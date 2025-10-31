@@ -12,16 +12,16 @@
     },
     "security-agent": {
       "status": "active",
-      "last_checkin": "2025-10-31T18:35:00Z",
-      "current_tasks": ["task-001", "task-002", "task-003"],
-      "completed_today": 0,
+      "last_checkin": "2025-10-31T19:10:00Z",
+      "current_tasks": [],
+      "completed_today": 3,
       "blocked_tasks": [],
-      "next_scheduled_checkin": "2025-10-31T19:00:00Z"
+      "next_scheduled_checkin": "2025-11-01T09:00:00Z"
     }
   },
   "system_health": {
-    "total_active_tasks": 3,
-    "pending_handoffs": 0,
+    "total_active_tasks": 2,
+    "pending_handoffs": 1,
     "blocked_tasks": 0,
     "agents_online": 2,
     "last_human_interaction": "2025-10-31T18:30:00Z"
