@@ -3,7 +3,8 @@
   "updated_at": "2025-10-31T19:20:00Z",
   "agents": {
     "development-agent": {
-      "status": "planned",
+      "status": "active",
+      "activated_at": "2025-10-31T19:25:00Z",
       "color": "blue",
       "icon": "code",
       "role": "Primary coding and feature development",

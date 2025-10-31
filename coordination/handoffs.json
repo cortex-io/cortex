@@ -1,7 +1,59 @@
 {
   "version": "1.0",
-  "updated_at": "2025-10-31T19:10:00Z",
-  "pending_handoffs": [],
+  "updated_at": "2025-10-31T19:40:00Z",
+  "pending_handoffs": [
+    {
+      "id": "handoff-002",
+      "from_agent": "development-agent",
+      "to_agent": "security-agent",
+      "task_id": "task-004-005",
+      "status": "pending",
+      "created_at": "2025-10-31T19:40:00Z",
+      "context": {
+        "summary": "n8n-mcp-server security fixes completed - ready for re-scan",
+        "deliverables": {
+          "repository": "ry-ops/n8n-mcp-server",
+          "commit": "b1ddf98",
+          "branch": "main",
+          "fixes_applied": [
+            "Added comprehensive .gitignore (150+ lines)",
+            "Fixed invalid pyproject.toml classifier"
+          ]
+        },
+        "handoff_reason": "Verify security issues resolved and run full scan with working environment",
+        "notes": "Both critical/high security issues from initial scan have been addressed. Repository now has proper .gitignore to prevent credential exposure, and build configuration is fixed to enable dependency scanning."
+      },
+      "accepted_at": null,
+      "accepted_by": null
+    },
+    {
+      "id": "handoff-003",
+      "from_agent": "development-agent",
+      "to_agent": "security-agent",
+      "task_id": "task-007",
+      "status": "pending",
+      "created_at": "2025-10-31T19:40:00Z",
+      "context": {
+        "summary": "aiana repository created - ready for initial security scan",
+        "deliverables": {
+          "repository": "ry-ops/aiana",
+          "commit": "089d0f6",
+          "branch": "main",
+          "created_files": [
+            ".gitignore (comprehensive Python)",
+            "LICENSE (MIT)",
+            "README.md",
+            "pyproject.toml",
+            "src/aiana/ (package structure)"
+          ]
+        },
+        "handoff_reason": "Run initial security scan on new repository",
+        "notes": "New repository initialized with proper security practices from the start: comprehensive .gitignore, no hardcoded secrets, proper package structure. Ready for baseline security assessment."
+      },
+      "accepted_at": null,
+      "accepted_by": null
+    }
+  ],
   "completed_handoffs": [
     {
       "id": "handoff-001",
