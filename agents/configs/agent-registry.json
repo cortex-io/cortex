@@ -23,7 +23,7 @@
       "repositories": []
     },
     "coordinator-agent": {
-      "status": "planned",
+      "status": "active",
       "color": "yellow",
       "icon": "users",
       "role": "Team coordination and oversight",

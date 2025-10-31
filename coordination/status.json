@@ -1,12 +1,21 @@
 {
   "version": "1.0",
-  "updated_at": "2025-10-31T00:00:00Z",
-  "agents": {},
+  "updated_at": "2025-10-31T18:30:00Z",
+  "agents": {
+    "coordinator-agent": {
+      "status": "active",
+      "last_checkin": "2025-10-31T18:30:00Z",
+      "current_tasks": [],
+      "completed_today": 0,
+      "blocked_tasks": [],
+      "next_scheduled_checkin": "2025-11-01T09:00:00Z"
+    }
+  },
   "system_health": {
     "total_active_tasks": 0,
     "pending_handoffs": 0,
     "blocked_tasks": 0,
-    "agents_online": 0,
-    "last_human_interaction": "2025-10-31T00:00:00Z"
+    "agents_online": 1,
+    "last_human_interaction": "2025-10-31T18:30:00Z"
   }
 }
