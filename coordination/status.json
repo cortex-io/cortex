@@ -4,9 +4,9 @@
   "agents": {
     "coordinator-agent": {
       "status": "active",
-      "last_checkin": "2025-10-31T18:35:00Z",
+      "last_checkin": "2025-10-31T19:15:00Z",
       "current_tasks": [],
-      "completed_today": 1,
+      "completed_today": 2,
       "blocked_tasks": [],
       "next_scheduled_checkin": "2025-11-01T09:00:00Z"
     },
@@ -21,7 +21,7 @@
   },
   "system_health": {
     "total_active_tasks": 2,
-    "pending_handoffs": 1,
+    "pending_handoffs": 0,
     "blocked_tasks": 0,
     "agents_online": 2,
     "last_human_interaction": "2025-10-31T18:30:00Z"
