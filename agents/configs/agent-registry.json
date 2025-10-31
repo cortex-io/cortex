@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "updated_at": "2025-10-31T00:00:00Z",
+  "updated_at": "2025-10-31T19:20:00Z",
   "agents": {
     "development-agent": {
       "status": "planned",
@@ -10,7 +10,10 @@
       "prompt_file": "agents/prompts/development.md",
       "log_directory": "agents/logs/development/",
       "created_at": "2025-10-31T00:00:00Z",
-      "repositories": []
+      "repositories": [
+        "ry-ops/n8n-mcp-server",
+        "ry-ops/aiana"
+      ]
     },
     "security-agent": {
       "status": "active",
@@ -24,7 +27,8 @@
       "repositories": [
         "ry-ops/mcp-server-unifi",
         "ry-ops/n8n-mcp-server",
-        "ry-ops/commit-relay"
+        "ry-ops/commit-relay",
+        "ry-ops/aiana"
       ]
     },
     "coordinator-agent": {
