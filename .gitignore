@@ -1,0 +1,35 @@
+# OS
+.DS_Store
+Thumbs.db
+
+# Editors
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Temporary files
+*.tmp
+*.bak
+.env
+.env.local
+
+# Node modules if we add tooling
+node_modules/
+
+# Python if we add scripts
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Logs - keep directory structure but ignore large log files
+# (We want to commit daily summaries but not huge debug logs)
+*.log
+
+# Sensitive data
+secrets/
+*.key
+*.pem
+credentials.json

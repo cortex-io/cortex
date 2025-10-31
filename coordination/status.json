@@ -1,0 +1,12 @@
+{
+  "version": "1.0",
+  "updated_at": "2025-10-31T00:00:00Z",
+  "agents": {},
+  "system_health": {
+    "total_active_tasks": 0,
+    "pending_handoffs": 0,
+    "blocked_tasks": 0,
+    "agents_online": 0,
+    "last_human_interaction": "2025-10-31T00:00:00Z"
+  }
+}

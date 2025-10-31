@@ -1,0 +1,52 @@
+{
+  "version": "1.0",
+  "updated_at": "2025-10-31T00:00:00Z",
+  "agents": {
+    "development-agent": {
+      "status": "planned",
+      "color": "blue",
+      "icon": "code",
+      "role": "Primary coding and feature development",
+      "prompt_file": "agents/prompts/development.md",
+      "log_directory": "agents/logs/development/",
+      "created_at": "2025-10-31T00:00:00Z",
+      "repositories": []
+    },
+    "security-agent": {
+      "status": "planned",
+      "color": "red",
+      "icon": "shield",
+      "role": "Security auditing and dependency management",
+      "prompt_file": "agents/prompts/security.md",
+      "log_directory": "agents/logs/security/",
+      "created_at": "2025-10-31T00:00:00Z",
+      "repositories": []
+    },
+    "coordinator-agent": {
+      "status": "planned",
+      "color": "yellow",
+      "icon": "users",
+      "role": "Team coordination and oversight",
+      "prompt_file": "agents/prompts/coordinator.md",
+      "log_directory": "agents/logs/coordinator/",
+      "created_at": "2025-10-31T00:00:00Z",
+      "repositories": []
+    }
+  },
+  "planned_agents": {
+    "pr-management-agent": {
+      "status": "future",
+      "color": "green",
+      "icon": "git-branch",
+      "role": "Pull request creation and management",
+      "priority": "phase-2"
+    },
+    "content-agent": {
+      "status": "future",
+      "color": "purple",
+      "icon": "file-text",
+      "role": "Documentation and blog content",
+      "priority": "phase-3"
+    }
+  }
+}
