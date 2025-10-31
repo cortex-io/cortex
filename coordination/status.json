@@ -1,21 +1,29 @@
 {
   "version": "1.0",
-  "updated_at": "2025-10-31T18:30:00Z",
+  "updated_at": "2025-10-31T18:35:00Z",
   "agents": {
     "coordinator-agent": {
       "status": "active",
-      "last_checkin": "2025-10-31T18:30:00Z",
+      "last_checkin": "2025-10-31T18:35:00Z",
       "current_tasks": [],
-      "completed_today": 0,
+      "completed_today": 1,
       "blocked_tasks": [],
       "next_scheduled_checkin": "2025-11-01T09:00:00Z"
+    },
+    "security-agent": {
+      "status": "active",
+      "last_checkin": "2025-10-31T18:35:00Z",
+      "current_tasks": ["task-001", "task-002", "task-003"],
+      "completed_today": 0,
+      "blocked_tasks": [],
+      "next_scheduled_checkin": "2025-10-31T19:00:00Z"
     }
   },
   "system_health": {
-    "total_active_tasks": 0,
+    "total_active_tasks": 3,
     "pending_handoffs": 0,
     "blocked_tasks": 0,
-    "agents_online": 1,
+    "agents_online": 2,
     "last_human_interaction": "2025-10-31T18:30:00Z"
   }
 }

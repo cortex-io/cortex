@@ -1,5 +1,69 @@
 {
   "version": "1.0",
-  "updated_at": "2025-10-31T00:00:00Z",
-  "tasks": []
+  "updated_at": "2025-10-31T18:35:00Z",
+  "tasks": [
+    {
+      "id": "task-001",
+      "title": "Initial security scan: mcp-server-unifi",
+      "type": "security",
+      "priority": "high",
+      "status": "pending",
+      "assigned_to": "security-agent",
+      "created_at": "2025-10-31T18:35:00Z",
+      "created_by": "coordinator-agent",
+      "repository": "ry-ops/mcp-server-unifi",
+      "context": {
+        "description": "Run comprehensive security scan including dependency audit, vulnerability check, and code security analysis",
+        "scan_types": ["dependencies", "vulnerabilities", "secrets", "static-analysis"],
+        "related_issues": [],
+        "previous_handoffs": []
+      },
+      "handoff_plan": {
+        "after_completion": "coordinator-agent",
+        "reason": "Report findings for prioritization"
+      }
+    },
+    {
+      "id": "task-002",
+      "title": "Initial security scan: n8n-mcp-server",
+      "type": "security",
+      "priority": "high",
+      "status": "pending",
+      "assigned_to": "security-agent",
+      "created_at": "2025-10-31T18:35:00Z",
+      "created_by": "coordinator-agent",
+      "repository": "ry-ops/n8n-mcp-server",
+      "context": {
+        "description": "Run comprehensive security scan including dependency audit, vulnerability check, and code security analysis",
+        "scan_types": ["dependencies", "vulnerabilities", "secrets", "static-analysis"],
+        "related_issues": [],
+        "previous_handoffs": []
+      },
+      "handoff_plan": {
+        "after_completion": "coordinator-agent",
+        "reason": "Report findings for prioritization"
+      }
+    },
+    {
+      "id": "task-003",
+      "title": "Initial security scan: commit-relay",
+      "type": "security",
+      "priority": "medium",
+      "status": "pending",
+      "assigned_to": "security-agent",
+      "created_at": "2025-10-31T18:35:00Z",
+      "created_by": "coordinator-agent",
+      "repository": "ry-ops/commit-relay",
+      "context": {
+        "description": "Run comprehensive security scan including dependency audit, vulnerability check, and code security analysis",
+        "scan_types": ["dependencies", "vulnerabilities", "secrets", "static-analysis"],
+        "related_issues": [],
+        "previous_handoffs": []
+      },
+      "handoff_plan": {
+        "after_completion": "coordinator-agent",
+        "reason": "Report findings for prioritization"
+      }
+    }
+  ]
 }

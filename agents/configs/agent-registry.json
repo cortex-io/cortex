@@ -13,14 +13,19 @@
       "repositories": []
     },
     "security-agent": {
-      "status": "planned",
+      "status": "active",
       "color": "red",
       "icon": "shield",
       "role": "Security auditing and dependency management",
       "prompt_file": "agents/prompts/security.md",
       "log_directory": "agents/logs/security/",
       "created_at": "2025-10-31T00:00:00Z",
-      "repositories": []
+      "activated_at": "2025-10-31T18:35:00Z",
+      "repositories": [
+        "ry-ops/mcp-server-unifi",
+        "ry-ops/n8n-mcp-server",
+        "ry-ops/commit-relay"
+      ]
     },
     "coordinator-agent": {
       "status": "active",
