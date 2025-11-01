@@ -167,6 +167,96 @@
             </div>
         </section>
 
+        <!-- Communication Flow -->
+        <section class="communication-section">
+            <h2>🔄 Master Agent Communication Flow</h2>
+            <div class="flow-container">
+                <div class="flow-diagram">
+                    <!-- Coordinator Master -->
+                    <div class="master-node coordinator-node" id="coordinatorNode">
+                        <div class="node-icon">🎯</div>
+                        <div class="node-name">Coordinator</div>
+                        <div class="node-status" id="coordinatorStatus">Idle</div>
+                    </div>
+
+                    <!-- Security Master -->
+                    <div class="master-node security-node" id="securityNode">
+                        <div class="node-icon">🔒</div>
+                        <div class="node-name">Security</div>
+                        <div class="node-status" id="securityStatus">Idle</div>
+                    </div>
+
+                    <!-- Development Master -->
+                    <div class="master-node development-node" id="developmentNode">
+                        <div class="node-icon">💻</div>
+                        <div class="node-name">Development</div>
+                        <div class="node-status" id="developmentStatus">Active</div>
+                    </div>
+
+                    <!-- Inventory Master (future) -->
+                    <div class="master-node inventory-node future" id="inventoryNode">
+                        <div class="node-icon">📋</div>
+                        <div class="node-name">Inventory</div>
+                        <div class="node-status">Coming Soon</div>
+                    </div>
+
+                    <!-- Worker Pool -->
+                    <div class="worker-pool-node" id="workerPoolNode">
+                        <div class="node-icon">⚙️</div>
+                        <div class="node-name">Worker Pool</div>
+                        <div class="node-status" id="workerPoolStatus">6 completed</div>
+                    </div>
+
+                    <!-- Communication Lines (SVG) -->
+                    <svg class="communication-lines" id="commLines">
+                        <!-- Coordinator to Security -->
+                        <line class="comm-line" x1="20%" y1="30%" x2="20%" y2="55%" stroke-dasharray="5,5" />
+
+                        <!-- Coordinator to Development -->
+                        <line class="comm-line" x1="25%" y1="30%" x2="50%" y2="55%" stroke-dasharray="5,5" />
+
+                        <!-- Coordinator to Inventory -->
+                        <line class="comm-line" x1="30%" y1="30%" x2="80%" y2="55%" stroke-dasharray="5,5" opacity="0.3" />
+
+                        <!-- Security to Development -->
+                        <line class="comm-line" x1="30%" y1="65%" x2="45%" y2="65%" stroke-dasharray="5,5" />
+
+                        <!-- Development to Worker Pool -->
+                        <line class="comm-line active" x1="50%" y1="75%" x2="50%" y2="85%" />
+
+                        <!-- Security to Worker Pool -->
+                        <line class="comm-line" x1="25%" y1="75%" x2="45%" y2="85%" stroke-dasharray="5,5" />
+                    </svg>
+                </div>
+
+                <!-- Legend -->
+                <div class="flow-legend">
+                    <h3>Communication Patterns</h3>
+                    <div class="legend-items">
+                        <div class="legend-item">
+                            <div class="legend-line active"></div>
+                            <span>Active Communication</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-line"></div>
+                            <span>Available Path</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-dot future"></div>
+                            <span>Coming Soon</span>
+                        </div>
+                    </div>
+                    <div class="flow-info">
+                        <p><strong>Coordinator</strong> orchestrates tasks and delegates to specialist masters</p>
+                        <p><strong>Security</strong> handles vulnerability scanning and remediation</p>
+                        <p><strong>Development</strong> manages features, bugs, and implementation</p>
+                        <p><strong>Inventory</strong> (Phase 5) will catalog and track all repositories</p>
+                        <p><strong>Worker Pool</strong> executes focused tasks for all masters</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
         <!-- Tasks Overview -->
         <section class="tasks-section">
             <h2>Task Queue</h2>

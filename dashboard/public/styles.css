@@ -296,6 +296,213 @@ body {
     transition: width 0.3s ease;
 }
 
+/* Communication Flow Section */
+.communication-section {
+    margin-bottom: 2rem;
+}
+
+.communication-section h2 {
+    font-size: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.flow-container {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 2rem;
+}
+
+.flow-diagram {
+    background: var(--bg-card);
+    border-radius: 1rem;
+    border: 1px solid var(--border);
+    padding: 2rem;
+    position: relative;
+    min-height: 400px;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    grid-template-rows: repeat(3, 1fr);
+    gap: 1rem;
+}
+
+.master-node,
+.worker-pool-node {
+    background: linear-gradient(135deg, var(--bg-card-hover), var(--bg-card));
+    border: 2px solid var(--border);
+    border-radius: 1rem;
+    padding: 1.5rem;
+    text-align: center;
+    transition: all 0.3s ease;
+    position: relative;
+    z-index: 10;
+}
+
+.master-node:hover,
+.worker-pool-node:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3);
+    border-color: var(--primary);
+}
+
+.coordinator-node {
+    grid-column: 1 / 3;
+    grid-row: 1;
+    border-color: var(--primary);
+}
+
+.security-node {
+    grid-column: 1;
+    grid-row: 2;
+    border-color: var(--danger);
+}
+
+.development-node {
+    grid-column: 2 / 4;
+    grid-row: 2;
+    border-color: var(--success);
+}
+
+.inventory-node {
+    grid-column: 4;
+    grid-row: 2;
+    border-color: var(--info);
+}
+
+.inventory-node.future {
+    opacity: 0.5;
+    border-style: dashed;
+}
+
+.worker-pool-node {
+    grid-column: 2 / 4;
+    grid-row: 3;
+    border-color: var(--warning);
+}
+
+.node-icon {
+    font-size: 2.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.node-name {
+    font-size: 1.125rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    color: var(--text);
+}
+
+.node-status {
+    font-size: 0.875rem;
+    color: var(--text-muted);
+    padding: 0.25rem 0.75rem;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 1rem;
+    display: inline-block;
+}
+
+.development-node .node-status {
+    background: rgba(72, 187, 120, 0.2);
+    color: var(--success);
+    font-weight: 600;
+}
+
+.communication-lines {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 1;
+}
+
+.comm-line {
+    stroke: var(--border);
+    stroke-width: 2;
+    transition: all 0.3s ease;
+}
+
+.comm-line.active {
+    stroke: var(--primary);
+    stroke-width: 3;
+    animation: flow 2s linear infinite;
+}
+
+@keyframes flow {
+    0% {
+        stroke-dashoffset: 0;
+    }
+    100% {
+        stroke-dashoffset: 20;
+    }
+}
+
+.flow-legend {
+    background: var(--bg-card);
+    border-radius: 1rem;
+    border: 1px solid var(--border);
+    padding: 1.5rem;
+}
+
+.flow-legend h3 {
+    font-size: 1.125rem;
+    margin-bottom: 1rem;
+    color: var(--text);
+}
+
+.legend-items {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-size: 0.875rem;
+}
+
+.legend-line {
+    width: 40px;
+    height: 2px;
+    background: var(--border);
+}
+
+.legend-line.active {
+    background: var(--primary);
+    height: 3px;
+}
+
+.legend-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: var(--border);
+}
+
+.legend-dot.future {
+    border: 2px dashed var(--info);
+    background: transparent;
+}
+
+.flow-info {
+    padding-top: 1rem;
+    border-top: 1px solid var(--border);
+}
+
+.flow-info p {
+    margin: 0.5rem 0;
+    font-size: 0.875rem;
+    line-height: 1.6;
+    color: var(--text-muted);
+}
+
+.flow-info strong {
+    color: var(--text);
+}
+
 /* Tasks Section */
 .tasks-section {
     margin-bottom: 2rem;
