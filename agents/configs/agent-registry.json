@@ -1,62 +1,152 @@
 {
-  "version": "1.0",
-  "updated_at": "2025-10-31T19:20:00Z",
-  "agents": {
-    "development-agent": {
+  "version": "2.0",
+  "architecture": "master-worker",
+  "updated_at": "2025-11-01T21:30:00Z",
+  "master_agents": {
+    "coordinator-master": {
       "status": "active",
-      "activated_at": "2025-10-31T19:25:00Z",
-      "color": "blue",
-      "icon": "code",
-      "role": "Primary coding and feature development",
-      "prompt_file": "agents/prompts/development.md",
-      "log_directory": "agents/logs/development/",
-      "created_at": "2025-10-31T00:00:00Z",
-      "repositories": [
-        "ry-ops/n8n-mcp-server",
-        "ry-ops/aiana"
+      "activated_at": "2025-11-01T00:00:00Z",
+      "color": "purple",
+      "icon": "users",
+      "role": "System orchestration and task decomposition",
+      "prompt_file": "agents/prompts/coordinator-master.md",
+      "log_directory": "agents/logs/coordinator/",
+      "token_budget": {
+        "personal": 50000,
+        "worker_pool": 30000
+      },
+      "repositories": [],
+      "capabilities": [
+        "task_decomposition",
+        "worker_orchestration",
+        "token_budget_management",
+        "system_health_monitoring"
       ]
     },
-    "security-agent": {
+    "security-master": {
       "status": "active",
+      "activated_at": "2025-11-01T00:00:00Z",
       "color": "red",
       "icon": "shield",
-      "role": "Security auditing and dependency management",
-      "prompt_file": "agents/prompts/security.md",
+      "role": "Security strategy and vulnerability management",
+      "prompt_file": "agents/prompts/security-master.md",
       "log_directory": "agents/logs/security/",
-      "created_at": "2025-10-31T00:00:00Z",
-      "activated_at": "2025-10-31T18:35:00Z",
+      "token_budget": {
+        "personal": 30000,
+        "worker_pool": 15000
+      },
       "repositories": [
         "ry-ops/mcp-server-unifi",
         "ry-ops/n8n-mcp-server",
         "ry-ops/commit-relay",
         "ry-ops/aiana"
+      ],
+      "capabilities": [
+        "vulnerability_scanning",
+        "security_remediation",
+        "parallel_repo_scanning",
+        "sla_driven_response"
       ]
     },
-    "coordinator-agent": {
+    "development-master": {
       "status": "active",
-      "color": "yellow",
-      "icon": "users",
-      "role": "Team coordination and oversight",
-      "prompt_file": "agents/prompts/coordinator.md",
-      "log_directory": "agents/logs/coordinator/",
-      "created_at": "2025-10-31T00:00:00Z",
-      "repositories": []
+      "activated_at": "2025-11-01T00:00:00Z",
+      "color": "green",
+      "icon": "code",
+      "role": "Development planning and feature orchestration",
+      "prompt_file": "agents/prompts/development-master.md",
+      "log_directory": "agents/logs/development/",
+      "token_budget": {
+        "personal": 30000,
+        "worker_pool": 20000
+      },
+      "repositories": [
+        "ry-ops/commit-relay",
+        "ry-ops/n8n-mcp-server",
+        "ry-ops/aiana"
+      ],
+      "capabilities": [
+        "feature_development",
+        "bug_fixes",
+        "code_quality_oversight",
+        "worker_orchestration"
+      ]
+    },
+    "inventory-master": {
+      "status": "active",
+      "activated_at": "2025-11-01T21:30:00Z",
+      "color": "blue",
+      "icon": "database",
+      "role": "Repository discovery and catalog management",
+      "prompt_file": "agents/prompts/inventory-master.md",
+      "log_directory": "agents/logs/inventory/",
+      "token_budget": {
+        "personal": 35000,
+        "worker_pool": 15000
+      },
+      "repositories": [],
+      "capabilities": [
+        "repository_discovery",
+        "metadata_cataloging",
+        "health_tracking",
+        "registry_maintenance"
+      ]
     }
   },
-  "planned_agents": {
-    "pr-management-agent": {
-      "status": "future",
-      "color": "green",
-      "icon": "git-branch",
-      "role": "Pull request creation and management",
-      "priority": "phase-2"
+  "worker_types": {
+    "scan-worker": {
+      "token_budget": 8000,
+      "timeout_minutes": 15,
+      "purpose": "Repository security scanning"
     },
-    "content-agent": {
-      "status": "future",
-      "color": "purple",
-      "icon": "file-text",
-      "role": "Documentation and blog content",
-      "priority": "phase-3"
+    "fix-worker": {
+      "token_budget": 5000,
+      "timeout_minutes": 20,
+      "purpose": "Apply specific fixes"
+    },
+    "analysis-worker": {
+      "token_budget": 5000,
+      "timeout_minutes": 15,
+      "purpose": "Research and investigation"
+    },
+    "implementation-worker": {
+      "token_budget": 10000,
+      "timeout_minutes": 45,
+      "purpose": "Build feature components"
+    },
+    "test-worker": {
+      "token_budget": 6000,
+      "timeout_minutes": 20,
+      "purpose": "Add test coverage"
+    },
+    "review-worker": {
+      "token_budget": 5000,
+      "timeout_minutes": 15,
+      "purpose": "Code review"
+    },
+    "pr-worker": {
+      "token_budget": 4000,
+      "timeout_minutes": 10,
+      "purpose": "Create pull requests"
+    },
+    "documentation-worker": {
+      "token_budget": 6000,
+      "timeout_minutes": 20,
+      "purpose": "Write documentation"
+    },
+    "catalog-worker": {
+      "token_budget": 8000,
+      "timeout_minutes": 15,
+      "purpose": "Deep repository cataloging"
+    }
+  },
+  "future_masters": {
+    "finance-controller": {
+      "status": "planned",
+      "phase": 6,
+      "color": "orange",
+      "icon": "dollar-sign",
+      "role": "Budget forecasting and cost estimation"
     }
   }
 }
