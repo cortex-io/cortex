@@ -1,0 +1,45 @@
+{
+  "version": "1.0",
+  "updated_at": "2025-11-01T00:00:00Z",
+  "budget_period": "daily",
+  "resets_at": "2025-11-02T00:00:00Z",
+  "total_budget": 200000,
+  "masters": {
+    "coordinator": {
+      "allocated": 50000,
+      "used": 0,
+      "worker_pool": 30000,
+      "last_reset": "2025-11-01T00:00:00Z"
+    },
+    "security": {
+      "allocated": 30000,
+      "used": 0,
+      "worker_pool": 15000,
+      "last_reset": "2025-11-01T00:00:00Z"
+    },
+    "development": {
+      "allocated": 30000,
+      "used": 0,
+      "worker_pool": 20000,
+      "last_reset": "2025-11-01T00:00:00Z"
+    }
+  },
+  "worker_pool": {
+    "total": 65000,
+    "allocated_to_workers": 0,
+    "available": 65000
+  },
+  "emergency_reserve": {
+    "total": 25000,
+    "used": 0,
+    "trigger_threshold": "critical_only",
+    "last_used": null
+  },
+  "usage_metrics": {
+    "total_tokens_used_today": 0,
+    "masters_percentage": 0,
+    "workers_percentage": 0,
+    "efficiency_score": 0,
+    "tasks_completed": 0
+  }
+}

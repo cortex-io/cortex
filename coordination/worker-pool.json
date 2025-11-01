@@ -1,0 +1,14 @@
+{
+  "version": "1.0",
+  "updated_at": "2025-11-01T00:00:00Z",
+  "active_workers": [],
+  "completed_workers": [],
+  "failed_workers": [],
+  "stats": {
+    "total_spawned_today": 0,
+    "total_completed_today": 0,
+    "total_failed_today": 0,
+    "avg_duration_minutes": 0,
+    "avg_tokens_used": 0
+  }
+}
