@@ -15,6 +15,11 @@ NC='\033[0m' # No Color
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 
+# Dashboard integration - prompt user unless disabled
+if [ -z "$SKIP_DASHBOARD_PROMPT" ]; then
+    source "$SCRIPT_DIR/dashboard-prompt.sh"
+fi
+
 # Function to print colored output
 print_info() {
     echo -e "${BLUE}ℹ${NC} $1"

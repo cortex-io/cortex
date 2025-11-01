@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Commit-Relay Dashboard</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-content">
+                <h1>🤖 Commit-Relay Dashboard</h1>
+                <p class="subtitle">Master-Worker System Monitoring</p>
+            </div>
+            <div class="connection-status">
+                <span class="status-dot" id="connectionDot"></span>
+                <span id="connectionStatus">Connecting...</span>
+            </div>
+        </header>
+
+        <!-- Stats Overview -->
+        <section class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-icon">⚡</div>
+                <div class="stat-content">
+                    <div class="stat-label">Active Workers</div>
+                    <div class="stat-value" id="activeWorkers">-</div>
+                </div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-icon">✅</div>
+                <div class="stat-content">
+                    <div class="stat-label">Success Rate</div>
+                    <div class="stat-value" id="successRate">-%</div>
+                </div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-icon">🎯</div>
+                <div class="stat-content">
+                    <div class="stat-label">Tasks In Progress</div>
+                    <div class="stat-value" id="inProgressTasks">-</div>
+                </div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-icon">💰</div>
+                <div class="stat-content">
+                    <div class="stat-label">Token Budget Used</div>
+                    <div class="stat-value" id="tokenUsage">-%</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Charts Section -->
+        <section class="charts-grid">
+            <!-- Token Budget Chart -->
+            <div class="chart-card">
+                <h2>Token Budget Distribution</h2>
+                <canvas id="tokenChart"></canvas>
+                <div class="chart-legend" id="tokenLegend"></div>
+            </div>
+
+            <!-- Worker Status Chart -->
+            <div class="chart-card">
+                <h2>Worker Status</h2>
+                <canvas id="workerChart"></canvas>
+                <div class="chart-legend" id="workerLegend"></div>
+            </div>
+        </section>
+
+        <!-- Masters Overview -->
+        <section class="masters-section">
+            <h2>Master Agents</h2>
+            <div class="masters-grid">
+                <div class="master-card">
+                    <h3>🎯 Coordinator Master</h3>
+                    <div class="master-stats">
+                        <div class="master-stat">
+                            <span class="label">Allocated:</span>
+                            <span class="value" id="coordAllocated">-</span>
+                        </div>
+                        <div class="master-stat">
+                            <span class="label">Used:</span>
+                            <span class="value" id="coordUsed">-</span>
+                        </div>
+                        <div class="master-stat">
+                            <span class="label">Worker Pool:</span>
+                            <span class="value" id="coordPool">-</span>
+                        </div>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="coordProgress"></div>
+                    </div>
+                </div>
+
+                <div class="master-card">
+                    <h3>🔒 Security Master</h3>
+                    <div class="master-stats">
+                        <div class="master-stat">
+                            <span class="label">Allocated:</span>
+                            <span class="value" id="secAllocated">-</span>
+                        </div>
+                        <div class="master-stat">
+                            <span class="label">Used:</span>
+                            <span class="value" id="secUsed">-</span>
+                        </div>
+                        <div class="master-stat">
+                            <span class="label">Worker Pool:</span>
+                            <span class="value" id="secPool">-</span>
+                        </div>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="secProgress"></div>
+                    </div>
+                </div>
+
+                <div class="master-card">
+                    <h3>💻 Development Master</h3>
+                    <div class="master-stats">
+                        <div class="master-stat">
+                            <span class="label">Allocated:</span>
+                            <span class="value" id="devAllocated">-</span>
+                        </div>
+                        <div class="master-stat">
+                            <span class="label">Used:</span>
+                            <span class="value" id="devUsed">-</span>
+                        </div>
+                        <div class="master-stat">
+                            <span class="label">Worker Pool:</span>
+                            <span class="value" id="devPool">-</span>
+                        </div>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="devProgress"></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Tasks Overview -->
+        <section class="tasks-section">
+            <h2>Task Queue</h2>
+            <div class="tasks-summary">
+                <div class="task-stat pending">
+                    <div class="task-count" id="pendingCount">-</div>
+                    <div class="task-label">Pending</div>
+                </div>
+                <div class="task-stat in-progress">
+                    <div class="task-count" id="inProgressCount">-</div>
+                    <div class="task-label">In Progress</div>
+                </div>
+                <div class="task-stat completed">
+                    <div class="task-count" id="completedCount">-</div>
+                    <div class="task-label">Completed</div>
+                </div>
+            </div>
+            <div class="tasks-list" id="tasksList">
+                <!-- Tasks will be populated dynamically -->
+            </div>
+        </section>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <p>Last updated: <span id="lastUpdate">-</span></p>
+            <p>Commit-Relay v2.0 • Production Ready</p>
+        </footer>
+    </div>
+
+    <script src="dashboard.js"></script>
+</body>
+</html>
