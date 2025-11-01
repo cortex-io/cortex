@@ -121,6 +121,11 @@ function calculateMetrics(data) {
       allocated: tokenBudget.masters?.development?.allocated || 0,
       used: tokenBudget.masters?.development?.used || 0,
       workerPool: tokenBudget.masters?.development?.worker_pool || 0
+    },
+    inventory: {
+      allocated: tokenBudget.masters?.inventory?.allocated || 0,
+      used: tokenBudget.masters?.inventory?.used || 0,
+      workerPool: tokenBudget.masters?.inventory?.worker_pool || 0
     }
   };
 
