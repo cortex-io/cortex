@@ -449,7 +449,29 @@ Emergency Reserve (12.5%): 25k
 
 ---
 
-### 🔮 Phase 7: Advanced Optimization (Optional - Future)
+### 🔮 Phase 7: Enhanced Dashboard Features (Planned)
+
+**Goal**: Advanced visualization and monitoring capabilities
+
+**Planned**:
+- **Real-time task feed**: Live activity stream of all master/worker actions
+  - Task creation events
+  - Worker spawn/completion notifications
+  - Master handoff tracking
+  - Error/warning alerts
+  - Searchable and filterable feed
+  - Activity timeline view
+- Budget forecast panel (from Phase 6)
+- Historical metrics charts (trends over time)
+- Custom alerts and notifications
+- Worker timeline/Gantt visualization
+- Master activity heatmap
+
+**Status**: Dashboard enhancements for better observability
+
+---
+
+### 🔮 Phase 8: Advanced Optimization (Optional - Future)
 
 **Goal**: Further automation and intelligence
 
@@ -459,8 +481,6 @@ Emergency Reserve (12.5%): 25k
 - Worker pooling and reuse
 - Performance profiling and tuning
 - Intelligent task decomposition
-- Historical metrics tracking
-- Custom alerts and notifications
 
 **Status**: System is fully production-ready; advanced optimizations are optional
 
