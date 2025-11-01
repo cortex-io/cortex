@@ -89,9 +89,48 @@ function updateDashboard(metrics) {
     // Update tasks
     updateTasks(metrics);
 
+    // Update communication flow
+    updateCommunicationFlow(metrics);
+
     // Update timestamp
     const now = new Date();
     document.getElementById('lastUpdate').textContent = now.toLocaleTimeString();
+}
+
+// Update communication flow visualization
+function updateCommunicationFlow(metrics) {
+    const { workers, tasks } = metrics;
+
+    // Update worker pool status
+    const workerPoolStatus = document.getElementById('workerPoolStatus');
+    if (workers.active > 0) {
+        workerPoolStatus.textContent = `${workers.active} active, ${workers.completed} done`;
+    } else {
+        workerPoolStatus.textContent = `${workers.completed} completed`;
+    }
+
+    // Update master statuses based on tasks
+    const coordinatorStatus = document.getElementById('coordinatorStatus');
+    const securityStatus = document.getElementById('securityStatus');
+    const developmentStatus = document.getElementById('developmentStatus');
+
+    // Simple status logic - can be enhanced with actual task data
+    if (tasks.inProgress > 0) {
+        coordinatorStatus.textContent = 'Orchestrating';
+
+        // Check which master is handling tasks
+        // For now, show development as active since we just completed task-009
+        if (workers.completed > 0) {
+            developmentStatus.textContent = 'Active';
+        } else {
+            developmentStatus.textContent = 'Idle';
+        }
+    } else {
+        coordinatorStatus.textContent = 'Idle';
+        developmentStatus.textContent = 'Idle';
+    }
+
+    securityStatus.textContent = 'Idle';
 }
 
 // Update session metrics banner

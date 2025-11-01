@@ -414,7 +414,42 @@ Emergency Reserve (12.5%): 25k
 
 ---
 
-### 🔮 Phase 5: Advanced Optimization (Optional - Future)
+### 🔮 Phase 5: Inventory Management (Planned)
+
+**Goal**: Automated repository discovery and cataloging
+
+**Planned**:
+- Inventory Master agent (4th master)
+- Automatic repository discovery via GitHub API
+- Repository metadata cataloging (languages, dependencies, health)
+- Activity tracking and stale repo detection
+- Integration with Security and Development masters
+- `repository-inventory.json` registry
+- `catalog-worker` for deep repo analysis
+
+**Status**: Next major feature - automating portfolio management
+
+---
+
+### 🔮 Phase 6: Financial Intelligence (Planned)
+
+**Goal**: Predictive budget management and cost forecasting
+
+**Planned**:
+- Finance Controller module or master agent
+- Task cost estimation before execution
+- Budget forecasting and runway prediction
+- Approval gates for high-cost tasks
+- Historical cost tracking and accuracy improvement
+- Emergency reserve trigger logic
+- Multi-task budget planning
+- Dashboard budget forecast panel
+
+**Status**: Future enhancement - preventing budget overruns
+
+---
+
+### 🔮 Phase 7: Advanced Optimization (Optional - Future)
 
 **Goal**: Further automation and intelligence
 
@@ -427,7 +462,7 @@ Emergency Reserve (12.5%): 25k
 - Historical metrics tracking
 - Custom alerts and notifications
 
-**Status**: System is fully production-ready; Phase 5 enhancements are optional
+**Status**: System is fully production-ready; advanced optimizations are optional
 
 ---
 
