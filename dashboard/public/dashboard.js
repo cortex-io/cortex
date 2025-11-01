@@ -74,6 +74,9 @@ function handleMessage(message) {
 function updateDashboard(metrics) {
     if (!metrics) return;
 
+    // Update session metrics
+    updateSessionMetrics(metrics);
+
     // Update stat cards
     updateStatCards(metrics);
 
@@ -89,6 +92,59 @@ function updateDashboard(metrics) {
     // Update timestamp
     const now = new Date();
     document.getElementById('lastUpdate').textContent = now.toLocaleTimeString();
+}
+
+// Update session metrics banner
+function updateSessionMetrics(metrics) {
+    const { workers, tokens, tasks } = metrics;
+
+    // Workers completed today
+    document.getElementById('sessionWorkers').textContent =
+        `${workers.completed} workers`;
+
+    // Tokens used today
+    const tokensUsed = tokens.used || 0;
+    const tokensFormatted = tokensUsed.toLocaleString();
+    const tokensPercent = tokens.usagePercentage || 0;
+    document.getElementById('sessionTokens').textContent =
+        `${tokensFormatted} (${tokensPercent}%)`;
+
+    // Tasks completed today
+    document.getElementById('sessionTasks').textContent =
+        `${tasks.completed} tasks`;
+
+    // Efficiency score
+    const efficiencyScore = calculateEfficiencyScore(metrics);
+    document.getElementById('sessionEfficiency').textContent =
+        `${efficiencyScore}%`;
+}
+
+// Calculate efficiency score based on various metrics
+function calculateEfficiencyScore(metrics) {
+    const { workers, tokens } = metrics;
+
+    // Factors:
+    // - Success rate (40%)
+    // - Token efficiency (30%)
+    // - Worker utilization (30%)
+
+    const successRate = workers.successRate || 0;
+
+    // Token efficiency: lower usage for same work = better
+    const tokenEfficiency = tokens.usagePercentage < 50 ? 100 :
+                           (100 - tokens.usagePercentage);
+
+    // Worker utilization: completed vs total
+    const workerUtilization = workers.total > 0 ?
+                              (workers.completed / workers.total) * 100 : 0;
+
+    const score = (
+        successRate * 0.4 +
+        tokenEfficiency * 0.3 +
+        workerUtilization * 0.3
+    );
+
+    return Math.round(score);
 }
 
 // Update stat cards
