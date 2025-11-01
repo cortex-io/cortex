@@ -266,6 +266,59 @@
         "after_completion": "coordinator-agent",
         "reason": "Review architecture and approve for implementation"
       }
+    },
+    {
+      "id": "task-009",
+      "title": "Build real-time metrics dashboard for commit-relay",
+      "type": "development",
+      "priority": "high",
+      "status": "in-progress",
+      "assigned_to": "development-master",
+      "created_at": "2025-11-01T20:00:00Z",
+      "created_by": "coordinator-master",
+      "repository": "ry-ops/commit-relay",
+      "context": {
+        "description": "Build a real-time metrics dashboard to monitor worker activity, token usage, task progress, and system health. Include integration prompt when commit-relay tools are used.",
+        "requirements": [
+          "Real-time worker status monitoring (active, completed, failed)",
+          "Token budget visualization (masters, workers, emergency reserve)",
+          "Task queue status and progress tracking",
+          "System health metrics (success rate, avg duration, efficiency)",
+          "User prompt integration for dashboard access",
+          "Web-based UI (accessible via local server)",
+          "Auto-refresh capability"
+        ],
+        "components": [
+          "Backend server (Node.js/Python with WebSocket)",
+          "Frontend UI (HTML/CSS/JS with charts)",
+          "Integration hook (prompt on commit-relay usage)",
+          "Data aggregation from coordination files"
+        ],
+        "related_issues": [],
+        "previous_handoffs": []
+      },
+      "execution_mode": "workers",
+      "worker_plan": {
+        "total_workers": 6,
+        "workers_spawned": [],
+        "workers_completed": [],
+        "workers_failed": [],
+        "estimated_tokens": 47000,
+        "actual_tokens": 0,
+        "parallel": false,
+        "sequence": [
+          "implementation-worker: backend server",
+          "implementation-worker: frontend UI",
+          "implementation-worker: integration hook",
+          "test-worker: dashboard tests",
+          "documentation-worker: dashboard docs",
+          "pr-worker: create PR"
+        ]
+      },
+      "handoff_plan": {
+        "after_completion": "coordinator-master",
+        "reason": "Review completed dashboard feature and system integration"
+      }
     }
   ]
 }

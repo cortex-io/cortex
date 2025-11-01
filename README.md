@@ -138,6 +138,17 @@ commit-relay/
 │   └── worker-specs/                 # Worker specifications
 │       ├── active/                   # Running workers
 │       └── archive/                  # Completed workers
+├── dashboard/                         # Real-time metrics dashboard
+│   ├── server/
+│   │   └── index.js                  # Express + WebSocket server
+│   ├── public/
+│   │   ├── index.html                # Dashboard UI
+│   │   ├── styles.css                # Styling
+│   │   └── dashboard.js              # Frontend logic
+│   ├── test/
+│   │   └── server.test.js            # API tests
+│   ├── package.json                  # Dependencies
+│   └── README.md                     # Dashboard documentation
 ├── docs/
 │   ├── master-worker-architecture.md # Complete architecture design
 │   ├── master-agent-examples.md      # Real-world workflows
@@ -150,7 +161,8 @@ commit-relay/
     ├── spawn-worker.sh               # Spawn worker agents
     ├── worker-status.sh              # Monitor workers
     ├── agent-init.sh                 # Initialize new agents
-    └── status-check.sh               # System health check
+    ├── status-check.sh               # System health check
+    └── dashboard-prompt.sh           # Dashboard integration
 ```
 
 ---
@@ -196,6 +208,33 @@ commit-relay/
 
 ### Monitoring
 
+#### Real-Time Dashboard 🎯
+
+**NEW**: Real-time web-based metrics dashboard for visual monitoring!
+
+```bash
+# Start dashboard (auto-prompts when using spawn-worker.sh)
+cd dashboard
+npm install
+npm start
+
+# Access at http://localhost:3000
+# Or use the helper script:
+./scripts/dashboard-prompt.sh start
+```
+
+**Dashboard Features**:
+- 📊 Real-time metrics visualization
+- ⚡ Live worker status tracking
+- 💰 Token budget monitoring
+- 🎯 Task queue progress
+- 📈 Master agent statistics
+- 🔄 Auto-refresh via WebSocket
+
+See [dashboard/README.md](./dashboard/README.md) for full documentation.
+
+#### Command Line Tools
+
 ```bash
 # Check system health
 ./scripts/status-check.sh
@@ -205,6 +244,11 @@ commit-relay/
 
 # View token budget
 cat coordination/token-budget.json | jq
+
+# Dashboard control
+./scripts/dashboard-prompt.sh status    # Check if running
+./scripts/dashboard-prompt.sh open      # Open in browser
+./scripts/dashboard-prompt.sh stop      # Stop server
 ```
 
 ---
