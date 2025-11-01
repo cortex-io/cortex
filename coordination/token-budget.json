@@ -1,33 +1,38 @@
 {
   "version": "1.0",
-  "updated_at": "2025-11-01T00:00:00Z",
+  "updated_at": "2025-11-01T20:50:00Z",
   "budget_period": "daily",
   "resets_at": "2025-11-02T00:00:00Z",
   "total_budget": 200000,
   "masters": {
     "coordinator": {
       "allocated": 50000,
-      "used": 0,
+      "used": 5000,
       "worker_pool": 30000,
-      "last_reset": "2025-11-01T00:00:00Z"
+      "last_reset": "2025-11-01T00:00:00Z",
+      "tasks_handled": ["task-009"]
     },
     "security": {
       "allocated": 30000,
       "used": 0,
       "worker_pool": 15000,
-      "last_reset": "2025-11-01T00:00:00Z"
+      "last_reset": "2025-11-01T00:00:00Z",
+      "tasks_handled": []
     },
     "development": {
       "allocated": 30000,
-      "used": 0,
+      "used": 6000,
       "worker_pool": 20000,
-      "last_reset": "2025-11-01T00:00:00Z"
+      "last_reset": "2025-11-01T00:00:00Z",
+      "tasks_handled": ["task-009"]
     }
   },
   "worker_pool": {
     "total": 65000,
-    "allocated_to_workers": 0,
-    "available": 65000
+    "allocated_to_workers": 34000,
+    "available": 31000,
+    "workers_active": 0,
+    "workers_completed": 6
   },
   "emergency_reserve": {
     "total": 25000,
@@ -36,10 +41,13 @@
     "last_used": null
   },
   "usage_metrics": {
-    "total_tokens_used_today": 0,
-    "masters_percentage": 0,
-    "workers_percentage": 0,
-    "efficiency_score": 0,
-    "tasks_completed": 0
+    "total_tokens_used_today": 45000,
+    "masters_used": 11000,
+    "workers_used": 34000,
+    "masters_percentage": 24.4,
+    "workers_percentage": 75.6,
+    "efficiency_score": 95.7,
+    "tasks_completed": 1,
+    "tasks_in_progress": 0
   }
 }
