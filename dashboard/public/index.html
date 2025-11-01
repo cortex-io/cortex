@@ -164,6 +164,27 @@
                         <div class="progress-fill" id="devProgress"></div>
                     </div>
                 </div>
+
+                <div class="master-card">
+                    <h3>🗄️ Inventory Master</h3>
+                    <div class="master-stats">
+                        <div class="master-stat">
+                            <span class="label">Allocated:</span>
+                            <span class="value" id="invAllocated">-</span>
+                        </div>
+                        <div class="master-stat">
+                            <span class="label">Used:</span>
+                            <span class="value" id="invUsed">-</span>
+                        </div>
+                        <div class="master-stat">
+                            <span class="label">Worker Pool:</span>
+                            <span class="value" id="invPool">-</span>
+                        </div>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="invProgress"></div>
+                    </div>
+                </div>
             </div>
         </section>
 
@@ -193,11 +214,11 @@
                         <div class="node-status" id="developmentStatus">Active</div>
                     </div>
 
-                    <!-- Inventory Master (future) -->
-                    <div class="master-node inventory-node future" id="inventoryNode">
-                        <div class="node-icon">📋</div>
+                    <!-- Inventory Master -->
+                    <div class="master-node inventory-node" id="inventoryNode">
+                        <div class="node-icon">🗄️</div>
                         <div class="node-name">Inventory</div>
-                        <div class="node-status">Coming Soon</div>
+                        <div class="node-status" id="inventoryStatus">Active</div>
                     </div>
 
                     <!-- Worker Pool -->
@@ -216,7 +237,7 @@
                         <line class="comm-line" x1="25%" y1="30%" x2="50%" y2="55%" stroke-dasharray="5,5" />
 
                         <!-- Coordinator to Inventory -->
-                        <line class="comm-line" x1="30%" y1="30%" x2="80%" y2="55%" stroke-dasharray="5,5" opacity="0.3" />
+                        <line class="comm-line" x1="30%" y1="30%" x2="80%" y2="55%" stroke-dasharray="5,5" />
 
                         <!-- Security to Development -->
                         <line class="comm-line" x1="30%" y1="65%" x2="45%" y2="65%" stroke-dasharray="5,5" />
@@ -226,6 +247,9 @@
 
                         <!-- Security to Worker Pool -->
                         <line class="comm-line" x1="25%" y1="75%" x2="45%" y2="85%" stroke-dasharray="5,5" />
+
+                        <!-- Inventory to Worker Pool -->
+                        <line class="comm-line" x1="75%" y1="75%" x2="55%" y2="85%" stroke-dasharray="5,5" />
                     </svg>
                 </div>
 

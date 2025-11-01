@@ -113,6 +113,7 @@ function updateCommunicationFlow(metrics) {
     const coordinatorStatus = document.getElementById('coordinatorStatus');
     const securityStatus = document.getElementById('securityStatus');
     const developmentStatus = document.getElementById('developmentStatus');
+    const inventoryStatus = document.getElementById('inventoryStatus');
 
     // Simple status logic - can be enhanced with actual task data
     if (tasks.inProgress > 0) {
@@ -131,6 +132,7 @@ function updateCommunicationFlow(metrics) {
     }
 
     securityStatus.textContent = 'Idle';
+    inventoryStatus.textContent = 'Active';
 }
 
 // Update session metrics banner
@@ -379,6 +381,9 @@ function updateMasters(metrics) {
 
     // Development
     updateMaster('dev', masters.development);
+
+    // Inventory
+    updateMaster('inv', masters.inventory);
 }
 
 // Update individual master
