@@ -1,3 +1,5 @@
+<img src="https://github.com/ry-ops/commit-relay/blob/main/commit-relay.png" width="100%">
+
 # Commit-Relay
 
 A multi-agent AI system for autonomous GitHub repository management.
