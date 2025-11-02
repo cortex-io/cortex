@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "updated_at": "2025-11-01T21:30:00Z",
+  "updated_at": "2025-11-02T19:44:11Z",
   "budget_period": "daily",
   "resets_at": "2025-11-02T00:00:00Z",
   "total_budget": 270000,
@@ -10,21 +10,27 @@
       "used": 5000,
       "worker_pool": 30000,
       "last_reset": "2025-11-01T00:00:00Z",
-      "tasks_handled": ["task-009"]
+      "tasks_handled": [
+        "task-009"
+      ]
     },
     "security": {
       "allocated": 30000,
       "used": 2500,
       "worker_pool": 15000,
       "last_reset": "2025-11-01T00:00:00Z",
-      "tasks_handled": ["task-010"]
+      "tasks_handled": [
+        "task-010"
+      ]
     },
     "development": {
       "allocated": 30000,
       "used": 6000,
       "worker_pool": 20000,
       "last_reset": "2025-11-01T00:00:00Z",
-      "tasks_handled": ["task-009"]
+      "tasks_handled": [
+        "task-009"
+      ]
     },
     "inventory": {
       "allocated": 35000,

@@ -1,41 +1,30 @@
 #!/bin/bash
-# Spawn Worker Script - Master-Worker Architecture
-# Creates worker specification and prepares for spawning
+# scripts/spawn-worker.sh
+# Spawn individual worker agents for commit-relay
+# Part of Phase 1: Script-Triggered Automation
 
-set -e
+set -euo pipefail
 
-# Colors for output
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-BLUE='\033[0;34m'
-NC='\033[0m' # No Color
-
-# Script directory
+# Get script directory
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+COMMIT_RELAY_HOME="${COMMIT_RELAY_HOME:-$(cd "$SCRIPT_DIR/.." && pwd)}"
 
-# Dashboard integration - prompt user unless disabled
-if [ -z "$SKIP_DASHBOARD_PROMPT" ]; then
-    source "$SCRIPT_DIR/dashboard-prompt.sh"
-fi
+# Load libraries
+source "$SCRIPT_DIR/lib/logging.sh"
+source "$SCRIPT_DIR/lib/coordination.sh"
 
-# Function to print colored output
-print_info() {
-    echo -e "${BLUE}ℹ${NC} $1"
-}
+# Color definitions for output formatting
+GREEN="\033[0;32m"
+BLUE="\033[0;34m"
+YELLOW="\033[0;33m"
+RED="\033[0;31m"
+NC="\033[0m"  # No Color
 
-print_success() {
-    echo -e "${GREEN}✓${NC} $1"
-}
-
-print_error() {
-    echo -e "${RED}✗${NC} $1"
-}
-
-print_warning() {
-    echo -e "${YELLOW}⚠${NC} $1"
-}
+# Backward compatibility functions
+print_info() { log_info "$1"; }
+print_success() { log_info "✅ $1"; }
+print_error() { log_error "$1"; }
+print_warning() { log_warn "$1"; }
 
 # Usage information
 usage() {
@@ -195,7 +184,7 @@ if [ -z "$TOKEN_BUDGET" ]; then
 fi
 
 # Navigate to project root
-cd "$PROJECT_ROOT"
+cd "$COMMIT_RELAY_HOME"
 
 # Pull latest state
 print_info "Pulling latest coordination state..."
