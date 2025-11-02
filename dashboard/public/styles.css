@@ -85,6 +85,140 @@ body {
     50% { opacity: 0.5; }
 }
 
+/* Usage Status */
+.usage-status {
+    background: linear-gradient(135deg, rgba(72, 187, 120, 0.1), rgba(66, 153, 225, 0.1));
+    border: 2px solid var(--success);
+    border-radius: 1rem;
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.usage-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+}
+
+.usage-header h2 {
+    font-size: 1.5rem;
+    color: var(--text);
+}
+
+.last-updated {
+    font-size: 0.875rem;
+    color: var(--text-muted);
+    font-style: italic;
+}
+
+.usage-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1.5rem;
+}
+
+.usage-card {
+    background: var(--bg-card);
+    border-radius: 0.75rem;
+    padding: 1.5rem;
+    display: flex;
+    gap: 1rem;
+    align-items: flex-start;
+    transition: all 0.3s ease;
+    border: 2px solid transparent;
+}
+
+.usage-card:hover {
+    background: var(--bg-card-hover);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.usage-card.session {
+    border-color: rgba(102, 126, 234, 0.3);
+}
+
+.usage-card.week-all {
+    border-color: rgba(66, 153, 225, 0.3);
+}
+
+.usage-card.week-opus {
+    border-color: rgba(214, 158, 46, 0.3);
+}
+
+.usage-icon {
+    font-size: 2rem;
+    line-height: 1;
+}
+
+.usage-info {
+    flex: 1;
+}
+
+.usage-label {
+    font-size: 0.875rem;
+    color: var(--text-muted);
+    margin-bottom: 0.5rem;
+}
+
+.usage-value {
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 0.75rem;
+}
+
+.usage-bar {
+    height: 8px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+    overflow: hidden;
+    position: relative;
+}
+
+.usage-bar-fill {
+    height: 100%;
+    border-radius: 4px;
+    transition: width 0.5s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.usage-bar-fill::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(
+        90deg,
+        transparent,
+        rgba(255, 255, 255, 0.3),
+        transparent
+    );
+    animation: shimmer 2s infinite;
+}
+
+@keyframes shimmer {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(100%); }
+}
+
+.session-fill {
+    background: linear-gradient(90deg, var(--primary), var(--primary-dark));
+}
+
+.week-fill {
+    background: linear-gradient(90deg, var(--info), #3182ce);
+}
+
+.opus-fill {
+    background: linear-gradient(90deg, #d69e2e, #dd6b20);
+}
+
 /* Session Banner */
 .session-banner {
     background: linear-gradient(135deg, rgba(102, 126, 234, 0.1), rgba(118, 75, 162, 0.1));

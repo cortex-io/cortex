@@ -130,6 +130,13 @@ function calculateMetrics(data) {
     }
   };
 
+  // Claude Code usage status (read from status.json or use defaults)
+  const usage = {
+    sessionPercent: data.status?.usage?.session_percent || 15,
+    weekAllPercent: data.status?.usage?.week_all_percent || 46,
+    weekOpusPercent: data.status?.usage?.week_opus_percent || 0
+  };
+
   return {
     workers: {
       active: activeWorkers,
@@ -156,6 +163,7 @@ function calculateMetrics(data) {
       total: totalTasks
     },
     masters,
+    usage,
     timestamp: new Date().toISOString()
   };
 }
