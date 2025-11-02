@@ -50,7 +50,7 @@ get_pending_tasks() {
 update_task_status() {
     local task_id=$1
     local new_status=$2
-    local additional_data="${3:-{}}"
+    local additional_data="${3:-{}"
 
     ensure_coordination_dir || return 1
 
@@ -58,13 +58,14 @@ update_task_status() {
     local temp_file=$(mktemp)
 
     # Update task with new status
+    log_debug "Updating task $task_id with data: $additional_data"
     jq \
         --arg id "$task_id" \
         --arg status "$new_status" \
         --arg timestamp "$(date -Iseconds 2>/dev/null || date +%Y-%m-%dT%H:%M:%S%z)" \
         --argjson data "$additional_data" \
         '(.tasks[] | select(.id == $id)) |= (. + {status: $status} + $data + {updated_at: $timestamp})' \
-        "$task_file" > "$temp_file"
+        "$task_file" > "$temp_file" 2>&1 | tee /tmp/jq-error.log
 
     if [ $? -eq 0 ]; then
         mv "$temp_file" "$task_file"

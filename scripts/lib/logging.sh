@@ -97,7 +97,7 @@ broadcast_dashboard_event() {
     local event_id="evt-$(date +%s)-$$"
     local timestamp=$(date -Iseconds 2>/dev/null || date +"%Y-%m-%dT%H:%M:%S%z")
 
-    local event=$(jq -n \
+    local event=$(jq -nc \
         --arg id "$event_id" \
         --arg ts "$timestamp" \
         --arg type "$event_type" \

@@ -72,7 +72,8 @@ for i in $(seq 0 $((TASK_COUNT - 1))); do
     log_info "Processing task: $TASK_ID (type: $TASK_TYPE, priority: $TASK_PRIORITY)"
 
     # Update task status to in_progress
-    update_task_status "$TASK_ID" "in_progress" "{\"assigned_to\": \"$AGENT_ID\"}"
+    TASK_UPDATE_DATA=$(jq -nc --arg agent "$AGENT_ID" '{assigned_to: $agent}')
+    update_task_status "$TASK_ID" "in_progress" "$TASK_UPDATE_DATA"
 
     case "$TASK_TYPE" in
         security-scan)
@@ -106,7 +107,8 @@ handle_security_scan() {
 
     if [ -z "$repository" ]; then
         log_error "No repository specified in task $task_id"
-        update_task_status "$task_id" "failed" "{\"error\": \"No repository specified\"}"
+        local error_data=$(jq -nc '{error: "No repository specified"}')
+        update_task_status "$task_id" "failed" "$error_data"
         return 1
     fi
 
@@ -117,7 +119,8 @@ handle_security_scan() {
     local estimated_tokens=8000
     if ! check_token_budget "$AGENT_ID" "$estimated_tokens"; then
         log_error "Insufficient token budget for scan worker"
-        update_task_status "$task_id" "blocked" "{\"reason\": \"insufficient_tokens\"}"
+        local blocked_data=$(jq -nc{reason: "insufficient_tokens"}')
+        update_task_status "$task_id" "blocked" "$blocked_data"
         return 1
     fi
 
@@ -146,10 +149,12 @@ EOF
         log_success "Scan worker spawned successfully for task $task_id"
 
         # Update task with worker reference
-        update_task_status "$task_id" "in_progress" "{\"status\": \"scan_worker_spawned\"}"
+        local worker_data=$(jq -nc{status: "scan_worker_spawned"}')
+        update_task_status "$task_id" "in_progress" "$worker_data"
     else
         log_error "Failed to spawn scan worker for task $task_id"
-        update_task_status "$task_id" "failed" "{\"error\": \"worker_spawn_failed\"}"
+        local spawn_fail_data=$(jq -nc{error: "worker_spawn_failed"}')
+        update_task_status "$task_id" "failed" "$spawn_fail_data"
         return 1
     fi
 }
@@ -167,7 +172,8 @@ handle_security_fix() {
 
     if [ -z "$repository" ]; then
         log_error "No repository specified in task $task_id"
-        update_task_status "$task_id" "failed" "{\"error\": \"No repository specified\"}"
+        local error_data=$(jq -nc '{error: "No repository specified"}')
+        update_task_status "$task_id" "failed" "$error_data"
         return 1
     fi
 
@@ -177,7 +183,8 @@ handle_security_fix() {
     # Check if we have scan results
     if [ "$vuln_count" -eq 0 ]; then
         log_warn "No vulnerabilities specified - may need to run scan first"
-        update_task_status "$task_id" "blocked" "{\"reason\": \"no_vulnerabilities_specified\"}"
+        local no_vuln_data=$(jq -nc{reason: "no_vulnerabilities_specified"}')
+        update_task_status "$task_id" "blocked" "$no_vuln_data"
         return 1
     fi
 
@@ -185,7 +192,8 @@ handle_security_fix() {
     local estimated_tokens=5000
     if ! check_token_budget "$AGENT_ID" "$estimated_tokens"; then
         log_error "Insufficient token budget for fix worker"
-        update_task_status "$task_id" "blocked" "{\"reason\": \"insufficient_tokens\"}"
+        local blocked_data=$(jq -nc{reason: "insufficient_tokens"}')
+        update_task_status "$task_id" "blocked" "$blocked_data"
         return 1
     fi
 
@@ -214,10 +222,12 @@ EOF
         log_success "Fix worker spawned successfully for task $task_id"
 
         # Update task with worker reference
-        update_task_status "$task_id" "in_progress" "{\"status\": \"fix_worker_spawned\"}"
+        local fix_worker_data=$(jq -nc{status: "fix_worker_spawned"}')
+        update_task_status "$task_id" "in_progress" "$fix_worker_data"
     else
         log_error "Failed to spawn fix worker for task $task_id"
-        update_task_status "$task_id" "failed" "{\"error\": \"worker_spawn_failed\"}"
+        local spawn_fail_data=$(jq -nc{error: "worker_spawn_failed"}')
+        update_task_status "$task_id" "failed" "$spawn_fail_data"
         return 1
     fi
 }
