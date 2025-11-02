@@ -27,6 +27,7 @@ venv/
 # Logs - keep directory structure but ignore large log files
 # (We want to commit daily summaries but not huge debug logs)
 *.log
+agents/logs/system/
 
 # Sensitive data
 secrets/
