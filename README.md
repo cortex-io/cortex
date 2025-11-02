@@ -12,7 +12,9 @@
 
 ## Overview
 
-Commit-Relay is a multi-agent AI system that autonomously manages GitHub repositories through specialized master agents that orchestrate ephemeral worker agents. The system achieves **60-80% token efficiency** improvements and **3-5x throughput gains** compared to traditional single-agent approaches.
+Commit-Relay automates the entire repository lifecycle using a network of intelligent agents that communicate through structured coordination files.
+
+Each master agent focuses on a domain like development, security, or inventory management, spawning lightweight workers to execute precise tasks in parallel. The result: a transparent, self-managing system that keeps projects moving efficiently and audibly from idea to pull request.
 
 ### Key Features
 
