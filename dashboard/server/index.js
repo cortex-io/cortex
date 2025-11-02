@@ -27,7 +27,8 @@ const FILES = {
   tokenBudget: path.join(COORD_DIR, 'token-budget.json'),
   taskQueue: path.join(COORD_DIR, 'task-queue.json'),
   handoffs: path.join(COORD_DIR, 'handoffs.json'),
-  status: path.join(COORD_DIR, 'status.json')
+  status: path.join(COORD_DIR, 'status.json'),
+  dashboardEvents: path.join(COORD_DIR, 'dashboard-events.jsonl')
 };
 
 // Cache for coordination data
@@ -246,6 +247,35 @@ app.get('/api/tasks', async (req, res) => {
   }
 });
 
+/**
+ * GET /api/events
+ * Get recent dashboard events
+ */
+app.get('/api/events', async (req, res) => {
+  try {
+    const limit = parseInt(req.query.limit) || 50;
+    const fsSync = require('fs');
+
+    if (!fsSync.existsSync(FILES.dashboardEvents)) {
+      return res.json({ events: [] });
+    }
+
+    const content = fsSync.readFileSync(FILES.dashboardEvents, 'utf-8');
+    const lines = content.trim().split('\n').filter(line => line);
+
+    // Get last N events
+    const events = lines
+      .slice(-limit)
+      .map(line => JSON.parse(line))
+      .reverse(); // Most recent first
+
+    res.json({ events, total: lines.length });
+  } catch (error) {
+    console.error('Error reading dashboard events:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 // ============================================================================
 // WebSocket Server for Real-time Updates
 // ============================================================================
@@ -312,7 +342,9 @@ function broadcastUpdate(data) {
 // File Watcher for Real-time Updates
 // ============================================================================
 
-const watcher = chokidar.watch(Object.values(FILES), {
+// Watch coordination JSON files (excluding events file)
+const coordFiles = Object.values(FILES).filter(f => !f.endsWith('.jsonl'));
+const watcher = chokidar.watch(coordFiles, {
   persistent: true,
   ignoreInitial: true,
   awaitWriteFinish: {
@@ -329,6 +361,56 @@ watcher.on('change', async (filePath) => {
     broadcastUpdate(data);
   } catch (error) {
     console.error('Error processing file change:', error);
+  }
+});
+
+// ============================================================================
+// Dashboard Events Stream Watcher
+// ============================================================================
+
+/**
+ * Broadcast event to all connected WebSocket clients
+ */
+function broadcastEvent(event) {
+  const message = JSON.stringify({
+    type: 'event',
+    event: event,
+    timestamp: new Date().toISOString()
+  });
+
+  clients.forEach(client => {
+    if (client.readyState === 1) { // OPEN
+      client.send(message);
+    }
+  });
+}
+
+// Watch dashboard-events.jsonl for new events
+const eventWatcher = chokidar.watch(FILES.dashboardEvents, {
+  persistent: true,
+  ignoreInitial: true,
+  awaitWriteFinish: {
+    stabilityThreshold: 200,
+    pollInterval: 50
+  }
+});
+
+eventWatcher.on('change', async () => {
+  try {
+    // Read the last line of the JSONL file (most recent event)
+    const fsSync = require('fs');
+    if (fsSync.existsSync(FILES.dashboardEvents)) {
+      const content = fsSync.readFileSync(FILES.dashboardEvents, 'utf-8');
+      const lines = content.trim().split('\n').filter(line => line);
+
+      if (lines.length > 0) {
+        const lastEvent = JSON.parse(lines[lines.length - 1]);
+        console.log(`Dashboard event: ${lastEvent.type}`);
+        broadcastEvent(lastEvent);
+      }
+    }
+  } catch (error) {
+    console.error('Error processing dashboard event:', error);
   }
 });
 
