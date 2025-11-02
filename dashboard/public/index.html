@@ -21,6 +21,48 @@
             </div>
         </header>
 
+        <!-- Claude Code Usage Status -->
+        <section class="usage-status">
+            <div class="usage-header">
+                <h2>🔋 Claude Code Usage Status</h2>
+                <span class="last-updated" id="usageLastUpdated">Updated just now</span>
+            </div>
+            <div class="usage-grid">
+                <div class="usage-card session">
+                    <div class="usage-icon">⚡</div>
+                    <div class="usage-info">
+                        <div class="usage-label">Current Session</div>
+                        <div class="usage-value" id="sessionUsage">15%</div>
+                        <div class="usage-bar">
+                            <div class="usage-bar-fill session-fill" id="sessionUsageBar" style="width: 15%"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="usage-card week-all">
+                    <div class="usage-icon">📊</div>
+                    <div class="usage-info">
+                        <div class="usage-label">Current Week (All Models)</div>
+                        <div class="usage-value" id="weekAllUsage">46%</div>
+                        <div class="usage-bar">
+                            <div class="usage-bar-fill week-fill" id="weekAllUsageBar" style="width: 46%"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="usage-card week-opus">
+                    <div class="usage-icon">💎</div>
+                    <div class="usage-info">
+                        <div class="usage-label">Current Week (Opus)</div>
+                        <div class="usage-value" id="weekOpusUsage">0%</div>
+                        <div class="usage-bar">
+                            <div class="usage-bar-fill opus-fill" id="weekOpusUsageBar" style="width: 0%"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
         <!-- Current Session Stats -->
         <section class="session-banner">
             <div class="session-info">

@@ -63,6 +63,49 @@ function updateConnectionStatus(connected) {
     }
 }
 
+// Update Claude Code usage status
+function updateUsageStatus(usage) {
+    if (!usage) {
+        // Use default values if no usage data provided
+        usage = {
+            sessionPercent: 15,
+            weekAllPercent: 46,
+            weekOpusPercent: 0
+        };
+    }
+
+    // Update session usage
+    const sessionValue = document.getElementById('sessionUsage');
+    const sessionBar = document.getElementById('sessionUsageBar');
+    if (sessionValue && sessionBar) {
+        sessionValue.textContent = `${usage.sessionPercent}%`;
+        sessionBar.style.width = `${usage.sessionPercent}%`;
+    }
+
+    // Update week all models usage
+    const weekAllValue = document.getElementById('weekAllUsage');
+    const weekAllBar = document.getElementById('weekAllUsageBar');
+    if (weekAllValue && weekAllBar) {
+        weekAllValue.textContent = `${usage.weekAllPercent}%`;
+        weekAllBar.style.width = `${usage.weekAllPercent}%`;
+    }
+
+    // Update week opus usage
+    const weekOpusValue = document.getElementById('weekOpusUsage');
+    const weekOpusBar = document.getElementById('weekOpusUsageBar');
+    if (weekOpusValue && weekOpusBar) {
+        weekOpusValue.textContent = `${usage.weekOpusPercent}%`;
+        weekOpusBar.style.width = `${usage.weekOpusPercent}%`;
+    }
+
+    // Update last updated timestamp
+    const lastUpdated = document.getElementById('usageLastUpdated');
+    if (lastUpdated) {
+        const now = new Date();
+        lastUpdated.textContent = `Updated ${now.toLocaleTimeString()}`;
+    }
+}
+
 // Handle incoming WebSocket messages
 function handleMessage(message) {
     if (message.type === 'initial' || message.type === 'update') {
@@ -73,6 +116,9 @@ function handleMessage(message) {
 // Update all dashboard components with new data
 function updateDashboard(metrics) {
     if (!metrics) return;
+
+    // Update usage status
+    updateUsageStatus(metrics.usage);
 
     // Update session metrics
     updateSessionMetrics(metrics);
