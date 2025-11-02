@@ -28,15 +28,20 @@ Commit-Relay is a multi-agent AI system that autonomously manages GitHub reposit
 
 ## Architecture
 
-### Master-Worker System (v2.0)
+### Master-Worker-Observer System (v2.1)
 
 ```
 ┌─────────────────────────────────────────────┐
 │         Coordinator Master                   │
 │  • Task decomposition & orchestration        │
-│  • Token budget management (250k daily)      │
+│  • Token budget management (270k daily)      │
 │  • Worker lifecycle management               │
 └────────────┬────────────────────────────────┘
+             │
+             ├─→ Dashboard Agent (Observer, 20k) ←─ Monitors all activity
+             │    • Real-time event streaming
+             │    • System health monitoring
+             │    • Analytics & insights
              │
      ┌───────┴───────┬──────────────┬──────────┐
      ▼               ▼              ▼          ▼
@@ -77,6 +82,16 @@ Commit-Relay is a multi-agent AI system that autonomously manages GitHub reposit
 - Activity monitoring and stale repo detection
 - Integration with Security and Development masters
 
+### Observer Agents (Monitoring)
+
+**Dashboard Agent** (20k tokens, read-only)
+- Real-time observability across all coordination files
+- Event detection and streaming (12 event types)
+- Analytics generation (worker efficiency, token usage, health)
+- Historical trend tracking with daily snapshots
+- System health monitoring with alert thresholds
+- Integration with Aiana for conversation context
+
 ### Worker Agents (Execution)
 
 **9 Specialized Worker Types** (Ephemeral, focused, efficient):
@@ -104,16 +119,18 @@ Commit-Relay is a multi-agent AI system that autonomously manages GitHub reposit
 **Coordination Files**:
 - `task-queue.json` - Task assignments and status (supports worker execution mode)
 - `worker-pool.json` - Active/completed/failed worker tracking
-- `token-budget.json` - System-wide token budget management (250k daily)
+- `token-budget.json` - System-wide token budget management (270k daily)
 - `handoffs.json` - Inter-master work transfers
 - `status.json` - System health monitoring
 - `repository-inventory.json` - Automated repository catalog and health tracking
+- `dashboard-events.jsonl` - Real-time event stream (JSON Lines format)
 
 **Activity Logs**:
 - `agents/logs/coordinator/` - System orchestration logs
 - `agents/logs/security/` - Security findings and metrics
 - `agents/logs/development/` - Implementation logs
 - `agents/logs/inventory/` - Repository discovery and cataloging logs
+- `agents/logs/dashboard/` - System monitoring and analytics logs
 - `agents/logs/workers/` - Individual worker execution logs
 
 ---
@@ -144,7 +161,7 @@ commit-relay/
 ├── coordination/
 │   ├── task-queue.json               # Task management (v2.0 schema)
 │   ├── worker-pool.json              # Worker tracking
-│   ├── token-budget.json             # Budget management (250k daily)
+│   ├── token-budget.json             # Budget management (270k daily)
 │   ├── handoffs.json                 # Master handoffs
 │   ├── status.json                   # System health
 │   ├── repository-inventory.json     # Repository catalog (20 repos)
@@ -310,17 +327,20 @@ See [master-agent-examples.md](./docs/master-agent-examples.md) for detailed wor
 
 ## Token Efficiency
 
-### Daily Budget Allocation (250k tokens)
+### Daily Budget Allocation (270k tokens)
 
 ```
-Masters (58%):
+Masters (54%): 145k
 ├── Coordinator: 50k + 30k worker pool
 ├── Security: 30k + 15k worker pool
 ├── Development: 30k + 20k worker pool
 └── Inventory: 35k + 15k worker pool
 
-Shared Worker Pool (32%): 80k
-Emergency Reserve (10%): 25k
+Observers (7%): 20k
+└── Dashboard: 20k (read-only monitoring)
+
+Shared Worker Pool (30%): 80k
+Emergency Reserve (9%): 25k
 ```
 
 ### Efficiency Gains
@@ -448,7 +468,28 @@ Emergency Reserve (10%): 25k
 
 **Result**: Autonomous portfolio management - 20 repos discovered, 14 Python, 2 TypeScript, 1 JavaScript, 1 MDX, 2 none. All 20 active, 0 archived. Complete visibility into repository health and activity across entire organization.
 
-**Architecture Impact**: Expanded from 3 to 4 master agents, increased daily token budget from 200k to 250k, added 9th worker type (catalog-worker)
+**Architecture Impact**: Expanded from 3 to 4 master agents, increased daily token budget from 200k to 250k, added 9th worker type (catalog-worker), established complete portfolio visibility
+
+#### 🆕 Phase 5.5: Dashboard Agent (Complete)
+
+**Enhancement**: Real-time observability layer
+
+**Delivered**:
+- ✅ Dashboard Agent (1st observer agent with 20k token budget)
+- ✅ Real-time event streaming via dashboard-events.jsonl (JSONL format)
+- ✅ WebSocket integration for live event broadcasting
+- ✅ 12 event types: task, worker, handoff, budget, repository, alert, system
+- ✅ Analytics generation (worker efficiency, token usage, health monitoring)
+- ✅ Historical trend tracking with daily snapshots
+- ✅ System health monitoring with alert thresholds (80% token warning, 90% degraded)
+- ✅ Aiana integration for conversation context export
+- ✅ Monitoring script (dashboard-agent-monitor.sh) with 2-second polling
+- ✅ /api/events endpoint for event history
+- ✅ Agent registry v2.1 (master-worker-observer architecture)
+
+**Result**: Complete system observability - Dashboard Agent provides real-time visibility into all master and worker activity, streaming events to dashboard for Phase 7 readiness. Non-invasive read-only monitoring of 6 coordination files with event detection <2 seconds.
+
+**Architecture Impact**: Added observer agent type, increased daily token budget from 250k to 270k, established foundation for Phase 7 (Enhanced Dashboard with real-time task feed)
 
 ---
 
