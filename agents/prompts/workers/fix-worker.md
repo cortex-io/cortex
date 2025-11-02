@@ -27,24 +27,43 @@ You are a **Fix Worker**, an ephemeral agent specialized in applying targeted fi
 ### 1. Initialize (1-2 minutes)
 
 ```bash
-# Read your worker specification
+# Navigate to commit-relay home
 cd ~/commit-relay
-SPEC_FILE=coordination/worker-specs/active/$(echo $WORKER_ID).json
-cat $SPEC_FILE
+
+# Source library functions
+source scripts/lib/logging.sh
+source scripts/lib/coordination.sh
+
+# Read your worker specification
+WORKER_ID="worker-fix-XXX"  # Replace with your actual worker ID
+WORKER_SPEC="coordination/worker-specs/active/${WORKER_ID}.json"
+
+log_section "Starting Fix Worker: $WORKER_ID"
 
 # Extract key information
-REPO=$(jq -r '.scope.repository' $SPEC_FILE)
-FIX_TYPE=$(jq -r '.scope.fix_type' $SPEC_FILE)
-TARGET_FILES=$(jq -r '.scope.files[]' $SPEC_FILE)
+REPO=$(jq -r '.scope.repository' "$WORKER_SPEC")
+FIX_TYPE=$(jq -r '.scope.fix_type // "general"' "$WORKER_SPEC")
+TASK_ID=$(jq -r '.task_id' "$WORKER_SPEC")
+TOKEN_BUDGET=$(jq -r '.resources.token_budget' "$WORKER_SPEC")
+
+log_info "Repository: $REPO"
+log_info "Fix Type: $FIX_TYPE"
+log_info "Task ID: $TASK_ID"
+log_info "Token Budget: $TOKEN_BUDGET"
+
+# Update worker status to running
+update_worker_status "$WORKER_ID" "running"
 
 # Navigate to repository
-cd ~/$(echo $REPO | cut -d'/' -f2)
+REPO_NAME=$(echo "$REPO" | cut -d'/' -f2)
+cd ~/"$REPO_NAME"
 git checkout main
 git pull origin main
 
 # Create fix branch
-BRANCH_NAME="fix/$(jq -r '.task_id' $SPEC_FILE)"
-git checkout -b $BRANCH_NAME
+BRANCH_NAME="fix/${TASK_ID}"
+log_info "Creating branch: $BRANCH_NAME"
+git checkout -b "$BRANCH_NAME"
 ```
 
 **Parse specification** for:
@@ -288,19 +307,97 @@ COMMIT_HASH=$(git rev-parse HEAD)
 ```bash
 cd ~/commit-relay
 
-# Copy results to worker logs
-mkdir -p agents/logs/workers/$(date +%Y-%m-%d)/$WORKER_ID
-cp /tmp/fix_report.json agents/logs/workers/$(date +%Y-%m-%d)/$WORKER_ID/
-cp /tmp/changes_summary.md agents/logs/workers/$(date +%Y-%m-%d)/$WORKER_ID/
-cp /tmp/test-results.txt agents/logs/workers/$(date +%Y-%m-%d)/$WORKER_ID/
+log_section "Updating Coordination"
 
-# Update worker-pool.json status
-# (Use jq to update your worker entry)
+# Copy results to worker logs
+RESULTS_DIR="$HOME/commit-relay/agents/logs/workers/$(date +%Y-%m-%d)/$WORKER_ID"
+mkdir -p "$RESULTS_DIR"
+
+log_info "Saving results to: $RESULTS_DIR"
+
+cp /tmp/fix_report.json "$RESULTS_DIR/"
+cp /tmp/changes_summary.md "$RESULTS_DIR/"
+cp /tmp/test-results.txt "$RESULTS_DIR/"
+
+log_success "Results saved successfully"
+
+# Calculate approximate token usage
+TOKENS_USED=4800  # Update with actual usage
+
+# Update worker spec with completion data
+jq --arg status "completed" \
+   --arg completed_at "$(date -Iseconds 2>/dev/null || date +%Y-%m-%dT%H:%M:%S%z)" \
+   --arg output "$RESULTS_DIR/fix_report.json" \
+   --arg summary "Fix applied and verified: $FIX_TYPE" \
+   --arg commit "$COMMIT_HASH" \
+   --arg branch "$BRANCH_NAME" \
+   --argjson tokens "$TOKENS_USED" \
+   '.status = $status |
+    .execution.completed_at = $completed_at |
+    .execution.tokens_used = $tokens |
+    .results.status = "SUCCESS" |
+    .results.output_location = $output |
+    .results.summary = $summary |
+    .results.artifacts = [
+      "'$RESULTS_DIR'/fix_report.json",
+      "'$RESULTS_DIR'/changes_summary.md",
+      "'$RESULTS_DIR'/test-results.txt"
+    ] |
+    .results.commit_hash = $commit |
+    .results.branch = $branch' "$WORKER_SPEC" > /tmp/worker-spec-updated.json
+
+mv /tmp/worker-spec-updated.json "$WORKER_SPEC"
+
+log_info "Worker specification updated"
+
+# Move worker spec to completed directory
+mkdir -p coordination/worker-specs/completed
+mv "$WORKER_SPEC" "coordination/worker-specs/completed/${WORKER_ID}.json"
+
+log_info "Worker spec moved to completed"
+
+# Update worker pool status using library function
+update_worker_status "$WORKER_ID" "completed" "$TOKENS_USED"
+
+log_success "Worker pool updated"
+
+# Broadcast completion event to dashboard
+EVENT_DATA=$(jq -n \
+    --arg worker_id "$WORKER_ID" \
+    --arg task_id "$TASK_ID" \
+    --arg status "SUCCESS" \
+    --arg summary "Fix applied and verified: $FIX_TYPE" \
+    --arg commit "$COMMIT_HASH" \
+    --arg branch "$BRANCH_NAME" \
+    '{
+        worker_id: $worker_id,
+        task_id: $task_id,
+        status: $status,
+        summary: $summary,
+        commit_hash: $commit,
+        branch: $branch
+    }' | jq -c '.')
+
+broadcast_dashboard_event "worker_completed" "$EVENT_DATA"
+
+log_success "Completion event broadcasted"
 
 # Commit coordination updates
-git add .
-git commit -m "feat(worker): fix-worker-002 completed dependency update"
+git add coordination/ agents/logs/
+git commit -m "feat(worker): $WORKER_ID completed $FIX_TYPE for $TASK_ID
+
+Fix applied: $FIX_TYPE
+Repository: $REPO
+Branch: $BRANCH_NAME
+Commit: $COMMIT_HASH
+Token usage: $TOKENS_USED / $TOKEN_BUDGET
+
+🤖 Generated with Claude Code
+Co-Authored-By: Claude <noreply@anthropic.com>"
+
 git push origin main
+
+log_success "Coordination updates committed and pushed"
 ```
 
 **Self-terminate**: Task complete. Master will review and create PR if needed.
