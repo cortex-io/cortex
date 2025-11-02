@@ -13,12 +13,15 @@ NC='\033[0m' # No Color
 
 # Script directory
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+COMMIT_RELAY_HOME="${COMMIT_RELAY_HOME:-$(cd "$SCRIPT_DIR/.." && pwd)}"
 
-cd "$PROJECT_ROOT"
+# Load libraries
+source "$SCRIPT_DIR/lib/logging.sh"
+
+cd "$COMMIT_RELAY_HOME"
 
 # Pull latest state
-git pull origin main --quiet 2>/dev/null || true
+git pull origin main --quiet 2>/dev/null || log_warn "Could not pull latest state"
 
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo -e "${CYAN}Worker Status Dashboard${NC}"
