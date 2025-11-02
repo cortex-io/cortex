@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "updated_at": "2025-10-31T19:40:00Z",
+  "updated_at": "2025-11-02T11:20:00Z",
   "tasks": [
     {
       "id": "task-001",
@@ -350,6 +350,134 @@
       "handoff_plan": {
         "after_completion": "coordinator-master",
         "reason": "Review completed dashboard feature and system integration"
+      }
+    },
+    {
+      "id": "task-010",
+      "title": "CRITICAL: Restore security fixes in n8n-mcp-server (regression from cf793c6)",
+      "type": "security",
+      "priority": "critical",
+      "status": "pending",
+      "assigned_to": "security-master",
+      "created_at": "2025-11-02T11:20:00Z",
+      "created_by": "user",
+      "repository": "ry-ops/n8n-mcp-server",
+      "context": {
+        "description": "Critical security regression detected by CodeRabbit AI scan. Security fixes implemented in commit c428f78 (Week 1) were completely removed during infrastructure refactoring in commit cf793c6 (Week 2). This has reintroduced 3 CRITICAL and 5 HIGH severity vulnerabilities.",
+        "severity": "CRITICAL",
+        "risk_level": "CRITICAL",
+        "regression": true,
+        "root_cause": "Week 2 infrastructure improvements (cf793c6) completely rewrote __init__.py without preserving Week 1 security fixes (c428f78)",
+        "coderabbit_scan_date": "2025-11-02",
+        "critical_vulnerabilities": [
+          {
+            "id": "CVE-PATH-001",
+            "title": "Path Traversal/Injection in API Parameters",
+            "severity": "CRITICAL",
+            "file": "src/n8n_mcp_server/__init__.py",
+            "lines": [406, 425, 434, 438, 446, 454, 478, 482],
+            "description": "workflow_id and execution_id parameters are directly interpolated into API URLs without validation. Allows path traversal attacks like '../../../admin/users'",
+            "affected_methods": [
+              "_get_workflow()",
+              "_update_workflow()",
+              "_delete_workflow()",
+              "_activate_workflow()",
+              "_deactivate_workflow()",
+              "_execute_workflow()",
+              "_get_execution()",
+              "_delete_execution()"
+            ],
+            "impact": "Access to unauthorized API endpoints, data leakage, bypass of access controls",
+            "previously_fixed_in": "c428f78",
+            "fix_available": "Restore _validate_id() method with regex validation"
+          },
+          {
+            "id": "CVE-INFO-001",
+            "title": "Information Disclosure via Verbose Error Messages",
+            "severity": "CRITICAL",
+            "file": "src/n8n_mcp_server/__init__.py",
+            "lines": [112, 113, 392, 393],
+            "description": "Error messages expose internal implementation details, stack traces, file paths, and system information to users",
+            "impact": "Attackers can gather information about internal API structure, network topology, authentication state for sophisticated attacks",
+            "previously_fixed_in": "c428f78",
+            "fix_available": "Restore error sanitization with user-friendly messages"
+          },
+          {
+            "id": "CVE-2025-53365",
+            "title": "Outdated MCP Dependency with Known CVEs",
+            "severity": "CRITICAL",
+            "file": "pyproject.toml",
+            "line": 38,
+            "description": "Using mcp>=1.1.2 but versions below 1.9.4 have known critical vulnerabilities",
+            "cves": ["CVE-2025-53365", "CVE-2025-53366"],
+            "impact": "Remote code execution, authentication bypass, data corruption (depends on specific CVE)",
+            "previously_fixed_in": "c428f78",
+            "fix_available": "Update to mcp>=1.9.4"
+          }
+        ],
+        "high_priority_vulnerabilities": [
+          {
+            "title": "Missing Input Validation for Workflow Data",
+            "severity": "HIGH",
+            "description": "Workflow creation/update accepts arbitrary JSON without validation",
+            "risks": ["Malicious workflow nodes", "DoS via oversized payloads", "XSS in n8n UI", "n8n crashes"]
+          },
+          {
+            "title": "Unvalidated Boolean and Numeric Parameters",
+            "severity": "HIGH",
+            "description": "Boolean/numeric parameters not validated, could cause DoS or expose implementation bugs"
+          },
+          {
+            "title": "API Key Exposure in Logs",
+            "severity": "HIGH",
+            "description": "API key stored in multiple instance variables, could be logged or exposed in exception handlers"
+          }
+        ],
+        "immediate_actions": [
+          "Restore _validate_id() method from commit c428f78",
+          "Apply _validate_id() to all 8 affected methods",
+          "Restore error sanitization for HTTPStatusError and RequestError",
+          "Update MCP dependency from 1.1.2 to 1.9.4 in pyproject.toml",
+          "Run security tests to verify fixes",
+          "Commit with reference to regression and original fix"
+        ],
+        "deliverables": [
+          "Restored security fixes in __init__.py",
+          "Updated pyproject.toml with mcp>=1.9.4",
+          "Security test suite additions",
+          "Commit pushed to main branch",
+          "Verification scan showing CRITICAL issues resolved"
+        ],
+        "references": {
+          "original_fixes": "commit c428f78",
+          "regression_introduced": "commit cf793c6",
+          "current_head": "commit b1ddf98",
+          "scan_report": "CodeRabbit AI comprehensive security audit 2025-11-02"
+        },
+        "estimated_effort": "HIGH - Multiple critical fixes across 8 methods plus dependency update",
+        "blocking": true,
+        "production_ready": false
+      },
+      "execution_mode": "workers",
+      "worker_plan": {
+        "total_workers": 3,
+        "estimated_workers": [
+          "fix-worker-validation",
+          "fix-worker-errors",
+          "test-worker-security"
+        ],
+        "estimated_tokens": 18000,
+        "parallel": false,
+        "sequence": [
+          "fix-worker: Restore input validation (_validate_id method + apply to 8 methods)",
+          "fix-worker: Restore error sanitization (HTTPStatusError + RequestError handling)",
+          "fix-worker: Update MCP dependency to 1.9.4",
+          "test-worker: Add security test cases and verify fixes"
+        ]
+      },
+      "handoff_plan": {
+        "after_completion": "coordinator-master",
+        "reason": "Verify all CRITICAL vulnerabilities resolved and approve for production deployment"
       }
     }
   ]
