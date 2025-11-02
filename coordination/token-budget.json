@@ -14,10 +14,10 @@
     },
     "security": {
       "allocated": 30000,
-      "used": 0,
+      "used": 2500,
       "worker_pool": 15000,
       "last_reset": "2025-11-01T00:00:00Z",
-      "tasks_handled": []
+      "tasks_handled": ["task-010"]
     },
     "development": {
       "allocated": 30000,
@@ -45,10 +45,10 @@
   },
   "worker_pool": {
     "total": 80000,
-    "allocated_to_workers": 34000,
-    "available": 46000,
+    "allocated_to_workers": 51500,
+    "available": 28500,
     "workers_active": 0,
-    "workers_completed": 6
+    "workers_completed": 9
   },
   "emergency_reserve": {
     "total": 25000,
@@ -57,13 +57,13 @@
     "last_used": null
   },
   "usage_metrics": {
-    "total_tokens_used_today": 45000,
-    "masters_used": 11000,
-    "workers_used": 34000,
-    "masters_percentage": 24.4,
-    "workers_percentage": 75.6,
-    "efficiency_score": 95.7,
-    "tasks_completed": 1,
+    "total_tokens_used_today": 65000,
+    "masters_used": 13500,
+    "workers_used": 51500,
+    "masters_percentage": 20.8,
+    "workers_percentage": 79.2,
+    "efficiency_score": 96.2,
+    "tasks_completed": 2,
     "tasks_in_progress": 0
   }
 }
