@@ -27,13 +27,32 @@ You are a **Scan Worker**, an ephemeral agent specialized in performing focused 
 ### 1. Initialize (1-2 minutes)
 
 ```bash
-# Read your worker specification
+# Navigate to commit-relay home
 cd ~/commit-relay
-cat coordination/worker-specs/active/$(basename $WORKER_SPEC_FILE)
 
-# Navigate to target repository
-cd ~/$(jq -r '.scope.repository' $WORKER_SPEC_FILE | cut -d'/' -f2)
-git pull origin main
+# Source library functions
+source scripts/lib/logging.sh
+source scripts/lib/coordination.sh
+
+# Read your worker specification
+WORKER_ID="worker-scan-XXX"  # Replace with your actual worker ID
+WORKER_SPEC="coordination/worker-specs/active/${WORKER_ID}.json"
+
+log_section "Starting Scan Worker: $WORKER_ID"
+
+# Extract configuration
+REPOSITORY=$(jq -r '.scope.repository' "$WORKER_SPEC")
+BRANCH=$(jq -r '.scope.branch // "main"' "$WORKER_SPEC")
+TASK_ID=$(jq -r '.task_id' "$WORKER_SPEC")
+TOKEN_BUDGET=$(jq -r '.resources.token_budget' "$WORKER_SPEC")
+
+log_info "Repository: $REPOSITORY"
+log_info "Branch: $BRANCH"
+log_info "Task ID: $TASK_ID"
+log_info "Token Budget: $TOKEN_BUDGET"
+
+# Update worker status to running
+update_worker_status "$WORKER_ID" "running"
 ```
 
 **Extract from specification**:
@@ -219,34 +238,102 @@ Found 15 security issues across 4 categories:
 
 ### 5. Update Coordination (1 minute)
 
-Update your status in the worker pool:
-
-```json
-{
-  "worker_id": "worker-scan-001",
-  "status": "completed",
-  "tokens_used": 7200,
-  "duration_minutes": 12,
-  "completed_at": "2025-11-01T10:30:00Z",
-  "result_location": "agents/logs/workers/2025-11-01/worker-scan-001/"
-}
-```
-
 Write results to standard location:
 ```bash
-mkdir -p ~/commit-relay/agents/logs/workers/$(date +%Y-%m-%d)/$(echo $WORKER_ID)
-cp /tmp/scan_results.json ~/commit-relay/agents/logs/workers/$(date +%Y-%m-%d)/$(echo $WORKER_ID)/
-cp /tmp/vulnerability_list.md ~/commit-relay/agents/logs/workers/$(date +%Y-%m-%d)/$(echo $WORKER_ID)/
-cp /tmp/dependency_report.md ~/commit-relay/agents/logs/workers/$(date +%Y-%m-%d)/$(echo $WORKER_ID)/
+RESULTS_DIR="$HOME/commit-relay/agents/logs/workers/$(date +%Y-%m-%d)/$WORKER_ID"
+mkdir -p "$RESULTS_DIR"
+
+log_info "Saving results to: $RESULTS_DIR"
+
+# Copy results
+cp /tmp/scan_results.json "$RESULTS_DIR/"
+cp /tmp/vulnerability_list.md "$RESULTS_DIR/"
+cp /tmp/dependency_report.md "$RESULTS_DIR/"
+
+log_success "Results saved successfully"
 ```
 
-### 6. Commit and Terminate (1 minute)
+Update worker specification with results:
+```bash
+# Calculate approximate token usage (from Claude conversation)
+TOKENS_USED=7200  # Update with actual usage
+
+# Update worker spec with completion data
+jq --arg status "completed" \
+   --arg completed_at "$(date -Iseconds 2>/dev/null || date +%Y-%m-%dT%H:%M:%S%z)" \
+   --arg output "$RESULTS_DIR/scan_results.json" \
+   --arg summary "Found X vulnerabilities: Y critical, Z high" \
+   --argjson tokens "$TOKENS_USED" \
+   '.status = $status |
+    .execution.completed_at = $completed_at |
+    .execution.tokens_used = $tokens |
+    .results.status = "SUCCESS" |
+    .results.output_location = $output |
+    .results.summary = $summary |
+    .results.artifacts = [
+      "'$RESULTS_DIR'/scan_results.json",
+      "'$RESULTS_DIR'/vulnerability_list.md",
+      "'$RESULTS_DIR'/dependency_report.md"
+    ]' "$WORKER_SPEC" > /tmp/worker-spec-updated.json
+
+mv /tmp/worker-spec-updated.json "$WORKER_SPEC"
+
+log_info "Worker specification updated"
+
+# Move worker spec to completed directory
+mkdir -p coordination/worker-specs/completed
+mv "$WORKER_SPEC" "coordination/worker-specs/completed/${WORKER_ID}.json"
+
+log_info "Worker spec moved to completed"
+
+# Update worker pool status using library function
+update_worker_status "$WORKER_ID" "completed" "$TOKENS_USED"
+
+log_success "Worker pool updated"
+```
+
+### 6. Broadcast Completion & Commit (1 minute)
 
 ```bash
 cd ~/commit-relay
-git add .
-git commit -m "feat(worker): scan-worker-001 completed security scan of n8n-mcp-server"
+
+# Broadcast completion event to dashboard
+log_section "Broadcasting completion event"
+
+EVENT_DATA=$(jq -n \
+    --arg worker_id "$WORKER_ID" \
+    --arg task_id "$TASK_ID" \
+    --arg status "SUCCESS" \
+    --arg summary "Scan completed with X vulnerabilities found" \
+    --arg output "$RESULTS_DIR/scan_results.json" \
+    '{
+        worker_id: $worker_id,
+        task_id: $task_id,
+        status: $status,
+        summary: $summary,
+        output_location: $output
+    }' | jq -c '.')
+
+broadcast_dashboard_event "worker_completed" "$EVENT_DATA"
+
+log_success "Completion event broadcasted"
+
+# Commit changes to coordination layer
+log_info "Committing changes to coordination layer"
+
+git add coordination/ agents/logs/
+git commit -m "feat(worker): $WORKER_ID completed security scan of $REPOSITORY
+
+Task: $TASK_ID
+Findings: X vulnerabilities (Y critical, Z high)
+Token usage: $TOKENS_USED / $TOKEN_BUDGET
+
+🤖 Generated with Claude Code
+Co-Authored-By: Claude <noreply@anthropic.com>"
+
 git push origin main
+
+log_success "Changes committed and pushed"
 ```
 
 **Self-terminate**: Your conversation ends here. The Security Master will review your findings.
@@ -282,23 +369,51 @@ Include in all outputs:
 ## Error Handling
 
 ### If scan fails
-1. Document the error in results
-2. Mark status as "failed" in worker-pool.json
-3. Create minimal error report
-4. Commit what you have
-5. Terminate
+```bash
+log_error "Scan failed: $ERROR_MESSAGE"
+
+# Update worker status to failed
+update_worker_status "$WORKER_ID" "failed"
+
+# Create minimal error report
+echo "{\"error\": \"$ERROR_MESSAGE\", \"status\": \"FAILED\"}" > "$RESULTS_DIR/error.json"
+
+# Commit what you have
+git add coordination/ agents/logs/
+git commit -m "feat(worker): $WORKER_ID scan failed - $ERROR_MESSAGE"
+git push origin main
+
+log_critical "Worker terminated due to error"
+```
 
 ### If timeout approaching
-1. Complete current scan phase
-2. Mark remaining scans as "incomplete"
-3. Report partial results
-4. Commit and terminate
+```bash
+log_warn "Timeout approaching - completing current phase"
+
+# Complete current scan phase
+# Mark remaining scans as "incomplete"
+echo "{\"status\": \"PARTIAL\", \"completed_scans\": [...]}" > "$RESULTS_DIR/partial-results.json"
+
+# Update worker status
+update_worker_status "$WORKER_ID" "completed" "$TOKENS_USED"
+
+# Commit and terminate
+log_info "Terminating with partial results"
+```
 
 ### If token budget running low
-1. Prioritize critical scans
-2. Skip low-priority items
-3. Report what was completed
-4. Terminate gracefully
+```bash
+TOKENS_REMAINING=$((TOKEN_BUDGET - TOKENS_USED))
+
+if [ "$TOKENS_REMAINING" -lt 1000 ]; then
+    log_warn "Token budget running low: $TOKENS_REMAINING remaining"
+    log_info "Prioritizing critical scans only"
+
+    # Skip low-priority items
+    # Report what was completed
+    # Terminate gracefully
+fi
+```
 
 ---
 
