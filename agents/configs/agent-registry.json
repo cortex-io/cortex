@@ -1,7 +1,7 @@
 {
-  "version": "2.0",
-  "architecture": "master-worker",
-  "updated_at": "2025-11-01T21:30:00Z",
+  "version": "2.1",
+  "architecture": "master-worker-observer",
+  "updated_at": "2025-11-01T19:35:00Z",
   "master_agents": {
     "coordinator-master": {
       "status": "active",
@@ -91,6 +91,41 @@
         "health_tracking",
         "registry_maintenance"
       ]
+    }
+  },
+  "observer_agents": {
+    "dashboard-agent": {
+      "status": "active",
+      "activated_at": "2025-11-01T19:35:00Z",
+      "color": "cyan",
+      "icon": "activity",
+      "role": "Real-time observability, analytics, and event streaming",
+      "prompt_file": "agents/prompts/dashboard-agent.md",
+      "log_directory": "agents/logs/dashboard/",
+      "token_budget": {
+        "personal": 20000,
+        "worker_pool": 0
+      },
+      "capabilities": [
+        "real_time_monitoring",
+        "event_detection",
+        "analytics_generation",
+        "historical_tracking",
+        "dashboard_integration",
+        "aiana_context_provider"
+      ],
+      "monitoring": {
+        "coordination_files": [
+          "task-queue.json",
+          "worker-pool.json",
+          "token-budget.json",
+          "handoffs.json",
+          "status.json",
+          "repository-inventory.json"
+        ],
+        "event_stream": "dashboard-events.jsonl",
+        "update_frequency_seconds": 2
+      }
     }
   },
   "worker_types": {

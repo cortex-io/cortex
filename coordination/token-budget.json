@@ -3,7 +3,7 @@
   "updated_at": "2025-11-01T21:30:00Z",
   "budget_period": "daily",
   "resets_at": "2025-11-02T00:00:00Z",
-  "total_budget": 250000,
+  "total_budget": 270000,
   "masters": {
     "coordinator": {
       "allocated": 50000,
@@ -32,6 +32,15 @@
       "worker_pool": 15000,
       "last_reset": "2025-11-01T00:00:00Z",
       "tasks_handled": []
+    }
+  },
+  "observers": {
+    "dashboard": {
+      "allocated": 20000,
+      "used": 0,
+      "worker_pool": 0,
+      "last_reset": "2025-11-01T00:00:00Z",
+      "events_processed": 0
     }
   },
   "worker_pool": {
