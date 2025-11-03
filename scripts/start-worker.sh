@@ -91,5 +91,5 @@ log_success "Starting Claude CLI with prompt..."
 log_info "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 log_info ""
 
-# Launch Claude CLI with prompt file content
-claude "$(cat "$COMMIT_RELAY_HOME/$PROMPT_TEMPLATE")"
+# Launch Claude CLI with prompt file via stdin
+cat "$COMMIT_RELAY_HOME/$PROMPT_TEMPLATE" | claude
