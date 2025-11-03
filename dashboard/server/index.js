@@ -102,7 +102,11 @@ function calculateMetrics(data) {
   // Task metrics
   const tasks = taskQueue.tasks || [];
   const pendingTasks = tasks.filter(t => t.status === 'pending').length;
-  const inProgressTasks = tasks.filter(t => t.status === 'in-progress').length;
+  const inProgressTasks = tasks.filter(t =>
+    t.status === 'in_progress' ||
+    t.status === 'in-progress' ||
+    t.status === 'scan_worker_spawned'
+  ).length;
   const completedTasks = tasks.filter(t => t.status === 'completed').length;
   const totalTasks = tasks.length;
 
