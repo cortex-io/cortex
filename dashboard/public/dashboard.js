@@ -242,6 +242,81 @@ function updateStatCards(metrics) {
     document.getElementById('successRate').textContent = `${workers.successRate}%`;
     document.getElementById('inProgressTasks').textContent = tasks.inProgress;
     document.getElementById('tokenUsage').textContent = `${tokens.usagePercentage}%`;
+
+    // Update daemon status
+    updateDaemonStatus();
+}
+
+// Fetch and update daemon status
+async function updateDaemonStatus() {
+    try {
+        const response = await fetch('/api/daemon/status');
+        const data = await response.json();
+
+        const statusElement = document.getElementById('daemonStatus');
+        const daemonCard = statusElement.closest('.stat-card');
+
+        if (data.status === 'running') {
+            // Format uptime
+            const uptimeStr = formatUptime(data.uptime);
+
+            // Format memory (convert KB to MB)
+            const memoryMB = (data.memory / 1024).toFixed(1);
+
+            // Update status display
+            statusElement.textContent = '✅ Running';
+            statusElement.classList.remove('coming-soon', 'daemon-stopped');
+            statusElement.classList.add('daemon-running');
+
+            // Update or create subtext with details
+            let subtext = daemonCard.querySelector('.stat-subtext');
+            if (!subtext) {
+                subtext = document.createElement('div');
+                subtext.className = 'stat-subtext';
+                statusElement.parentNode.appendChild(subtext);
+            }
+            subtext.innerHTML = `
+                PID ${data.pid} • ${uptimeStr}<br>
+                ${memoryMB} MB • ${data.launchCount} launches
+            `;
+
+            // Update card styling
+            daemonCard.classList.add('daemon-active');
+            daemonCard.style.borderLeft = '4px solid #48bb78';
+        } else {
+            statusElement.textContent = '⏸️ Stopped';
+            statusElement.classList.remove('coming-soon', 'daemon-running');
+            statusElement.classList.add('daemon-stopped');
+
+            let subtext = daemonCard.querySelector('.stat-subtext');
+            if (subtext) {
+                subtext.textContent = 'Not running';
+            }
+
+            daemonCard.classList.remove('daemon-active');
+            daemonCard.style.borderLeft = '4px solid #f56565';
+        }
+    } catch (error) {
+        console.error('Error fetching daemon status:', error);
+    }
+}
+
+// Format uptime in seconds to human-readable string
+function formatUptime(seconds) {
+    if (!seconds) return '0s';
+
+    const days = Math.floor(seconds / 86400);
+    const hours = Math.floor((seconds % 86400) / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
+    const secs = seconds % 60;
+
+    const parts = [];
+    if (days > 0) parts.push(`${days}d`);
+    if (hours > 0) parts.push(`${hours}h`);
+    if (minutes > 0) parts.push(`${minutes}m`);
+    if (secs > 0 && days === 0) parts.push(`${secs}s`);
+
+    return parts.join(' ') || '0s';
 }
 
 // Update charts
@@ -534,6 +609,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 .catch(error => console.error('Error polling metrics:', error));
         }
     }, 5000);
+
+    // Poll daemon status every 10 seconds
+    setInterval(() => {
+        updateDaemonStatus();
+    }, 10000);
 });
 
 // Cleanup on page unload
