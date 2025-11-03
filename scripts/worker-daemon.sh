@@ -16,6 +16,7 @@ source "$SCRIPT_DIR/lib/coordination.sh"
 # Daemon configuration
 DAEMON_NAME="commit-relay-worker-daemon"
 POLL_INTERVAL="${WORKER_DAEMON_POLL_INTERVAL:-30}"  # Check every 30 seconds
+AUTO_CLOSE_WORKERS="${AUTO_CLOSE_WORKERS:-true}"     # Auto-close terminal tabs after completion
 LOG_FILE="${COMMIT_RELAY_HOME}/agents/logs/system/worker-daemon.log"
 PID_FILE="/tmp/${DAEMON_NAME}.pid"
 
@@ -125,10 +126,20 @@ while true; do
                 PROMPT_TEMPLATE=$(jq -r '.prompt_template' "$spec_file")
                 FULL_PROMPT_PATH="$COMMIT_RELAY_HOME/$PROMPT_TEMPLATE"
 
+                # Build command with optional auto-close
+                if [ "$AUTO_CLOSE_WORKERS" = "true" ]; then
+                    # Auto-close tab after completion
+                    TERMINAL_CMD="cd '$COMMIT_RELAY_HOME' && claude-code --prompt-file '$PROMPT_TEMPLATE'; exit"
+                    log_daemon "INFO: Auto-close enabled for $WORKER_ID"
+                else
+                    # Keep tab open
+                    TERMINAL_CMD="cd '$COMMIT_RELAY_HOME' && claude-code --prompt-file '$PROMPT_TEMPLATE'"
+                fi
+
                 # Launch Claude Code in background with worker prompt
                 # Using osascript to open in new Terminal tab (macOS)
                 osascript -e "tell application \"Terminal\"
-                    do script \"cd '$COMMIT_RELAY_HOME' && claude-code --prompt-file '$PROMPT_TEMPLATE'\"
+                    do script \"$TERMINAL_CMD\"
                     activate
                 end tell" > /dev/null 2>&1 &
 
