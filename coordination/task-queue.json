@@ -569,7 +569,7 @@
           "secrets"
         ]
       },
-      "updated_at": "2025-11-03T08:16:54-06:00"
+      "updated_at": "2025-11-03T08:19:35-06:00"
     },
     {
       "id": "task-013",
@@ -612,7 +612,7 @@
           "secrets"
         ]
       },
-      "updated_at": "2025-11-03T08:16:54-06:00"
+      "updated_at": "2025-11-03T08:19:35-06:00"
     },
     {
       "id": "task-012",
@@ -633,15 +633,15 @@
           "secrets"
         ]
       },
-      "updated_at": "2025-11-03T08:16:54-06:00"
+      "updated_at": "2025-11-03T08:19:35-06:00"
     },
     {
       "id": "task-012",
       "title": "PRINT MODE TEST - Validate non-interactive Claude execution",
       "type": "security-scan",
       "priority": "high",
-      "status": "pending",
-      "assigned_to": null,
+      "status": "scan_worker_spawned",
+      "assigned_to": "security",
       "created_at": "2025-11-03T14:19:26Z",
       "created_by": "create-task-cli",
       "context": {
@@ -653,7 +653,8 @@
           "static-analysis",
           "secrets"
         ]
-      }
+      },
+      "updated_at": "2025-11-03T08:19:35-06:00"
     }
   ]
 }
