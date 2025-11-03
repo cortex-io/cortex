@@ -8,3 +8,4 @@
 {"id":"evt-1762178418-46199","timestamp":"2025-11-03T08:00:18-06:00","type":"worker_started","data":"{\"worker_id\":\"worker-scan-003\",\"task_id\":\"task-012\",\"worker_type\":\"scan-worker\",\"launched_by\":\"daemon\"}","source":"automation"}
 {"id":"evt-1762179155-51333","timestamp":"2025-11-03T08:12:35-06:00","type":"worker_started","data":"{\"worker_id\":\"worker-scan-004\",\"task_id\":\"task-012\",\"worker_type\":\"scan-worker\",\"launched_by\":\"daemon\"}","source":"automation"}
 {"id":"evt-1762179156-51333","timestamp":"2025-11-03T08:12:36-06:00","type":"worker_started","data":"{\"worker_id\":\"worker-scan-005\",\"task_id\":\"task-012\",\"worker_type\":\"scan-worker\",\"launched_by\":\"daemon\"}","source":"automation"}
+{"id":"evt-1762179418-54527","timestamp":"2025-11-03T08:16:58-06:00","type":"worker_started","data":"{\"worker_id\":\"worker-scan-006\",\"task_id\":\"task-012\",\"worker_type\":\"scan-worker\",\"launched_by\":\"daemon\"}","source":"automation"}
