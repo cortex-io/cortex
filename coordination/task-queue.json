@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "updated_at": "2025-11-03T14:04:46Z",
+  "updated_at": "2025-11-03T14:08:11Z",
   "tasks": [
     {
       "id": "task-001",
@@ -552,28 +552,23 @@
     },
     {
       "id": "task-012",
-      "title": "Security scan test: n8n-mcp-server",
+      "title": "Weekly security audit - test updated daemon notification",
       "type": "security-scan",
       "priority": "high",
-      "status": "scan_worker_spawned",
-      "assigned_to": "security",
-      "created_at": "2025-11-02T14:06:20-06:00",
-      "created_by": "test-automation",
+      "status": "pending",
+      "assigned_to": null,
+      "created_at": "2025-11-03T14:04:46Z",
+      "created_by": "create-task-cli",
       "context": {
         "repository": "ry-ops/n8n-mcp-server",
         "branch": "main",
-        "description": "Test automation flow with security scan",
+        "description": "Weekly security audit - test updated daemon notification",
         "scan_types": [
           "dependencies",
           "static-analysis",
           "secrets"
         ]
-      },
-      "updated_at": "2025-11-03T08:00:08-06:00",
-      "reason": "insufficient_tokens",
-      "scan_results": "Zero vulnerabilities found",
-      "findings": "0 critical, 0 high, 0 medium, 0 low",
-      "risk_level": "LOW"
+      }
     },
     {
       "id": "task-013",
@@ -596,47 +591,6 @@
         "test_objective": "Validate end-to-end autonomous operation with zero manual intervention"
       },
       "updated_at": "2025-11-02T19:36:56-06:00"
-    },
-    {
-      "id": "task-012",
-      "title": "Quarterly security audit - comprehensive vulnerability scan",
-      "type": "security-scan",
-      "priority": "high",
-      "status": "scan_worker_spawned",
-      "assigned_to": "security",
-      "created_at": "2025-11-03T13:58:22Z",
-      "created_by": "create-task-cli",
-      "context": {
-        "repository": "ry-ops/mcp-server-unifi",
-        "branch": "main",
-        "description": "Quarterly security audit - comprehensive vulnerability scan",
-        "scan_types": [
-          "dependencies",
-          "static-analysis",
-          "secrets"
-        ]
-      },
-      "updated_at": "2025-11-03T08:00:08-06:00"
-    },
-    {
-      "id": "task-012",
-      "title": "Weekly security audit - test updated daemon notification",
-      "type": "security-scan",
-      "priority": "high",
-      "status": "pending",
-      "assigned_to": null,
-      "created_at": "2025-11-03T14:04:46Z",
-      "created_by": "create-task-cli",
-      "context": {
-        "repository": "ry-ops/n8n-mcp-server",
-        "branch": "main",
-        "description": "Weekly security audit - test updated daemon notification",
-        "scan_types": [
-          "dependencies",
-          "static-analysis",
-          "secrets"
-        ]
-      }
     }
   ]
 }
