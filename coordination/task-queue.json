@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "updated_at": "2025-11-03T13:53:57Z",
+  "updated_at": "2025-11-03T13:54:34Z",
   "tasks": [
     {
       "id": "task-001",
@@ -599,17 +599,17 @@
     },
     {
       "id": "task-012",
-      "title": "Test task CLI - automated security scan",
+      "title": "CLI test - security scan of commit-relay dashboard",
       "type": "security-scan",
       "priority": "medium",
       "status": "pending",
       "assigned_to": null,
-      "created_at": "2025-11-03T13:53:57Z",
+      "created_at": "2025-11-03T13:54:34Z",
       "created_by": "create-task-cli",
       "context": {
         "repository": "ry-ops/commit-relay",
         "branch": "main",
-        "description": "Test task CLI - automated security scan",
+        "description": "CLI test - security scan of commit-relay dashboard",
         "scan_types": [
           "dependencies",
           "static-analysis",
