@@ -24,7 +24,8 @@ Each master agent focuses on a domain like development, security, or inventory m
 - 🔒 **Security-First**: Automated vulnerability scanning and remediation
 - 📊 **Portfolio Management**: Automatic repository discovery and health tracking (20 repos cataloged)
 - 📈 **Scalable**: Handle features that would exhaust single-agent token budgets
-- 🤖 **Autonomous**: Minimal human intervention required
+- 🤖 **Fully Autonomous**: Workers launch automatically via background daemon - zero manual intervention
+- 📡 **Real-Time Monitoring**: Live dashboard with WebSocket updates and system health metrics
 
 ---
 
@@ -191,10 +192,17 @@ commit-relay/
 │   └── phase3-completion-summary.md
 └── scripts/
     ├── spawn-worker.sh               # Spawn worker agents
+    ├── worker-daemon.sh              # Background worker launcher (autonomous)
+    ├── daemon-control.sh             # Daemon management (start/stop/status)
+    ├── start-worker.sh               # Manual worker startup
+    ├── start-commit-relay.sh         # System startup script
     ├── worker-status.sh              # Monitor workers
+    ├── run-security-master.sh        # Launch security master
     ├── agent-init.sh                 # Initialize new agents
     ├── status-check.sh               # System health check
-    └── dashboard-prompt.sh           # Dashboard integration
+    └── lib/
+        ├── logging.sh                # Centralized logging
+        └── coordination.sh           # Coordination file utilities
 ```
 
 ---
@@ -216,11 +224,23 @@ commit-relay/
    cd commit-relay
    ```
 
-2. **Configure repositories** in `agents/configs/agent-registry.json`
+2. **Install Worker Daemon** (one-time setup for autonomous operation):
+   ```bash
+   ./scripts/daemon-control.sh install
+   ```
+   The daemon will:
+   - Start automatically on login
+   - Monitor for pending workers every 30 seconds
+   - Launch workers automatically in new Terminal tabs
+   - Restart automatically if it crashes
 
-3. **Start a Master Agent**:
+3. **Configure repositories** in `agents/configs/agent-registry.json`
+
+4. **Start a Master Agent**:
    ```bash
    # Security Master - for security scans and vulnerability management
+   ./scripts/run-security-master.sh
+   # OR
    claude-code --prompt-file agents/prompts/security-master.md
 
    # Development Master - for feature development and bug fixes
@@ -233,10 +253,11 @@ commit-relay/
    claude-code --prompt-file agents/prompts/coordinator-master.md
    ```
 
-4. **Masters automatically**:
+5. **Masters automatically**:
    - Check coordination layer for tasks
    - Decompose complex work into worker jobs
    - Spawn workers via `scripts/spawn-worker.sh`
+   - **Workers launch automatically** via background daemon (within 30s)
    - Monitor worker progress
    - Aggregate results
    - Create handoffs to other masters
@@ -285,6 +306,37 @@ cat coordination/token-budget.json | jq
 ./scripts/dashboard-prompt.sh open      # Open in browser
 ./scripts/dashboard-prompt.sh stop      # Stop server
 ```
+
+#### Worker Daemon (Autonomous Operation) 🤖
+
+**NEW**: Background daemon for truly autonomous worker launching!
+
+```bash
+# Install daemon (one-time setup)
+./scripts/daemon-control.sh install
+
+# Daemon management
+./scripts/daemon-control.sh status     # Check daemon status
+./scripts/daemon-control.sh logs       # View live logs
+./scripts/daemon-control.sh restart    # Restart daemon
+./scripts/daemon-control.sh uninstall  # Remove daemon
+```
+
+**How It Works**:
+- Monitors `coordination/worker-specs/active/` every 30 seconds
+- Detects pending workers automatically
+- Launches workers in new Terminal tabs (via Claude Code)
+- Updates coordination state and broadcasts events
+- Zero manual intervention required
+
+**Benefits**:
+- ✅ **Truly Autonomous**: Workers launch automatically within 30 seconds
+- ✅ **macOS LaunchAgent**: Starts on login, restarts on crash
+- ✅ **Self-Managing**: Tracks workers to prevent duplicates
+- ✅ **Dashboard Integration**: Broadcasts launch events
+- ✅ **Production Ready**: Comprehensive logging and error handling
+
+See [docs/DAEMON.md](./docs/DAEMON.md) for complete documentation.
 
 ---
 
