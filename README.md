@@ -2,7 +2,7 @@
 
 # Commit-Relay
 
-**A Kubernetes-inspired master-worker AI system for autonomous GitHub repository management.**
+**Multi-agent AI system for autonomous GitHub repository management.**
 
 [![Status](https://img.shields.io/badge/Status-Production%20Ready-green)](https://github.com/ry-ops/commit-relay)
 [![Architecture](https://img.shields.io/badge/Architecture-Master--Worker-blue)](./docs/master-worker-architecture.md)
