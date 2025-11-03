@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "updated_at": "2025-11-03T14:12:24Z",
+  "updated_at": "2025-11-03T14:16:53Z",
   "budget_period": "daily",
   "resets_at": "2025-11-02T00:00:00Z",
   "total_budget": 270000,
@@ -51,8 +51,8 @@
   },
   "worker_pool": {
     "total": 80000,
-    "allocated_to_workers": 91500,
-    "available": -11500,
+    "allocated_to_workers": 99500,
+    "available": -19500,
     "workers_active": 0,
     "workers_completed": 9
   },
