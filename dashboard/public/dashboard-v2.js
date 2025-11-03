@@ -28,6 +28,9 @@ function dashboard() {
         ws: null,
         reconnectInterval: null,
 
+        // Charts
+        tokenChart: null,
+
         // Initialize
         async init() {
             console.log('Initializing dashboard v2...');
@@ -46,6 +49,11 @@ function dashboard() {
 
             // Start polling
             this.startPolling();
+
+            // Initialize charts
+            this.$nextTick(() => {
+                this.initCharts();
+            });
 
             this.loading = false;
         },
@@ -148,6 +156,11 @@ function dashboard() {
         updateMetrics(metrics) {
             this.metrics = metrics;
             this.lastUpdate = new Date().toLocaleTimeString();
+
+            // Update charts if they exist
+            if (this.tokenChart) {
+                this.updateTokenChart();
+            }
         },
 
         addEvent(event) {
@@ -195,6 +208,99 @@ function dashboard() {
                     console.error('Error polling tasks:', error);
                 }
             }, 15000);
+        },
+
+        // Charts
+        initCharts() {
+            this.initTokenChart();
+        },
+
+        initTokenChart() {
+            const isDark = this.darkMode;
+            const textColor = isDark ? '#9CA3AF' : '#6B7280';
+
+            const options = {
+                series: [
+                    this.metrics.tokens?.mastersUsed || 0,
+                    this.metrics.tokens?.workersAllocated || 0,
+                    this.metrics.tokens?.available || 0,
+                    this.metrics.tokens?.emergencyReserve || 0
+                ],
+                chart: {
+                    type: 'donut',
+                    height: 280,
+                    background: 'transparent',
+                    fontFamily: 'inherit',
+                },
+                labels: ['Masters', 'Workers', 'Available', 'Reserve'],
+                colors: ['#667eea', '#ed8936', '#48bb78', '#9f7aea'],
+                legend: {
+                    show: true,
+                    position: 'bottom',
+                    labels: {
+                        colors: textColor
+                    }
+                },
+                dataLabels: {
+                    enabled: false
+                },
+                plotOptions: {
+                    pie: {
+                        donut: {
+                            size: '70%',
+                            labels: {
+                                show: true,
+                                name: {
+                                    show: true,
+                                    color: textColor,
+                                    fontSize: '14px'
+                                },
+                                value: {
+                                    show: true,
+                                    color: textColor,
+                                    fontSize: '24px',
+                                    fontWeight: 'bold',
+                                    formatter: function (val) {
+                                        return Math.round(val).toLocaleString();
+                                    }
+                                },
+                                total: {
+                                    show: true,
+                                    label: 'Total',
+                                    color: textColor,
+                                    fontSize: '14px',
+                                    formatter: function (w) {
+                                        const total = w.globals.seriesTotals.reduce((a, b) => a + b, 0);
+                                        return Math.round(total).toLocaleString();
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                tooltip: {
+                    theme: isDark ? 'dark' : 'light',
+                    y: {
+                        formatter: function (val) {
+                            return Math.round(val).toLocaleString() + ' tokens';
+                        }
+                    }
+                }
+            };
+
+            this.tokenChart = new ApexCharts(document.querySelector("#tokenChart"), options);
+            this.tokenChart.render();
+        },
+
+        updateTokenChart() {
+            if (!this.tokenChart) return;
+
+            this.tokenChart.updateSeries([
+                this.metrics.tokens?.mastersUsed || 0,
+                this.metrics.tokens?.workersAllocated || 0,
+                this.metrics.tokens?.available || 0,
+                this.metrics.tokens?.emergencyReserve || 0
+            ]);
         },
 
         // Navigation
