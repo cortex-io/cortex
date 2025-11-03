@@ -596,26 +596,6 @@
         "test_objective": "Validate end-to-end autonomous operation with zero manual intervention"
       },
       "updated_at": "2025-11-02T19:36:56-06:00"
-    },
-    {
-      "id": "task-012",
-      "title": "CLI test - security scan of commit-relay dashboard",
-      "type": "security-scan",
-      "priority": "medium",
-      "status": "pending",
-      "assigned_to": null,
-      "created_at": "2025-11-03T13:54:34Z",
-      "created_by": "create-task-cli",
-      "context": {
-        "repository": "ry-ops/commit-relay",
-        "branch": "main",
-        "description": "CLI test - security scan of commit-relay dashboard",
-        "scan_types": [
-          "dependencies",
-          "static-analysis",
-          "secrets"
-        ]
-      }
     }
   ]
 }
