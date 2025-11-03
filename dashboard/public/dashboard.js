@@ -11,6 +11,7 @@ function dashboard() {
         loading: true,
         connected: false,
         lastUpdate: 'Never',
+        currentView: 'overview', // overview, workers, tasks, events, masters
 
         // Data
         metrics: {
@@ -21,6 +22,7 @@ function dashboard() {
         daemon: null,
         tasks: [],
         events: [],
+        workers: [], // Will store worker pool data
 
         // WebSocket
         ws: null,
@@ -295,6 +297,35 @@ function dashboard() {
                 this.metrics.tokens?.available || 0,
                 this.metrics.tokens?.emergencyReserve || 0
             ]);
+        },
+
+        // Navigation
+        switchView(view) {
+            this.currentView = view;
+
+            // Fetch additional data if needed
+            if (view === 'workers' && this.workers.length === 0) {
+                this.fetchWorkers();
+            }
+
+            // Re-initialize Lucide icons for new content
+            this.$nextTick(() => {
+                lucide.createIcons();
+            });
+        },
+
+        async fetchWorkers() {
+            try {
+                const res = await fetch('/api/workers');
+                const data = await res.json();
+                this.workers = [
+                    ...(data.active_workers || []),
+                    ...(data.completed_workers || []),
+                    ...(data.failed_workers || [])
+                ];
+            } catch (error) {
+                console.error('Error fetching workers:', error);
+            }
         },
 
         // Utility functions

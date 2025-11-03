@@ -126,26 +126,26 @@
 
         <!-- Navigation -->
         <nav class="px-4 space-y-1">
-            <a href="#overview" class="flex items-center space-x-3 px-4 py-3 rounded-lg bg-primary-50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-300">
+            <button @click="switchView('overview')" class="w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors" :class="currentView === 'overview' ? 'bg-primary-50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-300' : 'hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300'">
                 <i data-lucide="layout-dashboard" class="w-5 h-5"></i>
-                <span class="font-medium">Overview</span>
-            </a>
-            <a href="#workers" class="flex items-center space-x-3 px-4 py-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300">
+                <span :class="currentView === 'overview' ? 'font-medium' : ''">Overview</span>
+            </button>
+            <button @click="switchView('workers')" class="w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors" :class="currentView === 'workers' ? 'bg-primary-50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-300' : 'hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300'">
                 <i data-lucide="users" class="w-5 h-5"></i>
-                <span>Workers</span>
-            </a>
-            <a href="#tasks" class="flex items-center space-x-3 px-4 py-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300">
+                <span :class="currentView === 'workers' ? 'font-medium' : ''">Workers</span>
+            </button>
+            <button @click="switchView('tasks')" class="w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors" :class="currentView === 'tasks' ? 'bg-primary-50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-300' : 'hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300'">
                 <i data-lucide="list-checks" class="w-5 h-5"></i>
-                <span>Tasks</span>
-            </a>
-            <a href="#events" class="flex items-center space-x-3 px-4 py-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300">
+                <span :class="currentView === 'tasks' ? 'font-medium' : ''">Tasks</span>
+            </button>
+            <button @click="switchView('events')" class="w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors" :class="currentView === 'events' ? 'bg-primary-50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-300' : 'hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300'">
                 <i data-lucide="activity" class="w-5 h-5"></i>
-                <span>Events</span>
-            </a>
-            <a href="#masters" class="flex items-center space-x-3 px-4 py-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300">
+                <span :class="currentView === 'events' ? 'font-medium' : ''">Events</span>
+            </button>
+            <button @click="switchView('masters')" class="w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors" :class="currentView === 'masters' ? 'bg-primary-50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-300' : 'hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300'">
                 <i data-lucide="crown" class="w-5 h-5"></i>
-                <span>Masters</span>
-            </a>
+                <span :class="currentView === 'masters' ? 'font-medium' : ''">Masters</span>
+            </button>
         </nav>
 
         <!-- Theme toggle -->
@@ -164,7 +164,13 @@
         <header class="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 sticky top-0 z-30">
             <div class="px-8 py-4 flex items-center justify-between">
                 <div>
-                    <h2 class="text-2xl font-bold text-gray-900 dark:text-white">Dashboard Overview</h2>
+                    <h2 class="text-2xl font-bold text-gray-900 dark:text-white" x-text="{
+                        'overview': 'Dashboard Overview',
+                        'workers': 'Worker Pool',
+                        'tasks': 'Task Queue',
+                        'events': 'Event Stream',
+                        'masters': 'Master Agents'
+                    }[currentView]"></h2>
                     <p class="text-sm text-gray-500 dark:text-gray-400" x-text="'Last updated: ' + lastUpdate"></p>
                 </div>
 
@@ -178,114 +184,269 @@
 
         <!-- Content -->
         <div class="p-8 space-y-8">
-            <!-- Stats grid -->
+            <!-- Stats grid - redesigned with background icons -->
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 <!-- Active Workers -->
-                <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 border border-gray-200 dark:border-gray-700 hover:shadow-xl hover:scale-105 transition-all cursor-pointer" x-data="{ hover: false }" @mouseenter="hover = true" @mouseleave="hover = false">
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Active Workers</p>
-                            <p class="text-3xl font-bold text-gray-900 dark:text-white mt-2" x-text="metrics.workers?.active || 0"></p>
-                        </div>
-                        <div class="w-12 h-12 rounded-lg gradient-blue flex items-center justify-center">
-                            <i data-lucide="zap" class="w-6 h-6 text-white"></i>
-                        </div>
-                    </div>
-                    <div x-show="hover" x-transition class="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+                <div class="relative overflow-hidden bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 border border-gray-200 dark:border-gray-700 hover:shadow-xl hover:-translate-y-1 transition-all cursor-pointer">
+                    <i data-lucide="zap" class="absolute -right-4 -bottom-4 w-32 h-32 text-blue-100 dark:text-blue-900/20 opacity-50"></i>
+                    <div class="relative z-10">
+                        <p class="text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">Active Workers</p>
+                        <p class="text-4xl font-bold text-gray-900 dark:text-white mb-1" x-text="metrics.workers?.active || 0"></p>
                         <p class="text-xs text-gray-500 dark:text-gray-400">
-                            <span class="font-medium" x-text="metrics.workers?.completed || 0"></span> completed •
-                            <span class="font-medium" x-text="metrics.workers?.failed || 0"></span> failed
+                            <span class="font-medium text-green-600 dark:text-green-400" x-text="metrics.workers?.completed || 0"></span> completed •
+                            <span class="font-medium text-red-600 dark:text-red-400" x-text="metrics.workers?.failed || 0"></span> failed
                         </p>
                     </div>
                 </div>
 
                 <!-- Success Rate -->
-                <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 border border-gray-200 dark:border-gray-700 hover:shadow-xl hover:scale-105 transition-all cursor-pointer" x-data="{ hover: false }" @mouseenter="hover = true" @mouseleave="hover = false">
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Success Rate</p>
-                            <p class="text-3xl font-bold text-gray-900 dark:text-white mt-2" x-text="(metrics.workers?.successRate || 0) + '%'"></p>
-                        </div>
-                        <div class="w-12 h-12 rounded-lg gradient-green flex items-center justify-center">
-                            <i data-lucide="check-circle" class="w-6 h-6 text-white"></i>
-                        </div>
-                    </div>
-                    <div x-show="hover" x-transition class="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+                <div class="relative overflow-hidden bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 border border-gray-200 dark:border-gray-700 hover:shadow-xl hover:-translate-y-1 transition-all cursor-pointer">
+                    <i data-lucide="check-circle" class="absolute -right-4 -bottom-4 w-32 h-32 text-green-100 dark:text-green-900/20 opacity-50"></i>
+                    <div class="relative z-10">
+                        <p class="text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">Success Rate</p>
+                        <p class="text-4xl font-bold text-gray-900 dark:text-white mb-1" x-text="(metrics.workers?.successRate || 0) + '%'"></p>
                         <p class="text-xs text-gray-500 dark:text-gray-400">
-                            Avg duration: <span class="font-medium" x-text="(metrics.workers?.avgDuration || 0).toFixed(1)"></span>min
+                            Avg duration: <span class="font-medium text-blue-600 dark:text-blue-400" x-text="(metrics.workers?.avgDuration || 0).toFixed(1)"></span>min
                         </p>
                     </div>
                 </div>
 
                 <!-- Tasks In Progress -->
-                <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 border border-gray-200 dark:border-gray-700 hover:shadow-xl hover:scale-105 transition-all cursor-pointer" x-data="{ hover: false }" @mouseenter="hover = true" @mouseleave="hover = false">
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Tasks In Progress</p>
-                            <p class="text-3xl font-bold text-gray-900 dark:text-white mt-2" x-text="metrics.tasks?.inProgress || 0"></p>
-                        </div>
-                        <div class="w-12 h-12 rounded-lg gradient-orange flex items-center justify-center">
-                            <i data-lucide="loader" class="w-6 h-6 text-white"></i>
-                        </div>
-                    </div>
-                    <div x-show="hover" x-transition class="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+                <div class="relative overflow-hidden bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 border border-gray-200 dark:border-gray-700 hover:shadow-xl hover:-translate-y-1 transition-all cursor-pointer">
+                    <i data-lucide="loader" class="absolute -right-4 -bottom-4 w-32 h-32 text-orange-100 dark:text-orange-900/20 opacity-50"></i>
+                    <div class="relative z-10">
+                        <p class="text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">Tasks In Progress</p>
+                        <p class="text-4xl font-bold text-gray-900 dark:text-white mb-1" x-text="metrics.tasks?.inProgress || 0"></p>
                         <p class="text-xs text-gray-500 dark:text-gray-400">
-                            <span class="font-medium" x-text="metrics.tasks?.pending || 0"></span> pending •
-                            <span class="font-medium" x-text="metrics.tasks?.completed || 0"></span> done
+                            <span class="font-medium text-gray-600 dark:text-gray-400" x-text="metrics.tasks?.pending || 0"></span> pending •
+                            <span class="font-medium text-green-600 dark:text-green-400" x-text="metrics.tasks?.completed || 0"></span> done
                         </p>
                     </div>
                 </div>
 
                 <!-- Worker Daemon -->
-                <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 border border-gray-200 dark:border-gray-700 hover:shadow-xl hover:scale-105 transition-all cursor-pointer" x-data="{ hover: false }" @mouseenter="hover = true" @mouseleave="hover = false">
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Worker Daemon</p>
-                            <p class="text-3xl font-bold mt-2" :class="daemon?.status === 'running' ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'" x-text="daemon?.status === 'running' ? 'Running' : 'Stopped'"></p>
-                        </div>
-                        <div class="w-12 h-12 rounded-lg" :class="daemon?.status === 'running' ? 'gradient-green' : 'gradient-red'">
-                            <i data-lucide="bot" class="w-6 h-6 text-white m-3"></i>
-                        </div>
-                    </div>
-                    <div x-show="hover && daemon?.status === 'running'" x-transition class="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
-                        <p class="text-xs text-gray-500 dark:text-gray-400">
+                <div class="relative overflow-hidden bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 border border-gray-200 dark:border-gray-700 hover:shadow-xl hover:-translate-y-1 transition-all cursor-pointer">
+                    <i data-lucide="bot" class="absolute -right-4 -bottom-4 w-32 h-32 opacity-50" :class="daemon?.status === 'running' ? 'text-green-100 dark:text-green-900/20' : 'text-red-100 dark:text-red-900/20'"></i>
+                    <div class="relative z-10">
+                        <p class="text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">Worker Daemon</p>
+                        <p class="text-4xl font-bold mb-1" :class="daemon?.status === 'running' ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'" x-text="daemon?.status === 'running' ? 'Running' : 'Stopped'"></p>
+                        <p class="text-xs text-gray-500 dark:text-gray-400" x-show="daemon?.status === 'running'">
                             PID <span class="font-medium" x-text="daemon?.pid"></span> •
-                            Uptime: <span class="font-medium" x-text="formatUptime(daemon?.uptime)"></span>
+                            <span class="font-medium" x-text="formatUptime(daemon?.uptime)"></span>
                         </p>
                     </div>
                 </div>
             </div>
 
-            <!-- Charts and events row -->
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <!-- Token usage chart -->
-                <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 border border-gray-200 dark:border-gray-700">
-                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Token Budget</h3>
-                    <div id="tokenChart"></div>
+            <!-- Overview View -->
+            <div x-show="currentView === 'overview'" x-transition>
+                <!-- Charts and events row -->
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <!-- Token usage chart -->
+                    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 border border-gray-200 dark:border-gray-700">
+                        <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Token Budget</h3>
+                        <div id="tokenChart"></div>
+                    </div>
+
+                    <!-- Real-time events -->
+                    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 border border-gray-200 dark:border-gray-700">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Real-time Events</h3>
+                            <div class="flex items-center space-x-2">
+                                <div class="w-2 h-2 bg-green-500 rounded-full animate-pulse-slow"></div>
+                                <span class="text-xs text-gray-500 dark:text-gray-400">Live</span>
+                            </div>
+                        </div>
+                        <div class="space-y-2 max-h-80 overflow-y-auto">
+                            <template x-for="event in events.slice(0, 10)" :key="event.id">
+                                <div class="flex items-start space-x-3 p-3 rounded-lg bg-gray-50 dark:bg-gray-700/50 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                                    <div class="flex-shrink-0 w-2 h-2 mt-2 rounded-full" :class="{
+                                        'bg-green-500': event.type === 'worker_started' || event.type === 'task_completed',
+                                        'bg-blue-500': event.type === 'task_created',
+                                        'bg-orange-500': event.type === 'worker_spawned',
+                                        'bg-red-500': event.type === 'error'
+                                    }"></div>
+                                    <div class="flex-1 min-w-0">
+                                        <p class="text-sm font-medium text-gray-900 dark:text-white" x-text="event.type.replace('_', ' ').toUpperCase()"></p>
+                                        <p class="text-xs text-gray-500 dark:text-gray-400 truncate" x-text="JSON.stringify(event.data || {})"></p>
+                                        <p class="text-xs text-gray-400 dark:text-gray-500 mt-1" x-text="new Date(event.timestamp).toLocaleTimeString()"></p>
+                                    </div>
+                                </div>
+                            </template>
+                        </div>
+                    </div>
                 </div>
 
-                <!-- Real-time events -->
+                <!-- Task list -->
+                <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 mt-6">
+                    <div class="p-6 border-b border-gray-200 dark:border-gray-700">
+                        <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Recent Tasks</h3>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full">
+                            <thead class="bg-gray-50 dark:bg-gray-700/50">
+                                <tr>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">ID</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Title</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Type</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Status</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Priority</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
+                                <template x-for="task in tasks.slice(0, 10)" :key="task.id">
+                                    <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white" x-text="task.id"></td>
+                                        <td class="px-6 py-4 text-sm text-gray-700 dark:text-gray-300" x-text="task.title"></td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400" x-text="task.type"></td>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <span class="px-2 py-1 text-xs font-medium rounded-full" :class="{
+                                                'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400': task.status === 'completed',
+                                                'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400': task.status === 'in_progress' || task.status === 'in-progress',
+                                                'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300': task.status === 'pending'
+                                            }" x-text="task.status"></span>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <span class="px-2 py-1 text-xs font-medium rounded-full" :class="{
+                                                'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400': task.priority === 'critical',
+                                                'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400': task.priority === 'high',
+                                                'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400': task.priority === 'medium',
+                                                'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300': task.priority === 'low'
+                                            }" x-text="task.priority"></span>
+                                        </td>
+                                    </tr>
+                                </template>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Workers View -->
+            <div x-show="currentView === 'workers'" x-transition>
+                <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700">
+                    <div class="p-6 border-b border-gray-200 dark:border-gray-700">
+                        <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Worker Pool</h3>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full">
+                            <thead class="bg-gray-50 dark:bg-gray-700/50">
+                                <tr>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Worker ID</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Status</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Type</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Tokens Used</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Duration</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Started</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
+                                <template x-for="worker in workers" :key="worker.worker_id">
+                                    <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white" x-text="worker.worker_id"></td>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <span class="px-2 py-1 text-xs font-medium rounded-full" :class="{
+                                                'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400': worker.status === 'completed',
+                                                'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400': worker.status === 'running' || worker.status === 'active',
+                                                'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400': worker.status === 'failed',
+                                                'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300': worker.status === 'pending'
+                                            }" x-text="worker.status"></span>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300" x-text="worker.worker_type || worker.type || 'N/A'"></td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400" x-text="(worker.tokens_used || 0).toLocaleString()"></td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400" x-text="(worker.duration_minutes || 0).toFixed(1) + 'min'"></td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400" x-text="worker.execution?.started_at ? new Date(worker.execution.started_at).toLocaleString() : 'N/A'"></td>
+                                    </tr>
+                                </template>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tasks View -->
+            <div x-show="currentView === 'tasks'" x-transition>
+                <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700">
+                    <div class="p-6 border-b border-gray-200 dark:border-gray-700">
+                        <div class="flex items-center justify-between">
+                            <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Task Queue</h3>
+                            <div class="flex items-center space-x-2">
+                                <span class="text-sm text-gray-500 dark:text-gray-400">
+                                    <span class="font-medium" x-text="metrics.tasks?.total || 0"></span> total tasks
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full">
+                            <thead class="bg-gray-50 dark:bg-gray-700/50">
+                                <tr>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">ID</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Title</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Type</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Status</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Priority</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Assigned To</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
+                                <template x-for="task in tasks" :key="task.id">
+                                    <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white" x-text="task.id"></td>
+                                        <td class="px-6 py-4 text-sm text-gray-700 dark:text-gray-300" x-text="task.title"></td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400" x-text="task.type"></td>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <span class="px-2 py-1 text-xs font-medium rounded-full" :class="{
+                                                'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400': task.status === 'completed',
+                                                'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400': task.status === 'in_progress' || task.status === 'in-progress',
+                                                'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300': task.status === 'pending'
+                                            }" x-text="task.status"></span>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <span class="px-2 py-1 text-xs font-medium rounded-full" :class="{
+                                                'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400': task.priority === 'critical',
+                                                'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400': task.priority === 'high',
+                                                'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400': task.priority === 'medium',
+                                                'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300': task.priority === 'low'
+                                            }" x-text="task.priority"></span>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400" x-text="task.assigned_to || 'Unassigned'"></td>
+                                    </tr>
+                                </template>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Events View -->
+            <div x-show="currentView === 'events'" x-transition>
                 <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 border border-gray-200 dark:border-gray-700">
                     <div class="flex items-center justify-between mb-4">
-                        <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Real-time Events</h3>
+                        <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Event Stream</h3>
                         <div class="flex items-center space-x-2">
                             <div class="w-2 h-2 bg-green-500 rounded-full animate-pulse-slow"></div>
                             <span class="text-xs text-gray-500 dark:text-gray-400">Live</span>
                         </div>
                     </div>
-                    <div class="space-y-2 max-h-80 overflow-y-auto">
-                        <template x-for="event in events.slice(0, 10)" :key="event.id">
-                            <div class="flex items-start space-x-3 p-3 rounded-lg bg-gray-50 dark:bg-gray-700/50 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
-                                <div class="flex-shrink-0 w-2 h-2 mt-2 rounded-full" :class="{
+                    <div class="space-y-2 max-h-[calc(100vh-300px)] overflow-y-auto">
+                        <template x-for="event in events" :key="event.id">
+                            <div class="flex items-start space-x-3 p-4 rounded-lg bg-gray-50 dark:bg-gray-700/50 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                                <div class="flex-shrink-0 w-3 h-3 mt-1.5 rounded-full" :class="{
                                     'bg-green-500': event.type === 'worker_started' || event.type === 'task_completed',
                                     'bg-blue-500': event.type === 'task_created',
                                     'bg-orange-500': event.type === 'worker_spawned',
                                     'bg-red-500': event.type === 'error'
                                 }"></div>
                                 <div class="flex-1 min-w-0">
-                                    <p class="text-sm font-medium text-gray-900 dark:text-white" x-text="event.type.replace('_', ' ').toUpperCase()"></p>
-                                    <p class="text-xs text-gray-500 dark:text-gray-400 truncate" x-text="JSON.stringify(event.data || {})"></p>
-                                    <p class="text-xs text-gray-400 dark:text-gray-500 mt-1" x-text="new Date(event.timestamp).toLocaleTimeString()"></p>
+                                    <div class="flex items-center justify-between">
+                                        <p class="text-sm font-semibold text-gray-900 dark:text-white" x-text="event.type.replace(/_/g, ' ').toUpperCase()"></p>
+                                        <p class="text-xs text-gray-400 dark:text-gray-500" x-text="new Date(event.timestamp).toLocaleString()"></p>
+                                    </div>
+                                    <p class="text-sm text-gray-600 dark:text-gray-400 mt-1" x-text="event.message || 'No message'"></p>
+                                    <div class="mt-2 p-2 bg-gray-100 dark:bg-gray-800 rounded text-xs font-mono text-gray-600 dark:text-gray-400 overflow-x-auto">
+                                        <pre x-text="JSON.stringify(event.data || {}, null, 2)"></pre>
+                                    </div>
                                 </div>
                             </div>
                         </template>
@@ -293,47 +454,112 @@
                 </div>
             </div>
 
-            <!-- Task list -->
-            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700">
-                <div class="p-6 border-b border-gray-200 dark:border-gray-700">
-                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Recent Tasks</h3>
-                </div>
-                <div class="overflow-x-auto">
-                    <table class="w-full">
-                        <thead class="bg-gray-50 dark:bg-gray-700/50">
-                            <tr>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">ID</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Title</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Type</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Status</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Priority</th>
-                            </tr>
-                        </thead>
-                        <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
-                            <template x-for="task in tasks.slice(0, 10)" :key="task.id">
-                                <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white" x-text="task.id"></td>
-                                    <td class="px-6 py-4 text-sm text-gray-700 dark:text-gray-300" x-text="task.title"></td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400" x-text="task.type"></td>
-                                    <td class="px-6 py-4 whitespace-nowrap">
-                                        <span class="px-2 py-1 text-xs font-medium rounded-full" :class="{
-                                            'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400': task.status === 'completed',
-                                            'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400': task.status === 'in_progress' || task.status === 'in-progress',
-                                            'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300': task.status === 'pending'
-                                        }" x-text="task.status"></span>
-                                    </td>
-                                    <td class="px-6 py-4 whitespace-nowrap">
-                                        <span class="px-2 py-1 text-xs font-medium rounded-full" :class="{
-                                            'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400': task.priority === 'critical',
-                                            'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400': task.priority === 'high',
-                                            'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400': task.priority === 'medium',
-                                            'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300': task.priority === 'low'
-                                        }" x-text="task.priority"></span>
-                                    </td>
-                                </tr>
-                            </template>
-                        </tbody>
-                    </table>
+            <!-- Masters View -->
+            <div x-show="currentView === 'masters'" x-transition>
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <!-- Coordinator Master -->
+                    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 border border-gray-200 dark:border-gray-700">
+                        <div class="flex items-center justify-between mb-4">
+                            <div class="flex items-center space-x-3">
+                                <div class="w-10 h-10 rounded-lg gradient-blue flex items-center justify-center">
+                                    <i data-lucide="crown" class="w-5 h-5 text-white"></i>
+                                </div>
+                                <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Coordinator Master</h3>
+                            </div>
+                        </div>
+                        <dl class="space-y-3">
+                            <div class="flex justify-between">
+                                <dt class="text-sm text-gray-500 dark:text-gray-400">Allocated Tokens</dt>
+                                <dd class="text-sm font-medium text-gray-900 dark:text-white" x-text="(metrics.masters?.coordinator?.allocated || 0).toLocaleString()"></dd>
+                            </div>
+                            <div class="flex justify-between">
+                                <dt class="text-sm text-gray-500 dark:text-gray-400">Used Tokens</dt>
+                                <dd class="text-sm font-medium text-gray-900 dark:text-white" x-text="(metrics.masters?.coordinator?.used || 0).toLocaleString()"></dd>
+                            </div>
+                            <div class="flex justify-between">
+                                <dt class="text-sm text-gray-500 dark:text-gray-400">Worker Pool</dt>
+                                <dd class="text-sm font-medium text-gray-900 dark:text-white" x-text="(metrics.masters?.coordinator?.workerPool || 0).toLocaleString()"></dd>
+                            </div>
+                        </dl>
+                    </div>
+
+                    <!-- Security Master -->
+                    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 border border-gray-200 dark:border-gray-700">
+                        <div class="flex items-center justify-between mb-4">
+                            <div class="flex items-center space-x-3">
+                                <div class="w-10 h-10 rounded-lg gradient-orange flex items-center justify-center">
+                                    <i data-lucide="shield" class="w-5 h-5 text-white"></i>
+                                </div>
+                                <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Security Master</h3>
+                            </div>
+                        </div>
+                        <dl class="space-y-3">
+                            <div class="flex justify-between">
+                                <dt class="text-sm text-gray-500 dark:text-gray-400">Allocated Tokens</dt>
+                                <dd class="text-sm font-medium text-gray-900 dark:text-white" x-text="(metrics.masters?.security?.allocated || 0).toLocaleString()"></dd>
+                            </div>
+                            <div class="flex justify-between">
+                                <dt class="text-sm text-gray-500 dark:text-gray-400">Used Tokens</dt>
+                                <dd class="text-sm font-medium text-gray-900 dark:text-white" x-text="(metrics.masters?.security?.used || 0).toLocaleString()"></dd>
+                            </div>
+                            <div class="flex justify-between">
+                                <dt class="text-sm text-gray-500 dark:text-gray-400">Worker Pool</dt>
+                                <dd class="text-sm font-medium text-gray-900 dark:text-white" x-text="(metrics.masters?.security?.workerPool || 0).toLocaleString()"></dd>
+                            </div>
+                        </dl>
+                    </div>
+
+                    <!-- Development Master -->
+                    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 border border-gray-200 dark:border-gray-700">
+                        <div class="flex items-center justify-between mb-4">
+                            <div class="flex items-center space-x-3">
+                                <div class="w-10 h-10 rounded-lg gradient-green flex items-center justify-center">
+                                    <i data-lucide="code" class="w-5 h-5 text-white"></i>
+                                </div>
+                                <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Development Master</h3>
+                            </div>
+                        </div>
+                        <dl class="space-y-3">
+                            <div class="flex justify-between">
+                                <dt class="text-sm text-gray-500 dark:text-gray-400">Allocated Tokens</dt>
+                                <dd class="text-sm font-medium text-gray-900 dark:text-white" x-text="(metrics.masters?.development?.allocated || 0).toLocaleString()"></dd>
+                            </div>
+                            <div class="flex justify-between">
+                                <dt class="text-sm text-gray-500 dark:text-gray-400">Used Tokens</dt>
+                                <dd class="text-sm font-medium text-gray-900 dark:text-white" x-text="(metrics.masters?.development?.used || 0).toLocaleString()"></dd>
+                            </div>
+                            <div class="flex justify-between">
+                                <dt class="text-sm text-gray-500 dark:text-gray-400">Worker Pool</dt>
+                                <dd class="text-sm font-medium text-gray-900 dark:text-white" x-text="(metrics.masters?.development?.workerPool || 0).toLocaleString()"></dd>
+                            </div>
+                        </dl>
+                    </div>
+
+                    <!-- Inventory Master -->
+                    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 border border-gray-200 dark:border-gray-700">
+                        <div class="flex items-center justify-between mb-4">
+                            <div class="flex items-center space-x-3">
+                                <div class="w-10 h-10 rounded-lg gradient-red flex items-center justify-center">
+                                    <i data-lucide="database" class="w-5 h-5 text-white"></i>
+                                </div>
+                                <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Inventory Master</h3>
+                            </div>
+                        </div>
+                        <dl class="space-y-3">
+                            <div class="flex justify-between">
+                                <dt class="text-sm text-gray-500 dark:text-gray-400">Allocated Tokens</dt>
+                                <dd class="text-sm font-medium text-gray-900 dark:text-white" x-text="(metrics.masters?.inventory?.allocated || 0).toLocaleString()"></dd>
+                            </div>
+                            <div class="flex justify-between">
+                                <dt class="text-sm text-gray-500 dark:text-gray-400">Used Tokens</dt>
+                                <dd class="text-sm font-medium text-gray-900 dark:text-white" x-text="(metrics.masters?.inventory?.used || 0).toLocaleString()"></dd>
+                            </div>
+                            <div class="flex justify-between">
+                                <dt class="text-sm text-gray-500 dark:text-gray-400">Worker Pool</dt>
+                                <dd class="text-sm font-medium text-gray-900 dark:text-white" x-text="(metrics.masters?.inventory?.workerPool || 0).toLocaleString()"></dd>
+                            </div>
+                        </dl>
+                    </div>
                 </div>
             </div>
         </div>
