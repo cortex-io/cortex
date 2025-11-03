@@ -1,3 +1,4 @@
 {"id":"evt-1762113608-84625","timestamp":"2025-11-02T14:00:08-06:00","type":"system_ERROR","data":"Failed to update task task-012","source":"automation"}
 {"id":"evt-1762113627-84720","timestamp":"2025-11-02T14:00:27-06:00","type":"system_ERROR","data":"Failed to update task task-012","source":"automation"}
 {"id":"evt-1762113641-84791","timestamp":"2025-11-02T14:00:41-06:00","type":"system_ERROR","data":"Failed to update task task-012","source":"automation"}
+{"id":"evt-1762130768-91044","timestamp":"2025-11-02T18:46:08-06:00","type":"system_ERROR","data":"Insufficient token budget for scan worker","source":"automation"}

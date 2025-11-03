@@ -79,6 +79,7 @@ log() {
 # Convenience functions
 log_debug() { log "DEBUG" "$1" "${2:-}"; }
 log_info() { log "INFO" "$1" "${2:-}"; }
+log_success() { log "INFO" "✅ $1" "${2:-}"; }
 log_warn() { log "WARN" "$1" "${2:-}"; }
 log_error() { log "ERROR" "$1" "${2:-}"; }
 log_critical() { log "CRITICAL" "$1" "${2:-}"; }
