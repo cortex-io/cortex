@@ -815,3 +815,28 @@ body {
 @keyframes spin {
     to { transform: translate(-50%, -50%) rotate(360deg); }
 }
+
+/* Daemon Status Card (Future Feature) */
+.stat-card.daemon-status {
+    border: 2px dashed var(--border);
+    opacity: 0.7;
+    position: relative;
+}
+
+.stat-card.daemon-status:hover {
+    opacity: 1;
+    border-color: var(--primary);
+}
+
+.stat-value.coming-soon {
+    font-size: 1.2rem;
+    color: var(--text-muted);
+    font-style: italic;
+}
+
+.stat-subtext {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    margin-top: 0.25rem;
+    opacity: 0.7;
+}
