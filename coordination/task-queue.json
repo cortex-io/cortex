@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "updated_at": "2025-11-03T13:54:34Z",
+  "updated_at": "2025-11-03T13:58:22Z",
   "tasks": [
     {
       "id": "task-001",
@@ -596,6 +596,26 @@
         "test_objective": "Validate end-to-end autonomous operation with zero manual intervention"
       },
       "updated_at": "2025-11-02T19:36:56-06:00"
+    },
+    {
+      "id": "task-012",
+      "title": "Quarterly security audit - comprehensive vulnerability scan",
+      "type": "security-scan",
+      "priority": "high",
+      "status": "pending",
+      "assigned_to": null,
+      "created_at": "2025-11-03T13:58:22Z",
+      "created_by": "create-task-cli",
+      "context": {
+        "repository": "ry-ops/mcp-server-unifi",
+        "branch": "main",
+        "description": "Quarterly security audit - comprehensive vulnerability scan",
+        "scan_types": [
+          "dependencies",
+          "static-analysis",
+          "secrets"
+        ]
+      }
     }
   ]
 }
