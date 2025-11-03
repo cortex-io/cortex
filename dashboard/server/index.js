@@ -284,6 +284,102 @@ app.get('/api/events', async (req, res) => {
   }
 });
 
+/**
+ * GET /api/daemon/status
+ * Get worker daemon status
+ */
+app.get('/api/daemon/status', async (req, res) => {
+  try {
+    const { execSync } = require('child_process');
+    const fsSync = require('fs');
+
+    const PID_FILE = '/tmp/commit-relay-worker-daemon.pid';
+    const LOG_FILE = path.join(__dirname, '../../agents/logs/system/worker-daemon.log');
+
+    // Check if daemon is running
+    let status = 'stopped';
+    let pid = null;
+    let uptime = null;
+    let memory = null;
+
+    if (fsSync.existsSync(PID_FILE)) {
+      try {
+        pid = parseInt(fsSync.readFileSync(PID_FILE, 'utf-8').trim());
+
+        // Check if process is actually running
+        execSync(`ps -p ${pid}`, { stdio: 'pipe' });
+        status = 'running';
+
+        // Get process uptime (in seconds)
+        const psOutput = execSync(`ps -o etime= -p ${pid}`).toString().trim();
+        uptime = parseElapsedTime(psOutput);
+
+        // Get memory usage (in KB)
+        const memOutput = execSync(`ps -o rss= -p ${pid}`).toString().trim();
+        memory = parseInt(memOutput);
+
+      } catch (error) {
+        // Process not running, but PID file exists (stale)
+        status = 'stopped';
+        pid = null;
+      }
+    }
+
+    // Get recent log entries
+    let recentLogs = [];
+    if (fsSync.existsSync(LOG_FILE)) {
+      try {
+        const logContent = fsSync.readFileSync(LOG_FILE, 'utf-8');
+        const logLines = logContent.trim().split('\n');
+        recentLogs = logLines.slice(-10);  // Last 10 lines
+      } catch (error) {
+        console.error('Error reading daemon log:', error);
+      }
+    }
+
+    // Count recent worker launches (from logs)
+    const launchCount = recentLogs.filter(line =>
+      line.includes('SUCCESS: Launched')
+    ).length;
+
+    res.json({
+      status,
+      pid,
+      uptime,
+      memory,
+      launchCount,
+      recentLogs,
+      timestamp: new Date().toISOString()
+    });
+
+  } catch (error) {
+    console.error('Error getting daemon status:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+/**
+ * Parse elapsed time string (format: [[DD-]HH:]MM:SS) to seconds
+ */
+function parseElapsedTime(timeStr) {
+  const parts = timeStr.trim().split(/[-:]/);
+  let seconds = 0;
+
+  if (parts.length === 4) {
+    // DD-HH:MM:SS
+    seconds = parseInt(parts[0]) * 86400 + parseInt(parts[1]) * 3600 +
+              parseInt(parts[2]) * 60 + parseInt(parts[3]);
+  } else if (parts.length === 3) {
+    // HH:MM:SS
+    seconds = parseInt(parts[0]) * 3600 + parseInt(parts[1]) * 60 + parseInt(parts[2]);
+  } else if (parts.length === 2) {
+    // MM:SS
+    seconds = parseInt(parts[0]) * 60 + parseInt(parts[1]);
+  }
+
+  return seconds;
+}
+
 // ============================================================================
 // WebSocket Server for Real-time Updates
 // ============================================================================
