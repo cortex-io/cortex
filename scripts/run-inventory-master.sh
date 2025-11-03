@@ -1,30 +1,30 @@
 #!/bin/bash
 
 ################################################################################
-# Security Master Agent
+# Inventory Master Agent
 #
-# Role: Security scanning, vulnerability detection, and automated remediation
+# Role: Repository cataloging, documentation, and health monitoring
 # Responsibilities:
-#   - Security vulnerability scanning
-#   - Dependency security audits
-#   - Secrets detection
-#   - Security fix implementation
-#   - Compliance monitoring
+#   - Repository inventory and cataloging
+#   - Dependency tracking and updates
+#   - Documentation generation and maintenance
+#   - Repository health monitoring
+#   - License compliance tracking
 #
 # ASI Implementation:
-#   - Learns from vulnerability patterns
-#   - Improves threat detection accuracy
-#   - Builds knowledge of security best practices
+#   - Learns patterns in repository organization
+#   - Predicts maintenance needs
+#   - Optimizes documentation structure
 #
 # MoE Implementation:
-#   - Specializes in security-related tasks
-#   - Spawns workers for different security aspects
-#   - Coordinates with Development for security fixes
+#   - Specializes in metadata and organization
+#   - Spawns workers for different inventory aspects
+#   - Coordinates with Development for dependency updates
 #
 # RAG Implementation:
-#   - Retrieves known vulnerability databases
-#   - References past security incidents
-#   - Learns from remediation outcomes
+#   - Maintains comprehensive repository knowledge base
+#   - Retrieves historical dependency information
+#   - References documentation templates and standards
 ################################################################################
 
 set -euo pipefail
@@ -35,14 +35,14 @@ source "$SCRIPT_DIR/lib/logging.sh"
 source "$SCRIPT_DIR/lib/coordination.sh"
 
 # Master identity
-MASTER_ID="security"
-MASTER_NAME="Security Master"
-MASTER_CONTEXT_DIR="$SCRIPT_DIR/../coordination/masters/security"
+MASTER_ID="inventory"
+MASTER_NAME="Inventory Master"
+MASTER_CONTEXT_DIR="$SCRIPT_DIR/../coordination/masters/inventory"
 MASTER_KB_DIR="$MASTER_CONTEXT_DIR/knowledge-base"
 MASTER_WORKERS_DIR="$MASTER_CONTEXT_DIR/workers"
 
 # Initialization
-init_security_master() {
+init_inventory_master() {
     log_section "Initializing $MASTER_NAME"
 
     # Create context structure
@@ -59,29 +59,24 @@ init_security_master() {
   "session_id": "$(uuidgen)",
   "status": "initializing",
   "expertise": {
-    "security_domains": [
-      "vulnerability_scanning",
-      "dependency_auditing",
-      "secrets_detection",
-      "security_remediation",
-      "compliance_monitoring"
+    "domains": [
+      "repository_cataloging",
+      "dependency_management",
+      "documentation",
+      "health_monitoring",
+      "license_compliance"
     ],
-    "threat_databases": [
-      "CVE",
-      "NVD",
-      "npm_advisories",
-      "pip_advisories"
-    ]
+    "tracked_repositories": [],
+    "last_inventory_scan": null
   },
   "active_workers": [],
   "completed_tasks": 0,
   "tokens_used": 0,
-  "security_metrics": {
-    "vulnerabilities_found": 0,
-    "vulnerabilities_fixed": 0,
-    "critical_count": 0,
-    "high_count": 0,
-    "last_scan": null
+  "inventory_stats": {
+    "total_repositories": 0,
+    "documented_repositories": 0,
+    "outdated_dependencies": 0,
+    "last_updated": null
   }
 }
 EOF
@@ -93,27 +88,27 @@ EOF
     if [ ! -f "$kb_index" ]; then
         cat > "$kb_index" <<EOF
 {
-  "knowledge_base_id": "security-kb",
+  "knowledge_base_id": "inventory-kb",
   "created_at": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
   "categories": {
-    "vulnerability_database": {
-      "description": "Known vulnerabilities and their fixes",
+    "repository_catalog": {
+      "description": "Complete catalog of tracked repositories",
       "entries": []
     },
-    "remediation_strategies": {
-      "description": "Successful security fix strategies",
+    "dependency_database": {
+      "description": "Dependency information across all repositories",
       "entries": []
     },
-    "threat_patterns": {
-      "description": "Learned threat and vulnerability patterns",
+    "documentation_templates": {
+      "description": "Reusable documentation templates and patterns",
       "entries": []
     },
-    "false_positives": {
-      "description": "Known false positive patterns",
+    "health_metrics": {
+      "description": "Repository health indicators and trends",
       "entries": []
     },
-    "compliance_rules": {
-      "description": "Security compliance requirements",
+    "license_information": {
+      "description": "License compliance data",
       "entries": []
     }
   },
@@ -131,32 +126,32 @@ EOF
 {
   "worker_types": [
     {
-      "type_id": "scan-worker",
-      "description": "Performs comprehensive security scans",
-      "specialization": "vulnerability_detection",
-      "typical_token_allocation": 12000,
-      "skills": ["dependency_scanning", "static_analysis", "secrets_detection"]
-    },
-    {
-      "type_id": "audit-worker",
-      "description": "Conducts detailed security audits",
-      "specialization": "security_auditing",
-      "typical_token_allocation": 15000,
-      "skills": ["threat_modeling", "code_review", "risk_assessment"]
-    },
-    {
-      "type_id": "fix-worker",
-      "description": "Implements security fixes and patches",
-      "specialization": "security_remediation",
-      "typical_token_allocation": 13000,
-      "skills": ["patch_application", "code_fixing", "testing"]
-    },
-    {
-      "type_id": "compliance-worker",
-      "description": "Monitors compliance and generates reports",
-      "specialization": "compliance",
+      "type_id": "cataloger",
+      "description": "Catalogs and inventories repositories",
+      "specialization": "repository_cataloging",
       "typical_token_allocation": 8000,
-      "skills": ["compliance_checking", "report_generation", "policy_enforcement"]
+      "skills": ["metadata_extraction", "organization", "tagging"]
+    },
+    {
+      "type_id": "dependency-auditor",
+      "description": "Audits and tracks dependencies",
+      "specialization": "dependency_management",
+      "typical_token_allocation": 10000,
+      "skills": ["dependency_analysis", "version_tracking", "update_planning"]
+    },
+    {
+      "type_id": "documentor",
+      "description": "Generates and maintains documentation",
+      "specialization": "documentation",
+      "typical_token_allocation": 12000,
+      "skills": ["doc_generation", "technical_writing", "template_usage"]
+    },
+    {
+      "type_id": "health-monitor",
+      "description": "Monitors repository health metrics",
+      "specialization": "health_monitoring",
+      "typical_token_allocation": 7000,
+      "skills": ["metrics_collection", "trend_analysis", "alerting"]
     }
   ],
   "last_updated": "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
@@ -205,7 +200,7 @@ process_handoff() {
     local worker_type=$(select_worker_type "$task_type" "$task_data")
 
     # Spawn worker for this task
-    spawn_security_worker "$task_id" "$worker_type" "$task_data"
+    spawn_inventory_worker "$task_id" "$worker_type" "$task_data"
 
     # Mark handoff as processed
     mv "$handoff_file" "${handoff_file}.processed"
@@ -216,44 +211,36 @@ select_worker_type() {
     local task_type="$1"
     local task_data="$2"
 
-    local worker_type="scan-worker" # default
+    local worker_type="cataloger" # default
 
     # Match task to worker specialization
-    if echo "$task_type" | grep -iE "scan|detect|find.*vulnerability" > /dev/null; then
-        worker_type="scan-worker"
-    elif echo "$task_type" | grep -iE "audit|comprehensive|deep.*analysis" > /dev/null; then
-        worker_type="audit-worker"
-    elif echo "$task_type" | grep -iE "fix|patch|remediate|resolve" > /dev/null; then
-        worker_type="fix-worker"
-    elif echo "$task_type" | grep -iE "compliance|report|policy" > /dev/null; then
-        worker_type="compliance-worker"
+    if echo "$task_type" | grep -iE "catalog|inventory|organize" > /dev/null; then
+        worker_type="cataloger"
+    elif echo "$task_type" | grep -iE "dependency|update|audit" > /dev/null; then
+        worker_type="dependency-auditor"
+    elif echo "$task_type" | grep -iE "document|readme|doc" > /dev/null; then
+        worker_type="documentor"
+    elif echo "$task_type" | grep -iE "health|monitor|check" > /dev/null; then
+        worker_type="health-monitor"
     fi
 
     log_info "Selected worker type: $worker_type for task type: $task_type"
     echo "$worker_type"
 }
 
-# Spawn a security worker
-spawn_security_worker() {
+# Spawn an inventory worker
+spawn_inventory_worker() {
     local task_id="$1"
     local worker_type="$2"
     local task_data="$3"
 
-    local worker_id="sec-worker-$(uuidgen | cut -d'-' -f1)"
-    log_section "Spawning Security Worker: $worker_id"
+    local worker_id="inv-worker-$(uuidgen | cut -d'-' -f1)"
+    log_section "Spawning Inventory Worker: $worker_id"
 
     # Get worker type configuration
     local worker_types="$MASTER_KB_DIR/worker-types.json"
     local worker_config=$(jq --arg type "$worker_type" '.worker_types[] | select(.type_id == $type)' "$worker_types")
     local token_allocation=$(echo "$worker_config" | jq -r '.typical_token_allocation')
-
-    # RAG: Retrieve relevant vulnerability patterns from knowledge base
-    local relevant_context="{}"
-    local vuln_db="$MASTER_KB_DIR/vulnerability-history.jsonl"
-    if [ -f "$vuln_db" ]; then
-        # Get last 5 similar vulnerabilities
-        relevant_context=$(tail -5 "$vuln_db" 2>/dev/null | jq -s '.' || echo "[]")
-    fi
 
     # Create worker spec with rich context (RAG: augment with knowledge)
     local worker_spec_dir="$SCRIPT_DIR/../coordination/worker-specs/active"
@@ -272,15 +259,13 @@ spawn_security_worker() {
     "expertise_area": "$(echo "$worker_config" | jq -r '.specialization')",
     "skills_required": $(echo "$worker_config" | jq -r '.skills'),
     "knowledge_base_refs": {
-      "vulnerability_database": "$MASTER_KB_DIR/vulnerability-history.jsonl",
-      "remediation_strategies": "$MASTER_KB_DIR/remediation-patterns.json",
-      "false_positives": "$MASTER_KB_DIR/false-positives.json"
-    },
-    "relevant_past_findings": $relevant_context
+      "repository_catalog": "$MASTER_KB_DIR/repository-catalog.json",
+      "documentation_templates": "$MASTER_KB_DIR/doc-templates/"
+    }
   },
   "resources": {
     "token_allocation": $token_allocation,
-    "time_limit_minutes": 60
+    "time_limit_minutes": 45
   },
   "status": "pending",
   "created_at": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
@@ -332,7 +317,7 @@ main() {
 
     # Initialize if needed
     if [ ! -f "$MASTER_CONTEXT_DIR/context/master-state.json" ]; then
-        init_security_master
+        init_inventory_master
     else
         log_info "$MASTER_NAME already initialized, loading state..."
         update_master_state "status" "active"
