@@ -2,3 +2,5 @@
 {"id":"evt-1762113627-84720","timestamp":"2025-11-02T14:00:27-06:00","type":"system_ERROR","data":"Failed to update task task-012","source":"automation"}
 {"id":"evt-1762113641-84791","timestamp":"2025-11-02T14:00:41-06:00","type":"system_ERROR","data":"Failed to update task task-012","source":"automation"}
 {"id":"evt-1762130768-91044","timestamp":"2025-11-02T18:46:08-06:00","type":"system_ERROR","data":"Insufficient token budget for scan worker","source":"automation"}
+{"id":"evt-1762131679-93177","timestamp":"2025-11-02T19:01:19-06:00","type":"worker_started","data":"{\"worker_id\":\"worker-scan-001\",\"task_id\":\"task-012\",\"worker_type\":\"scan-worker\"}","source":"automation"}
+{"id":"evt-1762132317-96642","timestamp":"2025-11-02T19:11:57-06:00","type":"worker_completed","data":"{\"worker_id\":\"worker-scan-001\",\"task_id\":\"task-012\",\"status\":\"SUCCESS\",\"summary\":\"Security scan completed: 0 vulnerabilities found\",\"output_location\":\"agents/logs/workers/2025-11-02/worker-scan-001/scan_results.json\"}","source":"automation"}
