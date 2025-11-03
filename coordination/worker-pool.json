@@ -1,7 +1,21 @@
 {
   "version": "1.0",
-  "updated_at": "2025-11-02T19:44:11Z",
-  "active_workers": [],
+  "updated_at": "2025-11-03T00:55:40Z",
+  "active_workers": [
+    {
+      "worker_id": "worker-scan-001",
+      "worker_type": "scan-worker",
+      "spawned_by": "security",
+      "spawned_at": "2025-11-03T00:55:40Z",
+      "status": "pending",
+      "task_id": "task-012",
+      "token_budget": 8000,
+      "tokens_used": 0,
+      "timeout_at": null,
+      "last_heartbeat": null,
+      "session_id": null
+    }
+  ],
   "completed_workers": [
     {
       "worker_id": "implementation-worker-backend",
@@ -72,7 +86,7 @@
   ],
   "failed_workers": [],
   "stats": {
-    "total_spawned_today": 6,
+    "total_spawned_today": 7,
     "total_completed_today": 6,
     "total_failed_today": 0,
     "avg_duration_minutes": 6.7,

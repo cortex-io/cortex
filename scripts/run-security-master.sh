@@ -14,7 +14,7 @@ source "$SCRIPT_DIR/lib/logging.sh"
 source "$SCRIPT_DIR/lib/coordination.sh"
 
 # Agent configuration
-AGENT_ID="security-master"
+AGENT_ID="security"
 AGENT_TYPE="master"
 TOKEN_BUDGET_ALLOCATED=30000
 
@@ -26,6 +26,144 @@ fi
 
 # Trap to ensure lock is released on exit
 trap "release_lock $AGENT_ID" EXIT
+
+handle_security_scan() {
+    local task_id=$1
+    local task_data=$2
+
+    log_info "Handling security scan for task: $task_id"
+
+    # Extract task details
+    local repository=$(echo "$task_data" | jq -r '.context.repository // empty')
+    local branch=$(echo "$task_data" | jq -r '.context.branch // "main"')
+    local scan_types=$(echo "$task_data" | jq -r '.context.scan_types // ["dependencies", "static-analysis", "secrets"]')
+
+    if [ -z "$repository" ]; then
+        log_error "No repository specified in task $task_id"
+        local error_data=$(jq -nc '{error: "No repository specified"}')
+        update_task_status "$task_id" "failed" "$error_data"
+        return 1
+    fi
+
+    log_info "Repository: $repository"
+    log_info "Branch: $branch"
+
+    # Check token budget
+    local estimated_tokens=8000
+    if ! check_token_budget "$AGENT_ID" "$estimated_tokens"; then
+        log_error "Insufficient token budget for scan worker"
+        local blocked_data=$(jq -nc '{reason: "insufficient_tokens"}')
+        update_task_status "$task_id" "blocked" "$blocked_data"
+        return 1
+    fi
+
+    # Spawn scan worker
+    log_info "Spawning scan-worker for task $task_id"
+
+    local scope_json=$(cat <<EOF
+{
+  "repository": "$repository",
+  "branch": "$branch",
+  "description": "Security scan for $repository",
+  "scan_types": $scan_types
+}
+EOF
+)
+
+    # Spawn worker using spawn-worker.sh
+    if "$SCRIPT_DIR/spawn-worker.sh" \
+        --type scan-worker \
+        --task-id "$task_id" \
+        --master "$AGENT_ID" \
+        --repo "$repository" \
+        --priority high \
+        --scope "$scope_json"; then
+
+        log_success "Scan worker spawned successfully for task $task_id"
+
+        # Update task with worker reference
+        local worker_data=$(jq -nc '{status: "scan_worker_spawned"}')
+        update_task_status "$task_id" "in_progress" "$worker_data"
+    else
+        log_error "Failed to spawn scan worker for task $task_id"
+        local spawn_fail_data=$(jq -nc '{error: "worker_spawn_failed"}')
+        update_task_status "$task_id" "failed" "$spawn_fail_data"
+        return 1
+    fi
+}
+
+handle_security_fix() {
+    local task_id=$1
+    local task_data=$2
+
+    log_info "Handling security fix for task: $task_id"
+
+    # Extract task details
+    local repository=$(echo "$task_data" | jq -r '.context.repository // empty')
+    local vulnerabilities=$(echo "$task_data" | jq -r '.context.vulnerabilities // []')
+    local vuln_count=$(echo "$vulnerabilities" | jq 'length')
+
+    if [ -z "$repository" ]; then
+        log_error "No repository specified in task $task_id"
+        local error_data=$(jq -nc '{error: "No repository specified"}')
+        update_task_status "$task_id" "failed" "$error_data"
+        return 1
+    fi
+
+    log_info "Repository: $repository"
+    log_info "Vulnerabilities to fix: $vuln_count"
+
+    # Check if we have scan results
+    if [ "$vuln_count" -eq 0 ]; then
+        log_warn "No vulnerabilities specified - may need to run scan first"
+        local no_vuln_data=$(jq -nc '{reason: "no_vulnerabilities_specified"}')
+        update_task_status "$task_id" "blocked" "$no_vuln_data"
+        return 1
+    fi
+
+    # Check token budget for fix worker
+    local estimated_tokens=5000
+    if ! check_token_budget "$AGENT_ID" "$estimated_tokens"; then
+        log_error "Insufficient token budget for fix worker"
+        local blocked_data=$(jq -nc '{reason: "insufficient_tokens"}')
+        update_task_status "$task_id" "blocked" "$blocked_data"
+        return 1
+    fi
+
+    # Spawn fix worker
+    log_info "Spawning fix-worker for task $task_id"
+
+    local context_json=$(cat <<EOF
+{
+  "parent_task": "$task_id",
+  "repository": "$repository",
+  "vulnerabilities": $vulnerabilities,
+  "priority": "high"
+}
+EOF
+)
+
+    # Spawn worker using spawn-worker.sh
+    if "$SCRIPT_DIR/spawn-worker.sh" \
+        --type fix-worker \
+        --task-id "$task_id" \
+        --master "$AGENT_ID" \
+        --repo "$repository" \
+        --priority high \
+        --context "$context_json"; then
+
+        log_success "Fix worker spawned successfully for task $task_id"
+
+        # Update task with worker reference
+        local fix_worker_data=$(jq -nc '{status: "fix_worker_spawned"}')
+        update_task_status "$task_id" "in_progress" "$fix_worker_data"
+    else
+        log_error "Failed to spawn fix worker for task $task_id"
+        local spawn_fail_data=$(jq -nc '{error: "worker_spawn_failed"}')
+        update_task_status "$task_id" "failed" "$spawn_fail_data"
+        return 1
+    fi
+}
 
 # Start execution
 log_section "Security Master Agent Starting"
@@ -88,146 +226,8 @@ for i in $(seq 0 $((TASK_COUNT - 1))); do
     esac
 done
 
+
 log_section "Security Master Agent Complete"
 log_success "Processed $TASK_COUNT security tasks"
 
 exit 0
-
-# Task handlers
-handle_security_scan() {
-    local task_id=$1
-    local task_data=$2
-
-    log_info "Handling security scan for task: $task_id"
-
-    # Extract task details
-    local repository=$(echo "$task_data" | jq -r '.context.repository // empty')
-    local branch=$(echo "$task_data" | jq -r '.context.branch // "main"')
-    local scan_types=$(echo "$task_data" | jq -r '.context.scan_types // ["dependencies", "static-analysis", "secrets"]')
-
-    if [ -z "$repository" ]; then
-        log_error "No repository specified in task $task_id"
-        local error_data=$(jq -nc '{error: "No repository specified"}')
-        update_task_status "$task_id" "failed" "$error_data"
-        return 1
-    fi
-
-    log_info "Repository: $repository"
-    log_info "Branch: $branch"
-
-    # Check token budget
-    local estimated_tokens=8000
-    if ! check_token_budget "$AGENT_ID" "$estimated_tokens"; then
-        log_error "Insufficient token budget for scan worker"
-        local blocked_data=$(jq -nc{reason: "insufficient_tokens"}')
-        update_task_status "$task_id" "blocked" "$blocked_data"
-        return 1
-    fi
-
-    # Spawn scan worker
-    log_info "Spawning scan-worker for task $task_id"
-
-    local scope_json=$(cat <<EOF
-{
-  "repository": "$repository",
-  "branch": "$branch",
-  "description": "Security scan for $repository",
-  "scan_types": $scan_types
-}
-EOF
-)
-
-    # Spawn worker using spawn-worker.sh
-    if "$SCRIPT_DIR/spawn-worker.sh" \
-        --type scan-worker \
-        --task-id "$task_id" \
-        --master "$AGENT_ID" \
-        --repo "$repository" \
-        --priority high \
-        --scope "$scope_json"; then
-
-        log_success "Scan worker spawned successfully for task $task_id"
-
-        # Update task with worker reference
-        local worker_data=$(jq -nc{status: "scan_worker_spawned"}')
-        update_task_status "$task_id" "in_progress" "$worker_data"
-    else
-        log_error "Failed to spawn scan worker for task $task_id"
-        local spawn_fail_data=$(jq -nc{error: "worker_spawn_failed"}')
-        update_task_status "$task_id" "failed" "$spawn_fail_data"
-        return 1
-    fi
-}
-
-handle_security_fix() {
-    local task_id=$1
-    local task_data=$2
-
-    log_info "Handling security fix for task: $task_id"
-
-    # Extract task details
-    local repository=$(echo "$task_data" | jq -r '.context.repository // empty')
-    local vulnerabilities=$(echo "$task_data" | jq -r '.context.vulnerabilities // []')
-    local vuln_count=$(echo "$vulnerabilities" | jq 'length')
-
-    if [ -z "$repository" ]; then
-        log_error "No repository specified in task $task_id"
-        local error_data=$(jq -nc '{error: "No repository specified"}')
-        update_task_status "$task_id" "failed" "$error_data"
-        return 1
-    fi
-
-    log_info "Repository: $repository"
-    log_info "Vulnerabilities to fix: $vuln_count"
-
-    # Check if we have scan results
-    if [ "$vuln_count" -eq 0 ]; then
-        log_warn "No vulnerabilities specified - may need to run scan first"
-        local no_vuln_data=$(jq -nc{reason: "no_vulnerabilities_specified"}')
-        update_task_status "$task_id" "blocked" "$no_vuln_data"
-        return 1
-    fi
-
-    # Check token budget for fix worker
-    local estimated_tokens=5000
-    if ! check_token_budget "$AGENT_ID" "$estimated_tokens"; then
-        log_error "Insufficient token budget for fix worker"
-        local blocked_data=$(jq -nc{reason: "insufficient_tokens"}')
-        update_task_status "$task_id" "blocked" "$blocked_data"
-        return 1
-    fi
-
-    # Spawn fix worker
-    log_info "Spawning fix-worker for task $task_id"
-
-    local context_json=$(cat <<EOF
-{
-  "parent_task": "$task_id",
-  "repository": "$repository",
-  "vulnerabilities": $vulnerabilities,
-  "priority": "high"
-}
-EOF
-)
-
-    # Spawn worker using spawn-worker.sh
-    if "$SCRIPT_DIR/spawn-worker.sh" \
-        --type fix-worker \
-        --task-id "$task_id" \
-        --master "$AGENT_ID" \
-        --repo "$repository" \
-        --priority high \
-        --context "$context_json"; then
-
-        log_success "Fix worker spawned successfully for task $task_id"
-
-        # Update task with worker reference
-        local fix_worker_data=$(jq -nc{status: "fix_worker_spawned"}')
-        update_task_status "$task_id" "in_progress" "$fix_worker_data"
-    else
-        log_error "Failed to spawn fix worker for task $task_id"
-        local spawn_fail_data=$(jq -nc{error: "worker_spawn_failed"}')
-        update_task_status "$task_id" "failed" "$spawn_fail_data"
-        return 1
-    fi
-}
