@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Commit-Relay Dashboard</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-content">
+                <h1>🤖 Commit-Relay Dashboard</h1>
+                <p class="subtitle">Master-Worker System Monitoring</p>
+            </div>
+            <div class="connection-status">
+                <span class="status-dot" id="connectionDot"></span>
+                <span id="connectionStatus">Connecting...</span>
+            </div>
+        </header>
+
+        <!-- Claude Code Usage Status -->
+        <section class="usage-status">
+            <div class="usage-header">
+                <h2>🔋 Claude Code Usage Status</h2>
+                <span class="last-updated" id="usageLastUpdated">Updated just now</span>
+            </div>
+            <div class="usage-grid">
+                <div class="usage-card session">
+                    <div class="usage-icon">⚡</div>
+                    <div class="usage-info">
+                        <div class="usage-label">Current Session</div>
+                        <div class="usage-value" id="sessionUsage">15%</div>
+                        <div class="usage-bar">
+                            <div class="usage-bar-fill session-fill" id="sessionUsageBar" style="width: 15%"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="usage-card week-all">
+                    <div class="usage-icon">📊</div>
+                    <div class="usage-info">
+                        <div class="usage-label">Current Week (All Models)</div>
+                        <div class="usage-value" id="weekAllUsage">46%</div>
+                        <div class="usage-bar">
+                            <div class="usage-bar-fill week-fill" id="weekAllUsageBar" style="width: 46%"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="usage-card week-opus">
+                    <div class="usage-icon">💎</div>
+                    <div class="usage-info">
+                        <div class="usage-label">Current Week (Opus)</div>
+                        <div class="usage-value" id="weekOpusUsage">0%</div>
+                        <div class="usage-bar">
+                            <div class="usage-bar-fill opus-fill" id="weekOpusUsageBar" style="width: 0%"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Current Session Stats -->
+        <section class="session-banner">
+            <div class="session-info">
+                <h2>📊 Current Session Metrics</h2>
+                <div class="session-stats">
+                    <div class="session-stat">
+                        <span class="session-label">Workers Completed:</span>
+                        <span class="session-value" id="sessionWorkers">-</span>
+                    </div>
+                    <div class="session-stat">
+                        <span class="session-label">Tokens Used:</span>
+                        <span class="session-value" id="sessionTokens">-</span>
+                    </div>
+                    <div class="session-stat">
+                        <span class="session-label">Tasks Done:</span>
+                        <span class="session-value" id="sessionTasks">-</span>
+                    </div>
+                    <div class="session-stat">
+                        <span class="session-label">Efficiency:</span>
+                        <span class="session-value" id="sessionEfficiency">-</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Stats Overview -->
+        <section class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-icon">⚡</div>
+                <div class="stat-content">
+                    <div class="stat-label">Active Workers</div>
+                    <div class="stat-value" id="activeWorkers">-</div>
+                </div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-icon">✅</div>
+                <div class="stat-content">
+                    <div class="stat-label">Success Rate</div>
+                    <div class="stat-value" id="successRate">-%</div>
+                </div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-icon">🎯</div>
+                <div class="stat-content">
+                    <div class="stat-label">Tasks In Progress</div>
+                    <div class="stat-value" id="inProgressTasks">-</div>
+                </div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-icon">💰</div>
+                <div class="stat-content">
+                    <div class="stat-label">Token Budget Used</div>
+                    <div class="stat-value" id="tokenUsage">-%</div>
+                </div>
+            </div>
+
+            <div class="stat-card daemon-status" title="Worker Daemon Status - Auto-launches workers">
+                <div class="stat-icon">🤖</div>
+                <div class="stat-content">
+                    <div class="stat-label">Worker Daemon</div>
+                    <div class="stat-value" id="daemonStatus">Loading...</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Charts Section -->
+        <section class="charts-grid">
+            <!-- Token Budget Chart -->
+            <div class="chart-card">
+                <h2>Token Budget Distribution</h2>
+                <canvas id="tokenChart"></canvas>
+                <div class="chart-legend" id="tokenLegend"></div>
+            </div>
+
+            <!-- Worker Status Chart -->
+            <div class="chart-card">
+                <h2>Worker Status</h2>
+                <canvas id="workerChart"></canvas>
+                <div class="chart-legend" id="workerLegend"></div>
+            </div>
+        </section>
+
+        <!-- Masters Overview -->
+        <section class="masters-section">
+            <h2>Master Agents</h2>
+            <div class="masters-grid">
+                <div class="master-card">
+                    <h3>🎯 Coordinator Master</h3>
+                    <div class="master-stats">
+                        <div class="master-stat">
+                            <span class="label">Allocated:</span>
+                            <span class="value" id="coordAllocated">-</span>
+                        </div>
+                        <div class="master-stat">
+                            <span class="label">Used:</span>
+                            <span class="value" id="coordUsed">-</span>
+                        </div>
+                        <div class="master-stat">
+                            <span class="label">Worker Pool:</span>
+                            <span class="value" id="coordPool">-</span>
+                        </div>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="coordProgress"></div>
+                    </div>
+                </div>
+
+                <div class="master-card">
+                    <h3>🔒 Security Master</h3>
+                    <div class="master-stats">
+                        <div class="master-stat">
+                            <span class="label">Allocated:</span>
+                            <span class="value" id="secAllocated">-</span>
+                        </div>
+                        <div class="master-stat">
+                            <span class="label">Used:</span>
+                            <span class="value" id="secUsed">-</span>
+                        </div>
+                        <div class="master-stat">
+                            <span class="label">Worker Pool:</span>
+                            <span class="value" id="secPool">-</span>
+                        </div>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="secProgress"></div>
+                    </div>
+                </div>
+
+                <div class="master-card">
+                    <h3>💻 Development Master</h3>
+                    <div class="master-stats">
+                        <div class="master-stat">
+                            <span class="label">Allocated:</span>
+                            <span class="value" id="devAllocated">-</span>
+                        </div>
+                        <div class="master-stat">
+                            <span class="label">Used:</span>
+                            <span class="value" id="devUsed">-</span>
+                        </div>
+                        <div class="master-stat">
+                            <span class="label">Worker Pool:</span>
+                            <span class="value" id="devPool">-</span>
+                        </div>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="devProgress"></div>
+                    </div>
+                </div>
+
+                <div class="master-card">
+                    <h3>🗄️ Inventory Master</h3>
+                    <div class="master-stats">
+                        <div class="master-stat">
+                            <span class="label">Allocated:</span>
+                            <span class="value" id="invAllocated">-</span>
+                        </div>
+                        <div class="master-stat">
+                            <span class="label">Used:</span>
+                            <span class="value" id="invUsed">-</span>
+                        </div>
+                        <div class="master-stat">
+                            <span class="label">Worker Pool:</span>
+                            <span class="value" id="invPool">-</span>
+                        </div>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="invProgress"></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Communication Flow -->
+        <section class="communication-section">
+            <h2>🔄 Master Agent Communication Flow</h2>
+            <div class="flow-container">
+                <div class="flow-diagram">
+                    <!-- Coordinator Master -->
+                    <div class="master-node coordinator-node" id="coordinatorNode">
+                        <div class="node-icon">🎯</div>
+                        <div class="node-name">Coordinator</div>
+                        <div class="node-status" id="coordinatorStatus">Idle</div>
+                    </div>
+
+                    <!-- Security Master -->
+                    <div class="master-node security-node" id="securityNode">
+                        <div class="node-icon">🔒</div>
+                        <div class="node-name">Security</div>
+                        <div class="node-status" id="securityStatus">Idle</div>
+                    </div>
+
+                    <!-- Development Master -->
+                    <div class="master-node development-node" id="developmentNode">
+                        <div class="node-icon">💻</div>
+                        <div class="node-name">Development</div>
+                        <div class="node-status" id="developmentStatus">Active</div>
+                    </div>
+
+                    <!-- Inventory Master -->
+                    <div class="master-node inventory-node" id="inventoryNode">
+                        <div class="node-icon">🗄️</div>
+                        <div class="node-name">Inventory</div>
+                        <div class="node-status" id="inventoryStatus">Active</div>
+                    </div>
+
+                    <!-- Worker Pool -->
+                    <div class="worker-pool-node" id="workerPoolNode">
+                        <div class="node-icon">⚙️</div>
+                        <div class="node-name">Worker Pool</div>
+                        <div class="node-status" id="workerPoolStatus">6 completed</div>
+                    </div>
+
+                    <!-- Communication Lines (SVG) -->
+                    <svg class="communication-lines" id="commLines">
+                        <!-- Coordinator to Security -->
+                        <line class="comm-line" x1="20%" y1="30%" x2="20%" y2="55%" stroke-dasharray="5,5" />
+
+                        <!-- Coordinator to Development -->
+                        <line class="comm-line" x1="25%" y1="30%" x2="50%" y2="55%" stroke-dasharray="5,5" />
+
+                        <!-- Coordinator to Inventory -->
+                        <line class="comm-line" x1="30%" y1="30%" x2="80%" y2="55%" stroke-dasharray="5,5" />
+
+                        <!-- Security to Development -->
+                        <line class="comm-line" x1="30%" y1="65%" x2="45%" y2="65%" stroke-dasharray="5,5" />
+
+                        <!-- Development to Worker Pool -->
+                        <line class="comm-line active" x1="50%" y1="75%" x2="50%" y2="85%" />
+
+                        <!-- Security to Worker Pool -->
+                        <line class="comm-line" x1="25%" y1="75%" x2="45%" y2="85%" stroke-dasharray="5,5" />
+
+                        <!-- Inventory to Worker Pool -->
+                        <line class="comm-line" x1="75%" y1="75%" x2="55%" y2="85%" stroke-dasharray="5,5" />
+                    </svg>
+                </div>
+
+                <!-- Legend -->
+                <div class="flow-legend">
+                    <h3>Communication Patterns</h3>
+                    <div class="legend-items">
+                        <div class="legend-item">
+                            <div class="legend-line active"></div>
+                            <span>Active Communication</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-line"></div>
+                            <span>Available Path</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-dot future"></div>
+                            <span>Coming Soon</span>
+                        </div>
+                    </div>
+                    <div class="flow-info">
+                        <p><strong>Coordinator</strong> orchestrates tasks and delegates to specialist masters</p>
+                        <p><strong>Security</strong> handles vulnerability scanning and remediation</p>
+                        <p><strong>Development</strong> manages features, bugs, and implementation</p>
+                        <p><strong>Inventory</strong> (Phase 5) will catalog and track all repositories</p>
+                        <p><strong>Worker Pool</strong> executes focused tasks for all masters</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Tasks Overview -->
+        <section class="tasks-section">
+            <h2>Task Queue</h2>
+            <div class="tasks-summary">
+                <div class="task-stat pending">
+                    <div class="task-count" id="pendingCount">-</div>
+                    <div class="task-label">Pending</div>
+                </div>
+                <div class="task-stat in-progress">
+                    <div class="task-count" id="inProgressCount">-</div>
+                    <div class="task-label">In Progress</div>
+                </div>
+                <div class="task-stat completed">
+                    <div class="task-count" id="completedCount">-</div>
+                    <div class="task-label">Completed</div>
+                </div>
+            </div>
+            <div class="tasks-list" id="tasksList">
+                <!-- Tasks will be populated dynamically -->
+            </div>
+        </section>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <p>Last updated: <span id="lastUpdate">-</span></p>
+            <p>Commit-Relay v2.0 • Production Ready</p>
+        </footer>
+    </div>
+
+    <script src="dashboard.js"></script>
+</body>
+</html>
