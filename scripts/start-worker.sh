@@ -54,7 +54,7 @@ if [ ! -f "$FULL_PROMPT_PATH" ]; then
     exit 1
 fi
 
-log_section "Launching Claude Code Session"
+log_section "Launching Claude CLI Session"
 log_info "Prompt: $FULL_PROMPT_PATH"
 log_info ""
 log_info "The worker will:"
@@ -87,17 +87,9 @@ broadcast_dashboard_event "worker_started" "$EVENT_DATA"
 
 log_info ""
 log_info "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-log_info ""
-log_success "Worker is ready! Copy and paste the prompt below into Claude:"
-log_info ""
+log_success "Starting Claude CLI with prompt..."
 log_info "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 log_info ""
 
-# Display the prompt file contents
-cat "$COMMIT_RELAY_HOME/$PROMPT_TEMPLATE"
-
-log_info ""
-log_info "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-log_info ""
-log_info "Worker specification: $WORKER_SPEC_PATH"
-log_info ""
+# Launch Claude CLI with prompt file content
+claude "$(cat "$COMMIT_RELAY_HOME/$PROMPT_TEMPLATE")"
