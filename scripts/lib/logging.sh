@@ -116,3 +116,14 @@ log_section() {
     log_info "$title"
     log_info "=========================================="
 }
+
+# Log event to dashboard (simple stub for now)
+log_event() {
+    local event_type="$1"
+    local event_data="${2:-{}}"
+
+    # For now, just log to console
+    log_info "EVENT: $event_type - $event_data"
+
+    # TODO: Implement full dashboard event logging
+}

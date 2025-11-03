@@ -1,30 +1,30 @@
 #!/bin/bash
 
 ################################################################################
-# Security Master Agent
+# Development Master Agent
 #
-# Role: Security scanning, vulnerability detection, and automated remediation
+# Role: Code development, implementation, and technical improvements
 # Responsibilities:
-#   - Security vulnerability scanning
-#   - Dependency security audits
-#   - Secrets detection
-#   - Security fix implementation
-#   - Compliance monitoring
+#   - Feature implementation
+#   - Bug fixes and code improvements
+#   - Refactoring and optimization
+#   - Code review and quality assurance
+#   - Technical debt management
 #
 # ASI Implementation:
-#   - Learns from vulnerability patterns
-#   - Improves threat detection accuracy
-#   - Builds knowledge of security best practices
+#   - Learns from past implementation patterns
+#   - Improves code quality based on feedback
+#   - Builds knowledge of codebase architecture
 #
 # MoE Implementation:
-#   - Specializes in security-related tasks
-#   - Spawns workers for different security aspects
-#   - Coordinates with Development for security fixes
+#   - Specializes in code-related tasks
+#   - Spawns specialized workers for different languages/frameworks
+#   - Coordinates with Security Master for security-aware development
 #
 # RAG Implementation:
-#   - Retrieves known vulnerability databases
-#   - References past security incidents
-#   - Learns from remediation outcomes
+#   - Retrieves similar past implementations
+#   - References codebase documentation and patterns
+#   - Learns from code review feedback
 ################################################################################
 
 set -euo pipefail
@@ -35,14 +35,14 @@ source "$SCRIPT_DIR/lib/logging.sh"
 source "$SCRIPT_DIR/lib/coordination.sh"
 
 # Master identity
-MASTER_ID="security"
-MASTER_NAME="Security Master"
-MASTER_CONTEXT_DIR="$SCRIPT_DIR/../coordination/masters/security"
+MASTER_ID="development"
+MASTER_NAME="Development Master"
+MASTER_CONTEXT_DIR="$SCRIPT_DIR/../coordination/masters/development"
 MASTER_KB_DIR="$MASTER_CONTEXT_DIR/knowledge-base"
 MASTER_WORKERS_DIR="$MASTER_CONTEXT_DIR/workers"
 
 # Initialization
-init_security_master() {
+init_development_master() {
     log_section "Initializing $MASTER_NAME"
 
     # Create context structure
@@ -59,29 +59,23 @@ init_security_master() {
   "session_id": "$(uuidgen)",
   "status": "initializing",
   "expertise": {
-    "security_domains": [
-      "vulnerability_scanning",
-      "dependency_auditing",
-      "secrets_detection",
-      "security_remediation",
-      "compliance_monitoring"
-    ],
-    "threat_databases": [
-      "CVE",
-      "NVD",
-      "npm_advisories",
-      "pip_advisories"
+    "languages": ["bash", "javascript", "python", "typescript"],
+    "frameworks": ["node.js", "express", "alpine.js"],
+    "specializations": [
+      "feature_implementation",
+      "bug_fixing",
+      "code_refactoring",
+      "performance_optimization",
+      "technical_debt_resolution"
     ]
   },
   "active_workers": [],
   "completed_tasks": 0,
   "tokens_used": 0,
-  "security_metrics": {
-    "vulnerabilities_found": 0,
-    "vulnerabilities_fixed": 0,
-    "critical_count": 0,
-    "high_count": 0,
-    "last_scan": null
+  "performance_metrics": {
+    "avg_implementation_time": 0,
+    "success_rate": 0,
+    "code_quality_score": 0
   }
 }
 EOF
@@ -93,27 +87,27 @@ EOF
     if [ ! -f "$kb_index" ]; then
         cat > "$kb_index" <<EOF
 {
-  "knowledge_base_id": "security-kb",
+  "knowledge_base_id": "development-kb",
   "created_at": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
   "categories": {
-    "vulnerability_database": {
-      "description": "Known vulnerabilities and their fixes",
+    "implementation_patterns": {
+      "description": "Successful code implementation patterns",
       "entries": []
     },
-    "remediation_strategies": {
-      "description": "Successful security fix strategies",
+    "bug_fix_strategies": {
+      "description": "Effective bug fixing approaches",
       "entries": []
     },
-    "threat_patterns": {
-      "description": "Learned threat and vulnerability patterns",
+    "refactoring_techniques": {
+      "description": "Proven refactoring methods",
       "entries": []
     },
-    "false_positives": {
-      "description": "Known false positive patterns",
+    "codebase_architecture": {
+      "description": "Understanding of system architecture",
       "entries": []
     },
-    "compliance_rules": {
-      "description": "Security compliance requirements",
+    "performance_optimizations": {
+      "description": "Successful performance improvements",
       "entries": []
     }
   },
@@ -131,32 +125,32 @@ EOF
 {
   "worker_types": [
     {
-      "type_id": "scan-worker",
-      "description": "Performs comprehensive security scans",
-      "specialization": "vulnerability_detection",
-      "typical_token_allocation": 12000,
-      "skills": ["dependency_scanning", "static_analysis", "secrets_detection"]
-    },
-    {
-      "type_id": "audit-worker",
-      "description": "Conducts detailed security audits",
-      "specialization": "security_auditing",
+      "type_id": "feature-implementer",
+      "description": "Implements new features and functionality",
+      "specialization": "feature_development",
       "typical_token_allocation": 15000,
-      "skills": ["threat_modeling", "code_review", "risk_assessment"]
+      "skills": ["design", "implementation", "testing"]
     },
     {
-      "type_id": "fix-worker",
-      "description": "Implements security fixes and patches",
-      "specialization": "security_remediation",
+      "type_id": "bug-fixer",
+      "description": "Diagnoses and fixes bugs",
+      "specialization": "bug_resolution",
+      "typical_token_allocation": 10000,
+      "skills": ["debugging", "root_cause_analysis", "testing"]
+    },
+    {
+      "type_id": "refactorer",
+      "description": "Refactors and improves code quality",
+      "specialization": "code_improvement",
+      "typical_token_allocation": 12000,
+      "skills": ["refactoring", "design_patterns", "best_practices"]
+    },
+    {
+      "type_id": "optimizer",
+      "description": "Optimizes performance and resource usage",
+      "specialization": "performance",
       "typical_token_allocation": 13000,
-      "skills": ["patch_application", "code_fixing", "testing"]
-    },
-    {
-      "type_id": "compliance-worker",
-      "description": "Monitors compliance and generates reports",
-      "specialization": "compliance",
-      "typical_token_allocation": 8000,
-      "skills": ["compliance_checking", "report_generation", "policy_enforcement"]
+      "skills": ["profiling", "optimization", "benchmarking"]
     }
   ],
   "last_updated": "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
@@ -205,7 +199,7 @@ process_handoff() {
     local worker_type=$(select_worker_type "$task_type" "$task_data")
 
     # Spawn worker for this task
-    spawn_security_worker "$task_id" "$worker_type" "$task_data"
+    spawn_development_worker "$task_id" "$worker_type" "$task_data"
 
     # Mark handoff as processed
     mv "$handoff_file" "${handoff_file}.processed"
@@ -216,44 +210,41 @@ select_worker_type() {
     local task_type="$1"
     local task_data="$2"
 
-    local worker_type="scan-worker" # default
+    local worker_type="feature-implementer" # default
 
     # Match task to worker specialization
-    if echo "$task_type" | grep -iE "scan|detect|find.*vulnerability" > /dev/null; then
-        worker_type="scan-worker"
-    elif echo "$task_type" | grep -iE "audit|comprehensive|deep.*analysis" > /dev/null; then
-        worker_type="audit-worker"
-    elif echo "$task_type" | grep -iE "fix|patch|remediate|resolve" > /dev/null; then
-        worker_type="fix-worker"
-    elif echo "$task_type" | grep -iE "compliance|report|policy" > /dev/null; then
-        worker_type="compliance-worker"
-    fi
+    case "$task_type" in
+        *feature*|*implement*)
+            worker_type="feature-implementer"
+            ;;
+        *bug*|*fix*|*error*)
+            worker_type="bug-fixer"
+            ;;
+        *refactor*|*improve*|*cleanup*)
+            worker_type="refactorer"
+            ;;
+        *optimize*|*performance*|*speed*)
+            worker_type="optimizer"
+            ;;
+    esac
 
     log_info "Selected worker type: $worker_type for task type: $task_type"
     echo "$worker_type"
 }
 
-# Spawn a security worker
-spawn_security_worker() {
+# Spawn a development worker
+spawn_development_worker() {
     local task_id="$1"
     local worker_type="$2"
     local task_data="$3"
 
-    local worker_id="sec-worker-$(uuidgen | cut -d'-' -f1)"
-    log_section "Spawning Security Worker: $worker_id"
+    local worker_id="dev-worker-$(uuidgen | cut -d'-' -f1)"
+    log_section "Spawning Development Worker: $worker_id"
 
     # Get worker type configuration
     local worker_types="$MASTER_KB_DIR/worker-types.json"
     local worker_config=$(jq --arg type "$worker_type" '.worker_types[] | select(.type_id == $type)' "$worker_types")
     local token_allocation=$(echo "$worker_config" | jq -r '.typical_token_allocation')
-
-    # RAG: Retrieve relevant vulnerability patterns from knowledge base
-    local relevant_context="{}"
-    local vuln_db="$MASTER_KB_DIR/vulnerability-history.jsonl"
-    if [ -f "$vuln_db" ]; then
-        # Get last 5 similar vulnerabilities
-        relevant_context=$(tail -5 "$vuln_db" 2>/dev/null | jq -s '.' || echo "[]")
-    fi
 
     # Create worker spec with rich context (RAG: augment with knowledge)
     local worker_spec_dir="$SCRIPT_DIR/../coordination/worker-specs/active"
@@ -272,11 +263,9 @@ spawn_security_worker() {
     "expertise_area": "$(echo "$worker_config" | jq -r '.specialization')",
     "skills_required": $(echo "$worker_config" | jq -r '.skills'),
     "knowledge_base_refs": {
-      "vulnerability_database": "$MASTER_KB_DIR/vulnerability-history.jsonl",
-      "remediation_strategies": "$MASTER_KB_DIR/remediation-patterns.json",
-      "false_positives": "$MASTER_KB_DIR/false-positives.json"
-    },
-    "relevant_past_findings": $relevant_context
+      "implementation_patterns": "$MASTER_KB_DIR/implementation-patterns.jsonl",
+      "architecture_docs": "$MASTER_KB_DIR/codebase-architecture.json"
+    }
   },
   "resources": {
     "token_allocation": $token_allocation,
@@ -332,7 +321,7 @@ main() {
 
     # Initialize if needed
     if [ ! -f "$MASTER_CONTEXT_DIR/context/master-state.json" ]; then
-        init_security_master
+        init_development_master
     else
         log_info "$MASTER_NAME already initialized, loading state..."
         update_master_state "status" "active"

@@ -1,0 +1,33 @@
+{
+  "worker_types": [
+    {
+      "type_id": "scan-worker",
+      "description": "Performs comprehensive security scans",
+      "specialization": "vulnerability_detection",
+      "typical_token_allocation": 12000,
+      "skills": ["dependency_scanning", "static_analysis", "secrets_detection"]
+    },
+    {
+      "type_id": "audit-worker",
+      "description": "Conducts detailed security audits",
+      "specialization": "security_auditing",
+      "typical_token_allocation": 15000,
+      "skills": ["threat_modeling", "code_review", "risk_assessment"]
+    },
+    {
+      "type_id": "fix-worker",
+      "description": "Implements security fixes and patches",
+      "specialization": "security_remediation",
+      "typical_token_allocation": 13000,
+      "skills": ["patch_application", "code_fixing", "testing"]
+    },
+    {
+      "type_id": "compliance-worker",
+      "description": "Monitors compliance and generates reports",
+      "specialization": "compliance",
+      "typical_token_allocation": 8000,
+      "skills": ["compliance_checking", "report_generation", "policy_enforcement"]
+    }
+  ],
+  "last_updated": "2025-11-03T19:09:31Z"
+}
