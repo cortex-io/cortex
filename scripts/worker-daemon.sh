@@ -126,18 +126,37 @@ while true; do
                 PROMPT_TEMPLATE=$(jq -r '.prompt_template' "$spec_file")
                 FULL_PROMPT_PATH="$COMMIT_RELAY_HOME/$PROMPT_TEMPLATE"
 
-                # Build command with optional auto-close
-                if [ "$AUTO_CLOSE_WORKERS" = "true" ]; then
-                    # Auto-close tab after completion
-                    TERMINAL_CMD="cd '$COMMIT_RELAY_HOME' && claude-code --prompt-file '$PROMPT_TEMPLATE'; exit"
-                    log_daemon "INFO: Auto-close enabled for $WORKER_ID"
-                else
-                    # Keep tab open
-                    TERMINAL_CMD="cd '$COMMIT_RELAY_HOME' && claude-code --prompt-file '$PROMPT_TEMPLATE'"
-                fi
+                # Build notification command
+                # Since Claude Code doesn't have a CLI, just display instructions
+                TERMINAL_CMD="clear && cat << 'EOF'
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  🤖 Worker Ready: $WORKER_ID
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-                # Launch Claude Code in background with worker prompt
-                # Using osascript to open in new Terminal tab (macOS)
+Task: $TASK_ID
+Type: $WORKER_TYPE
+Repository: $(jq -r '.scope.repository' '$spec_file')
+Token Budget: $(jq -r '.resources.token_budget' '$spec_file')
+
+INSTRUCTIONS:
+1. Open Claude (claude.ai or desktop app)
+2. Use this prompt file:
+
+   $COMMIT_RELAY_HOME/$PROMPT_TEMPLATE
+
+3. Worker will read specification from:
+
+   $COMMIT_RELAY_HOME/coordination/worker-specs/active/$WORKER_ID.json
+
+QUICK START:
+   cd $COMMIT_RELAY_HOME
+   cat $PROMPT_TEMPLATE
+
+Press any key to close this window...
+EOF
+read -n 1"
+
+                # Launch notification in Terminal
                 osascript -e "tell application \"Terminal\"
                     do script \"$TERMINAL_CMD\"
                     activate

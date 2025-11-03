@@ -86,9 +86,18 @@ EVENT_DATA=$(jq -nc \
 broadcast_dashboard_event "worker_started" "$EVENT_DATA"
 
 log_info ""
-log_success "Starting Claude Code with worker prompt..."
+log_info "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+log_info ""
+log_success "Worker is ready! Copy and paste the prompt below into Claude:"
+log_info ""
+log_info "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 log_info ""
 
-# Start Claude Code with the worker prompt
-cd "$COMMIT_RELAY_HOME"
-exec claude-code --prompt-file "$PROMPT_TEMPLATE"
+# Display the prompt file contents
+cat "$COMMIT_RELAY_HOME/$PROMPT_TEMPLATE"
+
+log_info ""
+log_info "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+log_info ""
+log_info "Worker specification: $WORKER_SPEC_PATH"
+log_info ""
