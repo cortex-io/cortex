@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "updated_at": "2025-11-03T01:36:32Z",
+  "updated_at": "2025-11-03T13:53:57Z",
   "tasks": [
     {
       "id": "task-001",
@@ -580,8 +580,8 @@
       "title": "Autonomous flow test: mcp-server-unifi security rescan",
       "type": "security-scan",
       "priority": "high",
-      "status": "pending",
-      "assigned_to": null,
+      "status": "scan_worker_spawned",
+      "assigned_to": "security",
       "created_at": "2025-11-03T01:36:32Z",
       "created_by": "autonomous-test",
       "context": {
@@ -594,6 +594,27 @@
           "secrets"
         ],
         "test_objective": "Validate end-to-end autonomous operation with zero manual intervention"
+      },
+      "updated_at": "2025-11-02T19:36:56-06:00"
+    },
+    {
+      "id": "task-012",
+      "title": "Test task CLI - automated security scan",
+      "type": "security-scan",
+      "priority": "medium",
+      "status": "pending",
+      "assigned_to": null,
+      "created_at": "2025-11-03T13:53:57Z",
+      "created_by": "create-task-cli",
+      "context": {
+        "repository": "ry-ops/commit-relay",
+        "branch": "main",
+        "description": "Test task CLI - automated security scan",
+        "scan_types": [
+          "dependencies",
+          "static-analysis",
+          "secrets"
+        ]
       }
     }
   ]
