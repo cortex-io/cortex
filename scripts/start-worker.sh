@@ -91,5 +91,6 @@ log_success "Starting Claude CLI with prompt..."
 log_info "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 log_info ""
 
-# Launch Claude CLI with prompt file via stdin in print mode
-cat "$COMMIT_RELAY_HOME/$PROMPT_TEMPLATE" | claude --print
+# Launch Claude CLI in interactive mode with prompt
+# Workers need full tool access, not print mode
+claude "$(cat "$COMMIT_RELAY_HOME/$PROMPT_TEMPLATE")"
