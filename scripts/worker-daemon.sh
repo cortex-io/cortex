@@ -126,9 +126,10 @@ while true; do
                 PROMPT_TEMPLATE=$(jq -r '.prompt_template' "$spec_file")
                 FULL_PROMPT_PATH="$COMMIT_RELAY_HOME/$PROMPT_TEMPLATE"
 
-                # Build launch command using Claude CLI in print mode with stdin
-                # Note: We use --print mode to support non-interactive execution
-                TERMINAL_CMD="cd $COMMIT_RELAY_HOME && cat $PROMPT_TEMPLATE | claude --print"
+                # Build launch command using Claude CLI
+                # Note: Workers need interactive mode for tool usage, not --print mode
+                # The prompt file is passed as an argument to start a conversation
+                TERMINAL_CMD="cd $COMMIT_RELAY_HOME && claude \"\$(cat $PROMPT_TEMPLATE)\""
 
                 # Launch Claude CLI in Terminal
                 osascript -e "tell application \"Terminal\"
