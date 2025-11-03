@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "updated_at": "2025-11-03T14:11:29Z",
+  "updated_at": "2025-11-03T14:16:44Z",
   "tasks": [
     {
       "id": "task-001",
@@ -613,6 +613,26 @@
         ]
       },
       "updated_at": "2025-11-03T08:12:24-06:00"
+    },
+    {
+      "id": "task-012",
+      "title": "FINAL TEST - Validate stdin pipe fix for Claude CLI",
+      "type": "security-scan",
+      "priority": "high",
+      "status": "pending",
+      "assigned_to": null,
+      "created_at": "2025-11-03T14:16:44Z",
+      "created_by": "create-task-cli",
+      "context": {
+        "repository": "ry-ops/mcp-server-unifi",
+        "branch": "main",
+        "description": "FINAL TEST - Validate stdin pipe fix for Claude CLI",
+        "scan_types": [
+          "dependencies",
+          "static-analysis",
+          "secrets"
+        ]
+      }
     }
   ]
 }
