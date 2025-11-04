@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "updated_at": "2025-11-04T16:48:37Z",
+  "updated_at": "2025-11-04T22:15:13Z",
   "tasks": [
     {
       "id": "task-001",
@@ -887,7 +887,12 @@
         ],
         "technical_improvements": {
           "active_workers_logic": "Filter by (status=running/active AND recent_activity<5min) OR has_session_id",
-          "success_rate_periods": ["current_run", "last_24h", "last_7d", "all_time"],
+          "success_rate_periods": [
+            "current_run",
+            "last_24h",
+            "last_7d",
+            "all_time"
+          ],
           "api_enhancement": "Added ?period query parameter to /api/metrics endpoint",
           "ui_components": "Clickable success rate card with dropdown period selector"
         },
@@ -949,10 +954,26 @@
           "workers_percentage": 79.2,
           "resets_at": "daily at midnight",
           "individual_masters": {
-            "coordinator": {"allocated": 50000, "used": 5000, "worker_pool": 30000},
-            "security": {"allocated": 30000, "used": 2500, "worker_pool": 15000},
-            "development": {"allocated": 30000, "used": 6000, "worker_pool": 20000},
-            "inventory": {"allocated": 35000, "used": 0, "worker_pool": 15000}
+            "coordinator": {
+              "allocated": 50000,
+              "used": 5000,
+              "worker_pool": 30000
+            },
+            "security": {
+              "allocated": 30000,
+              "used": 2500,
+              "worker_pool": 15000
+            },
+            "development": {
+              "allocated": 30000,
+              "used": 6000,
+              "worker_pool": 20000
+            },
+            "inventory": {
+              "allocated": 35000,
+              "used": 0,
+              "worker_pool": 15000
+            }
           }
         },
         "deliverables": [
@@ -1065,7 +1086,7 @@
       "title": "Implement CI/CD Agent and Multi-Workforce Streams Architecture",
       "type": "development",
       "priority": "critical",
-      "status": "in_progress",
+      "status": "completed",
       "assigned_to": "development-master",
       "assigned_by": "coordinator-master",
       "assigned_at": "2025-11-04T17:50:00Z",
@@ -1263,7 +1284,6 @@
         "reason": "Verify CI/CD agent integration and multi-stream architecture functionality"
       },
       "completed_at": "2025-11-04T18:45:00Z",
-      "status": "completed",
       "results": {
         "status": "SUCCESS",
         "phases_completed": 3,
@@ -1325,35 +1345,48 @@
             "priority": 1,
             "max_workers": 5,
             "token_budget": 20000,
-            "assigned_masters": ["security", "cicd"]
+            "assigned_masters": [
+              "security",
+              "cicd"
+            ]
           },
           "stream_b": {
             "name": "Standard Development",
             "priority": 2,
             "max_workers": 5,
             "token_budget": 20000,
-            "assigned_masters": ["development", "inventory"]
+            "assigned_masters": [
+              "development",
+              "inventory"
+            ]
           },
           "stream_c": {
             "name": "Background/Maintenance",
             "priority": 3,
             "max_workers": 5,
             "token_budget": 15000,
-            "assigned_masters": ["security", "inventory"]
+            "assigned_masters": [
+              "security",
+              "inventory"
+            ]
           },
           "stream_d": {
             "name": "CI/CD Pipeline",
             "priority": 1,
             "max_workers": 5,
             "token_budget": 25000,
-            "assigned_masters": ["cicd"]
+            "assigned_masters": [
+              "cicd"
+            ]
           },
           "stream_e": {
             "name": "Security/Audit",
             "priority": 2,
             "max_workers": 5,
             "token_budget": 20000,
-            "assigned_masters": ["security"]
+            "assigned_masters": [
+              "security"
+            ]
           }
         },
         "dashboard_enhancements": {
@@ -1490,7 +1523,12 @@
         ],
         "features_implemented": {
           "overview_layout": "Token Budget (1/3) + Events Feed (2/3) - Recent Tasks removed",
-          "task_event_types": ["task_created", "task_assigned", "task_completed", "task_failed"],
+          "task_event_types": [
+            "task_created",
+            "task_assigned",
+            "task_completed",
+            "task_failed"
+          ],
           "event_colors": {
             "task_created": "blue dot",
             "task_assigned": "purple dot",
@@ -1607,7 +1645,13 @@
             "schema_addition": {
               "dashboard_update": {
                 "required": true,
-                "components": ["events", "metrics", "tasks", "workers", "streams"],
+                "components": [
+                  "events",
+                  "metrics",
+                  "tasks",
+                  "workers",
+                  "streams"
+                ],
                 "priority": "immediate|batched",
                 "validation_required": true
               }
@@ -1778,10 +1822,23 @@
         ],
         "handoff_schema": {
           "type": "dashboard_deployment",
-          "components": ["events", "metrics", "tasks", "workers", "streams"],
-          "priority_levels": ["immediate", "batched"],
+          "components": [
+            "events",
+            "metrics",
+            "tasks",
+            "workers",
+            "streams"
+          ],
+          "priority_levels": [
+            "immediate",
+            "batched"
+          ],
           "validation_required": true,
-          "from_masters": ["development", "security", "inventory"],
+          "from_masters": [
+            "development",
+            "security",
+            "inventory"
+          ],
           "to_master": "cicd"
         },
         "dashboard_worker_capabilities": {
@@ -1819,6 +1876,26 @@
         "estimated_tokens_used": 15000,
         "actual_duration_minutes": 30,
         "implementation_quality": "EXCELLENT"
+      }
+    },
+    {
+      "id": "",
+      "title": "Security scan after dashboard improvements - verify no new vulnerabilities introduced",
+      "type": "security-scan",
+      "priority": "high",
+      "status": "pending",
+      "assigned_to": null,
+      "created_at": "2025-11-04T22:15:13Z",
+      "created_by": "create-task-cli",
+      "context": {
+        "repository": "ry-ops/commit-relay",
+        "branch": "main",
+        "description": "Security scan after dashboard improvements - verify no new vulnerabilities introduced",
+        "scan_types": [
+          "dependencies",
+          "static-analysis",
+          "secrets"
+        ]
       }
     }
   ]
