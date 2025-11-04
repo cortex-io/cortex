@@ -1,6 +1,7 @@
 {
-  "version": "1.0",
-  "updated_at": "2025-11-03T14:19:35Z",
+  "version": "1.1",
+  "updated_at": "2025-11-04T18:00:00Z",
+  "workforce_streams_enabled": true,
   "active_workers": [],
   "completed_workers": [
     {
@@ -77,5 +78,44 @@
     "total_failed_today": 0,
     "avg_duration_minutes": 6.7,
     "avg_tokens_used": 5667
+  },
+  "stream_assignments": {
+    "stream-a": {
+      "active_workers": 0,
+      "max_workers": 5,
+      "queued_tasks": 0,
+      "workers": []
+    },
+    "stream-b": {
+      "active_workers": 0,
+      "max_workers": 5,
+      "queued_tasks": 0,
+      "workers": []
+    },
+    "stream-c": {
+      "active_workers": 0,
+      "max_workers": 5,
+      "queued_tasks": 0,
+      "workers": []
+    },
+    "stream-d": {
+      "active_workers": 0,
+      "max_workers": 5,
+      "queued_tasks": 0,
+      "workers": []
+    },
+    "stream-e": {
+      "active_workers": 0,
+      "max_workers": 5,
+      "queued_tasks": 0,
+      "workers": []
+    }
+  },
+  "pool_config": {
+    "total_capacity": 25,
+    "emergency_pool": 5,
+    "available_workers": 25,
+    "allocation_strategy": "dynamic",
+    "rebalance_interval_seconds": 300
   }
 }

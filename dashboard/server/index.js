@@ -407,6 +407,29 @@ app.get('/api/metrics', async (req, res) => {
 });
 
 /**
+ * GET /api/streams
+ * Get workforce streams data and metrics
+ */
+app.get('/api/streams', async (req, res) => {
+  try {
+    const streamsPath = path.join(__dirname, '../../coordination/workforce-streams.json');
+    const streams = await readJSON(streamsPath);
+
+    if (!streams) {
+      return res.status(404).json({
+        error: 'Workforce streams not configured',
+        details: 'workforce-streams.json not found'
+      });
+    }
+
+    res.json(streams);
+  } catch (error) {
+    console.error('Error loading workforce streams:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+/**
  * GET /api/coordination/raw
  * Get raw coordination data (for debugging)
  */

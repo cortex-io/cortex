@@ -58,17 +58,42 @@ log_info ""
 # Verify agents are installed
 log_section "Verifying Claude Code Agents"
 AGENTS_DIR="$COMMIT_RELAY_HOME/.claude/agents"
+REQUIRED_AGENTS=("coordinator-master" "security-master" "development-master" "inventory-master" "cicd-master")
+MISSING_AGENTS=()
+
 if [ -d "$AGENTS_DIR" ]; then
     AGENT_COUNT=$(find "$AGENTS_DIR" -name "*.md" -type f | wc -l | tr -d ' ')
     log_success "Found $AGENT_COUNT agents in .claude/agents/"
+
+    # Check for required master agents
+    for agent_name in "${REQUIRED_AGENTS[@]}"; do
+        if [ -f "$AGENTS_DIR/${agent_name}.md" ]; then
+            log_info "  ✓ $agent_name"
+        else
+            log_warn "  ✗ $agent_name (MISSING)"
+            MISSING_AGENTS+=("$agent_name")
+        fi
+    done
+
+    # Check for any additional agents
     for agent_file in "$AGENTS_DIR"/*.md; do
         if [ -f "$agent_file" ]; then
             agent_name=$(basename "$agent_file" .md)
-            log_info "  ✓ $agent_name"
+            # Skip if already checked in required agents
+            if [[ ! " ${REQUIRED_AGENTS[@]} " =~ " ${agent_name} " ]]; then
+                log_info "  ✓ $agent_name"
+            fi
         fi
     done
+
+    # Warn if missing required agents
+    if [ ${#MISSING_AGENTS[@]} -gt 0 ]; then
+        log_warn "Missing ${#MISSING_AGENTS[@]} required master agent(s)"
+        log_info "Run: ./scripts/install-agents.sh to install missing agents"
+    fi
 else
     log_warn "No agents directory found at .claude/agents/"
+    log_info "Run: ./scripts/install-agents.sh to install agents"
 fi
 log_info ""
 
