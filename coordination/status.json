@@ -21,7 +21,10 @@
     "development-agent": {
       "status": "active",
       "last_checkin": "2025-10-31T19:40:00Z",
-      "current_tasks": ["task-006", "task-008"],
+      "current_tasks": [
+        "task-006",
+        "task-008"
+      ],
       "completed_today": 3,
       "blocked_tasks": [],
       "next_scheduled_checkin": "2025-11-01T09:00:00Z"
@@ -33,5 +36,9 @@
     "blocked_tasks": 0,
     "agents_online": 3,
     "last_human_interaction": "2025-10-31T19:25:00Z"
+  },
+  "dashboard_agent": {
+    "status": "healthy",
+    "last_check": "2025-11-04T09:48:43-06:00"
   }
 }

@@ -30,6 +30,57 @@ fi
 
 log_info ""
 
+# Launch Dashboard Agent
+log_section "Starting Dashboard Agent"
+if pgrep -f "dashboard-agent-monitor.sh" > /dev/null; then
+    log_info "Dashboard agent already running"
+else
+    log_info "Launching dashboard agent in background..."
+    nohup "$SCRIPT_DIR/dashboard-agent-monitor.sh" > /dev/null 2>&1 &
+    DASHBOARD_PID=$!
+    log_success "Dashboard agent started (PID: $DASHBOARD_PID)"
+fi
+log_info ""
+
+# Launch Dashboard Server
+log_section "Starting Dashboard Server"
+DASHBOARD_PORT="${DASHBOARD_PORT:-3000}"
+if lsof -i :$DASHBOARD_PORT > /dev/null 2>&1; then
+    log_info "Dashboard server already running on port $DASHBOARD_PORT"
+else
+    log_info "Launching dashboard server on port $DASHBOARD_PORT..."
+    mkdir -p "$COMMIT_RELAY_HOME/agents/logs/system"
+    cd "$COMMIT_RELAY_HOME/dashboard"
+    nohup node server/index.js > "$COMMIT_RELAY_HOME/agents/logs/system/dashboard-server.log" 2>&1 &
+    DASHBOARD_SERVER_PID=$!
+    cd "$COMMIT_RELAY_HOME"
+    sleep 2
+    if lsof -i :$DASHBOARD_PORT > /dev/null 2>&1; then
+        log_success "Dashboard server started (PID: $DASHBOARD_SERVER_PID)"
+        log_info "Dashboard UI: http://localhost:$DASHBOARD_PORT/"
+    else
+        log_warn "Dashboard server may have failed to start. Check logs at agents/logs/system/dashboard-server.log"
+    fi
+fi
+log_info ""
+
+# Verify agents are installed
+log_section "Verifying Claude Code Agents"
+AGENTS_DIR="$COMMIT_RELAY_HOME/.claude/agents"
+if [ -d "$AGENTS_DIR" ]; then
+    AGENT_COUNT=$(find "$AGENTS_DIR" -name "*.md" -type f | wc -l | tr -d ' ')
+    log_success "Found $AGENT_COUNT agents in .claude/agents/"
+    for agent_file in "$AGENTS_DIR"/*.md; do
+        if [ -f "$agent_file" ]; then
+            agent_name=$(basename "$agent_file" .md)
+            log_info "  ✓ $agent_name"
+        fi
+    done
+else
+    log_warn "No agents directory found at .claude/agents/"
+fi
+log_info ""
+
 # Check for pending workers
 log_section "Checking for Pending Workers"
 
@@ -57,6 +108,9 @@ if [ "$PENDING_COUNT" -eq 0 ]; then
     log_info ""
     log_section "System Status"
     log_info "Commit-Relay is ready"
+    log_info "Dashboard agent is monitoring coordination state"
+    log_info "Dashboard UI: http://localhost:${DASHBOARD_PORT:-3000}/"
+    log_info ""
     log_info "To create tasks, use: scripts/create-task.sh"
     log_info "To run master agents, use: scripts/run-*-master.sh"
     exit 0
