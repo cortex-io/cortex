@@ -14,6 +14,9 @@
     <!-- ApexCharts -->
     <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
 
+    <!-- Chart.js for metrics page -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
     <!-- Lucide Icons -->
     <script src="https://unpkg.com/lucide@latest"></script>
 
@@ -146,6 +149,10 @@
                 <i data-lucide="crown" class="w-5 h-5"></i>
                 <span :class="currentView === 'masters' ? 'font-medium' : ''">Masters</span>
             </button>
+            <button @click="switchView('metrics')" class="w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors" :class="currentView === 'metrics' ? 'bg-primary-50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-300' : 'hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300'">
+                <i data-lucide="bar-chart-3" class="w-5 h-5"></i>
+                <span :class="currentView === 'metrics' ? 'font-medium' : ''">Metrics</span>
+            </button>
         </nav>
 
         <!-- Theme toggle -->
@@ -169,7 +176,8 @@
                         'workers': 'Worker Pool',
                         'tasks': 'Task Queue',
                         'events': 'Event Stream',
-                        'masters': 'Master Agents'
+                        'masters': 'Master Agents',
+                        'metrics': 'Analytics & Metrics'
                     }[currentView]"></h2>
                     <p class="text-sm text-gray-500 dark:text-gray-400" x-text="'Last updated: ' + lastUpdate"></p>
                 </div>
@@ -208,7 +216,7 @@
                 </div>
 
                 <!-- Success Rate -->
-                <div @click="togglePeriodSelector()" class="period-selector-card relative overflow-hidden bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 border border-gray-200 dark:border-gray-700 hover:shadow-xl hover:-translate-y-1 transition-all cursor-pointer">
+                <div @click="switchView('metrics')" class="period-selector-card relative overflow-hidden bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 border border-gray-200 dark:border-gray-700 hover:shadow-xl hover:-translate-y-1 transition-all cursor-pointer">
                     <i data-lucide="check-circle" class="absolute -right-4 -bottom-4 w-32 h-32 text-green-100 dark:text-green-900/20 opacity-50"></i>
                     <div class="relative z-10">
                         <div class="flex items-center justify-between mb-2">
@@ -621,6 +629,87 @@
                                 <dd class="text-sm font-medium text-gray-900 dark:text-white" x-text="(metrics.masters?.inventory?.workerPool || 0).toLocaleString()"></dd>
                             </div>
                         </dl>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Metrics View -->
+            <div x-show="currentView === 'metrics'" x-transition>
+                <div class="space-y-6">
+                    <!-- Top row: Pie Chart and Pareto Chart -->
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <!-- Pie Chart: Worker Status Distribution -->
+                        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 border border-gray-200 dark:border-gray-700">
+                            <div class="flex items-center justify-between mb-4">
+                                <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Worker Status Distribution</h3>
+                                <i data-lucide="pie-chart" class="w-5 h-5 text-gray-400"></i>
+                            </div>
+                            <div class="h-64">
+                                <canvas id="pieChart"></canvas>
+                            </div>
+                        </div>
+
+                        <!-- Pareto Chart: Task Types by Completion -->
+                        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 border border-gray-200 dark:border-gray-700">
+                            <div class="flex items-center justify-between mb-4">
+                                <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Task Types (Pareto Analysis)</h3>
+                                <i data-lucide="bar-chart-4" class="w-5 h-5 text-gray-400"></i>
+                            </div>
+                            <div class="h-64">
+                                <canvas id="paretoChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Middle row: Area Chart and Stacked Area Chart -->
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <!-- Area Chart: Token Usage Over Time -->
+                        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 border border-gray-200 dark:border-gray-700">
+                            <div class="flex items-center justify-between mb-4">
+                                <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Token Usage Trend</h3>
+                                <i data-lucide="trending-up" class="w-5 h-5 text-gray-400"></i>
+                            </div>
+                            <div class="h-64">
+                                <canvas id="areaChart"></canvas>
+                            </div>
+                        </div>
+
+                        <!-- Stacked Area Chart: Master Agent Activity -->
+                        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 border border-gray-200 dark:border-gray-700">
+                            <div class="flex items-center justify-between mb-4">
+                                <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Master Agent Activity</h3>
+                                <i data-lucide="layers" class="w-5 h-5 text-gray-400"></i>
+                            </div>
+                            <div class="h-64">
+                                <canvas id="stackedAreaChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Bottom row: Scatter Plot and Radar Chart -->
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <!-- Scatter Plot: Task Duration vs Token Usage -->
+                        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 border border-gray-200 dark:border-gray-700">
+                            <div class="flex items-center justify-between mb-4">
+                                <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Efficiency Analysis</h3>
+                                <i data-lucide="scatter-chart" class="w-5 h-5 text-gray-400"></i>
+                            </div>
+                            <div class="h-64">
+                                <canvas id="scatterChart"></canvas>
+                            </div>
+                            <p class="text-xs text-gray-500 dark:text-gray-400 mt-2">Task Duration (min) vs Token Usage</p>
+                        </div>
+
+                        <!-- Radar Chart: System Health Metrics -->
+                        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 border border-gray-200 dark:border-gray-700">
+                            <div class="flex items-center justify-between mb-4">
+                                <h3 class="text-lg font-semibold text-gray-900 dark:text-white">System Health Score</h3>
+                                <i data-lucide="radar" class="w-5 h-5 text-gray-400"></i>
+                            </div>
+                            <div class="h-64">
+                                <canvas id="radarChart"></canvas>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
