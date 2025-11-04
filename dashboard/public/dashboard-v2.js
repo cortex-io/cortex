@@ -316,61 +316,37 @@ function dashboard() {
 
             const options = {
                 series: [
-                    this.metrics.tokens?.mastersUsed || 0,
-                    this.metrics.tokens?.workersAllocated || 0,
                     this.metrics.tokens?.available || 0,
-                    this.metrics.tokens?.emergencyReserve || 0
+                    this.metrics.tokens?.used || 0
                 ],
                 chart: {
-                    type: 'donut',
-                    height: 280,
+                    type: 'pie',
+                    height: 300,
                     background: 'transparent',
                     fontFamily: 'inherit',
                 },
-                labels: ['Masters', 'Workers', 'Available', 'Reserve'],
-                colors: ['#667eea', '#ed8936', '#48bb78', '#9f7aea'],
+                labels: ['Available', 'Used'],
+                colors: ['#10B981', '#3B82F6'],
                 legend: {
-                    show: true,
-                    position: 'bottom',
-                    labels: {
-                        colors: textColor
-                    }
+                    show: false
                 },
                 dataLabels: {
-                    enabled: false
+                    enabled: true,
+                    formatter: function(val, opts) {
+                        return Math.round(val) + '%';
+                    },
+                    style: {
+                        fontSize: '14px',
+                        fontWeight: 'bold',
+                        colors: ['#fff']
+                    },
+                    dropShadow: {
+                        enabled: false
+                    }
                 },
                 plotOptions: {
                     pie: {
-                        donut: {
-                            size: '70%',
-                            labels: {
-                                show: true,
-                                name: {
-                                    show: true,
-                                    color: textColor,
-                                    fontSize: '14px'
-                                },
-                                value: {
-                                    show: true,
-                                    color: textColor,
-                                    fontSize: '24px',
-                                    fontWeight: 'bold',
-                                    formatter: function (val) {
-                                        return Math.round(val).toLocaleString();
-                                    }
-                                },
-                                total: {
-                                    show: true,
-                                    label: 'Total',
-                                    color: textColor,
-                                    fontSize: '14px',
-                                    formatter: function (w) {
-                                        const total = w.globals.seriesTotals.reduce((a, b) => a + b, 0);
-                                        return Math.round(total).toLocaleString();
-                                    }
-                                }
-                            }
-                        }
+                        expandOnClick: false
                     }
                 },
                 tooltip: {
@@ -380,6 +356,11 @@ function dashboard() {
                             return Math.round(val).toLocaleString() + ' tokens';
                         }
                     }
+                },
+                stroke: {
+                    show: true,
+                    width: 2,
+                    colors: isDark ? ['#1F2937'] : ['#fff']
                 }
             };
 
@@ -391,10 +372,8 @@ function dashboard() {
             if (!this.tokenChart) return;
 
             this.tokenChart.updateSeries([
-                this.metrics.tokens?.mastersUsed || 0,
-                this.metrics.tokens?.workersAllocated || 0,
                 this.metrics.tokens?.available || 0,
-                this.metrics.tokens?.emergencyReserve || 0
+                this.metrics.tokens?.used || 0
             ]);
         },
 
@@ -900,31 +879,6 @@ function dashboard() {
             return `${hours}h ${minutes}m`;
         },
 
-        getMastersPercentage() {
-            const used = this.metrics.tokens?.mastersUsed || 0;
-            const allocated = this.metrics.tokens?.mastersAllocated || 145000;
-            return Math.round((used / allocated) * 100 * 10) / 10; // One decimal place
-        },
-
-        getWorkersPercentage() {
-            const used = this.metrics.tokens?.workersUsed || 0;
-            const allocated = this.metrics.tokens?.workerPoolTotal || 80000;
-            return Math.round((used / allocated) * 100 * 10) / 10; // One decimal place
-        },
-
-        getProgressBarColor(percentage, baseColor = 'blue') {
-            if (percentage >= 80) {
-                return 'bg-red-500 dark:bg-red-600';
-            } else if (percentage >= 50) {
-                return 'bg-yellow-500 dark:bg-yellow-600';
-            } else {
-                // Return appropriate color for base
-                if (baseColor === 'green') {
-                    return 'bg-green-500 dark:bg-green-600';
-                }
-                return 'bg-blue-500 dark:bg-blue-600';
-            }
-        }
     };
 }
 
