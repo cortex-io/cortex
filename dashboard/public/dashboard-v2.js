@@ -14,6 +14,8 @@ function dashboard() {
         lastUpdateTimestamp: null,
         dataFreshness: 'fresh', // fresh, stale, very-stale
         currentView: 'overview', // overview, workers, tasks, events, masters
+        successRatePeriod: localStorage.getItem('successRatePeriod') || 'all_time',
+        showPeriodSelector: false,
 
         // Data
         metrics: {
@@ -55,6 +57,13 @@ function dashboard() {
             // Initialize charts
             this.$nextTick(() => {
                 this.initCharts();
+            });
+
+            // Add click listener to close period selector when clicking outside
+            document.addEventListener('click', (e) => {
+                if (this.showPeriodSelector && !e.target.closest('.period-selector-card')) {
+                    this.showPeriodSelector = false;
+                }
             });
 
             this.loading = false;
@@ -135,11 +144,41 @@ function dashboard() {
             }
         },
 
+        // Success rate period management
+        getPeriodLabel(period) {
+            const labels = {
+                'current_run': 'Current Run',
+                'last_24h': 'Last 24 Hours',
+                'last_7d': 'Last 7 Days',
+                'all_time': 'All Time'
+            };
+            return labels[period] || 'All Time';
+        },
+
+        async changeSuccessRatePeriod(newPeriod) {
+            this.successRatePeriod = newPeriod;
+            localStorage.setItem('successRatePeriod', newPeriod);
+            this.showPeriodSelector = false;
+
+            // Fetch new metrics with selected period
+            try {
+                const res = await fetch(`/api/metrics?period=${newPeriod}`);
+                const metrics = await res.json();
+                this.updateMetrics(metrics);
+            } catch (error) {
+                console.error('Error fetching metrics for period:', error);
+            }
+        },
+
+        togglePeriodSelector() {
+            this.showPeriodSelector = !this.showPeriodSelector;
+        },
+
         // Data fetching
         async fetchInitialData() {
             try {
-                // Fetch metrics
-                const metricsRes = await fetch('/api/metrics');
+                // Fetch metrics with selected period
+                const metricsRes = await fetch(`/api/metrics?period=${this.successRatePeriod}`);
                 const metrics = await metricsRes.json();
                 this.updateMetrics(metrics);
 

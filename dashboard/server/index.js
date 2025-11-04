@@ -153,23 +153,114 @@ async function getDaemonStatus() {
 }
 
 /**
+ * Calculate success rate for different time periods
+ */
+function calculateSuccessRate(workerPool, period = 'all_time') {
+  const now = Date.now();
+  const completed = workerPool.completed_workers || [];
+  const failed = workerPool.failed_workers || [];
+  const active = workerPool.active_workers || [];
+
+  let filteredCompleted = [];
+  let filteredFailed = [];
+  let filteredActive = [];
+
+  // Filter workers based on time period
+  switch (period) {
+    case 'current_run':
+      // Only active workers
+      filteredActive = active.filter(w => w.status === 'running' || w.status === 'active');
+      break;
+
+    case 'last_24h':
+      const day_ago = now - (24 * 60 * 60 * 1000);
+      filteredCompleted = completed.filter(w => {
+        const completedAt = new Date(w.completed_at).getTime();
+        return completedAt >= day_ago;
+      });
+      filteredFailed = failed.filter(w => {
+        const failedAt = new Date(w.completed_at || w.failed_at).getTime();
+        return failedAt >= day_ago;
+      });
+      break;
+
+    case 'last_7d':
+      const week_ago = now - (7 * 24 * 60 * 60 * 1000);
+      filteredCompleted = completed.filter(w => {
+        const completedAt = new Date(w.completed_at).getTime();
+        return completedAt >= week_ago;
+      });
+      filteredFailed = failed.filter(w => {
+        const failedAt = new Date(w.completed_at || w.failed_at).getTime();
+        return failedAt >= week_ago;
+      });
+      break;
+
+    case 'all_time':
+    default:
+      filteredCompleted = completed;
+      filteredFailed = failed;
+      break;
+  }
+
+  const totalCompleted = filteredCompleted.length;
+  const totalFailed = filteredFailed.length;
+  const totalActive = filteredActive.length;
+  const total = totalCompleted + totalFailed + totalActive;
+
+  const rate = total > 0 ? ((totalCompleted / total) * 100).toFixed(1) : 0;
+
+  return {
+    rate: parseFloat(rate),
+    completed: totalCompleted,
+    failed: totalFailed,
+    active: totalActive,
+    total: total,
+    period: period
+  };
+}
+
+/**
  * Calculate dashboard metrics from coordination data
  */
-function calculateMetrics(data) {
+function calculateMetrics(data, successRatePeriod = 'all_time') {
   const { workerPool, tokenBudget, taskQueue } = data;
 
   if (!workerPool || !tokenBudget || !taskQueue) {
     return null;
   }
 
-  // Worker metrics
-  const activeWorkers = workerPool.active_workers?.length || 0;
+  // Worker metrics - Fix: Filter active workers by actual running status
+  // A worker is truly active only if it has status='running' AND recent activity (< 5 minutes)
+  const now = Date.now();
+  const ACTIVE_THRESHOLD_MS = 5 * 60 * 1000; // 5 minutes
+
+  const activeWorkers = (workerPool.active_workers || []).filter(worker => {
+    // Worker must have 'running' status or recent heartbeat
+    const hasRunningStatus = worker.status === 'running' || worker.status === 'active';
+
+    // Check if worker has recent activity
+    const lastActivity = worker.last_heartbeat || worker.spawned_at;
+    if (!lastActivity) return hasRunningStatus;
+
+    const activityTime = new Date(lastActivity).getTime();
+    const isRecentlyActive = (now - activityTime) < ACTIVE_THRESHOLD_MS;
+
+    // Must be both running and recently active, OR have a session_id (actively executing)
+    return (hasRunningStatus && isRecentlyActive) || worker.session_id;
+  }).length;
+
   const completedWorkers = workerPool.completed_workers?.length || 0;
   const failedWorkers = workerPool.failed_workers?.length || 0;
-  const totalWorkers = activeWorkers + completedWorkers + failedWorkers;
-  const successRate = totalWorkers > 0
-    ? ((completedWorkers / totalWorkers) * 100).toFixed(1)
-    : 0;
+
+  // Calculate success rate based on selected time period
+  const successRateData = calculateSuccessRate(
+    workerPool,
+    successRatePeriod
+  );
+
+  const totalWorkers = successRateData.total;
+  const successRate = successRateData.rate;
 
   // Token metrics
   const totalBudget = tokenBudget.total_budget || 200000;
@@ -225,10 +316,12 @@ function calculateMetrics(data) {
   return {
     workers: {
       active: activeWorkers,
-      completed: completedWorkers,
-      failed: failedWorkers,
+      completed: successRateData.completed,
+      failed: successRateData.failed,
       total: totalWorkers,
       successRate: parseFloat(successRate),
+      successRatePeriod: successRatePeriod,
+      successRateDetails: successRateData,
       avgDuration: workerPool.stats?.avg_duration_minutes || 0,
       avgTokens: workerPool.stats?.avg_tokens_used || 0
     },
@@ -272,11 +365,14 @@ app.get('/api/health', (req, res) => {
 /**
  * GET /api/metrics
  * Get current system metrics (serves from cache)
+ * Query params:
+ *   - period: success_rate_period (current_run, last_24h, last_7d, all_time)
  */
 app.get('/api/metrics', async (req, res) => {
   try {
+    const period = req.query.period || 'all_time';
     const data = await loadCoordinationData(false); // Use cache
-    const metrics = calculateMetrics(data);
+    const metrics = calculateMetrics(data, period);
 
     if (!metrics) {
       return res.status(500).json({

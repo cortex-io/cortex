@@ -208,14 +208,49 @@
                 </div>
 
                 <!-- Success Rate -->
-                <div class="relative overflow-hidden bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 border border-gray-200 dark:border-gray-700 hover:shadow-xl hover:-translate-y-1 transition-all cursor-pointer">
+                <div @click="togglePeriodSelector()" class="period-selector-card relative overflow-hidden bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 border border-gray-200 dark:border-gray-700 hover:shadow-xl hover:-translate-y-1 transition-all cursor-pointer">
                     <i data-lucide="check-circle" class="absolute -right-4 -bottom-4 w-32 h-32 text-green-100 dark:text-green-900/20 opacity-50"></i>
                     <div class="relative z-10">
-                        <p class="text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">Success Rate</p>
+                        <div class="flex items-center justify-between mb-2">
+                            <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Success Rate</p>
+                            <i data-lucide="calendar" class="w-4 h-4 text-gray-400 dark:text-gray-500"></i>
+                        </div>
                         <p class="text-4xl font-bold text-gray-900 dark:text-white mb-1" x-text="(metrics.workers?.successRate || 0) + '%'"></p>
-                        <p class="text-xs text-gray-500 dark:text-gray-400">
-                            Avg duration: <span class="font-medium text-blue-600 dark:text-blue-400" x-text="(metrics.workers?.avgDuration || 0).toFixed(1)"></span>min
+                        <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">
+                            <span class="font-medium text-primary-600 dark:text-primary-400" x-text="getPeriodLabel(successRatePeriod)"></span>
                         </p>
+                        <p class="text-xs text-gray-500 dark:text-gray-400">
+                            <span class="font-medium text-green-600 dark:text-green-400" x-text="metrics.workers?.successRateDetails?.completed || 0"></span> /
+                            <span class="font-medium text-gray-600 dark:text-gray-400" x-text="metrics.workers?.successRateDetails?.total || 0"></span> workers
+                        </p>
+                    </div>
+
+                    <!-- Period Selector Dropdown -->
+                    <div x-show="showPeriodSelector" @click.stop class="absolute top-full left-0 right-0 mt-2 bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700 z-50 overflow-hidden">
+                        <button @click="changeSuccessRatePeriod('current_run')" class="w-full px-4 py-3 text-left text-sm hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors" :class="successRatePeriod === 'current_run' ? 'bg-primary-50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-300 font-medium' : 'text-gray-700 dark:text-gray-300'">
+                            <div class="flex items-center justify-between">
+                                <span>Current Run</span>
+                                <i x-show="successRatePeriod === 'current_run'" data-lucide="check" class="w-4 h-4"></i>
+                            </div>
+                        </button>
+                        <button @click="changeSuccessRatePeriod('last_24h')" class="w-full px-4 py-3 text-left text-sm hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors" :class="successRatePeriod === 'last_24h' ? 'bg-primary-50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-300 font-medium' : 'text-gray-700 dark:text-gray-300'">
+                            <div class="flex items-center justify-between">
+                                <span>Last 24 Hours</span>
+                                <i x-show="successRatePeriod === 'last_24h'" data-lucide="check" class="w-4 h-4"></i>
+                            </div>
+                        </button>
+                        <button @click="changeSuccessRatePeriod('last_7d')" class="w-full px-4 py-3 text-left text-sm hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors" :class="successRatePeriod === 'last_7d' ? 'bg-primary-50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-300 font-medium' : 'text-gray-700 dark:text-gray-300'">
+                            <div class="flex items-center justify-between">
+                                <span>Last 7 Days</span>
+                                <i x-show="successRatePeriod === 'last_7d'" data-lucide="check" class="w-4 h-4"></i>
+                            </div>
+                        </button>
+                        <button @click="changeSuccessRatePeriod('all_time')" class="w-full px-4 py-3 text-left text-sm hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors" :class="successRatePeriod === 'all_time' ? 'bg-primary-50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-300 font-medium' : 'text-gray-700 dark:text-gray-300'">
+                            <div class="flex items-center justify-between">
+                                <span>All Time</span>
+                                <i x-show="successRatePeriod === 'all_time'" data-lucide="check" class="w-4 h-4"></i>
+                            </div>
+                        </button>
                     </div>
                 </div>
 

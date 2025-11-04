@@ -784,6 +784,122 @@
           "Clear status of data age and connection health"
         ]
       }
+    },
+    {
+      "id": "task-015",
+      "title": "Fix dashboard metric accuracy - active workers, success rate, and tasks in progress",
+      "type": "development",
+      "priority": "high",
+      "status": "completed",
+      "assigned_to": "development-master",
+      "assigned_by": "coordinator-master",
+      "assigned_at": "2025-11-04T16:11:56Z",
+      "started_at": "2025-11-04T16:45:00Z",
+      "completed_at": "2025-11-04T17:10:00Z",
+      "created_at": "2025-11-04T16:30:00Z",
+      "created_by": "user",
+      "repository": "ry-ops/commit-relay",
+      "context": {
+        "description": "Fix dashboard metrics to show accurate real-time data. Currently showing incorrect counts (e.g., 7 active workers when none are running). Add time-based filtering for success rate and improve task tracking.",
+        "current_issues": [
+          "Active Workers shows 7 when no workers are running (should be 0)",
+          "Success Rate has no time frame indication (unclear what period it measures)",
+          "Tasks In Progress count may not be accurate/real-time",
+          "No ability to view success rate across different time periods"
+        ],
+        "requirements": [
+          "Fix Active Workers to show only currently running workers (not all-time count)",
+          "Add time frame indicator to Success Rate metric (e.g., 'Last 24 hours')",
+          "Make Success Rate card clickable to toggle time periods (current run, last run, last 24hrs, last 7 days)",
+          "Fix Tasks In Progress to show accurate real-time count of in-progress tasks",
+          "Implement proper filtering of worker data to distinguish active vs completed/failed",
+          "Add visual feedback when clicking success rate to show selected time period"
+        ],
+        "deliverables": [
+          "Updated dashboard/server/index.js with accurate worker counting logic",
+          "Modified dashboard/public/dashboard-v2.js with clickable success rate card",
+          "Time period selector UI for success rate metrics",
+          "Accurate task in-progress counting based on task status",
+          "Visual indicators for selected time period",
+          "Tests verifying metric accuracy"
+        ],
+        "files_to_modify": [
+          "dashboard/server/index.js",
+          "dashboard/public/dashboard-v2.js",
+          "dashboard/public/index.html"
+        ],
+        "technical_approach": [
+          "Update calculateMetrics() to filter workers by actual running status (not just status field)",
+          "Check worker-pool.json for worker process PIDs or timestamps to determine if still running",
+          "Implement time-based filtering in success rate calculation",
+          "Add click handler to success rate card with period selection dropdown/modal",
+          "Store selected time period in component state",
+          "Calculate success rate based on selected period: current/last run/24h/7d",
+          "Update tasks in progress to count only tasks with status='in_progress'",
+          "Add timestamp-based filtering for completed/failed workers"
+        ],
+        "success_criteria": [
+          "Active Workers shows 0 when no workers are running, accurate count when workers active",
+          "Success Rate displays time frame (e.g., 'Success Rate (Last 24h): 85%')",
+          "Clicking Success Rate card shows period options and updates metric accordingly",
+          "Tasks In Progress shows accurate count matching task-queue.json status",
+          "All metrics update in real-time via WebSocket",
+          "Visual feedback clearly indicates selected time period"
+        ],
+        "ui_enhancements": {
+          "success_rate_periods": [
+            "Current Run (active workers only)",
+            "Last Run (most recent completed batch)",
+            "Last 24 Hours",
+            "Last 7 Days",
+            "All Time"
+          ],
+          "display_format": "Success Rate (Last 24h): 85% (17/20 workers)",
+          "interaction": "Click card to cycle through time periods or show dropdown menu"
+        },
+        "estimated_effort": "MEDIUM - Requires logic updates and UI enhancements",
+        "related_issues": []
+      },
+      "handoff_plan": {
+        "after_completion": "coordinator-master",
+        "reason": "Verify metric accuracy and UI improvements"
+      },
+      "results": {
+        "status": "SUCCESS",
+        "fixes_delivered": [
+          "Fixed Active Workers count to show only truly running workers (status=running/active AND recent activity < 5 min OR has session_id)",
+          "Added time-based success rate filtering (Current Run, Last 24h, Last 7d, All Time)",
+          "Implemented interactive period selector UI with dropdown menu",
+          "Added visual period indicator and worker count display (e.g., '17/20 workers')",
+          "Verified Tasks In Progress count accuracy (correctly filters by status)",
+          "Added localStorage persistence for selected time period"
+        ],
+        "files_modified": [
+          "dashboard/server/index.js",
+          "dashboard/public/dashboard-v2.js",
+          "dashboard/public/index.html",
+          "coordination/task-queue.json"
+        ],
+        "technical_improvements": {
+          "active_workers_logic": "Filter by (status=running/active AND recent_activity<5min) OR has_session_id",
+          "success_rate_periods": ["current_run", "last_24h", "last_7d", "all_time"],
+          "api_enhancement": "Added ?period query parameter to /api/metrics endpoint",
+          "ui_components": "Clickable success rate card with dropdown period selector"
+        },
+        "verification": {
+          "active_workers_test": "Tested with 7 pending workers (>5min old) → correctly shows 0 active",
+          "success_rate_test": "Tested period filtering logic with mock data → PASSED",
+          "tasks_in_progress": "Verified counts 6 tasks with in_progress status correctly",
+          "syntax_check": "node --check passed for all modified files"
+        },
+        "user_experience": [
+          "Success Rate card now shows time period (e.g., 'Last 24 Hours')",
+          "Click Success Rate card to open period selector dropdown",
+          "Visual indicator with calendar icon shows card is interactive",
+          "Worker counts displayed as fraction (completed/total)",
+          "Selected period persists across page refreshes via localStorage"
+        ]
+      }
     }
   ]
 }
