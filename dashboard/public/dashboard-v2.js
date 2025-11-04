@@ -11,6 +11,8 @@ function dashboard() {
         loading: true,
         connected: false,
         lastUpdate: 'Never',
+        lastUpdateTimestamp: null,
+        dataFreshness: 'fresh', // fresh, stale, very-stale
         currentView: 'overview', // overview, workers, tasks, events, masters
 
         // Data
@@ -122,6 +124,14 @@ function dashboard() {
                 this.updateMetrics(message.data);
             } else if (message.type === 'event') {
                 this.addEvent(message.event);
+            } else if (message.type === 'daemon_status') {
+                this.daemon = message.data;
+            } else if (message.type === 'buffered_events') {
+                // Handle buffered events for reconnecting clients
+                console.log(`Received ${message.count} buffered events`);
+                message.events.forEach(event => {
+                    this.addEvent(event);
+                });
             }
         },
 
@@ -156,10 +166,48 @@ function dashboard() {
         updateMetrics(metrics) {
             this.metrics = metrics;
             this.lastUpdate = new Date().toLocaleTimeString();
+            this.lastUpdateTimestamp = Date.now();
+            this.dataFreshness = 'fresh';
 
             // Update charts if they exist
             if (this.tokenChart) {
                 this.updateTokenChart();
+            }
+        },
+
+        // Check data freshness periodically
+        checkDataFreshness() {
+            if (!this.lastUpdateTimestamp) {
+                this.dataFreshness = 'unknown';
+                return;
+            }
+
+            const secondsSinceUpdate = (Date.now() - this.lastUpdateTimestamp) / 1000;
+
+            if (secondsSinceUpdate > 120) {
+                this.dataFreshness = 'very-stale'; // Red indicator
+            } else if (secondsSinceUpdate > 30) {
+                this.dataFreshness = 'stale'; // Yellow indicator
+            } else {
+                this.dataFreshness = 'fresh'; // Green indicator
+            }
+        },
+
+        getFreshnessColor() {
+            switch(this.dataFreshness) {
+                case 'fresh': return 'text-green-500';
+                case 'stale': return 'text-yellow-500';
+                case 'very-stale': return 'text-red-500';
+                default: return 'text-gray-500';
+            }
+        },
+
+        getFreshnessIndicator() {
+            switch(this.dataFreshness) {
+                case 'fresh': return '●';
+                case 'stale': return '●';
+                case 'very-stale': return '●';
+                default: return '○';
             }
         },
 
@@ -175,7 +223,12 @@ function dashboard() {
 
         // Polling
         startPolling() {
-            // Poll metrics every 5 seconds
+            // Check data freshness every 5 seconds
+            setInterval(() => {
+                this.checkDataFreshness();
+            }, 5000);
+
+            // Fallback: Poll metrics every 5 seconds if WebSocket is disconnected
             setInterval(async () => {
                 if (!this.ws || this.ws.readyState !== WebSocket.OPEN) {
                     try {
@@ -188,17 +241,20 @@ function dashboard() {
                 }
             }, 5000);
 
-            // Poll daemon status every 10 seconds
+            // Note: Daemon status now pushed via WebSocket, no polling needed when connected
+            // Fallback: Poll daemon status only if WebSocket is disconnected
             setInterval(async () => {
-                try {
-                    const res = await fetch('/api/daemon/status');
-                    this.daemon = await res.json();
-                } catch (error) {
-                    console.error('Error polling daemon status:', error);
+                if (!this.ws || this.ws.readyState !== WebSocket.OPEN) {
+                    try {
+                        const res = await fetch('/api/daemon/status');
+                        this.daemon = await res.json();
+                    } catch (error) {
+                        console.error('Error polling daemon status:', error);
+                    }
                 }
             }, 10000);
 
-            // Poll tasks every 15 seconds
+            // Poll tasks every 15 seconds (tasks not pushed via WebSocket yet)
             setInterval(async () => {
                 try {
                     const res = await fetch('/api/tasks');
