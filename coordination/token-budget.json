@@ -1,9 +1,9 @@
 {
-  "version": "1.0",
-  "updated_at": "2025-11-03T14:19:35Z",
+  "version": "1.1",
+  "updated_at": "2025-11-04T18:00:00Z",
   "budget_period": "daily",
-  "resets_at": "2025-11-02T00:00:00Z",
-  "total_budget": 270000,
+  "resets_at": "2025-11-05T00:00:00Z",
+  "total_budget": 305000,
   "masters": {
     "coordinator": {
       "allocated": 50000,
@@ -38,6 +38,14 @@
       "worker_pool": 15000,
       "last_reset": "2025-11-01T00:00:00Z",
       "tasks_handled": []
+    },
+    "cicd": {
+      "allocated": 35000,
+      "used": 0,
+      "worker_pool": 25000,
+      "last_reset": "2025-11-04T00:00:00Z",
+      "tasks_handled": [],
+      "workforce_stream": "stream-d"
     }
   },
   "observers": {
@@ -50,11 +58,19 @@
     }
   },
   "worker_pool": {
-    "total": 80000,
+    "total": 105000,
     "allocated_to_workers": 107500,
-    "available": -27500,
+    "available": -2500,
     "workers_active": 0,
-    "workers_completed": 9
+    "workers_completed": 9,
+    "stream_allocations": {
+      "stream-a": 20000,
+      "stream-b": 20000,
+      "stream-c": 15000,
+      "stream-d": 25000,
+      "stream-e": 20000,
+      "emergency": 5000
+    }
   },
   "emergency_reserve": {
     "total": 25000,
