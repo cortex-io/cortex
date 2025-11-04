@@ -255,7 +255,7 @@
                 </div>
 
                 <!-- Tasks In Progress -->
-                <div class="relative overflow-hidden bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 border border-gray-200 dark:border-gray-700 hover:shadow-xl hover:-translate-y-1 transition-all cursor-pointer">
+                <div @click="switchView('tasks')" class="relative overflow-hidden bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 border border-gray-200 dark:border-gray-700 hover:shadow-xl hover:-translate-y-1 transition-all cursor-pointer">
                     <i data-lucide="loader" class="absolute -right-4 -bottom-4 w-32 h-32 text-orange-100 dark:text-orange-900/20 opacity-50"></i>
                     <div class="relative z-10">
                         <p class="text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">Tasks In Progress</p>
