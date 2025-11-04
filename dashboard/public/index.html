@@ -195,7 +195,7 @@
             <!-- Stats grid - redesigned with background icons -->
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 <!-- Active Workers -->
-                <div class="relative overflow-hidden bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 border border-gray-200 dark:border-gray-700 hover:shadow-xl hover:-translate-y-1 transition-all cursor-pointer">
+                <div @click="switchView('workers')" class="relative overflow-hidden bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 border border-gray-200 dark:border-gray-700 hover:shadow-xl hover:-translate-y-1 transition-all cursor-pointer">
                     <i data-lucide="zap" class="absolute -right-4 -bottom-4 w-32 h-32 text-blue-100 dark:text-blue-900/20 opacity-50"></i>
                     <div class="relative z-10">
                         <p class="text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">Active Workers</p>
