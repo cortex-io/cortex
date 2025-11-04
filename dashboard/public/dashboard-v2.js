@@ -311,6 +311,12 @@ function dashboard() {
         },
 
         initTokenChart() {
+            // Destroy existing chart if it exists to prevent duplicates
+            if (this.tokenChart) {
+                this.tokenChart.destroy();
+                this.tokenChart = null;
+            }
+
             const isDark = this.darkMode;
             const textColor = isDark ? '#9CA3AF' : '#6B7280';
 
@@ -773,6 +779,11 @@ function dashboard() {
                 this.fetchWorkers();
             }
 
+            // Fetch session-only events for Events page
+            if (view === 'events') {
+                this.fetchSessionEvents();
+            }
+
             // Initialize metrics charts when switching to metrics view
             if (view === 'metrics') {
                 this.$nextTick(() => {
@@ -784,6 +795,16 @@ function dashboard() {
             this.$nextTick(() => {
                 lucide.createIcons();
             });
+        },
+
+        async fetchSessionEvents() {
+            try {
+                const res = await fetch('/api/events?limit=100&session=current');
+                const data = await res.json();
+                this.events = data.events || [];
+            } catch (error) {
+                console.error('Error fetching session events:', error);
+            }
         },
 
         async fetchWorkers() {

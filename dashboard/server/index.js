@@ -565,12 +565,67 @@ app.get('/api/tasks', async (req, res) => {
 });
 
 /**
+ * Normalize event format to consistent schema
+ */
+function normalizeEvent(event) {
+  // Ensure the event has a consistent schema
+  const normalized = {
+    id: event.id || `evt-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+    type: event.type || event.event_type || event.event || 'unknown',
+    timestamp: event.timestamp || new Date().toISOString(),
+    data: event.data || {},
+    message: event.message || ''
+  };
+
+  // If data is a string, try to parse it as JSON
+  if (typeof normalized.data === 'string') {
+    try {
+      normalized.data = JSON.parse(normalized.data);
+    } catch (e) {
+      // Keep as string if not valid JSON
+      normalized.data = { message: normalized.data };
+    }
+  }
+
+  // Extract common fields from root level to data if not already present
+  if (event.task_id && !normalized.data.task_id) {
+    normalized.data.task_id = event.task_id;
+  }
+  if (event.task_title && !normalized.data.task_title) {
+    normalized.data.task_title = event.task_title;
+  }
+  if (event.assigned_to && !normalized.data.assigned_to) {
+    normalized.data.assigned_to = event.assigned_to;
+  }
+  if (event.worker_id && !normalized.data.worker_id) {
+    normalized.data.worker_id = event.worker_id;
+  }
+
+  // Generate message if not present
+  if (!normalized.message) {
+    normalized.message = `${normalized.type.replace(/_/g, ' ')}`;
+    if (normalized.data.task_id) {
+      normalized.message += `: ${normalized.data.task_id}`;
+    }
+    if (normalized.data.task_title) {
+      normalized.message += ` - ${normalized.data.task_title}`;
+    }
+  }
+
+  return normalized;
+}
+
+/**
  * GET /api/events
  * Get recent dashboard events (merged with task events)
+ * Query params:
+ *   - limit: number of events to return (default: 50)
+ *   - session: 'current' to get only current session events (since server start)
  */
 app.get('/api/events', async (req, res) => {
   try {
     const limit = parseInt(req.query.limit) || 50;
+    const sessionOnly = req.query.session === 'current';
     const fsSync = require('fs');
 
     let dashboardEvents = [];
@@ -579,7 +634,19 @@ app.get('/api/events', async (req, res) => {
     if (fsSync.existsSync(FILES.dashboardEvents)) {
       const content = fsSync.readFileSync(FILES.dashboardEvents, 'utf-8');
       const lines = content.trim().split('\n').filter(line => line);
-      dashboardEvents = lines.map(line => JSON.parse(line));
+      dashboardEvents = lines.map(line => {
+        try {
+          return normalizeEvent(JSON.parse(line));
+        } catch (e) {
+          console.error('Error parsing event line:', e);
+          return null;
+        }
+      }).filter(e => e !== null);
+    }
+
+    // If session=current, only show events from event buffer (events since server started)
+    if (sessionOnly) {
+      dashboardEvents = eventBuffer.slice();
     }
 
     // Generate task events from current task queue
@@ -898,7 +965,7 @@ eventWatcher.on('change', async () => {
       const lines = content.trim().split('\n').filter(line => line);
 
       if (lines.length > 0) {
-        const lastEvent = JSON.parse(lines[lines.length - 1]);
+        const lastEvent = normalizeEvent(JSON.parse(lines[lines.length - 1]));
         console.log(`Dashboard event: ${lastEvent.type}`);
         broadcastEvent(lastEvent);
       }
