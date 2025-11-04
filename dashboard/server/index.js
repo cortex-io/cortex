@@ -72,6 +72,93 @@ async function readJSON(filePath, retries = 3) {
 }
 
 /**
+ * Generate task events from task queue changes
+ */
+async function generateTaskEvents(newTaskQueue, oldTaskQueue) {
+  if (!newTaskQueue || !newTaskQueue.tasks) return [];
+
+  const events = [];
+  const oldTasks = oldTaskQueue?.tasks || [];
+  const newTasks = newTaskQueue.tasks;
+
+  // Create a map of old tasks by ID for quick lookup
+  const oldTasksMap = {};
+  oldTasks.forEach(task => {
+    oldTasksMap[task.id] = task;
+  });
+
+  // Check each task for state changes
+  for (const task of newTasks) {
+    const oldTask = oldTasksMap[task.id];
+
+    if (!oldTask) {
+      // New task created
+      events.push({
+        id: `task-event-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+        type: 'task_created',
+        timestamp: task.created_at || new Date().toISOString(),
+        data: {
+          task_id: task.id,
+          task_title: task.title,
+          task_type: task.type,
+          priority: task.priority,
+          created_by: task.created_by
+        },
+        message: `Task Created: '${task.id}: ${task.title}'`
+      });
+    } else {
+      // Check for status changes
+      if (oldTask.status !== task.status) {
+        if (task.status === 'assigned' || (oldTask.status === 'pending' && task.assigned_to)) {
+          events.push({
+            id: `task-event-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+            type: 'task_assigned',
+            timestamp: task.assigned_at || new Date().toISOString(),
+            data: {
+              task_id: task.id,
+              task_title: task.title,
+              assigned_to: task.assigned_to,
+              priority: task.priority
+            },
+            message: `Task Assigned: '${task.id}' → ${task.assigned_to}`
+          });
+        } else if (task.status === 'completed') {
+          events.push({
+            id: `task-event-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+            type: 'task_completed',
+            timestamp: task.completed_at || new Date().toISOString(),
+            data: {
+              task_id: task.id,
+              task_title: task.title,
+              assigned_to: task.assigned_to,
+              duration: task.completed_at && task.started_at
+                ? Math.round((new Date(task.completed_at) - new Date(task.started_at)) / 60000) + ' min'
+                : 'N/A'
+            },
+            message: `Task Completed: '${task.id}: ${task.title}' ✓`
+          });
+        } else if (task.status === 'failed') {
+          events.push({
+            id: `task-event-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+            type: 'task_failed',
+            timestamp: task.failed_at || new Date().toISOString(),
+            data: {
+              task_id: task.id,
+              task_title: task.title,
+              assigned_to: task.assigned_to,
+              error: task.error || 'Unknown error'
+            },
+            message: `Task Failed: '${task.id}: ${task.title}' ✗`
+          });
+        }
+      }
+    }
+  }
+
+  return events;
+}
+
+/**
  * Load all coordination data (serves from cache, updates on file changes)
  */
 async function loadCoordinationData(forceRefresh = false) {
@@ -479,29 +566,101 @@ app.get('/api/tasks', async (req, res) => {
 
 /**
  * GET /api/events
- * Get recent dashboard events
+ * Get recent dashboard events (merged with task events)
  */
 app.get('/api/events', async (req, res) => {
   try {
     const limit = parseInt(req.query.limit) || 50;
     const fsSync = require('fs');
 
-    if (!fsSync.existsSync(FILES.dashboardEvents)) {
-      return res.json({ events: [] });
+    let dashboardEvents = [];
+
+    // Read dashboard-events.jsonl
+    if (fsSync.existsSync(FILES.dashboardEvents)) {
+      const content = fsSync.readFileSync(FILES.dashboardEvents, 'utf-8');
+      const lines = content.trim().split('\n').filter(line => line);
+      dashboardEvents = lines.map(line => JSON.parse(line));
     }
 
-    const content = fsSync.readFileSync(FILES.dashboardEvents, 'utf-8');
-    const lines = content.trim().split('\n').filter(line => line);
+    // Generate task events from current task queue
+    const taskQueue = await readJSON(FILES.taskQueue);
+    const taskEvents = [];
 
-    // Get last N events
-    const events = lines
-      .slice(-limit)
-      .map(line => JSON.parse(line))
-      .reverse(); // Most recent first
+    if (taskQueue && taskQueue.tasks) {
+      // Create events for recent task status changes
+      for (const task of taskQueue.tasks) {
+        // Add event for task creation
+        if (task.created_at) {
+          taskEvents.push({
+            id: `task-created-${task.id}`,
+            type: 'task_created',
+            timestamp: task.created_at,
+            data: {
+              task_id: task.id,
+              task_title: task.title,
+              task_type: task.type,
+              priority: task.priority
+            },
+            message: `Task Created: '${task.id}: ${task.title}'`
+          });
+        }
 
-    res.json({ events, total: lines.length });
+        // Add event for task assignment
+        if (task.assigned_at) {
+          taskEvents.push({
+            id: `task-assigned-${task.id}`,
+            type: 'task_assigned',
+            timestamp: task.assigned_at,
+            data: {
+              task_id: task.id,
+              task_title: task.title,
+              assigned_to: task.assigned_to,
+              priority: task.priority
+            },
+            message: `Task Assigned: '${task.id}' → ${task.assigned_to}`
+          });
+        }
+
+        // Add event for task completion
+        if (task.status === 'completed' && task.completed_at) {
+          taskEvents.push({
+            id: `task-completed-${task.id}`,
+            type: 'task_completed',
+            timestamp: task.completed_at,
+            data: {
+              task_id: task.id,
+              task_title: task.title,
+              assigned_to: task.assigned_to
+            },
+            message: `Task Completed: '${task.id}: ${task.title}' ✓`
+          });
+        }
+
+        // Add event for task failure
+        if (task.status === 'failed' && task.failed_at) {
+          taskEvents.push({
+            id: `task-failed-${task.id}`,
+            type: 'task_failed',
+            timestamp: task.failed_at,
+            data: {
+              task_id: task.id,
+              task_title: task.title,
+              assigned_to: task.assigned_to
+            },
+            message: `Task Failed: '${task.id}: ${task.title}' ✗`
+          });
+        }
+      }
+    }
+
+    // Merge all events and sort by timestamp (most recent first)
+    const allEvents = [...dashboardEvents, ...taskEvents]
+      .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
+      .slice(0, limit);
+
+    res.json({ events: allEvents, total: allEvents.length });
   } catch (error) {
-    console.error('Error reading dashboard events:', error);
+    console.error('Error reading events:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
@@ -666,9 +825,22 @@ const watcher = chokidar.watch(coordFiles, {
 });
 
 // Debounced handler to batch multiple file changes within 1 second
-const debouncedBroadcast = debounce(async () => {
+const debouncedBroadcast = debounce(async (filePath) => {
   try {
+    const oldData = { ...cache }; // Save old state before refresh
     const data = await loadCoordinationData(true); // Force refresh cache
+
+    // Check if task queue changed - generate task events
+    if (filePath === FILES.taskQueue && oldData.taskQueue && data.taskQueue) {
+      const taskEvents = await generateTaskEvents(data.taskQueue, oldData.taskQueue);
+
+      // Broadcast each task event
+      for (const event of taskEvents) {
+        console.log(`Task event: ${event.type} - ${event.data.task_id}`);
+        broadcastEvent(event);
+      }
+    }
+
     broadcastUpdate(data);
   } catch (error) {
     console.error('Error processing file changes:', error);
@@ -677,7 +849,7 @@ const debouncedBroadcast = debounce(async () => {
 
 watcher.on('change', async (filePath) => {
   console.log(`File changed: ${path.basename(filePath)}`);
-  debouncedBroadcast();
+  debouncedBroadcast(filePath);
 });
 
 // ============================================================================

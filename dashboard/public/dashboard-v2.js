@@ -839,6 +839,54 @@ function dashboard() {
             return parts.join(' ') || '0s';
         },
 
+        formatEventType(type) {
+            // Convert event type to human-readable format
+            const typeMap = {
+                'task_created': 'Task Created',
+                'task_assigned': 'Task Assigned',
+                'task_completed': 'Task Completed',
+                'task_failed': 'Task Failed',
+                'worker_started': 'Worker Started',
+                'worker_completed': 'Worker Completed',
+                'worker_failed': 'Worker Failed',
+                'worker_spawned': 'Worker Spawned',
+                'error': 'Error',
+                'dashboard_event': 'System Event'
+            };
+            return typeMap[type] || type.replace(/_/g, ' ').toUpperCase();
+        },
+
+        formatEventMessage(event) {
+            // Format event message based on type and data
+            const data = event.data || {};
+
+            switch (event.type) {
+                case 'task_created':
+                    return `Task Created: '${data.task_id || 'unknown'}${data.task_title ? ': ' + data.task_title : ''}'`;
+
+                case 'task_assigned':
+                    return `Task Assigned: '${data.task_id || 'unknown'}' → ${data.assigned_to || 'unknown'}`;
+
+                case 'task_completed':
+                    return `Task Completed: '${data.task_id || 'unknown'}${data.task_title ? ': ' + data.task_title : ''}' ✓`;
+
+                case 'task_failed':
+                    return `Task Failed: '${data.task_id || 'unknown'}${data.task_title ? ': ' + data.task_title : ''}' ✗`;
+
+                case 'worker_started':
+                    return `Worker Started: ${data.worker_id || 'unknown'} (${data.worker_type || 'N/A'})`;
+
+                case 'worker_completed':
+                    return `Worker Completed: ${data.worker_id || 'unknown'} (${data.duration || 'N/A'})`;
+
+                case 'worker_failed':
+                    return `Worker Failed: ${data.worker_id || 'unknown'}`;
+
+                default:
+                    return event.message || JSON.stringify(data);
+            }
+        },
+
         // Token Budget helpers
         getTimeUntilReset() {
             const now = new Date();

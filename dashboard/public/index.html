@@ -295,8 +295,8 @@
 
             <!-- Overview View -->
             <div x-show="currentView === 'overview'" x-transition>
-                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                    <!-- Token Budget Chart - Enhanced -->
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+                    <!-- Token Budget Chart - Enhanced (1/3 width) -->
                     <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 border border-gray-200 dark:border-gray-700" x-data="{ expandedMasters: false }">
                         <!-- Header with countdown -->
                         <div class="flex items-center justify-between mb-4">
@@ -433,7 +433,7 @@
                         </div>
                     </div>
 
-                    <!-- Real-time events -->
+                    <!-- Real-time events (2/3 width - expanded to show all activity) -->
                     <div class="lg:col-span-2 bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 border border-gray-200 dark:border-gray-700">
                         <div class="flex items-center justify-between mb-4">
                             <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Real-time Events</h3>
@@ -446,63 +446,20 @@
                             <template x-for="event in events.slice(0, 15)" :key="event.id">
                                 <div class="flex items-start space-x-3 p-3 rounded-lg bg-gray-50 dark:bg-gray-700/50 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
                                     <div class="flex-shrink-0 w-2 h-2 mt-2 rounded-full" :class="{
-                                        'bg-green-500': event.type === 'worker_started' || event.type === 'task_completed',
-                                        'bg-blue-500': event.type === 'task_created',
+                                        'bg-green-500': event.type === 'worker_completed' || event.type === 'task_completed',
+                                        'bg-blue-500': event.type === 'worker_started' || event.type === 'task_created',
+                                        'bg-purple-500': event.type === 'task_assigned',
                                         'bg-orange-500': event.type === 'worker_spawned',
-                                        'bg-red-500': event.type === 'error'
+                                        'bg-red-500': event.type === 'worker_failed' || event.type === 'task_failed' || event.type === 'error'
                                     }"></div>
                                     <div class="flex-1 min-w-0">
-                                        <p class="text-sm font-medium text-gray-900 dark:text-white" x-text="event.type.replace('_', ' ').toUpperCase()"></p>
-                                        <p class="text-xs text-gray-500 dark:text-gray-400 truncate" x-text="JSON.stringify(event.data || {})"></p>
+                                        <p class="text-sm font-medium text-gray-900 dark:text-white" x-text="formatEventType(event.type)"></p>
+                                        <p class="text-xs text-gray-500 dark:text-gray-400" x-text="formatEventMessage(event)"></p>
                                         <p class="text-xs text-gray-400 dark:text-gray-500 mt-1" x-text="new Date(event.timestamp).toLocaleTimeString()"></p>
                                     </div>
                                 </div>
                             </template>
                         </div>
-                    </div>
-                </div>
-
-                <!-- Task list -->
-                <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 mt-6">
-                    <div class="p-6 border-b border-gray-200 dark:border-gray-700">
-                        <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Recent Tasks</h3>
-                    </div>
-                    <div class="overflow-x-auto">
-                        <table class="w-full">
-                            <thead class="bg-gray-50 dark:bg-gray-700/50">
-                                <tr>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">ID</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Title</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Type</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Status</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Priority</th>
-                                </tr>
-                            </thead>
-                            <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
-                                <template x-for="task in tasks.slice(0, 10)" :key="task.id">
-                                    <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white" x-text="task.id"></td>
-                                        <td class="px-6 py-4 text-sm text-gray-700 dark:text-gray-300" x-text="task.title"></td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400" x-text="task.type"></td>
-                                        <td class="px-6 py-4 whitespace-nowrap">
-                                            <span class="px-2 py-1 text-xs font-medium rounded-full" :class="{
-                                                'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400': task.status === 'completed',
-                                                'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400': task.status === 'in_progress' || task.status === 'in-progress',
-                                                'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300': task.status === 'pending'
-                                            }" x-text="task.status"></span>
-                                        </td>
-                                        <td class="px-6 py-4 whitespace-nowrap">
-                                            <span class="px-2 py-1 text-xs font-medium rounded-full" :class="{
-                                                'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400': task.priority === 'critical',
-                                                'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400': task.priority === 'high',
-                                                'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400': task.priority === 'medium',
-                                                'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300': task.priority === 'low'
-                                            }" x-text="task.priority"></span>
-                                        </td>
-                                    </tr>
-                                </template>
-                            </tbody>
-                        </table>
                     </div>
                 </div>
             </div>

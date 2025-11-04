@@ -1392,6 +1392,135 @@
         "actual_duration_minutes": 45,
         "implementation_quality": "EXCELLENT"
       }
+    },
+    {
+      "id": "task-018",
+      "title": "Merge tasks into events feed and reorganize dashboard overview",
+      "type": "development",
+      "priority": "high",
+      "status": "completed",
+      "assigned_to": "development-master",
+      "assigned_by": "coordinator-master",
+      "assigned_at": "2025-11-04T18:30:00Z",
+      "started_at": "2025-11-04T18:35:00Z",
+      "completed_at": "2025-11-04T18:50:00Z",
+      "created_at": "2025-11-04T18:15:00Z",
+      "created_by": "user",
+      "repository": "ry-ops/commit-relay",
+      "context": {
+        "description": "Consolidate the dashboard overview by merging tasks into the real-time events feed, making events show ALL system activity (workers, tasks, system events). Remove the Recent Tasks card and move detailed task information to the dedicated Tasks page.",
+        "current_issues": [
+          "Real-time Events card only shows worker/system events, missing task events",
+          "Recent Tasks card is redundant with Tasks page",
+          "Overview page has duplicate information",
+          "Events feed should be comprehensive showing all system activity",
+          "Task details belong on the dedicated Tasks page, not overview"
+        ],
+        "requirements": [
+          "Merge task events into the Real-time Events feed on overview page",
+          "Show task_created, task_assigned, task_completed, task_failed events",
+          "Remove the Recent Tasks card from overview page entirely",
+          "Keep Token Budget chart and Real-time Events as only cards on overview",
+          "Ensure Tasks page has comprehensive task information",
+          "Update event types to include all task lifecycle events",
+          "Maintain event coloring and icons for different event types",
+          "Real-time updates via WebSocket for all event types"
+        ],
+        "event_types_to_show": [
+          "worker_started (blue dot)",
+          "worker_completed (green dot)",
+          "worker_failed (red dot)",
+          "task_created (blue dot)",
+          "task_assigned (purple dot)",
+          "task_completed (green dot)",
+          "task_failed (red dot)",
+          "system_event (gray dot)",
+          "dashboard_event (teal dot)"
+        ],
+        "deliverables": [
+          "Updated dashboard/public/index.html - Remove Recent Tasks card",
+          "Updated dashboard/public/index.html - Expand Events feed to full width",
+          "Updated dashboard/public/dashboard-v2.js - Merge task events into events array",
+          "Updated dashboard/server/index.js - Generate task events from task-queue",
+          "Event type handling for task_created, task_assigned, task_completed",
+          "Color coding and icons for all event types",
+          "WebSocket broadcast for task events",
+          "Tests verifying event feed shows all activity"
+        ],
+        "files_to_modify": [
+          "dashboard/public/index.html",
+          "dashboard/public/dashboard-v2.js",
+          "dashboard/server/index.js"
+        ],
+        "success_criteria": [
+          "Overview page shows only metric cards, Token Budget, and Events feed",
+          "Recent Tasks card completely removed",
+          "Real-time Events feed shows ALL system activity (workers + tasks + system)",
+          "Task events have proper color coding and icons",
+          "Events update in real-time via WebSocket",
+          "Tasks page remains fully functional with complete task details",
+          "No duplicate information between overview and tasks page",
+          "Event feed is comprehensive and easy to read"
+        ],
+        "estimated_effort": "MEDIUM - UI restructuring and event generation logic",
+        "related_issues": []
+      },
+      "handoff_plan": {
+        "after_completion": "coordinator-master",
+        "reason": "Verify dashboard reorganization and event feed consolidation"
+      },
+      "results": {
+        "status": "SUCCESS",
+        "improvements_delivered": [
+          "Removed Recent Tasks card from overview page completely",
+          "Expanded Real-time Events feed from lg:col-span-2 to full 2/3 width",
+          "Added task event generation in dashboard server (task_created, task_assigned, task_completed, task_failed)",
+          "Implemented task event merging with dashboard-events.jsonl in /api/events endpoint",
+          "Added color-coded event dots: blue (created/started), purple (assigned), green (completed), red (failed)",
+          "Implemented formatEventType() and formatEventMessage() functions for better event display",
+          "Task events now show proper formatting: 'Task Created', 'Task Assigned: task-id → master', 'Task Completed ✓'",
+          "Events feed now shows ALL system activity (workers + tasks + system events)",
+          "Tasks page remains fully functional with comprehensive task details"
+        ],
+        "files_modified": [
+          "dashboard/public/index.html",
+          "dashboard/public/dashboard-v2.js",
+          "dashboard/server/index.js",
+          "coordination/task-queue.json"
+        ],
+        "features_implemented": {
+          "overview_layout": "Token Budget (1/3) + Events Feed (2/3) - Recent Tasks removed",
+          "task_event_types": ["task_created", "task_assigned", "task_completed", "task_failed"],
+          "event_colors": {
+            "task_created": "blue dot",
+            "task_assigned": "purple dot",
+            "task_completed": "green dot",
+            "task_failed": "red dot",
+            "worker_started": "blue dot",
+            "worker_completed": "green dot",
+            "worker_failed": "red dot"
+          },
+          "event_generation": "Server detects task queue changes and broadcasts task events via WebSocket",
+          "event_merging": "/api/events endpoint merges dashboard-events.jsonl with task queue events"
+        },
+        "technical_details": {
+          "task_event_detection": "generateTaskEvents() compares old vs new task queue states",
+          "event_broadcasting": "Task events pushed to WebSocket clients in real-time",
+          "event_formatting": "formatEventMessage() provides human-readable event descriptions",
+          "layout_changes": "Overview grid changed to lg:grid-cols-3 with mb-6 spacing"
+        },
+        "user_experience": [
+          "Overview page is cleaner with only essential cards (metrics + Token Budget + Events)",
+          "Events feed shows comprehensive activity: task lifecycle, worker activity, system events",
+          "Task details moved to dedicated Tasks page for better organization",
+          "Real-time updates via WebSocket for all event types",
+          "Color-coded event indicators for quick visual scanning"
+        ],
+        "syntax_validation": {
+          "dashboard-v2.js": "PASSED - node --check successful",
+          "server/index.js": "PASSED - node --check successful"
+        }
+      }
     }
   ]
 }
