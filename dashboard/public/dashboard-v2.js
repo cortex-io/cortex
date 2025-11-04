@@ -398,6 +398,393 @@ function dashboard() {
             ]);
         },
 
+        // Metrics Charts Initialization
+        initMetricsCharts() {
+            // Only initialize if we haven't already and charts exist in DOM
+            if (!document.getElementById('pieChart')) return;
+
+            this.initPieChart();
+            this.initParetoChart();
+            this.initAreaChart();
+            this.initStackedAreaChart();
+            this.initScatterChart();
+            this.initRadarChart();
+        },
+
+        initPieChart() {
+            const ctx = document.getElementById('pieChart');
+            if (!ctx) return;
+
+            const isDark = this.darkMode;
+            new Chart(ctx, {
+                type: 'pie',
+                data: {
+                    labels: ['Completed', 'Active', 'Failed'],
+                    datasets: [{
+                        data: [
+                            this.metrics.workers?.completed || 0,
+                            this.metrics.workers?.active || 0,
+                            this.metrics.workers?.failed || 0
+                        ],
+                        backgroundColor: [
+                            'rgba(34, 197, 94, 0.8)',
+                            'rgba(59, 130, 246, 0.8)',
+                            'rgba(239, 68, 68, 0.8)'
+                        ],
+                        borderWidth: 2,
+                        borderColor: isDark ? '#1f2937' : '#ffffff'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: { color: isDark ? '#9ca3af' : '#4b5563' }
+                        }
+                    }
+                }
+            });
+        },
+
+        initParetoChart() {
+            const ctx = document.getElementById('paretoChart');
+            if (!ctx) return;
+
+            // Calculate task types from tasks data
+            const taskTypes = {};
+            this.tasks.forEach(task => {
+                if (task.status === 'completed') {
+                    taskTypes[task.type] = (taskTypes[task.type] || 0) + 1;
+                }
+            });
+
+            const sorted = Object.entries(taskTypes).sort((a, b) => b[1] - a[1]);
+            const labels = sorted.map(([type]) => type);
+            const values = sorted.map(([, count]) => count);
+
+            // Calculate cumulative percentage
+            const total = values.reduce((sum, val) => sum + val, 0);
+            let cumulative = 0;
+            const cumulativePercentages = values.map(val => {
+                cumulative += val;
+                return (cumulative / total) * 100;
+            });
+
+            const isDark = this.darkMode;
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Task Count',
+                        data: values,
+                        backgroundColor: 'rgba(59, 130, 246, 0.8)',
+                        yAxisID: 'y',
+                        order: 2
+                    }, {
+                        label: 'Cumulative %',
+                        data: cumulativePercentages,
+                        type: 'line',
+                        borderColor: 'rgba(239, 68, 68, 1)',
+                        backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                        yAxisID: 'y1',
+                        order: 1,
+                        fill: false
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            labels: { color: isDark ? '#9ca3af' : '#4b5563' }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            type: 'linear',
+                            position: 'left',
+                            ticks: { color: isDark ? '#9ca3af' : '#4b5563' },
+                            grid: { color: isDark ? '#374151' : '#e5e7eb' }
+                        },
+                        y1: {
+                            type: 'linear',
+                            position: 'right',
+                            min: 0,
+                            max: 100,
+                            ticks: {
+                                color: isDark ? '#9ca3af' : '#4b5563',
+                                callback: (val) => val + '%'
+                            },
+                            grid: { drawOnChartArea: false }
+                        },
+                        x: {
+                            ticks: { color: isDark ? '#9ca3af' : '#4b5563' },
+                            grid: { color: isDark ? '#374151' : '#e5e7eb' }
+                        }
+                    }
+                }
+            });
+        },
+
+        initAreaChart() {
+            const ctx = document.getElementById('areaChart');
+            if (!ctx) return;
+
+            // Generate mock time series data for last 7 days
+            const days = 7;
+            const labels = [];
+            const data = [];
+            let cumulative = this.metrics.tokens?.used || 0;
+            const dailyUsage = cumulative / days;
+
+            for (let i = days; i >= 0; i--) {
+                const date = new Date();
+                date.setDate(date.getDate() - i);
+                labels.push(date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }));
+                cumulative -= dailyUsage;
+                data.push(Math.max(0, cumulative) + (dailyUsage * (days - i)));
+            }
+
+            const isDark = this.darkMode;
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Tokens Used',
+                        data: data,
+                        borderColor: 'rgba(59, 130, 246, 1)',
+                        backgroundColor: 'rgba(59, 130, 246, 0.2)',
+                        fill: true,
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            labels: { color: isDark ? '#9ca3af' : '#4b5563' }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            ticks: {
+                                color: isDark ? '#9ca3af' : '#4b5563',
+                                callback: (val) => val.toLocaleString()
+                            },
+                            grid: { color: isDark ? '#374151' : '#e5e7eb' }
+                        },
+                        x: {
+                            ticks: { color: isDark ? '#9ca3af' : '#4b5563' },
+                            grid: { color: isDark ? '#374151' : '#e5e7eb' }
+                        }
+                    }
+                }
+            });
+        },
+
+        initStackedAreaChart() {
+            const ctx = document.getElementById('stackedAreaChart');
+            if (!ctx) return;
+
+            // Generate mock time series data for master agents
+            const days = 7;
+            const labels = [];
+            const coordinatorData = [];
+            const securityData = [];
+            const developmentData = [];
+            const inventoryData = [];
+
+            for (let i = days; i >= 0; i--) {
+                const date = new Date();
+                date.setDate(date.getDate() - i);
+                labels.push(date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }));
+                coordinatorData.push(Math.floor(Math.random() * 3) + 1);
+                securityData.push(Math.floor(Math.random() * 4) + 1);
+                developmentData.push(Math.floor(Math.random() * 3) + 1);
+                inventoryData.push(Math.floor(Math.random() * 2));
+            }
+
+            const isDark = this.darkMode;
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Coordinator',
+                        data: coordinatorData,
+                        borderColor: 'rgba(59, 130, 246, 1)',
+                        backgroundColor: 'rgba(59, 130, 246, 0.5)',
+                        fill: true
+                    }, {
+                        label: 'Security',
+                        data: securityData,
+                        borderColor: 'rgba(249, 115, 22, 1)',
+                        backgroundColor: 'rgba(249, 115, 22, 0.5)',
+                        fill: true
+                    }, {
+                        label: 'Development',
+                        data: developmentData,
+                        borderColor: 'rgba(34, 197, 94, 1)',
+                        backgroundColor: 'rgba(34, 197, 94, 0.5)',
+                        fill: true
+                    }, {
+                        label: 'Inventory',
+                        data: inventoryData,
+                        borderColor: 'rgba(168, 85, 247, 1)',
+                        backgroundColor: 'rgba(168, 85, 247, 0.5)',
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            labels: { color: isDark ? '#9ca3af' : '#4b5563' }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            stacked: true,
+                            ticks: { color: isDark ? '#9ca3af' : '#4b5563' },
+                            grid: { color: isDark ? '#374151' : '#e5e7eb' }
+                        },
+                        x: {
+                            stacked: true,
+                            ticks: { color: isDark ? '#9ca3af' : '#4b5563' },
+                            grid: { color: isDark ? '#374151' : '#e5e7eb' }
+                        }
+                    }
+                }
+            });
+        },
+
+        initScatterChart() {
+            const ctx = document.getElementById('scatterChart');
+            if (!ctx) return;
+
+            // Generate scatter data from completed workers
+            const scatterData = this.workers
+                .filter(w => w.status === 'completed' && w.duration_minutes && w.tokens_used)
+                .map(w => ({
+                    x: w.duration_minutes,
+                    y: w.tokens_used
+                }));
+
+            const isDark = this.darkMode;
+            new Chart(ctx, {
+                type: 'scatter',
+                data: {
+                    datasets: [{
+                        label: 'Workers',
+                        data: scatterData.length > 0 ? scatterData : [
+                            { x: 5, y: 3000 }, { x: 10, y: 8000 }, { x: 5, y: 4000 },
+                            { x: 10, y: 9000 }, { x: 5, y: 6000 }, { x: 5, y: 4000 }
+                        ],
+                        backgroundColor: 'rgba(59, 130, 246, 0.6)',
+                        borderColor: 'rgba(59, 130, 246, 1)',
+                        pointRadius: 6,
+                        pointHoverRadius: 8
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            labels: { color: isDark ? '#9ca3af' : '#4b5563' }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            title: {
+                                display: true,
+                                text: 'Tokens Used',
+                                color: isDark ? '#9ca3af' : '#4b5563'
+                            },
+                            ticks: {
+                                color: isDark ? '#9ca3af' : '#4b5563',
+                                callback: (val) => val.toLocaleString()
+                            },
+                            grid: { color: isDark ? '#374151' : '#e5e7eb' }
+                        },
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Duration (minutes)',
+                                color: isDark ? '#9ca3af' : '#4b5563'
+                            },
+                            ticks: { color: isDark ? '#9ca3af' : '#4b5563' },
+                            grid: { color: isDark ? '#374151' : '#e5e7eb' }
+                        }
+                    }
+                }
+            });
+        },
+
+        initRadarChart() {
+            const ctx = document.getElementById('radarChart');
+            if (!ctx) return;
+
+            const successRate = this.metrics.workers?.successRate || 0;
+            const efficiency = Math.min(100, (this.metrics.tokens?.available / this.metrics.tokens?.total) * 100);
+            const speed = Math.min(100, (this.metrics.workers?.completed / Math.max(1, this.metrics.workers?.avgDuration)) * 10);
+            const reliability = successRate;
+            const activity = Math.min(100, ((this.metrics.tasks?.completed || 0) / Math.max(1, this.metrics.tasks?.total || 1)) * 100);
+
+            const isDark = this.darkMode;
+            new Chart(ctx, {
+                type: 'radar',
+                data: {
+                    labels: ['Success Rate', 'Efficiency', 'Speed', 'Reliability', 'Activity'],
+                    datasets: [{
+                        label: 'Current',
+                        data: [successRate, efficiency, speed, reliability, activity],
+                        borderColor: 'rgba(59, 130, 246, 1)',
+                        backgroundColor: 'rgba(59, 130, 246, 0.2)',
+                        pointBackgroundColor: 'rgba(59, 130, 246, 1)',
+                        pointBorderColor: '#fff',
+                        pointHoverBackgroundColor: '#fff',
+                        pointHoverBorderColor: 'rgba(59, 130, 246, 1)'
+                    }, {
+                        label: 'Target',
+                        data: [95, 80, 85, 95, 90],
+                        borderColor: 'rgba(34, 197, 94, 1)',
+                        backgroundColor: 'rgba(34, 197, 94, 0.1)',
+                        borderDash: [5, 5],
+                        pointBackgroundColor: 'rgba(34, 197, 94, 1)',
+                        pointBorderColor: '#fff'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            labels: { color: isDark ? '#9ca3af' : '#4b5563' }
+                        }
+                    },
+                    scales: {
+                        r: {
+                            min: 0,
+                            max: 100,
+                            ticks: {
+                                color: isDark ? '#9ca3af' : '#4b5563',
+                                backdropColor: 'transparent'
+                            },
+                            grid: { color: isDark ? '#374151' : '#e5e7eb' },
+                            pointLabels: { color: isDark ? '#9ca3af' : '#4b5563' }
+                        }
+                    }
+                }
+            });
+        },
+
         // Navigation
         switchView(view) {
             this.currentView = view;
@@ -405,6 +792,13 @@ function dashboard() {
             // Fetch additional data if needed
             if (view === 'workers' && this.workers.length === 0) {
                 this.fetchWorkers();
+            }
+
+            // Initialize metrics charts when switching to metrics view
+            if (view === 'metrics') {
+                this.$nextTick(() => {
+                    this.initMetricsCharts();
+                });
             }
 
             // Re-initialize Lucide icons for new content
