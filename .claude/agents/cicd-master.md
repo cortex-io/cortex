@@ -32,7 +32,7 @@ On first run, execute: `./scripts/run-cicd-master.sh`
 This initializes:
 1. Master state with session ID and pipeline metrics
 2. Knowledge base with deployment patterns
-3. Worker type registry (5 CI/CD worker types)
+3. Worker type registry (6 CI/CD worker types)
 4. Context directories
 
 ## Worker Types (MoE Specialization)
@@ -44,6 +44,7 @@ This initializes:
 | deploy-worker | 18k | Deployment execution | deployment_strategies, infrastructure, monitoring |
 | release-worker | 10k | Release management | versioning, changelogs, tagging, publishing |
 | pipeline-optimizer | 13k | Pipeline improvement | performance_tuning, caching, parallelization |
+| dashboard-update-worker | 8k | Dashboard deployment | data_validation, websocket_broadcasting, event_generation |
 
 ## Task Flow
 
@@ -225,6 +226,139 @@ As CI/CD master, you have access to **Stream D (CI/CD Pipeline)** with the follo
 - Blue-green and canary deployments
 - Release automation and versioning
 - Pipeline performance tuning
+
+## Dashboard Deployment Orchestration
+
+The CI/CD Master is responsible for orchestrating dashboard updates when specialist masters complete work. This ensures real-time dashboard updates with validation and proper event broadcasting.
+
+### Dashboard Update Flow
+
+1. **Receive Handoff from Specialist Master**: Specialist masters (development, security, inventory) create handoffs with `dashboard_update` flag after completing tasks
+2. **Analyze Dashboard Components**: Determine which dashboard components need updates (events, metrics, tasks, workers, streams)
+3. **Spawn Dashboard-Update Worker**: Create worker with specific update instructions
+4. **Validate Data**: Worker validates coordination file integrity before broadcasting
+5. **Broadcast via WebSocket**: Worker pushes updates to dashboard server via WebSocket
+6. **Verify Dashboard State**: Confirm dashboard reflects changes within 1-5 seconds
+7. **Report Completion**: Hand back to coordinator with deployment status
+
+### Dashboard Update Worker
+
+**Purpose**: Deploy dashboard data changes with validation and real-time broadcasting
+
+**Token Budget**: 8k tokens
+
+**Capabilities**:
+- Read and validate coordination file changes
+- Detect which dashboard components are affected
+- Generate WebSocket events for real-time updates
+- Broadcast to dashboard server (http://localhost:3000)
+- Log update success/failure
+- Handle reconnection and event replay
+
+### Dashboard Components
+
+Dashboard workers can update these components:
+
+| Component | Coordination File | Update Trigger |
+|-----------|-------------------|----------------|
+| **Events Feed** | `coordination/dashboard-events.jsonl` | Task/worker lifecycle events |
+| **Metrics** | `coordination/status.json`, `coordination/token-budget.json` | System metrics changes |
+| **Tasks** | `coordination/task-queue.json` | Task status updates |
+| **Workers** | `coordination/worker-pool.json` | Worker creation/completion |
+| **Streams** | `coordination/workforce-streams.json` | Stream allocation changes |
+
+### Handoff Schema for Dashboard Updates
+
+Specialist masters must include `dashboard_update` metadata when handing off to CI/CD:
+
+```json
+{
+  "handoff_id": "dev-to-cicd-dashboard-{uuid}",
+  "from_master": "development",
+  "to_master": "cicd",
+  "task_id": "task-XXX",
+  "handoff_type": "dashboard_deployment",
+  "dashboard_update": {
+    "required": true,
+    "components": ["events", "metrics", "tasks"],
+    "priority": "immediate",
+    "validation_required": true,
+    "changes_summary": "Task-XXX completed, update events feed and task metrics"
+  },
+  "created_at": "{timestamp}",
+  "status": "pending_pickup"
+}
+```
+
+### Dashboard Deployment Workflow Example
+
+```bash
+# Scenario: Development master completes task-020 (bug fix)
+
+# 1. Development master completes task, updates task-queue.json
+# 2. Development master creates handoff to CI/CD master:
+
+cat > coordination/masters/development/handoffs/dev-to-cicd-dashboard-A1B2C3.json <<EOF
+{
+  "handoff_id": "dev-to-cicd-dashboard-A1B2C3",
+  "from_master": "development",
+  "to_master": "cicd",
+  "task_id": "task-020",
+  "handoff_type": "dashboard_deployment",
+  "dashboard_update": {
+    "required": true,
+    "components": ["events", "metrics", "tasks"],
+    "priority": "immediate",
+    "changes": {
+      "task_status": "completed",
+      "files_modified": ["src/bugfix.js"],
+      "tests_passed": true
+    }
+  }
+}
+EOF
+
+# 3. CI/CD master detects handoff, analyzes dashboard impact
+# 4. CI/CD master spawns dashboard-update-worker:
+
+./agents/workers/dashboard-update-worker.sh \
+  --task-id task-020 \
+  --components events,metrics,tasks \
+  --handoff-id dev-to-cicd-dashboard-A1B2C3
+
+# 5. Dashboard worker validates task-queue.json changes
+# 6. Dashboard worker generates events:
+#    - task_completed event
+#    - metrics recalculation trigger
+# 7. Dashboard worker broadcasts via WebSocket to localhost:3000
+# 8. Dashboard frontend updates within 1-5 seconds
+# 9. CI/CD master reports completion to coordinator
+
+# Total Time: < 5 seconds
+# Tokens: 8k
+```
+
+### Dashboard Update Types
+
+**Immediate Updates** (priority: immediate):
+- Task completion/failure
+- Critical security alerts
+- Worker failures
+- System errors
+
+**Batched Updates** (priority: batched):
+- Metrics recalculation (every 5 minutes)
+- Token budget updates (every 10 minutes)
+- Stream rebalancing (every 15 minutes)
+
+### Success Criteria for Dashboard Deployments
+
+- Data validation passes before broadcasting
+- WebSocket events successfully delivered
+- Dashboard reflects changes within 1-5 seconds
+- No data inconsistencies or race conditions
+- Event replay buffer maintained for reconnecting clients
+- Deployment logged in `coordination/masters/cicd/context/dashboard-deployments.jsonl`
 
 ## Deployment Strategies
 

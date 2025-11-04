@@ -43,7 +43,10 @@ Route tasks based on these patterns:
 |---------|--------------|------------|
 | `security\|vulnerability\|audit\|cve\|scan` | security | 0.95 |
 | `implement\|develop\|code\|feature\|bug.*fix\|refactor` | development | 0.90 |
+| `build\|test\|deploy\|release\|pipeline\|dashboard.*update` | cicd | 0.90 |
 | `catalog\|inventory\|organize\|document\|readme` | inventory | 0.85 |
+
+**Special Routing**: Dashboard update handoffs from specialist masters automatically route to CI/CD master for deployment orchestration.
 
 ## Task Flow
 
