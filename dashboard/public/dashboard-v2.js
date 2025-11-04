@@ -837,6 +837,45 @@ function dashboard() {
             if (secs > 0 && days === 0) parts.push(`${secs}s`);
 
             return parts.join(' ') || '0s';
+        },
+
+        // Token Budget helpers
+        getTimeUntilReset() {
+            const now = new Date();
+            const midnight = new Date(now);
+            midnight.setHours(24, 0, 0, 0); // Next midnight
+
+            const diff = midnight - now;
+            const hours = Math.floor(diff / (1000 * 60 * 60));
+            const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+
+            return `${hours}h ${minutes}m`;
+        },
+
+        getMastersPercentage() {
+            const used = this.metrics.tokens?.mastersUsed || 0;
+            const allocated = this.metrics.tokens?.mastersAllocated || 145000;
+            return Math.round((used / allocated) * 100 * 10) / 10; // One decimal place
+        },
+
+        getWorkersPercentage() {
+            const used = this.metrics.tokens?.workersUsed || 0;
+            const allocated = this.metrics.tokens?.workerPoolTotal || 80000;
+            return Math.round((used / allocated) * 100 * 10) / 10; // One decimal place
+        },
+
+        getProgressBarColor(percentage, baseColor = 'blue') {
+            if (percentage >= 80) {
+                return 'bg-red-500 dark:bg-red-600';
+            } else if (percentage >= 50) {
+                return 'bg-yellow-500 dark:bg-yellow-600';
+            } else {
+                // Return appropriate color for base
+                if (baseColor === 'green') {
+                    return 'bg-green-500 dark:bg-green-600';
+                }
+                return 'bg-blue-500 dark:bg-blue-600';
+            }
         }
     };
 }

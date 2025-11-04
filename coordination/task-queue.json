@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "updated_at": "2025-11-03T14:29:39Z",
+  "updated_at": "2025-11-04T16:48:37Z",
   "tasks": [
     {
       "id": "task-001",
@@ -904,6 +904,160 @@
           "Worker counts displayed as fraction (completed/total)",
           "Selected period persists across page refreshes via localStorage"
         ]
+      }
+    },
+    {
+      "id": "task-016",
+      "title": "Redesign Token Budget card with hybrid multi-level visualization",
+      "type": "development",
+      "priority": "high",
+      "status": "in_progress",
+      "assigned_to": "development-master",
+      "assigned_by": "coordinator-master",
+      "assigned_at": "2025-11-04T16:48:37Z",
+      "started_at": "2025-11-04T17:15:00Z",
+      "created_at": "2025-11-04T17:00:00Z",
+      "created_by": "user",
+      "repository": "ry-ops/commit-relay",
+      "context": {
+        "description": "Redesign the Token Budget card to clearly distinguish between master (user) consumption vs worker consumption, show budget period, reset time, and provide detailed breakdown with progress bars.",
+        "current_issues": [
+          "Donut chart doesn't distinguish between YOUR (masters) vs WORKERS consumption",
+          "No indication of budget period (daily) or when it resets",
+          "Missing efficiency metrics and burn rate visualization",
+          "No clear breakdown of master agent usage",
+          "Doesn't show emergency reserve status clearly"
+        ],
+        "requirements": [
+          "Header with total budget and countdown to reset time",
+          "Dual progress bars: Masters consumption vs Workers consumption",
+          "Show percentages relative to their allocated budgets (not total)",
+          "Quick stats grid: Total Used, Available, Emergency Reserve, Efficiency Score",
+          "Expandable breakdown section showing each master's usage",
+          "Visual distinction between used/available/emergency reserve",
+          "Maintain existing donut chart but enhance surrounding information"
+        ],
+        "data_available": {
+          "total_budget": 270000,
+          "masters_used": 13500,
+          "workers_used": 51500,
+          "masters_allocated": 145000,
+          "worker_pool_total": 80000,
+          "emergency_reserve": 25000,
+          "efficiency_score": 96.2,
+          "masters_percentage": 20.8,
+          "workers_percentage": 79.2,
+          "resets_at": "daily at midnight",
+          "individual_masters": {
+            "coordinator": {"allocated": 50000, "used": 5000, "worker_pool": 30000},
+            "security": {"allocated": 30000, "used": 2500, "worker_pool": 15000},
+            "development": {"allocated": 30000, "used": 6000, "worker_pool": 20000},
+            "inventory": {"allocated": 35000, "used": 0, "worker_pool": 15000}
+          }
+        },
+        "deliverables": [
+          "Updated Token Budget card in dashboard/public/index.html",
+          "Enhanced token data calculations in dashboard/server/index.js if needed",
+          "Updated dashboard-v2.js with countdown timer logic",
+          "Progress bar styling for masters vs workers",
+          "Expandable details section with master breakdown",
+          "Responsive design for mobile and desktop"
+        ],
+        "files_to_modify": [
+          "dashboard/public/index.html",
+          "dashboard/public/dashboard-v2.js",
+          "dashboard/server/index.js (if API changes needed)"
+        ],
+        "design_approach": {
+          "layout": [
+            "Header: 'Token Budget (Daily)' with countdown timer",
+            "Main section: Keep donut chart on left",
+            "Right side: Add key metrics cards",
+            "Below chart: Dual progress bars (Masters vs Workers)",
+            "Bottom: Expandable accordion for master breakdown"
+          ],
+          "progress_bars": [
+            "Masters: 13,500 / 145,000 tokens (9.3%) - Blue color",
+            "Workers: 51,500 / 80,000 tokens (64.4%) - Green color",
+            "Show both absolute numbers and percentages",
+            "Color-code based on thresholds: <50% green, 50-80% yellow, >80% red"
+          ],
+          "countdown_timer": [
+            "Calculate time until next midnight (daily reset)",
+            "Display as 'Resets in: 6h 23m' in header",
+            "Update every minute"
+          ],
+          "stats_grid": [
+            "Total Used: 65,000 / 270,000 (24.1%)",
+            "Available: 149,000 tokens",
+            "Emergency: 25,000 (intact/used)",
+            "Efficiency: 96.2%"
+          ]
+        },
+        "success_criteria": [
+          "Clear visual distinction between master and worker token usage",
+          "Countdown timer shows time until budget reset",
+          "Progress bars accurately reflect consumption vs allocated amounts",
+          "User can expand to see individual master agent usage",
+          "Emergency reserve status is clearly visible",
+          "Efficiency score is displayed",
+          "All data updates in real-time via WebSocket"
+        ],
+        "estimated_effort": "MEDIUM - UI redesign with new components and calculations",
+        "related_issues": []
+      },
+      "handoff_plan": {
+        "after_completion": "coordinator-master",
+        "reason": "Verify token budget visualization improvements and accuracy"
+      },
+      "completed_at": "2025-11-04T17:30:00Z",
+      "results": {
+        "status": "SUCCESS",
+        "improvements_delivered": [
+          "Enhanced Token Budget card with clear header and countdown timer",
+          "Dual progress bars showing Masters (9.3%) vs Workers (64.4%) consumption",
+          "Color-coded progress bars based on thresholds (green <50%, yellow 50-80%, red >80%)",
+          "Quick stats grid with Total Used, Available, Emergency Reserve, and Efficiency Score",
+          "Expandable accordion for individual master agent breakdown (Coordinator, Security, Development, Inventory)",
+          "Real-time countdown timer showing time until daily budget reset",
+          "Visual distinction between master and worker token usage with separate tracking"
+        ],
+        "files_modified": [
+          "dashboard/public/index.html",
+          "dashboard/public/dashboard-v2.js",
+          "dashboard/server/index.js"
+        ],
+        "features_implemented": {
+          "header": "Token Budget (Daily) with countdown timer",
+          "countdown_timer": "Calculates and displays time until next midnight reset (updates every render)",
+          "dual_progress_bars": {
+            "masters": "13,500 / 145,000 tokens (9.3%)",
+            "workers": "51,500 / 80,000 tokens (64.4%)",
+            "color_coding": "Threshold-based: <50% green/blue, 50-80% yellow, >80% red"
+          },
+          "quick_stats": [
+            "Total Used: 65,000 / 270,000",
+            "Available: 205,000 tokens",
+            "Emergency Reserve: 25,000 (Intact/In Use indicator)",
+            "Efficiency Score: 96.2%"
+          ],
+          "expandable_breakdown": "Shows all 4 master agents with used/allocated tokens and color-coded backgrounds"
+        },
+        "technical_details": {
+          "countdown_calculation": "JavaScript function getTimeUntilReset() calculates hours and minutes until next midnight",
+          "percentage_calculations": "getMastersPercentage() and getWorkersPercentage() with one decimal precision",
+          "color_coding_logic": "getProgressBarColor(percentage, baseColor) with threshold-based CSS classes",
+          "server_enhancements": "Extended token metrics to include mastersAllocated, workersUsed, workerPoolTotal, emergencyUsed, efficiency",
+          "data_source": "coordination/token-budget.json with usage_metrics section"
+        },
+        "user_experience": [
+          "Immediate visibility of daily budget reset time",
+          "Clear separation between master (user) and worker token consumption",
+          "Visual warning system via color-coded progress bars",
+          "Detailed breakdown available on demand via expandable section",
+          "All data updates in real-time via WebSocket"
+        ],
+        "syntax_validation": "Both dashboard-v2.js and server/index.js passed node --check verification"
       }
     }
   ]
