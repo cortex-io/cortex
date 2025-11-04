@@ -268,7 +268,7 @@
                 </div>
 
                 <!-- Worker Daemon -->
-                <div class="relative overflow-hidden bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 border border-gray-200 dark:border-gray-700 hover:shadow-xl hover:-translate-y-1 transition-all cursor-pointer">
+                <div @click="switchView('events')" class="relative overflow-hidden bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 border border-gray-200 dark:border-gray-700 hover:shadow-xl hover:-translate-y-1 transition-all cursor-pointer">
                     <i data-lucide="bot" class="absolute -right-4 -bottom-4 w-32 h-32 opacity-50" :class="daemon?.status === 'running' ? 'text-green-100 dark:text-green-900/20' : 'text-red-100 dark:text-red-900/20'"></i>
                     <div class="relative z-10">
                         <p class="text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">Worker Daemon</p>
