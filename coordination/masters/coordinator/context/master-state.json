@@ -18,9 +18,10 @@
       "last_contact": null
     },
     "development": {
-      "status": "available",
-      "workload": 0,
-      "last_contact": null
+      "status": "busy",
+      "workload": 1,
+      "last_contact": "2025-11-04T15:54:53Z",
+      "current_tasks": ["task-014"]
     },
     "inventory": {
       "status": "available",
@@ -30,7 +31,8 @@
   },
   "active_workers": [],
   "completed_tasks": 0,
+  "tasks_routed": 1,
   "tokens_used": 0,
   "last_started": "2025-11-03T19:06:06Z",
-  "last_run": "2025-11-03T19:06:06Z"
+  "last_run": "2025-11-04T15:54:53Z"
 }

@@ -174,10 +174,18 @@
                     <p class="text-sm text-gray-500 dark:text-gray-400" x-text="'Last updated: ' + lastUpdate"></p>
                 </div>
 
-                <!-- Connection status -->
-                <div class="flex items-center space-x-2">
-                    <div :class="connected ? 'bg-green-500 animate-pulse-slow' : 'bg-red-500'" class="w-2 h-2 rounded-full"></div>
-                    <span class="text-sm font-medium" :class="connected ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'" x-text="connected ? 'Connected' : 'Disconnected'"></span>
+                <!-- Connection and freshness status -->
+                <div class="flex items-center space-x-4">
+                    <!-- Data freshness indicator -->
+                    <div class="flex items-center space-x-2">
+                        <span class="text-lg" :class="getFreshnessColor()" x-text="getFreshnessIndicator()"></span>
+                        <span class="text-sm font-medium text-gray-600 dark:text-gray-400" x-text="dataFreshness === 'fresh' ? 'Fresh' : dataFreshness === 'stale' ? 'Stale (30s+)' : dataFreshness === 'very-stale' ? 'Very Stale (2m+)' : 'Unknown'"></span>
+                    </div>
+                    <!-- Connection status -->
+                    <div class="flex items-center space-x-2">
+                        <div :class="connected ? 'bg-green-500 animate-pulse-slow' : 'bg-red-500'" class="w-2 h-2 rounded-full"></div>
+                        <span class="text-sm font-medium" :class="connected ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'" x-text="connected ? 'Connected' : 'Disconnected'"></span>
+                    </div>
                 </div>
             </div>
         </header>

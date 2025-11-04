@@ -1,7 +1,30 @@
 #!/bin/bash
 
-# Dashboard Agent Monitoring Script
-# Continuously monitors coordination files and broadcasts events
+# DEPRECATED: This script is no longer needed
+# Dashboard file monitoring and event broadcasting has been integrated
+# directly into the dashboard server (dashboard/server/index.js)
+#
+# The server now handles:
+# - File watching with chokidar (150ms latency)
+# - Event broadcasting via WebSocket
+# - Daemon status monitoring and push
+# - Event buffering for reconnecting clients
+#
+# To use the dashboard, simply run:
+#   node dashboard/server/index.js
+# Or use:
+#   ./scripts/start-commit-relay.sh
+#
+# This script will be removed in a future version.
+
+echo "DEPRECATED: dashboard-agent-monitor.sh is no longer needed"
+echo "Dashboard monitoring is now integrated into dashboard/server/index.js"
+echo "Please use: ./scripts/start-commit-relay.sh"
+exit 0
+
+# ============================================================================
+# ORIGINAL CODE BELOW - KEPT FOR REFERENCE ONLY
+# ============================================================================
 
 set -e
 

@@ -30,17 +30,8 @@ fi
 
 log_info ""
 
-# Launch Dashboard Agent
-log_section "Starting Dashboard Agent"
-if pgrep -f "dashboard-agent-monitor.sh" > /dev/null; then
-    log_info "Dashboard agent already running"
-else
-    log_info "Launching dashboard agent in background..."
-    nohup "$SCRIPT_DIR/dashboard-agent-monitor.sh" > /dev/null 2>&1 &
-    DASHBOARD_PID=$!
-    log_success "Dashboard agent started (PID: $DASHBOARD_PID)"
-fi
-log_info ""
+# Note: Dashboard agent monitoring has been integrated into dashboard server
+# The dashboard-agent-monitor.sh script is deprecated
 
 # Launch Dashboard Server
 log_section "Starting Dashboard Server"

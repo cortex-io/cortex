@@ -38,37 +38,118 @@ let cache = {
   taskQueue: null,
   handoffs: null,
   status: null,
-  lastUpdate: null
+  lastUpdate: null,
+  lastFileUpdate: {} // Track last update time per file
 };
 
+// Event buffer for reconnecting clients (last 50 events)
+const EVENT_BUFFER_SIZE = 50;
+let eventBuffer = [];
+
 /**
- * Read and parse JSON file safely
+ * Read and parse JSON file safely with retry logic
  */
-async function readJSON(filePath) {
-  try {
-    const content = await fs.readFile(filePath, 'utf-8');
-    return JSON.parse(content);
-  } catch (error) {
-    console.error(`Error reading ${filePath}:`, error.message);
-    return null;
+async function readJSON(filePath, retries = 3) {
+  for (let attempt = 1; attempt <= retries; attempt++) {
+    try {
+      const content = await fs.readFile(filePath, 'utf-8');
+      const data = JSON.parse(content);
+
+      // Track file update time
+      cache.lastFileUpdate[filePath] = new Date().toISOString();
+
+      return data;
+    } catch (error) {
+      if (attempt === retries) {
+        console.error(`Error reading ${filePath} after ${retries} attempts:`, error.message);
+        return null;
+      }
+      // Wait before retry (exponential backoff)
+      await new Promise(resolve => setTimeout(resolve, 50 * attempt));
+    }
   }
+  return null;
 }
 
 /**
- * Load all coordination data
+ * Load all coordination data (serves from cache, updates on file changes)
  */
-async function loadCoordinationData() {
+async function loadCoordinationData(forceRefresh = false) {
+  if (!forceRefresh && cache.lastUpdate) {
+    // Serve from cache if available
+    return cache;
+  }
+
   const data = {
     workerPool: await readJSON(FILES.workerPool),
     tokenBudget: await readJSON(FILES.tokenBudget),
     taskQueue: await readJSON(FILES.taskQueue),
     handoffs: await readJSON(FILES.handoffs),
     status: await readJSON(FILES.status),
-    lastUpdate: new Date().toISOString()
+    lastUpdate: new Date().toISOString(),
+    lastFileUpdate: cache.lastFileUpdate
   };
 
   cache = data;
   return data;
+}
+
+/**
+ * Get daemon status
+ */
+async function getDaemonStatus() {
+  const { execSync } = require('child_process');
+  const fsSync = require('fs');
+
+  const PID_FILE = '/tmp/commit-relay-worker-daemon.pid';
+  const LOG_FILE = path.join(__dirname, '../../agents/logs/system/worker-daemon.log');
+
+  let status = 'stopped';
+  let pid = null;
+  let uptime = null;
+  let memory = null;
+
+  if (fsSync.existsSync(PID_FILE)) {
+    try {
+      pid = parseInt(fsSync.readFileSync(PID_FILE, 'utf-8').trim());
+      execSync(`ps -p ${pid}`, { stdio: 'pipe' });
+      status = 'running';
+
+      const psOutput = execSync(`ps -o etime= -p ${pid}`).toString().trim();
+      uptime = parseElapsedTime(psOutput);
+
+      const memOutput = execSync(`ps -o rss= -p ${pid}`).toString().trim();
+      memory = parseInt(memOutput);
+    } catch (error) {
+      status = 'stopped';
+      pid = null;
+    }
+  }
+
+  let recentLogs = [];
+  if (fsSync.existsSync(LOG_FILE)) {
+    try {
+      const logContent = fsSync.readFileSync(LOG_FILE, 'utf-8');
+      const logLines = logContent.trim().split('\n');
+      recentLogs = logLines.slice(-10);
+    } catch (error) {
+      console.error('Error reading daemon log:', error);
+    }
+  }
+
+  const launchCount = recentLogs.filter(line =>
+    line.includes('SUCCESS: Launched')
+  ).length;
+
+  return {
+    status,
+    pid,
+    uptime,
+    memory,
+    launchCount,
+    recentLogs,
+    timestamp: new Date().toISOString()
+  };
 }
 
 /**
@@ -190,11 +271,11 @@ app.get('/api/health', (req, res) => {
 
 /**
  * GET /api/metrics
- * Get current system metrics
+ * Get current system metrics (serves from cache)
  */
 app.get('/api/metrics', async (req, res) => {
   try {
-    const data = await loadCoordinationData();
+    const data = await loadCoordinationData(false); // Use cache
     const metrics = calculateMetrics(data);
 
     if (!metrics) {
@@ -290,72 +371,12 @@ app.get('/api/events', async (req, res) => {
 
 /**
  * GET /api/daemon/status
- * Get worker daemon status
+ * Get worker daemon status (for backward compatibility)
  */
 app.get('/api/daemon/status', async (req, res) => {
   try {
-    const { execSync } = require('child_process');
-    const fsSync = require('fs');
-
-    const PID_FILE = '/tmp/commit-relay-worker-daemon.pid';
-    const LOG_FILE = path.join(__dirname, '../../agents/logs/system/worker-daemon.log');
-
-    // Check if daemon is running
-    let status = 'stopped';
-    let pid = null;
-    let uptime = null;
-    let memory = null;
-
-    if (fsSync.existsSync(PID_FILE)) {
-      try {
-        pid = parseInt(fsSync.readFileSync(PID_FILE, 'utf-8').trim());
-
-        // Check if process is actually running
-        execSync(`ps -p ${pid}`, { stdio: 'pipe' });
-        status = 'running';
-
-        // Get process uptime (in seconds)
-        const psOutput = execSync(`ps -o etime= -p ${pid}`).toString().trim();
-        uptime = parseElapsedTime(psOutput);
-
-        // Get memory usage (in KB)
-        const memOutput = execSync(`ps -o rss= -p ${pid}`).toString().trim();
-        memory = parseInt(memOutput);
-
-      } catch (error) {
-        // Process not running, but PID file exists (stale)
-        status = 'stopped';
-        pid = null;
-      }
-    }
-
-    // Get recent log entries
-    let recentLogs = [];
-    if (fsSync.existsSync(LOG_FILE)) {
-      try {
-        const logContent = fsSync.readFileSync(LOG_FILE, 'utf-8');
-        const logLines = logContent.trim().split('\n');
-        recentLogs = logLines.slice(-10);  // Last 10 lines
-      } catch (error) {
-        console.error('Error reading daemon log:', error);
-      }
-    }
-
-    // Count recent worker launches (from logs)
-    const launchCount = recentLogs.filter(line =>
-      line.includes('SUCCESS: Launched')
-    ).length;
-
-    res.json({
-      status,
-      pid,
-      uptime,
-      memory,
-      launchCount,
-      recentLogs,
-      timestamp: new Date().toISOString()
-    });
-
+    const daemonStatus = await getDaemonStatus();
+    res.json(daemonStatus);
   } catch (error) {
     console.error('Error getting daemon status:', error);
     res.status(500).json({ error: 'Internal server error' });
@@ -403,19 +424,34 @@ const wss = new WebSocketServer({ server });
 // Track connected WebSocket clients
 const clients = new Set();
 
-wss.on('connection', (ws) => {
+wss.on('connection', async (ws) => {
   console.log('WebSocket client connected');
   clients.add(ws);
 
-  // Send initial data
-  loadCoordinationData()
-    .then(data => {
-      const metrics = calculateMetrics(data);
-      ws.send(JSON.stringify({ type: 'initial', data: metrics }));
-    })
-    .catch(error => {
-      console.error('Error sending initial data:', error);
-    });
+  try {
+    // Send initial data
+    const data = await loadCoordinationData(false); // Use cache
+    const metrics = calculateMetrics(data);
+    ws.send(JSON.stringify({ type: 'initial', data: metrics }));
+
+    // Send buffered events for reconnecting clients
+    if (eventBuffer.length > 0) {
+      ws.send(JSON.stringify({
+        type: 'buffered_events',
+        events: eventBuffer,
+        count: eventBuffer.length
+      }));
+    }
+
+    // Send initial daemon status
+    const daemonStatus = await getDaemonStatus();
+    ws.send(JSON.stringify({
+      type: 'daemon_status',
+      data: daemonStatus
+    }));
+  } catch (error) {
+    console.error('Error sending initial data:', error);
+  }
 
   ws.on('close', () => {
     console.log('WebSocket client disconnected');
@@ -446,6 +482,37 @@ function broadcastUpdate(data) {
   });
 }
 
+/**
+ * Broadcast daemon status to all connected WebSocket clients
+ */
+function broadcastDaemonStatus(daemonStatus) {
+  const message = JSON.stringify({
+    type: 'daemon_status',
+    data: daemonStatus
+  });
+
+  clients.forEach(client => {
+    if (client.readyState === 1) { // OPEN
+      client.send(message);
+    }
+  });
+}
+
+/**
+ * Debounce function to batch multiple updates
+ */
+function debounce(func, wait) {
+  let timeout;
+  return function executedFunction(...args) {
+    const later = () => {
+      clearTimeout(timeout);
+      func(...args);
+    };
+    clearTimeout(timeout);
+    timeout = setTimeout(later, wait);
+  };
+}
+
 // ============================================================================
 // File Watcher for Real-time Updates
 // ============================================================================
@@ -456,20 +523,24 @@ const watcher = chokidar.watch(coordFiles, {
   persistent: true,
   ignoreInitial: true,
   awaitWriteFinish: {
-    stabilityThreshold: 500,
-    pollInterval: 100
+    stabilityThreshold: 150, // Reduced from 500ms to 150ms
+    pollInterval: 50 // Reduced from 100ms to 50ms
   }
 });
 
-watcher.on('change', async (filePath) => {
-  console.log(`File changed: ${path.basename(filePath)}`);
-
+// Debounced handler to batch multiple file changes within 1 second
+const debouncedBroadcast = debounce(async () => {
   try {
-    const data = await loadCoordinationData();
+    const data = await loadCoordinationData(true); // Force refresh cache
     broadcastUpdate(data);
   } catch (error) {
-    console.error('Error processing file change:', error);
+    console.error('Error processing file changes:', error);
   }
+}, 1000);
+
+watcher.on('change', async (filePath) => {
+  console.log(`File changed: ${path.basename(filePath)}`);
+  debouncedBroadcast();
 });
 
 // ============================================================================
@@ -480,6 +551,12 @@ watcher.on('change', async (filePath) => {
  * Broadcast event to all connected WebSocket clients
  */
 function broadcastEvent(event) {
+  // Add to event buffer (circular buffer)
+  eventBuffer.push(event);
+  if (eventBuffer.length > EVENT_BUFFER_SIZE) {
+    eventBuffer.shift(); // Remove oldest event
+  }
+
   const message = JSON.stringify({
     type: 'event',
     event: event,
@@ -523,12 +600,29 @@ eventWatcher.on('change', async () => {
 });
 
 // ============================================================================
+// Daemon Status Polling (WebSocket Push)
+// ============================================================================
+
+// Poll daemon status every 10 seconds and push via WebSocket
+setInterval(async () => {
+  if (clients.size > 0) {
+    try {
+      const daemonStatus = await getDaemonStatus();
+      broadcastDaemonStatus(daemonStatus);
+    } catch (error) {
+      console.error('Error polling daemon status:', error);
+    }
+  }
+}, 10000);
+
+// ============================================================================
 // Graceful Shutdown
 // ============================================================================
 
 process.on('SIGINT', () => {
   console.log('\nShutting down dashboard server...');
   watcher.close();
+  eventWatcher.close();
   server.close(() => {
     console.log('Server closed');
     process.exit(0);
@@ -538,6 +632,7 @@ process.on('SIGINT', () => {
 process.on('SIGTERM', () => {
   console.log('\nShutting down dashboard server...');
   watcher.close();
+  eventWatcher.close();
   server.close(() => {
     console.log('Server closed');
     process.exit(0);
