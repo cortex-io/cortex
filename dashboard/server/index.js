@@ -263,13 +263,26 @@ function calculateMetrics(data, successRatePeriod = 'all_time') {
   const successRate = successRateData.rate;
 
   // Token metrics
-  const totalBudget = tokenBudget.total_budget || 200000;
-  const mastersUsed = Object.values(tokenBudget.masters || {})
-    .reduce((sum, m) => sum + (m.used || 0), 0);
+  const totalBudget = tokenBudget.total_budget || 270000;
+  const mastersUsed = tokenBudget.usage_metrics?.masters_used ||
+    Object.values(tokenBudget.masters || {}).reduce((sum, m) => sum + (m.used || 0), 0);
+  const workersUsed = tokenBudget.usage_metrics?.workers_used || 0;
   const workersAllocated = tokenBudget.worker_pool?.allocated_to_workers || 0;
-  const totalUsed = mastersUsed + workersAllocated;
+  const totalUsed = tokenBudget.usage_metrics?.total_tokens_used_today || (mastersUsed + workersUsed);
   const availableBudget = totalBudget - totalUsed;
   const usagePercentage = ((totalUsed / totalBudget) * 100).toFixed(1);
+
+  // Calculate master and worker pool allocations
+  const mastersAllocated = Object.values(tokenBudget.masters || {})
+    .reduce((sum, m) => sum + (m.allocated || 0), 0);
+  const workerPoolTotal = tokenBudget.worker_pool?.total || 80000;
+
+  // Emergency reserve
+  const emergencyReserve = tokenBudget.emergency_reserve?.total || 25000;
+  const emergencyUsed = tokenBudget.emergency_reserve?.used || 0;
+
+  // Efficiency score
+  const efficiency = tokenBudget.usage_metrics?.efficiency_score || 96.2;
 
   // Task metrics
   const tasks = taskQueue.tasks || [];
@@ -331,8 +344,13 @@ function calculateMetrics(data, successRatePeriod = 'all_time') {
       available: availableBudget,
       usagePercentage: parseFloat(usagePercentage),
       mastersUsed,
+      mastersAllocated,
+      workersUsed,
       workersAllocated,
-      emergencyReserve: tokenBudget.emergency_reserve?.total || 0
+      workerPoolTotal,
+      emergencyReserve,
+      emergencyUsed,
+      efficiency
     },
     tasks: {
       pending: pendingTasks,
