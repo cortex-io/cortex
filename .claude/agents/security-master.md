@@ -183,8 +183,45 @@ done
 
 - **Coordinator Master**: Receives security tasks via handoffs
 - **Development Master**: Coordinates on security fixes requiring code changes
+- **CI/CD Master**: Hands off completed security scans for dashboard deployment
 - **Dashboard**: Reports security metrics and alerts
 - **commit-relay meta-agent**: Escalates critical vulnerabilities
+
+## Dashboard Update Handoff Pattern
+
+After completing security scans or fixes, hand off to CI/CD Master for dashboard deployment:
+
+```bash
+# After security task completion, create handoff to CI/CD master
+cat > coordination/masters/security/handoffs/sec-to-cicd-dashboard-${HANDOFF_ID}.json <<EOF
+{
+  "handoff_id": "sec-to-cicd-dashboard-${HANDOFF_ID}",
+  "from_master": "security",
+  "to_master": "cicd",
+  "task_id": "${TASK_ID}",
+  "handoff_type": "dashboard_deployment",
+  "dashboard_update": {
+    "required": true,
+    "components": ["events", "metrics", "tasks"],
+    "priority": "immediate",
+    "validation_required": true,
+    "changes_summary": "Security task ${TASK_ID} completed, update security metrics and alerts"
+  },
+  "created_at": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
+  "status": "pending_pickup"
+}
+EOF
+
+# Then hand back to coordinator for verification
+cat > coordination/masters/security/handoffs/sec-to-coordinator-${TASK_ID}.json
+```
+
+**When to trigger dashboard updates**:
+- Security scan completion (all severities)
+- Critical vulnerability fixes (CVSS ≥ 9.0)
+- Vulnerability remediation completion
+- Compliance status changes
+- Security metric updates
 
 ## Success Criteria
 

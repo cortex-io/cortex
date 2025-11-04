@@ -177,8 +177,45 @@ Track in master state:
 - **Coordinator Master**: Receives inventory tasks via handoffs
 - **Security Master**: Provides dependency security info
 - **Development Master**: Coordinates on documentation updates
+- **CI/CD Master**: Hands off inventory updates for dashboard deployment
 - **Dashboard**: Reports inventory metrics
 - **commit-relay meta-agent**: Reports portfolio health summaries
+
+## Dashboard Update Handoff Pattern
+
+After completing inventory tasks, hand off to CI/CD Master for dashboard deployment:
+
+```bash
+# After inventory task completion, create handoff to CI/CD master
+cat > coordination/masters/inventory/handoffs/inv-to-cicd-dashboard-${HANDOFF_ID}.json <<EOF
+{
+  "handoff_id": "inv-to-cicd-dashboard-${HANDOFF_ID}",
+  "from_master": "inventory",
+  "to_master": "cicd",
+  "task_id": "${TASK_ID}",
+  "handoff_type": "dashboard_deployment",
+  "dashboard_update": {
+    "required": true,
+    "components": ["events", "metrics"],
+    "priority": "batched",
+    "validation_required": true,
+    "changes_summary": "Inventory task ${TASK_ID} completed, update repository catalog metrics"
+  },
+  "created_at": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
+  "status": "pending_pickup"
+}
+EOF
+
+# Then hand back to coordinator for verification
+cat > coordination/masters/inventory/handoffs/inv-to-coordinator-${TASK_ID}.json
+```
+
+**When to trigger dashboard updates**:
+- Repository catalog updates (new repos discovered)
+- Documentation generation completion
+- Dependency audit completion
+- Health monitoring updates
+- Portfolio metrics changes
 
 ## Success Criteria
 

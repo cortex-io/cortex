@@ -177,8 +177,45 @@ Track in master state:
 - **Coordinator Master**: Receives development tasks via handoffs
 - **Security Master**: Coordinates on security-aware development
 - **Inventory Master**: Updates documentation after implementation
+- **CI/CD Master**: Hands off completed tasks for dashboard deployment
 - **Dashboard**: Reports development metrics and progress
 - **commit-relay meta-agent**: Escalates complex architectural decisions
+
+## Dashboard Update Handoff Pattern
+
+After completing tasks, hand off to CI/CD Master for dashboard deployment:
+
+```bash
+# After task completion, create handoff to CI/CD master
+cat > coordination/masters/development/handoffs/dev-to-cicd-dashboard-${HANDOFF_ID}.json <<EOF
+{
+  "handoff_id": "dev-to-cicd-dashboard-${HANDOFF_ID}",
+  "from_master": "development",
+  "to_master": "cicd",
+  "task_id": "${TASK_ID}",
+  "handoff_type": "dashboard_deployment",
+  "dashboard_update": {
+    "required": true,
+    "components": ["events", "metrics", "tasks", "workers"],
+    "priority": "immediate",
+    "validation_required": true,
+    "changes_summary": "Task ${TASK_ID} completed, update dashboard components"
+  },
+  "created_at": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
+  "status": "pending_pickup"
+}
+EOF
+
+# Then hand back to coordinator for verification
+cat > coordination/masters/development/handoffs/dev-to-coordinator-${TASK_ID}.json
+```
+
+**When to trigger dashboard updates**:
+- Task completion (status: completed)
+- Task failure (status: failed)
+- Worker spawning (new workers created)
+- Worker completion (workers finished)
+- Implementation milestones (major progress)
 
 ## Success Criteria
 
