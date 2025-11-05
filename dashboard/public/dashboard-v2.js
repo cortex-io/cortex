@@ -28,6 +28,18 @@ function dashboard() {
         events: [],
         workers: [], // Will store worker pool data
         gitOperations: [], // Git commit/push operations
+        streams: null, // Workforce streams data
+
+        // Watch for view changes to reinitialize icons
+        changeView(view) {
+            this.currentView = view;
+            // Reinitialize Lucide icons after view change
+            this.$nextTick(() => {
+                if (typeof lucide !== 'undefined') {
+                    lucide.createIcons();
+                }
+            });
+        },
 
         // Computed properties
         get sortedTasks() {
@@ -244,10 +256,25 @@ function dashboard() {
                 this.gitOperations = gitOpsData.operations || [];
                 console.log('Git operations loaded:', this.gitOperations.length, 'operations');
 
+                // Fetch workforce streams
+                console.log('Fetching workforce streams...');
+                await this.fetchStreams();
+                console.log('Workforce streams loaded');
+
                 console.log('Initial data loaded successfully!');
             } catch (error) {
                 console.error('Error fetching initial data:', error);
                 alert('Error loading dashboard data. Check console for details.');
+            }
+        },
+
+        async fetchStreams() {
+            try {
+                const response = await fetch('/api/streams');
+                this.streams = await response.json();
+            } catch (error) {
+                console.error('Error fetching workforce streams:', error);
+                this.streams = null;
             }
         },
 
@@ -382,6 +409,13 @@ function dashboard() {
         },
 
         initTokenChart() {
+            // Check if the chart element exists
+            const chartElement = document.querySelector("#tokenChart");
+            if (!chartElement) {
+                console.log('Token chart element not found, skipping initialization');
+                return;
+            }
+
             // Destroy existing chart if it exists to prevent duplicates
             if (this.tokenChart) {
                 this.tokenChart.destroy();
@@ -441,7 +475,7 @@ function dashboard() {
                 }
             };
 
-            this.tokenChart = new ApexCharts(document.querySelector("#tokenChart"), options);
+            this.tokenChart = new ApexCharts(chartElement, options);
             this.tokenChart.render();
         },
 
@@ -586,23 +620,35 @@ function dashboard() {
             });
         },
 
-        initAreaChart() {
+        async initAreaChart() {
             const ctx = document.getElementById('areaChart');
             if (!ctx) return;
 
-            // Generate mock time series data for last 7 days
-            const days = 7;
-            const labels = [];
-            const data = [];
-            let cumulative = this.metrics.tokens?.used || 0;
-            const dailyUsage = cumulative / days;
+            // Fetch historical data from API
+            let labels = [];
+            let data = [];
 
-            for (let i = days; i >= 0; i--) {
-                const date = new Date();
-                date.setDate(date.getDate() - i);
-                labels.push(date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }));
-                cumulative -= dailyUsage;
-                data.push(Math.max(0, cumulative) + (dailyUsage * (days - i)));
+            try {
+                const response = await fetch('/api/metrics/history?range=24h');
+                const historyData = await response.json();
+
+                if (historyData.snapshots && historyData.snapshots.length > 0) {
+                    // Extract labels and token usage data
+                    labels = historyData.snapshots.map(s => {
+                        const date = new Date(s.timestamp);
+                        return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+                    });
+                    data = historyData.snapshots.map(s => s.tokens.total_used);
+                } else {
+                    // Fallback to current metric as single data point
+                    labels = ['Now'];
+                    data = [this.metrics.tokens?.used || 0];
+                }
+            } catch (error) {
+                console.error('Error fetching historical token data:', error);
+                // Fallback to current metric
+                labels = ['Now'];
+                data = [this.metrics.tokens?.used || 0];
             }
 
             const isDark = this.darkMode;
@@ -644,26 +690,43 @@ function dashboard() {
             });
         },
 
-        initStackedAreaChart() {
+        async initStackedAreaChart() {
             const ctx = document.getElementById('stackedAreaChart');
             if (!ctx) return;
 
-            // Generate mock time series data for master agents
-            const days = 7;
-            const labels = [];
-            const coordinatorData = [];
-            const securityData = [];
-            const developmentData = [];
-            const inventoryData = [];
+            // Fetch historical data from API
+            let labels = [];
+            let activeData = [];
+            let completedData = [];
+            let failedData = [];
 
-            for (let i = days; i >= 0; i--) {
-                const date = new Date();
-                date.setDate(date.getDate() - i);
-                labels.push(date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }));
-                coordinatorData.push(Math.floor(Math.random() * 3) + 1);
-                securityData.push(Math.floor(Math.random() * 4) + 1);
-                developmentData.push(Math.floor(Math.random() * 3) + 1);
-                inventoryData.push(Math.floor(Math.random() * 2));
+            try {
+                const response = await fetch('/api/metrics/history?range=24h');
+                const historyData = await response.json();
+
+                if (historyData.snapshots && historyData.snapshots.length > 0) {
+                    // Extract labels and worker activity data
+                    labels = historyData.snapshots.map(s => {
+                        const date = new Date(s.timestamp);
+                        return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+                    });
+                    activeData = historyData.snapshots.map(s => s.workers.active);
+                    completedData = historyData.snapshots.map(s => s.workers.completed);
+                    failedData = historyData.snapshots.map(s => s.workers.failed);
+                } else {
+                    // Fallback to current metrics
+                    labels = ['Now'];
+                    activeData = [this.metrics.workers?.active || 0];
+                    completedData = [this.metrics.workers?.completed || 0];
+                    failedData = [this.metrics.workers?.failed || 0];
+                }
+            } catch (error) {
+                console.error('Error fetching historical worker data:', error);
+                // Fallback to current metrics
+                labels = ['Now'];
+                activeData = [this.metrics.workers?.active || 0];
+                completedData = [this.metrics.workers?.completed || 0];
+                failedData = [this.metrics.workers?.failed || 0];
             }
 
             const isDark = this.darkMode;
@@ -672,28 +735,22 @@ function dashboard() {
                 data: {
                     labels: labels,
                     datasets: [{
-                        label: 'Coordinator',
-                        data: coordinatorData,
+                        label: 'Active Workers',
+                        data: activeData,
                         borderColor: 'rgba(59, 130, 246, 1)',
                         backgroundColor: 'rgba(59, 130, 246, 0.5)',
                         fill: true
                     }, {
-                        label: 'Security',
-                        data: securityData,
-                        borderColor: 'rgba(249, 115, 22, 1)',
-                        backgroundColor: 'rgba(249, 115, 22, 0.5)',
-                        fill: true
-                    }, {
-                        label: 'Development',
-                        data: developmentData,
+                        label: 'Completed Workers',
+                        data: completedData,
                         borderColor: 'rgba(34, 197, 94, 1)',
                         backgroundColor: 'rgba(34, 197, 94, 0.5)',
                         fill: true
                     }, {
-                        label: 'Inventory',
-                        data: inventoryData,
-                        borderColor: 'rgba(168, 85, 247, 1)',
-                        backgroundColor: 'rgba(168, 85, 247, 0.5)',
+                        label: 'Failed Workers',
+                        data: failedData,
+                        borderColor: 'rgba(239, 68, 68, 1)',
+                        backgroundColor: 'rgba(239, 68, 68, 0.5)',
                         fill: true
                     }]
                 },
@@ -985,6 +1042,13 @@ function dashboard() {
                     this.initMetricsCharts();
                 });
             }
+
+            // Reinitialize Lucide icons after view switch
+            this.$nextTick(() => {
+                if (typeof lucide !== 'undefined') {
+                    lucide.createIcons();
+                }
+            });
 
             // Re-initialize Lucide icons for new content
             this.$nextTick(() => {

@@ -1,0 +1,15 @@
+#!/bin/bash
+# DDQD - "God Mode" Stress Test Launcher
+# Quick command to run comprehensive stress test
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+# Check if stress test is already running
+if pgrep -f "stress-test-ddqd.sh" >/dev/null; then
+    echo "⚠️  DDQD stress test is already running!"
+    echo "Kill it with: pkill -f stress-test-ddqd"
+    exit 1
+fi
+
+# Run the stress test
+exec "$SCRIPT_DIR/stress-test-ddqd.sh" "$@"
