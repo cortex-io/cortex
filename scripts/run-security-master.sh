@@ -33,6 +33,7 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$SCRIPT_DIR/lib/logging.sh"
 source "$SCRIPT_DIR/lib/coordination.sh"
+source "$SCRIPT_DIR/lib/em-spawning.sh"
 
 # Master identity
 MASTER_ID="security"
@@ -201,11 +202,17 @@ process_handoff() {
     local task_data=$(jq -r '.task_data' "$handoff_file")
     local task_type=$(echo "$task_data" | jq -r '.type')
 
-    # Select appropriate worker type based on task
-    local worker_type=$(select_worker_type "$task_type" "$task_data")
+    # v4.0: Check if task requires Execution Manager
+    if should_spawn_execution_manager "$task_data"; then
+        log_info "Task complexity requires Execution Manager coordination"
+        spawn_execution_manager "$task_id" "$task_data"
+    else
+        # Select appropriate worker type based on task
+        local worker_type=$(select_worker_type "$task_type" "$task_data")
 
-    # Spawn worker for this task
-    spawn_security_worker "$task_id" "$worker_type" "$task_data"
+        # Spawn worker for this task
+        spawn_security_worker "$task_id" "$worker_type" "$task_data"
+    fi
 
     # Mark handoff as processed
     mv "$handoff_file" "${handoff_file}.processed"
@@ -231,6 +238,14 @@ select_worker_type() {
 
     log_info "Selected worker type: $worker_type for task type: $task_type"
     echo "$worker_type"
+}
+
+# v4.0: Spawn Execution Manager for complex tasks
+# Uses shared library function
+spawn_execution_manager() {
+    local task_id="$1"
+    local task_data="$2"
+    spawn_execution_manager_for_master "$task_id" "$task_data" "security"
 }
 
 # Spawn a security worker
