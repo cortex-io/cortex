@@ -122,20 +122,44 @@ while true; do
                     '{worker_id: $worker, task_id: $task, worker_type: $type, launched_by: "daemon"}')
                 broadcast_dashboard_event "worker_started" "$EVENT_DATA" 2>/dev/null || true
 
-                # Get prompt template
-                PROMPT_TEMPLATE=$(jq -r '.prompt_template' "$spec_file")
-                FULL_PROMPT_PATH="$COMMIT_RELAY_HOME/$PROMPT_TEMPLATE"
+                # Check if a shell-based worker script exists for this type
+                WORKER_SCRIPT="$COMMIT_RELAY_HOME/agents/workers/${WORKER_TYPE}.sh"
 
-                # Build launch command using Claude CLI
-                # Note: Workers need interactive mode for tool usage, not --print mode
-                # The prompt file is passed as an argument to start a conversation
-                TERMINAL_CMD="cd $COMMIT_RELAY_HOME && claude \"\$(cat $PROMPT_TEMPLATE)\""
+                if [ -f "$WORKER_SCRIPT" ]; then
+                    # Use shell-based worker with git automation
+                    log_daemon "INFO: Using shell-based worker: $WORKER_SCRIPT"
 
-                # Launch Claude CLI in Terminal
-                osascript -e "tell application \"Terminal\"
-                    do script \"$TERMINAL_CMD\"
-                    activate
-                end tell" > /dev/null 2>&1 &
+                    # Extract worker parameters from spec
+                    SCOPE=$(jq -r '.scope' "$spec_file")
+                    DESCRIPTION=$(jq -r '.scope.description // .context.description // "Worker task"' "$spec_file")
+                    REPOSITORY=$(jq -r '.scope.repository // ""' "$spec_file")
+
+                    # Build worker command with environment variables
+                    TERMINAL_CMD="cd $COMMIT_RELAY_HOME && export WORKER_ID='$WORKER_ID' && export TASK_ID='$TASK_ID' && export TASK_DESCRIPTION='$DESCRIPTION' && export COMMIT_RELAY_HOME='$COMMIT_RELAY_HOME' && $WORKER_SCRIPT --task-id '$TASK_ID' --description '$DESCRIPTION'; read -p 'Press Enter to close...'"
+
+                    # Launch shell worker in Terminal
+                    osascript -e "tell application \"Terminal\"
+                        do script \"$TERMINAL_CMD\"
+                        activate
+                    end tell" > /dev/null 2>&1 &
+                else
+                    # Fallback to Claude CLI prompt-based worker
+                    log_daemon "INFO: Using prompt-based worker (no shell script found)"
+
+                    PROMPT_TEMPLATE=$(jq -r '.prompt_template' "$spec_file")
+                    FULL_PROMPT_PATH="$COMMIT_RELAY_HOME/$PROMPT_TEMPLATE"
+
+                    # Build launch command using Claude CLI
+                    # Note: Workers need interactive mode for tool usage, not --print mode
+                    # The prompt file is passed as an argument to start a conversation
+                    TERMINAL_CMD="cd $COMMIT_RELAY_HOME && claude \"\$(cat $PROMPT_TEMPLATE)\""
+
+                    # Launch Claude CLI in Terminal
+                    osascript -e "tell application \"Terminal\"
+                        do script \"$TERMINAL_CMD\"
+                        activate
+                    end tell" > /dev/null 2>&1 &
+                fi
 
                 log_daemon "SUCCESS: Launched $WORKER_ID in new Terminal tab"
 

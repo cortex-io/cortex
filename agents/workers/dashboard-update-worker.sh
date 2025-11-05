@@ -358,7 +358,13 @@ main() {
         echo -e "${GREEN}  Duration: ${duration}s${NC}"
         echo -e "${GREEN}=================================${NC}"
 
-        exit 0
+        # Set files changed for git automation
+        export FILES_CHANGED="coordination/dashboard-events.jsonl,coordination/masters/cicd/context/dashboard-deployments.jsonl"
+        export WORKER_TYPE="dashboard-update-worker"
+
+        # Use automatic git workflow
+        log_info "Starting autonomous git workflow..."
+        source "$PROJECT_ROOT/scripts/templates/worker-completion-hook.sh"
     else
         local end_time=$(date +%s)
         local duration=$((end_time - start_time))
