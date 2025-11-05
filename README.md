@@ -18,7 +18,15 @@ Each master agent focuses on a domain like development, security, or inventory m
 
 ### Key Features
 
-**🚀 NEW - Agentic AI Architecture (v3.0)**:
+**🚀 NEW - v4.0 Orchestration Architecture**:
+- 🎭 **Task Orchestrator**: Strategic daemon for complex multi-master coordination with DAG-based execution planning
+- 👨‍💼 **Execution Managers**: Tactical agents spawned by masters for subtask decomposition and multi-worker coordination
+- 💓 **Heartbeat Protocol**: Worker health monitoring with 2-minute ping intervals
+- 🧟 **Zombie Killer**: Dual detection system (timeout >15min OR stale heartbeat >5min) with automatic cleanup
+- 📊 **Live Orchestration Dashboard**: Real-time metrics, historical data collection, and system health visualization
+- 🎮 **DDQD Stress Test**: "God mode" comprehensive system validation testing all v4.0 orchestration features
+
+**v3.0 - Agentic AI Architecture**:
 - 🧠 **ASI (Learning)**: Each master learns from outcomes and improves over time
 - 🎯 **MoE (Expert Routing)**: Pattern-based task routing to specialist masters (95% confidence)
 - 📚 **RAG (Context Retrieval)**: Knowledge base augmentation for informed decision-making
@@ -39,55 +47,114 @@ Each master agent focuses on a domain like development, security, or inventory m
 
 ## Architecture
 
-### Master-Worker-Observer System (v3.0 - ASI/MoE/RAG)
+### v4.0 - Multi-Layer Orchestration System
 
-**NEW**: Phase 1 implementation of Artificial Super Intelligence (ASI), Mixture of Experts (MoE), and Retrieval Augmented Generation (RAG) principles for true agentic AI architecture.
+**NEW**: v4.0 introduces a three-layer orchestration architecture for complex multi-master coordination.
 
-#### ASI/MoE/RAG Principles
+#### Three-Layer Architecture
+
+**Layer 1 - Strategic (Permanent Daemons)**:
+- **Task Orchestrator Daemon**: Decomposes complex multi-master tasks into coordinated subtasks with dependencies
+- **Zombie Killer Daemon**: Monitors worker health using heartbeat protocol, kills stale workers
+- **Metrics Snapshot Daemon**: Collects historical metrics every 5 minutes for trend analysis and dashboard charts
+
+**Layer 2 - Tactical (Master Agents & Execution Managers)**:
+- **Coordinator Master**: Routes tasks via MoE pattern, checks for orchestration requirements
+- **Specialist Masters**: Security, Development, Inventory, CI/CD domains with dedicated knowledge bases
+- **Execution Managers**: Ephemeral tactical agents spawned by masters for:
+  - Breaking down complex subtasks into worker-level units
+  - Coordinating multiple workers on related operations
+  - Managing dependencies between parallel work streams
+  - Aggregating results from worker pools
+  - Scaling execution capacity for larger projects
+
+**Layer 3 - Execution (Workers)**:
+- **16 Specialized Workers**: Scan, Fix, Analysis, Implementation, Test, Review, PR, Documentation, Catalog, etc.
+- **Heartbeat Protocol**: Workers ping every 2 minutes to prove they're alive
+- **Health Monitoring**: Zombie detection via timeout (>15min) or stale heartbeat (>5min)
+
+```mermaid
+graph TB
+    subgraph Strategic["🎯 Strategic Layer - Daemons"]
+        TO["Task Orchestrator Daemon<br/>Complex Coordination"]
+        ZK["Zombie Killer Daemon<br/>Health Monitoring"]
+        MS["Metrics Snapshot Daemon<br/>Historical Data"]
+    end
+
+    subgraph Tactical["👨‍💼 Tactical Layer - Masters & Managers"]
+        CM["Coordinator Master<br/>MoE Routing"]
+        SM["Security Master"]
+        DM["Development Master"]
+        IM["Inventory Master"]
+        CICD["CI/CD Master"]
+        EM["Execution Managers<br/>Subtask Coordination"]
+    end
+
+    subgraph Execution["⚙️ Execution Layer - Workers"]
+        W1["Scan Workers"]
+        W2["Implementation Workers"]
+        W3["Test Workers"]
+        W4["... 16 Worker Types"]
+    end
+
+    subgraph Observer["📊 Observer Layer"]
+        DA["Dashboard Agent"]
+        DASH["Live Dashboard<br/>WebSocket Metrics"]
+    end
+
+    TO --> CM
+    TO --> SM
+    TO --> DM
+    TO --> IM
+
+    CM --> SM
+    CM --> DM
+    CM --> IM
+
+    SM --> EM
+    DM --> EM
+    IM --> EM
+
+    SM --> W1
+    DM --> W2
+    IM --> W3
+    EM --> W4
+
+    W1 -.->|Heartbeat| ZK
+    W2 -.->|Heartbeat| ZK
+    W3 -.->|Heartbeat| ZK
+    W4 -.->|Heartbeat| ZK
+
+    DA -.->|Monitors| TO
+    DA -.->|Monitors| CM
+    DA -.->|Monitors| SM
+    MS -.->|Feeds| DA
+    DA --> DASH
+
+    style TO fill:#e1bee7,stroke:#8e24aa
+    style ZK fill:#ffccbc,stroke:#ff6f00
+    style MS fill:#fff9c4,stroke:#f57f17
+    style EM fill:#c5cae9,stroke:#3949ab
+    style DA fill:#b2dfdb,stroke:#00897b
+    style DASH fill:#b2dfdb,stroke:#00897b
+```
+
+#### v3.0 ASI/MoE/RAG Principles (Still Active)
 
 **ASI (Artificial Super Intelligence)**:
 - Each master maintains state and learns from task outcomes
 - Knowledge bases store historical decisions and performance metrics
 - Continuous improvement through learning mechanisms
-- Session tracking and performance analytics
 
 **MoE (Mixture of Experts)**:
 - Coordinator Master routes tasks to specialist masters via pattern matching
-- Each specialist master has domain expertise (Security, Development, Inventory)
-- Worker type selection based on task requirements and specializations
+- Each specialist master has domain expertise
 - Confidence scoring for routing decisions
 
 **RAG (Retrieval Augmented Generation)**:
 - Masters retrieve relevant context from knowledge bases before spawning workers
 - Workers receive augmented context with historical data and past learnings
-- Knowledge base references provided to all workers
 - Domain-specific expertise storage per master
-
-```
-┌─────────────────────────────────────────────┐
-│         Coordinator Master                   │
-│  • Task decomposition & orchestration        │
-│  • Token budget management (270k daily)      │
-│  • Worker lifecycle management               │
-└────────────┬────────────────────────────────┘
-             │
-             ├─→ Dashboard Agent (Observer, 20k) ←─ Monitors all activity
-             │    • Real-time event streaming
-             │    • System health monitoring
-             │    • Analytics & insights
-             │
-     ┌───────┴───────┬──────────────┬──────────┐
-     ▼               ▼              ▼          ▼
-┌──────────┐   ┌──────────┐   ┌──────────┐  ┌──────────┐
-│Security  │   │Development│  │Inventory │  │ Worker   │
-│ Master   │   │  Master   │  │ Master   │  │  Pool    │
-│ (30k)    │   │  (30k)    │  │ (35k)    │  │ (80k)    │
-└────┬─────┘   └────┬──────┘  └────┬─────┘  └────┬─────┘
-     │              │              │              │
-     └──────────────┴──────────────┴──────────────┘
-                         │
-                9 Specialized Workers
-```
 
 ### Master Agents (Strategic)
 
@@ -304,11 +371,18 @@ commit-relay/
     ├── start-commit-relay.sh         # System startup script
     ├── worker-status.sh              # Monitor workers
     ├── run-security-master.sh        # Launch security master
+    ├── run-coordinator-master.sh     # Launch coordinator master (MoE routing)
+    ├── run-development-master.sh     # Launch development master
+    ├── run-inventory-master.sh       # Launch inventory master
+    ├── task-orchestrator-daemon.sh   # v4.0 Task orchestration daemon
+    ├── zombie-killer-daemon.sh       # v4.0 Zombie detection and cleanup
+    ├── spawn-execution-manager.sh    # v4.0 Execution manager spawner
     ├── agent-init.sh                 # Initialize new agents
     ├── status-check.sh               # System health check
     └── lib/
         ├── logging.sh                # Centralized logging
-        └── coordination.sh           # Coordination file utilities
+        ├── coordination.sh           # Coordination file utilities
+        └── worker-heartbeat.sh       # v4.0 Worker heartbeat protocol
 ```
 
 ---
@@ -434,6 +508,44 @@ cat coordination/token-budget.json | jq
 - Launches workers in new Terminal tabs (via Claude Code)
 - Updates coordination state and broadcasts events
 - Zero manual intervention required
+
+### Stress Testing
+
+#### DDQD - "God Mode" System Validation 🎮
+
+**NEW**: Comprehensive stress test that validates all v4.0 orchestration features under load!
+
+```bash
+# Run stress test with interactive duration prompt
+./scripts/ddqd
+
+# Or specify duration directly (in minutes)
+TEST_DURATION=60 ./scripts/ddqd
+```
+
+**What DDQD Tests**:
+- ✅ Task Orchestrator daemon (complex multi-master coordination)
+- ✅ Zombie Killer daemon (detection & cleanup)
+- ✅ Heartbeat Protocol (worker health monitoring)
+- ✅ Workforce Streams (multi-stream task execution)
+- ✅ Token Budget Management (usage tracking & limits)
+- ✅ Dashboard Metrics (real-time accuracy)
+- ✅ Historical Data Collection (time-series snapshots)
+
+**Test Phases**:
+1. **Normal Load**: Gradual worker spawning with simple tasks
+2. **High Parallelism**: Up to 15 concurrent workers
+3. **Zombie Scenarios**: Intentional zombie creation (timeout + stale heartbeat)
+4. **Orchestration Stress**: Complex multi-master tasks
+5. **Recovery Validation**: System health check & cleanup verification
+
+**Output**:
+- Real-time metrics during test execution
+- Final validation report in `coordination/stress-test/`
+- Metrics snapshots in JSON format
+- Full test logs for analysis
+
+See [scripts/STRESS-TEST.md](./scripts/STRESS-TEST.md) for complete documentation.
 
 **Benefits**:
 - ✅ **Truly Autonomous**: Workers launch automatically within 30 seconds
@@ -680,7 +792,35 @@ Emergency Reserve (9%): 25k
 
 ---
 
-### 🔮 Phase 6: Financial Intelligence (Planned)
+### ✅ Phase 6: v4.0 Orchestration Layer (Complete)
+
+**Goal**: Multi-layer orchestration for complex multi-master coordination
+
+**Delivered**:
+- ✅ **Task Orchestrator Daemon**: Strategic layer for complex task decomposition with DAG-based execution planning
+- ✅ **Zombie Killer Daemon**: Health monitoring with dual detection (timeout + stale heartbeat)
+- ✅ **Execution Manager Spawner**: Tactical layer for masters to delegate complex subtasks
+- ✅ **Heartbeat Protocol**: Worker health monitoring with 2-minute ping intervals (`lib/worker-heartbeat.sh`)
+- ✅ **Coordinator Integration**: MoE routing enhanced with orchestration requirement checks
+- ✅ **Dashboard Integration**: Orchestration metrics exposed via `/api/metrics` endpoint
+- ✅ **Live Orchestration Card**: Real-time display of active/completed/failed orchestrations
+- ✅ **Worker Spec Enhancements**: Added `last_heartbeat` field for health tracking
+- ✅ **Zombie Detection**: 15-minute timeout OR 5-minute stale heartbeat triggers cleanup
+
+**Architecture Changes**:
+- Three-layer system: Strategic (daemons) → Tactical (masters/managers) → Execution (workers)
+- Task Orchestrator sits above Coordinator Master for complex coordination
+- Execution Managers spawned by masters for subtask-level worker coordination
+- Heartbeat-based health monitoring replaces simple timeout detection
+- Orchestration state tracked in `coordination/orchestrator/state/current.json`
+
+**Result**: True multi-layer orchestration - complex tasks requiring multiple masters can now be decomposed into coordinated subtasks with dependencies. Worker health monitoring ensures zombies are detected and killed within 5 minutes of becoming unresponsive. Dashboard provides real-time visibility into orchestration status.
+
+**Architecture Impact**: Moved from flat master-worker to hierarchical orchestration system, added 2 permanent daemons (Task Orchestrator, Zombie Killer), introduced ephemeral Execution Managers, established heartbeat protocol for worker health
+
+---
+
+### 🔮 Phase 7: Financial Intelligence (Planned)
 
 **Goal**: Predictive budget management and cost forecasting
 
@@ -698,7 +838,7 @@ Emergency Reserve (9%): 25k
 
 ---
 
-### 🔮 Phase 7: Enhanced Dashboard Features (Planned)
+### 🔮 Phase 8: Enhanced Dashboard Features (Planned)
 
 **Goal**: Advanced visualization and monitoring capabilities
 
@@ -710,7 +850,7 @@ Emergency Reserve (9%): 25k
   - Error/warning alerts
   - Searchable and filterable feed
   - Activity timeline view
-- Budget forecast panel (from Phase 6)
+- Budget forecast panel (from Phase 7)
 - Historical metrics charts (trends over time)
 - Custom alerts and notifications
 - Worker timeline/Gantt visualization
@@ -720,7 +860,7 @@ Emergency Reserve (9%): 25k
 
 ---
 
-### 🔮 Phase 8: Advanced Optimization (Optional - Future)
+### 🔮 Phase 9: Advanced Optimization (Optional - Future)
 
 **Goal**: Further automation and intelligence
 
@@ -840,28 +980,32 @@ MIT License - See [LICENSE](./LICENSE) for details
 
 **Production Ready** ✅
 
-- **Version**: 3.0 (ASI/MoE/RAG Architecture)
-- **Architecture**: Master-Worker-Observer with AI principles
-- **Phases Complete**: Phase 1 ASI/MoE/RAG, Legacy Phases 1-5.5
-- **Master Agents**: 4 (Coordinator, Security, Development, Inventory)
-- **Observer Agents**: 1 (Dashboard)
-- **Dashboard**: Real-time monitoring with WebSocket
-- **Worker Types**: 16 specialized types (4 per master)
+- **Version**: 4.0 (Multi-Layer Orchestration)
+- **Architecture**: Hierarchical orchestration with Strategic/Tactical/Execution layers
+- **Phases Complete**: Phase 1-6 (ASI/MoE/RAG + v4.0 Orchestration)
+- **Strategic Layer**: 2 permanent daemons (Task Orchestrator, Zombie Killer)
+- **Tactical Layer**: 4 master agents + ephemeral Execution Managers
+- **Execution Layer**: 16 specialized worker types with heartbeat monitoring
+- **Observer Layer**: Dashboard Agent + Live WebSocket dashboard
 - **Lifecycle Coverage**: 100%
-- **Success Rate**: 94%
+- **Worker Success Rate**: 94%
 - **Token Efficiency**: 60-80% improvement
 
 ### System Health
 
+- ✅ v4.0 orchestration layer operational (3-layer hierarchy)
+- ✅ Task Orchestrator daemon running for complex coordination
+- ✅ Zombie Killer daemon running with heartbeat monitoring
+- ✅ Heartbeat protocol active (2-minute worker pings)
 - ✅ All 4 master agents operational with isolated contexts
 - ✅ ASI: Learning mechanisms active across all masters
-- ✅ MoE: Pattern-based routing with 95% confidence
+- ✅ MoE: Pattern-based routing with 95% confidence + orchestration checks
 - ✅ RAG: Knowledge base retrieval operational
 - ✅ 16 specialized worker types available
 - ✅ Token budget: 270k daily
 - ✅ Worker pool: 80k available
 - ✅ Emergency reserve: 25k
-- ✅ Documentation: Complete (PHASE_1_IMPLEMENTATION.md)
+- ✅ Dashboard: Live orchestration metrics + real-time events
 
 ---
 

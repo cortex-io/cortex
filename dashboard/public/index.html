@@ -313,144 +313,87 @@
 
             <!-- Overview View -->
             <div x-show="currentView === 'overview'" x-transition>
-                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
-                    <!-- Autonomous Productivity Analytics -->
-                    <div class="bg-gradient-to-br from-purple-50 to-blue-50 dark:from-gray-800 dark:to-gray-900 rounded-xl shadow-lg p-6 border-2 border-purple-200 dark:border-purple-900">
-                        <!-- Header -->
-                        <div class="flex items-center justify-between mb-4">
-                            <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
-                                Autonomous Productivity
-                            </h3>
-                            <div class="px-3 py-1 rounded-full bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300 text-xs font-semibold animate-pulse">
-                                ACTIVE
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <!-- Left Column: Productivity + Task Orchestration -->
+                    <div class="space-y-6">
+                        <!-- Productivity Card -->
+                        <div class="bg-gradient-to-br from-purple-50 to-blue-50 dark:from-gray-800 dark:to-gray-900 rounded-xl shadow-lg p-4 border-2 border-purple-200 dark:border-purple-900">
+                            <div class="flex items-center justify-between mb-3">
+                                <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Productivity</h3>
+                                <div class="px-2 py-1 rounded-full bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300 text-xs font-semibold animate-pulse">
+                                    ACTIVE
+                                </div>
+                            </div>
+
+                            <!-- Stats Grid - 2x2 Compact -->
+                            <div class="grid grid-cols-2 gap-2">
+                                <div class="bg-white dark:bg-gray-800 rounded-lg p-2 shadow">
+                                    <div class="text-xl font-bold text-purple-600 dark:text-purple-400" x-text="metrics.workers?.completed || 0">0</div>
+                                    <div class="text-xs text-gray-600 dark:text-gray-400">Commits</div>
+                                </div>
+                                <div class="bg-white dark:bg-gray-800 rounded-lg p-2 shadow border-2 border-red-200 dark:border-red-900">
+                                    <div class="text-xl font-bold text-red-600 dark:text-red-400" x-text="metrics.workers?.zombiesKilled || 0">0</div>
+                                    <div class="text-xs text-gray-600 dark:text-gray-400">Zombies</div>
+                                </div>
+                                <div class="bg-white dark:bg-gray-800 rounded-lg p-2 shadow">
+                                    <div class="text-xl font-bold text-indigo-600 dark:text-indigo-400" x-text="metrics.tasks?.completed || 0">0</div>
+                                    <div class="text-xs text-gray-600 dark:text-gray-400">Tasks</div>
+                                </div>
+                                <div class="bg-white dark:bg-gray-800 rounded-lg p-2 shadow border-2 border-cyan-200 dark:border-cyan-900">
+                                    <div class="text-xl font-bold text-cyan-600 dark:text-cyan-400" x-text="(metrics.tokens?.efficiency || 0) > 0 ? Math.round(metrics.tokens.efficiency) + '%' : '-'">-</div>
+                                    <div class="text-xs text-gray-600 dark:text-gray-400">Efficiency</div>
+                                </div>
                             </div>
                         </div>
 
-                        <!-- Exciting Stats Grid - 3x3 -->
-                        <div class="grid grid-cols-3 gap-3 mb-4">
-                            <!-- Total Autonomous Commits -->
-                            <div class="bg-white dark:bg-gray-800 rounded-lg p-3 shadow">
-                                <div class="text-2xl font-bold text-purple-600 dark:text-purple-400" x-text="metrics.workers?.completed || 0">0</div>
-                                <div class="text-xs text-gray-600 dark:text-gray-400 mt-1">Commits</div>
+                        <!-- Task Orchestration Card -->
+                        <div class="bg-gradient-to-br from-indigo-50 to-purple-50 dark:from-gray-800 dark:to-gray-900 rounded-xl shadow-lg p-4 border-2 border-indigo-200 dark:border-indigo-900">
+                            <div class="flex items-center justify-between mb-3">
+                                <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Task Orchestration</h3>
+                                <div x-show="(metrics.orchestrator?.active || 0) > 0" class="px-2 py-1 rounded-full bg-indigo-100 dark:bg-indigo-900 text-indigo-700 dark:text-indigo-300 text-xs font-semibold animate-pulse">
+                                    ACTIVE
+                                </div>
                             </div>
 
-                            <!-- Total Workers -->
-                            <div class="bg-white dark:bg-gray-800 rounded-lg p-3 shadow">
-                                <div class="text-2xl font-bold text-blue-600 dark:text-blue-400" x-text="metrics.workers?.total || 0">0</div>
-                                <div class="text-xs text-gray-600 dark:text-gray-400 mt-1">Total Workers</div>
+                            <!-- Orchestration Stats Grid - 2x2 Compact -->
+                            <div class="grid grid-cols-2 gap-2 mb-3">
+                                <div class="bg-white dark:bg-gray-800 rounded-lg p-2 shadow border-2 border-indigo-200 dark:border-indigo-900">
+                                    <div class="text-xl font-bold text-indigo-600 dark:text-indigo-400" x-text="metrics.orchestrator?.active || 0">0</div>
+                                    <div class="text-xs text-gray-600 dark:text-gray-400">Active</div>
+                                </div>
+                                <div class="bg-white dark:bg-gray-800 rounded-lg p-2 shadow">
+                                    <div class="text-xl font-bold text-purple-600 dark:text-purple-400" x-text="metrics.orchestrator?.total || 0">0</div>
+                                    <div class="text-xs text-gray-600 dark:text-gray-400">Total</div>
+                                </div>
+                                <div class="bg-white dark:bg-gray-800 rounded-lg p-2 shadow">
+                                    <div class="text-xl font-bold text-green-600 dark:text-green-400" x-text="metrics.orchestrator?.completed || 0">0</div>
+                                    <div class="text-xs text-gray-600 dark:text-gray-400">Done</div>
+                                </div>
+                                <div class="bg-white dark:bg-gray-800 rounded-lg p-2 shadow">
+                                    <div class="text-xl font-bold text-red-600 dark:text-red-400" x-text="metrics.orchestrator?.failed || 0">0</div>
+                                    <div class="text-xs text-gray-600 dark:text-gray-400">Failed</div>
+                                </div>
                             </div>
-
-                            <!-- Active Workers -->
-                            <div class="bg-white dark:bg-gray-800 rounded-lg p-3 shadow border-2 border-green-200 dark:border-green-900">
-                                <div class="text-2xl font-bold text-green-600 dark:text-green-400" x-text="metrics.workers?.active || 0">0</div>
-                                <div class="text-xs text-gray-600 dark:text-gray-400 mt-1">Active Now</div>
+                            <div class="text-center text-xs text-gray-500 dark:text-gray-400">
+                                v4.0 Multi-Master Coordination
                             </div>
-
-                            <!-- Success Rate -->
-                            <div class="bg-white dark:bg-gray-800 rounded-lg p-3 shadow">
-                                <div class="text-2xl font-bold text-emerald-600 dark:text-emerald-400" x-text="Math.round(metrics.workers?.successRate || 0) + '%'">0%</div>
-                                <div class="text-xs text-gray-600 dark:text-gray-400 mt-1">Success Rate</div>
-                            </div>
-
-                            <!-- Failed Workers -->
-                            <div class="bg-white dark:bg-gray-800 rounded-lg p-3 shadow">
-                                <div class="text-2xl font-bold text-amber-600 dark:text-amber-400" x-text="metrics.workers?.failed || 0">0</div>
-                                <div class="text-xs text-gray-600 dark:text-gray-400 mt-1">Failed</div>
-                            </div>
-
-                            <!-- Zombies Killed -->
-                            <div class="bg-white dark:bg-gray-800 rounded-lg p-3 shadow border-2 border-red-200 dark:border-red-900">
-                                <div class="text-2xl font-bold text-red-600 dark:text-red-400" x-text="metrics.workers?.zombiesKilled || 0">0</div>
-                                <div class="text-xs text-gray-600 dark:text-gray-400 mt-1">Zombies Killed</div>
-                            </div>
-
-                            <!-- Tasks Completed -->
-                            <div class="bg-white dark:bg-gray-800 rounded-lg p-3 shadow">
-                                <div class="text-2xl font-bold text-indigo-600 dark:text-indigo-400" x-text="metrics.tasks?.completed || 0">0</div>
-                                <div class="text-xs text-gray-600 dark:text-gray-400 mt-1">Tasks Done</div>
-                            </div>
-
-                            <!-- Token Efficiency -->
-                            <div class="bg-white dark:bg-gray-800 rounded-lg p-3 shadow border-2 border-cyan-200 dark:border-cyan-900">
-                                <div class="text-2xl font-bold text-cyan-600 dark:text-cyan-400" x-text="(metrics.tokens?.efficiency || 0) > 0 ? Math.round(metrics.tokens.efficiency) + '%' : '-'">-</div>
-                                <div class="text-xs text-gray-600 dark:text-gray-400 mt-1">Efficiency</div>
-                            </div>
-
-                            <!-- Avg Duration -->
-                            <div class="bg-white dark:bg-gray-800 rounded-lg p-3 shadow">
-                                <div class="text-2xl font-bold text-orange-600 dark:text-orange-400" x-text="(metrics.workers?.avgDuration || 0) > 0 ? Math.round(metrics.workers.avgDuration) + 'm' : '-'">-</div>
-                                <div class="text-xs text-gray-600 dark:text-gray-400 mt-1">Avg Time</div>
-                            </div>
-                        </div>
-
-                        <!-- Trend Indicator -->
-                        <div class="flex items-center justify-center text-sm space-x-2 py-2">
-                            <svg class="w-4 h-4 text-green-500 animate-bounce" fill="currentColor" viewBox="0 0 20 20">
-                                <path fill-rule="evenodd" d="M5.293 7.707a1 1 0 010-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 01-1.414 1.414L11 5.414V17a1 1 0 11-2 0V5.414L6.707 7.707a1 1 0 01-1.414 0z" clip-rule="evenodd"/>
-                            </svg>
-                            <span class="font-semibold text-green-600 dark:text-green-400">Growing Exponentially!</span>
                         </div>
                     </div>
 
-                    <!-- Orchestration Metrics (v4.0) -->
-                    <div class="bg-gradient-to-br from-indigo-50 to-purple-50 dark:from-gray-800 dark:to-gray-900 rounded-xl shadow-lg p-6 border-2 border-indigo-200 dark:border-indigo-900">
-                        <!-- Header -->
-                        <div class="flex items-center justify-between mb-4">
-                            <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
-                                Task Orchestration
-                            </h3>
-                            <div x-show="(metrics.orchestrator?.active || 0) > 0" class="px-3 py-1 rounded-full bg-indigo-100 dark:bg-indigo-900 text-indigo-700 dark:text-indigo-300 text-xs font-semibold animate-pulse">
-                                COORDINATING
-                            </div>
-                        </div>
-
-                        <!-- Orchestration Stats Grid - 2x2 -->
-                        <div class="grid grid-cols-2 gap-3">
-                            <!-- Active Orchestrations -->
-                            <div class="bg-white dark:bg-gray-800 rounded-lg p-3 shadow border-2 border-indigo-200 dark:border-indigo-900">
-                                <div class="text-2xl font-bold text-indigo-600 dark:text-indigo-400" x-text="metrics.orchestrator?.active || 0">0</div>
-                                <div class="text-xs text-gray-600 dark:text-gray-400 mt-1">Active</div>
-                            </div>
-
-                            <!-- Total Orchestrations -->
-                            <div class="bg-white dark:bg-gray-800 rounded-lg p-3 shadow">
-                                <div class="text-2xl font-bold text-purple-600 dark:text-purple-400" x-text="metrics.orchestrator?.total || 0">0</div>
-                                <div class="text-xs text-gray-600 dark:text-gray-400 mt-1">Total</div>
-                            </div>
-
-                            <!-- Completed Orchestrations -->
-                            <div class="bg-white dark:bg-gray-800 rounded-lg p-3 shadow">
-                                <div class="text-2xl font-bold text-green-600 dark:text-green-400" x-text="metrics.orchestrator?.completed || 0">0</div>
-                                <div class="text-xs text-gray-600 dark:text-gray-400 mt-1">Completed</div>
-                            </div>
-
-                            <!-- Failed Orchestrations -->
-                            <div class="bg-white dark:bg-gray-800 rounded-lg p-3 shadow">
-                                <div class="text-2xl font-bold text-red-600 dark:text-red-400" x-text="metrics.orchestrator?.failed || 0">0</div>
-                                <div class="text-xs text-gray-600 dark:text-gray-400 mt-1">Failed</div>
-                            </div>
-                        </div>
-
-                        <!-- Info -->
-                        <div class="mt-4 text-center text-xs text-gray-500 dark:text-gray-400">
-                            v4.0 Multi-Master Coordination
-                        </div>
-                    </div>
-
-                    <!-- Real-time events (2/3 width - expanded to show all activity) -->
-                    <div class="lg:col-span-3 bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 border border-gray-200 dark:border-gray-700">
-                        <div class="flex items-center justify-between mb-4">
+                    <!-- Right Column: Real-time Events (2/3 width) -->
+                    <div class="lg:col-span-2 bg-white dark:bg-gray-800 rounded-xl shadow-lg p-4 border border-gray-200 dark:border-gray-700">
+                        <div class="flex items-center justify-between mb-3">
                             <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Real-time Events</h3>
                             <div class="flex items-center space-x-2">
                                 <div class="w-2 h-2 bg-green-500 rounded-full animate-pulse-slow"></div>
                                 <span class="text-xs text-gray-500 dark:text-gray-400">Live</span>
                             </div>
                         </div>
-                        <div class="space-y-2 max-h-96 overflow-y-auto">
-                            <!-- Using index as key - events have duplicate IDs (e.g., 4x "task-created-task-012") -->
-                            <template x-for="(event, eventIndex) in events.slice(0, 15)" :key="'overview-event-' + eventIndex">
-                                <div class="flex items-start space-x-3 p-3 rounded-lg bg-gray-50 dark:bg-gray-700/50 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
-                                    <div class="flex-shrink-0 w-2 h-2 mt-2 rounded-full" :class="{
+                        <div class="space-y-1.5 max-h-[470px] overflow-y-auto">
+                            <!-- Using index as key - events have duplicate IDs -->
+                            <template x-for="(event, eventIndex) in events.slice(0, 20)" :key="'overview-event-' + eventIndex">
+                                <div class="flex items-start space-x-2 p-2 rounded-lg bg-gray-50 dark:bg-gray-700/50 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                                    <div class="flex-shrink-0 w-2 h-2 mt-1.5 rounded-full" :class="{
                                         'bg-green-500': event.type === 'worker_completed' || event.type === 'task_completed' || event.type === 'git_push_success',
                                         'bg-blue-500': event.type === 'worker_started' || event.type === 'task_created',
                                         'bg-purple-500': event.type === 'task_assigned',
@@ -458,9 +401,11 @@
                                         'bg-red-500': event.type === 'worker_failed' || event.type === 'task_failed' || event.type === 'error' || event.type === 'git_push_failed'
                                     }"></div>
                                     <div class="flex-1 min-w-0">
-                                        <p class="text-sm font-medium text-gray-900 dark:text-white" x-text="formatEventType(event.type)"></p>
-                                        <p class="text-xs text-gray-500 dark:text-gray-400" x-text="formatEventMessage(event)"></p>
-                                        <p class="text-xs text-gray-400 dark:text-gray-500 mt-1" x-text="new Date(event.timestamp).toLocaleTimeString()"></p>
+                                        <div class="flex items-baseline justify-between gap-2">
+                                            <p class="text-sm font-medium text-gray-900 dark:text-white truncate" x-text="formatEventType(event.type)"></p>
+                                            <p class="text-xs text-gray-400 dark:text-gray-500 flex-shrink-0" x-text="new Date(event.timestamp).toLocaleTimeString()"></p>
+                                        </div>
+                                        <p class="text-xs text-gray-500 dark:text-gray-400 truncate" x-text="formatEventMessage(event)"></p>
                                     </div>
                                 </div>
                             </template>
@@ -807,22 +752,22 @@
                         <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
                             <div class="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4">
                                 <div class="text-sm text-gray-500 dark:text-gray-400 mb-1">Total Capacity</div>
-                                <div class="text-2xl font-bold text-gray-900 dark:text-white">25</div>
+                                <div class="text-2xl font-bold text-gray-900 dark:text-white" x-text="streams?.global_config?.total_worker_pool || 0">0</div>
                                 <div class="text-xs text-gray-500 dark:text-gray-400 mt-1">workers</div>
                             </div>
                             <div class="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4">
                                 <div class="text-sm text-gray-500 dark:text-gray-400 mb-1">Active Workers</div>
-                                <div class="text-2xl font-bold text-primary-600 dark:text-primary-400">0</div>
+                                <div class="text-2xl font-bold text-primary-600 dark:text-primary-400" x-text="(streams?.streams || []).reduce((sum, s) => sum + (s.active_workers || 0), 0)">0</div>
                                 <div class="text-xs text-gray-500 dark:text-gray-400 mt-1">across streams</div>
                             </div>
                             <div class="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4">
                                 <div class="text-sm text-gray-500 dark:text-gray-400 mb-1">Emergency Pool</div>
-                                <div class="text-2xl font-bold text-orange-600 dark:text-orange-400">5</div>
+                                <div class="text-2xl font-bold text-orange-600 dark:text-orange-400" x-text="streams?.global_config?.emergency_pool || 0">0</div>
                                 <div class="text-xs text-gray-500 dark:text-gray-400 mt-1">reserved</div>
                             </div>
                             <div class="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4">
                                 <div class="text-sm text-gray-500 dark:text-gray-400 mb-1">Utilization</div>
-                                <div class="text-2xl font-bold text-green-600 dark:text-green-400">0%</div>
+                                <div class="text-2xl font-bold text-green-600 dark:text-green-400" x-text="streams?.global_config?.total_worker_pool ? Math.round(((streams?.streams || []).reduce((sum, s) => sum + (s.active_workers || 0), 0) / streams.global_config.total_worker_pool) * 100) + '%' : '0%'">0%</div>
                                 <div class="text-xs text-gray-500 dark:text-gray-400 mt-1">target: 80%</div>
                             </div>
                         </div>
@@ -830,207 +775,122 @@
 
                     <!-- Individual Stream Cards -->
                     <div class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
-                        <!-- Stream A: Critical Priority -->
-                        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg border-l-4 border-red-500 p-6">
-                            <div class="flex items-center justify-between mb-4">
-                                <div class="flex items-center space-x-3">
-                                    <div class="w-10 h-10 rounded-lg bg-red-500 flex items-center justify-center">
-                                        <i data-lucide="alert-circle" class="w-5 h-5 text-white"></i>
+                        <template x-for="(stream, index) in (streams?.streams || [])" :key="stream.id">
+                            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg border-l-4 p-6" :class="{
+                                'border-red-500': stream.priority === 1,
+                                'border-blue-500': stream.priority === 2,
+                                'border-gray-500': stream.priority === 3
+                            }">
+                                <div class="flex items-center justify-between mb-4">
+                                    <div class="flex items-center space-x-3">
+                                        <div class="w-10 h-10 rounded-lg flex items-center justify-center" :class="{
+                                            'bg-red-500': stream.priority === 1,
+                                            'bg-blue-500': stream.priority === 2,
+                                            'bg-gray-500': stream.priority === 3
+                                        }">
+                                            <i :data-lucide="stream.priority === 1 ? 'alert-circle' : stream.priority === 2 ? 'code' : 'settings'" class="w-5 h-5 text-white"></i>
+                                        </div>
+                                        <div>
+                                            <h3 class="text-lg font-semibold text-gray-900 dark:text-white" x-text="stream.name">Stream</h3>
+                                            <p class="text-xs text-gray-500 dark:text-gray-400" x-text="stream.description">Description</p>
+                                        </div>
                                     </div>
-                                    <div>
-                                        <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Stream A</h3>
-                                        <p class="text-xs text-gray-500 dark:text-gray-400">Critical Priority</p>
+                                    <span class="px-2 py-1 text-xs font-semibold rounded" :class="{
+                                        'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300': stream.priority === 1,
+                                        'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300': stream.priority === 2,
+                                        'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300': stream.priority === 3
+                                    }" x-text="'Priority ' + stream.priority">Priority</span>
+                                </div>
+                                <div class="space-y-3">
+                                    <div class="flex justify-between text-sm">
+                                        <span class="text-gray-600 dark:text-gray-400">Max Workers</span>
+                                        <span class="font-medium text-gray-900 dark:text-white" x-text="stream.max_workers || 0">0</span>
+                                    </div>
+                                    <div class="flex justify-between text-sm">
+                                        <span class="text-gray-600 dark:text-gray-400">Active</span>
+                                        <span class="font-medium text-gray-900 dark:text-white" x-text="stream.active_workers || 0">0</span>
+                                    </div>
+                                    <div class="flex justify-between text-sm">
+                                        <span class="text-gray-600 dark:text-gray-400">Queued Tasks</span>
+                                        <span class="font-medium text-gray-900 dark:text-white" x-text="(stream.queued_tasks || []).length">0</span>
+                                    </div>
+                                    <div class="flex justify-between text-sm">
+                                        <span class="text-gray-600 dark:text-gray-400">Token Budget</span>
+                                        <span class="font-medium text-gray-900 dark:text-white" x-text="(stream.token_allocation / 1000).toFixed(0) + 'k'">0k</span>
+                                    </div>
+                                    <div class="pt-2 border-t border-gray-200 dark:border-gray-700">
+                                        <div class="text-xs text-gray-500 dark:text-gray-400 mb-1">Assigned Masters</div>
+                                        <div class="flex flex-wrap gap-1">
+                                            <template x-for="master in (stream.assigned_masters || [])" :key="master">
+                                                <span class="px-2 py-0.5 text-xs bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded" x-text="master">master</span>
+                                            </template>
+                                        </div>
                                     </div>
                                 </div>
-                                <span class="px-2 py-1 text-xs font-semibold bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 rounded">Priority 1</span>
                             </div>
-                            <div class="space-y-3">
-                                <div class="flex justify-between text-sm">
-                                    <span class="text-gray-600 dark:text-gray-400">Max Workers</span>
-                                    <span class="font-medium text-gray-900 dark:text-white">5</span>
-                                </div>
-                                <div class="flex justify-between text-sm">
-                                    <span class="text-gray-600 dark:text-gray-400">Active</span>
-                                    <span class="font-medium text-gray-900 dark:text-white">0</span>
-                                </div>
-                                <div class="flex justify-between text-sm">
-                                    <span class="text-gray-600 dark:text-gray-400">Queued Tasks</span>
-                                    <span class="font-medium text-gray-900 dark:text-white">0</span>
-                                </div>
-                                <div class="flex justify-between text-sm">
-                                    <span class="text-gray-600 dark:text-gray-400">Token Budget</span>
-                                    <span class="font-medium text-gray-900 dark:text-white">20k</span>
-                                </div>
-                                <div class="pt-2 border-t border-gray-200 dark:border-gray-700">
-                                    <div class="text-xs text-gray-500 dark:text-gray-400 mb-1">Assigned Masters</div>
-                                    <div class="flex flex-wrap gap-1">
-                                        <span class="px-2 py-0.5 text-xs bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded">security</span>
-                                        <span class="px-2 py-0.5 text-xs bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded">cicd</span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
+                        </template>
+                    </div>
 
-                        <!-- Stream B: Standard Development -->
-                        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg border-l-4 border-blue-500 p-6">
-                            <div class="flex items-center justify-between mb-4">
-                                <div class="flex items-center space-x-3">
-                                    <div class="w-10 h-10 rounded-lg bg-blue-500 flex items-center justify-center">
-                                        <i data-lucide="code" class="w-5 h-5 text-white"></i>
-                                    </div>
-                                    <div>
-                                        <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Stream B</h3>
-                                        <p class="text-xs text-gray-500 dark:text-gray-400">Standard Development</p>
-                                    </div>
-                                </div>
-                                <span class="px-2 py-1 text-xs font-semibold bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded">Priority 2</span>
-                            </div>
-                            <div class="space-y-3">
-                                <div class="flex justify-between text-sm">
-                                    <span class="text-gray-600 dark:text-gray-400">Max Workers</span>
-                                    <span class="font-medium text-gray-900 dark:text-white">5</span>
-                                </div>
-                                <div class="flex justify-between text-sm">
-                                    <span class="text-gray-600 dark:text-gray-400">Active</span>
-                                    <span class="font-medium text-gray-900 dark:text-white">0</span>
-                                </div>
-                                <div class="flex justify-between text-sm">
-                                    <span class="text-gray-600 dark:text-gray-400">Queued Tasks</span>
-                                    <span class="font-medium text-gray-900 dark:text-white">0</span>
-                                </div>
-                                <div class="flex justify-between text-sm">
-                                    <span class="text-gray-600 dark:text-gray-400">Token Budget</span>
-                                    <span class="font-medium text-gray-900 dark:text-white">20k</span>
-                                </div>
-                                <div class="pt-2 border-t border-gray-200 dark:border-gray-700">
-                                    <div class="text-xs text-gray-500 dark:text-gray-400 mb-1">Assigned Masters</div>
-                                    <div class="flex flex-wrap gap-1">
-                                        <span class="px-2 py-0.5 text-xs bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded">development</span>
-                                        <span class="px-2 py-0.5 text-xs bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded">inventory</span>
-                                    </div>
-                                </div>
-                            </div>
+                    <!-- Active Workers Table -->
+                    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700">
+                        <div class="p-6 border-b border-gray-200 dark:border-gray-700">
+                            <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Active Workers</h3>
+                            <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Workers currently assigned to workforce streams</p>
                         </div>
-
-                        <!-- Stream C: Background/Maintenance -->
-                        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg border-l-4 border-gray-500 p-6">
-                            <div class="flex items-center justify-between mb-4">
-                                <div class="flex items-center space-x-3">
-                                    <div class="w-10 h-10 rounded-lg bg-gray-500 flex items-center justify-center">
-                                        <i data-lucide="settings" class="w-5 h-5 text-white"></i>
-                                    </div>
-                                    <div>
-                                        <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Stream C</h3>
-                                        <p class="text-xs text-gray-500 dark:text-gray-400">Background/Maintenance</p>
-                                    </div>
-                                </div>
-                                <span class="px-2 py-1 text-xs font-semibold bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded">Priority 3</span>
-                            </div>
-                            <div class="space-y-3">
-                                <div class="flex justify-between text-sm">
-                                    <span class="text-gray-600 dark:text-gray-400">Max Workers</span>
-                                    <span class="font-medium text-gray-900 dark:text-white">5</span>
-                                </div>
-                                <div class="flex justify-between text-sm">
-                                    <span class="text-gray-600 dark:text-gray-400">Active</span>
-                                    <span class="font-medium text-gray-900 dark:text-white">0</span>
-                                </div>
-                                <div class="flex justify-between text-sm">
-                                    <span class="text-gray-600 dark:text-gray-400">Queued Tasks</span>
-                                    <span class="font-medium text-gray-900 dark:text-white">0</span>
-                                </div>
-                                <div class="flex justify-between text-sm">
-                                    <span class="text-gray-600 dark:text-gray-400">Token Budget</span>
-                                    <span class="font-medium text-gray-900 dark:text-white">15k</span>
-                                </div>
-                                <div class="pt-2 border-t border-gray-200 dark:border-gray-700">
-                                    <div class="text-xs text-gray-500 dark:text-gray-400 mb-1">Assigned Masters</div>
-                                    <div class="flex flex-wrap gap-1">
-                                        <span class="px-2 py-0.5 text-xs bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded">security</span>
-                                        <span class="px-2 py-0.5 text-xs bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded">inventory</span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Stream D: CI/CD Pipeline -->
-                        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg border-l-4 border-green-500 p-6">
-                            <div class="flex items-center justify-between mb-4">
-                                <div class="flex items-center space-x-3">
-                                    <div class="w-10 h-10 rounded-lg bg-green-500 flex items-center justify-center">
-                                        <i data-lucide="git-branch" class="w-5 h-5 text-white"></i>
-                                    </div>
-                                    <div>
-                                        <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Stream D</h3>
-                                        <p class="text-xs text-gray-500 dark:text-gray-400">CI/CD Pipeline</p>
-                                    </div>
-                                </div>
-                                <span class="px-2 py-1 text-xs font-semibold bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 rounded">Priority 1</span>
-                            </div>
-                            <div class="space-y-3">
-                                <div class="flex justify-between text-sm">
-                                    <span class="text-gray-600 dark:text-gray-400">Max Workers</span>
-                                    <span class="font-medium text-gray-900 dark:text-white">5</span>
-                                </div>
-                                <div class="flex justify-between text-sm">
-                                    <span class="text-gray-600 dark:text-gray-400">Active</span>
-                                    <span class="font-medium text-gray-900 dark:text-white">0</span>
-                                </div>
-                                <div class="flex justify-between text-sm">
-                                    <span class="text-gray-600 dark:text-gray-400">Queued Tasks</span>
-                                    <span class="font-medium text-gray-900 dark:text-white">0</span>
-                                </div>
-                                <div class="flex justify-between text-sm">
-                                    <span class="text-gray-600 dark:text-gray-400">Token Budget</span>
-                                    <span class="font-medium text-gray-900 dark:text-white">25k</span>
-                                </div>
-                                <div class="pt-2 border-t border-gray-200 dark:border-gray-700">
-                                    <div class="text-xs text-gray-500 dark:text-gray-400 mb-1">Assigned Masters</div>
-                                    <div class="flex flex-wrap gap-1">
-                                        <span class="px-2 py-0.5 text-xs bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded">cicd</span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Stream E: Security/Audit -->
-                        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg border-l-4 border-orange-500 p-6">
-                            <div class="flex items-center justify-between mb-4">
-                                <div class="flex items-center space-x-3">
-                                    <div class="w-10 h-10 rounded-lg bg-orange-500 flex items-center justify-center">
-                                        <i data-lucide="shield" class="w-5 h-5 text-white"></i>
-                                    </div>
-                                    <div>
-                                        <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Stream E</h3>
-                                        <p class="text-xs text-gray-500 dark:text-gray-400">Security/Audit</p>
-                                    </div>
-                                </div>
-                                <span class="px-2 py-1 text-xs font-semibold bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300 rounded">Priority 2</span>
-                            </div>
-                            <div class="space-y-3">
-                                <div class="flex justify-between text-sm">
-                                    <span class="text-gray-600 dark:text-gray-400">Max Workers</span>
-                                    <span class="font-medium text-gray-900 dark:text-white">5</span>
-                                </div>
-                                <div class="flex justify-between text-sm">
-                                    <span class="text-gray-600 dark:text-gray-400">Active</span>
-                                    <span class="font-medium text-gray-900 dark:text-white">0</span>
-                                </div>
-                                <div class="flex justify-between text-sm">
-                                    <span class="text-gray-600 dark:text-gray-400">Queued Tasks</span>
-                                    <span class="font-medium text-gray-900 dark:text-white">0</span>
-                                </div>
-                                <div class="flex justify-between text-sm">
-                                    <span class="text-gray-600 dark:text-gray-400">Token Budget</span>
-                                    <span class="font-medium text-gray-900 dark:text-white">20k</span>
-                                </div>
-                                <div class="pt-2 border-t border-gray-200 dark:border-gray-700">
-                                    <div class="text-xs text-gray-500 dark:text-gray-400 mb-1">Assigned Masters</div>
-                                    <div class="flex flex-wrap gap-1">
-                                        <span class="px-2 py-0.5 text-xs bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded">security</span>
-                                    </div>
-                                </div>
-                            </div>
+                        <div class="overflow-x-auto">
+                            <table class="w-full">
+                                <thead class="bg-gray-50 dark:bg-gray-700/50">
+                                    <tr>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Worker ID</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Status</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Type</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Workforce Stream</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Tokens Used</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Duration</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Started</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
+                                    <template x-for="worker in workers" :key="worker.worker_id">
+                                        <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+                                            <td class="px-6 py-4 whitespace-nowrap">
+                                                <span class="text-sm font-mono text-gray-900 dark:text-white" x-text="worker.worker_id">-</span>
+                                            </td>
+                                            <td class="px-6 py-4 whitespace-nowrap">
+                                                <span class="px-2 py-1 text-xs font-semibold rounded-full" :class="{
+                                                    'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300': worker.status === 'running' || worker.status === 'active',
+                                                    'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300': worker.status === 'pending',
+                                                    'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300': worker.status === 'completed',
+                                                    'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300': worker.status === 'failed'
+                                                }" x-text="worker.status || 'unknown'">-</span>
+                                            </td>
+                                            <td class="px-6 py-4 whitespace-nowrap">
+                                                <span class="text-sm text-gray-700 dark:text-gray-300" x-text="worker.worker_type || '-'">-</span>
+                                            </td>
+                                            <td class="px-6 py-4 whitespace-nowrap">
+                                                <span class="text-sm text-gray-700 dark:text-gray-300" x-text="worker.workforce_stream || 'default'">-</span>
+                                            </td>
+                                            <td class="px-6 py-4 whitespace-nowrap">
+                                                <span class="text-sm text-gray-700 dark:text-gray-300" x-text="(worker.tokens_used || 0).toLocaleString()">0</span>
+                                            </td>
+                                            <td class="px-6 py-4 whitespace-nowrap">
+                                                <span class="text-sm text-gray-700 dark:text-gray-300" x-text="worker.duration_minutes ? worker.duration_minutes + 'm' : '-'">-</span>
+                                            </td>
+                                            <td class="px-6 py-4 whitespace-nowrap">
+                                                <span class="text-sm text-gray-500 dark:text-gray-400" x-text="worker.spawned_at ? new Date(worker.spawned_at).toLocaleTimeString() : '-'">-</span>
+                                            </td>
+                                        </tr>
+                                    </template>
+                                    <tr x-show="workers.length === 0">
+                                        <td colspan="7" class="px-6 py-12 text-center">
+                                            <div class="flex flex-col items-center justify-center text-gray-400 dark:text-gray-500">
+                                                <i data-lucide="inbox" class="w-12 h-12 mb-3"></i>
+                                                <p class="text-sm">No active workers in workforce streams</p>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
                         </div>
                     </div>
 
