@@ -397,7 +397,8 @@ function dashboard() {
             this.initParetoChart();
             this.initAreaChart();
             this.initStackedAreaChart();
-            this.initScatterChart();
+            this.initMasterEfficiencyChart();
+            this.initWorkerEfficiencyChart();
             this.initRadarChart();
         },
 
@@ -654,63 +655,185 @@ function dashboard() {
             });
         },
 
-        initScatterChart() {
-            const ctx = document.getElementById('scatterChart');
+        initMasterEfficiencyChart() {
+            const ctx = document.getElementById('masterEfficiencyChart');
             if (!ctx) return;
 
-            // Generate scatter data from completed workers
-            const scatterData = this.workers
-                .filter(w => w.status === 'completed' && w.duration_minutes && w.tokens_used)
-                .map(w => ({
-                    x: w.duration_minutes,
-                    y: w.tokens_used
-                }));
-
             const isDark = this.darkMode;
+            const masterAgents = this.metrics.masters || {};
+
+            // Calculate efficiency (tokens per task) for each master
+            const efficiencyData = Object.entries(masterAgents)
+                .filter(([name, data]) => data.tasksHandled > 0) // Only show masters with tasks
+                .map(([name, data]) => ({
+                    name: name.charAt(0).toUpperCase() + name.slice(1),
+                    efficiency: Math.round(data.used / data.tasksHandled),
+                    used: data.used,
+                    tasks: data.tasksHandled
+                }))
+                .sort((a, b) => b.efficiency - a.efficiency); // Sort by efficiency (highest first for visual impact)
+
+            // If no data, show placeholder
+            if (efficiencyData.length === 0) {
+                efficiencyData.push(
+                    { name: 'Coordinator', efficiency: 5000, used: 5000, tasks: 1 },
+                    { name: 'Development', efficiency: 4500, used: 9000, tasks: 2 },
+                    { name: 'Security', efficiency: 2500, used: 2500, tasks: 1 }
+                );
+            }
+
+            const labels = efficiencyData.map(d => d.name);
+            const data = efficiencyData.map(d => d.efficiency);
+
+            // Color code: green (efficient) to red (inefficient)
+            const colors = data.map((val, idx) => {
+                const max = Math.max(...data);
+                const ratio = val / max;
+                if (ratio <= 0.5) return 'rgba(34, 197, 94, 0.8)'; // Green
+                if (ratio <= 0.75) return 'rgba(251, 191, 36, 0.8)'; // Yellow
+                return 'rgba(239, 68, 68, 0.8)'; // Red
+            });
+
             new Chart(ctx, {
-                type: 'scatter',
+                type: 'bar',
                 data: {
+                    labels: labels,
                     datasets: [{
-                        label: 'Workers',
-                        data: scatterData.length > 0 ? scatterData : [
-                            { x: 5, y: 3000 }, { x: 10, y: 8000 }, { x: 5, y: 4000 },
-                            { x: 10, y: 9000 }, { x: 5, y: 6000 }, { x: 5, y: 4000 }
-                        ],
-                        backgroundColor: 'rgba(59, 130, 246, 0.6)',
-                        borderColor: 'rgba(59, 130, 246, 1)',
-                        pointRadius: 6,
-                        pointHoverRadius: 8
+                        label: 'Tokens per Task',
+                        data: data,
+                        backgroundColor: colors,
+                        borderWidth: 0,
+                        barThickness: 20
                     }]
                 },
                 options: {
+                    indexAxis: 'y', // Horizontal bars
                     responsive: true,
                     maintainAspectRatio: false,
                     plugins: {
                         legend: {
-                            labels: { color: isDark ? '#9ca3af' : '#4b5563' }
+                            display: false
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const dataPoint = efficiencyData[context.dataIndex];
+                                    return [
+                                        `Efficiency: ${context.parsed.x.toLocaleString()} tokens/task`,
+                                        `Total Tokens: ${dataPoint.used.toLocaleString()}`,
+                                        `Tasks Handled: ${dataPoint.tasks}`
+                                    ];
+                                }
+                            }
                         }
                     },
                     scales: {
-                        y: {
-                            title: {
-                                display: true,
-                                text: 'Tokens Used',
-                                color: isDark ? '#9ca3af' : '#4b5563'
-                            },
+                        x: {
+                            beginAtZero: true,
                             ticks: {
                                 color: isDark ? '#9ca3af' : '#4b5563',
                                 callback: (val) => val.toLocaleString()
                             },
                             grid: { color: isDark ? '#374151' : '#e5e7eb' }
                         },
-                        x: {
-                            title: {
-                                display: true,
-                                text: 'Duration (minutes)',
-                                color: isDark ? '#9ca3af' : '#4b5563'
-                            },
+                        y: {
                             ticks: { color: isDark ? '#9ca3af' : '#4b5563' },
+                            grid: { display: false }
+                        }
+                    }
+                }
+            });
+        },
+
+        initWorkerEfficiencyChart() {
+            const ctx = document.getElementById('workerEfficiencyChart');
+            if (!ctx) return;
+
+            const isDark = this.darkMode;
+
+            // Calculate efficiency (tokens per minute) for completed workers
+            const workerEfficiency = this.workers
+                .filter(w => w.status === 'completed' && w.duration_minutes > 0 && w.tokens_used > 0)
+                .map(w => ({
+                    id: w.worker_id,
+                    type: w.type || 'worker',
+                    efficiency: Math.round(w.tokens_used / w.duration_minutes),
+                    tokens: w.tokens_used,
+                    duration: w.duration_minutes
+                }))
+                .sort((a, b) => b.efficiency - a.efficiency) // Sort by efficiency
+                .slice(0, 8); // Show top 8 workers
+
+            // If no data, show placeholder
+            if (workerEfficiency.length === 0) {
+                workerEfficiency.push(
+                    { id: 'implementation-worker', type: 'implementation', efficiency: 900, tokens: 9000, duration: 10 },
+                    { id: 'test-worker', type: 'test', efficiency: 600, tokens: 3000, duration: 5 },
+                    { id: 'documentation-worker', type: 'documentation', efficiency: 500, tokens: 2500, duration: 5 }
+                );
+            }
+
+            const labels = workerEfficiency.map(w => {
+                // Shorten worker type for display
+                const type = w.type.replace('-worker', '').replace(/-/g, ' ');
+                return type.charAt(0).toUpperCase() + type.slice(1);
+            });
+            const data = workerEfficiency.map(w => w.efficiency);
+
+            // Color code: green (efficient) to red (inefficient)
+            const colors = data.map((val, idx) => {
+                const max = Math.max(...data);
+                const ratio = val / max;
+                if (ratio <= 0.5) return 'rgba(34, 197, 94, 0.8)'; // Green
+                if (ratio <= 0.75) return 'rgba(59, 130, 246, 0.8)'; // Blue
+                return 'rgba(168, 85, 247, 0.8)'; // Purple
+            });
+
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Tokens per Minute',
+                        data: data,
+                        backgroundColor: colors,
+                        borderWidth: 0,
+                        barThickness: 20
+                    }]
+                },
+                options: {
+                    indexAxis: 'y', // Horizontal bars
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const dataPoint = workerEfficiency[context.dataIndex];
+                                    return [
+                                        `Efficiency: ${context.parsed.x.toLocaleString()} tokens/min`,
+                                        `Total Tokens: ${dataPoint.tokens.toLocaleString()}`,
+                                        `Duration: ${dataPoint.duration} min`
+                                    ];
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            beginAtZero: true,
+                            ticks: {
+                                color: isDark ? '#9ca3af' : '#4b5563',
+                                callback: (val) => val.toLocaleString()
+                            },
                             grid: { color: isDark ? '#374151' : '#e5e7eb' }
+                        },
+                        y: {
+                            ticks: { color: isDark ? '#9ca3af' : '#4b5563' },
+                            grid: { display: false }
                         }
                     }
                 }

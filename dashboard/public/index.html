@@ -987,18 +987,32 @@
                         </div>
                     </div>
 
-                    <!-- Bottom row: Scatter Plot and Radar Chart -->
+                    <!-- Bottom row: Efficiency Analysis and Radar Chart -->
                     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                        <!-- Scatter Plot: Task Duration vs Token Usage -->
+                        <!-- Agent Efficiency Analysis: Dual Bar Charts -->
                         <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 border border-gray-200 dark:border-gray-700">
                             <div class="flex items-center justify-between mb-4">
-                                <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Efficiency Analysis</h3>
-                                <i data-lucide="scatter-chart" class="w-5 h-5 text-gray-400"></i>
+                                <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Agent Efficiency Analysis</h3>
+                                <i data-lucide="bar-chart-horizontal" class="w-5 h-5 text-gray-400"></i>
                             </div>
-                            <div class="h-64">
-                                <canvas id="scatterChart"></canvas>
+
+                            <!-- Master Agents Efficiency -->
+                            <div class="mb-6">
+                                <h4 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Master Agents (Tokens per Task)</h4>
+                                <div class="h-32">
+                                    <canvas id="masterEfficiencyChart"></canvas>
+                                </div>
                             </div>
-                            <p class="text-xs text-gray-500 dark:text-gray-400 mt-2">Task Duration (min) vs Token Usage</p>
+
+                            <!-- Worker Agents Efficiency -->
+                            <div>
+                                <h4 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Workers (Tokens per Minute)</h4>
+                                <div class="h-32">
+                                    <canvas id="workerEfficiencyChart"></canvas>
+                                </div>
+                            </div>
+
+                            <p class="text-xs text-gray-500 dark:text-gray-400 mt-3">Lower values indicate better efficiency</p>
                         </div>
 
                         <!-- Radar Chart: System Health Metrics -->
@@ -1017,6 +1031,6 @@
         </div>
     </main>
 
-    <script src="dashboard-v2.js?v=3.0"></script>
+    <script src="dashboard-v2.js?v=3.2"></script>
 </body>
 </html>
