@@ -443,9 +443,9 @@ function dashboard() {
 
         // Charts
         initCharts() {
+            // Only init token chart on page load (it's on overview page)
             this.initTokenChart();
-            this.initAnalyticsCharts();
-            this.initGanttChart();
+            // Analytics charts are initialized when switching to metrics view
         },
 
         // Initialize all historical analytics charts
