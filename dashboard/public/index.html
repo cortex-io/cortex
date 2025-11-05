@@ -446,6 +446,14 @@
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
+                                <!--
+                                    IMPORTANT: Using index as key instead of task.id
+                                    Reason: coordination/task-queue.json contains duplicate IDs
+                                    (e.g., 4 tasks with "task-012", 2 tasks with empty "")
+                                    Alpine.js requires unique keys for x-for loops
+                                    Using task.id causes "Duplicate key" errors and crashes rendering
+                                    TODO: Clean up task-queue.json to ensure unique IDs
+                                -->
                                 <template x-for="(task, index) in tasks" :key="'task-' + index">
                                     <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
                                         <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white" x-text="task.id"></td>
@@ -468,6 +476,7 @@
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400" x-text="task.assigned_to || 'Unassigned'"></td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm">
+                                            <!-- Using index-based key to avoid duplicate key errors -->
                                             <template x-for="(commit, commitIndex) in getTaskCommits(task.id)" :key="'commit-' + index + '-' + commitIndex">
                                                 <a :href="'https://github.com/ry-ops/commit-relay/commit/' + commit"
                                                    target="_blank"
