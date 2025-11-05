@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "updated_at": "2025-11-05T03:33:47Z",
+  "updated_at": "2025-11-05T11:22:03Z",
   "tasks": [
     {
       "id": "task-001",
@@ -1927,6 +1927,22 @@
         "repository": "ry-ops/commit-relay",
         "branch": "main",
         "description": "Add About page to dashboard with: 1) Brief summary/overview of commit-relay project, 2) Mermaid.js flowchart visualizing all mechanisms (coordinator, masters, workers, git automation, dashboard polling), 3) Add 'About' navigation link in left sidebar below Activity",
+        "requirements": []
+      }
+    },
+    {
+      "id": "",
+      "title": "Fix dashboard issues: 1) Task queue sorting (most recent first), 2) Agent Efficiency chart color duplication (Development and Coordinator have same color), 3) Agent Orchestration stale data display. All fixes already implemented in dashboard-v2.js and index.html, need to be committed via proper agent workflow.",
+      "type": "development",
+      "priority": "high",
+      "status": "pending",
+      "assigned_to": null,
+      "created_at": "2025-11-05T11:22:03Z",
+      "created_by": "create-task-cli",
+      "context": {
+        "repository": "ry-ops/commit-relay",
+        "branch": "main",
+        "description": "Fix dashboard issues: 1) Task queue sorting (most recent first), 2) Agent Efficiency chart color duplication (Development and Coordinator have same color), 3) Agent Orchestration stale data display. All fixes already implemented in dashboard-v2.js and index.html, need to be committed via proper agent workflow.",
         "requirements": []
       }
     }
