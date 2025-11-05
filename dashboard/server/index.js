@@ -167,8 +167,12 @@ async function loadCoordinationData(forceRefresh = false) {
     return cache;
   }
 
+  // Generate live worker pool from spec files
+  const workerSpecsDir = path.join(COORD_DIR, 'worker-specs');
+  const liveWorkerPool = await generateLiveWorkerPool(workerSpecsDir);
+
   const data = {
-    workerPool: await readJSON(FILES.workerPool),
+    workerPool: liveWorkerPool,
     tokenBudget: await readJSON(FILES.tokenBudget),
     taskQueue: await readJSON(FILES.taskQueue),
     handoffs: await readJSON(FILES.handoffs),
@@ -342,7 +346,7 @@ function calculateMetrics(data, successRatePeriod = 'all_time') {
 
   // Count zombies killed by the zombie-killer-daemon
   const zombiesKilled = (workerPool.failed_workers || []).filter(worker =>
-    worker.execution?.killed_by === 'zombie-killer-daemon'
+    worker.killed_by === 'zombie-killer-daemon'
   ).length;
 
   // Calculate success rate based on selected time period
@@ -557,8 +561,8 @@ app.get('/api/coordination/raw', async (req, res) => {
  */
 app.get('/api/workers', async (req, res) => {
   try {
-    // Read live worker specs from active directory
-    const workerSpecsDir = path.join(COORD_DIR, 'worker-specs/active');
+    // Read live worker specs from all directories (active, completed, failed)
+    const workerSpecsDir = path.join(COORD_DIR, 'worker-specs');
     const liveWorkerPool = await generateLiveWorkerPool(workerSpecsDir);
     res.json(liveWorkerPool);
   } catch (error) {
