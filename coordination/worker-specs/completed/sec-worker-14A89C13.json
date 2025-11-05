@@ -24,10 +24,10 @@
     "token_allocation": 12000,
     "time_limit_minutes": 60
   },
-  "status": "running",
+  "status": "completed",
   "created_at": "2025-11-05T11:51:55Z",
   "created_by": "security",
   "execution": {
-    "started_at": "2025-11-05T16:28:41Z"
+    "started_at": "2025-11-05T16:28:42Z"
   }
 }
