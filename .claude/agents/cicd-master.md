@@ -287,9 +287,104 @@ See:
 - `scripts/examples/autonomous-worker-demo.sh` - Live demonstration
 - `docs/GIT_AUTOMATION.md` - Complete documentation
 
+## Git Coordination Commands
+
+As CI/CD master, you have access to powerful git coordination tools:
+
+### Multi-Worker Coordination
+
+```bash
+# Wait for multiple workers and create PR if needed
+./scripts/coordinate-task-git.sh wait \
+  --task-id task-050 \
+  --worker-count 3 \
+  --description "Add authentication system"
+
+# This will:
+# 1. Wait for all 3 workers to complete
+# 2. Collect their commits
+# 3. Decide if feature branch is needed (5+ files changed)
+# 4. Create consolidated PR if 2+ workers contributed
+```
+
+### Feature Branch Management
+
+```bash
+# Manually create feature branch
+./scripts/coordinate-task-git.sh branch \
+  --task-id task-051 \
+  --description "Database migration"
+
+# Returns: feature/task-051-database-migration
+```
+
+### Pull Request Creation
+
+```bash
+# Create consolidated PR from completed workers
+./scripts/coordinate-task-git.sh pr \
+  --task-id task-052 \
+  --description "API refactoring"
+
+# Automatically:
+# - Collects all commits from workers
+# - Lists all contributors
+# - Shows files changed
+# - Creates PR with testing checklist
+```
+
+### Status Checking
+
+```bash
+# Check git coordination status
+./scripts/coordinate-task-git.sh status --task-id task-053
+
+# Shows:
+# - Commits found
+# - Worker contributions
+# - Branching recommendation
+```
+
+## Decision Matrix
+
+Use this to decide coordination strategy:
+
+| Workers | Files Changed | Strategy | Command |
+|---------|---------------|----------|---------|
+| 1 | Any | Direct to main | None (auto-handled by worker) |
+| 2-3 | < 5 files | Direct to main | None (auto-handled) |
+| 2-3 | 5+ files | Feature branch + PR | `coordinate-task-git.sh wait` |
+| 4+ | Any | Feature branch + PR | `coordinate-task-git.sh wait` |
+
+## Autonomous Coordination Workflow
+
+The CI/CD master should:
+
+1. **Spawn Workers** - Create worker specs for task components
+2. **Monitor Completion** - Watch git-operations.jsonl for worker commits
+3. **Coordinate** - Once all workers complete, run coordination
+4. **Report** - Update dashboard and notify coordinator
+
+Example workflow:
+```bash
+# Master spawns 3 workers for a large task
+./scripts/spawn-worker.sh --type implementation-worker --task-id task-100 ...
+./scripts/spawn-worker.sh --type test-worker --task-id task-100 ...
+./scripts/spawn-worker.sh --type documentation-worker --task-id task-100 ...
+
+# Wait for completion and coordinate (automatic)
+./scripts/coordinate-task-git.sh wait \
+  --task-id task-100 \
+  --worker-count 3 \
+  --description "Complete user auth feature"
+
+# Result: Feature branch + PR created automatically!
+```
+
 ## Commands
 
 - `./scripts/run-cicd-master.sh` - Run CI/CD master
+- `./scripts/coordinate-task-git.sh` - Git coordination CLI
 - Check state: `cat coordination/masters/cicd/context/master-state.json | jq`
 - View git operations: `cat coordination/git-operations.jsonl | jq`
 - Demo autonomous workflow: `./scripts/examples/autonomous-worker-demo.sh`
