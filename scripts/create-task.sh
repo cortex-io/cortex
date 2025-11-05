@@ -137,6 +137,7 @@ generate_task_id() {
     HIGHEST=$(jq -r '.tasks[].id' coordination/task-queue.json | \
               sort -u | \
               grep -o '[0-9]\+$' | \
+              sed 's/^0*//' | \
               sort -n | \
               tail -1)
 
