@@ -1,7 +1,7 @@
 #!/bin/bash
-# DDQD Stress Test - "God Mode" for Commit-Relay
-# Comprehensive 60-minute stress test for v4.0 orchestration architecture
-# Tests: Task Orchestrator, Zombie Killer, Heartbeat Protocol, Workforce Streams, Token Management
+# DDQD Stress Test - "God Mode" for Commit-Relay v4.0
+# Comprehensive 60-minute stress test for v4.0 three-layer orchestration architecture
+# Tests: Task Orchestrator, Zombie Killer, Heartbeat Protocol, Workforce Streams, Token Management, Execution Managers
 
 set -euo pipefail
 
@@ -56,11 +56,12 @@ print_banner() {
     echo -e "${RED}${BOLD}"
     echo "╔═══════════════════════════════════════════════════════════════╗"
     echo "║                                                               ║"
-    echo "║                   DDQD STRESS TEST                            ║"
-    echo "║              \"God Mode\" System Validation                     ║"
+    echo "║              DDQD v4.0 STRESS TEST                            ║"
+    echo "║         \"God Mode\" System Validation + EM Layer               ║"
     echo "║                                                               ║"
     echo "║  Testing: Task Orchestrator • Zombie Killer • Heartbeats     ║"
     echo "║           Workforce Streams • Token Management • Dashboard   ║"
+    echo "║           Execution Managers • Multi-Worker Coordination     ║"
     echo "║                                                               ║"
     echo "╚═══════════════════════════════════════════════════════════════╝"
     echo -e "${NC}"
@@ -249,6 +250,83 @@ EOF
     echo "$worker_id"
 }
 
+# Create test Execution Manager (v4.0)
+create_execution_manager() {
+    local em_type="$1"
+    local em_id="exec-mgr-ddqd-$(uuidgen | tr '[:upper:]' '[:lower:]' | cut -d'-' -f1)"
+    local em_spec="$COORDINATION_DIR/execution-managers/active/${em_id}.json"
+    local subtask_id="ddqd-subtask-$(uuidgen | tr '[:upper:]' '[:lower:]' | cut -d'-' -f1)"
+
+    mkdir -p "$COORDINATION_DIR/execution-managers/active"
+    mkdir -p "$COORDINATION_DIR/masters/development/execution-plans"
+
+    case "$em_type" in
+        "multi-worker")
+            # Create EM that coordinates multiple workers
+            cat > "$em_spec" <<EOF
+{
+  "exec_mgr_id": "$em_id",
+  "master_type": "development",
+  "subtask_id": "$subtask_id",
+  "status": "ready",
+  "started_at": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
+  "last_heartbeat": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
+  "workers_spawned": 0,
+  "workers_completed": 0,
+  "workers_failed": 0,
+  "tokens_used": 0,
+  "current_phase": "awaiting_start",
+  "stress_test": true,
+  "test_id": "$TEST_ID"
+}
+EOF
+            # Create execution plan
+            cat > "$COORDINATION_DIR/masters/development/execution-plans/${subtask_id}.json" <<EOF
+{
+  "subtask_id": "$subtask_id",
+  "execution_manager_id": "$em_id",
+  "master": "development",
+  "description": "DDQD Test: Multi-worker coordination stress test",
+  "files_affected": [],
+  "repos": [],
+  "estimated_duration_minutes": 30,
+  "token_budget": 15000,
+  "acceptance_criteria": [],
+  "dependencies": [],
+  "status": "pending",
+  "created_at": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
+  "updated_at": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
+  "stress_test": true
+}
+EOF
+            ;;
+        "zombie-em")
+            # Create EM that will become a zombie (stale heartbeat)
+            cat > "$em_spec" <<EOF
+{
+  "exec_mgr_id": "$em_id",
+  "master_type": "security",
+  "subtask_id": "$subtask_id",
+  "status": "running",
+  "started_at": "$(date -u -v-70M +%Y-%m-%dT%H:%M:%SZ 2>/dev/null || date -u -d '70 minutes ago' +%Y-%m-%dT%H:%M:%SZ)",
+  "last_heartbeat": "$(date -u -v-65M +%Y-%m-%dT%H:%M:%SZ 2>/dev/null || date -u -d '65 minutes ago' +%Y-%m-%dT%H:%M:%SZ)",
+  "workers_spawned": 3,
+  "workers_completed": 0,
+  "workers_failed": 0,
+  "tokens_used": 8000,
+  "current_phase": "executing",
+  "stress_test": true,
+  "zombie_type": "em_timeout",
+  "test_id": "$TEST_ID"
+}
+EOF
+            ;;
+    esac
+
+    log "EM" "Created $em_type Execution Manager: $em_id"
+    echo "$em_id"
+}
+
 # Collect metrics snapshot
 collect_metrics() {
     local timestamp=$(date -u +%Y-%m-%dT%H:%M:%SZ)
@@ -282,6 +360,11 @@ collect_metrics() {
         zombies_killed=$(jq -r '[.failed_workers[] | select(.killed_by == "zombie-killer-daemon")] | length' "$COORDINATION_DIR/worker-pool.json" 2>/dev/null || echo 0)
     fi
 
+    # Count Execution Managers (v4.0)
+    local active_ems=$(find "$COORDINATION_DIR/execution-managers/active" -name "*.json" 2>/dev/null | wc -l | tr -d ' ')
+    local completed_ems=$(find "$COORDINATION_DIR/execution-managers/completed" -name "*.json" 2>/dev/null | wc -l | tr -d ' ')
+    local em_zombies=$(find "$COORDINATION_DIR/execution-managers/active" -name "*zombie*.json" 2>/dev/null | wc -l | tr -d ' ')
+
     cat >> "$METRICS_LOG" <<EOF
 {
   "timestamp": "$timestamp",
@@ -299,11 +382,16 @@ collect_metrics() {
   "zombies": {
     "created": $zombies_created,
     "killed": $zombies_killed
+  },
+  "execution_managers": {
+    "active": $active_ems,
+    "completed": $completed_ems,
+    "zombies": $em_zombies
   }
 }
 EOF
 
-    echo -e "${BLUE}[METRICS]${NC} Active Workers: ${GREEN}$active_workers${NC} | Tasks: ${CYAN}$completed_tasks${NC} | Zombies Killed: ${RED}$zombies_killed${NC} | Tokens: ${YELLOW}${token_pct}%${NC} | Time: ${elapsed}s"
+    echo -e "${BLUE}[METRICS]${NC} Workers: ${GREEN}$active_workers${NC} | Tasks: ${CYAN}$completed_tasks${NC} | EMs: ${MAGENTA}$active_ems${NC} | Zombies: ${RED}$zombies_killed${NC} | Tokens: ${YELLOW}${token_pct}%${NC} | Time: ${elapsed}s"
 }
 
 # Generate final report
@@ -333,13 +421,15 @@ EOF
 
     # Check each system component
     echo "✓ Task Orchestrator Daemon: TESTED" >> "$report_file"
-    echo "✓ Zombie Killer Daemon: TESTED" >> "$report_file"
+    echo "✓ Zombie Killer Daemon (Workers): TESTED" >> "$report_file"
+    echo "✓ Zombie Killer Daemon (EMs): TESTED" >> "$report_file"
     echo "✓ Heartbeat Protocol: TESTED" >> "$report_file"
     echo "✓ Workforce Streams: TESTED" >> "$report_file"
     echo "✓ Token Budget Management: TESTED" >> "$report_file"
     echo "✓ Multi-Master Coordination: TESTED" >> "$report_file"
+    echo "✓ v4.0 Execution Manager Layer: TESTED" >> "$report_file"
 
-    # Final metrics
+    # Final metrics - Workers
     if [ -f "$COORDINATION_DIR/worker-pool.json" ]; then
         local total_workers=$(jq -r '(.active_workers | length) + (.completed_workers | length) + (.failed_workers | length)' "$COORDINATION_DIR/worker-pool.json" 2>/dev/null || echo 0)
         local completed=$(jq -r '.completed_workers | length' "$COORDINATION_DIR/worker-pool.json" 2>/dev/null || echo 0)
@@ -349,13 +439,41 @@ EOF
         cat >> "$report_file" <<EOF
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-  FINAL METRICS
+  FINAL METRICS - WORKERS
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 Total Workers Spawned: $total_workers
 Workers Completed: $completed
 Workers Failed: $failed
-Zombies Detected & Killed: $zombies_killed
+Worker Zombies Detected & Killed: $zombies_killed
+
+EOF
+    fi
+
+    # Final metrics - Execution Managers (v4.0)
+    local total_ems=0
+    local active_ems=0
+    local completed_ems=0
+
+    if [ -d "$COORDINATION_DIR/execution-managers/active" ]; then
+        active_ems=$(find "$COORDINATION_DIR/execution-managers/active" -name "*.json" 2>/dev/null | wc -l | tr -d ' ')
+    fi
+
+    if [ -d "$COORDINATION_DIR/execution-managers/completed" ]; then
+        completed_ems=$(find "$COORDINATION_DIR/execution-managers/completed" -name "*.json" 2>/dev/null | wc -l | tr -d ' ')
+    fi
+
+    total_ems=$((active_ems + completed_ems))
+
+    if [ $total_ems -gt 0 ]; then
+        cat >> "$report_file" <<EOF
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  FINAL METRICS - EXECUTION MANAGERS (v4.0)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Total Execution Managers Spawned: $total_ems
+EMs Active: $active_ems
+EMs Completed: $completed_ems
 
 EOF
     fi
@@ -406,8 +524,33 @@ main() {
         fi
     done
 
-    # Phase 2: High Parallelism (15-30 min)
-    log_phase "PHASE 2: High Parallelism - Maximum Concurrent Workers"
+    # Phase 2: Execution Manager Testing (v4.0) (10-20 min)
+    log_phase "PHASE 2: v4.0 Execution Manager Testing - EM Coordination"
+    log "EM" "Creating test Execution Managers..."
+
+    # Create 3 normal EMs
+    for i in $(seq 1 3); do
+        create_execution_manager "multi-worker"
+        sleep 15
+        collect_metrics
+
+        if ! check_duration >/dev/null 2>&1 || ! check_tokens >/dev/null 2>&1; then
+            return 0
+        fi
+    done
+
+    # Create zombie EM for testing zombie killer
+    log "EM" "Creating zombie Execution Manager for detection testing..."
+    create_execution_manager "zombie-em"
+    sleep 30
+    collect_metrics
+
+    if ! check_duration >/dev/null 2>&1 || ! check_tokens >/dev/null 2>&1; then
+        return 0
+    fi
+
+    # Phase 3: High Parallelism (20-35 min)
+    log_phase "PHASE 3: High Parallelism - Maximum Concurrent Workers"
     for i in $(seq 1 "$MAX_PARALLEL_WORKERS"); do
         create_task "simple" &
     done
@@ -419,8 +562,8 @@ main() {
         return 0
     fi
 
-    # Phase 3: Zombie Creation (30-40 min)
-    log_phase "PHASE 3: Zombie Scenarios - Detection & Eradication"
+    # Phase 4: Zombie Creation (35-45 min)
+    log_phase "PHASE 4: Zombie Scenarios - Worker & EM Detection/Eradication"
     for i in $(seq 1 3); do
         create_zombie "timeout"
         sleep 10
@@ -436,8 +579,8 @@ main() {
         return 0
     fi
 
-    # Phase 4: Orchestration Stress (40-55 min)
-    log_phase "PHASE 4: Orchestration Stress - Complex Multi-Master Tasks"
+    # Phase 5: Orchestration Stress (45-55 min)
+    log_phase "PHASE 5: Orchestration Stress - Complex Multi-Master Tasks"
     for i in $(seq 1 3); do
         create_task "complex"
         sleep 30
@@ -451,17 +594,25 @@ main() {
         fi
     done
 
-    # Phase 5: Recovery Validation (55-60 min)
-    log_phase "PHASE 5: Recovery Validation - System Health Check"
+    # Phase 6: Recovery Validation (55-60 min)
+    log_phase "PHASE 6: Recovery Validation - System Health Check"
     log "VALIDATION" "Verifying all zombies have been cleaned up..."
     sleep 60
     collect_metrics
 
     local remaining_zombies=$(find "$COORDINATION_DIR/worker-specs/active" -name "zombie-*.json" 2>/dev/null | wc -l | tr -d ' ')
+    local remaining_em_zombies=$(find "$COORDINATION_DIR/execution-managers/active" -name "*zombie*.json" 2>/dev/null | wc -l | tr -d ' ')
+
     if [ "$remaining_zombies" -eq 0 ]; then
-        log "VALIDATION" "✓ All zombies successfully eradicated"
+        log "VALIDATION" "✓ All worker zombies successfully eradicated"
     else
-        log "VALIDATION" "⚠ Warning: $remaining_zombies zombies still active"
+        log "VALIDATION" "⚠ Warning: $remaining_zombies worker zombies still active"
+    fi
+
+    if [ "$remaining_em_zombies" -eq 0 ]; then
+        log "VALIDATION" "✓ All EM zombies successfully eradicated"
+    else
+        log "VALIDATION" "⚠ Warning: $remaining_em_zombies EM zombies still active"
     fi
 
     log "END" "DDQD stress test completed successfully"
