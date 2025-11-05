@@ -1022,14 +1022,13 @@
 
                         <div class="space-y-4 text-gray-700 dark:text-gray-300">
                             <p class="text-lg leading-relaxed">
-                                <strong>Commit-Relay v4.0</strong> is a fully autonomous AI-powered development workflow system featuring
-                                a three-layer orchestration architecture for complex multi-master coordination and scalable task execution.
+                                <strong>Commit-Relay v3.0</strong> is a fully autonomous AI-powered development workflow system featuring
+                                strategic orchestration with a two-layer master-worker architecture for scalable task execution.
                             </p>
 
                             <p class="leading-relaxed">
-                                The system employs <strong>Strategic Daemons</strong> (Task Orchestrator, Zombie Killer, Metrics Snapshot),
-                                <strong>Tactical Masters & Managers</strong> (Coordinator with MoE routing, 4 specialist masters, ephemeral Execution Managers),
-                                and <strong>Execution Workers</strong> (16 specialized worker types with heartbeat health monitoring).
+                                The system employs <strong>Strategic Daemons</strong> (Task Orchestrator, Zombie Killer, Metrics Snapshot)
+                                and <strong>Tactical & Execution Layer</strong> (Coordinator with MoE routing, 3 specialist masters spawning 16 specialized worker types with heartbeat health monitoring).
                             </p>
 
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
@@ -1042,8 +1041,8 @@
                                     <p class="text-sm">Heartbeat protocol (2-min pings) with zombie detection and automatic cleanup.</p>
                                 </div>
                                 <div class="bg-purple-50 dark:bg-purple-900/20 p-4 rounded-lg">
-                                    <h4 class="font-semibold text-purple-700 dark:text-purple-300 mb-2">👨‍💼 Execution Managers</h4>
-                                    <p class="text-sm">Tactical agents for subtask decomposition, multi-worker coordination, and result aggregation.</p>
+                                    <h4 class="font-semibold text-purple-700 dark:text-purple-300 mb-2">🧠 MoE Routing</h4>
+                                    <p class="text-sm">Mixture of Experts pattern matching routes tasks to specialist masters with confidence scoring.</p>
                                 </div>
                                 <div class="bg-orange-50 dark:bg-orange-900/20 p-4 rounded-lg">
                                     <h4 class="font-semibold text-orange-700 dark:text-orange-300 mb-2">📊 Historical Analytics</h4>
@@ -1068,16 +1067,12 @@ graph TB
         MS["Metrics Snapshot<br/>Historical Data"]
     end
 
-    subgraph Tactical["👨‍💼 Tactical Layer - Masters & Managers"]
+    subgraph Tactical["👨‍💼 Tactical & Execution Layer"]
         CM["Coordinator Master<br/>MoE Routing"]
         SM["Security Master"]
         DM["Development Master"]
         IM["Inventory Master"]
-        CICD["CI/CD Master"]
-        EM["Execution Managers<br/>Subtask Coordination"]
-    end
 
-    subgraph Execution["⚙️ Execution Layer - Workers"]
         W1["Scan Workers"]
         W2["Implementation Workers"]
         W3["Test Workers"]
@@ -1093,20 +1088,16 @@ graph TB
     TO --> DM
     TO --> IM
 
-    CM --> SM
-    CM --> DM
-    CM --> IM
-    CM --> CICD
+    CM -->|Routes| SM
+    CM -->|Routes| DM
+    CM -->|Routes| IM
 
-    SM --> EM
-    DM --> EM
-    IM --> EM
-    CICD --> EM
-
-    EM --> W1
-    EM --> W2
-    EM --> W3
-    EM --> W4
+    SM -->|Spawns| W1
+    SM -->|Spawns| W2
+    DM -->|Spawns| W2
+    DM -->|Spawns| W3
+    IM -->|Spawns| W1
+    IM -->|Spawns| W2
 
     W1 -.->|Heartbeat| ZK
     W2 -.->|Heartbeat| ZK
@@ -1117,31 +1108,28 @@ graph TB
     MS -.->|Feeds| DA
     DA -.->|Monitors| TO
     DA -.->|Monitors| CM
+    DA -.->|Monitors| SM
+    DA -.->|Monitors| DM
+    DA -.->|Monitors| IM
 
     style TO fill:#e1bee7,stroke:#8e24aa
     style ZK fill:#ffccbc,stroke:#ff6f00
     style MS fill:#fff9c4,stroke:#f57f17
-    style EM fill:#c5cae9,stroke:#3949ab
     style DA fill:#b2dfdb,stroke:#00897b
     style CM fill:#fef3c7,stroke:#f59e0b
     style SM fill:#fee2e2,stroke:#ef4444
     style DM fill:#dbeafe,stroke:#3b82f6
     style IM fill:#e9d5ff,stroke:#a855f7
-    style CICD fill:#d1fae5,stroke:#10b981
                         </pre>
 
-                        <div class="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                        <div class="mt-6 grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                             <div>
                                 <h4 class="font-semibold text-gray-900 dark:text-white mb-2">🎯 Strategic Layer</h4>
                                 <p class="text-gray-600 dark:text-gray-400">Task Orchestrator decomposes complex tasks → Zombie Killer monitors health → Metrics Snapshot collects history</p>
                             </div>
                             <div>
-                                <h4 class="font-semibold text-gray-900 dark:text-white mb-2">👨‍💼 Tactical Layer</h4>
-                                <p class="text-gray-600 dark:text-gray-400">Coordinator routes via MoE → Masters spawn Execution Managers → Managers coordinate workers</p>
-                            </div>
-                            <div>
-                                <h4 class="font-semibold text-gray-900 dark:text-white mb-2">⚙️ Execution Layer</h4>
-                                <p class="text-gray-600 dark:text-gray-400">16 specialized workers execute tasks → Send heartbeats → Zombie detection → Auto cleanup</p>
+                                <h4 class="font-semibold text-gray-900 dark:text-white mb-2">⚙️ Tactical & Execution Layer</h4>
+                                <p class="text-gray-600 dark:text-gray-400">Coordinator routes via MoE → Masters spawn workers directly → Workers send heartbeats → Zombie detection → Auto cleanup</p>
                             </div>
                         </div>
                     </div>
@@ -1155,7 +1143,7 @@ graph TB
 
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div>
-                                <h4 class="font-semibold text-lg text-gray-900 dark:text-white mb-3">Master Agents (5)</h4>
+                                <h4 class="font-semibold text-lg text-gray-900 dark:text-white mb-3">Master Agents (4)</h4>
                                 <ul class="space-y-2 text-gray-700 dark:text-gray-300">
                                     <li class="flex items-start">
                                         <span class="text-orange-500 mr-2">🎯</span>
@@ -1172,10 +1160,6 @@ graph TB
                                     <li class="flex items-start">
                                         <span class="text-purple-500 mr-2">📦</span>
                                         <span><strong>Inventory:</strong> Repository cataloging, metadata tracking, documentation</span>
-                                    </li>
-                                    <li class="flex items-start">
-                                        <span class="text-green-500 mr-2">🚀</span>
-                                        <span><strong>CI/CD:</strong> Build automation, test orchestration, deployment pipelines</span>
                                     </li>
                                 </ul>
                             </div>

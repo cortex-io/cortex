@@ -18,15 +18,15 @@ Each master agent focuses on a domain like development, security, or inventory m
 
 ### Key Features
 
-**🚀 NEW - v4.0 Orchestration Architecture**:
-- 🎭 **Task Orchestrator**: Strategic daemon for complex multi-master coordination with DAG-based execution planning
-- 👨‍💼 **Execution Managers**: Tactical agents spawned by masters for subtask decomposition and multi-worker coordination
+**🚀 NEW - v3.0 Strategic Orchestration**:
+- 🎭 **Task Orchestrator Daemon**: Strategic daemon for complex multi-master coordination with DAG-based execution planning
 - 💓 **Heartbeat Protocol**: Worker health monitoring with 2-minute ping intervals
-- 🧟 **Zombie Killer**: Dual detection system (timeout >15min OR stale heartbeat >5min) with automatic cleanup
-- 📊 **Live Orchestration Dashboard**: Real-time metrics, historical data collection, and system health visualization
-- 🎮 **DDQD Stress Test**: "God mode" comprehensive system validation testing all v4.0 orchestration features
+- 🧟 **Zombie Killer Daemon**: Dual detection system (timeout >15min OR stale heartbeat >5min) with automatic cleanup
+- 📊 **Metrics Snapshot Daemon**: Historical data collection every 5 minutes for trend analysis
+- 📈 **Live Orchestration Dashboard**: Real-time metrics, historical data, and system health visualization
+- 🎮 **DDQD Stress Test**: "God mode" comprehensive system validation testing all orchestration features
 
-**v3.0 - Agentic AI Architecture**:
+**v2.0 - Agentic AI Architecture**:
 - 🧠 **ASI (Learning)**: Each master learns from outcomes and improves over time
 - 🎯 **MoE (Expert Routing)**: Pattern-based task routing to specialist masters (95% confidence)
 - 📚 **RAG (Context Retrieval)**: Knowledge base augmentation for informed decision-making
@@ -47,31 +47,26 @@ Each master agent focuses on a domain like development, security, or inventory m
 
 ## Architecture
 
-### v4.0 - Multi-Layer Orchestration System
+### v3.0 - Strategic Orchestration with Master-Worker Pattern
 
-**NEW**: v4.0 introduces a three-layer orchestration architecture for complex multi-master coordination.
+**Current Production Architecture**: Two-layer system with strategic daemons for orchestration and health monitoring.
 
-#### Three-Layer Architecture
+#### Two-Layer Architecture
 
 **Layer 1 - Strategic (Permanent Daemons)**:
 - **Task Orchestrator Daemon**: Decomposes complex multi-master tasks into coordinated subtasks with dependencies
-- **Zombie Killer Daemon**: Monitors worker health using heartbeat protocol, kills stale workers
+- **Zombie Killer Daemon**: Monitors worker health using heartbeat protocol, automatically kills stale workers
 - **Metrics Snapshot Daemon**: Collects historical metrics every 5 minutes for trend analysis and dashboard charts
 
-**Layer 2 - Tactical (Master Agents & Execution Managers)**:
-- **Coordinator Master**: Routes tasks via MoE pattern, checks for orchestration requirements
-- **Specialist Masters**: Security, Development, Inventory, CI/CD domains with dedicated knowledge bases
-- **Execution Managers**: Ephemeral tactical agents spawned by masters for:
-  - Breaking down complex subtasks into worker-level units
-  - Coordinating multiple workers on related operations
-  - Managing dependencies between parallel work streams
-  - Aggregating results from worker pools
-  - Scaling execution capacity for larger projects
-
-**Layer 3 - Execution (Workers)**:
+**Layer 2 - Tactical & Execution (Master Agents & Workers)**:
+- **Coordinator Master**: Routes tasks via MoE (Mixture of Experts) pattern, checks for orchestration requirements
+- **Specialist Masters**: 3 domain experts (Security, Development, Inventory) with dedicated knowledge bases
+  - Each master spawns workers directly for task execution
+  - Masters aggregate results and coordinate handoffs between domains
 - **16 Specialized Workers**: Scan, Fix, Analysis, Implementation, Test, Review, PR, Documentation, Catalog, etc.
-- **Heartbeat Protocol**: Workers ping every 2 minutes to prove they're alive
-- **Health Monitoring**: Zombie detection via timeout (>15min) or stale heartbeat (>5min)
+  - **Heartbeat Protocol**: Workers ping every 2 minutes to prove they're alive
+  - **Health Monitoring**: Zombie detection via timeout (>15min) or stale heartbeat (>5min)
+  - **Autonomous Operation**: Workers launch automatically, commit and push changes
 
 ```mermaid
 graph TB
@@ -81,16 +76,12 @@ graph TB
         MS["Metrics Snapshot Daemon<br/>Historical Data"]
     end
 
-    subgraph Tactical["👨‍💼 Tactical Layer - Masters & Managers"]
+    subgraph Tactical["👨‍💼 Tactical & Execution Layer"]
         CM["Coordinator Master<br/>MoE Routing"]
-        SM["Security Master"]
-        DM["Development Master"]
-        IM["Inventory Master"]
-        CICD["CI/CD Master"]
-        EM["Execution Managers<br/>Subtask Coordination"]
-    end
+        SM["Security Master<br/>Vuln Management"]
+        DM["Development Master<br/>Feature/Bug Work"]
+        IM["Inventory Master<br/>Cataloging"]
 
-    subgraph Execution["⚙️ Execution Layer - Workers"]
         W1["Scan Workers"]
         W2["Implementation Workers"]
         W3["Test Workers"]
@@ -107,20 +98,16 @@ graph TB
     TO --> DM
     TO --> IM
 
-    CM --> SM
-    CM --> DM
-    CM --> IM
-    CM --> CICD
+    CM -->|Routes Tasks| SM
+    CM -->|Routes Tasks| DM
+    CM -->|Routes Tasks| IM
 
-    SM --> EM
-    DM --> EM
-    IM --> EM
-    CICD --> EM
-
-    EM --> W1
-    EM --> W2
-    EM --> W3
-    EM --> W4
+    SM -->|Spawns| W1
+    SM -->|Spawns| W2
+    DM -->|Spawns| W2
+    DM -->|Spawns| W3
+    IM -->|Spawns| W1
+    IM -->|Spawns| W2
 
     W1 -.->|Heartbeat| ZK
     W2 -.->|Heartbeat| ZK
@@ -131,18 +118,20 @@ graph TB
     DA -.->|Monitors| TO
     DA -.->|Monitors| CM
     DA -.->|Monitors| SM
+    DA -.->|Monitors| DM
+    DA -.->|Monitors| IM
     MS -.->|Feeds| DA
     DA --> DASH
 
     style TO fill:#e1bee7,stroke:#8e24aa
     style ZK fill:#ffccbc,stroke:#ff6f00
     style MS fill:#fff9c4,stroke:#f57f17
-    style EM fill:#c5cae9,stroke:#3949ab
+    style CM fill:#c5cae9,stroke:#3949ab
     style DA fill:#b2dfdb,stroke:#00897b
     style DASH fill:#b2dfdb,stroke:#00897b
 ```
 
-#### v3.0 ASI/MoE/RAG Principles (Still Active)
+#### v2.0 ASI/MoE/RAG Principles (Still Active)
 
 **ASI (Artificial Super Intelligence)**:
 - Each master maintains state and learns from task outcomes
@@ -212,6 +201,35 @@ graph TB
 | catalog-worker | 8k | 15m | Deep repository cataloging |
 
 **Worker Success Rate**: 94% across all types
+
+---
+
+### v4.0 Future Enhancements
+
+**Execution Manager Layer** (Planned)
+
+The v4.0 architecture introduces an optional **Execution Manager** tactical layer for complex, large-scale operations requiring coordination across 5+ workers or multi-repository sequencing.
+
+**When to Implement**:
+- Complex refactoring operations spanning multiple repositories
+- Large-scale feature implementations requiring 5+ coordinated workers
+- Multi-phase operations with strict dependency ordering
+- Operations requiring dynamic replanning based on intermediate results
+
+**Capabilities**:
+- **Subtask Decomposition**: Break master-assigned work into fine-grained worker tasks
+- **Dependency Management**: Ensure workers execute in correct order with proper handoffs
+- **Result Aggregation**: Synthesize outputs from multiple parallel workers
+- **Dynamic Replanning**: Adjust execution plans based on worker outcomes
+- **Multi-Worker Coordination**: Manage 5+ workers on a single complex objective
+
+**Implementation Status**:
+- ✅ Execution plan schema defined (`coordination/execution-plans/`)
+- ✅ Worker handoff protocol designed
+- ⏳ Integration with master prompts (not yet active)
+- ⏳ Execution Manager agent prompt (placeholder only)
+
+**Current Approach**: Masters spawn workers directly for most operations. This works well for 95% of tasks and keeps the system simple. Execution Managers will be activated when scaling demands require the additional coordination layer.
 
 ---
 
