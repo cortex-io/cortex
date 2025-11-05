@@ -1,9 +1,32 @@
 {
   "version": "1.1",
-  "updated_at": "2025-11-04T18:00:00Z",
+  "updated_at": "2025-11-04T22:26:00Z",
   "workforce_streams_enabled": true,
-  "active_workers": [],
+  "active_workers": [
+    {
+      "worker_id": "test-worker-realtime-update",
+      "type": "test-worker",
+      "task_id": "task-021",
+      "spawned_at": "2025-11-04T22:26:00Z",
+      "status": "running",
+      "tokens_used": 500,
+      "duration_minutes": 0.2,
+      "stream": "stream-b"
+    }
+  ],
   "completed_workers": [
+    {
+      "worker_id": "test-security-scan-worker",
+      "type": "security-scan-worker",
+      "task_id": "task-020",
+      "spawned_at": "2025-11-04T22:22:00Z",
+      "completed_at": "2025-11-04T22:24:00Z",
+      "status": "success",
+      "tokens_used": 2500,
+      "duration_minutes": 2.0,
+      "stream": "stream-e",
+      "deliverable": "security-scan-report.md"
+    },
     {
       "worker_id": "implementation-worker-backend",
       "type": "implementation-worker",

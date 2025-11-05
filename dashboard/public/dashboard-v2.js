@@ -131,6 +131,8 @@ function dashboard() {
         handleWebSocketMessage(message) {
             if (message.type === 'initial' || message.type === 'update') {
                 this.updateMetrics(message.data);
+                // Refetch workers when metrics update (worker count may have changed)
+                this.fetchWorkers();
             } else if (message.type === 'event') {
                 this.addEvent(message.event);
             } else if (message.type === 'daemon_status') {
@@ -190,6 +192,9 @@ function dashboard() {
                 const tasksRes = await fetch('/api/tasks');
                 const tasksData = await tasksRes.json();
                 this.tasks = tasksData.tasks || [];
+
+                // Fetch workers
+                await this.fetchWorkers();
 
                 // Fetch recent events
                 const eventsRes = await fetch('/api/events?limit=50');

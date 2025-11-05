@@ -916,7 +916,7 @@
       "title": "Redesign Token Budget card with hybrid multi-level visualization",
       "type": "development",
       "priority": "high",
-      "status": "in_progress",
+      "status": "completed",
       "assigned_to": "development-master",
       "assigned_by": "coordinator-master",
       "assigned_at": "2025-11-04T16:48:37Z",
