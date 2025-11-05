@@ -1777,12 +1777,18 @@ function dashboard() {
                     setTimeout(() => {
                         try {
                             if (typeof mermaid !== 'undefined') {
-                                mermaid.run();
+                                // Only render unprocessed mermaid diagrams
+                                const mermaidElements = document.querySelectorAll('.mermaid:not([data-processed])');
+                                if (mermaidElements.length > 0) {
+                                    mermaid.run({
+                                        querySelector: '.mermaid:not([data-processed])'
+                                    });
+                                }
                             }
                         } catch (e) {
                             console.error('Mermaid rendering error:', e);
                         }
-                    }, 100);
+                    }, 200);
                 });
             }
 
