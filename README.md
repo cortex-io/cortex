@@ -18,10 +18,18 @@ Each master agent focuses on a domain like development, security, or inventory m
 
 ### Key Features
 
-**🚀 NEW - v3.0 Strategic Orchestration**:
-- 🎭 **Task Orchestrator Daemon**: Strategic daemon for complex multi-master coordination with DAG-based execution planning
-- 💓 **Heartbeat Protocol**: Worker health monitoring with 2-minute ping intervals
-- 🧟 **Zombie Killer Daemon**: Dual detection system (timeout >15min OR stale heartbeat >5min) with automatic cleanup
+**🚀 NEW - v4.0 Three-Layer Orchestration with Execution Managers**:
+- 🎯 **Execution Manager Layer**: Tactical coordination for complex multi-worker operations (5+ workers, multi-phase)
+- 📋 **DAG-based Subtask Planning**: Dependency-aware worker sequencing with parallel and sequential phases
+- 🔄 **Result Aggregation**: Synthesize outputs from multiple parallel workers into unified deliverables
+- 🏥 **EM Health Monitoring**: 60-minute timeout + 5-minute heartbeat detection with zombie cleanup
+- 📊 **Dashboard EM Metrics**: Real-time tracking of active, completed, failed EMs with success rates
+- ⚡ **Master EM Detection**: Automatic identification when operations require tactical coordination layer
+
+**v3.0 Strategic Orchestration**:
+- 🎭 **Task Orchestrator Daemon**: Strategic daemon for complex multi-master coordination
+- 💓 **Heartbeat Protocol**: Worker/EM health monitoring with 2-minute ping intervals
+- 🧟 **Zombie Killer Daemon**: Dual detection for workers (15min) and EMs (60min) with automatic cleanup
 - 📊 **Metrics Snapshot Daemon**: Historical data collection every 5 minutes for trend analysis
 - 📈 **Live Orchestration Dashboard**: Real-time metrics, historical data, and system health visualization
 - 🎮 **DDQD Stress Test**: "God mode" comprehensive system validation testing all orchestration features
@@ -47,26 +55,36 @@ Each master agent focuses on a domain like development, security, or inventory m
 
 ## Architecture
 
-### v3.0 - Strategic Orchestration with Master-Worker Pattern
+### v4.0 - Three-Layer Orchestration with Execution Managers
 
-**Current Production Architecture**: Two-layer system with strategic daemons for orchestration and health monitoring.
+**Current Production Architecture**: Three-layer hierarchical system with strategic daemons, tactical coordination, and execution specialization.
 
-#### Two-Layer Architecture
+#### Three-Layer Architecture
 
 **Layer 1 - Strategic (Permanent Daemons)**:
 - **Task Orchestrator Daemon**: Decomposes complex multi-master tasks into coordinated subtasks with dependencies
-- **Zombie Killer Daemon**: Monitors worker health using heartbeat protocol, automatically kills stale workers
+- **Zombie Killer Daemon**: Monitors worker AND execution manager health using heartbeat protocol
 - **Metrics Snapshot Daemon**: Collects historical metrics every 5 minutes for trend analysis and dashboard charts
 
-**Layer 2 - Tactical & Execution (Master Agents & Workers)**:
+**Layer 2 - Tactical (Masters & Execution Managers)**:
 - **Coordinator Master**: Routes tasks via MoE (Mixture of Experts) pattern, checks for orchestration requirements
 - **Specialist Masters**: 3 domain experts (Security, Development, Inventory) with dedicated knowledge bases
-  - Each master spawns workers directly for task execution
-  - Masters aggregate results and coordinate handoffs between domains
+  - Spawn workers directly for standard operations (95% of tasks)
+  - Spawn Execution Managers for complex multi-worker coordination
+  - Aggregate results and coordinate handoffs between domains
+- **Execution Managers** (v4.0): Tactical agents for complex subtask coordination
+  - Spawned by masters for operations requiring 5+ workers
+  - Decompose subtasks into fine-grained worker assignments
+  - Manage worker dependencies and sequencing (DAG-based)
+  - Aggregate results from multiple parallel workers
+  - Report unified deliverables back to master
+
+**Layer 3 - Execution (Specialized Workers)**:
 - **16 Specialized Workers**: Scan, Fix, Analysis, Implementation, Test, Review, PR, Documentation, Catalog, etc.
   - **Heartbeat Protocol**: Workers ping every 2 minutes to prove they're alive
   - **Health Monitoring**: Zombie detection via timeout (>15min) or stale heartbeat (>5min)
   - **Autonomous Operation**: Workers launch automatically, commit and push changes
+  - **EM Coordination**: Can be spawned by masters OR execution managers
 
 ```mermaid
 graph TB
@@ -76,12 +94,17 @@ graph TB
         MS["Metrics Snapshot Daemon<br/>Historical Data"]
     end
 
-    subgraph Tactical["👨‍💼 Tactical & Execution Layer"]
+    subgraph Tactical["👨‍💼 Tactical Layer - Masters & Execution Managers"]
         CM["Coordinator Master<br/>MoE Routing"]
         SM["Security Master<br/>Vuln Management"]
         DM["Development Master<br/>Feature/Bug Work"]
         IM["Inventory Master<br/>Cataloging"]
 
+        EM1["Execution Manager<br/>Multi-Worker Coordination"]
+        EM2["Execution Manager<br/>Subtask Decomposition"]
+    end
+
+    subgraph Execution["⚙️ Execution Layer - Workers"]
         W1["Scan Workers"]
         W2["Implementation Workers"]
         W3["Test Workers"]
@@ -102,17 +125,23 @@ graph TB
     CM -->|Routes Tasks| DM
     CM -->|Routes Tasks| IM
 
-    SM -->|Spawns| W1
-    SM -->|Spawns| W2
-    DM -->|Spawns| W2
-    DM -->|Spawns| W3
-    IM -->|Spawns| W1
-    IM -->|Spawns| W2
+    SM -->|Direct Spawn| W1
+    SM -->|Complex: Spawn EM| EM1
+    DM -->|Direct Spawn| W2
+    DM -->|Complex: Spawn EM| EM2
+    IM -->|Direct Spawn| W1
+
+    EM1 -->|Coordinates| W1
+    EM1 -->|Coordinates| W2
+    EM2 -->|Coordinates| W2
+    EM2 -->|Coordinates| W3
 
     W1 -.->|Heartbeat| ZK
     W2 -.->|Heartbeat| ZK
     W3 -.->|Heartbeat| ZK
     W4 -.->|Heartbeat| ZK
+    EM1 -.->|Heartbeat| ZK
+    EM2 -.->|Heartbeat| ZK
 
     ZK -.->|Reports| DA
     DA -.->|Monitors| TO
@@ -120,6 +149,8 @@ graph TB
     DA -.->|Monitors| SM
     DA -.->|Monitors| DM
     DA -.->|Monitors| IM
+    DA -.->|Monitors| EM1
+    DA -.->|Monitors| EM2
     MS -.->|Feeds| DA
     DA --> DASH
 
@@ -127,6 +158,8 @@ graph TB
     style ZK fill:#ffccbc,stroke:#ff6f00
     style MS fill:#fff9c4,stroke:#f57f17
     style CM fill:#c5cae9,stroke:#3949ab
+    style EM1 fill:#80deea,stroke:#00acc1
+    style EM2 fill:#80deea,stroke:#00acc1
     style DA fill:#b2dfdb,stroke:#00897b
     style DASH fill:#b2dfdb,stroke:#00897b
 ```
@@ -204,32 +237,72 @@ graph TB
 
 ---
 
-### v4.0 Future Enhancements
+### v4.0 Execution Manager Layer (IMPLEMENTED)
 
-**Execution Manager Layer** (Planned)
+**Production Status**: The v4.0 architecture has been fully implemented with an **Execution Manager** tactical layer for complex, large-scale operations requiring coordination across 5+ workers or multi-repository sequencing.
 
-The v4.0 architecture introduces an optional **Execution Manager** tactical layer for complex, large-scale operations requiring coordination across 5+ workers or multi-repository sequencing.
-
-**When to Implement**:
+**When to Use Execution Managers**:
 - Complex refactoring operations spanning multiple repositories
 - Large-scale feature implementations requiring 5+ coordinated workers
-- Multi-phase operations with strict dependency ordering
+- Multi-phase operations with strict dependency ordering (DAG-based planning)
 - Operations requiring dynamic replanning based on intermediate results
+- Multi-file changes with tight integration (5+ files)
+- Resource-intensive tasks (>30k tokens or >60 minutes)
 
 **Capabilities**:
-- **Subtask Decomposition**: Break master-assigned work into fine-grained worker tasks
-- **Dependency Management**: Ensure workers execute in correct order with proper handoffs
-- **Result Aggregation**: Synthesize outputs from multiple parallel workers
-- **Dynamic Replanning**: Adjust execution plans based on worker outcomes
-- **Multi-Worker Coordination**: Manage 5+ workers on a single complex objective
+- **Subtask Decomposition**: Break master-assigned work into fine-grained worker tasks with dependencies
+- **DAG-based Execution Planning**: Define task sequencing with parallel and sequential phases
+- **Worker Coordination**: Spawn and manage 5+ workers on a single complex objective
+- **Health Monitoring**: Track worker progress via heartbeat protocol (2-minute pings)
+- **Result Aggregation**: Synthesize outputs from multiple parallel workers into unified deliverables
+- **Quality Gates**: Verify acceptance criteria between execution phases
+- **Resource Management**: Track token budgets and time constraints across worker pool
+- **Failure Recovery**: Detect zombie workers and implement retry logic
 
 **Implementation Status**:
-- ✅ Execution plan schema defined (`coordination/execution-plans/`)
-- ✅ Worker handoff protocol designed
-- ⏳ Integration with master prompts (not yet active)
-- ⏳ Execution Manager agent prompt (placeholder only)
+- ✅ **Execution Manager agent prompt** (`agents/prompts/execution-manager.md`) - 800 lines, production-ready
+- ✅ **Master prompt integration** - All 3 specialist masters detect when to spawn EMs
+- ✅ **Spawning infrastructure** (`scripts/spawn-execution-manager.sh`) - Creates EM with execution plan
+- ✅ **Worker handoff protocol** - Enhanced spawn-worker.sh with `execution_manager` field
+- ✅ **Result aggregation** (`scripts/aggregate-worker-results.sh`) - Collects outputs from EM's workers
+- ✅ **Health monitoring** - Zombie killer daemon tracks EMs (60-minute timeout, 5-minute heartbeat)
+- ✅ **Dashboard integration** - Real-time EM metrics with success rate tracking
+- ✅ **Metrics collection** - Historical EM data in metrics snapshot daemon
 
-**Current Approach**: Masters spawn workers directly for most operations. This works well for 95% of tasks and keeps the system simple. Execution Managers will be activated when scaling demands require the additional coordination layer.
+**Architecture**:
+```
+Masters → Execution Managers → Workers
+         (Tactical Layer)     (Execution Layer)
+```
+
+**Three-Layer v4.0 System**:
+1. **Strategic Layer**: Daemons (Task Orchestrator, Zombie Killer, Metrics Snapshot)
+2. **Tactical Layer**: Masters + Execution Managers (for complex subtasks)
+3. **Execution Layer**: Workers (specialized, ephemeral)
+
+**Example Usage**:
+```bash
+# Spawn Execution Manager for complex development subtask
+./scripts/spawn-execution-manager.sh \
+  --master development \
+  --subtask-id dev-subtask-001 \
+  --description "Implement user dashboard with real-time updates" \
+  --files "src/dashboard.ts,src/api.ts,src/websocket.ts" \
+  --token-budget 30000 \
+  --estimated-duration 90
+
+# EM will:
+# 1. Decompose into phases (backend API → frontend → real-time)
+# 2. Spawn 8 workers sequentially and in parallel
+# 3. Monitor health via heartbeats
+# 4. Aggregate results into unified deliverable
+# 5. Report back to Development Master
+```
+
+**Current Approach**: Masters spawn workers directly for standard operations (95% of tasks). Execution Managers are spawned when masters detect complexity thresholds:
+- **Development Master**: 5+ workers, multi-phase execution, >30k tokens
+- **Security Master**: Multi-repo remediation, coordinated CVE response
+- **Inventory Master**: Portfolio-wide cataloging (10+ repos)
 
 ---
 
@@ -339,9 +412,10 @@ commit-relay/
 ├── agents/
 │   ├── prompts/
 │   │   ├── coordinator-master.md      # System orchestrator (v2.0)
-│   │   ├── security-master.md         # Security strategist (v2.0)
-│   │   ├── development-master.md      # Development planner (v2.0)
-│   │   ├── inventory-master.md        # Repository cataloger (v2.0)
+│   │   ├── security-master.md         # Security strategist (v4.0 with EM detection)
+│   │   ├── development-master.md      # Development planner (v4.0 with EM detection)
+│   │   ├── inventory-master.md        # Repository cataloger (v4.0 with EM detection)
+│   │   ├── execution-manager.md       # v4.0 Multi-worker coordinator (~800 lines)
 │   │   └── workers/                   # 9 worker types
 │   │       ├── scan-worker.md
 │   │       ├── fix-worker.md
@@ -354,7 +428,7 @@ commit-relay/
 │   │       └── catalog-worker.md
 │   ├── configs/
 │   │   └── agent-registry.json        # Master agent configuration (v2.0)
-│   └── logs/                          # Activity logs (masters + workers)
+│   └── logs/                          # Activity logs (masters + workers + EMs)
 ├── coordination/
 │   ├── task-queue.json               # Task management (v2.0 schema)
 │   ├── worker-pool.json              # Worker tracking
@@ -362,9 +436,25 @@ commit-relay/
 │   ├── handoffs.json                 # Master handoffs
 │   ├── status.json                   # System health
 │   ├── repository-inventory.json     # Repository catalog (20 repos)
-│   └── worker-specs/                 # Worker specifications
-│       ├── active/                   # Running workers
-│       └── archive/                  # Completed workers
+│   ├── worker-specs/                 # Worker specifications
+│   │   ├── active/                   # Running workers
+│   │   ├── completed/                # Completed workers
+│   │   └── failed/                   # Failed workers
+│   ├── execution-managers/           # v4.0 EM tracking
+│   │   ├── active/                   # Running EMs
+│   │   ├── completed/                # Completed EMs
+│   │   ├── plans/                    # EM execution plans
+│   │   └── results/                  # Aggregated EM results
+│   ├── masters/                      # Master-specific coordination
+│   │   ├── development/
+│   │   │   └── execution-plans/      # Dev subtask plans
+│   │   ├── security/
+│   │   │   └── execution-plans/      # Security subtask plans
+│   │   └── inventory/
+│   │       └── execution-plans/      # Inventory subtask plans
+│   └── history/                      # v4.0 Historical metrics
+│       ├── hourly/                   # 5-minute snapshots (7-day retention)
+│       └── daily/                    # Daily aggregates (permanent)
 ├── dashboard/                         # Real-time metrics dashboard
 │   ├── server/
 │   │   └── index.js                  # Express + WebSocket server
@@ -385,21 +475,24 @@ commit-relay/
 │   ├── phase2-completion-summary.md
 │   └── phase3-completion-summary.md
 └── scripts/
-    ├── spawn-worker.sh               # Spawn worker agents
+    ├── spawn-worker.sh               # Spawn worker agents (v4.0 EM support)
     ├── worker-daemon.sh              # Background worker launcher (autonomous)
     ├── daemon-control.sh             # Daemon management (start/stop/status)
     ├── start-worker.sh               # Manual worker startup
     ├── start-commit-relay.sh         # System startup script
     ├── worker-status.sh              # Monitor workers
-    ├── run-security-master.sh        # Launch security master
+    ├── run-security-master.sh        # Launch security master (v4.0)
     ├── run-coordinator-master.sh     # Launch coordinator master (MoE routing)
-    ├── run-development-master.sh     # Launch development master
-    ├── run-inventory-master.sh       # Launch inventory master
-    ├── task-orchestrator-daemon.sh   # v4.0 Task orchestration daemon
-    ├── zombie-killer-daemon.sh       # v4.0 Zombie detection and cleanup
+    ├── run-development-master.sh     # Launch development master (v4.0)
+    ├── run-inventory-master.sh       # Launch inventory master (v4.0)
+    ├── task-orchestrator-daemon.sh   # v3.0 Task orchestration daemon
+    ├── zombie-killer-daemon.sh       # v4.0 Zombie detection (workers + EMs)
+    ├── metrics-snapshot-daemon.sh    # v4.0 Historical metrics (includes EMs)
     ├── spawn-execution-manager.sh    # v4.0 Execution manager spawner
+    ├── aggregate-worker-results.sh   # v4.0 EM result aggregation
     ├── agent-init.sh                 # Initialize new agents
     ├── status-check.sh               # System health check
+    ├── ddqd                          # v4.0 Stress test suite
     └── lib/
         ├── logging.sh                # Centralized logging
         ├── coordination.sh           # Coordination file utilities
@@ -813,31 +906,44 @@ Emergency Reserve (9%): 25k
 
 ---
 
-### ✅ Phase 6: v4.0 Orchestration Layer (Complete)
+### ✅ Phase 6: v4.0 Execution Manager Layer (Complete)
 
-**Goal**: Multi-layer orchestration for complex multi-master coordination
+**Goal**: Three-layer orchestration with tactical coordination for complex multi-worker operations
 
 **Delivered**:
-- ✅ **Task Orchestrator Daemon**: Strategic layer for complex task decomposition with DAG-based execution planning
-- ✅ **Zombie Killer Daemon**: Health monitoring with dual detection (timeout + stale heartbeat)
-- ✅ **Execution Manager Spawner**: Tactical layer for masters to delegate complex subtasks
-- ✅ **Heartbeat Protocol**: Worker health monitoring with 2-minute ping intervals (`lib/worker-heartbeat.sh`)
-- ✅ **Coordinator Integration**: MoE routing enhanced with orchestration requirement checks
-- ✅ **Dashboard Integration**: Orchestration metrics exposed via `/api/metrics` endpoint
-- ✅ **Live Orchestration Card**: Real-time display of active/completed/failed orchestrations
-- ✅ **Worker Spec Enhancements**: Added `last_heartbeat` field for health tracking
-- ✅ **Zombie Detection**: 15-minute timeout OR 5-minute stale heartbeat triggers cleanup
+- ✅ **Execution Manager Agent Prompt**: Production-ready 800-line prompt with DAG-based planning and subtask decomposition
+- ✅ **Master Prompt Integration**: All 3 specialist masters (Security, Development, Inventory) detect when to spawn EMs
+- ✅ **EM Spawning Infrastructure**: `spawn-execution-manager.sh` creates EMs with execution plans
+- ✅ **Worker Handoff Protocol**: Enhanced `spawn-worker.sh` with `execution_manager` field for tracking
+- ✅ **Result Aggregation**: `aggregate-worker-results.sh` synthesizes outputs from EM's workers
+- ✅ **EM Health Monitoring**: Zombie killer daemon tracks EMs (60-minute timeout, 5-minute heartbeat)
+- ✅ **Dashboard Integration**: Real-time EM metrics card with active/completed/failed counts and success rate
+- ✅ **Metrics Collection**: Historical EM data in metrics snapshot daemon for trend analysis
+- ✅ **Heartbeat Protocol**: 2-minute ping intervals for both workers and EMs
+- ✅ **Task Orchestrator Daemon**: Strategic layer for complex task decomposition (v3.0 retained)
+- ✅ **Zombie Killer Daemon**: Enhanced to monitor workers (15min timeout) AND EMs (60min timeout)
+- ✅ **Metrics Snapshot Daemon**: Enhanced to collect EM metrics alongside worker data
 
 **Architecture Changes**:
-- Three-layer system: Strategic (daemons) → Tactical (masters/managers) → Execution (workers)
-- Task Orchestrator sits above Coordinator Master for complex coordination
-- Execution Managers spawned by masters for subtask-level worker coordination
-- Heartbeat-based health monitoring replaces simple timeout detection
-- Orchestration state tracked in `coordination/orchestrator/state/current.json`
+- **Three-layer system**: Strategic (daemons) → Tactical (masters + EMs) → Execution (workers)
+- **Execution Managers**: Tactical agents spawned by masters for operations requiring 5+ workers
+- **EM Coordination**: Manage worker dependencies, sequencing (DAG-based), and result aggregation
+- **Health Monitoring**: Extended to EMs with longer timeout (60min vs 15min for workers)
+- **Dashboard Visibility**: EM metrics exposed via `/api/execution-managers` and `/api/metrics`
+- **Master Detection**: Masters automatically identify when to use EMs (5+ workers, multi-phase, >30k tokens)
 
-**Result**: True multi-layer orchestration - complex tasks requiring multiple masters can now be decomposed into coordinated subtasks with dependencies. Worker health monitoring ensures zombies are detected and killed within 5 minutes of becoming unresponsive. Dashboard provides real-time visibility into orchestration status.
+**EM Capabilities**:
+- Subtask decomposition into fine-grained worker assignments
+- DAG-based execution planning with parallel and sequential phases
+- Multi-worker coordination (5+ workers on single complex objective)
+- Quality gates between execution phases
+- Result aggregation from multiple parallel workers
+- Failure recovery and zombie detection
+- Resource management (tokens, time budgets)
 
-**Architecture Impact**: Moved from flat master-worker to hierarchical orchestration system, added 2 permanent daemons (Task Orchestrator, Zombie Killer), introduced ephemeral Execution Managers, established heartbeat protocol for worker health
+**Result**: Complete three-layer orchestration system. Masters can now delegate complex multi-worker operations to Execution Managers, which handle tactical coordination while masters focus on strategic planning. EMs enable operations that would be too complex for direct master-to-worker coordination, such as large-scale refactoring, multi-phase implementations, and multi-repo operations.
+
+**Architecture Impact**: Established tactical coordination layer between masters and workers, enabled complex operations requiring 5+ coordinated workers, added EM health monitoring to zombie killer, integrated EM metrics into dashboard, created result aggregation workflows for multi-worker outputs
 
 ---
 
@@ -1001,11 +1107,11 @@ MIT License - See [LICENSE](./LICENSE) for details
 
 **Production Ready** ✅
 
-- **Version**: 4.0 (Multi-Layer Orchestration)
+- **Version**: 4.0 (Three-Layer Orchestration with Execution Managers)
 - **Architecture**: Hierarchical orchestration with Strategic/Tactical/Execution layers
-- **Phases Complete**: Phase 1-6 (ASI/MoE/RAG + v4.0 Orchestration)
-- **Strategic Layer**: 2 permanent daemons (Task Orchestrator, Zombie Killer)
-- **Tactical Layer**: 4 master agents + ephemeral Execution Managers
+- **Phases Complete**: Phase 1-6 (ASI/MoE/RAG + v4.0 Orchestration + EM Layer)
+- **Strategic Layer**: 3 permanent daemons (Task Orchestrator, Zombie Killer, Metrics Snapshot)
+- **Tactical Layer**: 4 master agents + Execution Managers (spawned on-demand)
 - **Execution Layer**: 16 specialized worker types with heartbeat monitoring
 - **Observer Layer**: Dashboard Agent + Live WebSocket dashboard
 - **Lifecycle Coverage**: 100%
@@ -1014,19 +1120,26 @@ MIT License - See [LICENSE](./LICENSE) for details
 
 ### System Health
 
-- ✅ v4.0 orchestration layer operational (3-layer hierarchy)
+- ✅ **v4.0 Execution Manager layer fully operational (3-layer hierarchy)**
+- ✅ **EM spawning infrastructure ready** (`spawn-execution-manager.sh`)
+- ✅ **EM agent prompt production-ready** (800 lines with DAG-based planning)
+- ✅ **EM health monitoring active** (60-minute timeout, 5-minute heartbeat)
+- ✅ **EM metrics in dashboard** (active, completed, failed, success rate)
+- ✅ **Result aggregation system operational** (`aggregate-worker-results.sh`)
 - ✅ Task Orchestrator daemon running for complex coordination
-- ✅ Zombie Killer daemon running with heartbeat monitoring
-- ✅ Heartbeat protocol active (2-minute worker pings)
+- ✅ Zombie Killer daemon monitoring workers AND execution managers
+- ✅ Metrics Snapshot daemon collecting EM data for historical analysis
+- ✅ Heartbeat protocol active (2-minute worker/EM pings)
 - ✅ All 4 master agents operational with isolated contexts
+- ✅ **Masters detect EM requirements** (5+ workers, multi-phase, >30k tokens)
 - ✅ ASI: Learning mechanisms active across all masters
-- ✅ MoE: Pattern-based routing with 95% confidence + orchestration checks
+- ✅ MoE: Pattern-based routing with 95% confidence + EM detection
 - ✅ RAG: Knowledge base retrieval operational
 - ✅ 16 specialized worker types available
 - ✅ Token budget: 270k daily
 - ✅ Worker pool: 80k available
 - ✅ Emergency reserve: 25k
-- ✅ Dashboard: Live orchestration metrics + real-time events
+- ✅ Dashboard: Live orchestration + EM metrics + real-time events
 
 ---
 
