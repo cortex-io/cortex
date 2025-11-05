@@ -1109,6 +1109,89 @@
             <!-- Metrics View -->
             <div x-show="currentView === 'metrics'" x-transition>
                 <div class="space-y-6">
+                    <!-- Historical Analytics Section -->
+                    <div class="bg-gradient-to-r from-primary-50 to-purple-50 dark:from-primary-900/20 dark:to-purple-900/20 rounded-xl shadow-lg p-6 border border-primary-200 dark:border-primary-700">
+                        <div class="flex items-center justify-between mb-4">
+                            <div class="flex items-center space-x-3">
+                                <i data-lucide="trending-up" class="w-6 h-6 text-primary-600 dark:text-primary-400"></i>
+                                <h3 class="text-xl font-bold text-gray-900 dark:text-white">Historical Analytics & Trends</h3>
+                            </div>
+                            <div class="flex items-center space-x-2">
+                                <select class="px-3 py-2 text-sm rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500" x-model="analyticsTimeRange" @change="updateAnalyticsCharts()">
+                                    <option value="1h">Last Hour</option>
+                                    <option value="6h">Last 6 Hours</option>
+                                    <option value="24h" selected>Last 24 Hours</option>
+                                    <option value="7d">Last 7 Days</option>
+                                    <option value="30d">Last 30 Days</option>
+                                </select>
+                            </div>
+                        </div>
+                        <p class="text-sm text-gray-600 dark:text-gray-400 mb-6">Real-time system performance trends and patterns over time</p>
+
+                        <!-- Historical Charts Grid -->
+                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                            <!-- Worker Success Rate Over Time -->
+                            <div class="bg-white dark:bg-gray-800 rounded-lg p-5 border border-gray-200 dark:border-gray-700">
+                                <div class="flex items-center justify-between mb-4">
+                                    <h4 class="text-sm font-semibold text-gray-900 dark:text-white">Worker Success Rate</h4>
+                                    <i data-lucide="check-circle" class="w-4 h-4 text-green-500"></i>
+                                </div>
+                                <div class="h-48">
+                                    <canvas id="successRateTrendChart"></canvas>
+                                </div>
+                                <div class="mt-3 flex items-center justify-between text-xs text-gray-500 dark:text-gray-400">
+                                    <span>Tracks worker completion success over time</span>
+                                    <span class="font-medium" x-text="'Current: ' + (metrics.workers?.successRate || 0).toFixed(1) + '%'"></span>
+                                </div>
+                            </div>
+
+                            <!-- System Throughput Over Time -->
+                            <div class="bg-white dark:bg-gray-800 rounded-lg p-5 border border-gray-200 dark:border-gray-700">
+                                <div class="flex items-center justify-between mb-4">
+                                    <h4 class="text-sm font-semibold text-gray-900 dark:text-white">System Throughput</h4>
+                                    <i data-lucide="zap" class="w-4 h-4 text-yellow-500"></i>
+                                </div>
+                                <div class="h-48">
+                                    <canvas id="throughputTrendChart"></canvas>
+                                </div>
+                                <div class="mt-3 flex items-center justify-between text-xs text-gray-500 dark:text-gray-400">
+                                    <span>Tasks completed per hour</span>
+                                    <span class="font-medium" x-text="'Total: ' + (metrics.tasks?.completed || 0)"></span>
+                                </div>
+                            </div>
+
+                            <!-- Average Completion Time Trend -->
+                            <div class="bg-white dark:bg-gray-800 rounded-lg p-5 border border-gray-200 dark:border-gray-700">
+                                <div class="flex items-center justify-between mb-4">
+                                    <h4 class="text-sm font-semibold text-gray-900 dark:text-white">Avg Completion Time</h4>
+                                    <i data-lucide="clock" class="w-4 h-4 text-blue-500"></i>
+                                </div>
+                                <div class="h-48">
+                                    <canvas id="completionTimeTrendChart"></canvas>
+                                </div>
+                                <div class="mt-3 flex items-center justify-between text-xs text-gray-500 dark:text-gray-400">
+                                    <span>Worker task completion duration</span>
+                                    <span class="font-medium" x-text="'Avg: ' + (metrics.workers?.avgDuration || 0).toFixed(1) + ' min'"></span>
+                                </div>
+                            </div>
+
+                            <!-- Active Workers Over Time -->
+                            <div class="bg-white dark:bg-gray-800 rounded-lg p-5 border border-gray-200 dark:border-gray-700">
+                                <div class="flex items-center justify-between mb-4">
+                                    <h4 class="text-sm font-semibold text-gray-900 dark:text-white">Active Workers</h4>
+                                    <i data-lucide="users" class="w-4 h-4 text-purple-500"></i>
+                                </div>
+                                <div class="h-48">
+                                    <canvas id="activeWorkersTrendChart"></canvas>
+                                </div>
+                                <div class="mt-3 flex items-center justify-between text-xs text-gray-500 dark:text-gray-400">
+                                    <span>Concurrent worker utilization</span>
+                                    <span class="font-medium" x-text="'Current: ' + (metrics.workers?.active || 0)"></span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
                     <!-- Top row: Pie Chart and Pareto Chart -->
                     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
                         <!-- Pie Chart: Worker Status Distribution -->
