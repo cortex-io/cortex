@@ -355,11 +355,11 @@
                             <template x-for="event in events.slice(0, 15)" :key="event.id">
                                 <div class="flex items-start space-x-3 p-3 rounded-lg bg-gray-50 dark:bg-gray-700/50 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
                                     <div class="flex-shrink-0 w-2 h-2 mt-2 rounded-full" :class="{
-                                        'bg-green-500': event.type === 'worker_completed' || event.type === 'task_completed',
+                                        'bg-green-500': event.type === 'worker_completed' || event.type === 'task_completed' || event.type === 'git_push_success',
                                         'bg-blue-500': event.type === 'worker_started' || event.type === 'task_created',
                                         'bg-purple-500': event.type === 'task_assigned',
                                         'bg-orange-500': event.type === 'worker_spawned',
-                                        'bg-red-500': event.type === 'worker_failed' || event.type === 'task_failed' || event.type === 'error'
+                                        'bg-red-500': event.type === 'worker_failed' || event.type === 'task_failed' || event.type === 'error' || event.type === 'git_push_failed'
                                     }"></div>
                                     <div class="flex-1 min-w-0">
                                         <p class="text-sm font-medium text-gray-900 dark:text-white" x-text="formatEventType(event.type)"></p>

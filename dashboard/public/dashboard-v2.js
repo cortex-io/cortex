@@ -973,6 +973,8 @@ function dashboard() {
                 'task_created': 'Task Created',
                 'task_assigned': 'Task Assigned',
                 'task_completed': 'Task Completed',
+                'git_push_success': 'Git Push',
+                'git_push_failed': 'Git Push Failed',
                 'task_failed': 'Task Failed',
                 'worker_started': 'Worker Started',
                 'worker_completed': 'Worker Completed',

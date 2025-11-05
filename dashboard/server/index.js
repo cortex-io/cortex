@@ -735,14 +735,101 @@ app.get('/api/events', async (req, res) => {
       }
     }
 
+    // Read git operations and convert to events
+    let gitEvents = [];
+    const gitOpsPath = path.join(coordPath, 'git-operations.jsonl');
+    if (fsSync.existsSync(gitOpsPath)) {
+      const gitContent = fsSync.readFileSync(gitOpsPath, 'utf-8');
+      const gitOps = gitContent
+        .split('\n')
+        .filter(line => line.trim())
+        .map(line => JSON.parse(line));
+
+      // Convert git operations to events
+      gitEvents = gitOps.map(op => {
+        const isSuccess = op.status === 'success';
+        const commitHash = op.details && op.details.includes('Commit:') ?
+          op.details.split('Commit:')[1].trim().split(' ')[0] : '';
+
+        return {
+          id: `git-${op.worker_id}-${op.timestamp}`,
+          type: isSuccess ? 'git_push_success' : 'git_push_failed',
+          timestamp: op.timestamp,
+          data: {
+            worker_id: op.worker_id,
+            operation: op.operation,
+            commit_hash: commitHash,
+            details: op.details
+          },
+          message: isSuccess ?
+            `Git Push: ${op.worker_id}${commitHash ? ` (${commitHash})` : ''} ✓` :
+            `Git Push Failed: ${op.worker_id} ✗`
+        };
+      });
+    }
+
     // Merge all events and sort by timestamp (most recent first)
-    const allEvents = [...dashboardEvents, ...taskEvents]
+    const allEvents = [...dashboardEvents, ...taskEvents, ...gitEvents]
       .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
       .slice(0, limit);
 
     res.json({ events: allEvents, total: allEvents.length });
   } catch (error) {
     console.error('Error reading events:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+/**
+ * GET /api/git-operations
+ * Get git operations log
+ * Query params:
+ *   - limit: number of operations to return (default: 50)
+ *   - worker_id: filter by specific worker
+ *   - status: filter by status (success/failed)
+ */
+app.get('/api/git-operations', async (req, res) => {
+  try {
+    const limit = parseInt(req.query.limit) || 50;
+    const workerFilter = req.query.worker_id;
+    const statusFilter = req.query.status;
+    const fsSync = require('fs');
+
+    let gitOperations = [];
+
+    // Read git-operations.jsonl
+    const gitOpsPath = path.join(coordPath, 'git-operations.jsonl');
+    if (fsSync.existsSync(gitOpsPath)) {
+      const content = fsSync.readFileSync(gitOpsPath, 'utf-8');
+      gitOperations = content
+        .split('\n')
+        .filter(line => line.trim())
+        .map(line => JSON.parse(line));
+    }
+
+    // Apply filters
+    let filteredOps = gitOperations;
+
+    if (workerFilter) {
+      filteredOps = filteredOps.filter(op => op.worker_id === workerFilter);
+    }
+
+    if (statusFilter) {
+      filteredOps = filteredOps.filter(op => op.status === statusFilter);
+    }
+
+    // Sort by timestamp (most recent first) and limit
+    filteredOps = filteredOps
+      .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
+      .slice(0, limit);
+
+    res.json({
+      operations: filteredOps,
+      total: filteredOps.length,
+      filters: { worker_id: workerFilter, status: statusFilter }
+    });
+  } catch (error) {
+    console.error('Error reading git operations:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
