@@ -2,6 +2,12 @@
 # scripts/lib/logging.sh
 # Structured logging utilities for commit-relay
 
+# Prevent re-sourcing
+if [ -n "${LOGGING_LIB_LOADED:-}" ]; then
+    return 0
+fi
+LOGGING_LIB_LOADED=1
+
 # Log levels
 declare -r LOG_LEVEL_DEBUG=0
 declare -r LOG_LEVEL_INFO=1
