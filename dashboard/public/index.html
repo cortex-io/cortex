@@ -8,8 +8,8 @@
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
 
-    <!-- Alpine.js -->
-    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <!-- Alpine.js - loaded after dashboard-v2.js -->
+    <!-- Moved to end of body for proper load order -->
 
     <!-- ApexCharts -->
     <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
@@ -1041,6 +1041,9 @@
         </div>
     </main>
 
-    <script src="dashboard-v2.js?v=3.2"></script>
+    <script src="dashboard-v2.js?v=4.1"></script>
+
+    <!-- Alpine.js - loaded AFTER dashboard-v2.js to ensure dashboard() function is defined -->
+    <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
 </body>
 </html>
