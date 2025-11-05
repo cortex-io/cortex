@@ -575,44 +575,57 @@ async function generateLiveWorkerPool(specsDir) {
   const completed_workers = [];
   const failed_workers = [];
 
-  try {
-    const files = await fs.readdir(specsDir);
-    const jsonFiles = files.filter(f => f.endsWith('.json'));
+  // Read from multiple directories
+  const directories = [
+    { path: path.join(specsDir, 'active'), type: 'active' },
+    { path: path.join(specsDir, 'completed'), type: 'completed' },
+    { path: path.join(specsDir, 'failed'), type: 'failed' }
+  ];
 
-    for (const file of jsonFiles) {
-      try {
-        const content = await fs.readFile(path.join(specsDir, file), 'utf-8');
-        const spec = JSON.parse(content);
+  for (const dir of directories) {
+    try {
+      const files = await fs.readdir(dir.path);
+      const jsonFiles = files.filter(f => f.endsWith('.json'));
 
-        const worker = {
-          worker_id: spec.worker_id,
-          type: spec.worker_type,
-          task_id: spec.task_id,
-          spawned_at: spec.created_at,
-          status: spec.status,
-          parent_master: spec.parent_master
-        };
+      for (const file of jsonFiles) {
+        try {
+          const content = await fs.readFile(path.join(dir.path, file), 'utf-8');
+          const spec = JSON.parse(content);
 
-        if (spec.execution) {
-          worker.started_at = spec.execution.started_at;
-          worker.completed_at = spec.execution.completed_at;
-          worker.tokens_used = spec.execution.tokens_used;
+          const worker = {
+            worker_id: spec.worker_id,
+            type: spec.worker_type,
+            task_id: spec.task_id,
+            spawned_at: spec.created_at,
+            status: spec.status,
+            parent_master: spec.parent_master
+          };
+
+          if (spec.execution) {
+            worker.started_at = spec.execution.started_at;
+            worker.completed_at = spec.execution.completed_at;
+            worker.tokens_used = spec.execution.tokens_used;
+            worker.killed_by = spec.execution.killed_by; // For zombie tracking
+          }
+
+          // Categorize by status
+          if (spec.status === 'pending' || spec.status === 'running') {
+            active_workers.push(worker);
+          } else if (spec.status === 'completed' || spec.status === 'success') {
+            completed_workers.push(worker);
+          } else if (spec.status === 'failed') {
+            failed_workers.push(worker);
+          }
+        } catch (err) {
+          console.error(`Error reading worker spec ${file}:`, err);
         }
-
-        // Categorize by status
-        if (spec.status === 'pending' || spec.status === 'running') {
-          active_workers.push(worker);
-        } else if (spec.status === 'completed' || spec.status === 'success') {
-          completed_workers.push(worker);
-        } else if (spec.status === 'failed') {
-          failed_workers.push(worker);
-        }
-      } catch (err) {
-        console.error(`Error reading worker spec ${file}:`, err);
+      }
+    } catch (err) {
+      // Directory might not exist, that's ok
+      if (err.code !== 'ENOENT') {
+        console.error(`Error reading directory ${dir.path}:`, err);
       }
     }
-  } catch (err) {
-    console.error('Error reading worker specs directory:', err);
   }
 
   return {
