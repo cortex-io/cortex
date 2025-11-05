@@ -150,43 +150,41 @@ if [[ ! " ${VALID_TYPES[@]} " =~ " ${WORKER_TYPE} " ]]; then
     exit 1
 fi
 
-# Set default token budget based on worker type
-if [ -z "$TOKEN_BUDGET" ]; then
-    case $WORKER_TYPE in
-        scan-worker)
-            TOKEN_BUDGET=8000
-            TIMEOUT_MINUTES=15
-            ;;
-        fix-worker)
-            TOKEN_BUDGET=5000
-            TIMEOUT_MINUTES=20
-            ;;
-        analysis-worker)
-            TOKEN_BUDGET=5000
-            TIMEOUT_MINUTES=15
-            ;;
-        implementation-worker)
-            TOKEN_BUDGET=10000
-            TIMEOUT_MINUTES=45
-            ;;
-        test-worker)
-            TOKEN_BUDGET=6000
-            TIMEOUT_MINUTES=20
-            ;;
-        review-worker)
-            TOKEN_BUDGET=5000
-            TIMEOUT_MINUTES=15
-            ;;
-        pr-worker)
-            TOKEN_BUDGET=4000
-            TIMEOUT_MINUTES=10
-            ;;
-        documentation-worker)
-            TOKEN_BUDGET=6000
-            TIMEOUT_MINUTES=20
-            ;;
-    esac
-fi
+# Set default token budget and timeout based on worker type
+case $WORKER_TYPE in
+    scan-worker)
+        [ -z "$TOKEN_BUDGET" ] && TOKEN_BUDGET=8000
+        TIMEOUT_MINUTES=15
+        ;;
+    fix-worker)
+        [ -z "$TOKEN_BUDGET" ] && TOKEN_BUDGET=5000
+        TIMEOUT_MINUTES=20
+        ;;
+    analysis-worker)
+        [ -z "$TOKEN_BUDGET" ] && TOKEN_BUDGET=5000
+        TIMEOUT_MINUTES=15
+        ;;
+    implementation-worker)
+        [ -z "$TOKEN_BUDGET" ] && TOKEN_BUDGET=10000
+        TIMEOUT_MINUTES=45
+        ;;
+    test-worker)
+        [ -z "$TOKEN_BUDGET" ] && TOKEN_BUDGET=6000
+        TIMEOUT_MINUTES=20
+        ;;
+    review-worker)
+        [ -z "$TOKEN_BUDGET" ] && TOKEN_BUDGET=5000
+        TIMEOUT_MINUTES=15
+        ;;
+    pr-worker)
+        [ -z "$TOKEN_BUDGET" ] && TOKEN_BUDGET=4000
+        TIMEOUT_MINUTES=10
+        ;;
+    documentation-worker)
+        [ -z "$TOKEN_BUDGET" ] && TOKEN_BUDGET=6000
+        TIMEOUT_MINUTES=20
+        ;;
+esac
 
 # Navigate to project root
 cd "$COMMIT_RELAY_HOME"
