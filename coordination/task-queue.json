@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "updated_at": "2025-11-05T11:34:24Z",
+  "updated_at": "2025-11-05T11:34:36Z",
   "tasks": [
     {
       "id": "task-001",
@@ -2010,6 +2010,22 @@
         "repository": "ry-ops/commit-relay",
         "branch": "main",
         "description": "System Test - CI/CD Master: Verify build system by checking package.json scripts and create a build verification report at tests/system-test-cicd.txt with 'CI/CD Master Test Completed' message",
+        "requirements": []
+      }
+    },
+    {
+      "id": "",
+      "title": "System Test - Coordinator Master: Verify task routing system by checking coordination/task-queue.json and coordination/workforce-streams.json, create routing verification report at tests/system-test-coordinator.txt with 'Coordinator Master Test Completed' message",
+      "type": "development",
+      "priority": "medium",
+      "status": "pending",
+      "assigned_to": null,
+      "created_at": "2025-11-05T11:34:36Z",
+      "created_by": "create-task-cli",
+      "context": {
+        "repository": "ry-ops/commit-relay",
+        "branch": "main",
+        "description": "System Test - Coordinator Master: Verify task routing system by checking coordination/task-queue.json and coordination/workforce-streams.json, create routing verification report at tests/system-test-coordinator.txt with 'Coordinator Master Test Completed' message",
         "requirements": []
       }
     }
