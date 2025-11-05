@@ -1041,9 +1041,10 @@
         </div>
     </main>
 
-    <script src="dashboard-v2.js?v=4.2"></script>
+    <!-- Load dashboard function first -->
+    <script src="dashboard-v2.js?v=4.3"></script>
 
-    <!-- Alpine.js - loaded AFTER dashboard-v2.js to ensure dashboard() function is defined -->
-    <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <!-- Alpine.js with defer to wait for DOM to be fully parsed -->
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
 </body>
 </html>
