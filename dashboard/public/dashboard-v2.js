@@ -53,6 +53,16 @@ function dashboard() {
             inventory: []
         },
 
+        // Alerting System
+        activeAlerts: [],
+        alertThresholds: {
+            errorRate: { enabled: true, threshold: 20, severity: 'critical' }, // % errors
+            workerFailureRate: { enabled: true, threshold: 30, severity: 'warning' }, // % failures
+            slowResponseTime: { enabled: true, threshold: 5, severity: 'warning' }, // minutes
+            lowSuccessRate: { enabled: true, threshold: 70, severity: 'critical' }, // % success
+            highActiveWorkers: { enabled: false, threshold: 20, severity: 'info' } // count
+        },
+
         // Watch for view changes to reinitialize icons
         changeView(view) {
             this.currentView = view;
@@ -365,6 +375,11 @@ function dashboard() {
             setInterval(() => {
                 this.checkDataFreshness();
             }, 5000);
+
+            // Check alerts every 30 seconds
+            setInterval(() => {
+                this.checkAlerts();
+            }, 30000);
 
             // Fallback: Poll metrics every 5 seconds if WebSocket is disconnected
             setInterval(async () => {
@@ -1027,6 +1042,97 @@ function dashboard() {
             if (activity <= 6) return colors[3];
             if (activity <= 8) return colors[4];
             return colors[5];
+        },
+
+        // Alerting System Functions
+        checkAlerts() {
+            // Check error rate
+            if (this.alertThresholds.errorRate.enabled) {
+                const errorEvents = this.events.filter(e =>
+                    e.type?.includes('error') || e.type?.includes('failed')
+                ).length;
+                const totalEvents = this.events.length;
+                const errorRate = totalEvents > 0 ? (errorEvents / totalEvents * 100) : 0;
+
+                if (errorRate > this.alertThresholds.errorRate.threshold) {
+                    this.triggerAlert({
+                        id: 'error-rate-' + Date.now(),
+                        title: 'High Error Rate Detected',
+                        message: `System error rate is ${errorRate.toFixed(1)}% (threshold: ${this.alertThresholds.errorRate.threshold}%)`,
+                        severity: this.alertThresholds.errorRate.severity,
+                        timestamp: Date.now()
+                    });
+                }
+            }
+
+            // Check worker failure rate
+            if (this.alertThresholds.workerFailureRate.enabled && this.metrics.workers) {
+                const total = (this.metrics.workers.completed || 0) + (this.metrics.workers.failed || 0);
+                const failureRate = total > 0 ? ((this.metrics.workers.failed || 0) / total * 100) : 0;
+
+                if (failureRate > this.alertThresholds.workerFailureRate.threshold) {
+                    this.triggerAlert({
+                        id: 'worker-failure-' + Date.now(),
+                        title: 'High Worker Failure Rate',
+                        message: `Worker failure rate is ${failureRate.toFixed(1)}% (threshold: ${this.alertThresholds.workerFailureRate.threshold}%)`,
+                        severity: this.alertThresholds.workerFailureRate.severity,
+                        timestamp: Date.now()
+                    });
+                }
+            }
+
+            // Check low success rate
+            if (this.alertThresholds.lowSuccessRate.enabled && this.metrics.workers) {
+                const successRate = this.metrics.workers.successRate || 0;
+
+                if (successRate < this.alertThresholds.lowSuccessRate.threshold && successRate > 0) {
+                    this.triggerAlert({
+                        id: 'low-success-' + Date.now(),
+                        title: 'Low Success Rate Alert',
+                        message: `System success rate dropped to ${successRate.toFixed(1)}% (threshold: ${this.alertThresholds.lowSuccessRate.threshold}%)`,
+                        severity: this.alertThresholds.lowSuccessRate.severity,
+                        timestamp: Date.now()
+                    });
+                }
+            }
+
+            // Check high active workers
+            if (this.alertThresholds.highActiveWorkers.enabled && this.metrics.workers) {
+                const activeWorkers = this.metrics.workers.active || 0;
+
+                if (activeWorkers > this.alertThresholds.highActiveWorkers.threshold) {
+                    this.triggerAlert({
+                        id: 'high-workers-' + Date.now(),
+                        title: 'High Worker Load',
+                        message: `${activeWorkers} workers currently active (threshold: ${this.alertThresholds.highActiveWorkers.threshold})`,
+                        severity: this.alertThresholds.highActiveWorkers.severity,
+                        timestamp: Date.now()
+                    });
+                }
+            }
+        },
+
+        triggerAlert(alert) {
+            // Check if similar alert already exists (prevent duplicates)
+            const exists = this.activeAlerts.some(a =>
+                a.title === alert.title && (Date.now() - a.timestamp) < 60000 // Within last minute
+            );
+
+            if (!exists) {
+                this.activeAlerts.unshift(alert);
+                // Keep only last 20 alerts
+                if (this.activeAlerts.length > 20) {
+                    this.activeAlerts = this.activeAlerts.slice(0, 20);
+                }
+                // Reinitialize icons for new alert
+                this.$nextTick(() => {
+                    lucide.createIcons();
+                });
+            }
+        },
+
+        dismissAlert(alertId) {
+            this.activeAlerts = this.activeAlerts.filter(a => a.id !== alertId);
         },
 
         initTokenChart() {

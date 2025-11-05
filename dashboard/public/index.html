@@ -220,6 +220,62 @@
             </div>
         </header>
 
+        <!-- Alert Notifications Banner -->
+        <div x-show="activeAlerts.length > 0" x-transition class="mx-8 mt-8 space-y-2">
+            <template x-for="alert in activeAlerts.slice(0, 3)" :key="alert.id">
+                <div class="rounded-lg shadow-lg border p-4 flex items-start space-x-3 animate-fade-in"
+                     :class="{
+                         'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800': alert.severity === 'critical',
+                         'bg-orange-50 dark:bg-orange-900/20 border-orange-200 dark:border-orange-800': alert.severity === 'warning',
+                         'bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800': alert.severity === 'info'
+                     }">
+                    <i :data-lucide="alert.severity === 'critical' ? 'alert-circle' : alert.severity === 'warning' ? 'alert-triangle' : 'info'"
+                       class="w-5 h-5 flex-shrink-0 mt-0.5"
+                       :class="{
+                           'text-red-600 dark:text-red-400': alert.severity === 'critical',
+                           'text-orange-600 dark:text-orange-400': alert.severity === 'warning',
+                           'text-blue-600 dark:text-blue-400': alert.severity === 'info'
+                       }"></i>
+                    <div class="flex-1 min-w-0">
+                        <p class="text-sm font-semibold"
+                           :class="{
+                               'text-red-900 dark:text-red-100': alert.severity === 'critical',
+                               'text-orange-900 dark:text-orange-100': alert.severity === 'warning',
+                               'text-blue-900 dark:text-blue-100': alert.severity === 'info'
+                           }"
+                           x-text="alert.title"></p>
+                        <p class="text-sm mt-1"
+                           :class="{
+                               'text-red-700 dark:text-red-200': alert.severity === 'critical',
+                               'text-orange-700 dark:text-orange-200': alert.severity === 'warning',
+                               'text-blue-700 dark:text-blue-200': alert.severity === 'info'
+                           }"
+                           x-text="alert.message"></p>
+                        <p class="text-xs mt-1"
+                           :class="{
+                               'text-red-600 dark:text-red-300': alert.severity === 'critical',
+                               'text-orange-600 dark:text-orange-300': alert.severity === 'warning',
+                               'text-blue-600 dark:text-blue-300': alert.severity === 'info'
+                           }"
+                           x-text="'Triggered: ' + new Date(alert.timestamp).toLocaleString()"></p>
+                    </div>
+                    <button @click="dismissAlert(alert.id)" class="flex-shrink-0 p-1 rounded hover:bg-black/5 dark:hover:bg-white/10 transition-colors"
+                            :class="{
+                                'text-red-600 dark:text-red-400': alert.severity === 'critical',
+                                'text-orange-600 dark:text-orange-400': alert.severity === 'warning',
+                                'text-blue-600 dark:text-blue-400': alert.severity === 'info'
+                            }">
+                        <i data-lucide="x" class="w-5 h-5"></i>
+                    </button>
+                </div>
+            </template>
+            <div x-show="activeAlerts.length > 3" class="text-center">
+                <button @click="switchView('alerts')" class="text-sm text-primary-600 dark:text-primary-400 hover:underline">
+                    View <span x-text="activeAlerts.length - 3"></span> more alerts
+                </button>
+            </div>
+        </div>
+
         <!-- Content -->
         <div class="p-8 space-y-8">
             <!-- Stats grid - redesigned with background icons -->
