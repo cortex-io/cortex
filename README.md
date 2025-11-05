@@ -125,6 +125,7 @@ graph TB
     W3 -.->|Heartbeat| ZK
     W4 -.->|Heartbeat| ZK
 
+    ZK -.->|Reports| DA
     DA -.->|Monitors| TO
     DA -.->|Monitors| CM
     DA -.->|Monitors| SM
