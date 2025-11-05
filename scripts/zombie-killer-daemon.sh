@@ -112,8 +112,31 @@ while true; do
 
             RUNNING_TIME=$(($CURRENT_TIME - $STARTED_SECONDS))
 
-            # Check if worker is stale (running longer than threshold)
+            # Check heartbeat (v4.0 health monitoring)
+            LAST_HEARTBEAT=$(jq -r '.execution.last_heartbeat // "1970-01-01T00:00:00Z"' "$spec_file" 2>/dev/null)
+            HEARTBEAT_SECONDS=$(iso_to_seconds "$LAST_HEARTBEAT")
+            HEARTBEAT_AGE=0
+
+            if [ "$HEARTBEAT_SECONDS" != "0" ]; then
+                HEARTBEAT_AGE=$(($CURRENT_TIME - $HEARTBEAT_SECONDS))
+            fi
+
+            # Zombie detection logic (v4.0):
+            # 1. Running longer than threshold (15 min) OR
+            # 2. Has heartbeat but hasn't pinged in >5 minutes
+            IS_ZOMBIE=false
+            ZOMBIE_REASON=""
+
             if [ $RUNNING_TIME -gt $STALE_THRESHOLD ]; then
+                IS_ZOMBIE=true
+                ZOMBIE_REASON="Running for ${RUNNING_TIME}s ($(($RUNNING_TIME / 60)) minutes) without completion"
+            elif [ "$HEARTBEAT_SECONDS" != "0" ] && [ $HEARTBEAT_AGE -gt 300 ]; then
+                # Heartbeat exists but hasn't updated in 5+ minutes
+                IS_ZOMBIE=true
+                ZOMBIE_REASON="Heartbeat stale for ${HEARTBEAT_AGE}s ($(($HEARTBEAT_AGE / 60)) minutes)"
+            fi
+
+            if [ "$IS_ZOMBIE" = true ]; then
                 ZOMBIES_FOUND=$((ZOMBIES_FOUND + 1))
 
                 # Check if there's actually a Claude process for this worker
@@ -121,8 +144,10 @@ while true; do
                 CLAUDE_PROCESSES=$(ps aux | grep -i "claude" | grep -v grep | wc -l | tr -d ' ')
 
                 log_zombie "ZOMBIE DETECTED: $WORKER_ID"
+                log_zombie "  Reason: $ZOMBIE_REASON"
                 log_zombie "  Running for: ${RUNNING_TIME}s ($(($RUNNING_TIME / 60)) minutes)"
                 log_zombie "  Started at: $STARTED_AT"
+                log_zombie "  Last heartbeat: $LAST_HEARTBEAT (age: ${HEARTBEAT_AGE}s)"
                 log_zombie "  Active Claude processes: $CLAUDE_PROCESSES"
 
                 # Mark as failed and move to failed directory
