@@ -43,6 +43,12 @@
       "worker_type": "scan-worker",
       "spawned_at": "2025-11-05T11:51:55Z",
       "status": "active"
+    },
+    {
+      "worker_id": "sec-worker-03B228A5",
+      "worker_type": "scan-worker",
+      "spawned_at": "2025-11-05T16:44:26Z",
+      "status": "active"
     }
   ],
   "completed_tasks": 0,
@@ -54,6 +60,6 @@
     "high_count": 0,
     "last_scan": null
   },
-  "last_run": "2025-11-05T11:51:55Z",
-  "last_started": "2025-11-05T11:51:55Z"
+  "last_run": "2025-11-05T16:44:27Z",
+  "last_started": "2025-11-05T16:44:26Z"
 }
