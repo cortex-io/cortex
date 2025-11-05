@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "updated_at": "2025-11-05T12:13:44Z",
+  "updated_at": "2025-11-05T12:13:45Z",
   "tasks": [
     {
       "id": "task-001",
@@ -2097,6 +2097,22 @@
         "repository": "ry-ops/commit-relay",
         "branch": "main",
         "description": "Process pending handoff files: coord-to-development-5c74c959.json, coord-to-development-B1034580.json, coord-to-development-task-018.json. Route to appropriate masters.",
+        "requirements": []
+      }
+    },
+    {
+      "id": "task-1762342908",
+      "title": "Clean up all .processed handoff files from coordination/masters/*/handoffs/ directories (7 files total)",
+      "type": "development",
+      "priority": "low",
+      "status": "pending",
+      "assigned_to": null,
+      "created_at": "2025-11-05T12:13:45Z",
+      "created_by": "create-task-cli",
+      "context": {
+        "repository": "ry-ops/commit-relay",
+        "branch": "main",
+        "description": "Clean up all .processed handoff files from coordination/masters/*/handoffs/ directories (7 files total)",
         "requirements": []
       }
     }
