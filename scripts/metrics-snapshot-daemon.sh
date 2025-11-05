@@ -134,6 +134,42 @@ collect_metrics() {
         failed_orchestrations=$(jq -r '.failed_orchestrations // 0' "$ORCHESTRATOR_STATE" 2>/dev/null || echo 0)
     fi
 
+    # Read Execution Manager data (v4.0)
+    local active_ems=0
+    local completed_ems=0
+    local failed_ems=0
+    local total_ems=0
+    local em_success_rate=0
+
+    local EM_ACTIVE_DIR="${COMMIT_RELAY_HOME}/coordination/execution-managers/active"
+    local EM_COMPLETED_DIR="${COMMIT_RELAY_HOME}/coordination/execution-managers/completed"
+
+    if [ -d "$EM_ACTIVE_DIR" ]; then
+        active_ems=$(find "$EM_ACTIVE_DIR" -name "*.json" -type f 2>/dev/null | wc -l | tr -d ' ')
+    fi
+
+    if [ -d "$EM_COMPLETED_DIR" ]; then
+        total_completed=$(find "$EM_COMPLETED_DIR" -name "*.json" -type f 2>/dev/null | wc -l | tr -d ' ')
+        failed_ems=0
+
+        for em_file in "$EM_COMPLETED_DIR"/*.json 2>/dev/null; do
+            if [ -f "$em_file" ]; then
+                em_status=$(jq -r '.status // "unknown"' "$em_file" 2>/dev/null || echo "unknown")
+                if [ "$em_status" = "failed" ]; then
+                    failed_ems=$((failed_ems + 1))
+                fi
+            fi
+        done
+
+        completed_ems=$((total_completed - failed_ems))
+    fi
+
+    total_ems=$((active_ems + completed_ems + failed_ems))
+
+    if [ $((completed_ems + failed_ems)) -gt 0 ]; then
+        em_success_rate=$(echo "scale=2; ($completed_ems * 100) / ($completed_ems + $failed_ems)" | bc 2>/dev/null || echo 0)
+    fi
+
     # Calculate success rate
     local success_rate=0
     if [ $((completed_workers + failed_workers)) -gt 0 ]; then
@@ -173,11 +209,18 @@ collect_metrics() {
     "total": $total_orchestrations,
     "completed": $completed_orchestrations,
     "failed": $failed_orchestrations
+  },
+  "execution_managers": {
+    "active": $active_ems,
+    "completed": $completed_ems,
+    "failed": $failed_ems,
+    "total": $total_ems,
+    "success_rate": $em_success_rate
   }
 }
 EOF
 
-    log_snapshot "SNAPSHOT: Workers(A:$active_workers C:$completed_workers F:$failed_workers) Tokens(${total_used}/${total_budget}) Tasks(P:$pending_tasks IP:$in_progress_tasks C:$completed_tasks)"
+    log_snapshot "SNAPSHOT: Workers(A:$active_workers C:$completed_workers F:$failed_workers) EMs(A:$active_ems C:$completed_ems F:$failed_ems) Tokens(${total_used}/${total_budget}) Tasks(P:$pending_tasks IP:$in_progress_tasks C:$completed_tasks)"
 }
 
 # Aggregate hourly snapshots into daily snapshot

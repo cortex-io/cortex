@@ -174,6 +174,9 @@ async function loadCoordinationData(forceRefresh = false) {
   // Load orchestrator state (v4.0)
   const orchestratorState = await readJSON(path.join(COORD_DIR, 'orchestrator/state/current.json'));
 
+  // Load Execution Manager data (v4.0)
+  const executionManagersData = await generateLiveExecutionManagers(COORD_DIR);
+
   const data = {
     workerPool: liveWorkerPool,
     tokenBudget: await readJSON(FILES.tokenBudget),
@@ -186,6 +189,7 @@ async function loadCoordinationData(forceRefresh = false) {
       completed_orchestrations: 0,
       failed_orchestrations: 0
     },
+    executionManagers: executionManagersData,
     lastUpdate: new Date().toISOString(),
     lastFileUpdate: cache.lastFileUpdate
   };
@@ -449,6 +453,15 @@ function calculateMetrics(data, successRatePeriod = 'all_time') {
   // Orchestration metrics (v4.0)
   const orchestrator = data.orchestrator || {};
 
+  // Execution Manager metrics (v4.0)
+  const executionManagers = data.executionManagers || {
+    active: 0,
+    completed: 0,
+    failed: 0,
+    total: 0,
+    success_rate: 0
+  };
+
   return {
     workers: {
       active: activeWorkers,
@@ -487,6 +500,13 @@ function calculateMetrics(data, successRatePeriod = 'all_time') {
       total: orchestrator.total_orchestrations || 0,
       completed: orchestrator.completed_orchestrations || 0,
       failed: orchestrator.failed_orchestrations || 0
+    },
+    executionManagers: {
+      active: executionManagers.active || 0,
+      completed: executionManagers.completed || 0,
+      failed: executionManagers.failed || 0,
+      total: executionManagers.total || 0,
+      successRate: executionManagers.success_rate || 0
     },
     masters,
     usage,
@@ -788,6 +808,93 @@ async function generateLiveWorkerPool(specsDir) {
     }
   };
 }
+
+/**
+ * Generate live Execution Manager data from EM state files (v4.0)
+ */
+async function generateLiveExecutionManagers(coordDir) {
+  const active_ems = [];
+  const completed_ems = [];
+  const failed_ems = [];
+
+  const emActiveDir = path.join(coordDir, 'execution-managers/active');
+  const emCompletedDir = path.join(coordDir, 'execution-managers/completed');
+
+  // Read active EMs
+  try {
+    const files = await fs.readdir(emActiveDir);
+    const jsonFiles = files.filter(f => f.endsWith('.json'));
+
+    for (const file of jsonFiles) {
+      try {
+        const content = await fs.readFile(path.join(emActiveDir, file), 'utf-8');
+        const em = JSON.parse(content);
+        active_ems.push(em);
+      } catch (err) {
+        console.error(`Error reading EM file ${file}:`, err);
+      }
+    }
+  } catch (err) {
+    if (err.code !== 'ENOENT') {
+      console.error(`Error reading active EMs directory:`, err);
+    }
+  }
+
+  // Read completed EMs (both successful and failed)
+  try {
+    const files = await fs.readdir(emCompletedDir);
+    const jsonFiles = files.filter(f => f.endsWith('.json'));
+
+    for (const file of jsonFiles) {
+      try {
+        const content = await fs.readFile(path.join(emCompletedDir, file), 'utf-8');
+        const em = JSON.parse(content);
+
+        if (em.status === 'failed') {
+          failed_ems.push(em);
+        } else {
+          completed_ems.push(em);
+        }
+      } catch (err) {
+        console.error(`Error reading EM file ${file}:`, err);
+      }
+    }
+  } catch (err) {
+    if (err.code !== 'ENOENT') {
+      console.error(`Error reading completed EMs directory:`, err);
+    }
+  }
+
+  const total = active_ems.length + completed_ems.length + failed_ems.length;
+  const success_rate = (completed_ems.length + failed_ems.length) > 0
+    ? ((completed_ems.length / (completed_ems.length + failed_ems.length)) * 100).toFixed(1)
+    : 0;
+
+  return {
+    active: active_ems.length,
+    completed: completed_ems.length,
+    failed: failed_ems.length,
+    total: total,
+    success_rate: parseFloat(success_rate),
+    active_ems,
+    completed_ems,
+    failed_ems
+  };
+}
+
+/**
+ * GET /api/execution-managers
+ * Get detailed Execution Manager information (v4.0)
+ */
+app.get('/api/execution-managers', async (req, res) => {
+  try {
+    const emData = await generateLiveExecutionManagers(COORD_DIR);
+    res.json(emData);
+  } catch (error) {
+    console.error('Error reading execution managers:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
 
 /**
  * GET /api/tasks
