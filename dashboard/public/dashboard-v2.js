@@ -29,6 +29,16 @@ function dashboard() {
         workers: [], // Will store worker pool data
         gitOperations: [], // Git commit/push operations
 
+        // Computed properties
+        get sortedTasks() {
+            // Sort tasks by created_at in descending order (most recent first)
+            return [...this.tasks].sort((a, b) => {
+                const dateA = new Date(a.created_at || 0);
+                const dateB = new Date(b.created_at || 0);
+                return dateB - dateA; // Descending order
+            });
+        },
+
         // WebSocket
         ws: null,
         reconnectInterval: null,
@@ -741,14 +751,15 @@ function dashboard() {
             const labels = efficiencyData.map(d => d.name);
             const data = efficiencyData.map(d => d.efficiency);
 
-            // Color code: green (efficient) to red (inefficient)
-            const colors = data.map((val, idx) => {
-                const max = Math.max(...data);
-                const ratio = val / max;
-                if (ratio <= 0.5) return 'rgba(34, 197, 94, 0.8)'; // Green
-                if (ratio <= 0.75) return 'rgba(251, 191, 36, 0.8)'; // Yellow
-                return 'rgba(239, 68, 68, 0.8)'; // Red
-            });
+            // Assign distinct colors for each master agent
+            const colorMap = {
+                'Coordinator': 'rgba(59, 130, 246, 0.8)',    // Blue
+                'Security': 'rgba(249, 115, 22, 0.8)',       // Orange
+                'Development': 'rgba(34, 197, 94, 0.8)',     // Green
+                'Inventory': 'rgba(239, 68, 68, 0.8)',       // Red
+                'Cicd': 'rgba(168, 85, 247, 0.8)'            // Purple
+            };
+            const colors = labels.map(name => colorMap[name] || 'rgba(107, 114, 128, 0.8)'); // Gray fallback
 
             new Chart(ctx, {
                 type: 'bar',
