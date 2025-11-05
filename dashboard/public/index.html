@@ -463,7 +463,7 @@
                                     Using task.id causes "Duplicate key" errors and crashes rendering
                                     TODO: Clean up task-queue.json to ensure unique IDs
                                 -->
-                                <template x-for="(task, index) in tasks" :key="'task-' + index">
+                                <template x-for="(task, index) in sortedTasks" :key="'task-' + index">
                                     <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
                                         <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white" x-text="task.id"></td>
                                         <td class="px-6 py-4 text-sm text-gray-700 dark:text-gray-300" x-text="task.title"></td>
@@ -1238,7 +1238,7 @@ graph TB
 
     <!-- Load dashboard function first -->
     <!-- All x-for loops now use index-based keys to handle duplicate IDs -->
-    <script src="dashboard-v2.js?v=5.3"></script>
+    <script src="dashboard-v2.js?v=5.4"></script>
 
     <!-- Alpine.js with defer to wait for DOM to be fully parsed -->
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
