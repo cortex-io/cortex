@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "updated_at": "2025-11-05T11:34:36Z",
+  "updated_at": "2025-11-05T12:13:43Z",
   "tasks": [
     {
       "id": "task-001",
@@ -2067,6 +2067,22 @@
       "updated_at": "2025-11-05T05:51:49-06:00",
       "worker_id": "dev-worker-DE5535B6",
       "worker_type": "feature-implementer"
+    },
+    {
+      "id": "task-1762342906",
+      "title": "Monitor and report status of active workers (dev-worker-92D7943C and sec-worker-FD673A67). Check worker spec files until completion and provide status report.",
+      "type": "development",
+      "priority": "medium",
+      "status": "pending",
+      "assigned_to": null,
+      "created_at": "2025-11-05T12:13:43Z",
+      "created_by": "create-task-cli",
+      "context": {
+        "repository": "ry-ops/commit-relay",
+        "branch": "main",
+        "description": "Monitor and report status of active workers (dev-worker-92D7943C and sec-worker-FD673A67). Check worker spec files until completion and provide status report.",
+        "requirements": []
+      }
     }
   ]
 }
