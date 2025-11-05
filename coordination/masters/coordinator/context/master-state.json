@@ -21,7 +21,14 @@
       "status": "busy",
       "workload": 6,
       "last_contact": "2025-11-04T17:34:55Z",
-      "current_tasks": ["task-014", "task-015", "task-016", "task-017", "task-018", "task-019"]
+      "current_tasks": [
+        "task-014",
+        "task-015",
+        "task-016",
+        "task-017",
+        "task-018",
+        "task-019"
+      ]
     },
     "inventory": {
       "status": "available",
@@ -38,6 +45,6 @@
   "completed_tasks": 0,
   "tasks_routed": 6,
   "tokens_used": 0,
-  "last_started": "2025-11-03T19:06:06Z",
-  "last_run": "2025-11-04T17:34:55Z"
+  "last_started": "2025-11-05T11:42:28Z",
+  "last_run": "2025-11-05T11:42:30Z"
 }

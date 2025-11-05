@@ -19,7 +19,32 @@
       "pip_advisories"
     ]
   },
-  "active_workers": [],
+  "active_workers": [
+    {
+      "worker_id": "sec-worker-AA0D073A",
+      "worker_type": "scan-worker",
+      "spawned_at": "2025-11-05T11:43:17Z",
+      "status": "active"
+    },
+    {
+      "worker_id": "sec-worker-027336D3",
+      "worker_type": "scan-worker",
+      "spawned_at": "2025-11-05T11:43:17Z",
+      "status": "active"
+    },
+    {
+      "worker_id": "sec-worker-14A89C13",
+      "worker_type": "scan-worker",
+      "spawned_at": "2025-11-05T11:51:55Z",
+      "status": "active"
+    },
+    {
+      "worker_id": "sec-worker-FD673A67",
+      "worker_type": "scan-worker",
+      "spawned_at": "2025-11-05T11:51:55Z",
+      "status": "active"
+    }
+  ],
   "completed_tasks": 0,
   "tokens_used": 0,
   "security_metrics": {
@@ -29,5 +54,6 @@
     "high_count": 0,
     "last_scan": null
   },
-  "last_run": "2025-11-03T19:09:31Z"
+  "last_run": "2025-11-05T11:51:55Z",
+  "last_started": "2025-11-05T11:51:55Z"
 }

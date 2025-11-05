@@ -251,6 +251,7 @@ spawn_inventory_worker() {
 {
   "worker_id": "$worker_id",
   "worker_type": "$worker_type",
+  "prompt_template": "agents/prompts/workers/analysis-worker.md",
   "parent_master": "$MASTER_ID",
   "task_id": "$task_id",
   "task_data": $task_data,

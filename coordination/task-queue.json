@@ -1431,10 +1431,10 @@
       "title": "Merge tasks into events feed and reorganize dashboard overview",
       "type": "development",
       "priority": "high",
-      "status": "completed",
-      "assigned_to": "development-master",
-      "assigned_by": "coordinator-master",
-      "assigned_at": "2025-11-04T18:30:00Z",
+      "status": "assigned",
+      "assigned_to": "development",
+      "assigned_by": "coordinator",
+      "assigned_at": "2025-11-05T11:42:29Z",
       "started_at": "2025-11-04T18:35:00Z",
       "completed_at": "2025-11-04T18:50:00Z",
       "created_at": "2025-11-04T18:15:00Z",
@@ -1558,17 +1558,18 @@
           "dashboard-v2.js": "PASSED - node --check successful",
           "server/index.js": "PASSED - node --check successful"
         }
-      }
+      },
+      "updated_at": "2025-11-05T05:42:29-06:00"
     },
     {
       "id": "task-019",
       "title": "Implement CI/CD-managed dashboard data flow architecture",
       "type": "development",
       "priority": "high",
-      "status": "completed",
-      "assigned_to": "development-master",
-      "assigned_by": "coordinator-master",
-      "assigned_at": "2025-11-04T17:34:55Z",
+      "status": "assigned",
+      "assigned_to": "development",
+      "assigned_by": "coordinator",
+      "assigned_at": "2025-11-05T11:42:29Z",
       "started_at": "2025-11-04T19:15:00Z",
       "completed_at": "2025-11-04T19:45:00Z",
       "created_at": "2025-11-04T19:00:00Z",
@@ -1876,15 +1877,16 @@
         "estimated_tokens_used": 15000,
         "actual_duration_minutes": 30,
         "implementation_quality": "EXCELLENT"
-      }
+      },
+      "updated_at": "2025-11-05T05:42:29-06:00"
     },
     {
-      "id": "",
+      "id": "task-1762342905",
       "title": "Security scan after dashboard improvements - verify no new vulnerabilities introduced",
       "type": "security-scan",
       "priority": "high",
-      "status": "pending",
-      "assigned_to": null,
+      "status": "assigned",
+      "assigned_to": "security",
       "created_at": "2025-11-04T22:15:13Z",
       "created_by": "create-task-cli",
       "context": {
@@ -1896,15 +1898,18 @@
           "static-analysis",
           "secrets"
         ]
-      }
+      },
+      "assigned_by": "coordinator",
+      "assigned_at": "2025-11-05T11:42:29Z",
+      "updated_at": "2025-11-05T05:42:29-06:00"
     },
     {
-      "id": "",
+      "id": "task-018",
       "title": "Display GitHub commits/updates on dashboard task queue page - show git operations linked to each task",
       "type": "development",
       "priority": "high",
-      "status": "pending",
-      "assigned_to": null,
+      "status": "assigned",
+      "assigned_to": "development",
       "created_at": "2025-11-05T02:27:25Z",
       "created_by": "create-task-cli",
       "context": {
@@ -1912,15 +1917,18 @@
         "branch": "main",
         "description": "Display GitHub commits/updates on dashboard task queue page - show git operations linked to each task",
         "requirements": []
-      }
+      },
+      "assigned_by": "coordinator",
+      "assigned_at": "2025-11-05T11:42:29Z",
+      "updated_at": "2025-11-05T05:42:29-06:00"
     },
     {
-      "id": "",
+      "id": "task-1762342905",
       "title": "Add About page to dashboard with: 1) Brief summary/overview of commit-relay project, 2) Mermaid.js flowchart visualizing all mechanisms (coordinator, masters, workers, git automation, dashboard polling), 3) Add 'About' navigation link in left sidebar below Activity",
       "type": "development",
       "priority": "high",
-      "status": "pending",
-      "assigned_to": null,
+      "status": "assigned",
+      "assigned_to": "security",
       "created_at": "2025-11-05T03:33:47Z",
       "created_by": "create-task-cli",
       "context": {
@@ -1928,15 +1936,18 @@
         "branch": "main",
         "description": "Add About page to dashboard with: 1) Brief summary/overview of commit-relay project, 2) Mermaid.js flowchart visualizing all mechanisms (coordinator, masters, workers, git automation, dashboard polling), 3) Add 'About' navigation link in left sidebar below Activity",
         "requirements": []
-      }
+      },
+      "assigned_by": "coordinator",
+      "assigned_at": "2025-11-05T11:42:29Z",
+      "updated_at": "2025-11-05T05:42:29-06:00"
     },
     {
-      "id": "",
+      "id": "task-019",
       "title": "Fix dashboard issues: 1) Task queue sorting (most recent first), 2) Agent Efficiency chart color duplication (Development and Coordinator have same color), 3) Agent Orchestration stale data display. All fixes already implemented in dashboard-v2.js and index.html, need to be committed via proper agent workflow.",
       "type": "development",
       "priority": "high",
-      "status": "pending",
-      "assigned_to": null,
+      "status": "assigned",
+      "assigned_to": "development",
       "created_at": "2025-11-05T11:22:03Z",
       "created_by": "create-task-cli",
       "context": {
@@ -1944,15 +1955,18 @@
         "branch": "main",
         "description": "Fix dashboard issues: 1) Task queue sorting (most recent first), 2) Agent Efficiency chart color duplication (Development and Coordinator have same color), 3) Agent Orchestration stale data display. All fixes already implemented in dashboard-v2.js and index.html, need to be committed via proper agent workflow.",
         "requirements": []
-      }
+      },
+      "assigned_by": "coordinator",
+      "assigned_at": "2025-11-05T11:42:29Z",
+      "updated_at": "2025-11-05T05:42:29-06:00"
     },
     {
-      "id": "",
+      "id": "task-020",
       "title": "System Test - Development Master: Create a simple test file at tests/system-test-dev.txt with content 'Development Master Test Completed' and commit with message 'test: development master verification - Task Completed'",
       "type": "development",
       "priority": "medium",
-      "status": "pending",
-      "assigned_to": null,
+      "status": "worker_spawned",
+      "assigned_to": "development",
       "created_at": "2025-11-05T11:33:46Z",
       "created_by": "create-task-cli",
       "context": {
@@ -1960,15 +1974,20 @@
         "branch": "main",
         "description": "System Test - Development Master: Create a simple test file at tests/system-test-dev.txt with content 'Development Master Test Completed' and commit with message 'test: development master verification - Task Completed'",
         "requirements": []
-      }
+      },
+      "assigned_by": "coordinator",
+      "assigned_at": "2025-11-05T11:42:29Z",
+      "updated_at": "2025-11-05T05:51:48-06:00",
+      "worker_id": "dev-worker-92D7943C",
+      "worker_type": "feature-implementer"
     },
     {
-      "id": "",
+      "id": "task-021",
       "title": "System Test - Security Master: Run a basic security scan on package.json dependencies and create a report at tests/system-test-security.txt with findings summary and 'Security Master Test Completed' message",
       "type": "security-scan",
       "priority": "medium",
-      "status": "pending",
-      "assigned_to": null,
+      "status": "worker_spawned",
+      "assigned_to": "security",
       "created_at": "2025-11-05T11:33:55Z",
       "created_by": "create-task-cli",
       "context": {
@@ -1980,30 +1999,40 @@
           "static-analysis",
           "secrets"
         ]
-      }
+      },
+      "assigned_by": "coordinator",
+      "assigned_at": "2025-11-05T11:42:29Z",
+      "updated_at": "2025-11-05T05:51:55-06:00",
+      "worker_id": "sec-worker-FD673A67",
+      "worker_type": "scan-worker"
     },
     {
-      "id": "",
+      "id": "task-022",
       "title": "System Test - Inventory Master: Generate a simple project inventory listing all master agents and their current status, save to tests/system-test-inventory.txt with 'Inventory Master Test Completed' message",
       "type": "catalog",
       "priority": "medium",
-      "status": "pending",
-      "assigned_to": null,
+      "status": "worker_spawned",
+      "assigned_to": "inventory",
       "created_at": "2025-11-05T11:34:05Z",
       "created_by": "create-task-cli",
       "context": {
         "repository": "ry-ops/commit-relay",
         "description": "System Test - Inventory Master: Generate a simple project inventory listing all master agents and their current status, save to tests/system-test-inventory.txt with 'Inventory Master Test Completed' message",
         "catalog_depth": "deep"
-      }
+      },
+      "assigned_by": "coordinator",
+      "assigned_at": "2025-11-05T11:42:29Z",
+      "updated_at": "2025-11-05T05:51:56-06:00",
+      "worker_id": "inv-worker-A6A5C517",
+      "worker_type": "cataloger"
     },
     {
-      "id": "",
+      "id": "task-023",
       "title": "System Test - CI/CD Master: Verify build system by checking package.json scripts and create a build verification report at tests/system-test-cicd.txt with 'CI/CD Master Test Completed' message",
       "type": "development",
       "priority": "medium",
-      "status": "pending",
-      "assigned_to": null,
+      "status": "worker_spawned",
+      "assigned_to": "development",
       "created_at": "2025-11-05T11:34:24Z",
       "created_by": "create-task-cli",
       "context": {
@@ -2011,15 +2040,20 @@
         "branch": "main",
         "description": "System Test - CI/CD Master: Verify build system by checking package.json scripts and create a build verification report at tests/system-test-cicd.txt with 'CI/CD Master Test Completed' message",
         "requirements": []
-      }
+      },
+      "assigned_by": "coordinator",
+      "assigned_at": "2025-11-05T11:42:30Z",
+      "updated_at": "2025-11-05T05:51:50-06:00",
+      "worker_id": "dev-worker-A2BE7A42",
+      "worker_type": "feature-implementer"
     },
     {
-      "id": "",
+      "id": "task-024",
       "title": "System Test - Coordinator Master: Verify task routing system by checking coordination/task-queue.json and coordination/workforce-streams.json, create routing verification report at tests/system-test-coordinator.txt with 'Coordinator Master Test Completed' message",
       "type": "development",
       "priority": "medium",
-      "status": "pending",
-      "assigned_to": null,
+      "status": "worker_spawned",
+      "assigned_to": "development",
       "created_at": "2025-11-05T11:34:36Z",
       "created_by": "create-task-cli",
       "context": {
@@ -2027,7 +2061,12 @@
         "branch": "main",
         "description": "System Test - Coordinator Master: Verify task routing system by checking coordination/task-queue.json and coordination/workforce-streams.json, create routing verification report at tests/system-test-coordinator.txt with 'Coordinator Master Test Completed' message",
         "requirements": []
-      }
+      },
+      "assigned_by": "coordinator",
+      "assigned_at": "2025-11-05T11:42:30Z",
+      "updated_at": "2025-11-05T05:51:49-06:00",
+      "worker_id": "dev-worker-DE5535B6",
+      "worker_type": "feature-implementer"
     }
   ]
 }
