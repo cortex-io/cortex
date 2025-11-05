@@ -1417,16 +1417,16 @@
                         <div class="bg-gray-50 dark:bg-gray-900 rounded-lg p-6 border border-gray-200 dark:border-gray-700">
                             <pre class="mermaid" x-init="setTimeout(() => { try { mermaid.run(); } catch(e) { console.error('Mermaid EM diagram error:', e); } }, 100)">
 graph TB
-    subgraph Complex_Task["🎯 Complex Task (Requires EM)"]
+    subgraph Complex_Task[Complex Task Requires EM]
         CT[Multi-Step Task<br/>Assigned to Master]
     end
 
-    subgraph Master["👑 Master Agent"]
+    subgraph Master[Master Agent]
         MC{Complexity<br/>Check}
         MD[Task Analysis]
     end
 
-    subgraph EM["⚡ Execution Manager"]
+    subgraph EM[Execution Manager]
         EM1[Parse Task]
         EM2[Decompose Steps]
         EM3[Allocate Resources]
@@ -1435,13 +1435,13 @@ graph TB
         EM6[Aggregate Results]
     end
 
-    subgraph Workers["👷 Worker Pool"]
+    subgraph Workers[Worker Pool]
         W1[Worker 1<br/>Step A]
         W2[Worker 2<br/>Step B]
         W3[Worker 3<br/>Step C]
     end
 
-    subgraph Results["📊 Completion"]
+    subgraph Results[Completion]
         R1[EM Aggregates<br/>All Results]
         R2[Master Validates]
         R3[Task Complete]
