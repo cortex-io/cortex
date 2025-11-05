@@ -442,6 +442,7 @@
                                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Status</th>
                                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Priority</th>
                                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Assigned To</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Git Commits</th>
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
@@ -466,6 +467,15 @@
                                             }" x-text="task.priority"></span>
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400" x-text="task.assigned_to || 'Unassigned'"></td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm">
+                                            <template x-for="commit in getTaskCommits(task.id)" :key="commit">
+                                                <a :href="'https://github.com/ry-ops/commit-relay/commit/' + commit"
+                                                   target="_blank"
+                                                   class="inline-block px-2 py-1 mr-1 mb-1 text-xs font-mono bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+                                                   x-text="commit"></a>
+                                            </template>
+                                            <span x-show="getTaskCommits(task.id).length === 0" class="text-gray-400 dark:text-gray-500 text-xs">-</span>
+                                        </td>
                                     </tr>
                                 </template>
                             </tbody>
@@ -1034,6 +1044,3 @@
     <script src="dashboard-v2.js?v=3.2"></script>
 </body>
 </html>
-
-// Updated by impl-worker-dashboard-1762309691 for task-020
-// Display GitHub commits on dashboard task queue page
