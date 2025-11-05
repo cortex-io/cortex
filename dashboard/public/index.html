@@ -378,6 +378,48 @@
                                 v4.0 Multi-Master Coordination
                             </div>
                         </div>
+
+                        <!-- Execution Managers Card (v4.0) -->
+                        <div class="bg-gradient-to-br from-cyan-50 to-blue-50 dark:from-gray-800 dark:to-gray-900 rounded-xl shadow-lg p-4 border-2 border-cyan-200 dark:border-cyan-900">
+                            <div class="flex items-center justify-between mb-3">
+                                <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Execution Managers</h3>
+                                <div x-show="(metrics.executionManagers?.active || 0) > 0" class="px-2 py-1 rounded-full bg-cyan-100 dark:bg-cyan-900 text-cyan-700 dark:text-cyan-300 text-xs font-semibold animate-pulse">
+                                    ACTIVE
+                                </div>
+                            </div>
+
+                            <!-- EM Stats Grid - 2x2 Compact -->
+                            <div class="grid grid-cols-2 gap-2 mb-3">
+                                <div class="bg-white dark:bg-gray-800 rounded-lg p-2 shadow border-2 border-cyan-200 dark:border-cyan-900">
+                                    <div class="text-xl font-bold text-cyan-600 dark:text-cyan-400" x-text="metrics.executionManagers?.active || 0">0</div>
+                                    <div class="text-xs text-gray-600 dark:text-gray-400">Active</div>
+                                </div>
+                                <div class="bg-white dark:bg-gray-800 rounded-lg p-2 shadow">
+                                    <div class="text-xl font-bold text-blue-600 dark:text-blue-400" x-text="metrics.executionManagers?.total || 0">0</div>
+                                    <div class="text-xs text-gray-600 dark:text-gray-400">Total</div>
+                                </div>
+                                <div class="bg-white dark:bg-gray-800 rounded-lg p-2 shadow">
+                                    <div class="text-xl font-bold text-green-600 dark:text-green-400" x-text="metrics.executionManagers?.completed || 0">0</div>
+                                    <div class="text-xs text-gray-600 dark:text-gray-400">Done</div>
+                                </div>
+                                <div class="bg-white dark:bg-gray-800 rounded-lg p-2 shadow">
+                                    <div class="text-xl font-bold text-red-600 dark:text-red-400" x-text="metrics.executionManagers?.failed || 0">0</div>
+                                    <div class="text-xs text-gray-600 dark:text-gray-400">Failed</div>
+                                </div>
+                            </div>
+
+                            <!-- Success Rate -->
+                            <div class="bg-white dark:bg-gray-800 rounded-lg p-2 shadow">
+                                <div class="flex justify-between items-baseline">
+                                    <span class="text-xs text-gray-600 dark:text-gray-400">Success Rate</span>
+                                    <span class="text-lg font-bold text-cyan-600 dark:text-cyan-400" x-text="(metrics.executionManagers?.successRate || 0) + '%'">0%</span>
+                                </div>
+                            </div>
+
+                            <div class="text-center text-xs text-gray-500 dark:text-gray-400 mt-2">
+                                v4.0 Multi-Worker Coordination
+                            </div>
+                        </div>
                     </div>
 
                     <!-- Right Column: Real-time Events (2/3 width) -->
