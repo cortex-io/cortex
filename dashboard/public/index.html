@@ -326,7 +326,7 @@
                             </div>
                         </div>
 
-                        <!-- Exciting Stats Grid - 3x2 -->
+                        <!-- Exciting Stats Grid - 3x3 -->
                         <div class="grid grid-cols-3 gap-3 mb-4">
                             <!-- Total Autonomous Commits -->
                             <div class="bg-white dark:bg-gray-800 rounded-lg p-3 shadow">
@@ -352,10 +352,28 @@
                                 <div class="text-xs text-gray-600 dark:text-gray-400 mt-1">Success Rate</div>
                             </div>
 
+                            <!-- Failed Workers -->
+                            <div class="bg-white dark:bg-gray-800 rounded-lg p-3 shadow">
+                                <div class="text-2xl font-bold text-amber-600 dark:text-amber-400" x-text="metrics.workers?.failed || 0">0</div>
+                                <div class="text-xs text-gray-600 dark:text-gray-400 mt-1">Failed</div>
+                            </div>
+
                             <!-- Zombies Killed -->
                             <div class="bg-white dark:bg-gray-800 rounded-lg p-3 shadow border-2 border-red-200 dark:border-red-900">
                                 <div class="text-2xl font-bold text-red-600 dark:text-red-400" x-text="metrics.workers?.zombiesKilled || 0">0</div>
                                 <div class="text-xs text-gray-600 dark:text-gray-400 mt-1">Zombies Killed</div>
+                            </div>
+
+                            <!-- Tasks Completed -->
+                            <div class="bg-white dark:bg-gray-800 rounded-lg p-3 shadow">
+                                <div class="text-2xl font-bold text-indigo-600 dark:text-indigo-400" x-text="metrics.tasks?.completed || 0">0</div>
+                                <div class="text-xs text-gray-600 dark:text-gray-400 mt-1">Tasks Done</div>
+                            </div>
+
+                            <!-- Token Efficiency -->
+                            <div class="bg-white dark:bg-gray-800 rounded-lg p-3 shadow border-2 border-cyan-200 dark:border-cyan-900">
+                                <div class="text-2xl font-bold text-cyan-600 dark:text-cyan-400" x-text="(metrics.tokens?.efficiency || 0) > 0 ? Math.round(metrics.tokens.efficiency) + '%' : '-'">-</div>
+                                <div class="text-xs text-gray-600 dark:text-gray-400 mt-1">Efficiency</div>
                             </div>
 
                             <!-- Avg Duration -->
