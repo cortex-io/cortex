@@ -44,6 +44,15 @@ function dashboard() {
         ganttAutoScroll: true,
         ganttChart: null,
 
+        // Heatmap
+        heatmapTimeRange: '7d',
+        heatmapData: {
+            coordinator: [],
+            development: [],
+            security: [],
+            inventory: []
+        },
+
         // Watch for view changes to reinitialize icons
         changeView(view) {
             this.currentView = view;
@@ -915,6 +924,109 @@ function dashboard() {
                     }
                 }
             });
+        },
+
+        // Heatmap functions
+        updateHeatmap() {
+            this.initHeatmapData();
+        },
+
+        initHeatmapData() {
+            const now = Date.now();
+            const ranges = {
+                '24h': { duration: 24 * 60 * 60 * 1000, cells: 24 },
+                '7d': { duration: 7 * 24 * 60 * 60 * 1000, cells: 24 },
+                '30d': { duration: 30 * 24 * 60 * 60 * 1000, cells: 24 }
+            };
+            const range = ranges[this.heatmapTimeRange] || ranges['7d'];
+            const startTime = now - range.duration;
+            const cellDuration = range.duration / range.cells;
+
+            // Initialize empty heatmap data
+            const masters = ['coordinator', 'development', 'security', 'inventory'];
+            masters.forEach(master => {
+                this.heatmapData[master] = [];
+                for (let i = 0; i < range.cells; i++) {
+                    this.heatmapData[master].push({
+                        hour: i,
+                        activity: 0
+                    });
+                }
+            });
+
+            // Count task assignments per master per time cell
+            const relevantEvents = this.events.filter(e => {
+                const eventTime = new Date(e.timestamp).getTime();
+                return eventTime >= startTime &&
+                       eventTime <= now &&
+                       (e.type?.includes('task_assigned') || e.type?.includes('assigned'));
+            });
+
+            relevantEvents.forEach(event => {
+                const eventTime = new Date(event.timestamp).getTime();
+                const cellIndex = Math.floor((eventTime - startTime) / cellDuration);
+
+                if (cellIndex >= 0 && cellIndex < range.cells) {
+                    // Determine which master this event is for
+                    let master = null;
+                    if (event.data) {
+                        try {
+                            const data = typeof event.data === 'string' ? JSON.parse(event.data) : event.data;
+                            const assignedTo = data.assigned_to || '';
+                            if (assignedTo.includes('coordinator')) master = 'coordinator';
+                            else if (assignedTo.includes('development')) master = 'development';
+                            else if (assignedTo.includes('security')) master = 'security';
+                            else if (assignedTo.includes('inventory')) master = 'inventory';
+                        } catch (e) {
+                            // Ignore parse errors
+                        }
+                    }
+
+                    // Check event type for master hints
+                    if (!master && event.type) {
+                        if (event.type.includes('coordinator')) master = 'coordinator';
+                        else if (event.type.includes('development')) master = 'development';
+                        else if (event.type.includes('security')) master = 'security';
+                        else if (event.type.includes('inventory')) master = 'inventory';
+                    }
+
+                    // Check message for master hints
+                    if (!master && event.message) {
+                        const msg = event.message.toLowerCase();
+                        if (msg.includes('coordinator')) master = 'coordinator';
+                        else if (msg.includes('development')) master = 'development';
+                        else if (msg.includes('security')) master = 'security';
+                        else if (msg.includes('inventory')) master = 'inventory';
+                    }
+
+                    if (master && this.heatmapData[master]) {
+                        this.heatmapData[master][cellIndex].activity++;
+                    }
+                }
+            });
+        },
+
+        renderHeatmapRow(master) {
+            this.initHeatmapData();
+        },
+
+        getHeatmapColor(activity) {
+            // Color scale from light gray to deep indigo
+            const colors = [
+                '#f3f4f6',  // 0 - gray-100
+                '#c7d2fe',  // 1-2 - indigo-200
+                '#a5b4fc',  // 3-4 - indigo-300
+                '#818cf8',  // 5-6 - indigo-400
+                '#6366f1',  // 7-8 - indigo-500
+                '#4f46e5'   // 9+ - indigo-600
+            ];
+
+            if (activity === 0) return colors[0];
+            if (activity <= 2) return colors[1];
+            if (activity <= 4) return colors[2];
+            if (activity <= 6) return colors[3];
+            if (activity <= 8) return colors[4];
+            return colors[5];
         },
 
         initTokenChart() {
