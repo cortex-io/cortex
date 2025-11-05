@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "updated_at": "2025-11-05T16:41:15Z",
+  "updated_at": "2025-11-05T16:44:12Z",
   "tasks": [
     {
       "id": "task-001",
@@ -2200,14 +2200,36 @@
       "title": "Improve task queue page status display. Replace raw 'worker_spawned' status text with styled badges/chips like the priority badges (completed, critical, etc.). Make all status values human-readable with appropriate colors: pending (gray), assigned (blue), worker_spawned (purple/running), in_progress (yellow), completed (green), failed (red). Apply consistent styling across all status columns.",
       "type": "development",
       "priority": "high",
-      "status": "pending",
-      "assigned_to": null,
+      "status": "completed",
+      "assigned_to": "development",
       "created_at": "2025-11-05T16:41:15Z",
       "created_by": "create-task-cli",
       "context": {
         "repository": "ry-ops/commit-relay",
         "branch": "main",
         "description": "Improve task queue page status display. Replace raw 'worker_spawned' status text with styled badges/chips like the priority badges (completed, critical, etc.). Make all status values human-readable with appropriate colors: pending (gray), assigned (blue), worker_spawned (purple/running), in_progress (yellow), completed (green), failed (red). Apply consistent styling across all status columns.",
+        "requirements": []
+      },
+      "assigned_by": "coordinator",
+      "assigned_at": "2025-11-05T16:41:20Z",
+      "updated_at": "2025-11-05T10:41:24-06:00",
+      "worker_id": "dev-worker-E41DDFD9",
+      "worker_type": "feature-implementer",
+      "completed_at": "2025-11-05T16:41:41Z"
+    },
+    {
+      "id": "task-1762342913",
+      "title": "CRITICAL: Clean up 19 zombie workers stuck in 'running' status. Workers from Nov 3-5 show running but no actual processes exist. Implement worker health check system: 1) Create cleanup script to detect stale workers (running >2hrs with no process), 2) Mark them as 'timeout' or 'unknown_failure', 3) Move to failed/ directory, 4) Add daemon watchdog to periodically check worker health, 5) Update worker prompt to ensure status updates on exit/error. List: worker-scan-002 through 007, dev-worker-A819947D, C42C00C2, 92D7943C, A2BE7A42, DE5535B6, 89DE27B5, DF971C09, 37A01F3D, 693450EA, 2D6C668D, 5F3CFA26, sec-worker-FD673A67, inv-worker-A6A5C517",
+      "type": "development",
+      "priority": "critical",
+      "status": "pending",
+      "assigned_to": null,
+      "created_at": "2025-11-05T16:44:12Z",
+      "created_by": "create-task-cli",
+      "context": {
+        "repository": "ry-ops/commit-relay",
+        "branch": "main",
+        "description": "CRITICAL: Clean up 19 zombie workers stuck in 'running' status. Workers from Nov 3-5 show running but no actual processes exist. Implement worker health check system: 1) Create cleanup script to detect stale workers (running >2hrs with no process), 2) Mark them as 'timeout' or 'unknown_failure', 3) Move to failed/ directory, 4) Add daemon watchdog to periodically check worker health, 5) Update worker prompt to ensure status updates on exit/error. List: worker-scan-002 through 007, dev-worker-A819947D, C42C00C2, 92D7943C, A2BE7A42, DE5535B6, 89DE27B5, DF971C09, 37A01F3D, 693450EA, 2D6C668D, 5F3CFA26, sec-worker-FD673A67, inv-worker-A6A5C517",
         "requirements": []
       }
     }
