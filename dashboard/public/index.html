@@ -1192,6 +1192,57 @@
                         </div>
                     </div>
 
+                    <!-- Worker Timeline Gantt Chart -->
+                    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 border border-gray-200 dark:border-gray-700">
+                        <div class="flex items-center justify-between mb-4">
+                            <div class="flex items-center space-x-3">
+                                <i data-lucide="gantt-chart" class="w-6 h-6 text-indigo-600 dark:text-indigo-400"></i>
+                                <h3 class="text-xl font-bold text-gray-900 dark:text-white">Worker Timeline (Gantt Chart)</h3>
+                            </div>
+                            <div class="flex items-center space-x-3">
+                                <button @click="ganttAutoScroll = !ganttAutoScroll" class="px-3 py-1.5 text-sm rounded-lg border transition-colors" :class="ganttAutoScroll ? 'bg-primary-100 dark:bg-primary-900/30 border-primary-300 dark:border-primary-700 text-primary-700 dark:text-primary-300' : 'bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600'">
+                                    <i :data-lucide="ganttAutoScroll ? 'pause' : 'play'" class="w-4 h-4 inline-block mr-1"></i>
+                                    <span x-text="ganttAutoScroll ? 'Live' : 'Paused'"></span>
+                                </button>
+                                <select class="px-3 py-1.5 text-sm rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white" x-model="ganttTimeRange" @change="updateGanttChart()">
+                                    <option value="1h">Last Hour</option>
+                                    <option value="6h">Last 6 Hours</option>
+                                    <option value="24h" selected>Last 24 Hours</option>
+                                </select>
+                            </div>
+                        </div>
+                        <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">Visual timeline of worker execution periods and concurrent activity</p>
+
+                        <!-- Gantt Chart Canvas -->
+                        <div class="relative bg-gray-50 dark:bg-gray-900 rounded-lg p-4 border border-gray-200 dark:border-gray-700" style="height: 400px; overflow-x: auto; overflow-y: auto;">
+                            <canvas id="ganttChart" style="height: 100%;"></canvas>
+                        </div>
+
+                        <!-- Legend -->
+                        <div class="mt-4 flex flex-wrap gap-4 text-xs text-gray-600 dark:text-gray-400">
+                            <div class="flex items-center space-x-2">
+                                <div class="w-4 h-3 bg-blue-500 rounded"></div>
+                                <span>Development Workers</span>
+                            </div>
+                            <div class="flex items-center space-x-2">
+                                <div class="w-4 h-3 bg-red-500 rounded"></div>
+                                <span>Security Workers</span>
+                            </div>
+                            <div class="flex items-center space-x-2">
+                                <div class="w-4 h-3 bg-purple-500 rounded"></div>
+                                <span>Inventory Workers</span>
+                            </div>
+                            <div class="flex items-center space-x-2">
+                                <div class="w-4 h-3 bg-green-500 rounded"></div>
+                                <span>Completed</span>
+                            </div>
+                            <div class="flex items-center space-x-2">
+                                <div class="w-4 h-3 bg-gray-500 rounded"></div>
+                                <span>Failed</span>
+                            </div>
+                        </div>
+                    </div>
+
                     <!-- Top row: Pie Chart and Pareto Chart -->
                     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
                         <!-- Pie Chart: Worker Status Distribution -->

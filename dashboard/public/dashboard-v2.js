@@ -39,6 +39,11 @@ function dashboard() {
             activeWorkers: null
         },
 
+        // Gantt Chart
+        ganttTimeRange: '24h',
+        ganttAutoScroll: true,
+        ganttChart: null,
+
         // Watch for view changes to reinitialize icons
         changeView(view) {
             this.currentView = view;
@@ -416,6 +421,7 @@ function dashboard() {
         initCharts() {
             this.initTokenChart();
             this.initAnalyticsCharts();
+            this.initGanttChart();
         },
 
         // Initialize all historical analytics charts
@@ -705,6 +711,205 @@ function dashboard() {
                         },
                         x: {
                             ticks: { color: isDark ? '#9CA3AF' : '#6B7280', maxRotation: 45, minRotation: 45 },
+                            grid: { display: false }
+                        }
+                    }
+                }
+            });
+        },
+
+        // Update Gantt chart when time range changes
+        updateGanttChart() {
+            this.initGanttChart();
+        },
+
+        // Initialize Gantt Chart for Worker Timeline
+        initGanttChart() {
+            const canvas = document.getElementById('ganttChart');
+            if (!canvas) return;
+
+            if (this.ganttChart) {
+                this.ganttChart.destroy();
+            }
+
+            // Get time range
+            const now = Date.now();
+            const ranges = {
+                '1h': 60 * 60 * 1000,
+                '6h': 6 * 60 * 60 * 1000,
+                '24h': 24 * 60 * 60 * 1000
+            };
+            const rangeDuration = ranges[this.ganttTimeRange] || ranges['24h'];
+            const startTime = now - rangeDuration;
+
+            // Get worker start/end events from events
+            const workerEvents = this.events.filter(e => e.type?.includes('worker'));
+
+            // Build worker timeline data
+            const workerTimelines = {};
+            workerEvents.forEach(event => {
+                let workerId = null;
+                if (event.data) {
+                    try {
+                        const data = typeof event.data === 'string' ? JSON.parse(event.data) : event.data;
+                        workerId = data.worker_id;
+                    } catch (e) {
+                        // Ignore parse errors
+                    }
+                }
+
+                if (!workerId) return;
+
+                if (!workerTimelines[workerId]) {
+                    workerTimelines[workerId] = {
+                        id: workerId,
+                        start: null,
+                        end: null,
+                        status: 'running',
+                        type: workerId.startsWith('dev-') ? 'development' :
+                              workerId.startsWith('sec-') ? 'security' :
+                              workerId.startsWith('inv-') ? 'inventory' : 'other'
+                    };
+                }
+
+                const eventTime = new Date(event.timestamp).getTime();
+
+                if (event.type?.includes('started') || event.type?.includes('spawned')) {
+                    if (!workerTimelines[workerId].start || eventTime < workerTimelines[workerId].start) {
+                        workerTimelines[workerId].start = eventTime;
+                    }
+                } else if (event.type?.includes('completed') || event.type?.includes('success')) {
+                    workerTimelines[workerId].end = eventTime;
+                    workerTimelines[workerId].status = 'completed';
+                } else if (event.type?.includes('failed') || event.type?.includes('error')) {
+                    workerTimelines[workerId].end = eventTime;
+                    workerTimelines[workerId].status = 'failed';
+                }
+            });
+
+            // Convert to array and filter by time range
+            let workers = Object.values(workerTimelines)
+                .filter(w => w.start && w.start >= startTime)
+                .sort((a, b) => a.start - b.start)
+                .slice(-20); // Show last 20 workers
+
+            // If no end time, assume still running
+            const currentTime = now;
+            workers.forEach(w => {
+                if (!w.end || w.end < w.start) {
+                    w.end = currentTime;
+                    w.status = 'running';
+                }
+            });
+
+            // Prepare chart data
+            const labels = workers.map(w => w.id.substring(0, 16)); // Truncate long IDs
+
+            // Create datasets for horizontal bar chart (Gantt-style)
+            const datasets = workers.map((w, index) => {
+                const duration = (w.end - w.start) / 1000 / 60; // Duration in minutes
+                const offset = (w.start - startTime) / 1000 / 60; // Offset from start time
+
+                // Color based on worker type and status
+                let backgroundColor;
+                if (w.status === 'completed') {
+                    backgroundColor = 'rgba(34, 197, 94, 0.8)'; // Green
+                } else if (w.status === 'failed') {
+                    backgroundColor = 'rgba(156, 163, 175, 0.8)'; // Gray
+                } else {
+                    // Running - color by type
+                    if (w.type === 'development') {
+                        backgroundColor = 'rgba(59, 130, 246, 0.8)'; // Blue
+                    } else if (w.type === 'security') {
+                        backgroundColor = 'rgba(239, 68, 68, 0.8)'; // Red
+                    } else if (w.type === 'inventory') {
+                        backgroundColor = 'rgba(168, 85, 247, 0.8)'; // Purple
+                    } else {
+                        backgroundColor = 'rgba(107, 114, 128, 0.8)'; // Gray
+                    }
+                }
+
+                return {
+                    label: w.id,
+                    data: [{ x: [offset, offset + duration], y: index }],
+                    backgroundColor,
+                    borderColor: backgroundColor.replace('0.8', '1'),
+                    borderWidth: 1,
+                    barThickness: 20
+                };
+            });
+
+            const isDark = this.darkMode;
+            const maxDuration = rangeDuration / 1000 / 60; // in minutes
+
+            this.ganttChart = new Chart(canvas, {
+                type: 'bar',
+                data: {
+                    labels,
+                    datasets
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                title: (context) => {
+                                    const workerIndex = context[0].dataIndex;
+                                    return workers[workerIndex]?.id || 'Unknown';
+                                },
+                                label: (context) => {
+                                    const workerIndex = context.dataIndex;
+                                    const worker = workers[workerIndex];
+                                    if (!worker) return '';
+
+                                    const duration = ((worker.end - worker.start) / 1000 / 60).toFixed(1);
+                                    const startDate = new Date(worker.start);
+                                    const endDate = new Date(worker.end);
+
+                                    return [
+                                        `Type: ${worker.type}`,
+                                        `Status: ${worker.status}`,
+                                        `Duration: ${duration} min`,
+                                        `Started: ${startDate.toLocaleTimeString()}`,
+                                        `${worker.status === 'running' ? 'Still' : 'Ended'}: ${endDate.toLocaleTimeString()}`
+                                    ];
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            type: 'linear',
+                            position: 'top',
+                            min: 0,
+                            max: maxDuration,
+                            ticks: {
+                                color: isDark ? '#9CA3AF' : '#6B7280',
+                                callback: (value) => {
+                                    // Convert minutes to readable format
+                                    if (this.ganttTimeRange === '1h') {
+                                        return `${value}m`;
+                                    } else {
+                                        const hours = Math.floor(value / 60);
+                                        return `${hours}h`;
+                                    }
+                                }
+                            },
+                            grid: { color: isDark ? 'rgba(75, 85, 99, 0.3)' : 'rgba(229, 231, 235, 0.8)' },
+                            title: {
+                                display: true,
+                                text: 'Time Elapsed',
+                                color: isDark ? '#9CA3AF' : '#6B7280'
+                            }
+                        },
+                        y: {
+                            ticks: {
+                                color: isDark ? '#9CA3AF' : '#6B7280',
+                                font: { size: 10 }
+                            },
                             grid: { display: false }
                         }
                     }
