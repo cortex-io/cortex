@@ -184,10 +184,98 @@ while true; do
         done
     fi
 
-    if [ $ZOMBIES_FOUND -gt 0 ]; then
-        log_zombie "INFO: Zombie scan complete - Found: $ZOMBIES_FOUND, Killed: $ZOMBIES_KILLED"
+    # Check Execution Managers for zombies (v4.0)
+    EM_ACTIVE_DIR="coordination/execution-managers/active"
+    EM_COMPLETED_DIR="coordination/execution-managers/completed"
+    EM_ZOMBIES_FOUND=0
+    EM_ZOMBIES_KILLED=0
+
+    if [ -d "$EM_ACTIVE_DIR" ]; then
+        for em_file in "$EM_ACTIVE_DIR"/*.json; do
+            if [ ! -f "$em_file" ]; then
+                continue
+            fi
+
+            EM_ID=$(jq -r '.exec_mgr_id' "$em_file" 2>/dev/null || echo "")
+            EM_STATUS=$(jq -r '.status' "$em_file" 2>/dev/null || echo "")
+            EM_STARTED_AT=$(jq -r '.started_at // "1970-01-01T00:00:00Z"' "$em_file" 2>/dev/null)
+            EM_LAST_HEARTBEAT=$(jq -r '.last_heartbeat // "1970-01-01T00:00:00Z"' "$em_file" 2>/dev/null)
+
+            if [ -z "$EM_ID" ] || [ "$EM_ID" = "null" ]; then
+                continue
+            fi
+
+            # Only check EMs marked as "running" or "ready"
+            if [ "$EM_STATUS" != "running" ] && [ "$EM_STATUS" != "ready" ]; then
+                continue
+            fi
+
+            # Calculate EM runtime
+            EM_STARTED_SECONDS=$(iso_to_seconds "$EM_STARTED_AT")
+            if [ "$EM_STARTED_SECONDS" = "0" ]; then
+                continue
+            fi
+
+            EM_RUNNING_TIME=$(($CURRENT_TIME - $EM_STARTED_SECONDS))
+
+            # Calculate heartbeat age
+            EM_HEARTBEAT_SECONDS=$(iso_to_seconds "$EM_LAST_HEARTBEAT")
+            EM_HEARTBEAT_AGE=0
+
+            if [ "$EM_HEARTBEAT_SECONDS" != "0" ]; then
+                EM_HEARTBEAT_AGE=$(($CURRENT_TIME - $EM_HEARTBEAT_SECONDS))
+            fi
+
+            # EM Zombie detection:
+            # 1. Running longer than 60 minutes (EMs can be long-running) OR
+            # 2. Heartbeat stale for >5 minutes
+            EM_IS_ZOMBIE=false
+            EM_ZOMBIE_REASON=""
+
+            if [ $EM_RUNNING_TIME -gt 3600 ]; then
+                # 60 minutes = 3600 seconds
+                EM_IS_ZOMBIE=true
+                EM_ZOMBIE_REASON="Running for ${EM_RUNNING_TIME}s ($(($EM_RUNNING_TIME / 60)) minutes) without completion"
+            elif [ "$EM_HEARTBEAT_SECONDS" != "0" ] && [ $EM_HEARTBEAT_AGE -gt 300 ]; then
+                # Heartbeat exists but hasn't updated in 5+ minutes
+                EM_IS_ZOMBIE=true
+                EM_ZOMBIE_REASON="Heartbeat stale for ${EM_HEARTBEAT_AGE}s ($(($EM_HEARTBEAT_AGE / 60)) minutes)"
+            fi
+
+            if [ "$EM_IS_ZOMBIE" = true ]; then
+                EM_ZOMBIES_FOUND=$((EM_ZOMBIES_FOUND + 1))
+
+                log_zombie "EXECUTION MANAGER ZOMBIE DETECTED: $EM_ID"
+                log_zombie "  Reason: $EM_ZOMBIE_REASON"
+                log_zombie "  Running for: ${EM_RUNNING_TIME}s ($(($EM_RUNNING_TIME / 60)) minutes)"
+                log_zombie "  Started at: $EM_STARTED_AT"
+                log_zombie "  Last heartbeat: $EM_LAST_HEARTBEAT (age: ${EM_HEARTBEAT_AGE}s)"
+
+                # Mark as failed and move to completed directory
+                mkdir -p "$EM_COMPLETED_DIR"
+                jq --arg ts "$(date -u +%Y-%m-%dT%H:%M:%SZ)" --arg runtime "$EM_RUNNING_TIME" \
+                   '.status = "failed" |
+                    .current_phase = "zombie_detected" |
+                    .failed_at = $ts |
+                    .error = "Execution Manager became zombie - running for \($runtime)s with no completion" |
+                    .killed_by = "zombie-killer-daemon"' \
+                   "$em_file" > "${em_file}.tmp" && \
+                   mv "${em_file}.tmp" "$EM_COMPLETED_DIR/$(basename "$em_file")"
+
+                EM_ZOMBIES_KILLED=$((EM_ZOMBIES_KILLED + 1))
+                log_zombie "KILLED: $EM_ID moved to completed/"
+            fi
+        done
+    fi
+
+    # Summary logging
+    TOTAL_ZOMBIES=$((ZOMBIES_FOUND + EM_ZOMBIES_FOUND))
+    TOTAL_KILLED=$((ZOMBIES_KILLED + EM_ZOMBIES_KILLED))
+
+    if [ $TOTAL_ZOMBIES -gt 0 ]; then
+        log_zombie "INFO: Zombie scan complete - Workers: $ZOMBIES_FOUND/$ZOMBIES_KILLED, EMs: $EM_ZOMBIES_FOUND/$EM_ZOMBIES_KILLED, Total: $TOTAL_KILLED killed"
     else
-        log_zombie "DEBUG: No zombies detected - all workers healthy"
+        log_zombie "DEBUG: No zombies detected - all workers and EMs healthy"
     fi
 
     # Sleep until next check
