@@ -737,7 +737,7 @@ app.get('/api/events', async (req, res) => {
 
     // Read git operations and convert to events
     let gitEvents = [];
-    const gitOpsPath = path.join(coordPath, 'git-operations.jsonl');
+    const gitOpsPath = path.join(COORD_DIR, 'git-operations.jsonl');
     if (fsSync.existsSync(gitOpsPath)) {
       const gitContent = fsSync.readFileSync(gitOpsPath, 'utf-8');
       const gitOps = gitContent
@@ -798,7 +798,7 @@ app.get('/api/git-operations', async (req, res) => {
     let gitOperations = [];
 
     // Read git-operations.jsonl
-    const gitOpsPath = path.join(coordPath, 'git-operations.jsonl');
+    const gitOpsPath = path.join(COORD_DIR, 'git-operations.jsonl');
     if (fsSync.existsSync(gitOpsPath)) {
       const content = fsSync.readFileSync(gitOpsPath, 'utf-8');
       gitOperations = content
