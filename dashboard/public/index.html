@@ -314,44 +314,53 @@
             <!-- Overview View -->
             <div x-show="currentView === 'overview'" x-transition>
                 <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
-                    <!-- 🚀 Autonomous Productivity Analytics -->
+                    <!-- Autonomous Productivity Analytics -->
                     <div class="bg-gradient-to-br from-purple-50 to-blue-50 dark:from-gray-800 dark:to-gray-900 rounded-xl shadow-lg p-6 border-2 border-purple-200 dark:border-purple-900">
                         <!-- Header -->
                         <div class="flex items-center justify-between mb-4">
-                            <h3 class="text-lg font-semibold text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-blue-600 dark:from-purple-400 dark:to-blue-400">
-                                🚀 Autonomous Productivity
+                            <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
+                                Autonomous Productivity
                             </h3>
                             <div class="px-3 py-1 rounded-full bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300 text-xs font-semibold animate-pulse">
                                 ACTIVE
                             </div>
                         </div>
 
-                        <!-- Exciting Stats Grid -->
-                        <div class="grid grid-cols-2 gap-3 mb-4">
+                        <!-- Exciting Stats Grid - 3x2 -->
+                        <div class="grid grid-cols-3 gap-3 mb-4">
                             <!-- Total Autonomous Commits -->
                             <div class="bg-white dark:bg-gray-800 rounded-lg p-3 shadow">
                                 <div class="text-2xl font-bold text-purple-600 dark:text-purple-400" x-text="metrics.workers?.completed || 0">0</div>
-                                <div class="text-xs text-gray-600 dark:text-gray-400 mt-1">Autonomous Commits</div>
+                                <div class="text-xs text-gray-600 dark:text-gray-400 mt-1">Commits</div>
                             </div>
 
-                            <!-- Zombies Killed -->
-                            <div class="bg-white dark:bg-gray-800 rounded-lg p-3 shadow border-2 border-red-200 dark:border-red-900">
-                                <div class="flex items-center justify-center space-x-1">
-                                    <div class="text-2xl font-bold text-red-600 dark:text-red-400" x-text="metrics.workers?.zombiesKilled || 0">0</div>
-                                    <div class="text-lg">🧟</div>
-                                </div>
-                                <div class="text-xs text-gray-600 dark:text-gray-400 mt-1">Zombies Killed</div>
+                            <!-- Total Workers -->
+                            <div class="bg-white dark:bg-gray-800 rounded-lg p-3 shadow">
+                                <div class="text-2xl font-bold text-blue-600 dark:text-blue-400" x-text="metrics.workers?.total || 0">0</div>
+                                <div class="text-xs text-gray-600 dark:text-gray-400 mt-1">Total Workers</div>
+                            </div>
+
+                            <!-- Active Workers -->
+                            <div class="bg-white dark:bg-gray-800 rounded-lg p-3 shadow border-2 border-green-200 dark:border-green-900">
+                                <div class="text-2xl font-bold text-green-600 dark:text-green-400" x-text="metrics.workers?.active || 0">0</div>
+                                <div class="text-xs text-gray-600 dark:text-gray-400 mt-1">Active Now</div>
                             </div>
 
                             <!-- Success Rate -->
                             <div class="bg-white dark:bg-gray-800 rounded-lg p-3 shadow">
-                                <div class="text-2xl font-bold text-green-600 dark:text-green-400" x-text="Math.round(metrics.workers?.successRate || 0) + '%'">0%</div>
+                                <div class="text-2xl font-bold text-emerald-600 dark:text-emerald-400" x-text="Math.round(metrics.workers?.successRate || 0) + '%'">0%</div>
                                 <div class="text-xs text-gray-600 dark:text-gray-400 mt-1">Success Rate</div>
+                            </div>
+
+                            <!-- Zombies Killed -->
+                            <div class="bg-white dark:bg-gray-800 rounded-lg p-3 shadow border-2 border-red-200 dark:border-red-900">
+                                <div class="text-2xl font-bold text-red-600 dark:text-red-400" x-text="metrics.workers?.zombiesKilled || 0">0</div>
+                                <div class="text-xs text-gray-600 dark:text-gray-400 mt-1">Zombies Killed</div>
                             </div>
 
                             <!-- Avg Duration -->
                             <div class="bg-white dark:bg-gray-800 rounded-lg p-3 shadow">
-                                <div class="text-2xl font-bold text-orange-600 dark:text-orange-400" x-text="Math.round(metrics.workers?.avgDuration || 0) + 'm'">0m</div>
+                                <div class="text-2xl font-bold text-orange-600 dark:text-orange-400" x-text="(metrics.workers?.avgDuration || 0) > 0 ? Math.round(metrics.workers.avgDuration) + 'm' : '-'">-</div>
                                 <div class="text-xs text-gray-600 dark:text-gray-400 mt-1">Avg Time</div>
                             </div>
                         </div>
