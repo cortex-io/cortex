@@ -947,47 +947,41 @@ Emergency Reserve (9%): 25k
 
 ---
 
-### 🔮 Phase 7: Financial Intelligence (Planned)
+### 🚧 Phase 7: Enhanced Dashboard & Observability (In Progress)
 
-**Goal**: Predictive budget management and cost forecasting
+**Goal**: Advanced visualization, real-time monitoring, and system insights
 
-**Planned**:
-- Finance Controller module or master agent
-- Task cost estimation before execution
-- Budget forecasting and runway prediction
-- Approval gates for high-cost tasks
-- Historical cost tracking and accuracy improvement
-- Emergency reserve trigger logic
-- Multi-task budget planning
-- Dashboard budget forecast panel
-
-**Status**: Future enhancement - preventing budget overruns
-
----
-
-### 🔮 Phase 8: Enhanced Dashboard Features (Planned)
-
-**Goal**: Advanced visualization and monitoring capabilities
-
-**Planned**:
-- **Real-time task feed**: Live activity stream of all master/worker actions
-  - Task creation events
-  - Worker spawn/completion notifications
+**Planned Features**:
+- **Real-time Activity Feed**: Live stream of all system events
+  - Task creation and routing events
+  - Worker/EM spawn and completion notifications
   - Master handoff tracking
-  - Error/warning alerts
-  - Searchable and filterable feed
-  - Activity timeline view
-- Budget forecast panel (from Phase 7)
-- Historical metrics charts (trends over time)
-- Custom alerts and notifications
-- Worker timeline/Gantt visualization
-- Master activity heatmap
+  - Error and warning alerts
+  - Searchable and filterable event stream
+  - Activity timeline visualization
+- **Historical Analytics**: Trend analysis over time
+  - Worker success rates by type
+  - EM utilization patterns
+  - Token usage trends
+  - System throughput metrics
+  - Performance degradation detection
+- **Advanced Visualizations**: Interactive charts and graphs
+  - Worker timeline (Gantt-style)
+  - Master activity heatmap
+  - EM coordination flow diagram
+  - System health dashboard
+  - Resource utilization graphs
+- **Alerting & Notifications**: Proactive system monitoring
+  - Configurable alert thresholds
+  - Error rate spike detection
+  - Resource exhaustion warnings
+  - Performance anomaly alerts
 
-**Status**: Dashboard enhancements for better observability
+**Status**: Active development - enhancing system observability
 
 ---
 
-### 🔮 Phase 9: Advanced Optimization (Optional - Future)
+### 🔮 Phase 8: Advanced Optimization (Optional - Future)
 
 **Goal**: Further automation and intelligence
 
