@@ -110,14 +110,16 @@ graph TB
     CM --> SM
     CM --> DM
     CM --> IM
+    CM --> CICD
 
     SM --> EM
     DM --> EM
     IM --> EM
+    CICD --> EM
 
-    SM --> W1
-    DM --> W2
-    IM --> W3
+    EM --> W1
+    EM --> W2
+    EM --> W3
     EM --> W4
 
     W1 -.->|Heartbeat| ZK
