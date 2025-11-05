@@ -1985,7 +1985,7 @@
       "updated_at": "2025-11-05T05:51:48-06:00",
       "worker_id": "dev-worker-92D7943C",
       "worker_type": "feature-implementer",
-      "completed_at": "2025-11-05T19:00:28Z",
+      "completed_at": "2025-11-05T19:05:29Z",
       "error": "Worker became zombie and was killed"
     },
     {
@@ -2012,7 +2012,7 @@
       "updated_at": "2025-11-05T05:51:55-06:00",
       "worker_id": "sec-worker-FD673A67",
       "worker_type": "scan-worker",
-      "completed_at": "2025-11-05T19:00:28Z",
+      "completed_at": "2025-11-05T19:05:29Z",
       "error": "Worker became zombie and was killed"
     },
     {
@@ -2034,7 +2034,7 @@
       "updated_at": "2025-11-05T05:51:56-06:00",
       "worker_id": "inv-worker-A6A5C517",
       "worker_type": "cataloger",
-      "completed_at": "2025-11-05T19:00:28Z",
+      "completed_at": "2025-11-05T19:05:29Z",
       "error": "Worker became zombie and was killed"
     },
     {
@@ -2057,7 +2057,7 @@
       "updated_at": "2025-11-05T05:51:50-06:00",
       "worker_id": "dev-worker-A2BE7A42",
       "worker_type": "feature-implementer",
-      "completed_at": "2025-11-05T19:00:28Z",
+      "completed_at": "2025-11-05T19:05:29Z",
       "error": "Worker became zombie and was killed"
     },
     {
@@ -2080,7 +2080,7 @@
       "updated_at": "2025-11-05T05:51:49-06:00",
       "worker_id": "dev-worker-DE5535B6",
       "worker_type": "feature-implementer",
-      "completed_at": "2025-11-05T19:00:28Z",
+      "completed_at": "2025-11-05T19:05:29Z",
       "error": "Worker became zombie and was killed"
     },
     {
@@ -2126,7 +2126,7 @@
       "updated_at": "2025-11-05T06:14:43-06:00",
       "worker_id": "dev-worker-DF971C09",
       "worker_type": "feature-implementer",
-      "completed_at": "2025-11-05T19:00:28Z",
+      "completed_at": "2025-11-05T19:05:29Z",
       "error": "Worker became zombie and was killed"
     },
     {
