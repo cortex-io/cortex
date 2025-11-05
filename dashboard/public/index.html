@@ -352,7 +352,8 @@
                             </div>
                         </div>
                         <div class="space-y-2 max-h-96 overflow-y-auto">
-                            <template x-for="event in events.slice(0, 15)" :key="event.id">
+                            <!-- Using index as key - events have duplicate IDs (e.g., 4x "task-created-task-012") -->
+                            <template x-for="(event, eventIndex) in events.slice(0, 15)" :key="'overview-event-' + eventIndex">
                                 <div class="flex items-start space-x-3 p-3 rounded-lg bg-gray-50 dark:bg-gray-700/50 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
                                     <div class="flex-shrink-0 w-2 h-2 mt-2 rounded-full" :class="{
                                         'bg-green-500': event.type === 'worker_completed' || event.type === 'task_completed' || event.type === 'git_push_success',
@@ -515,7 +516,8 @@
                         </div>
 
                         <!-- Event list -->
-                        <template x-for="event in events" :key="event.id">
+                        <!-- Using index as key - events have duplicate IDs -->
+                        <template x-for="(event, eventIndex) in events" :key="'events-page-' + eventIndex">
                             <div class="flex items-start space-x-3 p-4 rounded-lg bg-gray-50 dark:bg-gray-700/50 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
                                 <div class="flex-shrink-0 w-3 h-3 mt-1.5 rounded-full" :class="{
                                     'bg-green-500': event.type === 'worker_started' || event.type === 'task_completed' || event.type === 'worker_completed',
@@ -566,7 +568,8 @@
                                     </td>
                                     <td class="px-6 py-4">
                                         <div class="space-y-2">
-                                            <template x-for="event in events.filter(e => e.data?.assigned_to === 'coordinator-master' || e.data?.assigned_by === 'coordinator-master' || e.type?.includes('coordinator')).slice(0, 3)" :key="event.id">
+                                            <!-- Using index as key - events have duplicate IDs -->
+                                            <template x-for="(event, eventIndex) in events.filter(e => e.data?.assigned_to === 'coordinator-master' || e.data?.assigned_by === 'coordinator-master' || e.type?.includes('coordinator')).slice(0, 3)" :key="'coord-event-' + eventIndex">
                                                 <div class="flex items-start space-x-2 text-sm">
                                                     <span class="text-xs text-gray-400 dark:text-gray-500 whitespace-nowrap" x-text="new Date(event.timestamp).toLocaleTimeString()"></span>
                                                     <span class="text-gray-700 dark:text-gray-300 line-clamp-1" x-text="event.message || formatEventMessage(event)"></span>
@@ -591,7 +594,8 @@
                                     </td>
                                     <td class="px-6 py-4">
                                         <div class="space-y-2">
-                                            <template x-for="event in events.filter(e => e.data?.assigned_to === 'security-master' || e.data?.assigned_by === 'security-master' || e.type?.includes('security')).slice(0, 3)" :key="event.id">
+                                            <!-- Using index as key - events have duplicate IDs -->
+                                            <template x-for="(event, eventIndex) in events.filter(e => e.data?.assigned_to === 'security-master' || e.data?.assigned_by === 'security-master' || e.type?.includes('security')).slice(0, 3)" :key="'security-event-' + eventIndex">
                                                 <div class="flex items-start space-x-2 text-sm">
                                                     <span class="text-xs text-gray-400 dark:text-gray-500 whitespace-nowrap" x-text="new Date(event.timestamp).toLocaleTimeString()"></span>
                                                     <span class="text-gray-700 dark:text-gray-300 line-clamp-1" x-text="event.message || formatEventMessage(event)"></span>
@@ -616,7 +620,8 @@
                                     </td>
                                     <td class="px-6 py-4">
                                         <div class="space-y-2">
-                                            <template x-for="event in events.filter(e => e.data?.assigned_to === 'development-master' || e.data?.assigned_by === 'development-master' || e.type?.includes('development')).slice(0, 3)" :key="event.id">
+                                            <!-- Using index as key - events have duplicate IDs -->
+                                            <template x-for="(event, eventIndex) in events.filter(e => e.data?.assigned_to === 'development-master' || e.data?.assigned_by === 'development-master' || e.type?.includes('development')).slice(0, 3)" :key="'dev-event-' + eventIndex">
                                                 <div class="flex items-start space-x-2 text-sm">
                                                     <span class="text-xs text-gray-400 dark:text-gray-500 whitespace-nowrap" x-text="new Date(event.timestamp).toLocaleTimeString()"></span>
                                                     <span class="text-gray-700 dark:text-gray-300 line-clamp-1" x-text="event.message || formatEventMessage(event)"></span>
@@ -641,7 +646,8 @@
                                     </td>
                                     <td class="px-6 py-4">
                                         <div class="space-y-2">
-                                            <template x-for="event in events.filter(e => e.data?.assigned_to === 'inventory-master' || e.data?.assigned_by === 'inventory-master' || e.type?.includes('inventory')).slice(0, 3)" :key="event.id">
+                                            <!-- Using index as key - events have duplicate IDs -->
+                                            <template x-for="(event, eventIndex) in events.filter(e => e.data?.assigned_to === 'inventory-master' || e.data?.assigned_by === 'inventory-master' || e.type?.includes('inventory')).slice(0, 3)" :key="'inventory-event-' + eventIndex">
                                                 <div class="flex items-start space-x-2 text-sm">
                                                     <span class="text-xs text-gray-400 dark:text-gray-500 whitespace-nowrap" x-text="new Date(event.timestamp).toLocaleTimeString()"></span>
                                                     <span class="text-gray-700 dark:text-gray-300 line-clamp-1" x-text="event.message || formatEventMessage(event)"></span>
@@ -666,7 +672,8 @@
                                     </td>
                                     <td class="px-6 py-4">
                                         <div class="space-y-2">
-                                            <template x-for="event in events.filter(e => e.data?.assigned_to === 'cicd-master' || e.data?.assigned_by === 'cicd-master' || e.type?.includes('cicd')).slice(0, 3)" :key="event.id">
+                                            <!-- Using index as key - events have duplicate IDs -->
+                                            <template x-for="(event, eventIndex) in events.filter(e => e.data?.assigned_to === 'cicd-master' || e.data?.assigned_by === 'cicd-master' || e.type?.includes('cicd')).slice(0, 3)" :key="'cicd-event-' + eventIndex">
                                                 <div class="flex items-start space-x-2 text-sm">
                                                     <span class="text-xs text-gray-400 dark:text-gray-500 whitespace-nowrap" x-text="new Date(event.timestamp).toLocaleTimeString()"></span>
                                                     <span class="text-gray-700 dark:text-gray-300 line-clamp-1" x-text="event.message || formatEventMessage(event)"></span>
@@ -1051,7 +1058,7 @@
     </main>
 
     <!-- Load dashboard function first -->
-    <script src="dashboard-v2.js?v=4.4"></script>
+    <script src="dashboard-v2.js?v=4.5"></script>
 
     <!-- Alpine.js with defer to wait for DOM to be fully parsed -->
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
