@@ -27,6 +27,7 @@ function dashboard() {
         tasks: [],
         events: [],
         workers: [], // Will store worker pool data
+        gitOperations: [], // Git commit/push operations
 
         // WebSocket
         ws: null,
@@ -200,6 +201,11 @@ function dashboard() {
                 const eventsRes = await fetch('/api/events?limit=50');
                 const eventsData = await eventsRes.json();
                 this.events = eventsData.events || [];
+
+                // Fetch git operations
+                const gitOpsRes = await fetch('/api/git-operations');
+                const gitOpsData = await gitOpsRes.json();
+                this.gitOperations = gitOpsData.operations || [];
 
                 console.log('Initial data loaded');
             } catch (error) {
@@ -1030,6 +1036,25 @@ function dashboard() {
             return `${hours}h ${minutes}m`;
         },
 
+        // Git operations helpers
+        getTaskCommits(taskId) {
+            // Find git operations related to this task
+            // Task ID might be in worker_id or we need to match by timestamp/context
+            if (!taskId) return [];
+
+            return this.gitOperations
+                .filter(op => {
+                    // Match if worker_id contains the task ID
+                    return op.worker_id && op.worker_id.includes(taskId);
+                })
+                .map(op => {
+                    // Extract commit hash from details
+                    const match = op.details && op.details.match(/Commit: ([a-f0-9]{7,})/);
+                    return match ? match[1] : null;
+                })
+                .filter(hash => hash !== null);
+        },
+
     };
 }
 
@@ -1040,6 +1065,3 @@ window.addEventListener('beforeunload', () => {
         app.ws.close();
     }
 });
-
-// Updated by impl-worker-dashboard-1762309691 for task-020
-// Display GitHub commits on dashboard task queue page

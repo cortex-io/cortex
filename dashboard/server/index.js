@@ -1116,6 +1116,3 @@ process.on('SIGTERM', () => {
     process.exit(0);
   });
 });
-
-// Updated by impl-worker-dashboard-1762309691 for task-020
-// Display GitHub commits on dashboard task queue page
