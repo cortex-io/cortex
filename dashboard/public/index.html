@@ -1116,33 +1116,33 @@
                         <div class="mermaid bg-gray-50 dark:bg-gray-900 p-6 rounded-lg" x-init="mermaid.initialize({
                             theme: darkMode ? 'dark' : 'default',
                             startOnLoad: true,
-                            flowchart: { useMaxWidth: true, htmlLabels: true }
+                            flowchart: { useMaxWidth: true, htmlLabels: false }
                         }); setTimeout(() => mermaid.run(), 100);">
 graph TB
-    User[👤 User/CLI] -->|Creates Task| TaskQueue[(📋 Task Queue<br/>task-queue.json)]
-    TaskQueue -->|Monitors| Daemon[⚙️ Worker Daemon]
-    Daemon -->|Routes| Coordinator[🎯 Coordinator Master]
+    User["👤 User/CLI"] -->|Creates Task| TaskQueue[("📋 Task Queue")]
+    TaskQueue -->|Monitors| Daemon["⚙️ Worker Daemon"]
+    Daemon -->|Routes| Coordinator["🎯 Coordinator Master"]
 
-    Coordinator -->|Routes by Type| Security[🔒 Security Master]
-    Coordinator -->|Routes by Type| Development[💻 Development Master]
-    Coordinator -->|Routes by Type| Inventory[📦 Inventory Master]
-    Coordinator -->|Routes by Type| CICD[🚀 CI/CD Master]
+    Coordinator -->|Routes by Type| Security["🔒 Security Master"]
+    Coordinator -->|Routes by Type| Development["💻 Development Master"]
+    Coordinator -->|Routes by Type| Inventory["📦 Inventory Master"]
+    Coordinator -->|Routes by Type| CICD["🚀 CI/CD Master"]
 
-    Security -->|Spawns| SecWorkers[🔍 Security Workers<br/>Scan/Fix]
-    Development -->|Spawns| DevWorkers[⚡ Dev Workers<br/>Implement/Test/Docs]
-    Inventory -->|Spawns| InvWorkers[📊 Inventory Workers<br/>Catalog/Discover]
-    CICD -->|Spawns| CICDWorkers[🔄 CI/CD Workers<br/>Build/Deploy/Dashboard]
+    Security -->|Spawns| SecWorkers["🔍 Security Workers"]
+    Development -->|Spawns| DevWorkers["⚡ Dev Workers"]
+    Inventory -->|Spawns| InvWorkers["📊 Inventory Workers"]
+    CICD -->|Spawns| CICDWorkers["🔄 CI/CD Workers"]
 
-    SecWorkers -->|Executes| GitAuto[📝 Git Automation<br/>Auto Commit/Push]
+    SecWorkers -->|Executes| GitAuto["📝 Git Automation"]
     DevWorkers -->|Executes| GitAuto
     InvWorkers -->|Executes| GitAuto
     CICDWorkers -->|Executes| GitAuto
 
-    GitAuto -->|Records| GitOps[(🗂️ Git Operations<br/>git-operations.jsonl)]
-    GitAuto -->|Pushes to| GitHub[🐙 GitHub<br/>ry-ops/commit-relay]
+    GitAuto -->|Records| GitOps[("🗂️ Git Operations")]
+    GitAuto -->|Pushes to| GitHub["🐙 GitHub"]
 
-    GitOps -->|Generates| Events[(📡 Events<br/>dashboard-events.jsonl)]
-    Events -->|Polls Every 10s| Dashboard[📊 Dashboard<br/>localhost:3000]
+    GitOps -->|Generates| Events[("📡 Events")]
+    Events -->|Polls Every 10s| Dashboard["📊 Dashboard"]
     GitHub -->|Visible on| Dashboard
 
     Dashboard -->|Displays| User
@@ -1242,7 +1242,7 @@ graph TB
 
     <!-- Load dashboard function first -->
     <!-- All x-for loops now use index-based keys to handle duplicate IDs -->
-    <script src="dashboard-v2.js?v=4.7"></script>
+    <script src="dashboard-v2.js?v=4.8"></script>
 
     <!-- Alpine.js with defer to wait for DOM to be fully parsed -->
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
