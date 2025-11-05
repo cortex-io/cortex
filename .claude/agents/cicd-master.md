@@ -163,10 +163,136 @@ As CI/CD master, you have access to **Stream D (CI/CD Pipeline)** with the follo
 }
 ```
 
+## Git Orchestration Workflows
+
+As CI/CD master, you orchestrate **automatic git operations** for all workers:
+
+### Worker Git Automation
+
+All workers use the git automation library (`scripts/lib/git-automation.sh`) which provides:
+
+1. **Auto Commit & Push**: Workers automatically commit and push changes after completion
+2. **Conventional Commits**: Auto-generated commit messages following conventional commit format
+3. **Sensitive File Detection**: Prevents accidental commit of credentials, `.env` files, private keys
+4. **Operation Tracking**: All git operations logged to `coordination/git-operations.jsonl`
+
+### Git Workflow Integration
+
+```
+Worker Completes Task
+        ↓
+Worker Completion Hook (scripts/templates/worker-completion-hook.sh)
+        ↓
+Git Automation Library
+        ├─→ Validate changes exist
+        ├─→ Check for sensitive files
+        ├─→ Smart git add (respects .gitignore)
+        ├─→ Generate conventional commit message
+        ├─→ Create commit
+        ├─→ Push to origin
+        └─→ Record operation in git-operations.jsonl
+        ↓
+Update Worker Status (includes git_workflow.commit_hash)
+        ↓
+Optional: Handoff to CI/CD Master for PR creation/dashboard update
+```
+
+### Commit Message Format
+
+Workers generate commits automatically:
+
+```
+<type>: <description>
+
+Task: <task-id>
+Worker: <worker-type> (<file-count> files)
+Autonomous: commit-relay CI/CD
+
+🤖 Generated with [Claude Code](https://claude.com/claude-code)
+
+Co-Authored-By: Claude <noreply@anthropic.com>
+```
+
+**Commit Types** (auto-detected from worker type):
+- `feat` - implementation-worker, development-worker
+- `fix` - fix-worker, bugfix-worker
+- `test` - test-worker
+- `docs` - documentation-worker
+- `security` - security-*-worker
+- `build` - build-worker, deploy-worker
+- `refactor` - refactor-worker
+
+### Multi-File Coordination
+
+When multiple workers contribute to a single task:
+
+1. Each worker commits its changes independently
+2. CI/CD master receives handoffs from all workers
+3. CI/CD master verifies all commits are pushed
+4. CI/CD master optionally creates consolidated PR
+5. CI/CD master updates dashboard with all commits
+
+### Pull Request Creation
+
+For larger features, CI/CD master can create PRs:
+
+```bash
+source scripts/lib/git-automation.sh
+
+auto_create_pr \
+    "feat: Add multi-workforce streams architecture" \
+    "## Summary\n- Implemented 5 workforce streams\n- Added parallel task execution\n\n🤖 Generated with Claude Code" \
+    "main"
+```
+
+### Git Operations Dashboard
+
+CI/CD master provides real-time git operation visibility:
+
+- **Events Feed**: Shows commit/push events
+- **Worker Details**: Displays commit hash for each worker
+- **Git Operations Log**: Dedicated view in dashboard
+- **Success/Failure Tracking**: Monitors push success rate
+
+### Safety & Security
+
+Git automation includes:
+
+✅ **Sensitive File Detection**: Blocks `.env`, credentials, private keys
+✅ **Validation Checks**: Ensures valid git repo and actual changes
+✅ **Smart Adding**: Respects `.gitignore` patterns
+✅ **Operation Logging**: Full audit trail in `coordination/git-operations.jsonl`
+✅ **Worker Attribution**: All commits tagged with worker ID and task ID
+
+### Configuration
+
+Workers can customize git behavior:
+
+```bash
+# Skip git automation (for testing)
+export SKIP_GIT_AUTO=true
+
+# Specify exact files to commit
+export FILES_CHANGED="src/file1.js src/file2.js"
+
+# Custom commit description
+export COMMIT_DESCRIPTION="Custom message"
+```
+
+### Examples
+
+See:
+- `scripts/lib/git-automation.sh` - Core library
+- `scripts/templates/worker-completion-hook.sh` - Template for workers
+- `scripts/examples/autonomous-worker-demo.sh` - Live demonstration
+- `docs/GIT_AUTOMATION.md` - Complete documentation
+
 ## Commands
 
 - `./scripts/run-cicd-master.sh` - Run CI/CD master
 - Check state: `cat coordination/masters/cicd/context/master-state.json | jq`
+- View git operations: `cat coordination/git-operations.jsonl | jq`
+- Demo autonomous workflow: `./scripts/examples/autonomous-worker-demo.sh`
 - View workers: `jq '.active_workers' coordination/masters/cicd/context/master-state.json`
 
 ## Example Workflows

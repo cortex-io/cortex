@@ -387,22 +387,37 @@ function calculateMetrics(data, successRatePeriod = 'all_time') {
     coordinator: {
       allocated: tokenBudget.masters?.coordinator?.allocated || 0,
       used: tokenBudget.masters?.coordinator?.used || 0,
-      workerPool: tokenBudget.masters?.coordinator?.worker_pool || 0
+      workerPool: tokenBudget.masters?.coordinator?.worker_pool || 0,
+      tasksHandled: tokenBudget.masters?.coordinator?.tasks_handled?.length || 0
     },
     security: {
       allocated: tokenBudget.masters?.security?.allocated || 0,
       used: tokenBudget.masters?.security?.used || 0,
-      workerPool: tokenBudget.masters?.security?.worker_pool || 0
+      workerPool: tokenBudget.masters?.security?.worker_pool || 0,
+      tasksHandled: tokenBudget.masters?.security?.tasks_handled?.length || 0
     },
     development: {
       allocated: tokenBudget.masters?.development?.allocated || 0,
       used: tokenBudget.masters?.development?.used || 0,
-      workerPool: tokenBudget.masters?.development?.worker_pool || 0
+      workerPool: tokenBudget.masters?.development?.worker_pool || 0,
+      tasksHandled: tokenBudget.masters?.development?.tasks_handled?.length || 0
     },
     inventory: {
       allocated: tokenBudget.masters?.inventory?.allocated || 0,
       used: tokenBudget.masters?.inventory?.used || 0,
-      workerPool: tokenBudget.masters?.inventory?.worker_pool || 0
+      workerPool: tokenBudget.masters?.inventory?.worker_pool || 0,
+      tasksHandled: tokenBudget.masters?.inventory?.tasks_handled?.length || 0
+    },
+    cicd: {
+      allocated: tokenBudget.masters?.cicd?.allocated || 0,
+      used: tokenBudget.masters?.cicd?.used || 0,
+      workerPool: tokenBudget.masters?.cicd?.worker_pool || 0,
+      tasksHandled: tokenBudget.masters?.cicd?.tasks_handled?.length || 0
+    },
+    dashboard: {
+      allocated: tokenBudget.observers?.dashboard?.allocated || 0,
+      used: tokenBudget.observers?.dashboard?.used || 0,
+      eventsProcessed: tokenBudget.observers?.dashboard?.events_processed || 0
     }
   };
 
