@@ -1347,6 +1347,135 @@
                         </div>
                     </div>
 
+                    <!-- EM Coordination Flow Diagram -->
+                    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 border border-gray-200 dark:border-gray-700">
+                        <div class="flex items-center justify-between mb-4">
+                            <div class="flex items-center space-x-3">
+                                <i data-lucide="workflow" class="w-6 h-6 text-teal-600 dark:text-teal-400"></i>
+                                <h3 class="text-xl font-bold text-gray-900 dark:text-white">Execution Manager Coordination Flow</h3>
+                            </div>
+                        </div>
+                        <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">Visual representation of EM orchestration patterns for complex multi-step tasks</p>
+
+                        <!-- Mermaid Flow Diagram -->
+                        <div class="bg-gray-50 dark:bg-gray-900 rounded-lg p-6 border border-gray-200 dark:border-gray-700">
+                            <pre class="mermaid" x-init="setTimeout(() => { try { mermaid.run(); } catch(e) { console.error('Mermaid EM diagram error:', e); } }, 100)">
+graph TB
+    subgraph Complex_Task["🎯 Complex Task (Requires EM)"]
+        CT[Multi-Step Task<br/>Assigned to Master]
+    end
+
+    subgraph Master["👑 Master Agent"]
+        MC{Complexity<br/>Check}
+        MD[Task Analysis]
+    end
+
+    subgraph EM["⚡ Execution Manager"]
+        EM1[Parse Task]
+        EM2[Decompose Steps]
+        EM3[Allocate Resources]
+        EM4[Spawn Workers]
+        EM5[Monitor Progress]
+        EM6[Aggregate Results]
+    end
+
+    subgraph Workers["👷 Worker Pool"]
+        W1[Worker 1<br/>Step A]
+        W2[Worker 2<br/>Step B]
+        W3[Worker 3<br/>Step C]
+    end
+
+    subgraph Results["📊 Completion"]
+        R1[EM Aggregates<br/>All Results]
+        R2[Master Validates]
+        R3[Task Complete]
+    end
+
+    CT --> MC
+    MC -->|Complex| MD
+    MC -->|Simple| W1
+    MD --> EM1
+    EM1 --> EM2
+    EM2 --> EM3
+    EM3 --> EM4
+
+    EM4 -->|Spawn| W1
+    EM4 -->|Spawn| W2
+    EM4 -->|Spawn| W3
+
+    W1 -->|Result| EM5
+    W2 -->|Result| EM5
+    W3 -->|Result| EM5
+
+    EM5 --> EM6
+    EM6 --> R1
+    R1 --> R2
+    R2 --> R3
+
+    style CT fill:#fef3c7,stroke:#f59e0b,stroke-width:2px
+    style MC fill:#dbeafe,stroke:#3b82f6,stroke-width:2px
+    style EM1 fill:#d1fae5,stroke:#10b981,stroke-width:2px
+    style EM2 fill:#d1fae5,stroke:#10b981,stroke-width:2px
+    style EM3 fill:#d1fae5,stroke:#10b981,stroke-width:2px
+    style EM4 fill:#d1fae5,stroke:#10b981,stroke-width:2px
+    style EM5 fill:#d1fae5,stroke:#10b981,stroke-width:2px
+    style EM6 fill:#d1fae5,stroke:#10b981,stroke-width:2px
+    style W1 fill:#e0e7ff,stroke:#818cf8,stroke-width:2px
+    style W2 fill:#e0e7ff,stroke:#818cf8,stroke-width:2px
+    style W3 fill:#e0e7ff,stroke:#818cf8,stroke-width:2px
+    style R1 fill:#fce7f3,stroke:#ec4899,stroke-width:2px
+    style R2 fill:#fce7f3,stroke:#ec4899,stroke-width:2px
+    style R3 fill:#dcfce7,stroke:#16a34a,stroke-width:3px
+                            </pre>
+                        </div>
+
+                        <!-- EM Statistics -->
+                        <div class="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div class="bg-green-50 dark:bg-green-900/20 p-4 rounded-lg border border-green-200 dark:border-green-800">
+                                <div class="flex items-center justify-between">
+                                    <div>
+                                        <p class="text-xs font-medium text-green-700 dark:text-green-300 uppercase">EM Instances</p>
+                                        <p class="text-2xl font-bold text-green-900 dark:text-green-100 mt-1" x-text="0">0</p>
+                                    </div>
+                                    <i data-lucide="git-branch" class="w-8 h-8 text-green-500"></i>
+                                </div>
+                                <p class="text-xs text-green-600 dark:text-green-400 mt-2">Total EMs spawned</p>
+                            </div>
+
+                            <div class="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg border border-blue-200 dark:border-blue-800">
+                                <div class="flex items-center justify-between">
+                                    <div>
+                                        <p class="text-xs font-medium text-blue-700 dark:text-blue-300 uppercase">Workers Managed</p>
+                                        <p class="text-2xl font-bold text-blue-900 dark:text-blue-100 mt-1" x-text="0">0</p>
+                                    </div>
+                                    <i data-lucide="users" class="w-8 h-8 text-blue-500"></i>
+                                </div>
+                                <p class="text-xs text-blue-600 dark:text-blue-400 mt-2">Workers coordinated by EMs</p>
+                            </div>
+
+                            <div class="bg-purple-50 dark:bg-purple-900/20 p-4 rounded-lg border border-purple-200 dark:border-purple-800">
+                                <div class="flex items-center justify-between">
+                                    <div>
+                                        <p class="text-xs font-medium text-purple-700 dark:text-purple-300 uppercase">Success Rate</p>
+                                        <p class="text-2xl font-bold text-purple-900 dark:text-purple-100 mt-1" x-text="'N/A'">N/A</p>
+                                    </div>
+                                    <i data-lucide="check-circle" class="w-8 h-8 text-purple-500"></i>
+                                </div>
+                                <p class="text-xs text-purple-600 dark:text-purple-400 mt-2">EM-managed task success</p>
+                            </div>
+                        </div>
+
+                        <div class="mt-4 p-4 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg">
+                            <div class="flex items-start space-x-3">
+                                <i data-lucide="info" class="w-5 h-5 text-amber-600 dark:text-amber-400 flex-shrink-0 mt-0.5"></i>
+                                <div class="text-sm text-amber-800 dark:text-amber-200">
+                                    <p class="font-semibold mb-1">Execution Managers (v4.0+)</p>
+                                    <p>EMs are spawned for complex multi-step tasks that require decomposition and parallel worker coordination. They handle resource allocation, progress monitoring, and result aggregation.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
                     <!-- Top row: Pie Chart and Pareto Chart -->
                     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
                         <!-- Pie Chart: Worker Status Distribution -->
