@@ -340,6 +340,11 @@ function calculateMetrics(data, successRatePeriod = 'all_time') {
   const completedWorkers = workerPool.completed_workers?.length || 0;
   const failedWorkers = workerPool.failed_workers?.length || 0;
 
+  // Count zombies killed by the zombie-killer-daemon
+  const zombiesKilled = (workerPool.failed_workers || []).filter(worker =>
+    worker.execution?.killed_by === 'zombie-killer-daemon'
+  ).length;
+
   // Calculate success rate based on selected time period
   const successRateData = calculateSuccessRate(
     workerPool,
@@ -438,7 +443,8 @@ function calculateMetrics(data, successRatePeriod = 'all_time') {
       successRatePeriod: successRatePeriod,
       successRateDetails: successRateData,
       avgDuration: workerPool.stats?.avg_duration_minutes || 0,
-      avgTokens: workerPool.stats?.avg_tokens_used || 0
+      avgTokens: workerPool.stats?.avg_tokens_used || 0,
+      zombiesKilled: zombiesKilled
     },
     tokens: {
       total: totalBudget,

@@ -334,10 +334,13 @@
                                 <div class="text-xs text-gray-600 dark:text-gray-400 mt-1">Autonomous Commits</div>
                             </div>
 
-                            <!-- Tasks Completed -->
-                            <div class="bg-white dark:bg-gray-800 rounded-lg p-3 shadow">
-                                <div class="text-2xl font-bold text-blue-600 dark:text-blue-400" x-text="metrics.tasks?.completed || 0">0</div>
-                                <div class="text-xs text-gray-600 dark:text-gray-400 mt-1">Tasks Completed</div>
+                            <!-- Zombies Killed -->
+                            <div class="bg-white dark:bg-gray-800 rounded-lg p-3 shadow border-2 border-red-200 dark:border-red-900">
+                                <div class="flex items-center justify-center space-x-1">
+                                    <div class="text-2xl font-bold text-red-600 dark:text-red-400" x-text="metrics.workers?.zombiesKilled || 0">0</div>
+                                    <div class="text-lg">🧟</div>
+                                </div>
+                                <div class="text-xs text-gray-600 dark:text-gray-400 mt-1">Zombies Killed</div>
                             </div>
 
                             <!-- Success Rate -->
