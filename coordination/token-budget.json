@@ -1,6 +1,6 @@
 {
   "version": "1.1",
-  "updated_at": "2025-11-04T18:00:00Z",
+  "updated_at": "2025-11-05T21:46:05Z",
   "budget_period": "daily",
   "resets_at": "2025-11-05T00:00:00Z",
   "total_budget": 305000,
@@ -59,8 +59,8 @@
   },
   "worker_pool": {
     "total": 105000,
-    "allocated_to_workers": 107500,
-    "available": -2500,
+    "allocated_to_workers": 112500,
+    "available": -7500,
     "workers_active": 0,
     "workers_completed": 9,
     "stream_allocations": {
@@ -87,5 +87,19 @@
     "efficiency_score": 96.2,
     "tasks_completed": 2,
     "tasks_in_progress": 0
+  },
+  "execution_managers": {
+    "exec-mgr-dev-903e3486": {
+      "allocated": 30000,
+      "used": 0,
+      "master": "development",
+      "started_at": "2025-11-05T21:16:56Z"
+    },
+    "exec-mgr-dev-78d332c2": {
+      "allocated": 25000,
+      "used": 0,
+      "master": "development",
+      "started_at": "2025-11-05T21:38:48Z"
+    }
   }
 }
