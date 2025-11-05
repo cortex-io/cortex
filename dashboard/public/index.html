@@ -17,6 +17,9 @@
     <!-- Chart.js for metrics page -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 
+    <!-- Mermaid.js for flowcharts -->
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+
     <!-- Lucide Icons -->
     <script src="https://unpkg.com/lucide@latest"></script>
 
@@ -167,6 +170,10 @@
                 <i data-lucide="scroll-text" class="w-5 h-5"></i>
                 <span :class="currentView === 'events' ? 'font-medium' : ''">Activity</span>
             </button>
+            <button @click="switchView('about')" class="w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors" :class="currentView === 'about' ? 'bg-primary-50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-300' : 'hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300'">
+                <i data-lucide="info" class="w-5 h-5"></i>
+                <span :class="currentView === 'about' ? 'font-medium' : ''">About</span>
+            </button>
         </nav>
 
         <!-- Theme toggle -->
@@ -191,7 +198,8 @@
                         'tasks': 'Task Queue',
                         'events': 'Activity Logs',
                         'masters': 'Agent Orchestration',
-                        'metrics': 'Analytics'
+                        'metrics': 'Analytics',
+                        'about': 'About Commit-Relay'
                     }[currentView]"></h2>
                     <p class="text-sm text-gray-500 dark:text-gray-400" x-text="'Last updated: ' + lastUpdate"></p>
                 </div>
@@ -1054,12 +1062,187 @@
                     </div>
                 </div>
             </div>
+
+            <!-- About View -->
+            <div x-show="currentView === 'about'" x-transition>
+                <div class="space-y-6 max-w-6xl">
+                    <!-- Overview Section -->
+                    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-8 border border-gray-200 dark:border-gray-700">
+                        <div class="flex items-center space-x-3 mb-6">
+                            <i data-lucide="info" class="w-8 h-8 text-primary-500"></i>
+                            <h3 class="text-2xl font-bold text-gray-900 dark:text-white">About Commit-Relay</h3>
+                        </div>
+
+                        <div class="space-y-4 text-gray-700 dark:text-gray-300">
+                            <p class="text-lg leading-relaxed">
+                                <strong>Commit-Relay</strong> is a fully autonomous AI-powered development workflow system that orchestrates
+                                multiple specialized AI agents to handle software development tasks from inception to deployment.
+                            </p>
+
+                            <p class="leading-relaxed">
+                                The system employs a <strong>Mixture of Experts (MoE)</strong> architecture where a central coordinator
+                                routes tasks to specialized master agents (Security, Development, Inventory, CI/CD) who in turn spawn
+                                domain-specific workers to execute the actual work.
+                            </p>
+
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
+                                <div class="bg-primary-50 dark:bg-primary-900/20 p-4 rounded-lg">
+                                    <h4 class="font-semibold text-primary-700 dark:text-primary-300 mb-2">🤖 Autonomous Operation</h4>
+                                    <p class="text-sm">Workers automatically commit and push changes to GitHub without manual intervention.</p>
+                                </div>
+                                <div class="bg-green-50 dark:bg-green-900/20 p-4 rounded-lg">
+                                    <h4 class="font-semibold text-green-700 dark:text-green-300 mb-2">⚡ Real-Time Updates</h4>
+                                    <p class="text-sm">Dashboard polls every 10 seconds to display live task progress, events, and git operations.</p>
+                                </div>
+                                <div class="bg-purple-50 dark:bg-purple-900/20 p-4 rounded-lg">
+                                    <h4 class="font-semibold text-purple-700 dark:text-purple-300 mb-2">🎯 Specialized Agents</h4>
+                                    <p class="text-sm">5 master agents and 5 worker types handle security, development, testing, documentation, and CI/CD.</p>
+                                </div>
+                                <div class="bg-orange-50 dark:bg-orange-900/20 p-4 rounded-lg">
+                                    <h4 class="font-semibold text-orange-700 dark:text-orange-300 mb-2">📊 Complete Visibility</h4>
+                                    <p class="text-sm">Track all tasks, workers, events, and git operations through comprehensive dashboard analytics.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- System Architecture Flowchart -->
+                    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-8 border border-gray-200 dark:border-gray-700">
+                        <div class="flex items-center space-x-3 mb-6">
+                            <i data-lucide="git-branch" class="w-8 h-8 text-primary-500"></i>
+                            <h3 class="text-2xl font-bold text-gray-900 dark:text-white">System Architecture</h3>
+                        </div>
+
+                        <div class="mermaid bg-gray-50 dark:bg-gray-900 p-6 rounded-lg" x-init="mermaid.initialize({
+                            theme: darkMode ? 'dark' : 'default',
+                            startOnLoad: true,
+                            flowchart: { useMaxWidth: true, htmlLabels: true }
+                        }); setTimeout(() => mermaid.run(), 100);">
+graph TB
+    User[👤 User/CLI] -->|Creates Task| TaskQueue[(📋 Task Queue<br/>task-queue.json)]
+    TaskQueue -->|Monitors| Daemon[⚙️ Worker Daemon]
+    Daemon -->|Routes| Coordinator[🎯 Coordinator Master]
+
+    Coordinator -->|Routes by Type| Security[🔒 Security Master]
+    Coordinator -->|Routes by Type| Development[💻 Development Master]
+    Coordinator -->|Routes by Type| Inventory[📦 Inventory Master]
+    Coordinator -->|Routes by Type| CICD[🚀 CI/CD Master]
+
+    Security -->|Spawns| SecWorkers[🔍 Security Workers<br/>Scan/Fix]
+    Development -->|Spawns| DevWorkers[⚡ Dev Workers<br/>Implement/Test/Docs]
+    Inventory -->|Spawns| InvWorkers[📊 Inventory Workers<br/>Catalog/Discover]
+    CICD -->|Spawns| CICDWorkers[🔄 CI/CD Workers<br/>Build/Deploy/Dashboard]
+
+    SecWorkers -->|Executes| GitAuto[📝 Git Automation<br/>Auto Commit/Push]
+    DevWorkers -->|Executes| GitAuto
+    InvWorkers -->|Executes| GitAuto
+    CICDWorkers -->|Executes| GitAuto
+
+    GitAuto -->|Records| GitOps[(🗂️ Git Operations<br/>git-operations.jsonl)]
+    GitAuto -->|Pushes to| GitHub[🐙 GitHub<br/>ry-ops/commit-relay]
+
+    GitOps -->|Generates| Events[(📡 Events<br/>dashboard-events.jsonl)]
+    Events -->|Polls Every 10s| Dashboard[📊 Dashboard<br/>localhost:3000]
+    GitHub -->|Visible on| Dashboard
+
+    Dashboard -->|Displays| User
+
+    style User fill:#e1f5ff,stroke:#0284c7,stroke-width:2px
+    style Coordinator fill:#fef3c7,stroke:#f59e0b,stroke-width:2px
+    style Security fill:#fee2e2,stroke:#ef4444,stroke-width:2px
+    style Development fill:#dbeafe,stroke:#3b82f6,stroke-width:2px
+    style Inventory fill:#e9d5ff,stroke:#a855f7,stroke-width:2px
+    style CICD fill:#d1fae5,stroke:#10b981,stroke-width:2px
+    style GitAuto fill:#fce7f3,stroke:#ec4899,stroke-width:2px
+    style GitHub fill:#1f2937,stroke:#ffffff,stroke-width:2px
+    style Dashboard fill:#f3e8ff,stroke:#9333ea,stroke-width:2px
+                        </div>
+
+                        <div class="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                            <div>
+                                <h4 class="font-semibold text-gray-900 dark:text-white mb-2">📋 Task Flow</h4>
+                                <p class="text-gray-600 dark:text-gray-400">User creates task → Queue → Daemon detects → Coordinator routes to specialist master</p>
+                            </div>
+                            <div>
+                                <h4 class="font-semibold text-gray-900 dark:text-white mb-2">🤖 Worker Execution</h4>
+                                <p class="text-gray-600 dark:text-gray-400">Master spawns worker → Worker executes → Auto git commit/push → Records operation</p>
+                            </div>
+                            <div>
+                                <h4 class="font-semibold text-gray-900 dark:text-white mb-2">📊 Dashboard Updates</h4>
+                                <p class="text-gray-600 dark:text-gray-400">Events generated → Dashboard polls every 10s → Real-time visibility</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Key Components -->
+                    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-8 border border-gray-200 dark:border-gray-700">
+                        <div class="flex items-center space-x-3 mb-6">
+                            <i data-lucide="layers" class="w-8 h-8 text-primary-500"></i>
+                            <h3 class="text-2xl font-bold text-gray-900 dark:text-white">Key Components</h3>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <h4 class="font-semibold text-lg text-gray-900 dark:text-white mb-3">Master Agents (5)</h4>
+                                <ul class="space-y-2 text-gray-700 dark:text-gray-300">
+                                    <li class="flex items-start">
+                                        <span class="text-orange-500 mr-2">🎯</span>
+                                        <span><strong>Coordinator:</strong> Routes tasks to specialist masters using MoE pattern matching</span>
+                                    </li>
+                                    <li class="flex items-start">
+                                        <span class="text-red-500 mr-2">🔒</span>
+                                        <span><strong>Security:</strong> Vulnerability scanning, CVE remediation, compliance monitoring</span>
+                                    </li>
+                                    <li class="flex items-start">
+                                        <span class="text-blue-500 mr-2">💻</span>
+                                        <span><strong>Development:</strong> Feature implementation, bug fixes, code refactoring</span>
+                                    </li>
+                                    <li class="flex items-start">
+                                        <span class="text-purple-500 mr-2">📦</span>
+                                        <span><strong>Inventory:</strong> Repository cataloging, metadata tracking, documentation</span>
+                                    </li>
+                                    <li class="flex items-start">
+                                        <span class="text-green-500 mr-2">🚀</span>
+                                        <span><strong>CI/CD:</strong> Build automation, test orchestration, deployment pipelines</span>
+                                    </li>
+                                </ul>
+                            </div>
+
+                            <div>
+                                <h4 class="font-semibold text-lg text-gray-900 dark:text-white mb-3">Worker Types (5)</h4>
+                                <ul class="space-y-2 text-gray-700 dark:text-gray-300">
+                                    <li class="flex items-start">
+                                        <span class="text-blue-500 mr-2">⚡</span>
+                                        <span><strong>Implementation:</strong> Feature development and code creation</span>
+                                    </li>
+                                    <li class="flex items-start">
+                                        <span class="text-green-500 mr-2">🧪</span>
+                                        <span><strong>Test:</strong> Unit, integration, and E2E test creation</span>
+                                    </li>
+                                    <li class="flex items-start">
+                                        <span class="text-purple-500 mr-2">📝</span>
+                                        <span><strong>Documentation:</strong> Markdown docs, API references, guides</span>
+                                    </li>
+                                    <li class="flex items-start">
+                                        <span class="text-red-500 mr-2">🔍</span>
+                                        <span><strong>Security Scan:</strong> Dependency audits, static analysis, secrets detection</span>
+                                    </li>
+                                    <li class="flex items-start">
+                                        <span class="text-orange-500 mr-2">📊</span>
+                                        <span><strong>Dashboard Update:</strong> Deploys dashboard data and events</span>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </main>
 
     <!-- Load dashboard function first -->
     <!-- All x-for loops now use index-based keys to handle duplicate IDs -->
-    <script src="dashboard-v2.js?v=4.6"></script>
+    <script src="dashboard-v2.js?v=4.7"></script>
 
     <!-- Alpine.js with defer to wait for DOM to be fully parsed -->
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
