@@ -1064,7 +1064,7 @@
             </div>
 
             <!-- About View -->
-            <div x-show="currentView === 'about'" x-transition x-init="$watch('currentView', value => { if (value === 'about') { setTimeout(() => mermaid.run(), 100); } })">
+            <div x-show="currentView === 'about'" x-transition @transitionend="if (currentView === 'about') { setTimeout(() => { try { mermaid.run(); console.log('Mermaid rendered'); } catch(e) { console.error('Mermaid error:', e); } }, 50); }">
                 <div class="space-y-6 max-w-6xl">
                     <!-- Overview Section -->
                     <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-8 border border-gray-200 dark:border-gray-700">
@@ -1238,33 +1238,26 @@ graph TB
 
     <!-- Load dashboard function first -->
     <!-- All x-for loops now use index-based keys to handle duplicate IDs -->
-    <script src="dashboard-v2.js?v=5.0"></script>
+    <script src="dashboard-v2.js?v=5.1"></script>
 
     <!-- Alpine.js with defer to wait for DOM to be fully parsed -->
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
 
     <!-- Mermaid initialization -->
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            mermaid.initialize({
-                startOnLoad: true,
-                theme: 'default',
-                flowchart: {
-                    useMaxWidth: true,
-                    htmlLabels: false
-                }
-            });
+        // Initialize Mermaid but DON'T auto-render (startOnLoad: false)
+        mermaid.initialize({
+            startOnLoad: false,
+            theme: 'default',
+            flowchart: {
+                useMaxWidth: true,
+                htmlLabels: false
+            }
+        });
 
-            // Re-render Mermaid diagrams when view changes
-            document.addEventListener('alpine:initialized', () => {
-                const observer = new MutationObserver(() => {
-                    mermaid.run();
-                });
-                const mainContent = document.querySelector('main');
-                if (mainContent) {
-                    observer.observe(mainContent, { childList: true, subtree: true });
-                }
-            });
+        // Wait for Alpine.js to be fully ready
+        document.addEventListener('alpine:initialized', () => {
+            console.log('Alpine initialized, Mermaid ready');
         });
     </script>
 </body>
