@@ -171,12 +171,21 @@ async function loadCoordinationData(forceRefresh = false) {
   const workerSpecsDir = path.join(COORD_DIR, 'worker-specs');
   const liveWorkerPool = await generateLiveWorkerPool(workerSpecsDir);
 
+  // Load orchestrator state (v4.0)
+  const orchestratorState = await readJSON(path.join(COORD_DIR, 'orchestrator/state/current.json'));
+
   const data = {
     workerPool: liveWorkerPool,
     tokenBudget: await readJSON(FILES.tokenBudget),
     taskQueue: await readJSON(FILES.taskQueue),
     handoffs: await readJSON(FILES.handoffs),
     status: await readJSON(FILES.status),
+    orchestrator: orchestratorState || {
+      active_orchestrations: 0,
+      total_orchestrations: 0,
+      completed_orchestrations: 0,
+      failed_orchestrations: 0
+    },
     lastUpdate: new Date().toISOString(),
     lastFileUpdate: cache.lastFileUpdate
   };
@@ -437,6 +446,9 @@ function calculateMetrics(data, successRatePeriod = 'all_time') {
     weekOpusPercent: data.status?.usage?.week_opus_percent || 0
   };
 
+  // Orchestration metrics (v4.0)
+  const orchestrator = data.orchestrator || {};
+
   return {
     workers: {
       active: activeWorkers,
@@ -469,6 +481,12 @@ function calculateMetrics(data, successRatePeriod = 'all_time') {
       inProgress: inProgressTasks,
       completed: completedTasks,
       total: totalTasks
+    },
+    orchestrator: {
+      active: orchestrator.active_orchestrations || 0,
+      total: orchestrator.total_orchestrations || 0,
+      completed: orchestrator.completed_orchestrations || 0,
+      failed: orchestrator.failed_orchestrations || 0
     },
     masters,
     usage,
