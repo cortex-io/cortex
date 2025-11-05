@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "updated_at": "2025-11-04T22:15:13Z",
+  "updated_at": "2025-11-05T02:27:25Z",
   "tasks": [
     {
       "id": "task-001",
@@ -1896,6 +1896,22 @@
           "static-analysis",
           "secrets"
         ]
+      }
+    },
+    {
+      "id": "",
+      "title": "Display GitHub commits/updates on dashboard task queue page - show git operations linked to each task",
+      "type": "development",
+      "priority": "high",
+      "status": "pending",
+      "assigned_to": null,
+      "created_at": "2025-11-05T02:27:25Z",
+      "created_by": "create-task-cli",
+      "context": {
+        "repository": "ry-ops/commit-relay",
+        "branch": "main",
+        "description": "Display GitHub commits/updates on dashboard task queue page - show git operations linked to each task",
+        "requirements": []
       }
     }
   ]
