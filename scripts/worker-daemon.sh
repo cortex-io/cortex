@@ -151,10 +151,17 @@ while true; do
 
                     # Build launch command using Claude CLI
                     # Note: Workers need interactive mode for tool usage, not --print mode
-                    # The prompt file is passed as an argument to start a conversation
-                    TERMINAL_CMD="cd $COMMIT_RELAY_HOME && claude \"\$(cat $PROMPT_TEMPLATE)\""
+                    # Read the prompt content and pass it to claude
+                    PROMPT_CONTENT=$(cat "$FULL_PROMPT_PATH" 2>/dev/null | sed 's/"/\\"/g' | tr '\n' ' ')
 
-                    # Launch Claude CLI in Terminal
+                    if [ -z "$PROMPT_CONTENT" ]; then
+                        log_daemon "ERROR: Could not read prompt template: $FULL_PROMPT_PATH"
+                        continue
+                    fi
+
+                    # Launch Claude CLI in Terminal with the prompt
+                    TERMINAL_CMD="cd $COMMIT_RELAY_HOME && claude \"$PROMPT_CONTENT\""
+
                     osascript -e "tell application \"Terminal\"
                         do script \"$TERMINAL_CMD\"
                         activate
