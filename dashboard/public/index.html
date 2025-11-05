@@ -1243,6 +1243,110 @@
                         </div>
                     </div>
 
+                    <!-- Master Activity Heatmap -->
+                    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 border border-gray-200 dark:border-gray-700">
+                        <div class="flex items-center justify-between mb-4">
+                            <div class="flex items-center space-x-3">
+                                <i data-lucide="grid-3x3" class="w-6 h-6 text-orange-600 dark:text-orange-400"></i>
+                                <h3 class="text-xl font-bold text-gray-900 dark:text-white">Master Activity Heatmap</h3>
+                            </div>
+                            <div class="flex items-center space-x-2">
+                                <select class="px-3 py-1.5 text-sm rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white" x-model="heatmapTimeRange" @change="updateHeatmap()">
+                                    <option value="24h">Last 24 Hours</option>
+                                    <option value="7d" selected>Last 7 Days</option>
+                                    <option value="30d">Last 30 Days</option>
+                                </select>
+                            </div>
+                        </div>
+                        <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">Visual representation of master agent activity patterns over time</p>
+
+                        <!-- Heatmap Grid -->
+                        <div class="overflow-x-auto">
+                            <div class="inline-block min-w-full">
+                                <!-- Time Labels (Top) -->
+                                <div class="flex mb-2">
+                                    <div class="w-32 flex-shrink-0"></div>
+                                    <div class="flex-1 flex justify-between text-xs text-gray-500 dark:text-gray-400 px-1">
+                                        <span>0h</span>
+                                        <span>6h</span>
+                                        <span>12h</span>
+                                        <span>18h</span>
+                                        <span>24h</span>
+                                    </div>
+                                </div>
+
+                                <!-- Heatmap Rows -->
+                                <div class="space-y-1">
+                                    <!-- Coordinator Master -->
+                                    <div class="flex items-center">
+                                        <div class="w-32 flex-shrink-0 text-sm font-medium text-gray-900 dark:text-white">Coordinator</div>
+                                        <div class="flex-1 flex gap-0.5" x-init="renderHeatmapRow('coordinator')">
+                                            <template x-for="(cell, index) in heatmapData.coordinator" :key="'coord-' + index">
+                                                <div class="flex-1 h-8 rounded transition-colors cursor-pointer"
+                                                     :style="'background-color: ' + getHeatmapColor(cell.activity)"
+                                                     :title="'Hour ' + cell.hour + ': ' + cell.activity + ' tasks'">
+                                                </div>
+                                            </template>
+                                        </div>
+                                    </div>
+
+                                    <!-- Development Master -->
+                                    <div class="flex items-center">
+                                        <div class="w-32 flex-shrink-0 text-sm font-medium text-gray-900 dark:text-white">Development</div>
+                                        <div class="flex-1 flex gap-0.5" x-init="renderHeatmapRow('development')">
+                                            <template x-for="(cell, index) in heatmapData.development" :key="'dev-' + index">
+                                                <div class="flex-1 h-8 rounded transition-colors cursor-pointer"
+                                                     :style="'background-color: ' + getHeatmapColor(cell.activity)"
+                                                     :title="'Hour ' + cell.hour + ': ' + cell.activity + ' tasks'">
+                                                </div>
+                                            </template>
+                                        </div>
+                                    </div>
+
+                                    <!-- Security Master -->
+                                    <div class="flex items-center">
+                                        <div class="w-32 flex-shrink-0 text-sm font-medium text-gray-900 dark:text-white">Security</div>
+                                        <div class="flex-1 flex gap-0.5" x-init="renderHeatmapRow('security')">
+                                            <template x-for="(cell, index) in heatmapData.security" :key="'sec-' + index">
+                                                <div class="flex-1 h-8 rounded transition-colors cursor-pointer"
+                                                     :style="'background-color: ' + getHeatmapColor(cell.activity)"
+                                                     :title="'Hour ' + cell.hour + ': ' + cell.activity + ' tasks'">
+                                                </div>
+                                            </template>
+                                        </div>
+                                    </div>
+
+                                    <!-- Inventory Master -->
+                                    <div class="flex items-center">
+                                        <div class="w-32 flex-shrink-0 text-sm font-medium text-gray-900 dark:text-white">Inventory</div>
+                                        <div class="flex-1 flex gap-0.5" x-init="renderHeatmapRow('inventory')">
+                                            <template x-for="(cell, index) in heatmapData.inventory" :key="'inv-' + index">
+                                                <div class="flex-1 h-8 rounded transition-colors cursor-pointer"
+                                                     :style="'background-color: ' + getHeatmapColor(cell.activity)"
+                                                     :title="'Hour ' + cell.hour + ': ' + cell.activity + ' tasks'">
+                                                </div>
+                                            </template>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Color Scale Legend -->
+                                <div class="flex items-center justify-between mt-4 text-xs text-gray-500 dark:text-gray-400">
+                                    <span>Less Active</span>
+                                    <div class="flex gap-1">
+                                        <div class="w-6 h-4 rounded" style="background-color: #f3f4f6;"></div>
+                                        <div class="w-6 h-4 rounded" style="background-color: #c7d2fe;"></div>
+                                        <div class="w-6 h-4 rounded" style="background-color: #a5b4fc;"></div>
+                                        <div class="w-6 h-4 rounded" style="background-color: #818cf8;"></div>
+                                        <div class="w-6 h-4 rounded" style="background-color: #6366f1;"></div>
+                                        <div class="w-6 h-4 rounded" style="background-color: #4f46e5;"></div>
+                                    </div>
+                                    <span>More Active</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
                     <!-- Top row: Pie Chart and Pareto Chart -->
                     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
                         <!-- Pie Chart: Worker Status Distribution -->
