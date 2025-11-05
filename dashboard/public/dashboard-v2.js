@@ -1220,6 +1220,12 @@ function dashboard() {
             // Only initialize if we haven't already and charts exist in DOM
             if (!document.getElementById('pieChart')) return;
 
+            // Initialize new Phase 7 analytics charts
+            this.initAnalyticsCharts();
+            this.initGanttChart();
+            this.initHeatmapData();
+
+            // Initialize existing charts
             this.initPieChart();
             this.initParetoChart();
             this.initAreaChart();
@@ -1767,6 +1773,16 @@ function dashboard() {
             if (view === 'metrics') {
                 this.$nextTick(() => {
                     this.initMetricsCharts();
+                    // Render Mermaid diagrams (for EM flow diagram)
+                    setTimeout(() => {
+                        try {
+                            if (typeof mermaid !== 'undefined') {
+                                mermaid.run();
+                            }
+                        } catch (e) {
+                            console.error('Mermaid rendering error:', e);
+                        }
+                    }, 100);
                 });
             }
 
