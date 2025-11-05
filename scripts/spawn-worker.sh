@@ -82,6 +82,7 @@ DEADLINE=""
 PRIORITY="medium"
 SCOPE_JSON=""
 CONTEXT_JSON=""
+EXECUTION_MANAGER=""
 
 while [[ $# -gt 0 ]]; do
     case $1 in
@@ -95,6 +96,10 @@ while [[ $# -gt 0 ]]; do
             ;;
         -m|--master)
             MASTER_AGENT="$2"
+            shift 2
+            ;;
+        -e|--execution-manager)
+            EXECUTION_MANAGER="$2"
             shift 2
             ;;
         -r|--repo)
@@ -238,11 +243,19 @@ WORKER_SPEC_FILE="coordination/worker-specs/active/${WORKER_ID}.json"
 
 print_info "Creating worker specification: $WORKER_SPEC_FILE"
 
+# Set execution_manager field
+if [ -n "$EXECUTION_MANAGER" ]; then
+  EM_FIELD="\"$EXECUTION_MANAGER\""
+else
+  EM_FIELD="null"
+fi
+
 cat > "$WORKER_SPEC_FILE" <<EOF
 {
   "worker_id": "$WORKER_ID",
   "worker_type": "$WORKER_TYPE",
   "created_by": "$MASTER_AGENT",
+  "execution_manager": $EM_FIELD,
   "created_at": "$CREATED_AT",
   "task_id": "$TASK_ID",
   "status": "pending",

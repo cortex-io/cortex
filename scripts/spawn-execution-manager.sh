@@ -1,385 +1,279 @@
 #!/bin/bash
 
-###############################################################################
-# Execution Manager Spawner
-#
-# Purpose: Spawned by master agents to handle complex subtasks requiring
-#          multiple workers with coordination
-#
-# Layer: Between Master Agents and Workers
-# Type: Ephemeral (spawned per complex subtask)
-# Role: Tactical Team Lead
-###############################################################################
+# Spawn Execution Manager Script
+# Used by Master agents to spawn Execution Managers for complex multi-worker coordination
 
 set -euo pipefail
 
-# Configuration
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
-COORD_DIR="$PROJECT_ROOT/coordination"
-TEMPLATE_PROMPT="$PROJECT_ROOT/agents/prompts/execution-manager/execution-manager-template.md"
-LOG_DIR="$PROJECT_ROOT/agents/logs/execution-managers"
-EVENTS_FILE="$COORD_DIR/dashboard-events.jsonl"
+COORDINATION_DIR="$PROJECT_ROOT/coordination"
 
-# Colors
+# Colors for output
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
-CYAN='\033[0;36m'
-NC='\033[0m'
+NC='\033[0m' # No Color
 
-###############################################################################
-# Usage
-###############################################################################
-
-usage() {
-    cat <<EOF
-Usage: $0 --master MASTER --subtask SUBTASK_ID [OPTIONS]
-
-Spawn an Execution Manager to handle a complex subtask requiring multiple workers.
-
-REQUIRED:
-  --master MASTER          Parent master (development, security, inventory, cicd)
-  --subtask SUBTASK_ID     Subtask ID to execute
-
-OPTIONAL:
-  --orchestration ORCH_ID  Parent orchestration ID
-  --interactive            Run in interactive Claude Code session (default: background)
-  --help                   Show this help
-
-EXAMPLES:
-  # Spawn execution manager for complex implementation subtask
-  $0 --master development --subtask auth-002-backend
-
-  # With orchestration context
-  $0 --master development \\
-     --subtask auth-002-backend \\
-     --orchestration orch-task-1762366071
-
-  # Interactive mode (for debugging)
-  $0 --master development --subtask auth-002-backend --interactive
-
-EXECUTION MANAGER ROLE:
-  - Breaks down master-specific subtask into worker-sized tasks
-  - Spawns specialized workers (Explorer, Planner, Implementer, Tester, Committer)
-  - Coordinates sequential and parallel execution
-  - Monitors worker health (PID, heartbeat, file changes)
-  - Implements quality gates and retry logic
-  - Reports results back to master
-
-EOF
-    exit 1
-}
-
-###############################################################################
-# Logging
-###############################################################################
-
-log_info() {
-    echo -e "${BLUE}[INFO]${NC} $*" | tee -a "$LOG_FILE"
-}
-
-log_success() {
-    echo -e "${GREEN}[SUCCESS]${NC} $*" | tee -a "$LOG_FILE"
-}
-
-log_warn() {
-    echo -e "${YELLOW}[WARN]${NC} $*" | tee -a "$LOG_FILE"
-}
-
-log_error() {
-    echo -e "${RED}[ERROR]${NC} $*" | tee -a "$LOG_FILE"
-}
-
-log_exec_mgr() {
-    echo -e "${CYAN}[EXEC-MGR]${NC} $*" | tee -a "$LOG_FILE"
-}
-
-log_dashboard_event() {
-    local event_type="$1"
-    local event_data="$2"
-
-    local event_json=$(cat <<EOF
-{"timestamp":"$(date -u +%Y-%m-%dT%H:%M:%SZ)","type":"$event_type","data":$event_data}
-EOF
-)
-    echo "$event_json" >> "$EVENTS_FILE"
-}
-
-###############################################################################
-# Parse Arguments
-###############################################################################
-
-MASTER=""
+# Default values
+MASTER_TYPE=""
 SUBTASK_ID=""
-ORCHESTRATION_ID=""
-INTERACTIVE=false
+DESCRIPTION=""
+FILES_AFFECTED=""
+REPOS=""
+TOKEN_BUDGET=20000
+ESTIMATED_DURATION=30
+ACCEPTANCE_CRITERIA=""
+DEPENDENCIES=""
 
+# Parse arguments
 while [[ $# -gt 0 ]]; do
-    case $1 in
-        --master)
-            MASTER="$2"
-            shift 2
-            ;;
-        --subtask)
-            SUBTASK_ID="$2"
-            shift 2
-            ;;
-        --orchestration)
-            ORCHESTRATION_ID="$2"
-            shift 2
-            ;;
-        --interactive)
-            INTERACTIVE=true
-            shift
-            ;;
-        --help)
-            usage
-            ;;
-        *)
-            echo "Unknown option: $1"
-            usage
-            ;;
-    esac
+  case $1 in
+    --master)
+      MASTER_TYPE="$2"
+      shift 2
+      ;;
+    --subtask-id)
+      SUBTASK_ID="$2"
+      shift 2
+      ;;
+    --description)
+      DESCRIPTION="$2"
+      shift 2
+      ;;
+    --files)
+      FILES_AFFECTED="$2"
+      shift 2
+      ;;
+    --repos)
+      REPOS="$2"
+      shift 2
+      ;;
+    --token-budget)
+      TOKEN_BUDGET="$2"
+      shift 2
+      ;;
+    --estimated-duration)
+      ESTIMATED_DURATION="$2"
+      shift 2
+      ;;
+    --acceptance-criteria)
+      ACCEPTANCE_CRITERIA="$2"
+      shift 2
+      ;;
+    --dependencies)
+      DEPENDENCIES="$2"
+      shift 2
+      ;;
+    *)
+      echo -e "${RED}Unknown argument: $1${NC}"
+      exit 1
+      ;;
+  esac
 done
 
 # Validate required arguments
-if [ -z "$MASTER" ] || [ -z "$SUBTASK_ID" ]; then
-    echo "Error: --master and --subtask are required"
-    usage
+if [ -z "$MASTER_TYPE" ] || [ -z "$SUBTASK_ID" ] || [ -z "$DESCRIPTION" ]; then
+  echo -e "${RED}ERROR: Missing required arguments${NC}"
+  echo "Usage: $0 --master <type> --subtask-id <id> --description <desc> [options]"
+  echo ""
+  echo "Required:"
+  echo "  --master <type>              Master type (development, security, inventory)"
+  echo "  --subtask-id <id>            Unique subtask identifier"
+  echo "  --description <desc>         Subtask description"
+  echo ""
+  echo "Optional:"
+  echo "  --files <files>              Comma-separated list of files affected"
+  echo "  --repos <repos>              Comma-separated list of repositories"
+  echo "  --token-budget <tokens>      Token budget (default: 20000)"
+  echo "  --estimated-duration <min>   Estimated duration in minutes (default: 30)"
+  echo "  --acceptance-criteria <json> JSON array of acceptance criteria"
+  echo "  --dependencies <json>        JSON array of dependency subtask IDs"
+  exit 1
 fi
 
-# Validate master
-case "$MASTER" in
-    development|security|inventory|cicd)
-        ;;
-    *)
-        echo "Error: Invalid master '$MASTER'. Must be: development, security, inventory, or cicd"
-        exit 1
-        ;;
-esac
+# Validate master type
+if [[ ! "$MASTER_TYPE" =~ ^(development|security|inventory)$ ]]; then
+  echo -e "${RED}ERROR: Invalid master type: $MASTER_TYPE${NC}"
+  echo "Must be one of: development, security, inventory"
+  exit 1
+fi
 
-###############################################################################
-# Initialization
-###############################################################################
+# Generate unique Execution Manager ID
+EXEC_MGR_ID="exec-mgr-${MASTER_TYPE:0:3}-$(uuidgen | tr '[:upper:]' '[:lower:]' | cut -d'-' -f1)"
+TIMESTAMP=$(date -u +%Y-%m-%dT%H:%M:%SZ)
 
-# Generate execution manager ID
-EXEC_MGR_ID="exec-mgr-${SUBTASK_ID}-$(date +%s)"
-MASTER_DIR="$COORD_DIR/masters/$MASTER"
-EXEC_PLAN_DIR="$MASTER_DIR/execution-plans"
-EXEC_MGR_FILE="$EXEC_PLAN_DIR/${EXEC_MGR_ID}.json"
+echo -e "${BLUE}========================================${NC}"
+echo -e "${BLUE}Spawning Execution Manager${NC}"
+echo -e "${BLUE}========================================${NC}"
+echo -e "Execution Manager ID: ${GREEN}${EXEC_MGR_ID}${NC}"
+echo -e "Master Type: ${GREEN}${MASTER_TYPE}${NC}"
+echo -e "Subtask ID: ${GREEN}${SUBTASK_ID}${NC}"
+echo -e "Description: ${GREEN}${DESCRIPTION}${NC}"
+echo -e "Token Budget: ${GREEN}${TOKEN_BUDGET}${NC}"
+echo -e "Estimated Duration: ${GREEN}${ESTIMATED_DURATION} minutes${NC}"
+echo ""
 
-# Create directories
-mkdir -p "$LOG_DIR"
-mkdir -p "$EXEC_PLAN_DIR"
+# Step 1: Create execution plan in master's execution-plans directory
+echo -e "${YELLOW}[1/5]${NC} Creating execution plan..."
 
-# Setup log file
-LOG_FILE="$LOG_DIR/${EXEC_MGR_ID}.log"
+PLAN_FILE="$COORDINATION_DIR/masters/$MASTER_TYPE/execution-plans/$SUBTASK_ID.json"
 
-log_exec_mgr "Initializing Execution Manager"
-log_info "Master: $MASTER"
-log_info "Subtask: $SUBTASK_ID"
-log_info "Execution Manager ID: $EXEC_MGR_ID"
+# Parse files into JSON array
+FILES_JSON="[]"
+if [ -n "$FILES_AFFECTED" ]; then
+  FILES_JSON=$(echo "$FILES_AFFECTED" | jq -R 'split(",") | map(gsub("^\\s+|\\s+$";""))')
+fi
 
-###############################################################################
-# Load Subtask Data
-###############################################################################
+# Parse repos into JSON array
+REPOS_JSON="[]"
+if [ -n "$REPOS" ]; then
+  REPOS_JSON=$(echo "$REPOS" | jq -R 'split(",") | map(gsub("^\\s+|\\s+$";""))')
+fi
 
-load_subtask_data() {
-    log_info "Loading subtask data..."
+# Parse acceptance criteria
+CRITERIA_JSON="[]"
+if [ -n "$ACCEPTANCE_CRITERIA" ]; then
+  CRITERIA_JSON="$ACCEPTANCE_CRITERIA"
+fi
 
-    # Check orchestrator subtasks directory first
-    local subtask_file="$COORD_DIR/orchestrator/subtasks/${SUBTASK_ID}.json"
+# Parse dependencies
+DEPS_JSON="[]"
+if [ -n "$DEPENDENCIES" ]; then
+  DEPS_JSON="$DEPENDENCIES"
+fi
 
-    if [ ! -f "$subtask_file" ]; then
-        # Fallback: check if it's in master handoffs
-        local handoff_file="$MASTER_DIR/handoffs/*${SUBTASK_ID}*.json"
-        if ls $handoff_file 1> /dev/null 2>&1; then
-            subtask_file=$(ls $handoff_file | head -1)
-            log_info "Found subtask in handoff: $subtask_file"
-        else
-            log_error "Subtask file not found: $SUBTASK_ID"
-            exit 1
-        fi
-    fi
-
-    SUBTASK_DATA=$(cat "$subtask_file")
-    log_success "Loaded subtask data"
-}
-
-###############################################################################
-# Create Execution Plan
-###############################################################################
-
-create_execution_plan() {
-    log_exec_mgr "Creating execution plan..."
-
-    local subtask_title=$(echo "$SUBTASK_DATA" | jq -r '.title // .task_data.title // "Unknown"')
-    local subtask_desc=$(echo "$SUBTASK_DATA" | jq -r '.description // .task_data.description // ""')
-    local files_affected=$(echo "$SUBTASK_DATA" | jq -r '.files_affected // [] | join(", ")')
-    local estimated_duration=$(echo "$SUBTASK_DATA" | jq -r '.estimated_duration_minutes // 30')
-
-    # Create initial execution plan
-    cat > "$EXEC_MGR_FILE" <<EOF
+cat > "$PLAN_FILE" <<EOF
 {
+  "subtask_id": "$SUBTASK_ID",
   "execution_manager_id": "$EXEC_MGR_ID",
-  "parent_master": "$MASTER",
-  "parent_subtask": "$SUBTASK_ID",
-  "parent_orchestration": "$ORCHESTRATION_ID",
-  "status": "analyzing",
-  "created_at": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
-
-  "subtask_info": {
-    "title": "$subtask_title",
-    "description": "$subtask_desc",
-    "files_affected": "$files_affected",
-    "estimated_duration_minutes": $estimated_duration
-  },
-
-  "worker_plan": {
-    "total_workers": 0,
-    "workers": []
-  },
-
-  "progress": {
-    "current_phase": "planning",
-    "workers_spawned": 0,
-    "workers_completed": 0,
-    "workers_failed": 0,
-    "workers_active": []
-  },
-
-  "resources": {
-    "token_budget": 50000,
-    "tokens_used": 0,
-    "time_limit_minutes": $((estimated_duration + 10))
-  }
+  "master": "$MASTER_TYPE",
+  "description": "$DESCRIPTION",
+  "files_affected": $FILES_JSON,
+  "repos": $REPOS_JSON,
+  "estimated_duration_minutes": $ESTIMATED_DURATION,
+  "token_budget": $TOKEN_BUDGET,
+  "acceptance_criteria": $CRITERIA_JSON,
+  "dependencies": $DEPS_JSON,
+  "status": "pending",
+  "created_at": "$TIMESTAMP",
+  "updated_at": "$TIMESTAMP"
 }
 EOF
 
-    log_success "Created execution plan: $EXEC_MGR_FILE"
+echo -e "${GREEN}✓${NC} Execution plan created: $PLAN_FILE"
+
+# Step 2: Create Execution Manager state in active directory
+echo -e "${YELLOW}[2/5]${NC} Creating Execution Manager state..."
+
+EM_STATE_FILE="$COORDINATION_DIR/execution-managers/active/$EXEC_MGR_ID.json"
+
+cat > "$EM_STATE_FILE" <<EOF
+{
+  "exec_mgr_id": "$EXEC_MGR_ID",
+  "master_type": "$MASTER_TYPE",
+  "subtask_id": "$SUBTASK_ID",
+  "status": "ready",
+  "started_at": "$TIMESTAMP",
+  "last_heartbeat": "$TIMESTAMP",
+  "workers_spawned": 0,
+  "workers_completed": 0,
+  "workers_failed": 0,
+  "tokens_used": 0,
+  "current_phase": "awaiting_start"
 }
-
-###############################################################################
-# Build Execution Manager Prompt
-###############################################################################
-
-build_execution_manager_prompt() {
-    log_exec_mgr "Building execution manager prompt..."
-
-    local subtask_title=$(echo "$SUBTASK_DATA" | jq -r '.title // .task_data.title // "Unknown"')
-    local subtask_desc=$(echo "$SUBTASK_DATA" | jq -r '.description // .task_data.description // ""')
-
-    local prompt_file="/tmp/exec-mgr-prompt-${EXEC_MGR_ID}.txt"
-
-    cat > "$prompt_file" <<EOF
-You are an Execution Manager for the $MASTER Master.
-
-SUBTASK ASSIGNED TO YOU:
-- Subtask ID: $SUBTASK_ID
-- Title: $subtask_title
-- Description: $subtask_desc
-
-YOUR MISSION:
-1. Analyze this subtask's complexity
-2. Break it down into worker-sized tasks (10-20 min each, 1-2 files max)
-3. Select appropriate worker types for each task:
-   - Explorer: Read code, gather context (5-10 min, 5k tokens)
-   - Planner: Design approach (5-10 min, 5k tokens)
-   - Implementer: Write/edit code (15-30 min, 15k tokens)
-   - Tester: Run tests, verify (5-15 min, 8k tokens)
-   - Committer: Git operations (2-5 min, 2k tokens)
-4. Determine execution order (sequential or parallel)
-5. Create worker specs in: coordination/worker-specs/active/
-6. Update execution plan in: $EXEC_MGR_FILE
-7. Monitor worker health and handle failures
-8. Aggregate results and report to master
-
-EXECUTION PATTERNS:
-
-Sequential Pipeline:
-  Explorer → Planner → Implementer → Tester → Committer
-
-Parallel Implementation:
-  Planner → [Implementer-A, Implementer-B] (parallel) → Tester → Committer
-
-Read the full Execution Manager template at: $TEMPLATE_PROMPT
-
-EXECUTION MANAGER ID: $EXEC_MGR_ID
-MASTER: $MASTER
-START TIME: $(date -u +%Y-%m-%dT%H:%M:%SZ)
-
-Begin tactical coordination now.
 EOF
 
-    echo "$prompt_file"
+echo -e "${GREEN}✓${NC} Execution Manager state created: $EM_STATE_FILE"
+
+# Step 3: Update token budget
+echo -e "${YELLOW}[3/5]${NC} Allocating token budget..."
+
+if [ -f "$COORDINATION_DIR/token-budget.json" ]; then
+  jq --arg em_id "$EXEC_MGR_ID" \
+     --argjson budget "$TOKEN_BUDGET" \
+     --arg master "$MASTER_TYPE" \
+     '.execution_managers = (.execution_managers // {}) |
+      .execution_managers[$em_id] = {
+        "allocated": $budget,
+        "used": 0,
+        "master": $master,
+        "started_at": now | todate
+      }' \
+    "$COORDINATION_DIR/token-budget.json" > "$COORDINATION_DIR/token-budget.json.tmp"
+
+  mv "$COORDINATION_DIR/token-budget.json.tmp" "$COORDINATION_DIR/token-budget.json"
+  echo -e "${GREEN}✓${NC} Token budget allocated: $TOKEN_BUDGET tokens"
+else
+  echo -e "${YELLOW}⚠${NC}  Token budget file not found, skipping allocation"
+fi
+
+# Step 4: Create log directory and spawn info
+echo -e "${YELLOW}[4/5]${NC} Setting up Execution Manager workspace..."
+
+LOG_DIR="$PROJECT_ROOT/agents/logs/execution-managers/$EXEC_MGR_ID"
+mkdir -p "$LOG_DIR"
+
+cat > "$LOG_DIR/spawn-info.txt" <<EOF
+Execution Manager Spawn Information
+Generated: $TIMESTAMP
+
+Execution Manager ID: $EXEC_MGR_ID
+Master Type: $MASTER_TYPE
+Subtask ID: $SUBTASK_ID
+Description: $DESCRIPTION
+
+Token Budget: $TOKEN_BUDGET
+Estimated Duration: $ESTIMATED_DURATION minutes
+
+Files:
+$PLAN_FILE
+$EM_STATE_FILE
+
+To start the Execution Manager manually:
+  export EXEC_MGR_ID="$EXEC_MGR_ID"
+  echo "$EXEC_MGR_ID" > /tmp/exec-mgr-id.txt
+  cd $PROJECT_ROOT
+  claude --prompt "\$(cat agents/prompts/execution-manager.md)"
+EOF
+
+echo -e "${GREEN}✓${NC} Workspace created: $LOG_DIR"
+
+# Step 5: Create handoff notification
+echo -e "${YELLOW}[5/5]${NC} Creating handoff notification..."
+
+HANDOFF_FILE="$COORDINATION_DIR/masters/$MASTER_TYPE/handoffs/to-exec-mgr-$EXEC_MGR_ID.json"
+
+cat > "$HANDOFF_FILE" <<EOF
+{
+  "handoff_id": "to-exec-mgr-$EXEC_MGR_ID",
+  "from": "${MASTER_TYPE}-master",
+  "to": "execution-manager-$EXEC_MGR_ID",
+  "subtask_id": "$SUBTASK_ID",
+  "execution_manager_required": true,
+  "reason": "Complex multi-worker coordination required",
+  "execution_plan": "$PLAN_FILE",
+  "created_at": "$TIMESTAMP"
 }
+EOF
 
-###############################################################################
-# Spawn Execution Manager
-###############################################################################
+echo -e "${GREEN}✓${NC} Handoff created: $HANDOFF_FILE"
 
-spawn_execution_manager() {
-    local prompt_file=$(build_execution_manager_prompt)
+# Summary
+echo ""
+echo -e "${BLUE}========================================${NC}"
+echo -e "${GREEN}✓ Execution Manager Spawned${NC}"
+echo -e "${BLUE}========================================${NC}"
+echo ""
+echo -e "${YELLOW}Details:${NC}"
+echo -e "  ID: ${GREEN}$EXEC_MGR_ID${NC}"
+echo -e "  Execution Plan: ${BLUE}$PLAN_FILE${NC}"
+echo -e "  State File: ${BLUE}$EM_STATE_FILE${NC}"
+echo -e "  Logs: ${BLUE}$LOG_DIR${NC}"
+echo ""
 
-    log_exec_mgr "Spawning execution manager session..."
+# Output JSON for programmatic use
+echo "{\"exec_mgr_id\":\"$EXEC_MGR_ID\",\"subtask_id\":\"$SUBTASK_ID\",\"plan_file\":\"$PLAN_FILE\"}"
 
-    if [ "$INTERACTIVE" = true ]; then
-        log_info "Starting INTERACTIVE Claude Code session"
-        log_info "Prompt file: $prompt_file"
-
-        # Update status to running
-        jq '.status = "running" | .started_at = "'$(date -u +%Y-%m-%dT%H:%M:%SZ)'"' "$EXEC_MGR_FILE" > "$EXEC_MGR_FILE.tmp"
-        mv "$EXEC_MGR_FILE.tmp" "$EXEC_MGR_FILE"
-
-        # Log event
-        log_dashboard_event "execution_manager_started" "{\"exec_mgr_id\":\"$EXEC_MGR_ID\",\"master\":\"$MASTER\",\"subtask\":\"$SUBTASK_ID\"}"
-
-        log_success "Execution manager spawned"
-        log_info "Run this command to start the session:"
-        echo ""
-        echo "  claude < $prompt_file"
-        echo ""
-
-    else
-        log_info "Starting BACKGROUND execution manager"
-
-        # Update status
-        jq '.status = "running" | .started_at = "'$(date -u +%Y-%m-%dT%H:%M:%SZ)'"' "$EXEC_MGR_FILE" > "$EXEC_MGR_FILE.tmp"
-        mv "$EXEC_MGR_FILE.tmp" "$EXEC_MGR_FILE"
-
-        # For now, just create the marker file
-        # In production, this would launch an actual Claude Code session
-        log_warn "Background mode not fully implemented yet"
-        log_info "Created execution plan and prompt file"
-        log_info "To complete execution, run: claude < $prompt_file"
-
-        # Log event
-        log_dashboard_event "execution_manager_pending" "{\"exec_mgr_id\":\"$EXEC_MGR_ID\",\"master\":\"$MASTER\",\"subtask\":\"$SUBTASK_ID\",\"prompt_file\":\"$prompt_file\"}"
-
-        log_success "Execution manager initialized (manual start required)"
-    fi
-}
-
-###############################################################################
-# Main
-###############################################################################
-
-main() {
-    log_exec_mgr "Starting Execution Manager Spawner"
-
-    # Load subtask
-    load_subtask_data
-
-    # Create execution plan
-    create_execution_plan
-
-    # Spawn execution manager
-    spawn_execution_manager
-
-    log_success "Execution Manager spawner completed"
-    log_info "Execution Plan: $EXEC_MGR_FILE"
-}
-
-main
+exit 0
