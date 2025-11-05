@@ -122,12 +122,26 @@ while true; do
                     '{worker_id: $worker, task_id: $task, worker_type: $type, launched_by: "daemon"}')
                 broadcast_dashboard_event "worker_started" "$EVENT_DATA" 2>/dev/null || true
 
-                # Check if a shell-based worker script exists for this type
+                # Check for autonomous worker script (default for all workers)
+                AUTONOMOUS_SCRIPT="$COMMIT_RELAY_HOME/agents/workers/autonomous-worker.sh"
                 WORKER_SCRIPT="$COMMIT_RELAY_HOME/agents/workers/${WORKER_TYPE}.sh"
 
-                if [ -f "$WORKER_SCRIPT" ]; then
-                    # Use shell-based worker with git automation
-                    log_daemon "INFO: Using shell-based worker: $WORKER_SCRIPT"
+                if [ -f "$AUTONOMOUS_SCRIPT" ]; then
+                    # Use autonomous worker script that reads spec and executes
+                    log_daemon "INFO: Using autonomous worker script"
+
+                    # Build worker command with environment variables
+                    TERMINAL_CMD="cd $COMMIT_RELAY_HOME && export WORKER_ID='$WORKER_ID' && export SPEC_FILE='$spec_file' && $AUTONOMOUS_SCRIPT"
+
+                    # Launch autonomous worker in Terminal
+                    osascript -e "tell application \"Terminal\"
+                        do script \"$TERMINAL_CMD\"
+                        activate
+                    end tell" > /dev/null 2>&1 &
+
+                elif [ -f "$WORKER_SCRIPT" ]; then
+                    # Use worker-type-specific shell script
+                    log_daemon "INFO: Using type-specific worker: $WORKER_SCRIPT"
 
                     # Extract worker parameters from spec
                     SCOPE=$(jq -r '.scope' "$spec_file")
