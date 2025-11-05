@@ -199,6 +199,23 @@ route_task() {
         return 1
     fi
 
+    # CHECK FOR ORCHESTRATION REQUIREMENT (v4.0)
+    local orch_required=$(echo "$task" | jq -r '.orchestration_required // false')
+    local complexity=$(echo "$task" | jq -r '.complexity // "unknown"')
+
+    if [ "$orch_required" = "true" ] || [ "$complexity" = "high" ]; then
+        log_info "Task requires orchestration (complexity: $complexity)"
+        log_info "Task Orchestrator daemon will handle decomposition"
+
+        # Mark task as requiring orchestration (daemon will pick it up)
+        update_task_status "$task_id" "pending" "{\"orchestration_required\": true, \"routed_by\": \"$MASTER_ID\"}"
+        log_success "Task $task_id flagged for Task Orchestrator"
+
+        # Log routing decision
+        record_routing_decision "$task_id" "orchestrator" "orchestration-required"
+        return 0
+    fi
+
     local task_type=$(echo "$task" | jq -r '.type')
     local task_title=$(echo "$task" | jq -r '.title // ""')
     local task_desc="$task_type: $task_title"
