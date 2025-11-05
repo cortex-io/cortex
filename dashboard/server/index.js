@@ -537,6 +537,131 @@ app.get('/api/metrics', async (req, res) => {
 });
 
 /**
+ * GET /api/metrics/history
+ * Get historical metrics data for trend charts
+ * Query params:
+ *   - range: time range (24h, 7d, 30d) - default: 24h
+ *   - granularity: data point frequency (5m, 1h, 1d) - default: auto-selected
+ */
+app.get('/api/metrics/history', async (req, res) => {
+  try {
+    const range = req.query.range || '24h';
+    const granularity = req.query.granularity || 'auto';
+
+    const historyDir = path.join(__dirname, '../../coordination/history');
+    const hourlyDir = path.join(historyDir, 'hourly');
+    const dailyDir = path.join(historyDir, 'daily');
+
+    // Determine which directory and files to read based on range
+    let files = [];
+    let actualGranularity = granularity;
+
+    const now = new Date();
+    let cutoffDate;
+
+    switch (range) {
+      case '24h':
+        actualGranularity = granularity === 'auto' ? '5m' : granularity;
+        cutoffDate = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+        // Read hourly directory for last 24 hours
+        try {
+          const hourlyFiles = await fs.readdir(hourlyDir);
+          files = hourlyFiles
+            .filter(f => f.endsWith('.json'))
+            .map(f => path.join(hourlyDir, f))
+            .filter(f => {
+              const fileDate = new Date(path.basename(f, '.json'));
+              return fileDate >= cutoffDate;
+            })
+            .sort();
+        } catch (error) {
+          console.warn('No hourly data available yet');
+        }
+        break;
+
+      case '7d':
+        actualGranularity = granularity === 'auto' ? '1h' : granularity;
+        cutoffDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+        // Read hourly directory for last 7 days
+        try {
+          const hourlyFiles = await fs.readdir(hourlyDir);
+          files = hourlyFiles
+            .filter(f => f.endsWith('.json'))
+            .map(f => path.join(hourlyDir, f))
+            .filter(f => {
+              const fileDate = new Date(path.basename(f, '.json'));
+              return fileDate >= cutoffDate;
+            })
+            .sort();
+        } catch (error) {
+          console.warn('No hourly data available yet');
+        }
+        break;
+
+      case '30d':
+        actualGranularity = granularity === 'auto' ? '1d' : granularity;
+        cutoffDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+        // Read daily directory for last 30 days
+        try {
+          const dailyFiles = await fs.readdir(dailyDir);
+          files = dailyFiles
+            .filter(f => f.endsWith('.json'))
+            .map(f => path.join(dailyDir, f))
+            .filter(f => {
+              const fileDate = new Date(path.basename(f, '.json'));
+              return fileDate >= cutoffDate;
+            })
+            .sort();
+        } catch (error) {
+          console.warn('No daily data available yet');
+        }
+        break;
+
+      default:
+        return res.status(400).json({ error: 'Invalid range. Use 24h, 7d, or 30d' });
+    }
+
+    // Read all snapshot files
+    const snapshots = [];
+    for (const file of files) {
+      try {
+        const content = await fs.readFile(file, 'utf-8');
+        const snapshot = JSON.parse(content);
+        snapshots.push(snapshot);
+      } catch (error) {
+        console.error(`Error reading snapshot ${file}:`, error.message);
+      }
+    }
+
+    // If no historical data, return current metrics as single data point
+    if (snapshots.length === 0) {
+      const data = await loadCoordinationData(false);
+      const currentMetrics = calculateMetrics(data);
+
+      if (currentMetrics) {
+        snapshots.push({
+          timestamp: new Date().toISOString(),
+          workers: currentMetrics.workers,
+          tokens: currentMetrics.tokens,
+          tasks: currentMetrics.tasks,
+          orchestrator: currentMetrics.orchestrator
+        });
+      }
+    }
+
+    res.json({
+      range,
+      granularity: actualGranularity,
+      data_points: snapshots.length,
+      snapshots
+    });
+  } catch (error) {
+    console.error('Error loading historical metrics:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+/**
  * GET /api/streams
  * Get workforce streams data and metrics
  */
