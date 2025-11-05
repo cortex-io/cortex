@@ -551,16 +551,77 @@ app.get('/api/coordination/raw', async (req, res) => {
  */
 app.get('/api/workers', async (req, res) => {
   try {
-    const workerPool = await readJSON(FILES.workerPool);
-    if (!workerPool) {
-      return res.status(500).json({ error: 'Failed to read worker pool' });
-    }
-    res.json(workerPool);
+    // Read live worker specs from active directory
+    const workerSpecsDir = path.join(COORD_DIR, 'worker-specs/active');
+    const liveWorkerPool = await generateLiveWorkerPool(workerSpecsDir);
+    res.json(liveWorkerPool);
   } catch (error) {
     console.error('Error reading worker pool:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
+
+/**
+ * Generate live worker pool data from worker spec files
+ */
+async function generateLiveWorkerPool(specsDir) {
+  const active_workers = [];
+  const completed_workers = [];
+  const failed_workers = [];
+
+  try {
+    const files = await fs.readdir(specsDir);
+    const jsonFiles = files.filter(f => f.endsWith('.json'));
+
+    for (const file of jsonFiles) {
+      try {
+        const content = await fs.readFile(path.join(specsDir, file), 'utf-8');
+        const spec = JSON.parse(content);
+
+        const worker = {
+          worker_id: spec.worker_id,
+          type: spec.worker_type,
+          task_id: spec.task_id,
+          spawned_at: spec.created_at,
+          status: spec.status,
+          parent_master: spec.parent_master
+        };
+
+        if (spec.execution) {
+          worker.started_at = spec.execution.started_at;
+          worker.completed_at = spec.execution.completed_at;
+          worker.tokens_used = spec.execution.tokens_used;
+        }
+
+        // Categorize by status
+        if (spec.status === 'pending' || spec.status === 'running') {
+          active_workers.push(worker);
+        } else if (spec.status === 'completed' || spec.status === 'success') {
+          completed_workers.push(worker);
+        } else if (spec.status === 'failed') {
+          failed_workers.push(worker);
+        }
+      } catch (err) {
+        console.error(`Error reading worker spec ${file}:`, err);
+      }
+    }
+  } catch (err) {
+    console.error('Error reading worker specs directory:', err);
+  }
+
+  return {
+    version: '2.0-live',
+    updated_at: new Date().toISOString(),
+    active_workers,
+    completed_workers,
+    failed_workers,
+    stats: {
+      total_active: active_workers.length,
+      total_completed: completed_workers.length,
+      total_failed: failed_workers.length
+    }
+  };
+}
 
 /**
  * GET /api/tasks
