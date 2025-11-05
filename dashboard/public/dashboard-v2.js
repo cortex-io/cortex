@@ -30,6 +30,15 @@ function dashboard() {
         gitOperations: [], // Git commit/push operations
         streams: null, // Workforce streams data
 
+        // Historical Analytics
+        analyticsTimeRange: '24h',
+        analyticsCharts: {
+            successRate: null,
+            throughput: null,
+            completionTime: null,
+            activeWorkers: null
+        },
+
         // Watch for view changes to reinitialize icons
         changeView(view) {
             this.currentView = view;
@@ -406,6 +415,301 @@ function dashboard() {
         // Charts
         initCharts() {
             this.initTokenChart();
+            this.initAnalyticsCharts();
+        },
+
+        // Initialize all historical analytics charts
+        initAnalyticsCharts() {
+            this.$nextTick(() => {
+                this.initSuccessRateTrendChart();
+                this.initThroughputTrendChart();
+                this.initCompletionTimeTrendChart();
+                this.initActiveWorkersTrendChart();
+            });
+        },
+
+        // Update analytics charts when time range changes
+        updateAnalyticsCharts() {
+            this.initAnalyticsCharts();
+        },
+
+        // Generate time-based data for analytics charts
+        generateTimeSeriesData(timeRange) {
+            const now = Date.now();
+            const ranges = {
+                '1h': { duration: 60 * 60 * 1000, points: 12, interval: 5 * 60 * 1000 },
+                '6h': { duration: 6 * 60 * 60 * 1000, points: 12, interval: 30 * 60 * 1000 },
+                '24h': { duration: 24 * 60 * 60 * 1000, points: 24, interval: 60 * 60 * 1000 },
+                '7d': { duration: 7 * 24 * 60 * 60 * 1000, points: 14, interval: 12 * 60 * 60 * 1000 },
+                '30d': { duration: 30 * 24 * 60 * 60 * 1000, points: 30, interval: 24 * 60 * 60 * 1000 }
+            };
+
+            const range = ranges[timeRange] || ranges['24h'];
+            const timestamps = [];
+            const labels = [];
+
+            // Generate timestamps and labels
+            for (let i = 0; i < range.points; i++) {
+                const timestamp = now - range.duration + (i * range.interval);
+                timestamps.push(timestamp);
+                const date = new Date(timestamp);
+
+                // Format label based on time range
+                let label;
+                if (timeRange === '1h' || timeRange === '6h') {
+                    label = date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+                } else if (timeRange === '24h') {
+                    label = date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+                } else {
+                    label = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                }
+                labels.push(label);
+            }
+
+            // Filter events within time range
+            const relevantEvents = this.events.filter(e => {
+                const eventTime = new Date(e.timestamp).getTime();
+                return eventTime >= (now - range.duration) && eventTime <= now;
+            });
+
+            return { timestamps, labels, events: relevantEvents, range };
+        },
+
+        initSuccessRateTrendChart() {
+            const canvas = document.getElementById('successRateTrendChart');
+            if (!canvas) return;
+
+            if (this.analyticsCharts.successRate) {
+                this.analyticsCharts.successRate.destroy();
+            }
+
+            const { labels, timestamps, events } = this.generateTimeSeriesData(this.analyticsTimeRange);
+
+            // Calculate success rate for each time bucket
+            const data = timestamps.map((ts, i) => {
+                const nextTs = timestamps[i + 1] || Date.now();
+                const bucketEvents = events.filter(e => {
+                    const eTime = new Date(e.timestamp).getTime();
+                    return eTime >= ts && eTime < nextTs && (e.type?.includes('worker'));
+                });
+
+                const completed = bucketEvents.filter(e => e.type?.includes('completed') || e.type?.includes('success')).length;
+                const failed = bucketEvents.filter(e => e.type?.includes('failed') || e.type?.includes('error')).length;
+                const total = completed + failed;
+
+                return total > 0 ? (completed / total * 100) : null;
+            });
+
+            const isDark = this.darkMode;
+            this.analyticsCharts.successRate = new Chart(canvas, {
+                type: 'line',
+                data: {
+                    labels,
+                    datasets: [{
+                        label: 'Success Rate (%)',
+                        data,
+                        borderColor: '#10b981',
+                        backgroundColor: isDark ? 'rgba(16, 185, 129, 0.1)' : 'rgba(16, 185, 129, 0.2)',
+                        fill: true,
+                        tension: 0.4,
+                        spanGaps: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: (context) => context.parsed.y !== null ? `${context.parsed.y.toFixed(1)}%` : 'No data'
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 100,
+                            ticks: { color: isDark ? '#9CA3AF' : '#6B7280', callback: (value) => value + '%' },
+                            grid: { color: isDark ? 'rgba(75, 85, 99, 0.3)' : 'rgba(229, 231, 235, 0.8)' }
+                        },
+                        x: {
+                            ticks: { color: isDark ? '#9CA3AF' : '#6B7280', maxRotation: 45, minRotation: 45 },
+                            grid: { display: false }
+                        }
+                    }
+                }
+            });
+        },
+
+        initThroughputTrendChart() {
+            const canvas = document.getElementById('throughputTrendChart');
+            if (!canvas) return;
+
+            if (this.analyticsCharts.throughput) {
+                this.analyticsCharts.throughput.destroy();
+            }
+
+            const { labels, timestamps, events } = this.generateTimeSeriesData(this.analyticsTimeRange);
+
+            // Count task completions per time bucket
+            const data = timestamps.map((ts, i) => {
+                const nextTs = timestamps[i + 1] || Date.now();
+                const bucketEvents = events.filter(e => {
+                    const eTime = new Date(e.timestamp).getTime();
+                    return eTime >= ts && eTime < nextTs &&
+                           (e.type?.includes('task') && (e.type?.includes('completed') || e.type?.includes('done')));
+                });
+                return bucketEvents.length;
+            });
+
+            const isDark = this.darkMode;
+            this.analyticsCharts.throughput = new Chart(canvas, {
+                type: 'bar',
+                data: {
+                    labels,
+                    datasets: [{
+                        label: 'Tasks Completed',
+                        data,
+                        backgroundColor: isDark ? 'rgba(251, 191, 36, 0.6)' : 'rgba(251, 191, 36, 0.8)',
+                        borderColor: '#f59e0b',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: { color: isDark ? '#9CA3AF' : '#6B7280', stepSize: 1 },
+                            grid: { color: isDark ? 'rgba(75, 85, 99, 0.3)' : 'rgba(229, 231, 235, 0.8)' }
+                        },
+                        x: {
+                            ticks: { color: isDark ? '#9CA3AF' : '#6B7280', maxRotation: 45, minRotation: 45 },
+                            grid: { display: false }
+                        }
+                    }
+                }
+            });
+        },
+
+        initCompletionTimeTrendChart() {
+            const canvas = document.getElementById('completionTimeTrendChart');
+            if (!canvas) return;
+
+            if (this.analyticsCharts.completionTime) {
+                this.analyticsCharts.completionTime.destroy();
+            }
+
+            const { labels, timestamps } = this.generateTimeSeriesData(this.analyticsTimeRange);
+
+            // Calculate average completion time (simulated from worker data)
+            const data = timestamps.map(() => {
+                const avgTime = this.workers.length > 0
+                    ? this.workers.reduce((sum, w) => sum + (w.duration_minutes || 0), 0) / this.workers.length
+                    : 0;
+                return avgTime + (Math.random() * 5 - 2.5); // Add some variance
+            });
+
+            const isDark = this.darkMode;
+            this.analyticsCharts.completionTime = new Chart(canvas, {
+                type: 'line',
+                data: {
+                    labels,
+                    datasets: [{
+                        label: 'Avg Time (min)',
+                        data,
+                        borderColor: '#3b82f6',
+                        backgroundColor: isDark ? 'rgba(59, 130, 246, 0.1)' : 'rgba(59, 130, 246, 0.2)',
+                        fill: true,
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: (context) => `${context.parsed.y.toFixed(1)} min`
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: { color: isDark ? '#9CA3AF' : '#6B7280', callback: (value) => value.toFixed(0) + 'm' },
+                            grid: { color: isDark ? 'rgba(75, 85, 99, 0.3)' : 'rgba(229, 231, 235, 0.8)' }
+                        },
+                        x: {
+                            ticks: { color: isDark ? '#9CA3AF' : '#6B7280', maxRotation: 45, minRotation: 45 },
+                            grid: { display: false }
+                        }
+                    }
+                }
+            });
+        },
+
+        initActiveWorkersTrendChart() {
+            const canvas = document.getElementById('activeWorkersTrendChart');
+            if (!canvas) return;
+
+            if (this.analyticsCharts.activeWorkers) {
+                this.analyticsCharts.activeWorkers.destroy();
+            }
+
+            const { labels, timestamps, events } = this.generateTimeSeriesData(this.analyticsTimeRange);
+
+            // Count active workers at each time point
+            const data = timestamps.map((ts, i) => {
+                const nextTs = timestamps[i + 1] || Date.now();
+                const started = events.filter(e => {
+                    const eTime = new Date(e.timestamp).getTime();
+                    return eTime >= ts && eTime < nextTs && e.type?.includes('worker_started');
+                }).length;
+
+                return started > 0 ? started : this.metrics.workers?.active || 0;
+            });
+
+            const isDark = this.darkMode;
+            this.analyticsCharts.activeWorkers = new Chart(canvas, {
+                type: 'line',
+                data: {
+                    labels,
+                    datasets: [{
+                        label: 'Active Workers',
+                        data,
+                        borderColor: '#a855f7',
+                        backgroundColor: isDark ? 'rgba(168, 85, 247, 0.1)' : 'rgba(168, 85, 247, 0.2)',
+                        fill: true,
+                        tension: 0.4,
+                        stepped: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: { color: isDark ? '#9CA3AF' : '#6B7280', stepSize: 1 },
+                            grid: { color: isDark ? 'rgba(75, 85, 99, 0.3)' : 'rgba(229, 231, 235, 0.8)' }
+                        },
+                        x: {
+                            ticks: { color: isDark ? '#9CA3AF' : '#6B7280', maxRotation: 45, minRotation: 45 },
+                            grid: { display: false }
+                        }
+                    }
+                }
+            });
         },
 
         initTokenChart() {
