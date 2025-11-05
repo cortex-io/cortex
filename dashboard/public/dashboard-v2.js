@@ -38,36 +38,49 @@ function dashboard() {
 
         // Initialize
         async init() {
-            console.log('Initializing dashboard v2...');
+            console.log('🚀 Initializing dashboard v2...');
 
-            // Apply theme
-            this.applyTheme();
+            try {
+                // Apply theme
+                console.log('Applying theme...');
+                this.applyTheme();
 
-            // Initialize Lucide icons
-            lucide.createIcons();
+                // Initialize Lucide icons
+                console.log('Initializing Lucide icons...');
+                lucide.createIcons();
 
-            // Connect WebSocket
-            this.connectWebSocket();
+                // Connect WebSocket
+                console.log('Connecting WebSocket...');
+                this.connectWebSocket();
 
-            // Fetch initial data
-            await this.fetchInitialData();
+                // Fetch initial data
+                console.log('Fetching initial data...');
+                await this.fetchInitialData();
 
-            // Start polling
-            this.startPolling();
+                // Start polling
+                console.log('Starting polling...');
+                this.startPolling();
 
-            // Initialize charts
-            this.$nextTick(() => {
-                this.initCharts();
-            });
+                // Initialize charts
+                console.log('Initializing charts...');
+                this.$nextTick(() => {
+                    this.initCharts();
+                });
 
-            // Add click listener to close period selector when clicking outside
-            document.addEventListener('click', (e) => {
-                if (this.showPeriodSelector && !e.target.closest('.period-selector-card')) {
-                    this.showPeriodSelector = false;
-                }
-            });
+                // Add click listener to close period selector when clicking outside
+                document.addEventListener('click', (e) => {
+                    if (this.showPeriodSelector && !e.target.closest('.period-selector-card')) {
+                        this.showPeriodSelector = false;
+                    }
+                });
 
-            this.loading = false;
+                console.log('✅ Dashboard initialization complete!');
+                this.loading = false;
+            } catch (error) {
+                console.error('❌ Error during dashboard initialization:', error);
+                alert('Dashboard initialization failed. Check console for details.');
+                this.loading = false;
+            }
         },
 
         // Theme management
@@ -180,36 +193,51 @@ function dashboard() {
         // Data fetching
         async fetchInitialData() {
             try {
+                console.log('Starting fetchInitialData...');
+
                 // Fetch metrics with selected period
+                console.log('Fetching metrics...');
                 const metricsRes = await fetch(`/api/metrics?period=${this.successRatePeriod}`);
                 const metrics = await metricsRes.json();
                 this.updateMetrics(metrics);
+                console.log('Metrics loaded:', metrics);
 
                 // Fetch daemon status
+                console.log('Fetching daemon status...');
                 const daemonRes = await fetch('/api/daemon/status');
                 this.daemon = await daemonRes.json();
+                console.log('Daemon status loaded');
 
                 // Fetch tasks
+                console.log('Fetching tasks...');
                 const tasksRes = await fetch('/api/tasks');
                 const tasksData = await tasksRes.json();
                 this.tasks = tasksData.tasks || [];
+                console.log('Tasks loaded:', this.tasks.length, 'tasks');
 
                 // Fetch workers
+                console.log('Fetching workers...');
                 await this.fetchWorkers();
+                console.log('Workers loaded');
 
                 // Fetch recent events
+                console.log('Fetching events...');
                 const eventsRes = await fetch('/api/events?limit=50');
                 const eventsData = await eventsRes.json();
                 this.events = eventsData.events || [];
+                console.log('Events loaded:', this.events.length, 'events');
 
                 // Fetch git operations
+                console.log('Fetching git operations...');
                 const gitOpsRes = await fetch('/api/git-operations');
                 const gitOpsData = await gitOpsRes.json();
                 this.gitOperations = gitOpsData.operations || [];
+                console.log('Git operations loaded:', this.gitOperations.length, 'operations');
 
-                console.log('Initial data loaded');
+                console.log('Initial data loaded successfully!');
             } catch (error) {
                 console.error('Error fetching initial data:', error);
+                alert('Error loading dashboard data. Check console for details.');
             }
         },
 
