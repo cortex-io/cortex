@@ -1022,32 +1022,32 @@
 
                         <div class="space-y-4 text-gray-700 dark:text-gray-300">
                             <p class="text-lg leading-relaxed">
-                                <strong>Commit-Relay</strong> is a fully autonomous AI-powered development workflow system that orchestrates
-                                multiple specialized AI agents to handle software development tasks from inception to deployment.
+                                <strong>Commit-Relay v4.0</strong> is a fully autonomous AI-powered development workflow system featuring
+                                a three-layer orchestration architecture for complex multi-master coordination and scalable task execution.
                             </p>
 
                             <p class="leading-relaxed">
-                                The system employs a <strong>Mixture of Experts (MoE)</strong> architecture where a central coordinator
-                                routes tasks to specialized master agents (Security, Development, Inventory, CI/CD) who in turn spawn
-                                domain-specific workers to execute the actual work.
+                                The system employs <strong>Strategic Daemons</strong> (Task Orchestrator, Zombie Killer, Metrics Snapshot),
+                                <strong>Tactical Masters & Managers</strong> (Coordinator with MoE routing, 4 specialist masters, ephemeral Execution Managers),
+                                and <strong>Execution Workers</strong> (16 specialized worker types with heartbeat health monitoring).
                             </p>
 
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
                                 <div class="bg-primary-50 dark:bg-primary-900/20 p-4 rounded-lg">
-                                    <h4 class="font-semibold text-primary-700 dark:text-primary-300 mb-2">🤖 Autonomous Operation</h4>
-                                    <p class="text-sm">Workers automatically commit and push changes to GitHub without manual intervention.</p>
+                                    <h4 class="font-semibold text-primary-700 dark:text-primary-300 mb-2">🎭 Task Orchestration</h4>
+                                    <p class="text-sm">Strategic daemon decomposes complex multi-master tasks with DAG-based execution planning.</p>
                                 </div>
                                 <div class="bg-green-50 dark:bg-green-900/20 p-4 rounded-lg">
-                                    <h4 class="font-semibold text-green-700 dark:text-green-300 mb-2">⚡ Real-Time Updates</h4>
-                                    <p class="text-sm">Dashboard polls every 10 seconds to display live task progress, events, and git operations.</p>
+                                    <h4 class="font-semibold text-green-700 dark:text-green-300 mb-2">💓 Health Monitoring</h4>
+                                    <p class="text-sm">Heartbeat protocol (2-min pings) with zombie detection and automatic cleanup.</p>
                                 </div>
                                 <div class="bg-purple-50 dark:bg-purple-900/20 p-4 rounded-lg">
-                                    <h4 class="font-semibold text-purple-700 dark:text-purple-300 mb-2">🎯 Specialized Agents</h4>
-                                    <p class="text-sm">5 master agents and 5 worker types handle security, development, testing, documentation, and CI/CD.</p>
+                                    <h4 class="font-semibold text-purple-700 dark:text-purple-300 mb-2">👨‍💼 Execution Managers</h4>
+                                    <p class="text-sm">Tactical agents for subtask decomposition, multi-worker coordination, and result aggregation.</p>
                                 </div>
                                 <div class="bg-orange-50 dark:bg-orange-900/20 p-4 rounded-lg">
-                                    <h4 class="font-semibold text-orange-700 dark:text-orange-300 mb-2">📊 Complete Visibility</h4>
-                                    <p class="text-sm">Track all tasks, workers, events, and git operations through comprehensive dashboard analytics.</p>
+                                    <h4 class="font-semibold text-orange-700 dark:text-orange-300 mb-2">📊 Historical Analytics</h4>
+                                    <p class="text-sm">Real-time metrics with 5-minute snapshots, daily aggregation, and trend visualization.</p>
                                 </div>
                             </div>
                         </div>
@@ -1062,57 +1062,84 @@
 
                         <pre class="mermaid bg-gray-50 dark:bg-gray-900 p-6 rounded-lg">
 graph TB
-    User[User/CLI] -->|Creates Task| TaskQueue[(Task Queue)]
-    TaskQueue -->|Monitors| Daemon[Worker Daemon]
-    Daemon -->|Routes| Coordinator[Coordinator Master]
+    subgraph Strategic["🎯 Strategic Layer - Daemons"]
+        TO["Task Orchestrator<br/>Complex Coordination"]
+        ZK["Zombie Killer<br/>Health Monitoring"]
+        MS["Metrics Snapshot<br/>Historical Data"]
+    end
 
-    Coordinator -->|Routes by Type| Security[Security Master]
-    Coordinator -->|Routes by Type| Development[Development Master]
-    Coordinator -->|Routes by Type| Inventory[Inventory Master]
-    Coordinator -->|Routes by Type| CICD[CI/CD Master]
+    subgraph Tactical["👨‍💼 Tactical Layer - Masters & Managers"]
+        CM["Coordinator Master<br/>MoE Routing"]
+        SM["Security Master"]
+        DM["Development Master"]
+        IM["Inventory Master"]
+        CICD["CI/CD Master"]
+        EM["Execution Managers<br/>Subtask Coordination"]
+    end
 
-    Security -->|Spawns| SecWorkers[Security Workers]
-    Development -->|Spawns| DevWorkers[Dev Workers]
-    Inventory -->|Spawns| InvWorkers[Inventory Workers]
-    CICD -->|Spawns| CICDWorkers[CI/CD Workers]
+    subgraph Execution["⚙️ Execution Layer - Workers"]
+        W1["Scan Workers"]
+        W2["Implementation Workers"]
+        W3["Test Workers"]
+        W4["16 Worker Types"]
+    end
 
-    SecWorkers -->|Executes| GitAuto[Git Automation]
-    DevWorkers -->|Executes| GitAuto
-    InvWorkers -->|Executes| GitAuto
-    CICDWorkers -->|Executes| GitAuto
+    subgraph Observer["📊 Observer Layer"]
+        DA["Dashboard"]
+    end
 
-    GitAuto -->|Records| GitOps[(Git Operations)]
-    GitAuto -->|Pushes to| GitHub[GitHub]
+    TO --> CM
+    TO --> SM
+    TO --> DM
+    TO --> IM
 
-    GitOps -->|Generates| Events[(Events)]
-    Events -->|Polls Every 10s| Dashboard[Dashboard]
-    GitHub -->|Visible on| Dashboard
+    CM --> SM
+    CM --> DM
+    CM --> IM
+    CM --> CICD
 
-    Dashboard -->|Displays| User
+    SM --> EM
+    DM --> EM
+    IM --> EM
 
-    style User fill:#e1f5ff,stroke:#0284c7,stroke-width:2px
-    style Coordinator fill:#fef3c7,stroke:#f59e0b,stroke-width:2px
-    style Security fill:#fee2e2,stroke:#ef4444,stroke-width:2px
-    style Development fill:#dbeafe,stroke:#3b82f6,stroke-width:2px
-    style Inventory fill:#e9d5ff,stroke:#a855f7,stroke-width:2px
-    style CICD fill:#d1fae5,stroke:#10b981,stroke-width:2px
-    style GitAuto fill:#fce7f3,stroke:#ec4899,stroke-width:2px
-    style GitHub fill:#d1d5db,stroke:#374151,stroke-width:2px
-    style Dashboard fill:#f3e8ff,stroke:#9333ea,stroke-width:2px
+    SM --> W1
+    DM --> W2
+    IM --> W3
+    EM --> W4
+
+    W1 -.->|Heartbeat| ZK
+    W2 -.->|Heartbeat| ZK
+    W3 -.->|Heartbeat| ZK
+    W4 -.->|Heartbeat| ZK
+
+    MS -.->|Feeds| DA
+    DA -.->|Monitors| TO
+    DA -.->|Monitors| CM
+
+    style TO fill:#e1bee7,stroke:#8e24aa
+    style ZK fill:#ffccbc,stroke:#ff6f00
+    style MS fill:#fff9c4,stroke:#f57f17
+    style EM fill:#c5cae9,stroke:#3949ab
+    style DA fill:#b2dfdb,stroke:#00897b
+    style CM fill:#fef3c7,stroke:#f59e0b
+    style SM fill:#fee2e2,stroke:#ef4444
+    style DM fill:#dbeafe,stroke:#3b82f6
+    style IM fill:#e9d5ff,stroke:#a855f7
+    style CICD fill:#d1fae5,stroke:#10b981
                         </pre>
 
                         <div class="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
                             <div>
-                                <h4 class="font-semibold text-gray-900 dark:text-white mb-2">📋 Task Flow</h4>
-                                <p class="text-gray-600 dark:text-gray-400">User creates task → Queue → Daemon detects → Coordinator routes to specialist master</p>
+                                <h4 class="font-semibold text-gray-900 dark:text-white mb-2">🎯 Strategic Layer</h4>
+                                <p class="text-gray-600 dark:text-gray-400">Task Orchestrator decomposes complex tasks → Zombie Killer monitors health → Metrics Snapshot collects history</p>
                             </div>
                             <div>
-                                <h4 class="font-semibold text-gray-900 dark:text-white mb-2">🤖 Worker Execution</h4>
-                                <p class="text-gray-600 dark:text-gray-400">Master spawns worker → Worker executes → Auto git commit/push → Records operation</p>
+                                <h4 class="font-semibold text-gray-900 dark:text-white mb-2">👨‍💼 Tactical Layer</h4>
+                                <p class="text-gray-600 dark:text-gray-400">Coordinator routes via MoE → Masters spawn Execution Managers → Managers coordinate workers</p>
                             </div>
                             <div>
-                                <h4 class="font-semibold text-gray-900 dark:text-white mb-2">📊 Dashboard Updates</h4>
-                                <p class="text-gray-600 dark:text-gray-400">Events generated → Dashboard polls every 10s → Real-time visibility</p>
+                                <h4 class="font-semibold text-gray-900 dark:text-white mb-2">⚙️ Execution Layer</h4>
+                                <p class="text-gray-600 dark:text-gray-400">16 specialized workers execute tasks → Send heartbeats → Zombie detection → Auto cleanup</p>
                             </div>
                         </div>
                     </div>
