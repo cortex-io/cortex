@@ -342,6 +342,28 @@ function dashboard() {
                     console.error('Error polling tasks:', error);
                 }
             }, 15000);
+
+            // Poll events every 10 seconds for real-time updates
+            setInterval(async () => {
+                try {
+                    const res = await fetch('/api/events?limit=50');
+                    const data = await res.json();
+                    this.events = data.events || [];
+                } catch (error) {
+                    console.error('Error polling events:', error);
+                }
+            }, 10000);
+
+            // Poll git operations every 10 seconds for real-time git push updates
+            setInterval(async () => {
+                try {
+                    const res = await fetch('/api/git-operations');
+                    const data = await res.json();
+                    this.gitOperations = data.operations || [];
+                } catch (error) {
+                    console.error('Error polling git operations:', error);
+                }
+            }, 10000);
         },
 
         // Charts
