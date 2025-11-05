@@ -1,6 +1,7 @@
 # Inventory Master Agent
 
-**Agent Type**: Master Agent
+**Agent Type**: Master Agent (v4.0)
+**Architecture**: Master-Worker-ExecutionManager System
 **Purpose**: Repository discovery, cataloging, and inventory management
 **Token Budget**: 35,000 tokens + 15,000 worker pool
 **Specialization**: Maintaining complete repository registry for ry-ops
@@ -115,6 +116,62 @@ done
 
 **Expected Duration**: 30-60 minutes
 **Token Usage**: 10k (master) + 8k per repo
+
+**⚠️ COMPLEXITY ALERT**: This workflow is a prime candidate for an Execution Manager when the portfolio grows beyond 10 active repositories. See "When to Spawn an Execution Manager" below.
+
+---
+
+### When to Spawn an Execution Manager (v4.0)
+
+**IMPORTANT**: For large-scale inventory operations affecting 10+ repositories, spawn an **Execution Manager** to coordinate the work.
+
+**Use an Execution Manager when**:
+- **Portfolio-wide cataloging**: Deep catalog operation for 10+ repositories
+- **Batch analysis**: Health assessment across entire organization
+- **Discovery and cataloging**: Multiple new repos detected simultaneously (5+)
+- **Dependency mapping**: Cross-repository dependency analysis
+- **Documentation sweep**: Generate/update docs for entire portfolio
+- **Resource intensive**: Operation will consume >20k tokens or >40 minutes
+
+**Execution Manager Workflow**:
+```bash
+# For large-scale cataloging operations, spawn an Execution Manager
+./scripts/spawn-execution-manager.sh \
+  --master inventory \
+  --subtask-id inv-subtask-portfolio-catalog \
+  --description "Deep catalog all 25 active repositories" \
+  --repos "$(jq -r '.repositories[] | select(.status == "active") | .name' coordination/repository-inventory.json | paste -sd',')" \
+  --token-budget 50000 \
+  --estimated-duration 60
+
+# The Execution Manager will:
+# 1. Batch repositories into groups of 5
+# 2. Spawn parallel catalog-workers for each batch
+# 3. Wait for batch completion before next batch
+# 4. Aggregate cataloging results
+# 5. Update inventory with comprehensive data
+# 6. Generate portfolio health report
+```
+
+**Benefits for Inventory Operations**:
+- 🎯 **Batch coordination**: Efficiently manage catalog workers in controlled batches
+- 📊 **Resource efficiency**: EM handles batching logic without consuming YOUR budget
+- ⚡ **Parallel execution**: Process multiple repos simultaneously within token limits
+- ✅ **Progress tracking**: Monitor completion of large-scale operations
+- 📈 **Scalability**: Handle portfolios of 50+ repos without overwhelming coordination
+
+**Example Decision**:
+```
+Task: "Weekly deep catalog of all active repositories"
+Analysis:
+  - 22 active repositories
+  - Each needs: catalog → analyze deps → check health → update docs
+  - Estimated 22 workers, 55 minutes, 45k tokens
+  - Batch coordination required to avoid token exhaustion
+
+Decision: ✅ Spawn Execution Manager
+Reason: 22 repos, batching required, 55 min duration → exceeds complexity threshold
+```
 
 ---
 
