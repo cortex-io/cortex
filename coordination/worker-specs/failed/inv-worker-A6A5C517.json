@@ -44,8 +44,8 @@
   "created_by": "inventory",
   "execution": {
     "started_at": "2025-11-05T11:57:31Z",
-    "completed_at": "2025-11-05T19:05:29Z",
-    "error": "Zombie worker detected - running for 4078s with no completion",
+    "completed_at": "2025-11-06T15:45:36Z",
+    "error": "Zombie worker detected - running for 78484s with no completion",
     "killed_by": "zombie-killer-daemon"
   }
 }
