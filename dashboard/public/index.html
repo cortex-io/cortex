@@ -190,9 +190,14 @@
                 <i data-lucide="cpu" class="w-5 h-5"></i>
                 <span :class="currentView === 'workers' ? 'font-medium' : ''">Workforce</span>
             </button>
-            <button @click="switchView('masters')" class="w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors" :class="currentView === 'masters' ? 'bg-primary-50 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 font-medium' : 'hover:bg-gray-100 dark:hover:bg-gray-700/70 text-gray-700 dark:text-gray-300'">
-                <i data-lucide="network" class="w-5 h-5"></i>
-                <span :class="currentView === 'masters' ? 'font-medium' : ''">Agents</span>
+
+            <!-- Integrations Section -->
+            <div class="pt-4 pb-1 px-4">
+                <p class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Integrations</p>
+            </div>
+            <button @click="switchView('api-explorer')" class="w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors" :class="currentView === 'api-explorer' ? 'bg-primary-50 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 font-medium' : 'hover:bg-gray-100 dark:hover:bg-gray-700/70 text-gray-700 dark:text-gray-300'">
+                <i data-lucide="code" class="w-5 h-5"></i>
+                <span :class="currentView === 'api-explorer' ? 'font-medium' : ''">API Explorer</span>
             </button>
 
             <!-- Logs Section -->
@@ -959,152 +964,37 @@
                 </div>
             </div>
 
-            <!-- Masters View -->
-            <div x-show="currentView === 'masters'" x-transition>
-                <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700">
-                    <div class="p-6 border-b border-gray-200 dark:border-gray-700">
-                        <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Master Agents</h3>
+            <!-- API Explorer View -->
+            <div x-show="currentView === 'api-explorer'" x-transition>
+                <div class="space-y-6">
+                    <!-- API Explorer Header -->
+                    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 border border-gray-200 dark:border-gray-700">
+                        <div class="flex items-center justify-between mb-4">
+                            <div>
+                                <h2 class="text-2xl font-bold text-gray-900 dark:text-white">API Explorer</h2>
+                                <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Interactive API testing and exploration</p>
+                            </div>
+                            <div class="flex items-center space-x-2 px-3 py-1.5 rounded-full border bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800">
+                                <div class="relative">
+                                    <div class="w-2 h-2 rounded-full bg-green-500"></div>
+                                    <div class="absolute inset-0 w-2 h-2 bg-green-500 rounded-full animate-pulse-slow"></div>
+                                </div>
+                                <span class="text-sm font-medium text-green-700 dark:text-green-300">API Ready</span>
+                            </div>
+                        </div>
                     </div>
-                    <div class="overflow-x-auto">
-                        <table class="w-full">
-                            <thead class="bg-gray-50 dark:bg-gray-700/50 border-b-2 border-gray-200 dark:border-gray-600">
-                                <tr>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-600 dark:text-gray-300 uppercase tracking-wider w-48">Master Agent</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-600 dark:text-gray-300 uppercase tracking-wider">Recent Activity</th>
-                                </tr>
-                            </thead>
-                            <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
-                                <!-- Coordinator Master -->
-                                <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
-                                    <td class="px-6 py-4 whitespace-nowrap">
-                                        <div class="flex items-center space-x-3">
-                                            <div class="w-8 h-8 rounded-lg gradient-blue flex items-center justify-center flex-shrink-0">
-                                                <i data-lucide="crown" class="w-4 h-4 text-white"></i>
-                                            </div>
-                                            <span class="text-sm font-medium text-gray-900 dark:text-white">Coordinator</span>
-                                        </div>
-                                    </td>
-                                    <td class="px-6 py-4">
-                                        <div class="space-y-2">
-                                            <!-- Using index as key - events have duplicate IDs -->
-                                            <template x-for="(event, eventIndex) in events.filter(e => e.data?.assigned_to === 'coordinator-master' || e.data?.assigned_by === 'coordinator-master' || e.type?.includes('coordinator')).slice(0, 3)" :key="'coord-event-' + eventIndex">
-                                                <div class="flex items-start space-x-2 text-sm">
-                                                    <span class="text-xs text-gray-400 dark:text-gray-500 whitespace-nowrap" x-text="new Date(event.timestamp).toLocaleTimeString()"></span>
-                                                    <span class="text-gray-700 dark:text-gray-300 line-clamp-1" x-text="event.message || formatEventMessage(event)"></span>
-                                                </div>
-                                            </template>
-                                            <div x-show="events.filter(e => e.data?.assigned_to === 'coordinator-master' || e.data?.assigned_by === 'coordinator-master' || e.type?.includes('coordinator')).length === 0" class="text-sm text-gray-400 dark:text-gray-500 italic">
-                                                No recent activity
-                                            </div>
-                                        </div>
-                                    </td>
-                                </tr>
 
-                                <!-- Security Master -->
-                                <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
-                                    <td class="px-6 py-4 whitespace-nowrap">
-                                        <div class="flex items-center space-x-3">
-                                            <div class="w-8 h-8 rounded-lg gradient-orange flex items-center justify-center flex-shrink-0">
-                                                <i data-lucide="shield" class="w-4 h-4 text-white"></i>
-                                            </div>
-                                            <span class="text-sm font-medium text-gray-900 dark:text-white">Security</span>
-                                        </div>
-                                    </td>
-                                    <td class="px-6 py-4">
-                                        <div class="space-y-2">
-                                            <!-- Using index as key - events have duplicate IDs -->
-                                            <template x-for="(event, eventIndex) in events.filter(e => e.data?.assigned_to === 'security-master' || e.data?.assigned_by === 'security-master' || e.type?.includes('security')).slice(0, 3)" :key="'security-event-' + eventIndex">
-                                                <div class="flex items-start space-x-2 text-sm">
-                                                    <span class="text-xs text-gray-400 dark:text-gray-500 whitespace-nowrap" x-text="new Date(event.timestamp).toLocaleTimeString()"></span>
-                                                    <span class="text-gray-700 dark:text-gray-300 line-clamp-1" x-text="event.message || formatEventMessage(event)"></span>
-                                                </div>
-                                            </template>
-                                            <div x-show="events.filter(e => e.data?.assigned_to === 'security-master' || e.data?.assigned_by === 'security-master' || e.type?.includes('security')).length === 0" class="text-sm text-gray-400 dark:text-gray-500 italic">
-                                                No recent activity
-                                            </div>
-                                        </div>
-                                    </td>
-                                </tr>
-
-                                <!-- Development Master -->
-                                <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
-                                    <td class="px-6 py-4 whitespace-nowrap">
-                                        <div class="flex items-center space-x-3">
-                                            <div class="w-8 h-8 rounded-lg gradient-green flex items-center justify-center flex-shrink-0">
-                                                <i data-lucide="code" class="w-4 h-4 text-white"></i>
-                                            </div>
-                                            <span class="text-sm font-medium text-gray-900 dark:text-white">Development</span>
-                                        </div>
-                                    </td>
-                                    <td class="px-6 py-4">
-                                        <div class="space-y-2">
-                                            <!-- Using index as key - events have duplicate IDs -->
-                                            <template x-for="(event, eventIndex) in events.filter(e => e.data?.assigned_to === 'development-master' || e.data?.assigned_by === 'development-master' || e.type?.includes('development')).slice(0, 3)" :key="'dev-event-' + eventIndex">
-                                                <div class="flex items-start space-x-2 text-sm">
-                                                    <span class="text-xs text-gray-400 dark:text-gray-500 whitespace-nowrap" x-text="new Date(event.timestamp).toLocaleTimeString()"></span>
-                                                    <span class="text-gray-700 dark:text-gray-300 line-clamp-1" x-text="event.message || formatEventMessage(event)"></span>
-                                                </div>
-                                            </template>
-                                            <div x-show="events.filter(e => e.data?.assigned_to === 'development-master' || e.data?.assigned_by === 'development-master' || e.type?.includes('development')).length === 0" class="text-sm text-gray-400 dark:text-gray-500 italic">
-                                                No recent activity
-                                            </div>
-                                        </div>
-                                    </td>
-                                </tr>
-
-                                <!-- Inventory Master -->
-                                <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
-                                    <td class="px-6 py-4 whitespace-nowrap">
-                                        <div class="flex items-center space-x-3">
-                                            <div class="w-8 h-8 rounded-lg gradient-red flex items-center justify-center flex-shrink-0">
-                                                <i data-lucide="database" class="w-4 h-4 text-white"></i>
-                                            </div>
-                                            <span class="text-sm font-medium text-gray-900 dark:text-white">Inventory</span>
-                                        </div>
-                                    </td>
-                                    <td class="px-6 py-4">
-                                        <div class="space-y-2">
-                                            <!-- Using index as key - events have duplicate IDs -->
-                                            <template x-for="(event, eventIndex) in events.filter(e => e.data?.assigned_to === 'inventory-master' || e.data?.assigned_by === 'inventory-master' || e.type?.includes('inventory')).slice(0, 3)" :key="'inventory-event-' + eventIndex">
-                                                <div class="flex items-start space-x-2 text-sm">
-                                                    <span class="text-xs text-gray-400 dark:text-gray-500 whitespace-nowrap" x-text="new Date(event.timestamp).toLocaleTimeString()"></span>
-                                                    <span class="text-gray-700 dark:text-gray-300 line-clamp-1" x-text="event.message || formatEventMessage(event)"></span>
-                                                </div>
-                                            </template>
-                                            <div x-show="events.filter(e => e.data?.assigned_to === 'inventory-master' || e.data?.assigned_by === 'inventory-master' || e.type?.includes('inventory')).length === 0" class="text-sm text-gray-400 dark:text-gray-500 italic">
-                                                No recent activity
-                                            </div>
-                                        </div>
-                                    </td>
-                                </tr>
-
-                                <!-- CI/CD Master -->
-                                <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
-                                    <td class="px-6 py-4 whitespace-nowrap">
-                                        <div class="flex items-center space-x-3">
-                                            <div class="w-8 h-8 rounded-lg gradient-purple flex items-center justify-center flex-shrink-0">
-                                                <i data-lucide="zap" class="w-4 h-4 text-white"></i>
-                                            </div>
-                                            <span class="text-sm font-medium text-gray-900 dark:text-white">CI/CD</span>
-                                        </div>
-                                    </td>
-                                    <td class="px-6 py-4">
-                                        <div class="space-y-2">
-                                            <!-- Using index as key - events have duplicate IDs -->
-                                            <template x-for="(event, eventIndex) in events.filter(e => e.data?.assigned_to === 'cicd-master' || e.data?.assigned_by === 'cicd-master' || e.type?.includes('cicd')).slice(0, 3)" :key="'cicd-event-' + eventIndex">
-                                                <div class="flex items-start space-x-2 text-sm">
-                                                    <span class="text-xs text-gray-400 dark:text-gray-500 whitespace-nowrap" x-text="new Date(event.timestamp).toLocaleTimeString()"></span>
-                                                    <span class="text-gray-700 dark:text-gray-300 line-clamp-1" x-text="event.message || formatEventMessage(event)"></span>
-                                                </div>
-                                            </template>
-                                            <div x-show="events.filter(e => e.data?.assigned_to === 'cicd-master' || e.data?.assigned_by === 'cicd-master' || e.type?.includes('cicd')).length === 0" class="text-sm text-gray-400 dark:text-gray-500 italic">
-                                                No recent activity
-                                            </div>
-                                        </div>
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
+                    <!-- Placeholder Content -->
+                    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-12 border border-gray-200 dark:border-gray-700">
+                        <div class="text-center">
+                            <div class="inline-flex items-center justify-center w-20 h-20 rounded-full bg-primary-100 dark:bg-primary-900/30 mb-4">
+                                <i data-lucide="code" class="w-10 h-10 text-primary-600 dark:text-primary-400"></i>
+                            </div>
+                            <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">API Explorer Coming Soon</h3>
+                            <p class="text-gray-500 dark:text-gray-400 max-w-md mx-auto">
+                                This page will provide interactive API testing capabilities, endpoint documentation, and integration examples.
+                            </p>
+                        </div>
                     </div>
                 </div>
             </div>
