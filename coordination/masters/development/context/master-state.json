@@ -180,6 +180,18 @@
       "worker_type": "feature-implementer",
       "spawned_at": "2025-11-05T17:03:36Z",
       "status": "active"
+    },
+    {
+      "worker_id": "dev-worker-4FD07A66",
+      "worker_type": "feature-implementer",
+      "spawned_at": "2025-11-06T14:47:21Z",
+      "status": "active"
+    },
+    {
+      "worker_id": "dev-worker-A3BA1E63",
+      "worker_type": "feature-implementer",
+      "spawned_at": "2025-11-06T14:47:21Z",
+      "status": "active"
     }
   ],
   "completed_tasks": 0,
@@ -189,6 +201,6 @@
     "success_rate": 0,
     "code_quality_score": 0
   },
-  "last_run": "2025-11-05T17:03:36Z",
-  "last_started": "2025-11-05T17:03:36Z"
+  "last_run": "2025-11-06T14:47:22Z",
+  "last_started": "2025-11-06T14:47:21Z"
 }
