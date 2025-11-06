@@ -1131,7 +1131,7 @@
                                     </tr>
                                 </thead>
                                 <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
-                                    <template x-for="worker in workers" :key="worker.worker_id">
+                                    <template x-for="worker in paginatedWorkers" :key="worker.worker_id">
                                         <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
                                             <td class="px-6 py-4 whitespace-nowrap">
                                                 <span class="text-sm font-mono text-gray-900 dark:text-white" x-text="worker.worker_id">-</span>
@@ -1187,6 +1187,34 @@
                                     </tr>
                                 </tbody>
                             </table>
+                        </div>
+
+                        <!-- Pagination Controls -->
+                        <div x-show="getTotalPages('workers') > 1" class="px-6 py-4 border-t border-gray-200 dark:border-gray-700 flex items-center justify-between">
+                            <div class="text-sm text-gray-600 dark:text-gray-400">
+                                Showing
+                                <span class="font-medium" x-text="(pagination.workers.currentPage - 1) * pagination.workers.itemsPerPage + 1"></span>
+                                to
+                                <span class="font-medium" x-text="Math.min(pagination.workers.currentPage * pagination.workers.itemsPerPage, pagination.workers.total)"></span>
+                                of
+                                <span class="font-medium" x-text="pagination.workers.total"></span>
+                                workers
+                            </div>
+                            <div class="flex items-center space-x-2">
+                                <button @click="prevPage('workers')" :disabled="pagination.workers.currentPage === 1"
+                                    class="px-3 py-1 text-sm rounded border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                                    :class="pagination.workers.currentPage === 1 ? 'text-gray-400 dark:text-gray-600' : 'text-gray-700 dark:text-gray-300'">
+                                    Previous
+                                </button>
+                                <span class="text-sm text-gray-600 dark:text-gray-400">
+                                    Page <span class="font-medium" x-text="pagination.workers.currentPage"></span> of <span class="font-medium" x-text="getTotalPages('workers')"></span>
+                                </span>
+                                <button @click="nextPage('workers')" :disabled="pagination.workers.currentPage >= getTotalPages('workers')"
+                                    class="px-3 py-1 text-sm rounded border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                                    :class="pagination.workers.currentPage >= getTotalPages('workers') ? 'text-gray-400 dark:text-gray-600' : 'text-gray-700 dark:text-gray-300'">
+                                    Next
+                                </button>
+                            </div>
                         </div>
                     </div>
 
