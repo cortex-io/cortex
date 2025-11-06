@@ -101,6 +101,13 @@ function dashboard() {
         // Charts
         tokenChart: null,
 
+        // Lazy loading tracking
+        chartsInitialized: {
+            overview: false,  // token chart
+            metrics: false,   // all metrics page charts
+            analytics: false  // analytics charts
+        },
+
         // Initialize
         async init() {
             console.log('🚀 Initializing dashboard v2...');
@@ -516,9 +523,10 @@ function dashboard() {
 
         // Charts
         initCharts() {
-            // Only init token chart on page load (it's on overview page)
+            // Lazy loading: Only init token chart on page load (it's on overview page)
             this.initTokenChart();
-            // Analytics charts are initialized when switching to metrics view
+            this.chartsInitialized.overview = true;
+            // Other charts are initialized when their views are accessed
         },
 
         // Initialize all historical analytics charts
@@ -1832,9 +1840,14 @@ function dashboard() {
         switchView(view) {
             this.currentView = view;
 
-            // Fetch additional data if needed
-            if (view === 'workers' && this.workers.length === 0) {
-                this.fetchWorkers();
+            // Lazy loading: Fetch workers data only when viewing workers page
+            if (view === 'workers') {
+                // Check cache first
+                const cachedWorkers = this.getCachedData('workers');
+                if (!cachedWorkers || this.workers.length === 0) {
+                    console.log('👷 Lazy loading workers data...');
+                    this.fetchWorkers();
+                }
             }
 
             // Fetch session-only events for Events page
@@ -1842,10 +1855,13 @@ function dashboard() {
                 this.fetchSessionEvents();
             }
 
-            // Initialize metrics charts when switching to metrics view
-            if (view === 'metrics') {
+            // Lazy loading: Initialize metrics charts only on first visit
+            if (view === 'metrics' && !this.chartsInitialized.metrics) {
+                console.log('📊 Lazy loading metrics charts...');
                 this.$nextTick(() => {
                     this.initMetricsCharts();
+                    this.chartsInitialized.metrics = true;
+
                     // Render Mermaid diagrams (for EM flow diagram)
                     setTimeout(() => {
                         try {
@@ -1890,6 +1906,14 @@ function dashboard() {
 
         async fetchWorkers() {
             try {
+                // Check cache first
+                const cached = this.getCachedData('workers');
+                if (cached) {
+                    console.log('Using cached workers data');
+                    this.workers = cached;
+                    return;
+                }
+
                 const res = await fetch('/api/workers');
                 const data = await res.json();
                 this.workers = [
@@ -1897,6 +1921,9 @@ function dashboard() {
                     ...(data.completed_workers || []),
                     ...(data.failed_workers || [])
                 ];
+
+                // Cache the workers data
+                this.setCachedData('workers', this.workers);
             } catch (error) {
                 console.error('Error fetching workers:', error);
             }
