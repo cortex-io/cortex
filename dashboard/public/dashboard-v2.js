@@ -48,6 +48,13 @@ function dashboard() {
         gitOperations: [], // Git commit/push operations
         streams: null, // Workforce streams data
 
+        // Pagination
+        pagination: {
+            workers: { currentPage: 1, itemsPerPage: 50, total: 0 },
+            tasks: { currentPage: 1, itemsPerPage: 50, total: 0 },
+            events: { currentPage: 1, itemsPerPage: 100, total: 0 }
+        },
+
         // Historical Analytics
         analyticsTimeRange: '24h',
         analyticsCharts: {
@@ -100,6 +107,48 @@ function dashboard() {
                 const dateB = new Date(b.created_at || 0);
                 return dateB - dateA; // Descending order
             });
+        },
+
+        // Paginated data
+        get paginatedWorkers() {
+            const start = (this.pagination.workers.currentPage - 1) * this.pagination.workers.itemsPerPage;
+            const end = start + this.pagination.workers.itemsPerPage;
+            this.pagination.workers.total = this.workers.length;
+            return this.workers.slice(start, end);
+        },
+
+        get paginatedTasks() {
+            const sorted = this.sortedTasks;
+            const start = (this.pagination.tasks.currentPage - 1) * this.pagination.tasks.itemsPerPage;
+            const end = start + this.pagination.tasks.itemsPerPage;
+            this.pagination.tasks.total = sorted.length;
+            return sorted.slice(start, end);
+        },
+
+        get paginatedEvents() {
+            const start = (this.pagination.events.currentPage - 1) * this.pagination.events.itemsPerPage;
+            const end = start + this.pagination.events.itemsPerPage;
+            this.pagination.events.total = this.events.length;
+            return this.events.slice(start, end);
+        },
+
+        // Pagination helpers
+        getTotalPages(type) {
+            return Math.ceil(this.pagination[type].total / this.pagination[type].itemsPerPage);
+        },
+
+        changePage(type, page) {
+            const totalPages = this.getTotalPages(type);
+            if (page < 1 || page > totalPages) return;
+            this.pagination[type].currentPage = page;
+        },
+
+        nextPage(type) {
+            this.changePage(type, this.pagination[type].currentPage + 1);
+        },
+
+        prevPage(type) {
+            this.changePage(type, this.pagination[type].currentPage - 1);
         },
 
         // WebSocket
