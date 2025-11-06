@@ -17,6 +17,16 @@ function dashboard() {
         successRatePeriod: localStorage.getItem('successRatePeriod') || 'all_time',
         showPeriodSelector: false,
 
+        // Performance: Debouncing and caching
+        updateDebounceTimer: null,
+        updateDebounceDelay: 300, // ms - wait 300ms after last message before updating UI
+        messageQueue: [], // Queue messages for batch processing
+        cache: {
+            metrics: { data: null, timestamp: 0, ttl: 5000 }, // 5 second cache
+            workers: { data: null, timestamp: 0, ttl: 3000 },  // 3 second cache
+            tasks: { data: null, timestamp: 0, ttl: 3000 }
+        },
+
         // Data
         metrics: {
             workers: { active: 0, completed: 0, failed: 0, successRate: 0, avgDuration: 0 },
@@ -138,6 +148,66 @@ function dashboard() {
             }
         },
 
+        // Performance: Caching helpers
+        getCachedData(key) {
+            const cached = this.cache[key];
+            if (!cached) return null;
+
+            const now = Date.now();
+            const age = now - cached.timestamp;
+
+            // Return cached data if still fresh
+            if (cached.data && age < cached.ttl) {
+                return cached.data;
+            }
+
+            return null;
+        },
+
+        setCachedData(key, data) {
+            if (!this.cache[key]) {
+                this.cache[key] = { data: null, timestamp: 0, ttl: 5000 };
+            }
+            this.cache[key].data = data;
+            this.cache[key].timestamp = Date.now();
+        },
+
+        // Performance: Debounced update
+        scheduleUpdate() {
+            // Clear existing timer
+            if (this.updateDebounceTimer) {
+                clearTimeout(this.updateDebounceTimer);
+            }
+
+            // Schedule new update
+            this.updateDebounceTimer = setTimeout(() => {
+                this.processMessageQueue();
+            }, this.updateDebounceDelay);
+        },
+
+        processMessageQueue() {
+            if (this.messageQueue.length === 0) return;
+
+            // Process all queued messages in batch
+            const messages = [...this.messageQueue];
+            this.messageQueue = [];
+
+            // Group messages by type for efficient processing
+            const grouped = {};
+            messages.forEach(msg => {
+                if (!grouped[msg.type]) grouped[msg.type] = [];
+                grouped[msg.type].push(msg);
+            });
+
+            // Process each type
+            Object.keys(grouped).forEach(type => {
+                const msgs = grouped[type];
+                // For most types, we only care about the latest message
+                const latestMsg = msgs[msgs.length - 1];
+                this.processWebSocketMessage(latestMsg);
+            });
+        },
+
         // Theme management
         toggleTheme() {
             this.darkMode = !this.darkMode;
@@ -172,7 +242,10 @@ function dashboard() {
             this.ws.onmessage = (event) => {
                 try {
                     const message = JSON.parse(event.data);
-                    this.handleWebSocketMessage(message);
+                    // Queue message for batch processing
+                    this.messageQueue.push(message);
+                    // Schedule debounced update
+                    this.scheduleUpdate();
                 } catch (error) {
                     console.error('Error parsing WebSocket message:', error);
                 }
@@ -197,7 +270,7 @@ function dashboard() {
             };
         },
 
-        handleWebSocketMessage(message) {
+        processWebSocketMessage(message) {
             if (message.type === 'initial' || message.type === 'update') {
                 this.updateMetrics(message.data);
                 // Refetch workers when metrics update (worker count may have changed)
