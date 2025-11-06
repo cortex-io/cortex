@@ -211,9 +211,9 @@
 
         <!-- Theme toggle -->
         <div class="absolute bottom-6 left-4 right-4">
-            <button @click="toggleTheme()" class="w-full flex items-center justify-center space-x-2 px-4 py-3 rounded-lg bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300">
-                <i x-show="!darkMode" data-lucide="moon" class="w-5 h-5"></i>
-                <i x-show="darkMode" data-lucide="sun" class="w-5 h-5"></i>
+            <button @click="toggleTheme()" class="w-full flex items-center justify-center space-x-2 px-4 py-3 rounded-lg bg-gradient-to-r from-gray-100 to-gray-200 dark:from-gray-700 dark:to-gray-600 hover:from-gray-200 hover:to-gray-300 dark:hover:from-gray-600 dark:hover:to-gray-500 text-gray-700 dark:text-gray-200 font-medium shadow-sm hover:shadow transition-all">
+                <i x-show="!darkMode" data-lucide="moon" class="w-5 h-5 text-indigo-600 dark:text-indigo-400"></i>
+                <i x-show="darkMode" data-lucide="sun" class="w-5 h-5 text-yellow-500 dark:text-yellow-400"></i>
                 <span x-text="darkMode ? 'Light Mode' : 'Dark Mode'"></span>
             </button>
         </div>
@@ -245,9 +245,12 @@
                         <span class="text-sm font-medium text-gray-600 dark:text-gray-400" x-text="dataFreshness === 'fresh' ? 'Fresh' : dataFreshness === 'stale' ? 'Stale (30s+)' : dataFreshness === 'very-stale' ? 'Very Stale (2m+)' : 'Unknown'"></span>
                     </div>
                     <!-- Connection status -->
-                    <div class="flex items-center space-x-2">
-                        <div :class="connected ? 'bg-green-500 animate-pulse-slow' : 'bg-red-500'" class="w-2 h-2 rounded-full"></div>
-                        <span class="text-sm font-medium" :class="connected ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'" x-text="connected ? 'Connected' : 'Disconnected'"></span>
+                    <div class="flex items-center space-x-2 px-3 py-1.5 rounded-full border" :class="connected ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800' : 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800'">
+                        <div class="relative">
+                            <div :class="connected ? 'bg-green-500' : 'bg-red-500'" class="w-2 h-2 rounded-full"></div>
+                            <div x-show="connected" class="absolute inset-0 w-2 h-2 bg-green-500 rounded-full animate-pulse-slow"></div>
+                        </div>
+                        <span class="text-sm font-medium" :class="connected ? 'text-green-700 dark:text-green-300' : 'text-red-700 dark:text-red-300'" x-text="connected ? 'Connected' : 'Disconnected'"></span>
                     </div>
                 </div>
             </div>
@@ -515,9 +518,12 @@
                     <div class="lg:col-span-2 bg-white dark:bg-gray-800 rounded-xl shadow-lg p-4 border border-gray-200 dark:border-gray-700">
                         <div class="flex items-center justify-between mb-3">
                             <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Real-time Events</h3>
-                            <div class="flex items-center space-x-2">
-                                <div class="w-2 h-2 bg-green-500 rounded-full animate-pulse-slow"></div>
-                                <span class="text-xs text-gray-500 dark:text-gray-400">Live</span>
+                            <div class="flex items-center space-x-2 px-3 py-1.5 bg-green-50 dark:bg-green-900/20 rounded-full border border-green-200 dark:border-green-800">
+                                <div class="relative">
+                                    <div class="w-2 h-2 bg-green-500 rounded-full animate-pulse-slow"></div>
+                                    <div class="absolute inset-0 w-2 h-2 bg-green-500 rounded-full animate-ping opacity-75"></div>
+                                </div>
+                                <span class="text-xs font-medium text-green-700 dark:text-green-300">Live</span>
                             </div>
                         </div>
                         <div class="space-y-1.5 max-h-[470px] overflow-y-auto">
@@ -845,17 +851,22 @@
                             })
                          ">
                         <!-- Empty state -->
-                        <div x-show="events.length === 0" class="text-center py-12">
-                            <i data-lucide="inbox" class="w-16 h-16 mx-auto text-gray-300 dark:text-gray-600 mb-4"></i>
-                            <p class="text-gray-500 dark:text-gray-400 text-sm">No events in current session yet</p>
-                            <p class="text-gray-400 dark:text-gray-500 text-xs mt-2">Events will appear here as they occur</p>
+                        <div x-show="events.length === 0" class="text-center py-12 px-6">
+                            <div class="inline-flex items-center justify-center w-20 h-20 rounded-full bg-gray-100 dark:bg-gray-800 mb-4">
+                                <i data-lucide="inbox" class="w-10 h-10 text-gray-400 dark:text-gray-500"></i>
+                            </div>
+                            <p class="text-gray-600 dark:text-gray-300 text-base font-medium mb-2">No events yet</p>
+                            <p class="text-gray-500 dark:text-gray-400 text-sm max-w-sm mx-auto">Events will appear here as they occur. Try performing some actions to generate activity.</p>
                         </div>
 
                         <!-- No results state -->
-                        <div x-show="events.length > 0 && filteredEvents.length === 0" class="text-center py-12">
-                            <i data-lucide="filter-x" class="w-16 h-16 mx-auto text-gray-300 dark:text-gray-600 mb-4"></i>
-                            <p class="text-gray-500 dark:text-gray-400 text-sm">No events match your filters</p>
-                            <button @click="searchQuery = ''; selectedEventType = 'all'; resetPage()" class="mt-4 px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg text-sm">
+                        <div x-show="events.length > 0 && filteredEvents.length === 0" class="text-center py-12 px-6">
+                            <div class="inline-flex items-center justify-center w-20 h-20 rounded-full bg-gray-100 dark:bg-gray-800 mb-4">
+                                <i data-lucide="filter-x" class="w-10 h-10 text-gray-400 dark:text-gray-500"></i>
+                            </div>
+                            <p class="text-gray-600 dark:text-gray-300 text-base font-medium mb-2">No matching events</p>
+                            <p class="text-gray-500 dark:text-gray-400 text-sm max-w-sm mx-auto mb-4">No events match your current filters. Try adjusting your search or filter criteria.</p>
+                            <button @click="searchQuery = ''; selectedEventType = 'all'; resetPage()" class="px-4 py-2 bg-primary-500 hover:bg-primary-600 dark:bg-primary-600 dark:hover:bg-primary-700 text-white rounded-lg text-sm font-medium transition-colors">
                                 Clear Filters
                             </button>
                         </div>
