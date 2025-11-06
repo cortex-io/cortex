@@ -105,44 +105,6 @@
         .animate-pulse-slow {
             animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
         }
-
-        /* Skeleton loading animations */
-        @keyframes shimmer {
-            0% { background-position: -1000px 0; }
-            100% { background-position: 1000px 0; }
-        }
-
-        .skeleton {
-            background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
-            background-size: 1000px 100%;
-            animation: shimmer 2s infinite;
-        }
-
-        .dark .skeleton {
-            background: linear-gradient(90deg, #374151 25%, #4b5563 50%, #374151 75%);
-            background-size: 1000px 100%;
-        }
-
-        /* Mermaid diagram SVG background */
-        .mermaid svg {
-            background-color: transparent !important;
-        }
-
-        .skeleton-text {
-            height: 1rem;
-            margin-bottom: 0.5rem;
-            border-radius: 0.25rem;
-        }
-
-        .skeleton-card {
-            border-radius: 0.5rem;
-            padding: 1.5rem;
-        }
-
-        .skeleton-chart {
-            height: 300px;
-            border-radius: 0.5rem;
-        }
     </style>
 </head>
 <body class="bg-gray-50 dark:bg-gray-900" x-data="dashboard()" x-init="init()">
@@ -174,11 +136,11 @@
             <div class="pt-2 pb-1 px-4">
                 <p class="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">Monitoring</p>
             </div>
-            <button @click="switchView('overview')" class="w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors" :class="currentView === 'overview' ? 'bg-primary-50 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 font-medium' : 'hover:bg-gray-100 dark:hover:bg-gray-700/70 text-gray-700 dark:text-gray-300'">
+            <button @click="switchView('overview')" class="w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors" :class="currentView === 'overview' ? 'bg-primary-50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-300' : 'hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300'">
                 <i data-lucide="gauge" class="w-5 h-5"></i>
                 <span :class="currentView === 'overview' ? 'font-medium' : ''">Dashboard</span>
             </button>
-            <button @click="switchView('metrics')" class="w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors" :class="currentView === 'metrics' ? 'bg-primary-50 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 font-medium' : 'hover:bg-gray-100 dark:hover:bg-gray-700/70 text-gray-700 dark:text-gray-300'">
+            <button @click="switchView('metrics')" class="w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors" :class="currentView === 'metrics' ? 'bg-primary-50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-300' : 'hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300'">
                 <i data-lucide="bar-chart-3" class="w-5 h-5"></i>
                 <span :class="currentView === 'metrics' ? 'font-medium' : ''">Analytics</span>
             </button>
@@ -187,33 +149,28 @@
             <div class="pt-4 pb-1 px-4">
                 <p class="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">Pipeline</p>
             </div>
-            <button @click="switchView('tasks')" class="w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors" :class="currentView === 'tasks' ? 'bg-primary-50 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 font-medium' : 'hover:bg-gray-100 dark:hover:bg-gray-700/70 text-gray-700 dark:text-gray-300'">
+            <button @click="switchView('tasks')" class="w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors" :class="currentView === 'tasks' ? 'bg-primary-50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-300' : 'hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300'">
                 <i data-lucide="git-branch" class="w-5 h-5"></i>
                 <span :class="currentView === 'tasks' ? 'font-medium' : ''">Task Queue</span>
             </button>
-            <button @click="switchView('workers')" class="w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors" :class="currentView === 'workers' ? 'bg-primary-50 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 font-medium' : 'hover:bg-gray-100 dark:hover:bg-gray-700/70 text-gray-700 dark:text-gray-300'">
+            <button @click="switchView('workers')" class="w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors" :class="currentView === 'workers' ? 'bg-primary-50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-300' : 'hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300'">
                 <i data-lucide="cpu" class="w-5 h-5"></i>
                 <span :class="currentView === 'workers' ? 'font-medium' : ''">Workforce</span>
             </button>
-
-            <!-- Integrations Section -->
-            <div class="pt-4 pb-1 px-4">
-                <p class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Integrations</p>
-            </div>
-            <button @click="switchView('api-explorer')" class="w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors" :class="currentView === 'api-explorer' ? 'bg-primary-50 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 font-medium' : 'hover:bg-gray-100 dark:hover:bg-gray-700/70 text-gray-700 dark:text-gray-300'">
-                <i data-lucide="code" class="w-5 h-5"></i>
-                <span :class="currentView === 'api-explorer' ? 'font-medium' : ''">API Explorer</span>
+            <button @click="switchView('masters')" class="w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors" :class="currentView === 'masters' ? 'bg-primary-50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-300' : 'hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300'">
+                <i data-lucide="network" class="w-5 h-5"></i>
+                <span :class="currentView === 'masters' ? 'font-medium' : ''">Agents</span>
             </button>
 
             <!-- Logs Section -->
             <div class="pt-4 pb-1 px-4">
                 <p class="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">Logs</p>
             </div>
-            <button @click="switchView('events')" class="w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors" :class="currentView === 'events' ? 'bg-primary-50 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 font-medium' : 'hover:bg-gray-100 dark:hover:bg-gray-700/70 text-gray-700 dark:text-gray-300'">
+            <button @click="switchView('events')" class="w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors" :class="currentView === 'events' ? 'bg-primary-50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-300' : 'hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300'">
                 <i data-lucide="scroll-text" class="w-5 h-5"></i>
                 <span :class="currentView === 'events' ? 'font-medium' : ''">Activity</span>
             </button>
-            <button @click="switchView('about')" class="w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors" :class="currentView === 'about' ? 'bg-primary-50 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 font-medium' : 'hover:bg-gray-100 dark:hover:bg-gray-700/70 text-gray-700 dark:text-gray-300'">
+            <button @click="switchView('about')" class="w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors" :class="currentView === 'about' ? 'bg-primary-50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-300' : 'hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300'">
                 <i data-lucide="info" class="w-5 h-5"></i>
                 <span :class="currentView === 'about' ? 'font-medium' : ''">About</span>
             </button>
@@ -221,9 +178,9 @@
 
         <!-- Theme toggle -->
         <div class="absolute bottom-6 left-4 right-4">
-            <button @click="toggleTheme()" class="w-full flex items-center justify-center space-x-2 px-4 py-3 rounded-lg bg-gradient-to-r from-gray-100 to-gray-200 dark:from-gray-700 dark:to-gray-600 hover:from-gray-200 hover:to-gray-300 dark:hover:from-gray-600 dark:hover:to-gray-500 text-gray-700 dark:text-gray-200 font-medium shadow-sm hover:shadow transition-all">
-                <i x-show="!darkMode" data-lucide="moon" class="w-5 h-5 text-indigo-600 dark:text-indigo-400"></i>
-                <i x-show="darkMode" data-lucide="sun" class="w-5 h-5 text-yellow-500 dark:text-yellow-400"></i>
+            <button @click="toggleTheme()" class="w-full flex items-center justify-center space-x-2 px-4 py-3 rounded-lg bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300">
+                <i x-show="!darkMode" data-lucide="moon" class="w-5 h-5"></i>
+                <i x-show="darkMode" data-lucide="sun" class="w-5 h-5"></i>
                 <span x-text="darkMode ? 'Light Mode' : 'Dark Mode'"></span>
             </button>
         </div>
@@ -255,12 +212,9 @@
                         <span class="text-sm font-medium text-gray-600 dark:text-gray-400" x-text="dataFreshness === 'fresh' ? 'Fresh' : dataFreshness === 'stale' ? 'Stale (30s+)' : dataFreshness === 'very-stale' ? 'Very Stale (2m+)' : 'Unknown'"></span>
                     </div>
                     <!-- Connection status -->
-                    <div class="flex items-center space-x-2 px-3 py-1.5 rounded-full border" :class="connected ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800' : 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800'">
-                        <div class="relative">
-                            <div :class="connected ? 'bg-green-500' : 'bg-red-500'" class="w-2 h-2 rounded-full"></div>
-                            <div x-show="connected" class="absolute inset-0 w-2 h-2 bg-green-500 rounded-full animate-pulse-slow"></div>
-                        </div>
-                        <span class="text-sm font-medium" :class="connected ? 'text-green-700 dark:text-green-300' : 'text-red-700 dark:text-red-300'" x-text="connected ? 'Connected' : 'Disconnected'"></span>
+                    <div class="flex items-center space-x-2">
+                        <div :class="connected ? 'bg-green-500 animate-pulse-slow' : 'bg-red-500'" class="w-2 h-2 rounded-full"></div>
+                        <span class="text-sm font-medium" :class="connected ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'" x-text="connected ? 'Connected' : 'Disconnected'"></span>
                     </div>
                 </div>
             </div>
@@ -328,7 +282,7 @@
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 <!-- Active Workers -->
                 <div @click="switchView('workers')" class="relative overflow-hidden bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 border border-gray-200 dark:border-gray-700 hover:shadow-xl hover:-translate-y-1 transition-all cursor-pointer">
-                    <i data-lucide="zap" class="absolute -right-4 -bottom-4 w-32 h-32 text-blue-100 dark:text-blue-900/30 opacity-40 dark:opacity-50"></i>
+                    <i data-lucide="zap" class="absolute -right-4 -bottom-4 w-32 h-32 text-blue-100 dark:text-blue-900/20 opacity-50"></i>
                     <div class="relative z-10">
                         <p class="text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">Active Workers</p>
                         <p class="text-4xl font-bold text-gray-900 dark:text-white mb-1" x-text="metrics.workers?.active || 0"></p>
@@ -341,7 +295,7 @@
 
                 <!-- Success Rate -->
                 <div @click="switchView('metrics')" class="period-selector-card relative overflow-hidden bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 border border-gray-200 dark:border-gray-700 hover:shadow-xl hover:-translate-y-1 transition-all cursor-pointer">
-                    <i data-lucide="check-circle" class="absolute -right-4 -bottom-4 w-32 h-32 text-green-100 dark:text-green-900/30 opacity-40 dark:opacity-50"></i>
+                    <i data-lucide="check-circle" class="absolute -right-4 -bottom-4 w-32 h-32 text-green-100 dark:text-green-900/20 opacity-50"></i>
                     <div class="relative z-10">
                         <div class="flex items-center justify-between mb-2">
                             <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Success Rate</p>
@@ -388,7 +342,7 @@
 
                 <!-- Tasks In Progress -->
                 <div @click="switchView('tasks')" class="relative overflow-hidden bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 border border-gray-200 dark:border-gray-700 hover:shadow-xl hover:-translate-y-1 transition-all cursor-pointer">
-                    <i data-lucide="loader" class="absolute -right-4 -bottom-4 w-32 h-32 text-orange-100 dark:text-orange-900/30 opacity-40 dark:opacity-50"></i>
+                    <i data-lucide="loader" class="absolute -right-4 -bottom-4 w-32 h-32 text-orange-100 dark:text-orange-900/20 opacity-50"></i>
                     <div class="relative z-10">
                         <p class="text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">Tasks In Progress</p>
                         <p class="text-4xl font-bold text-gray-900 dark:text-white mb-1" x-text="metrics.tasks?.inProgress || 0"></p>
@@ -401,7 +355,7 @@
 
                 <!-- Worker Daemon -->
                 <div @click="switchView('events')" class="relative overflow-hidden bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 border border-gray-200 dark:border-gray-700 hover:shadow-xl hover:-translate-y-1 transition-all cursor-pointer">
-                    <i data-lucide="bot" class="absolute -right-4 -bottom-4 w-32 h-32 opacity-40 dark:opacity-50" :class="daemon?.status === 'running' ? 'text-green-100 dark:text-green-900/30' : 'text-red-100 dark:text-red-900/30'"></i>
+                    <i data-lucide="bot" class="absolute -right-4 -bottom-4 w-32 h-32 opacity-50" :class="daemon?.status === 'running' ? 'text-green-100 dark:text-green-900/20' : 'text-red-100 dark:text-red-900/20'"></i>
                     <div class="relative z-10">
                         <p class="text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">Worker Daemon</p>
                         <p class="text-4xl font-bold mb-1" :class="daemon?.status === 'running' ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'" x-text="daemon?.status === 'running' ? 'Running' : 'Stopped'"></p>
@@ -449,7 +403,7 @@
                         </div>
 
                         <!-- Task Orchestration Card -->
-                        <div class="bg-gradient-to-br from-indigo-50 to-purple-50 dark:from-indigo-950 dark:to-purple-950 rounded-xl shadow-lg p-4 border-2 border-indigo-200 dark:border-indigo-700">
+                        <div class="bg-gradient-to-br from-indigo-50 to-purple-50 dark:from-gray-800 dark:to-gray-900 rounded-xl shadow-lg p-4 border-2 border-indigo-200 dark:border-indigo-900">
                             <div class="flex items-center justify-between mb-3">
                                 <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Task Orchestration</h3>
                                 <div x-show="(metrics.orchestrator?.active || 0) > 0" class="px-2 py-1 rounded-full bg-indigo-100 dark:bg-indigo-900 text-indigo-700 dark:text-indigo-300 text-xs font-semibold animate-pulse">
@@ -528,12 +482,9 @@
                     <div class="lg:col-span-2 bg-white dark:bg-gray-800 rounded-xl shadow-lg p-4 border border-gray-200 dark:border-gray-700">
                         <div class="flex items-center justify-between mb-3">
                             <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Real-time Events</h3>
-                            <div class="flex items-center space-x-2 px-3 py-1.5 bg-green-50 dark:bg-green-900/20 rounded-full border border-green-200 dark:border-green-800">
-                                <div class="relative">
-                                    <div class="w-2 h-2 bg-green-500 rounded-full animate-pulse-slow"></div>
-                                    <div class="absolute inset-0 w-2 h-2 bg-green-500 rounded-full animate-ping opacity-75"></div>
-                                </div>
-                                <span class="text-xs font-medium text-green-700 dark:text-green-300">Live</span>
+                            <div class="flex items-center space-x-2">
+                                <div class="w-2 h-2 bg-green-500 rounded-full animate-pulse-slow"></div>
+                                <span class="text-xs text-gray-500 dark:text-gray-400">Live</span>
                             </div>
                         </div>
                         <div class="space-y-1.5 max-h-[470px] overflow-y-auto">
@@ -569,15 +520,15 @@
                     </div>
                     <div class="overflow-x-auto">
                         <table class="w-full">
-                            <thead class="bg-gray-50 dark:bg-gray-700/50 border-b-2 border-gray-200 dark:border-gray-600">
+                            <thead class="bg-gray-50 dark:bg-gray-700/50">
                                 <tr>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-600 dark:text-gray-300 uppercase tracking-wider">Worker ID</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-600 dark:text-gray-300 uppercase tracking-wider">Status</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-600 dark:text-gray-300 uppercase tracking-wider">Type</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-600 dark:text-gray-300 uppercase tracking-wider">Workforce Stream</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-600 dark:text-gray-300 uppercase tracking-wider">Tokens Used</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-600 dark:text-gray-300 uppercase tracking-wider">Duration</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-600 dark:text-gray-300 uppercase tracking-wider">Started</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Worker ID</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Status</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Type</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Workforce Stream</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Tokens Used</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Duration</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Started</th>
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
@@ -586,10 +537,10 @@
                                         <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white" x-text="worker.worker_id"></td>
                                         <td class="px-6 py-4 whitespace-nowrap">
                                             <span class="px-2 py-1 text-xs font-medium rounded-full" :class="{
-                                                'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400': worker.status === 'completed' || worker.status === 'success',
-                                                'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400': worker.status === 'running' || worker.status === 'active',
-                                                'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400': worker.status === 'failed',
-                                                'bg-gray-100 text-gray-700 dark:bg-gray-700/50 dark:text-gray-300': worker.status === 'pending'
+                                                'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400': worker.status === 'completed' || worker.status === 'success',
+                                                'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400': worker.status === 'running' || worker.status === 'active',
+                                                'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400': worker.status === 'failed',
+                                                'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300': worker.status === 'pending'
                                             }" x-text="worker.status"></span>
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300" x-text="worker.worker_type || worker.type || 'N/A'"></td>
@@ -622,15 +573,15 @@
                     </div>
                     <div class="overflow-x-auto">
                         <table class="w-full">
-                            <thead class="bg-gray-50 dark:bg-gray-700/50 border-b-2 border-gray-200 dark:border-gray-600">
+                            <thead class="bg-gray-50 dark:bg-gray-700/50">
                                 <tr>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-600 dark:text-gray-300 uppercase tracking-wider">ID</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-600 dark:text-gray-300 uppercase tracking-wider">Title</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-600 dark:text-gray-300 uppercase tracking-wider">Type</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-600 dark:text-gray-300 uppercase tracking-wider">Status</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-600 dark:text-gray-300 uppercase tracking-wider">Priority</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-600 dark:text-gray-300 uppercase tracking-wider">Assigned To</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-600 dark:text-gray-300 uppercase tracking-wider">Git Commits</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">ID</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Title</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Type</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Status</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Priority</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Assigned To</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Git Commits</th>
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
@@ -642,24 +593,24 @@
                                     Using task.id causes "Duplicate key" errors and crashes rendering
                                     TODO: Clean up task-queue.json to ensure unique IDs
                                 -->
-                                <template x-for="(task, index) in paginatedTasks" :key="'task-' + index">
+                                <template x-for="(task, index) in sortedTasks" :key="'task-' + index">
                                     <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
                                         <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white" x-text="task.id"></td>
                                         <td class="px-6 py-4 text-sm text-gray-700 dark:text-gray-300" x-text="task.title"></td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400" x-text="task.type"></td>
                                         <td class="px-6 py-4 whitespace-nowrap">
                                             <span class="px-2 py-1 text-xs font-medium rounded-full" :class="{
-                                                'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400': task.status === 'completed',
-                                                'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400': task.status === 'in_progress' || task.status === 'in-progress',
-                                                'bg-gray-100 text-gray-700 dark:bg-gray-700/50 dark:text-gray-300': task.status === 'pending'
+                                                'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400': task.status === 'completed',
+                                                'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400': task.status === 'in_progress' || task.status === 'in-progress',
+                                                'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300': task.status === 'pending'
                                             }" x-text="task.status"></span>
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap">
                                             <span class="px-2 py-1 text-xs font-medium rounded-full" :class="{
-                                                'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400': task.priority === 'critical',
-                                                'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400': task.priority === 'high',
-                                                'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400': task.priority === 'medium',
-                                                'bg-gray-100 text-gray-700 dark:bg-gray-700/50 dark:text-gray-300': task.priority === 'low'
+                                                'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400': task.priority === 'critical',
+                                                'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400': task.priority === 'high',
+                                                'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400': task.priority === 'medium',
+                                                'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300': task.priority === 'low'
                                             }" x-text="task.priority"></span>
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400" x-text="task.assigned_to || 'Unassigned'"></td>
@@ -668,7 +619,7 @@
                                             <template x-for="(commit, commitIndex) in getTaskCommits(task.id)" :key="'commit-' + index + '-' + commitIndex">
                                                 <a :href="'https://github.com/ry-ops/commit-relay/commit/' + commit"
                                                    target="_blank"
-                                                   class="inline-block px-2 py-1 mr-1 mb-1 text-xs font-mono bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded hover:bg-gray-200 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-1 transition-colors"
+                                                   class="inline-block px-2 py-1 mr-1 mb-1 text-xs font-mono bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
                                                    x-text="commit"></a>
                                             </template>
                                             <span x-show="getTaskCommits(task.id).length === 0" class="text-gray-400 dark:text-gray-500 text-xs">-</span>
@@ -677,38 +628,6 @@
                                 </template>
                             </tbody>
                         </table>
-                    </div>
-
-                    <!-- Pagination Controls -->
-                    <div x-show="getTotalPages('tasks') > 1" class="px-6 py-4 border-t border-gray-200 dark:border-gray-700 flex items-center justify-between">
-                        <div class="text-sm text-gray-600 dark:text-gray-400">
-                            Showing
-                            <span class="font-medium" x-text="(pagination.tasks.currentPage - 1) * pagination.tasks.itemsPerPage + 1"></span>
-                            to
-                            <span class="font-medium" x-text="Math.min(pagination.tasks.currentPage * pagination.tasks.itemsPerPage, pagination.tasks.total)"></span>
-                            of
-                            <span class="font-medium" x-text="pagination.tasks.total"></span>
-                            tasks
-                        </div>
-                        <div class="flex items-center space-x-2">
-                            <button
-                                @click="prevPage('tasks')"
-                                :disabled="pagination.tasks.currentPage === 1"
-                                class="px-3 py-1 text-sm font-medium rounded-lg border transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                                :class="pagination.tasks.currentPage === 1 ? 'bg-gray-100 text-gray-400 border-gray-200 dark:bg-gray-700 dark:text-gray-500 dark:border-gray-600' : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-600 dark:hover:bg-gray-700'">
-                                Previous
-                            </button>
-                            <span class="text-sm text-gray-600 dark:text-gray-400">
-                                Page <span class="font-medium" x-text="pagination.tasks.currentPage"></span> of <span class="font-medium" x-text="getTotalPages('tasks')"></span>
-                            </span>
-                            <button
-                                @click="nextPage('tasks')"
-                                :disabled="pagination.tasks.currentPage >= getTotalPages('tasks')"
-                                class="px-3 py-1 text-sm font-medium rounded-lg border transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                                :class="pagination.tasks.currentPage >= getTotalPages('tasks') ? 'bg-gray-100 text-gray-400 border-gray-200 dark:bg-gray-700 dark:text-gray-500 dark:border-gray-600' : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-600 dark:hover:bg-gray-700'">
-                                Next
-                            </button>
-                        </div>
                     </div>
                 </div>
             </div>
@@ -719,9 +638,7 @@
                 selectedEventType: 'all',
                 autoScroll: true,
                 showFilters: false,
-                currentPage: 1,
-                itemsPerPage: 50,
-                get allFilteredEvents() {
+                get filteredEvents() {
                     let filtered = events;
 
                     // Filter by event type
@@ -749,27 +666,6 @@
                     }
 
                     return filtered;
-                },
-                get filteredEvents() {
-                    const filtered = this.allFilteredEvents;
-                    const start = (this.currentPage - 1) * this.itemsPerPage;
-                    const end = start + this.itemsPerPage;
-                    return filtered.slice(start, end);
-                },
-                get totalPages() {
-                    return Math.ceil(this.allFilteredEvents.length / this.itemsPerPage);
-                },
-                get totalFiltered() {
-                    return this.allFilteredEvents.length;
-                },
-                nextPage() {
-                    if (this.currentPage < this.totalPages) this.currentPage++;
-                },
-                prevPage() {
-                    if (this.currentPage > 1) this.currentPage--;
-                },
-                resetPage() {
-                    this.currentPage = 1;
                 },
                 get eventStats() {
                     return {
@@ -813,23 +709,23 @@
 
                         <!-- Quick Stats -->
                         <div class="grid grid-cols-5 gap-3">
-                            <button @click="selectedEventType = 'all'; resetPage()" class="p-3 rounded-lg transition-colors text-center" :class="selectedEventType === 'all' ? 'bg-primary-100 dark:bg-primary-900/30 border-2 border-primary-500' : 'bg-gray-50 dark:bg-gray-700/50 hover:bg-gray-100 dark:hover:bg-gray-700'">
+                            <button @click="selectedEventType = 'all'" class="p-3 rounded-lg transition-colors text-center" :class="selectedEventType === 'all' ? 'bg-blue-100 dark:bg-blue-900/30 border-2 border-blue-500' : 'bg-gray-50 dark:bg-gray-700/50 hover:bg-gray-100 dark:hover:bg-gray-700'">
                                 <div class="text-2xl font-bold text-gray-900 dark:text-white" x-text="eventStats.total"></div>
                                 <div class="text-xs text-gray-500 dark:text-gray-400">All Events</div>
                             </button>
-                            <button @click="selectedEventType = 'task'; resetPage()" class="p-3 rounded-lg transition-colors text-center" :class="selectedEventType === 'task' ? 'bg-blue-100 dark:bg-blue-900/30 border-2 border-blue-500' : 'bg-gray-50 dark:bg-gray-700/50 hover:bg-gray-100 dark:hover:bg-gray-700'">
+                            <button @click="selectedEventType = 'task'" class="p-3 rounded-lg transition-colors text-center" :class="selectedEventType === 'task' ? 'bg-blue-100 dark:bg-blue-900/30 border-2 border-blue-500' : 'bg-gray-50 dark:bg-gray-700/50 hover:bg-gray-100 dark:hover:bg-gray-700'">
                                 <div class="text-2xl font-bold text-gray-900 dark:text-white" x-text="eventStats.task"></div>
                                 <div class="text-xs text-gray-500 dark:text-gray-400">Tasks</div>
                             </button>
-                            <button @click="selectedEventType = 'worker'; resetPage()" class="p-3 rounded-lg transition-colors text-center" :class="selectedEventType === 'worker' ? 'bg-blue-100 dark:bg-blue-900/30 border-2 border-blue-500' : 'bg-gray-50 dark:bg-gray-700/50 hover:bg-gray-100 dark:hover:bg-gray-700'">
+                            <button @click="selectedEventType = 'worker'" class="p-3 rounded-lg transition-colors text-center" :class="selectedEventType === 'worker' ? 'bg-blue-100 dark:bg-blue-900/30 border-2 border-blue-500' : 'bg-gray-50 dark:bg-gray-700/50 hover:bg-gray-100 dark:hover:bg-gray-700'">
                                 <div class="text-2xl font-bold text-gray-900 dark:text-white" x-text="eventStats.worker"></div>
                                 <div class="text-xs text-gray-500 dark:text-gray-400">Workers</div>
                             </button>
-                            <button @click="selectedEventType = 'em'; resetPage()" class="p-3 rounded-lg transition-colors text-center" :class="selectedEventType === 'em' ? 'bg-blue-100 dark:bg-blue-900/30 border-2 border-blue-500' : 'bg-gray-50 dark:bg-gray-700/50 hover:bg-gray-100 dark:hover:bg-gray-700'">
+                            <button @click="selectedEventType = 'em'" class="p-3 rounded-lg transition-colors text-center" :class="selectedEventType === 'em' ? 'bg-blue-100 dark:bg-blue-900/30 border-2 border-blue-500' : 'bg-gray-50 dark:bg-gray-700/50 hover:bg-gray-100 dark:hover:bg-gray-700'">
                                 <div class="text-2xl font-bold text-gray-900 dark:text-white" x-text="eventStats.em"></div>
                                 <div class="text-xs text-gray-500 dark:text-gray-400">EMs</div>
                             </button>
-                            <button @click="selectedEventType = 'error'; resetPage()" class="p-3 rounded-lg transition-colors text-center" :class="selectedEventType === 'error' ? 'bg-primary-100 dark:bg-primary-900/30 border-2 border-primary-500' : 'bg-gray-50 dark:bg-gray-700/50 hover:bg-gray-100 dark:hover:bg-gray-700'">
+                            <button @click="selectedEventType = 'error'" class="p-3 rounded-lg transition-colors text-center" :class="selectedEventType === 'error' ? 'bg-red-100 dark:bg-red-900/30 border-2 border-red-500' : 'bg-gray-50 dark:bg-gray-700/50 hover:bg-gray-100 dark:hover:bg-gray-700'">
                                 <div class="text-2xl font-bold text-gray-900 dark:text-white" x-text="eventStats.error"></div>
                                 <div class="text-xs text-gray-500 dark:text-gray-400">Errors</div>
                             </button>
@@ -838,12 +734,12 @@
                         <!-- Search Bar -->
                         <div class="mt-4">
                             <div class="relative">
-                                <i data-lucide="search" class="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 dark:text-gray-500 pointer-events-none"></i>
+                                <i data-lucide="search" class="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400"></i>
                                 <input
                                     x-model="searchQuery"
                                     type="text"
                                     placeholder="Search events by message, type, or data..."
-                                    class="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-colors">
+                                    class="w-full pl-10 pr-4 py-2 border border-gray-200 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:ring-2 focus:ring-blue-500 focus:border-transparent">
                             </div>
                         </div>
                     </div>
@@ -861,22 +757,17 @@
                             })
                          ">
                         <!-- Empty state -->
-                        <div x-show="events.length === 0" class="text-center py-12 px-6">
-                            <div class="inline-flex items-center justify-center w-20 h-20 rounded-full bg-gray-100 dark:bg-gray-800 mb-4">
-                                <i data-lucide="inbox" class="w-10 h-10 text-gray-400 dark:text-gray-500"></i>
-                            </div>
-                            <p class="text-gray-600 dark:text-gray-300 text-base font-medium mb-2">No events yet</p>
-                            <p class="text-gray-500 dark:text-gray-400 text-sm max-w-sm mx-auto">Events will appear here as they occur. Try performing some actions to generate activity.</p>
+                        <div x-show="events.length === 0" class="text-center py-12">
+                            <i data-lucide="inbox" class="w-16 h-16 mx-auto text-gray-300 dark:text-gray-600 mb-4"></i>
+                            <p class="text-gray-500 dark:text-gray-400 text-sm">No events in current session yet</p>
+                            <p class="text-gray-400 dark:text-gray-500 text-xs mt-2">Events will appear here as they occur</p>
                         </div>
 
                         <!-- No results state -->
-                        <div x-show="events.length > 0 && filteredEvents.length === 0" class="text-center py-12 px-6">
-                            <div class="inline-flex items-center justify-center w-20 h-20 rounded-full bg-gray-100 dark:bg-gray-800 mb-4">
-                                <i data-lucide="filter-x" class="w-10 h-10 text-gray-400 dark:text-gray-500"></i>
-                            </div>
-                            <p class="text-gray-600 dark:text-gray-300 text-base font-medium mb-2">No matching events</p>
-                            <p class="text-gray-500 dark:text-gray-400 text-sm max-w-sm mx-auto mb-4">No events match your current filters. Try adjusting your search or filter criteria.</p>
-                            <button @click="searchQuery = ''; selectedEventType = 'all'; resetPage()" class="px-4 py-2 bg-primary-500 hover:bg-primary-600 dark:bg-primary-600 dark:hover:bg-primary-700 text-white rounded-lg text-sm font-medium transition-colors">
+                        <div x-show="events.length > 0 && filteredEvents.length === 0" class="text-center py-12">
+                            <i data-lucide="filter-x" class="w-16 h-16 mx-auto text-gray-300 dark:text-gray-600 mb-4"></i>
+                            <p class="text-gray-500 dark:text-gray-400 text-sm">No events match your filters</p>
+                            <button @click="searchQuery = ''; selectedEventType = 'all'" class="mt-4 px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg text-sm">
                                 Clear Filters
                             </button>
                         </div>
@@ -933,73 +824,156 @@
                                 </div>
                             </div>
                         </template>
-
-                        <!-- Pagination Controls -->
-                        <div x-show="totalPages > 1" class="mt-6 flex items-center justify-between border-t border-gray-200 dark:border-gray-700 pt-4">
-                            <div class="text-sm text-gray-600 dark:text-gray-400">
-                                Showing
-                                <span class="font-medium" x-text="((currentPage - 1) * itemsPerPage) + 1"></span>
-                                to
-                                <span class="font-medium" x-text="Math.min(currentPage * itemsPerPage, totalFiltered)"></span>
-                                of
-                                <span class="font-medium" x-text="totalFiltered"></span>
-                                events
-                            </div>
-                            <div class="flex items-center space-x-2">
-                                <button
-                                    @click="prevPage()"
-                                    :disabled="currentPage === 1"
-                                    class="px-3 py-1 text-sm font-medium rounded-lg border transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                                    :class="currentPage === 1 ? 'bg-gray-100 text-gray-400 border-gray-200 dark:bg-gray-700 dark:text-gray-500 dark:border-gray-600' : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-600 dark:hover:bg-gray-700'">
-                                    Previous
-                                </button>
-                                <span class="text-sm text-gray-600 dark:text-gray-400">
-                                    Page <span class="font-medium" x-text="currentPage"></span> of <span class="font-medium" x-text="totalPages"></span>
-                                </span>
-                                <button
-                                    @click="nextPage()"
-                                    :disabled="currentPage >= totalPages"
-                                    class="px-3 py-1 text-sm font-medium rounded-lg border transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                                    :class="currentPage >= totalPages ? 'bg-gray-100 text-gray-400 border-gray-200 dark:bg-gray-700 dark:text-gray-500 dark:border-gray-600' : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-600 dark:hover:bg-gray-700'">
-                                    Next
-                                </button>
-                            </div>
-                        </div>
                     </div>
                 </div>
             </div>
 
-            <!-- API Explorer View -->
-            <div x-show="currentView === 'api-explorer'" x-transition>
-                <div class="space-y-6">
-                    <!-- API Explorer Header -->
-                    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 border border-gray-200 dark:border-gray-700">
-                        <div class="flex items-center justify-between mb-4">
-                            <div>
-                                <h2 class="text-2xl font-bold text-gray-900 dark:text-white">API Explorer</h2>
-                                <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Interactive API testing and exploration</p>
-                            </div>
-                            <div class="flex items-center space-x-2 px-3 py-1.5 rounded-full border bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800">
-                                <div class="relative">
-                                    <div class="w-2 h-2 rounded-full bg-green-500"></div>
-                                    <div class="absolute inset-0 w-2 h-2 bg-green-500 rounded-full animate-pulse-slow"></div>
-                                </div>
-                                <span class="text-sm font-medium text-green-700 dark:text-green-300">API Ready</span>
-                            </div>
-                        </div>
+            <!-- Masters View -->
+            <div x-show="currentView === 'masters'" x-transition>
+                <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700">
+                    <div class="p-6 border-b border-gray-200 dark:border-gray-700">
+                        <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Master Agents</h3>
                     </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full">
+                            <thead class="bg-gray-50 dark:bg-gray-700/50">
+                                <tr>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider w-48">Master Agent</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Recent Activity</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
+                                <!-- Coordinator Master -->
+                                <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <div class="flex items-center space-x-3">
+                                            <div class="w-8 h-8 rounded-lg gradient-blue flex items-center justify-center flex-shrink-0">
+                                                <i data-lucide="crown" class="w-4 h-4 text-white"></i>
+                                            </div>
+                                            <span class="text-sm font-medium text-gray-900 dark:text-white">Coordinator</span>
+                                        </div>
+                                    </td>
+                                    <td class="px-6 py-4">
+                                        <div class="space-y-2">
+                                            <!-- Using index as key - events have duplicate IDs -->
+                                            <template x-for="(event, eventIndex) in events.filter(e => e.data?.assigned_to === 'coordinator-master' || e.data?.assigned_by === 'coordinator-master' || e.type?.includes('coordinator')).slice(0, 3)" :key="'coord-event-' + eventIndex">
+                                                <div class="flex items-start space-x-2 text-sm">
+                                                    <span class="text-xs text-gray-400 dark:text-gray-500 whitespace-nowrap" x-text="new Date(event.timestamp).toLocaleTimeString()"></span>
+                                                    <span class="text-gray-700 dark:text-gray-300 line-clamp-1" x-text="event.message || formatEventMessage(event)"></span>
+                                                </div>
+                                            </template>
+                                            <div x-show="events.filter(e => e.data?.assigned_to === 'coordinator-master' || e.data?.assigned_by === 'coordinator-master' || e.type?.includes('coordinator')).length === 0" class="text-sm text-gray-400 dark:text-gray-500 italic">
+                                                No recent activity
+                                            </div>
+                                        </div>
+                                    </td>
+                                </tr>
 
-                    <!-- Placeholder Content -->
-                    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-12 border border-gray-200 dark:border-gray-700">
-                        <div class="text-center">
-                            <div class="inline-flex items-center justify-center w-20 h-20 rounded-full bg-primary-100 dark:bg-primary-900/30 mb-4">
-                                <i data-lucide="code" class="w-10 h-10 text-primary-600 dark:text-primary-400"></i>
-                            </div>
-                            <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">API Explorer Coming Soon</h3>
-                            <p class="text-gray-500 dark:text-gray-400 max-w-md mx-auto">
-                                This page will provide interactive API testing capabilities, endpoint documentation, and integration examples.
-                            </p>
-                        </div>
+                                <!-- Security Master -->
+                                <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <div class="flex items-center space-x-3">
+                                            <div class="w-8 h-8 rounded-lg gradient-orange flex items-center justify-center flex-shrink-0">
+                                                <i data-lucide="shield" class="w-4 h-4 text-white"></i>
+                                            </div>
+                                            <span class="text-sm font-medium text-gray-900 dark:text-white">Security</span>
+                                        </div>
+                                    </td>
+                                    <td class="px-6 py-4">
+                                        <div class="space-y-2">
+                                            <!-- Using index as key - events have duplicate IDs -->
+                                            <template x-for="(event, eventIndex) in events.filter(e => e.data?.assigned_to === 'security-master' || e.data?.assigned_by === 'security-master' || e.type?.includes('security')).slice(0, 3)" :key="'security-event-' + eventIndex">
+                                                <div class="flex items-start space-x-2 text-sm">
+                                                    <span class="text-xs text-gray-400 dark:text-gray-500 whitespace-nowrap" x-text="new Date(event.timestamp).toLocaleTimeString()"></span>
+                                                    <span class="text-gray-700 dark:text-gray-300 line-clamp-1" x-text="event.message || formatEventMessage(event)"></span>
+                                                </div>
+                                            </template>
+                                            <div x-show="events.filter(e => e.data?.assigned_to === 'security-master' || e.data?.assigned_by === 'security-master' || e.type?.includes('security')).length === 0" class="text-sm text-gray-400 dark:text-gray-500 italic">
+                                                No recent activity
+                                            </div>
+                                        </div>
+                                    </td>
+                                </tr>
+
+                                <!-- Development Master -->
+                                <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <div class="flex items-center space-x-3">
+                                            <div class="w-8 h-8 rounded-lg gradient-green flex items-center justify-center flex-shrink-0">
+                                                <i data-lucide="code" class="w-4 h-4 text-white"></i>
+                                            </div>
+                                            <span class="text-sm font-medium text-gray-900 dark:text-white">Development</span>
+                                        </div>
+                                    </td>
+                                    <td class="px-6 py-4">
+                                        <div class="space-y-2">
+                                            <!-- Using index as key - events have duplicate IDs -->
+                                            <template x-for="(event, eventIndex) in events.filter(e => e.data?.assigned_to === 'development-master' || e.data?.assigned_by === 'development-master' || e.type?.includes('development')).slice(0, 3)" :key="'dev-event-' + eventIndex">
+                                                <div class="flex items-start space-x-2 text-sm">
+                                                    <span class="text-xs text-gray-400 dark:text-gray-500 whitespace-nowrap" x-text="new Date(event.timestamp).toLocaleTimeString()"></span>
+                                                    <span class="text-gray-700 dark:text-gray-300 line-clamp-1" x-text="event.message || formatEventMessage(event)"></span>
+                                                </div>
+                                            </template>
+                                            <div x-show="events.filter(e => e.data?.assigned_to === 'development-master' || e.data?.assigned_by === 'development-master' || e.type?.includes('development')).length === 0" class="text-sm text-gray-400 dark:text-gray-500 italic">
+                                                No recent activity
+                                            </div>
+                                        </div>
+                                    </td>
+                                </tr>
+
+                                <!-- Inventory Master -->
+                                <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <div class="flex items-center space-x-3">
+                                            <div class="w-8 h-8 rounded-lg gradient-red flex items-center justify-center flex-shrink-0">
+                                                <i data-lucide="database" class="w-4 h-4 text-white"></i>
+                                            </div>
+                                            <span class="text-sm font-medium text-gray-900 dark:text-white">Inventory</span>
+                                        </div>
+                                    </td>
+                                    <td class="px-6 py-4">
+                                        <div class="space-y-2">
+                                            <!-- Using index as key - events have duplicate IDs -->
+                                            <template x-for="(event, eventIndex) in events.filter(e => e.data?.assigned_to === 'inventory-master' || e.data?.assigned_by === 'inventory-master' || e.type?.includes('inventory')).slice(0, 3)" :key="'inventory-event-' + eventIndex">
+                                                <div class="flex items-start space-x-2 text-sm">
+                                                    <span class="text-xs text-gray-400 dark:text-gray-500 whitespace-nowrap" x-text="new Date(event.timestamp).toLocaleTimeString()"></span>
+                                                    <span class="text-gray-700 dark:text-gray-300 line-clamp-1" x-text="event.message || formatEventMessage(event)"></span>
+                                                </div>
+                                            </template>
+                                            <div x-show="events.filter(e => e.data?.assigned_to === 'inventory-master' || e.data?.assigned_by === 'inventory-master' || e.type?.includes('inventory')).length === 0" class="text-sm text-gray-400 dark:text-gray-500 italic">
+                                                No recent activity
+                                            </div>
+                                        </div>
+                                    </td>
+                                </tr>
+
+                                <!-- CI/CD Master -->
+                                <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <div class="flex items-center space-x-3">
+                                            <div class="w-8 h-8 rounded-lg gradient-purple flex items-center justify-center flex-shrink-0">
+                                                <i data-lucide="zap" class="w-4 h-4 text-white"></i>
+                                            </div>
+                                            <span class="text-sm font-medium text-gray-900 dark:text-white">CI/CD</span>
+                                        </div>
+                                    </td>
+                                    <td class="px-6 py-4">
+                                        <div class="space-y-2">
+                                            <!-- Using index as key - events have duplicate IDs -->
+                                            <template x-for="(event, eventIndex) in events.filter(e => e.data?.assigned_to === 'cicd-master' || e.data?.assigned_by === 'cicd-master' || e.type?.includes('cicd')).slice(0, 3)" :key="'cicd-event-' + eventIndex">
+                                                <div class="flex items-start space-x-2 text-sm">
+                                                    <span class="text-xs text-gray-400 dark:text-gray-500 whitespace-nowrap" x-text="new Date(event.timestamp).toLocaleTimeString()"></span>
+                                                    <span class="text-gray-700 dark:text-gray-300 line-clamp-1" x-text="event.message || formatEventMessage(event)"></span>
+                                                </div>
+                                            </template>
+                                            <div x-show="events.filter(e => e.data?.assigned_to === 'cicd-master' || e.data?.assigned_by === 'cicd-master' || e.type?.includes('cicd')).length === 0" class="text-sm text-gray-400 dark:text-gray-500 italic">
+                                                No recent activity
+                                            </div>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
                     </div>
                 </div>
             </div>
@@ -1112,19 +1086,19 @@
                         </div>
                         <div class="overflow-x-auto">
                             <table class="w-full">
-                                <thead class="bg-gray-50 dark:bg-gray-700/50 border-b-2 border-gray-200 dark:border-gray-600">
+                                <thead class="bg-gray-50 dark:bg-gray-700/50">
                                     <tr>
-                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-600 dark:text-gray-300 uppercase tracking-wider">Worker ID</th>
-                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-600 dark:text-gray-300 uppercase tracking-wider">Status</th>
-                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-600 dark:text-gray-300 uppercase tracking-wider">Type</th>
-                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-600 dark:text-gray-300 uppercase tracking-wider">Workforce Stream</th>
-                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-600 dark:text-gray-300 uppercase tracking-wider">Tokens Used</th>
-                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-600 dark:text-gray-300 uppercase tracking-wider">Duration</th>
-                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-600 dark:text-gray-300 uppercase tracking-wider">Started</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Worker ID</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Status</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Type</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Workforce Stream</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Tokens Used</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Duration</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Started</th>
                                     </tr>
                                 </thead>
                                 <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
-                                    <template x-for="worker in paginatedWorkers" :key="worker.worker_id">
+                                    <template x-for="worker in workers" :key="worker.worker_id">
                                         <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
                                             <td class="px-6 py-4 whitespace-nowrap">
                                                 <span class="text-sm font-mono text-gray-900 dark:text-white" x-text="worker.worker_id">-</span>
@@ -1154,9 +1128,7 @@
                                             </td>
                                         </tr>
                                     </template>
-
-                                    <!-- Empty state -->
-                                    <tr x-show="!loadingStates.workers && workers.length === 0">
+                                    <tr x-show="workers.length === 0">
                                         <td colspan="7" class="px-6 py-12 text-center">
                                             <div class="flex flex-col items-center justify-center text-gray-400 dark:text-gray-500">
                                                 <i data-lucide="inbox" class="w-12 h-12 mb-3"></i>
@@ -1166,34 +1138,6 @@
                                     </tr>
                                 </tbody>
                             </table>
-                        </div>
-
-                        <!-- Pagination Controls -->
-                        <div x-show="getTotalPages('workers') > 1" class="px-6 py-4 border-t border-gray-200 dark:border-gray-700 flex items-center justify-between">
-                            <div class="text-sm text-gray-600 dark:text-gray-400">
-                                Showing
-                                <span class="font-medium" x-text="(pagination.workers.currentPage - 1) * pagination.workers.itemsPerPage + 1"></span>
-                                to
-                                <span class="font-medium" x-text="Math.min(pagination.workers.currentPage * pagination.workers.itemsPerPage, pagination.workers.total)"></span>
-                                of
-                                <span class="font-medium" x-text="pagination.workers.total"></span>
-                                workers
-                            </div>
-                            <div class="flex items-center space-x-2">
-                                <button @click="prevPage('workers')" :disabled="pagination.workers.currentPage === 1"
-                                    class="px-3 py-1.5 text-sm font-medium rounded-lg border transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                                    :class="pagination.workers.currentPage === 1 ? 'bg-gray-100 text-gray-400 border-gray-200 dark:bg-gray-800 dark:text-gray-500 dark:border-gray-700' : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-600 dark:hover:bg-gray-700'">
-                                    Previous
-                                </button>
-                                <span class="text-sm text-gray-600 dark:text-gray-400">
-                                    Page <span class="font-medium" x-text="pagination.workers.currentPage"></span> of <span class="font-medium" x-text="getTotalPages('workers')"></span>
-                                </span>
-                                <button @click="nextPage('workers')" :disabled="pagination.workers.currentPage >= getTotalPages('workers')"
-                                    class="px-3 py-1.5 text-sm font-medium rounded-lg border transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                                    :class="pagination.workers.currentPage >= getTotalPages('workers') ? 'bg-gray-100 text-gray-400 border-gray-200 dark:bg-gray-800 dark:text-gray-500 dark:border-gray-700' : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-600 dark:hover:bg-gray-700'">
-                                    Next
-                                </button>
-                            </div>
                         </div>
                     </div>
 
@@ -1222,14 +1166,14 @@
             <div x-show="currentView === 'metrics'" x-transition>
                 <div class="space-y-6">
                     <!-- Historical Analytics Section -->
-                    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 border border-gray-200 dark:border-gray-700">
+                    <div class="bg-gradient-to-r from-primary-50 to-purple-50 dark:from-primary-900/20 dark:to-purple-900/20 rounded-xl shadow-lg p-6 border border-primary-200 dark:border-primary-700">
                         <div class="flex items-center justify-between mb-4">
                             <div class="flex items-center space-x-3">
                                 <i data-lucide="trending-up" class="w-6 h-6 text-primary-600 dark:text-primary-400"></i>
                                 <h3 class="text-xl font-bold text-gray-900 dark:text-white">Historical Analytics & Trends</h3>
                             </div>
                             <div class="flex items-center space-x-2">
-                                <select class="px-3 py-2 text-sm rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors" x-model="analyticsTimeRange" @change="updateAnalyticsCharts()">
+                                <select class="px-3 py-2 text-sm rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500" x-model="analyticsTimeRange" @change="updateAnalyticsCharts()">
                                     <option value="1h">Last Hour</option>
                                     <option value="6h">Last 6 Hours</option>
                                     <option value="24h" selected>Last 24 Hours</option>
@@ -1316,7 +1260,7 @@
                                     <i :data-lucide="ganttAutoScroll ? 'pause' : 'play'" class="w-4 h-4 inline-block mr-1"></i>
                                     <span x-text="ganttAutoScroll ? 'Live' : 'Paused'"></span>
                                 </button>
-                                <select class="px-3 py-1.5 text-sm rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors" x-model="ganttTimeRange" @change="updateGanttChart()">
+                                <select class="px-3 py-1.5 text-sm rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white" x-model="ganttTimeRange" @change="updateGanttChart()">
                                     <option value="1h">Last Hour</option>
                                     <option value="6h">Last 6 Hours</option>
                                     <option value="24h" selected>Last 24 Hours</option>
@@ -1363,7 +1307,7 @@
                                 <h3 class="text-xl font-bold text-gray-900 dark:text-white">Master Activity Heatmap</h3>
                             </div>
                             <div class="flex items-center space-x-2">
-                                <select class="px-3 py-1.5 text-sm rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors" x-model="heatmapTimeRange" @change="updateHeatmap()">
+                                <select class="px-3 py-1.5 text-sm rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white" x-model="heatmapTimeRange" @change="updateHeatmap()">
                                     <option value="24h">Last 24 Hours</option>
                                     <option value="7d" selected>Last 7 Days</option>
                                     <option value="30d">Last 30 Days</option>
@@ -1702,21 +1646,21 @@ graph TB
                             </p>
 
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
-                                <div class="bg-primary-50 dark:bg-gray-700 p-4 rounded-lg border border-primary-100 dark:border-gray-600">
+                                <div class="bg-primary-50 dark:bg-primary-900/20 p-4 rounded-lg">
                                     <h4 class="font-semibold text-primary-700 dark:text-primary-300 mb-2">🎭 Task Orchestration</h4>
-                                    <p class="text-sm text-gray-700 dark:text-gray-300">Strategic daemon decomposes complex multi-master tasks with DAG-based execution planning.</p>
+                                    <p class="text-sm">Strategic daemon decomposes complex multi-master tasks with DAG-based execution planning.</p>
                                 </div>
-                                <div class="bg-green-50 dark:bg-gray-700 p-4 rounded-lg border border-green-100 dark:border-gray-600">
+                                <div class="bg-green-50 dark:bg-green-900/20 p-4 rounded-lg">
                                     <h4 class="font-semibold text-green-700 dark:text-green-300 mb-2">💓 Health Monitoring</h4>
-                                    <p class="text-sm text-gray-700 dark:text-gray-300">Heartbeat protocol (2-min pings) with zombie detection and automatic cleanup.</p>
+                                    <p class="text-sm">Heartbeat protocol (2-min pings) with zombie detection and automatic cleanup.</p>
                                 </div>
-                                <div class="bg-purple-50 dark:bg-gray-700 p-4 rounded-lg border border-purple-100 dark:border-gray-600">
+                                <div class="bg-purple-50 dark:bg-purple-900/20 p-4 rounded-lg">
                                     <h4 class="font-semibold text-purple-700 dark:text-purple-300 mb-2">🧠 MoE Routing</h4>
-                                    <p class="text-sm text-gray-700 dark:text-gray-300">Mixture of Experts pattern matching routes tasks to specialist masters with confidence scoring.</p>
+                                    <p class="text-sm">Mixture of Experts pattern matching routes tasks to specialist masters with confidence scoring.</p>
                                 </div>
-                                <div class="bg-orange-50 dark:bg-gray-700 p-4 rounded-lg border border-orange-100 dark:border-gray-600">
+                                <div class="bg-orange-50 dark:bg-orange-900/20 p-4 rounded-lg">
                                     <h4 class="font-semibold text-orange-700 dark:text-orange-300 mb-2">📊 Historical Analytics</h4>
-                                    <p class="text-sm text-gray-700 dark:text-gray-300">Real-time metrics with 5-minute snapshots, daily aggregation, and trend visualization.</p>
+                                    <p class="text-sm">Real-time metrics with 5-minute snapshots, daily aggregation, and trend visualization.</p>
                                 </div>
                             </div>
                         </div>
@@ -1729,7 +1673,7 @@ graph TB
                             <h3 class="text-2xl font-bold text-gray-900 dark:text-white">System Architecture</h3>
                         </div>
 
-                        <pre class="mermaid bg-gray-50 dark:bg-gray-600 p-6 rounded-lg">
+                        <pre class="mermaid bg-gray-50 dark:bg-gray-900 p-6 rounded-lg">
 graph TB
     subgraph Strategic["🎯 Strategic Layer - Daemons"]
         TO["Task Orchestrator<br/>Complex Coordination"]
@@ -1868,10 +1812,10 @@ graph TB
 
     <!-- Load dashboard function first -->
     <!-- All x-for loops now use index-based keys to handle duplicate IDs -->
-    <script src="dashboard-v2.js?v=5.8"></script>
+    <script src="dashboard-v2.js?v=5.4"></script>
 
-    <!-- Alpine.js - load synchronously after dashboard function -->
-    <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.13.3/dist/cdn.min.js"></script>
+    <!-- Alpine.js with defer to wait for DOM to be fully parsed -->
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
 
     <!-- Mermaid initialization -->
     <script>
@@ -1879,12 +1823,6 @@ graph TB
         mermaid.initialize({
             startOnLoad: false,
             theme: 'default',
-            themeVariables: {
-                background: 'transparent',
-                mainBkg: 'transparent',
-                secondBkg: 'transparent',
-                tertiaryBkg: 'transparent'
-            },
             flowchart: {
                 useMaxWidth: true,
                 htmlLabels: true
