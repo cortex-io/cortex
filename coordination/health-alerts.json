@@ -1,0 +1,23 @@
+{
+  "sla_config": {
+    "critical": 15,
+    "high": 30,
+    "medium": 60,
+    "low": 120
+  },
+  "alerts": [
+    {
+      "id": "alert-lowsuccess-001",
+      "type": "low_success_rate",
+      "severity": "high",
+      "status": "needs_review",
+      "message": "Worker success rate is 65% (threshold: 75%)",
+      "metric_value": 0.65,
+      "threshold": 0.75,
+      "sla_minutes": 30,
+      "created_at": "2025-11-06T18:30:00Z",
+      "worker_id": null,
+      "investigation_notes": []
+    }
+  ]
+}
