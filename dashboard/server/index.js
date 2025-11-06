@@ -259,11 +259,24 @@ async function getDaemonStatus() {
 /**
  * Calculate success rate for different time periods
  */
+// Helper function to filter out test/zombie workers
+function isProductionWorker(worker) {
+  // Exclude stress test workers
+  if (worker.stress_test === true) return false;
+  // Exclude zombie test workers (from DDQD tests)
+  if (worker.worker_id && worker.worker_id.includes('zombie-ddqd')) return false;
+  if (worker.worker_id && worker.worker_id.startsWith('zombie-')) return false;
+  // Exclude workers with test_id field (stress test workers)
+  if (worker.test_id) return false;
+  return true;
+}
+
 function calculateSuccessRate(workerPool, period = 'all_time') {
   const now = Date.now();
-  const completed = workerPool.completed_workers || [];
-  const failed = workerPool.failed_workers || [];
-  const active = workerPool.active_workers || [];
+  // Filter out test/zombie workers from all pools
+  const completed = (workerPool.completed_workers || []).filter(isProductionWorker);
+  const failed = (workerPool.failed_workers || []).filter(isProductionWorker);
+  const active = (workerPool.active_workers || []).filter(isProductionWorker);
 
   let filteredCompleted = [];
   let filteredFailed = [];
