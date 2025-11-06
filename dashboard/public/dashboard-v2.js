@@ -17,6 +17,14 @@ function dashboard() {
         successRatePeriod: localStorage.getItem('successRatePeriod') || 'all_time',
         showPeriodSelector: false,
 
+        // Loading states for different components
+        loadingStates: {
+            workers: false,
+            tasks: false,
+            metrics: false,
+            charts: false
+        },
+
         // Performance: Debouncing and caching
         updateDebounceTimer: null,
         updateDebounceDelay: 300, // ms - wait 300ms after last message before updating UI
@@ -1914,6 +1922,9 @@ function dashboard() {
                     return;
                 }
 
+                // Show loading skeleton
+                this.loadingStates.workers = true;
+
                 const res = await fetch('/api/workers');
                 const data = await res.json();
                 this.workers = [
@@ -1926,6 +1937,9 @@ function dashboard() {
                 this.setCachedData('workers', this.workers);
             } catch (error) {
                 console.error('Error fetching workers:', error);
+            } finally {
+                // Hide loading skeleton
+                this.loadingStates.workers = false;
             }
         },
 
