@@ -157,9 +157,13 @@
                 <i data-lucide="cpu" class="w-5 h-5"></i>
                 <span :class="currentView === 'workers' ? 'font-medium' : ''">Workforce</span>
             </button>
-            <button @click="switchView('masters')" class="w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors" :class="currentView === 'masters' ? 'bg-primary-50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-300' : 'hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300'">
-                <i data-lucide="network" class="w-5 h-5"></i>
-                <span :class="currentView === 'masters' ? 'font-medium' : ''">Agents</span>
+            <!-- Integrations Section -->
+            <div class="pt-4 pb-1 px-4">
+                <p class="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">Integrations</p>
+            </div>
+            <button @click="switchView('api-explorer')" class="w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors" :class="currentView === 'api-explorer' ? 'bg-primary-50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-300' : 'hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300'">
+                <i data-lucide="code" class="w-5 h-5"></i>
+                <span :class="currentView === 'api-explorer' ? 'font-medium' : ''">API Explorer</span>
             </button>
 
             <!-- Logs Section -->
@@ -197,7 +201,7 @@
                         'workers': 'Workforce Stream',
                         'tasks': 'Task Queue',
                         'events': 'Activity Logs',
-                        'masters': 'Agent Orchestration',
+                        'api-explorer': 'API Explorer',
                         'metrics': 'Analytics',
                         'about': 'About Commit-Relay'
                     }[currentView]"></h2>
@@ -514,46 +518,83 @@
 
             <!-- Workers View -->
             <div x-show="currentView === 'workers'" x-transition>
-                <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700">
-                    <div class="p-6 border-b border-gray-200 dark:border-gray-700">
-                        <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Workforce Stream</h3>
+                <!-- Workforce Stream Header -->
+                <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 mb-6">
+                    <div class="p-6">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Workforce Stream</h3>
+                                <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Live worker and master activity feed</p>
+                            </div>
+                            <div class="text-right">
+                                <div class="text-2xl font-bold text-gray-900 dark:text-white" x-text="events.filter(e => e.type?.includes('worker') || e.type?.includes('master')).length"></div>
+                                <div class="text-xs text-gray-500 dark:text-gray-400">Total Events</div>
+                            </div>
+                        </div>
                     </div>
-                    <div class="overflow-x-auto">
-                        <table class="w-full">
-                            <thead class="bg-gray-50 dark:bg-gray-700/50">
-                                <tr>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Worker ID</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Status</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Type</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Workforce Stream</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Tokens Used</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Duration</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Started</th>
-                                </tr>
-                            </thead>
-                            <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
-                                <template x-for="worker in workers" :key="worker.worker_id">
-                                    <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white" x-text="worker.worker_id"></td>
-                                        <td class="px-6 py-4 whitespace-nowrap">
-                                            <span class="px-2 py-1 text-xs font-medium rounded-full" :class="{
-                                                'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400': worker.status === 'completed' || worker.status === 'success',
-                                                'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400': worker.status === 'running' || worker.status === 'active',
-                                                'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400': worker.status === 'failed',
-                                                'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300': worker.status === 'pending'
-                                            }" x-text="worker.status"></span>
-                                        </td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300" x-text="worker.worker_type || worker.type || 'N/A'"></td>
-                                        <td class="px-6 py-4 whitespace-nowrap">
-                                            <span class="px-2 py-1 text-xs font-medium rounded-full bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400" x-text="worker.stream || 'N/A'"></span>
-                                        </td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400" x-text="(worker.tokens_used || 0).toLocaleString()"></td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400" x-text="(worker.duration_minutes || 0).toFixed(1) + 'min'"></td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400" x-text="worker.spawned_at ? new Date(worker.spawned_at).toLocaleString() : (worker.execution?.started_at ? new Date(worker.execution.started_at).toLocaleString() : 'N/A')"></td>
-                                    </tr>
-                                </template>
-                            </tbody>
-                        </table>
+                </div>
+
+                <!-- Event Feed -->
+                <div class="space-y-4">
+                    <template x-for="(event, index) in events.filter(e => e.type?.includes('worker') || e.type?.includes('master')).slice(0, 50)" :key="'event-' + index">
+                        <div class="bg-white dark:bg-gray-800 rounded-lg shadow border border-gray-200 dark:border-gray-700 p-4 hover:shadow-md transition-shadow">
+                            <div class="flex items-start space-x-4">
+                                <!-- Event Icon -->
+                                <div class="flex-shrink-0 mt-1">
+                                    <div class="w-10 h-10 rounded-full flex items-center justify-center" :class="{
+                                        'bg-green-100 dark:bg-green-900/30': event.type?.includes('completed') || event.type?.includes('success'),
+                                        'bg-blue-100 dark:bg-blue-900/30': event.type?.includes('spawned') || event.type?.includes('started'),
+                                        'bg-red-100 dark:bg-red-900/30': event.type?.includes('failed') || event.type?.includes('error'),
+                                        'bg-yellow-100 dark:bg-yellow-900/30': event.type?.includes('pending') || event.type?.includes('routed'),
+                                        'bg-gray-100 dark:bg-gray-700': !event.type
+                                    }">
+                                        <span class="text-xl" x-text="event.type?.includes('completed') || event.type?.includes('success') ? '✓' : event.type?.includes('spawned') || event.type?.includes('started') ? '▶' : event.type?.includes('failed') || event.type?.includes('error') ? '✗' : '•'"></span>
+                                    </div>
+                                </div>
+
+                                <!-- Event Details -->
+                                <div class="flex-1 min-w-0">
+                                    <div class="flex items-start justify-between">
+                                        <div class="flex-1">
+                                            <div class="flex items-center space-x-2">
+                                                <span class="text-sm font-medium text-gray-900 dark:text-white" x-text="event.type || 'Unknown Event'"></span>
+                                                <span class="px-2 py-0.5 text-xs font-medium rounded-full" :class="{
+                                                    'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400': event.type?.includes('completed') || event.type?.includes('success'),
+                                                    'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400': event.type?.includes('spawned') || event.type?.includes('started') || event.type?.includes('running'),
+                                                    'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400': event.type?.includes('failed') || event.type?.includes('error'),
+                                                    'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400': event.type?.includes('pending') || event.type?.includes('routed')
+                                                }" x-text="event.type?.includes('completed') ? 'Completed' : event.type?.includes('spawned') ? 'Spawned' : event.type?.includes('failed') ? 'Failed' : event.type?.includes('started') ? 'Started' : 'Active'"></span>
+                                            </div>
+                                            <div class="mt-1 text-sm text-gray-600 dark:text-gray-400">
+                                                <span x-show="event.data?.worker_id" x-text="'Worker: ' + event.data?.worker_id"></span>
+                                                <span x-show="event.data?.task_id && !event.data?.worker_id" x-text="'Task: ' + event.data?.task_id"></span>
+                                                <span x-show="event.data?.master" x-text="' • Master: ' + event.data?.master"></span>
+                                            </div>
+                                            <div class="mt-2 text-xs text-gray-500 dark:text-gray-500" x-show="event.data && Object.keys(event.data).length > 0">
+                                                <template x-for="(value, key) in event.data" :key="'data-' + index + '-' + key">
+                                                    <div x-show="key !== 'worker_id' && key !== 'task_id' && key !== 'master'">
+                                                        <span class="font-medium" x-text="key"></span>: <span x-text="typeof value === 'object' ? JSON.stringify(value) : value"></span>
+                                                    </div>
+                                                </template>
+                                            </div>
+                                        </div>
+                                        <div class="ml-4 flex-shrink-0 text-right">
+                                            <div class="text-xs text-gray-500 dark:text-gray-400" x-text="new Date(event.timestamp).toLocaleTimeString()"></div>
+                                            <div class="text-xs text-gray-400 dark:text-gray-500" x-text="new Date(event.timestamp).toLocaleDateString()"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </template>
+
+                    <!-- Empty State -->
+                    <div x-show="events.filter(e => e.type?.includes('worker') || e.type?.includes('master')).length === 0" class="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 p-12">
+                        <div class="text-center">
+                            <div class="text-6xl mb-4">📥</div>
+                            <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">No Workforce Events</h3>
+                            <p class="text-sm text-gray-500 dark:text-gray-400">Worker and master activity will appear here when available</p>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -828,152 +869,91 @@
                 </div>
             </div>
 
-            <!-- Masters View -->
-            <div x-show="currentView === 'masters'" x-transition>
-                <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700">
-                    <div class="p-6 border-b border-gray-200 dark:border-gray-700">
-                        <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Master Agents</h3>
+            <!-- API Explorer View -->
+            <div x-show="currentView === 'api-explorer'" x-transition>
+                <div class="space-y-6">
+                    <!-- Header Card -->
+                    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 border border-gray-200 dark:border-gray-700">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <h2 class="text-2xl font-bold text-gray-900 dark:text-white">API Explorer</h2>
+                                <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Interactive API testing and exploration</p>
+                            </div>
+                            <div class="flex items-center space-x-2">
+                                <span class="px-3 py-1 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 rounded-full text-sm font-medium">
+                                    Coming Soon
+                                </span>
+                            </div>
+                        </div>
                     </div>
-                    <div class="overflow-x-auto">
-                        <table class="w-full">
-                            <thead class="bg-gray-50 dark:bg-gray-700/50">
-                                <tr>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider w-48">Master Agent</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Recent Activity</th>
-                                </tr>
-                            </thead>
-                            <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
-                                <!-- Coordinator Master -->
-                                <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
-                                    <td class="px-6 py-4 whitespace-nowrap">
-                                        <div class="flex items-center space-x-3">
-                                            <div class="w-8 h-8 rounded-lg gradient-blue flex items-center justify-center flex-shrink-0">
-                                                <i data-lucide="crown" class="w-4 h-4 text-white"></i>
-                                            </div>
-                                            <span class="text-sm font-medium text-gray-900 dark:text-white">Coordinator</span>
-                                        </div>
-                                    </td>
-                                    <td class="px-6 py-4">
-                                        <div class="space-y-2">
-                                            <!-- Using index as key - events have duplicate IDs -->
-                                            <template x-for="(event, eventIndex) in events.filter(e => e.data?.assigned_to === 'coordinator-master' || e.data?.assigned_by === 'coordinator-master' || e.type?.includes('coordinator')).slice(0, 3)" :key="'coord-event-' + eventIndex">
-                                                <div class="flex items-start space-x-2 text-sm">
-                                                    <span class="text-xs text-gray-400 dark:text-gray-500 whitespace-nowrap" x-text="new Date(event.timestamp).toLocaleTimeString()"></span>
-                                                    <span class="text-gray-700 dark:text-gray-300 line-clamp-1" x-text="event.message || formatEventMessage(event)"></span>
-                                                </div>
-                                            </template>
-                                            <div x-show="events.filter(e => e.data?.assigned_to === 'coordinator-master' || e.data?.assigned_by === 'coordinator-master' || e.type?.includes('coordinator')).length === 0" class="text-sm text-gray-400 dark:text-gray-500 italic">
-                                                No recent activity
-                                            </div>
-                                        </div>
-                                    </td>
-                                </tr>
 
-                                <!-- Security Master -->
-                                <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
-                                    <td class="px-6 py-4 whitespace-nowrap">
-                                        <div class="flex items-center space-x-3">
-                                            <div class="w-8 h-8 rounded-lg gradient-orange flex items-center justify-center flex-shrink-0">
-                                                <i data-lucide="shield" class="w-4 h-4 text-white"></i>
-                                            </div>
-                                            <span class="text-sm font-medium text-gray-900 dark:text-white">Security</span>
-                                        </div>
-                                    </td>
-                                    <td class="px-6 py-4">
-                                        <div class="space-y-2">
-                                            <!-- Using index as key - events have duplicate IDs -->
-                                            <template x-for="(event, eventIndex) in events.filter(e => e.data?.assigned_to === 'security-master' || e.data?.assigned_by === 'security-master' || e.type?.includes('security')).slice(0, 3)" :key="'security-event-' + eventIndex">
-                                                <div class="flex items-start space-x-2 text-sm">
-                                                    <span class="text-xs text-gray-400 dark:text-gray-500 whitespace-nowrap" x-text="new Date(event.timestamp).toLocaleTimeString()"></span>
-                                                    <span class="text-gray-700 dark:text-gray-300 line-clamp-1" x-text="event.message || formatEventMessage(event)"></span>
-                                                </div>
-                                            </template>
-                                            <div x-show="events.filter(e => e.data?.assigned_to === 'security-master' || e.data?.assigned_by === 'security-master' || e.type?.includes('security')).length === 0" class="text-sm text-gray-400 dark:text-gray-500 italic">
-                                                No recent activity
-                                            </div>
-                                        </div>
-                                    </td>
-                                </tr>
+                    <!-- Feature Preview Cards -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        <!-- REST API Testing -->
+                        <div class="bg-white dark:bg-gray-800 rounded-lg shadow border border-gray-200 dark:border-gray-700 p-6">
+                            <div class="w-12 h-12 bg-blue-100 dark:bg-blue-900/30 rounded-lg flex items-center justify-center mb-4">
+                                <i data-lucide="zap" class="w-6 h-6 text-blue-600 dark:text-blue-400"></i>
+                            </div>
+                            <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">REST API Testing</h3>
+                            <p class="text-sm text-gray-600 dark:text-gray-400">Test all dashboard endpoints with an interactive request builder and response viewer</p>
+                        </div>
 
-                                <!-- Development Master -->
-                                <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
-                                    <td class="px-6 py-4 whitespace-nowrap">
-                                        <div class="flex items-center space-x-3">
-                                            <div class="w-8 h-8 rounded-lg gradient-green flex items-center justify-center flex-shrink-0">
-                                                <i data-lucide="code" class="w-4 h-4 text-white"></i>
-                                            </div>
-                                            <span class="text-sm font-medium text-gray-900 dark:text-white">Development</span>
-                                        </div>
-                                    </td>
-                                    <td class="px-6 py-4">
-                                        <div class="space-y-2">
-                                            <!-- Using index as key - events have duplicate IDs -->
-                                            <template x-for="(event, eventIndex) in events.filter(e => e.data?.assigned_to === 'development-master' || e.data?.assigned_by === 'development-master' || e.type?.includes('development')).slice(0, 3)" :key="'dev-event-' + eventIndex">
-                                                <div class="flex items-start space-x-2 text-sm">
-                                                    <span class="text-xs text-gray-400 dark:text-gray-500 whitespace-nowrap" x-text="new Date(event.timestamp).toLocaleTimeString()"></span>
-                                                    <span class="text-gray-700 dark:text-gray-300 line-clamp-1" x-text="event.message || formatEventMessage(event)"></span>
-                                                </div>
-                                            </template>
-                                            <div x-show="events.filter(e => e.data?.assigned_to === 'development-master' || e.data?.assigned_by === 'development-master' || e.type?.includes('development')).length === 0" class="text-sm text-gray-400 dark:text-gray-500 italic">
-                                                No recent activity
-                                            </div>
-                                        </div>
-                                    </td>
-                                </tr>
+                        <!-- WebSocket Monitor -->
+                        <div class="bg-white dark:bg-gray-800 rounded-lg shadow border border-gray-200 dark:border-gray-700 p-6">
+                            <div class="w-12 h-12 bg-purple-100 dark:bg-purple-900/30 rounded-lg flex items-center justify-center mb-4">
+                                <i data-lucide="radio" class="w-6 h-6 text-purple-600 dark:text-purple-400"></i>
+                            </div>
+                            <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">WebSocket Monitor</h3>
+                            <p class="text-sm text-gray-600 dark:text-gray-400">Monitor real-time WebSocket events and messages with filtering and replay</p>
+                        </div>
 
-                                <!-- Inventory Master -->
-                                <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
-                                    <td class="px-6 py-4 whitespace-nowrap">
-                                        <div class="flex items-center space-x-3">
-                                            <div class="w-8 h-8 rounded-lg gradient-red flex items-center justify-center flex-shrink-0">
-                                                <i data-lucide="database" class="w-4 h-4 text-white"></i>
-                                            </div>
-                                            <span class="text-sm font-medium text-gray-900 dark:text-white">Inventory</span>
-                                        </div>
-                                    </td>
-                                    <td class="px-6 py-4">
-                                        <div class="space-y-2">
-                                            <!-- Using index as key - events have duplicate IDs -->
-                                            <template x-for="(event, eventIndex) in events.filter(e => e.data?.assigned_to === 'inventory-master' || e.data?.assigned_by === 'inventory-master' || e.type?.includes('inventory')).slice(0, 3)" :key="'inventory-event-' + eventIndex">
-                                                <div class="flex items-start space-x-2 text-sm">
-                                                    <span class="text-xs text-gray-400 dark:text-gray-500 whitespace-nowrap" x-text="new Date(event.timestamp).toLocaleTimeString()"></span>
-                                                    <span class="text-gray-700 dark:text-gray-300 line-clamp-1" x-text="event.message || formatEventMessage(event)"></span>
-                                                </div>
-                                            </template>
-                                            <div x-show="events.filter(e => e.data?.assigned_to === 'inventory-master' || e.data?.assigned_by === 'inventory-master' || e.type?.includes('inventory')).length === 0" class="text-sm text-gray-400 dark:text-gray-500 italic">
-                                                No recent activity
-                                            </div>
-                                        </div>
-                                    </td>
-                                </tr>
+                        <!-- API Documentation -->
+                        <div class="bg-white dark:bg-gray-800 rounded-lg shadow border border-gray-200 dark:border-gray-700 p-6">
+                            <div class="w-12 h-12 bg-green-100 dark:bg-green-900/30 rounded-lg flex items-center justify-center mb-4">
+                                <i data-lucide="book-open" class="w-6 h-6 text-green-600 dark:text-green-400"></i>
+                            </div>
+                            <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">API Documentation</h3>
+                            <p class="text-sm text-gray-600 dark:text-gray-400">Complete API reference with examples, schemas, and authentication details</p>
+                        </div>
 
-                                <!-- CI/CD Master -->
-                                <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
-                                    <td class="px-6 py-4 whitespace-nowrap">
-                                        <div class="flex items-center space-x-3">
-                                            <div class="w-8 h-8 rounded-lg gradient-purple flex items-center justify-center flex-shrink-0">
-                                                <i data-lucide="zap" class="w-4 h-4 text-white"></i>
-                                            </div>
-                                            <span class="text-sm font-medium text-gray-900 dark:text-white">CI/CD</span>
-                                        </div>
-                                    </td>
-                                    <td class="px-6 py-4">
-                                        <div class="space-y-2">
-                                            <!-- Using index as key - events have duplicate IDs -->
-                                            <template x-for="(event, eventIndex) in events.filter(e => e.data?.assigned_to === 'cicd-master' || e.data?.assigned_by === 'cicd-master' || e.type?.includes('cicd')).slice(0, 3)" :key="'cicd-event-' + eventIndex">
-                                                <div class="flex items-start space-x-2 text-sm">
-                                                    <span class="text-xs text-gray-400 dark:text-gray-500 whitespace-nowrap" x-text="new Date(event.timestamp).toLocaleTimeString()"></span>
-                                                    <span class="text-gray-700 dark:text-gray-300 line-clamp-1" x-text="event.message || formatEventMessage(event)"></span>
-                                                </div>
-                                            </template>
-                                            <div x-show="events.filter(e => e.data?.assigned_to === 'cicd-master' || e.data?.assigned_by === 'cicd-master' || e.type?.includes('cicd')).length === 0" class="text-sm text-gray-400 dark:text-gray-500 italic">
-                                                No recent activity
-                                            </div>
-                                        </div>
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
+                        <!-- Request History -->
+                        <div class="bg-white dark:bg-gray-800 rounded-lg shadow border border-gray-200 dark:border-gray-700 p-6">
+                            <div class="w-12 h-12 bg-orange-100 dark:bg-orange-900/30 rounded-lg flex items-center justify-center mb-4">
+                                <i data-lucide="history" class="w-6 h-6 text-orange-600 dark:text-orange-400"></i>
+                            </div>
+                            <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">Request History</h3>
+                            <p class="text-sm text-gray-600 dark:text-gray-400">Save and replay API requests with full history and favorites management</p>
+                        </div>
+
+                        <!-- Code Generation -->
+                        <div class="bg-white dark:bg-gray-800 rounded-lg shadow border border-gray-200 dark:border-gray-700 p-6">
+                            <div class="w-12 h-12 bg-red-100 dark:bg-red-900/30 rounded-lg flex items-center justify-center mb-4">
+                                <i data-lucide="code-2" class="w-6 h-6 text-red-600 dark:text-red-400"></i>
+                            </div>
+                            <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">Code Generation</h3>
+                            <p class="text-sm text-gray-600 dark:text-gray-400">Generate client code in multiple languages for API integration</p>
+                        </div>
+
+                        <!-- Environment Manager -->
+                        <div class="bg-white dark:bg-gray-800 rounded-lg shadow border border-gray-200 dark:border-gray-700 p-6">
+                            <div class="w-12 h-12 bg-indigo-100 dark:bg-indigo-900/30 rounded-lg flex items-center justify-center mb-4">
+                                <i data-lucide="settings" class="w-6 h-6 text-indigo-600 dark:text-indigo-400"></i>
+                            </div>
+                            <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">Environment Manager</h3>
+                            <p class="text-sm text-gray-600 dark:text-gray-400">Manage multiple environments with variables and configuration profiles</p>
+                        </div>
+                    </div>
+
+                    <!-- Placeholder Message -->
+                    <div class="bg-gradient-to-br from-primary-50 to-blue-50 dark:from-gray-800 dark:to-gray-700 rounded-xl shadow-lg border border-primary-200 dark:border-gray-600 p-12">
+                        <div class="text-center">
+                            <div class="text-6xl mb-4">🚀</div>
+                            <h3 class="text-2xl font-bold text-gray-900 dark:text-white mb-3">API Explorer Coming Soon</h3>
+                            <p class="text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
+                                We're building a comprehensive API testing and exploration tool to help you integrate with the Commit-Relay API.
+                                Stay tuned for interactive testing, documentation, and code generation features.
+                            </p>
+                        </div>
                     </div>
                 </div>
             </div>

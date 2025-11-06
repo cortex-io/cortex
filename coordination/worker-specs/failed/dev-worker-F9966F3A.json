@@ -45,8 +45,8 @@
   "created_by": "development",
   "execution": {
     "started_at": "2025-11-05T17:03:56Z",
-    "completed_at": "2025-11-06T15:45:36Z",
-    "error": "Zombie worker detected - running for 60099s with no completion",
+    "completed_at": "2025-11-06T18:06:11Z",
+    "error": "Zombie worker detected - running for 68534s with no completion",
     "killed_by": "zombie-killer-daemon"
   }
 }
