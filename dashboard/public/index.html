@@ -553,15 +553,15 @@
                     </div>
                     <div class="overflow-x-auto">
                         <table class="w-full">
-                            <thead class="bg-gray-50 dark:bg-gray-700/50">
+                            <thead class="bg-gray-50 dark:bg-gray-700/50 border-b-2 border-gray-200 dark:border-gray-600">
                                 <tr>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Worker ID</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Status</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Type</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Workforce Stream</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Tokens Used</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Duration</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Started</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-600 dark:text-gray-300 uppercase tracking-wider">Worker ID</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-600 dark:text-gray-300 uppercase tracking-wider">Status</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-600 dark:text-gray-300 uppercase tracking-wider">Type</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-600 dark:text-gray-300 uppercase tracking-wider">Workforce Stream</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-600 dark:text-gray-300 uppercase tracking-wider">Tokens Used</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-600 dark:text-gray-300 uppercase tracking-wider">Duration</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-600 dark:text-gray-300 uppercase tracking-wider">Started</th>
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
@@ -570,10 +570,10 @@
                                         <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white" x-text="worker.worker_id"></td>
                                         <td class="px-6 py-4 whitespace-nowrap">
                                             <span class="px-2 py-1 text-xs font-medium rounded-full" :class="{
-                                                'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400': worker.status === 'completed' || worker.status === 'success',
-                                                'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400': worker.status === 'running' || worker.status === 'active',
-                                                'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400': worker.status === 'failed',
-                                                'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300': worker.status === 'pending'
+                                                'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400': worker.status === 'completed' || worker.status === 'success',
+                                                'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400': worker.status === 'running' || worker.status === 'active',
+                                                'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400': worker.status === 'failed',
+                                                'bg-gray-100 text-gray-700 dark:bg-gray-700/50 dark:text-gray-300': worker.status === 'pending'
                                             }" x-text="worker.status"></span>
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300" x-text="worker.worker_type || worker.type || 'N/A'"></td>
@@ -606,15 +606,15 @@
                     </div>
                     <div class="overflow-x-auto">
                         <table class="w-full">
-                            <thead class="bg-gray-50 dark:bg-gray-700/50">
+                            <thead class="bg-gray-50 dark:bg-gray-700/50 border-b-2 border-gray-200 dark:border-gray-600">
                                 <tr>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">ID</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Title</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Type</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Status</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Priority</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Assigned To</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Git Commits</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-600 dark:text-gray-300 uppercase tracking-wider">ID</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-600 dark:text-gray-300 uppercase tracking-wider">Title</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-600 dark:text-gray-300 uppercase tracking-wider">Type</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-600 dark:text-gray-300 uppercase tracking-wider">Status</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-600 dark:text-gray-300 uppercase tracking-wider">Priority</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-600 dark:text-gray-300 uppercase tracking-wider">Assigned To</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-600 dark:text-gray-300 uppercase tracking-wider">Git Commits</th>
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
@@ -633,17 +633,17 @@
                                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400" x-text="task.type"></td>
                                         <td class="px-6 py-4 whitespace-nowrap">
                                             <span class="px-2 py-1 text-xs font-medium rounded-full" :class="{
-                                                'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400': task.status === 'completed',
-                                                'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400': task.status === 'in_progress' || task.status === 'in-progress',
-                                                'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300': task.status === 'pending'
+                                                'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400': task.status === 'completed',
+                                                'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400': task.status === 'in_progress' || task.status === 'in-progress',
+                                                'bg-gray-100 text-gray-700 dark:bg-gray-700/50 dark:text-gray-300': task.status === 'pending'
                                             }" x-text="task.status"></span>
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap">
                                             <span class="px-2 py-1 text-xs font-medium rounded-full" :class="{
-                                                'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400': task.priority === 'critical',
-                                                'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400': task.priority === 'high',
-                                                'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400': task.priority === 'medium',
-                                                'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300': task.priority === 'low'
+                                                'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400': task.priority === 'critical',
+                                                'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400': task.priority === 'high',
+                                                'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400': task.priority === 'medium',
+                                                'bg-gray-100 text-gray-700 dark:bg-gray-700/50 dark:text-gray-300': task.priority === 'low'
                                             }" x-text="task.priority"></span>
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400" x-text="task.assigned_to || 'Unassigned'"></td>
@@ -652,7 +652,7 @@
                                             <template x-for="(commit, commitIndex) in getTaskCommits(task.id)" :key="'commit-' + index + '-' + commitIndex">
                                                 <a :href="'https://github.com/ry-ops/commit-relay/commit/' + commit"
                                                    target="_blank"
-                                                   class="inline-block px-2 py-1 mr-1 mb-1 text-xs font-mono bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+                                                   class="inline-block px-2 py-1 mr-1 mb-1 text-xs font-mono bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded hover:bg-gray-200 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-1 transition-colors"
                                                    x-text="commit"></a>
                                             </template>
                                             <span x-show="getTaskCommits(task.id).length === 0" class="text-gray-400 dark:text-gray-500 text-xs">-</span>
@@ -822,12 +822,12 @@
                         <!-- Search Bar -->
                         <div class="mt-4">
                             <div class="relative">
-                                <i data-lucide="search" class="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400"></i>
+                                <i data-lucide="search" class="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 dark:text-gray-500 pointer-events-none"></i>
                                 <input
                                     x-model="searchQuery"
                                     type="text"
                                     placeholder="Search events by message, type, or data..."
-                                    class="w-full pl-10 pr-4 py-2 border border-gray-200 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                    class="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-colors">
                             </div>
                         </div>
                     </div>
@@ -956,10 +956,10 @@
                     </div>
                     <div class="overflow-x-auto">
                         <table class="w-full">
-                            <thead class="bg-gray-50 dark:bg-gray-700/50">
+                            <thead class="bg-gray-50 dark:bg-gray-700/50 border-b-2 border-gray-200 dark:border-gray-600">
                                 <tr>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider w-48">Master Agent</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Recent Activity</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-600 dark:text-gray-300 uppercase tracking-wider w-48">Master Agent</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-600 dark:text-gray-300 uppercase tracking-wider">Recent Activity</th>
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
@@ -1206,15 +1206,15 @@
                         </div>
                         <div class="overflow-x-auto">
                             <table class="w-full">
-                                <thead class="bg-gray-50 dark:bg-gray-700/50">
+                                <thead class="bg-gray-50 dark:bg-gray-700/50 border-b-2 border-gray-200 dark:border-gray-600">
                                     <tr>
-                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Worker ID</th>
-                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Status</th>
-                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Type</th>
-                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Workforce Stream</th>
-                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Tokens Used</th>
-                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Duration</th>
-                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Started</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-600 dark:text-gray-300 uppercase tracking-wider">Worker ID</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-600 dark:text-gray-300 uppercase tracking-wider">Status</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-600 dark:text-gray-300 uppercase tracking-wider">Type</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-600 dark:text-gray-300 uppercase tracking-wider">Workforce Stream</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-600 dark:text-gray-300 uppercase tracking-wider">Tokens Used</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-600 dark:text-gray-300 uppercase tracking-wider">Duration</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-600 dark:text-gray-300 uppercase tracking-wider">Started</th>
                                     </tr>
                                 </thead>
                                 <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
@@ -1337,7 +1337,7 @@
                                 <h3 class="text-xl font-bold text-gray-900 dark:text-white">Historical Analytics & Trends</h3>
                             </div>
                             <div class="flex items-center space-x-2">
-                                <select class="px-3 py-2 text-sm rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500" x-model="analyticsTimeRange" @change="updateAnalyticsCharts()">
+                                <select class="px-3 py-2 text-sm rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors" x-model="analyticsTimeRange" @change="updateAnalyticsCharts()">
                                     <option value="1h">Last Hour</option>
                                     <option value="6h">Last 6 Hours</option>
                                     <option value="24h" selected>Last 24 Hours</option>
@@ -1424,7 +1424,7 @@
                                     <i :data-lucide="ganttAutoScroll ? 'pause' : 'play'" class="w-4 h-4 inline-block mr-1"></i>
                                     <span x-text="ganttAutoScroll ? 'Live' : 'Paused'"></span>
                                 </button>
-                                <select class="px-3 py-1.5 text-sm rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white" x-model="ganttTimeRange" @change="updateGanttChart()">
+                                <select class="px-3 py-1.5 text-sm rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors" x-model="ganttTimeRange" @change="updateGanttChart()">
                                     <option value="1h">Last Hour</option>
                                     <option value="6h">Last 6 Hours</option>
                                     <option value="24h" selected>Last 24 Hours</option>
@@ -1471,7 +1471,7 @@
                                 <h3 class="text-xl font-bold text-gray-900 dark:text-white">Master Activity Heatmap</h3>
                             </div>
                             <div class="flex items-center space-x-2">
-                                <select class="px-3 py-1.5 text-sm rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white" x-model="heatmapTimeRange" @change="updateHeatmap()">
+                                <select class="px-3 py-1.5 text-sm rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors" x-model="heatmapTimeRange" @change="updateHeatmap()">
                                     <option value="24h">Last 24 Hours</option>
                                     <option value="7d" selected>Last 7 Days</option>
                                     <option value="30d">Last 30 Days</option>
