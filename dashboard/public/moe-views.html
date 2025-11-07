@@ -1,0 +1,303 @@
+<!-- MoE Routing Intelligence View -->
+<div x-show="currentView === 'moe-routing'" x-transition>
+    <div class="space-y-4 sm:space-y-6">
+        <!-- MoE Overview Stats -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+            <div class="bg-white dark:bg-gray-800 rounded-lg sm:rounded-xl shadow-lg p-4 sm:p-6 border border-gray-200 dark:border-gray-700">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-400">Total Routes</p>
+                        <p class="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mt-1" x-text="moeMetrics.totalRoutes || 0"></p>
+                    </div>
+                    <i data-lucide="zap" class="w-8 h-8 sm:w-10 sm:h-10 text-blue-500"></i>
+                </div>
+            </div>
+
+            <div class="bg-white dark:bg-gray-800 rounded-lg sm:rounded-xl shadow-lg p-4 sm:p-6 border border-gray-200 dark:border-gray-700">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-400">Avg Confidence</p>
+                        <p class="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mt-1" x-text="(moeMetrics.avgConfidence || 0) + '%'"></p>
+                    </div>
+                    <i data-lucide="target" class="w-8 h-8 sm:w-10 sm:h-10 text-green-500"></i>
+                </div>
+            </div>
+
+            <div class="bg-white dark:bg-gray-800 rounded-lg sm:rounded-xl shadow-lg p-4 sm:p-6 border border-gray-200 dark:border-gray-700">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-400">Parallel Routes</p>
+                        <p class="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mt-1" x-text="moeMetrics.parallelRoutes || 0"></p>
+                    </div>
+                    <i data-lucide="git-branch" class="w-8 h-8 sm:w-10 sm:h-10 text-purple-500"></i>
+                </div>
+            </div>
+
+            <div class="bg-white dark:bg-gray-800 rounded-lg sm:rounded-xl shadow-lg p-4 sm:p-6 border border-gray-200 dark:border-gray-700">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-400">Accuracy</p>
+                        <p class="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mt-1" x-text="(moeMetrics.accuracy || 0) + '%'"></p>
+                    </div>
+                    <i data-lucide="check-circle" class="w-8 h-8 sm:w-10 sm:h-10 text-emerald-500"></i>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Routing Decisions -->
+        <div class="bg-white dark:bg-gray-800 rounded-lg sm:rounded-xl shadow-lg border border-gray-200 dark:border-gray-700">
+            <div class="p-4 sm:p-6 border-b border-gray-200 dark:border-gray-700">
+                <h3 class="text-base sm:text-lg font-semibold text-gray-900 dark:text-white flex items-center">
+                    <i data-lucide="zap" class="w-5 h-5 mr-2 text-primary-500"></i>
+                    Recent Routing Decisions
+                </h3>
+            </div>
+            <div class="p-4 sm:p-6">
+                <div class="space-y-3 sm:space-y-4" x-show="moeRoutingDecisions.length > 0">
+                    <template x-for="decision in moeRoutingDecisions.slice(0, 10)" :key="decision.task_id">
+                        <div class="border border-gray-200 dark:border-gray-700 rounded-lg p-3 sm:p-4 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                            <div class="flex items-start justify-between mb-2">
+                                <div class="flex-1">
+                                    <p class="text-sm font-mono text-gray-900 dark:text-white" x-text="decision.task_id"></p>
+                                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-1" x-text="decision.timestamp"></p>
+                                </div>
+                                <span class="px-2 py-1 rounded text-xs font-semibold"
+                                      :class="{
+                                        'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300': decision.decision?.primary_expert === 'development',
+                                        'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300': decision.decision?.primary_expert === 'security',
+                                        'bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300': decision.decision?.primary_expert === 'inventory'
+                                      }"
+                                      x-text="decision.decision?.primary_expert || 'unknown'"></span>
+                            </div>
+                            <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-4 text-xs">
+                                <div>
+                                    <p class="text-gray-500 dark:text-gray-400">Confidence</p>
+                                    <p class="font-semibold text-gray-900 dark:text-white" x-text="((decision.decision?.primary_confidence || 0) * 100).toFixed(0) + '%'"></p>
+                                </div>
+                                <div>
+                                    <p class="text-gray-500 dark:text-gray-400">Strategy</p>
+                                    <p class="font-semibold text-gray-900 dark:text-white" x-text="decision.decision?.strategy || 'N/A'"></p>
+                                </div>
+                                <div class="col-span-2">
+                                    <p class="text-gray-500 dark:text-gray-400">Scores</p>
+                                    <div class="flex space-x-2 mt-1">
+                                        <span class="text-xs font-mono text-blue-600 dark:text-blue-400" x-text="'Dev: ' + (decision.decision?.scores?.development || 0)"></span>
+                                        <span class="text-xs font-mono text-red-600 dark:text-red-400" x-text="'Sec: ' + (decision.decision?.scores?.security || 0)"></span>
+                                        <span class="text-xs font-mono text-purple-600 dark:text-purple-400" x-text="'Inv: ' + (decision.decision?.scores?.inventory || 0)"></span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </template>
+                </div>
+                <p x-show="moeRoutingDecisions.length === 0" class="text-center text-gray-500 dark:text-gray-400 py-8">
+                    No routing decisions yet
+                </p>
+            </div>
+        </div>
+
+        <!-- Expert Distribution Chart -->
+        <div class="bg-white dark:bg-gray-800 rounded-lg sm:rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 p-4 sm:p-6">
+            <h3 class="text-base sm:text-lg font-semibold text-gray-900 dark:text-white mb-4">Expert Distribution</h3>
+            <div class="grid grid-cols-3 gap-4">
+                <div class="text-center">
+                    <div class="text-3xl sm:text-4xl font-bold text-blue-600 dark:text-blue-400" x-text="moeMetrics.expertCounts?.development || 0"></div>
+                    <p class="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mt-1">Development</p>
+                </div>
+                <div class="text-center">
+                    <div class="text-3xl sm:text-4xl font-bold text-red-600 dark:text-red-400" x-text="moeMetrics.expertCounts?.security || 0"></div>
+                    <p class="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mt-1">Security</p>
+                </div>
+                <div class="text-center">
+                    <div class="text-3xl sm:text-4xl font-bold text-purple-600 dark:text-purple-400" x-text="moeMetrics.expertCounts?.inventory || 0"></div>
+                    <p class="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mt-1">Inventory</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- MoE Worker Pool View -->
+<div x-show="currentView === 'moe-pool'" x-transition>
+    <div class="space-y-4 sm:space-y-6">
+        <!-- Pool Metrics -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+            <div class="bg-white dark:bg-gray-800 rounded-lg sm:rounded-xl shadow-lg p-4 sm:p-6 border border-gray-200 dark:border-gray-700">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-400">Active Workers</p>
+                        <p class="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mt-1" x-text="(moePoolMetrics.active_workers || 0) + '/' + (moePoolMetrics.max_capacity || 64)"></p>
+                    </div>
+                    <i data-lucide="cpu" class="w-8 h-8 sm:w-10 sm:h-10 text-blue-500"></i>
+                </div>
+            </div>
+
+            <div class="bg-white dark:bg-gray-800 rounded-lg sm:rounded-xl shadow-lg p-4 sm:p-6 border border-gray-200 dark:border-gray-700">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-400">Activation Rate</p>
+                        <p class="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mt-1" x-text="(moePoolMetrics.activation_rate || 0) + '%'"></p>
+                    </div>
+                    <i data-lucide="activity" class="w-8 h-8 sm:w-10 sm:h-10 text-green-500"></i>
+                </div>
+                <p class="text-xs text-gray-500 dark:text-gray-400 mt-2">~14% sparse (like MoE 1B/7B)</p>
+            </div>
+
+            <div class="bg-white dark:bg-gray-800 rounded-lg sm:rounded-xl shadow-lg p-4 sm:p-6 border border-gray-200 dark:border-gray-700">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-400">Target Workers</p>
+                        <p class="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mt-1" x-text="moePoolMetrics.target_workers || 0"></p>
+                    </div>
+                    <i data-lucide="target" class="w-8 h-8 sm:w-10 sm:h-10 text-purple-500"></i>
+                </div>
+            </div>
+
+            <div class="bg-white dark:bg-gray-800 rounded-lg sm:rounded-xl shadow-lg p-4 sm:p-6 border border-gray-200 dark:border-gray-700">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-400">Utilization</p>
+                        <p class="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mt-1" x-text="(moePoolMetrics.utilization || 0) + '%'"></p>
+                    </div>
+                    <i data-lucide="gauge" class="w-8 h-8 sm:w-10 sm:h-10 text-orange-500"></i>
+                </div>
+            </div>
+        </div>
+
+        <!-- Activation Gauge -->
+        <div class="bg-white dark:bg-gray-800 rounded-lg sm:rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 p-4 sm:p-6">
+            <h3 class="text-base sm:text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center">
+                <i data-lucide="activity" class="w-5 h-5 mr-2 text-primary-500"></i>
+                Sparse Activation (MoE-Inspired)
+            </h3>
+            <div class="relative pt-1">
+                <div class="flex mb-2 items-center justify-between">
+                    <div>
+                        <span class="text-xs font-semibold inline-block py-1 px-2 uppercase rounded-full text-blue-600 bg-blue-200 dark:bg-blue-900/30 dark:text-blue-300">
+                            <span x-text="(moePoolMetrics.activation_rate || 0) + '%'"></span> Activation
+                        </span>
+                    </div>
+                    <div class="text-right">
+                        <span class="text-xs font-semibold inline-block text-gray-600 dark:text-gray-400">
+                            <span x-text="moePoolMetrics.active_workers || 0"></span> / <span x-text="moePoolMetrics.max_capacity || 64"></span> Workers
+                        </span>
+                    </div>
+                </div>
+                <div class="overflow-hidden h-4 mb-4 text-xs flex rounded bg-gray-200 dark:bg-gray-700">
+                    <div :style="'width: ' + (moePoolMetrics.activation_rate || 0) + '%'"
+                         class="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center transition-all duration-500"
+                         :class="{
+                            'bg-green-500': (moePoolMetrics.activation_rate || 0) <= 20,
+                            'bg-yellow-500': (moePoolMetrics.activation_rate || 0) > 20 && (moePoolMetrics.activation_rate || 0) <= 50,
+                            'bg-orange-500': (moePoolMetrics.activation_rate || 0) > 50 && (moePoolMetrics.activation_rate || 0) <= 80,
+                            'bg-red-500': (moePoolMetrics.activation_rate || 0) > 80
+                         }">
+                    </div>
+                </div>
+            </div>
+
+            <!-- MoE Analogy -->
+            <div class="mt-6 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
+                <p class="text-sm font-semibold text-blue-900 dark:text-blue-200 mb-2">MoE Analogy</p>
+                <p class="text-xs text-blue-700 dark:text-blue-300" x-text="moePoolMetrics.moe_analogy?.active_params || 'No data'"></p>
+                <p class="text-xs text-blue-600 dark:text-blue-400 mt-1">Like activating 1B out of 7B parameters in a Mixture of Experts model</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- MoE Learning View -->
+<div x-show="currentView === 'moe-learning'" x-transition>
+    <div class="space-y-4 sm:space-y-6">
+        <!-- Learning Stats -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+            <div class="bg-white dark:bg-gray-800 rounded-lg sm:rounded-xl shadow-lg p-4 sm:p-6 border border-gray-200 dark:border-gray-700">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-400">Tasks Processed</p>
+                        <p class="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mt-1" x-text="moeLearningMetrics.total_tasks || 0"></p>
+                    </div>
+                    <i data-lucide="brain" class="w-8 h-8 sm:w-10 sm:h-10 text-purple-500"></i>
+                </div>
+            </div>
+
+            <div class="bg-white dark:bg-gray-800 rounded-lg sm:rounded-xl shadow-lg p-4 sm:p-6 border border-gray-200 dark:border-gray-700">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-400">Success Rate</p>
+                        <p class="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mt-1" x-text="(moeLearningMetrics.success_rate || 0) + '%'"></p>
+                    </div>
+                    <i data-lucide="trending-up" class="w-8 h-8 sm:w-10 sm:h-10 text-green-500"></i>
+                </div>
+            </div>
+
+            <div class="bg-white dark:bg-gray-800 rounded-lg sm:rounded-xl shadow-lg p-4 sm:p-6 border border-gray-200 dark:border-gray-700">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-400">Avg Completion</p>
+                        <p class="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mt-1" x-text="(moeLearningMetrics.avg_time || 0) + 'm'"></p>
+                    </div>
+                    <i data-lucide="clock" class="w-8 h-8 sm:w-10 sm:h-10 text-blue-500"></i>
+                </div>
+            </div>
+
+            <div class="bg-white dark:bg-gray-800 rounded-lg sm:rounded-xl shadow-lg p-4 sm:p-6 border border-gray-200 dark:border-gray-700">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-400">Learned Patterns</p>
+                        <p class="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mt-1" x-text="moeLearningMetrics.learned_keywords || 0"></p>
+                    </div>
+                    <i data-lucide="sparkles" class="w-8 h-8 sm:w-10 sm:h-10 text-yellow-500"></i>
+                </div>
+            </div>
+        </div>
+
+        <!-- Expert Performance -->
+        <div class="bg-white dark:bg-gray-800 rounded-lg sm:rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 p-4 sm:p-6">
+            <h3 class="text-base sm:text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center">
+                <i data-lucide="users" class="w-5 h-5 mr-2 text-primary-500"></i>
+                Expert Performance
+            </h3>
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <template x-for="expert in ['development', 'security', 'inventory']" :key="expert">
+                    <div class="p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
+                        <p class="font-semibold text-gray-900 dark:text-white capitalize mb-3" x-text="expert"></p>
+                        <div class="space-y-2 text-sm">
+                            <div class="flex justify-between">
+                                <span class="text-gray-600 dark:text-gray-400">Tasks:</span>
+                                <span class="font-semibold text-gray-900 dark:text-white" x-text="moeLearningMetrics.experts?.[expert]?.tasks || 0"></span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-gray-600 dark:text-gray-400">Success Rate:</span>
+                                <span class="font-semibold text-gray-900 dark:text-white" x-text="(moeLearningMetrics.experts?.[expert]?.success_rate || 0) + '%'"></span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-gray-600 dark:text-gray-400">Avg Time:</span>
+                                <span class="font-semibold text-gray-900 dark:text-white" x-text="(moeLearningMetrics.experts?.[expert]?.avg_time || 0) + 'm'"></span>
+                            </div>
+                        </div>
+                    </div>
+                </template>
+            </div>
+        </div>
+
+        <!-- Learning Insights -->
+        <div class="bg-white dark:bg-gray-800 rounded-lg sm:rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 p-4 sm:p-6">
+            <h3 class="text-base sm:text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center">
+                <i data-lucide="lightbulb" class="w-5 h-5 mr-2 text-primary-500"></i>
+                Learning Insights
+            </h3>
+            <div class="space-y-3" x-show="moeLearningInsights.length > 0">
+                <template x-for="insight in moeLearningInsights" :key="insight.id">
+                    <div class="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
+                        <p class="text-sm text-blue-900 dark:text-blue-200" x-text="insight.message"></p>
+                        <p class="text-xs text-blue-600 dark:text-blue-400 mt-1" x-text="insight.timestamp"></p>
+                    </div>
+                </template>
+            </div>
+            <p x-show="moeLearningInsights.length === 0" class="text-center text-gray-500 dark:text-gray-400 py-4">
+                System is learning from routing decisions...
+            </p>
+        </div>
+    </div>
+</div>

@@ -164,15 +164,18 @@ Dashboard integration specifications:
 
 ## System Architecture Overview
 
-### Components
+### Components (with Health Monitor & PM Failover)
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
 │                     Coordinator Master                          │
-│                 (Task Assignment & Routing)                     │
-└─────────────────────┬───────────────────────────────────────────┘
-                      │ Creates worker spec
-                      ↓
+│                (Task Assignment & Routing)                      │
+│  • Routes tasks to appropriate masters                          │
+│  • Creates worker specs                                         │
+│  • Writes heartbeat (monitored by Health Monitor)               │
+└─────────────┬───────────────────────────────────────────────────┘
+              │ Creates worker spec
+              ↓
 ┌─────────────────────────────────────────────────────────────────┐
 │                  Worker Daemon (Launcher)                       │
 │         Spawns workers from pending specs                       │
@@ -182,9 +185,9 @@ Dashboard integration specifications:
 ┌─────────────────────────────────────────────────────────────────┐
 │                   Worker Process (Claude)                       │
 │         Executes task + calls check-in helper                   │
-└──────────────────────────────────────────────┬──────────────────┘
-                                               │ Writes check-in
-                                               ↓
+└──────────────────────────────────────────┬──────────────────────┘
+                                           │ Writes check-in
+                                           ↓
 ┌─────────────────────────────────────────────────────────────────┐
 │              coordination/worker-checkins/                      │
 │         {worker-id}-{timestamp}.json (check-in files)           │
@@ -192,17 +195,103 @@ Dashboard integration specifications:
                       │ Monitored by
                       ↓
 ┌─────────────────────────────────────────────────────────────────┐
-│                   PM Daemon (Monitor)                           │
+│                   PM Monitoring Layer                           │
+│  DUAL MODE:                                                     │
+│  • PM Daemon (continuous, preferred)                            │
+│  • PM Agent (spawned by Health Monitor if daemon fails)         │
+│                                                                 │
+│  Functions:                                                     │
 │  • Scan for workers                                             │
 │  • Process check-ins                                            │
 │  • Detect stalls/timeouts                                       │
 │  • Execute interventions                                        │
+│  • Write heartbeat (monitored by Health Monitor)                │
 └─────────────────────┬───────────────────────────────────────────┘
                       │ Feeds data to
                       ↓
 ┌─────────────────────────────────────────────────────────────────┐
 │                    Dashboard (UI & WebSocket)                   │
-│              Real-time PM metrics and worker health             │
+│      Real-time PM metrics, worker health & system status        │
+└─────────────────────────────────────────────────────────────────┘
+
+                            ↑ Monitors all components
+                            │
+┌─────────────────────────────────────────────────────────────────┐
+│              Health Monitor Daemon (System Oversight)           │
+│  • Monitors PM Daemon heartbeat (every 2-3 min)                 │
+│  • Monitors Coordinator heartbeat                               │
+│  • Monitors Master activity                                     │
+│  • Spawns PM Agent if PM Daemon fails                           │
+│  • Creates health alerts                                        │
+│  • Generates health reports                                     │
+│  • Logs health incidents                                        │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+### PM Failover Architecture (Health Monitor Managed)
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│  NORMAL OPERATION: PM Daemon Running                            │
+│  • PM Daemon writes heartbeat every 2-3 minutes                 │
+│  • Health Monitor checks heartbeat (age < 5 min = healthy)      │
+│  • All monitoring functions active                              │
+└─────────────────────────────────────────────────────────────────┘
+                              ↓
+                    ┌─────────────────┐
+                    │ Daemon crashes? │
+                    └─────────────────┘
+                              ↓ YES
+┌─────────────────────────────────────────────────────────────────┐
+│  FAILOVER: Health Monitor Detects Stale Heartbeat               │
+│  • Health Monitor: "PM heartbeat is 7 minutes old"              │
+│  • Health Monitor spawns PM Agent as backup                     │
+│  • Health Monitor creates health alert                          │
+│  • PM Agent performs same monitoring functions                  │
+│  • PM Agent writes heartbeat to separate file                   │
+└─────────────────────────────────────────────────────────────────┘
+                              ↓
+┌─────────────────────────────────────────────────────────────────┐
+│  RECOVERY: PM Daemon Restarts                                   │
+│  • PM Daemon resumes operation                                  │
+│  • PM Daemon detects PM Agent is running                        │
+│  • PM Agent gracefully exits                                    │
+│  • PM Daemon resumes primary role                               │
+│  • Health Monitor resolves alert                                │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+### Health Monitor Responsibilities
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│          Health Monitor Daemon (Every 2-3 minutes)              │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                 │
+│  Component Health Checks:                                       │
+│  ┌────────────────────────────────────────────────────────┐    │
+│  │ 1. PM Daemon        → heartbeat < 5 min old?           │    │
+│  │ 2. Coordinator      → heartbeat < 5 min old?           │    │
+│  │ 3. Master Agents    → recent activity in handoffs?     │    │
+│  │ 4. Dashboard        → process running on port 3000?     │    │
+│  │ 5. Worker Daemon    → process exists (pgrep)?          │    │
+│  └────────────────────────────────────────────────────────┘    │
+│                                                                 │
+│  Actions on Failure:                                            │
+│  ┌────────────────────────────────────────────────────────┐    │
+│  │ • Create health alert in health-alerts.json            │    │
+│  │ • Log incident to health-incidents/                    │    │
+│  │ • Spawn backup agent (PM Agent, etc.)                  │    │
+│  │ • Update dashboard metrics                             │    │
+│  │ • Generate health report (if threshold met)            │    │
+│  └────────────────────────────────────────────────────────┘    │
+│                                                                 │
+│  Monitored Files:                                               │
+│  • coordination/pm-daemon-heartbeat.json                        │
+│  • coordination/coordinator-heartbeat.json                      │
+│  • coordination/masters/*/heartbeat.json                        │
+│  • coordination/masters/*/handoffs/*.json (activity)            │
+│                                                                 │
 └─────────────────────────────────────────────────────────────────┘
 ```
 
@@ -220,13 +309,21 @@ commit-relay/
 │   │   └── resolved/
 │   ├── pm-activity.jsonl             # NEW: PM event log
 │   ├── pm-state.json                 # NEW: PM daemon state
+│   ├── pm-daemon-heartbeat.json      # NEW: PM daemon health signal
+│   ├── pm-agent-heartbeat.json       # NEW: PM agent health signal (failover)
+│   ├── coordinator-heartbeat.json    # NEW: Coordinator health signal
+│   ├── health-alerts.json            # EXISTING: Now used by Health Monitor
+│   ├── health-incidents/             # EXISTING: Now populated by Health Monitor
 │   ├── pm-architecture.md            # NEW: Architecture doc
 │   └── pm-data-formats.md            # NEW: Data formats doc
 │
 ├── scripts/
 │   ├── pm-daemon.sh                  # NEW: PM monitoring daemon
 │   ├── worker-checkin.sh             # NEW: Worker check-in helper
-│   └── pm-intervention.sh            # NEW: Intervention actions
+│   ├── pm-intervention.sh            # NEW: Intervention actions
+│   ├── health-monitor-daemon.sh      # NEW: System health monitoring daemon
+│   ├── log-health-incident.sh        # EXISTING: Used by Health Monitor
+│   └── generate-health-report.sh     # EXISTING: Triggered by Health Monitor
 │
 ├── docs/
 │   ├── PM-IMPLEMENTATION-PLAN.md     # NEW: Phased implementation
@@ -455,9 +552,25 @@ PM handles:
 ## Risk Mitigation
 
 ### Risk: PM daemon crashes
-- **Mitigation**: Extensive error handling, graceful restart
-- **Impact**: Workers continue normally (no disruption)
-- **Rollback**: Disable PM, revert to pre-PM behavior
+- **Mitigation**:
+  - Dual-layer failover (PM Agent as backup)
+  - Health Monitor Daemon (dedicated service monitors PM health)
+  - Extensive error handling in daemon
+  - Graceful restart capability
+  - PM Agent spawned within 5 minutes of daemon failure by Health Monitor
+- **Impact**: 5-minute monitoring gap during failover, then normal operation resumes
+- **Recovery**: PM Daemon auto-restarts, PM Agent gracefully exits, Health Monitor resolves alert
+- **Rollback**: Disable both PM layers, workers continue independently
+
+### Risk: Health Monitor daemon fails
+- **Mitigation**:
+  - Health Monitor is simple (just heartbeat checks, minimal failure surface)
+  - Easy to restart (lightweight, stateless)
+  - If Health Monitor fails, it's immediately obvious (no new health alerts/reports)
+  - System components continue operating (PM, Coordinator, Workers all independent)
+- **Impact**: No automated failover during Health Monitor downtime, manual intervention required
+- **Recovery**: Restart Health Monitor daemon (./scripts/health-monitor-daemon.sh)
+- **Detection**: Dashboard shows "Last health check: 10 minutes ago" warning
 
 ### Risk: False-positive worker kills
 - **Mitigation**: Conservative thresholds, multiple checks before kill
@@ -546,8 +659,14 @@ PM handles:
 **Rationale**: Non-blocking, no network calls, minimal impact on execution
 
 ### What happens if PM fails?
-**Decision**: Workers continue independently
-**Rationale**: PM is observer/helper, not controller, graceful degradation
+**Decision**: Dual-layer failover - PM Daemon + PM Agent + Health Monitor oversight
+**Rationale**: PM is critical infrastructure, needs redundancy and dedicated monitoring
+**Architecture**:
+- **PM Daemon**: Primary continuous monitoring (baseline operation)
+- **PM Agent**: Backup spawned by Health Monitor if daemon fails (ensures continuity)
+- **Health Monitor Daemon**: Dedicated service monitors PM health, spawns backup agent if needed
+- **Separation of Concerns**: Health Monitor watches all system components (PM, Coordinator, Masters)
+- **Worker Independence**: Workers continue independently during failover transitions
 
 ### How to handle race conditions?
 **Decision**: PM checks status before kill, timestamped files, clear responsibilities
@@ -573,13 +692,17 @@ PM handles:
 ## Appendix A: Key Architectural Decisions
 
 1. **File-based state** (not database) - Simple, debuggable, no dependencies
-2. **Daemon architecture** (not per-task agent) - Persistent monitoring
-3. **Worker-controlled check-ins** (not forced intervals) - Flexibility
-4. **Conservative thresholds** (15/20 min) - Avoid false positives
-5. **Graceful interventions** (warn before kill) - Give workers chance to recover
-6. **Auto-approve small requests** (≤30 min/5000 tokens) - Reduce master load
-7. **Backward compatibility** (legacy workers) - Safe migration
-8. **Observable operations** (logs/metrics) - Easy debugging
+2. **Dual-layer PM architecture** (daemon primary + agent backup) - Redundancy and failover
+3. **Dedicated Health Monitor** (monitors all system components) - Separation of concerns, meta-monitoring
+4. **Clear service boundaries** (Coordinator=routing, PM=workers, Health Monitor=system health) - Each service has one job
+5. **Worker-controlled check-ins** (not forced intervals) - Flexibility
+6. **Conservative thresholds** (15/20 min) - Avoid false positives
+7. **Graceful interventions** (warn before kill) - Give workers chance to recover
+8. **Auto-approve small requests** (≤30 min/5000 tokens) - Reduce master load
+9. **Backward compatibility** (legacy workers) - Safe migration
+10. **Observable operations** (logs/metrics) - Easy debugging
+11. **Simple architecture** (keeps existing coordinator/worker pattern) - Minimal disruption
+12. **Reusable health infrastructure** (extends existing health-alerts.json system) - Build on what works
 
 ## Appendix B: Success Rate Projection
 

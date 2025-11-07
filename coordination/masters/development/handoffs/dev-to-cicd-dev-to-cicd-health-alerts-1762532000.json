@@ -1,0 +1,50 @@
+{
+  "handoff_id": "dev-to-cicd-health-alerts-1762532000",
+  "from_master": "development",
+  "to_master": "cicd",
+  "task_id": "health-alerts-dashboard",
+  "handoff_type": "dashboard_deployment",
+  "dashboard_update": {
+    "required": true,
+    "components": ["health-alerts", "api-endpoints", "ui-views", "alpine-functions"],
+    "priority": "high",
+    "validation_required": true,
+    "changes_summary": "Comprehensive Health Alerts Management System added to dashboard",
+    "files_modified": [
+      "/Users/ryandahlberg/commit-relay/dashboard/server/index.js",
+      "/Users/ryandahlberg/commit-relay/dashboard/public/dashboard-v2.js",
+      "/Users/ryandahlberg/commit-relay/dashboard/public/index.html"
+    ],
+    "features_added": [
+      "Health Alerts view with sidebar navigation",
+      "GET /api/health-alerts endpoint",
+      "POST /api/health-alerts/:id/resolve endpoint",
+      "POST /api/health-alerts/:id/restart-worker endpoint",
+      "POST /api/health-alerts/:id/note endpoint",
+      "DELETE /api/health-alerts/:id endpoint",
+      "Alpine.js functions: fetchHealthAlerts, resolveAlert, restartWorkerFromAlert, addAlertNote, deleteAlert",
+      "Color-coded severity badges (critical/high/medium/low)",
+      "Status badges (monitoring/resolved/active)",
+      "Expandable alert details with investigation and resolution notes",
+      "Worker restart functionality from stuck/failed directories",
+      "Alert badge counter in sidebar navigation"
+    ],
+    "testing_notes": [
+      "All file syntax validated successfully",
+      "Backend API endpoints implemented with proper error handling",
+      "UI uses Tailwind CSS matching existing dashboard aesthetic",
+      "Lucide icons integrated for all action buttons",
+      "Confirmation dialogs for destructive actions (delete, restart)",
+      "Real-time updates via fetchHealthAlerts() in init()"
+    ]
+  },
+  "created_at": "2025-11-07T16:13:20Z",
+  "status": "pending_pickup",
+  "metadata": {
+    "implementation_complexity": "high",
+    "files_changed": 3,
+    "backend_endpoints": 5,
+    "frontend_functions": 10,
+    "ui_components": 1
+  }
+}
