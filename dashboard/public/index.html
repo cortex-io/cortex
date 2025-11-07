@@ -46,6 +46,23 @@
     <style>
         [x-cloak] { display: none !important; }
 
+        /* Responsive font sizing */
+        html {
+            font-size: 14px;
+        }
+
+        @media (min-width: 640px) {
+            html { font-size: 15px; }
+        }
+
+        @media (min-width: 1024px) {
+            html { font-size: 16px; }
+        }
+
+        @media (min-width: 1536px) {
+            html { font-size: 17px; }
+        }
+
         /* Smooth transitions */
         * {
             transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
@@ -105,6 +122,42 @@
         .animate-pulse-slow {
             animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
         }
+
+        /* Smooth scrolling for sidebar navigation */
+        aside nav {
+            scroll-behavior: smooth;
+        }
+
+        /* Better mobile scrolling */
+        aside nav {
+            -webkit-overflow-scrolling: touch;
+        }
+
+        /* Sidebar scrollbar styling */
+        aside nav::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        aside nav::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        aside nav::-webkit-scrollbar-thumb {
+            background: rgba(156, 163, 175, 0.3);
+            border-radius: 3px;
+        }
+
+        aside nav::-webkit-scrollbar-thumb:hover {
+            background: rgba(156, 163, 175, 0.5);
+        }
+
+        .dark aside nav::-webkit-scrollbar-thumb {
+            background: rgba(75, 85, 99, 0.3);
+        }
+
+        .dark aside nav::-webkit-scrollbar-thumb:hover {
+            background: rgba(75, 85, 99, 0.5);
+        }
     </style>
 </head>
 <body class="bg-gray-50 dark:bg-gray-900" x-data="dashboard()" x-init="init()">
@@ -116,22 +169,31 @@
         </div>
     </div>
 
+    <!-- Mobile menu button -->
+    <button @click="mobileMenuOpen = !mobileMenuOpen" class="fixed top-4 left-4 z-50 lg:hidden p-2 rounded-lg bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-lg">
+        <i data-lucide="menu" class="w-6 h-6 text-gray-700 dark:text-gray-300"></i>
+    </button>
+
+    <!-- Mobile menu overlay -->
+    <div x-show="mobileMenuOpen" @click="mobileMenuOpen = false" class="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden" x-cloak></div>
+
     <!-- Sidebar -->
-    <aside class="fixed top-0 left-0 h-full w-64 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 shadow-lg z-40">
-        <div class="p-6">
-            <div class="flex items-center space-x-3">
-                <div class="w-10 h-10 bg-gradient-to-br from-primary-500 to-purple-600 rounded-lg flex items-center justify-center">
-                    <i data-lucide="bot" class="w-6 h-6 text-white"></i>
+    <aside class="fixed top-0 left-0 h-screen w-64 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 shadow-lg z-40 transform transition-transform duration-300 flex flex-col overflow-hidden" :class="mobileMenuOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'">
+        <!-- Logo/Header - Fixed at top -->
+        <div class="flex-shrink-0 p-4 lg:p-6 border-b border-gray-200 dark:border-gray-700">
+            <div class="flex items-center space-x-2 lg:space-x-3">
+                <div class="w-8 h-8 lg:w-10 lg:h-10 bg-gradient-to-br from-primary-500 to-purple-600 rounded-lg flex items-center justify-center">
+                    <i data-lucide="bot" class="w-5 h-5 lg:w-6 lg:h-6 text-white"></i>
                 </div>
                 <div>
-                    <h1 class="text-xl font-bold text-gray-900 dark:text-white">Commit-Relay</h1>
+                    <h1 class="text-lg lg:text-xl font-bold text-gray-900 dark:text-white">Commit-Relay</h1>
                     <p class="text-xs text-gray-500 dark:text-gray-400">v2.0 Dashboard</p>
                 </div>
             </div>
         </div>
 
-        <!-- Navigation -->
-        <nav class="px-4 space-y-1">
+        <!-- Navigation - Scrollable -->
+        <nav class="flex-1 overflow-y-auto px-4 py-4 space-y-1">
             <!-- Monitoring Section -->
             <div class="pt-2 pb-1 px-4">
                 <p class="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">Monitoring</p>
@@ -157,6 +219,23 @@
                 <i data-lucide="cpu" class="w-5 h-5"></i>
                 <span :class="currentView === 'workers' ? 'font-medium' : ''">Workforce</span>
             </button>
+            <!-- MoE Intelligence Section -->
+            <div class="pt-4 pb-1 px-4">
+                <p class="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">MoE Intelligence</p>
+            </div>
+            <button @click="switchView('moe-routing')" class="w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors" :class="currentView === 'moe-routing' ? 'bg-primary-50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-300' : 'hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300'">
+                <i data-lucide="zap" class="w-5 h-5"></i>
+                <span :class="currentView === 'moe-routing' ? 'font-medium' : ''">Routing</span>
+            </button>
+            <button @click="switchView('moe-pool')" class="w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors" :class="currentView === 'moe-pool' ? 'bg-primary-50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-300' : 'hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300'">
+                <i data-lucide="activity" class="w-5 h-5"></i>
+                <span :class="currentView === 'moe-pool' ? 'font-medium' : ''">Worker Pool</span>
+            </button>
+            <button @click="switchView('moe-learning')" class="w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors" :class="currentView === 'moe-learning' ? 'bg-primary-50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-300' : 'hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300'">
+                <i data-lucide="brain" class="w-5 h-5"></i>
+                <span :class="currentView === 'moe-learning' ? 'font-medium' : ''">Learning</span>
+            </button>
+
             <!-- Integrations Section -->
             <div class="pt-4 pb-1 px-4">
                 <p class="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">Integrations</p>
@@ -174,15 +253,29 @@
                 <i data-lucide="scroll-text" class="w-5 h-5"></i>
                 <span :class="currentView === 'events' ? 'font-medium' : ''">Activity</span>
             </button>
+
+            <!-- System Section -->
+            <div class="pt-4 pb-1 px-4">
+                <p class="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">System</p>
+            </div>
+            <button @click="switchView('health-alerts')" class="w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors" :class="currentView === 'health-alerts' ? 'bg-primary-50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-300' : 'hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300'">
+                <i data-lucide="alert-circle" class="w-5 h-5"></i>
+                <span :class="currentView === 'health-alerts' ? 'font-medium' : ''">Health Alerts</span>
+                <span x-show="healthAlerts.filter(a => a.status !== 'resolved').length > 0" class="ml-auto px-2 py-0.5 rounded-full bg-red-500 text-white text-xs font-semibold" x-text="healthAlerts.filter(a => a.status !== 'resolved').length"></span>
+            </button>
+            <button @click="switchView('admin')" class="w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors" :class="currentView === 'admin' ? 'bg-primary-50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-300' : 'hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300'">
+                <i data-lucide="settings" class="w-5 h-5"></i>
+                <span :class="currentView === 'admin' ? 'font-medium' : ''">Admin</span>
+            </button>
             <button @click="switchView('about')" class="w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors" :class="currentView === 'about' ? 'bg-primary-50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-300' : 'hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300'">
                 <i data-lucide="info" class="w-5 h-5"></i>
                 <span :class="currentView === 'about' ? 'font-medium' : ''">About</span>
             </button>
         </nav>
 
-        <!-- Theme toggle -->
-        <div class="absolute bottom-6 left-4 right-4">
-            <button @click="toggleTheme()" class="w-full flex items-center justify-center space-x-2 px-4 py-3 rounded-lg bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300">
+        <!-- Theme toggle - Fixed at bottom -->
+        <div class="flex-shrink-0 p-4 border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
+            <button @click="toggleTheme()" class="w-full flex items-center justify-center space-x-2 px-4 py-3 rounded-lg bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 transition-colors">
                 <i x-show="!darkMode" data-lucide="moon" class="w-5 h-5"></i>
                 <i x-show="darkMode" data-lucide="sun" class="w-5 h-5"></i>
                 <span x-text="darkMode ? 'Light Mode' : 'Dark Mode'"></span>
@@ -191,34 +284,39 @@
     </aside>
 
     <!-- Main content -->
-    <main class="ml-64 min-h-screen">
+    <main class="lg:ml-64 min-h-screen">
         <!-- Header -->
         <header class="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 sticky top-0 z-30">
-            <div class="px-8 py-4 flex items-center justify-between">
-                <div>
-                    <h2 class="text-2xl font-bold text-gray-900 dark:text-white" x-text="{
+            <div class="px-4 sm:px-6 lg:px-8 py-3 sm:py-4 flex items-center justify-between">
+                <div class="ml-12 lg:ml-0">
+                    <h2 class="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white" x-text="{
                         'overview': 'Dashboard',
                         'workers': 'Workforce Stream',
                         'tasks': 'Task Queue',
                         'events': 'Activity Logs',
                         'api-explorer': 'API Explorer',
                         'metrics': 'Analytics',
-                        'about': 'About Commit-Relay'
+                        'health-alerts': 'Health Alerts',
+                        'admin': 'Admin Controls',
+                        'about': 'About Commit-Relay',
+                        'moe-routing': 'MoE Routing Intelligence',
+                        'moe-pool': 'MoE Worker Pool',
+                        'moe-learning': 'MoE Learning System'
                     }[currentView]"></h2>
                     <p class="text-sm text-gray-500 dark:text-gray-400" x-text="'Last updated: ' + lastUpdate"></p>
                 </div>
 
                 <!-- Connection and freshness status -->
-                <div class="flex items-center space-x-4">
+                <div class="flex items-center space-x-2 sm:space-x-4">
                     <!-- Data freshness indicator -->
-                    <div class="flex items-center space-x-2">
+                    <div class="hidden sm:flex items-center space-x-2">
                         <span class="text-lg" :class="getFreshnessColor()" x-text="getFreshnessIndicator()"></span>
-                        <span class="text-sm font-medium text-gray-600 dark:text-gray-400" x-text="dataFreshness === 'fresh' ? 'Fresh' : dataFreshness === 'stale' ? 'Stale (30s+)' : dataFreshness === 'very-stale' ? 'Very Stale (2m+)' : 'Unknown'"></span>
+                        <span class="text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-400 hidden md:inline" x-text="dataFreshness === 'fresh' ? 'Fresh' : dataFreshness === 'stale' ? 'Stale (30s+)' : dataFreshness === 'very-stale' ? 'Very Stale (2m+)' : 'Unknown'"></span>
                     </div>
                     <!-- Connection status -->
-                    <div class="flex items-center space-x-2">
+                    <div class="flex items-center space-x-1 sm:space-x-2">
                         <div :class="connected ? 'bg-green-500 animate-pulse-slow' : 'bg-red-500'" class="w-2 h-2 rounded-full"></div>
-                        <span class="text-sm font-medium" :class="connected ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'" x-text="connected ? 'Connected' : 'Disconnected'"></span>
+                        <span class="text-xs sm:text-sm font-medium" :class="connected ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'" x-text="connected ? 'Connected' : 'Disconnected'"></span>
                     </div>
                 </div>
             </div>
@@ -281,105 +379,16 @@
         </div>
 
         <!-- Content -->
-        <div class="p-8 space-y-8">
-            <!-- Stats grid - redesigned with background icons -->
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                <!-- Active Workers -->
-                <div @click="switchView('workers')" class="relative overflow-hidden bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 border border-gray-200 dark:border-gray-700 hover:shadow-xl hover:-translate-y-1 transition-all cursor-pointer">
-                    <i data-lucide="zap" class="absolute -right-4 -bottom-4 w-32 h-32 text-blue-100 dark:text-blue-900/20 opacity-50"></i>
-                    <div class="relative z-10">
-                        <p class="text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">Active Workers</p>
-                        <p class="text-4xl font-bold text-gray-900 dark:text-white mb-1" x-text="metrics.workers?.active || 0"></p>
-                        <p class="text-xs text-gray-500 dark:text-gray-400">
-                            <span class="font-medium text-green-600 dark:text-green-400" x-text="metrics.workers?.completed || 0"></span> completed •
-                            <span class="font-medium text-red-600 dark:text-red-400" x-text="metrics.workers?.failed || 0"></span> failed
-                        </p>
-                    </div>
-                </div>
-
-                <!-- Success Rate -->
-                <div @click="switchView('metrics')" class="period-selector-card relative overflow-hidden bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 border border-gray-200 dark:border-gray-700 hover:shadow-xl hover:-translate-y-1 transition-all cursor-pointer">
-                    <i data-lucide="check-circle" class="absolute -right-4 -bottom-4 w-32 h-32 text-green-100 dark:text-green-900/20 opacity-50"></i>
-                    <div class="relative z-10">
-                        <div class="flex items-center justify-between mb-2">
-                            <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Success Rate</p>
-                            <i data-lucide="calendar" class="w-4 h-4 text-gray-400 dark:text-gray-500"></i>
-                        </div>
-                        <p class="text-4xl font-bold text-gray-900 dark:text-white mb-1" x-text="(metrics.workers?.successRate || 0) + '%'"></p>
-                        <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">
-                            <span class="font-medium text-primary-600 dark:text-primary-400" x-text="getPeriodLabel(successRatePeriod)"></span>
-                        </p>
-                        <p class="text-xs text-gray-500 dark:text-gray-400">
-                            <span class="font-medium text-green-600 dark:text-green-400" x-text="metrics.workers?.successRateDetails?.completed || 0"></span> /
-                            <span class="font-medium text-gray-600 dark:text-gray-400" x-text="metrics.workers?.successRateDetails?.total || 0"></span> workers
-                        </p>
-                    </div>
-
-                    <!-- Period Selector Dropdown -->
-                    <div x-show="showPeriodSelector" @click.stop class="absolute top-full left-0 right-0 mt-2 bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700 z-50 overflow-hidden">
-                        <button @click="changeSuccessRatePeriod('current_run')" class="w-full px-4 py-3 text-left text-sm hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors" :class="successRatePeriod === 'current_run' ? 'bg-primary-50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-300 font-medium' : 'text-gray-700 dark:text-gray-300'">
-                            <div class="flex items-center justify-between">
-                                <span>Current Run</span>
-                                <i x-show="successRatePeriod === 'current_run'" data-lucide="check" class="w-4 h-4"></i>
-                            </div>
-                        </button>
-                        <button @click="changeSuccessRatePeriod('last_24h')" class="w-full px-4 py-3 text-left text-sm hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors" :class="successRatePeriod === 'last_24h' ? 'bg-primary-50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-300 font-medium' : 'text-gray-700 dark:text-gray-300'">
-                            <div class="flex items-center justify-between">
-                                <span>Last 24 Hours</span>
-                                <i x-show="successRatePeriod === 'last_24h'" data-lucide="check" class="w-4 h-4"></i>
-                            </div>
-                        </button>
-                        <button @click="changeSuccessRatePeriod('last_7d')" class="w-full px-4 py-3 text-left text-sm hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors" :class="successRatePeriod === 'last_7d' ? 'bg-primary-50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-300 font-medium' : 'text-gray-700 dark:text-gray-300'">
-                            <div class="flex items-center justify-between">
-                                <span>Last 7 Days</span>
-                                <i x-show="successRatePeriod === 'last_7d'" data-lucide="check" class="w-4 h-4"></i>
-                            </div>
-                        </button>
-                        <button @click="changeSuccessRatePeriod('all_time')" class="w-full px-4 py-3 text-left text-sm hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors" :class="successRatePeriod === 'all_time' ? 'bg-primary-50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-300 font-medium' : 'text-gray-700 dark:text-gray-300'">
-                            <div class="flex items-center justify-between">
-                                <span>All Time</span>
-                                <i x-show="successRatePeriod === 'all_time'" data-lucide="check" class="w-4 h-4"></i>
-                            </div>
-                        </button>
-                    </div>
-                </div>
-
-                <!-- Tasks In Progress -->
-                <div @click="switchView('tasks')" class="relative overflow-hidden bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 border border-gray-200 dark:border-gray-700 hover:shadow-xl hover:-translate-y-1 transition-all cursor-pointer">
-                    <i data-lucide="loader" class="absolute -right-4 -bottom-4 w-32 h-32 text-orange-100 dark:text-orange-900/20 opacity-50"></i>
-                    <div class="relative z-10">
-                        <p class="text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">Tasks In Progress</p>
-                        <p class="text-4xl font-bold text-gray-900 dark:text-white mb-1" x-text="metrics.tasks?.inProgress || 0"></p>
-                        <p class="text-xs text-gray-500 dark:text-gray-400">
-                            <span class="font-medium text-gray-600 dark:text-gray-400" x-text="metrics.tasks?.pending || 0"></span> pending •
-                            <span class="font-medium text-green-600 dark:text-green-400" x-text="metrics.tasks?.completed || 0"></span> done
-                        </p>
-                    </div>
-                </div>
-
-                <!-- Worker Daemon -->
-                <div @click="switchView('events')" class="relative overflow-hidden bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 border border-gray-200 dark:border-gray-700 hover:shadow-xl hover:-translate-y-1 transition-all cursor-pointer">
-                    <i data-lucide="bot" class="absolute -right-4 -bottom-4 w-32 h-32 opacity-50" :class="daemon?.status === 'running' ? 'text-green-100 dark:text-green-900/20' : 'text-red-100 dark:text-red-900/20'"></i>
-                    <div class="relative z-10">
-                        <p class="text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">Worker Daemon</p>
-                        <p class="text-4xl font-bold mb-1" :class="daemon?.status === 'running' ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'" x-text="daemon?.status === 'running' ? 'Running' : 'Stopped'"></p>
-                        <p class="text-xs text-gray-500 dark:text-gray-400" x-show="daemon?.status === 'running'">
-                            PID <span class="font-medium" x-text="daemon?.pid"></span> •
-                            <span class="font-medium" x-text="formatUptime(daemon?.uptime)"></span>
-                        </p>
-                    </div>
-                </div>
-            </div>
-
+        <div class="p-4 sm:p-6 lg:p-8 space-y-4 sm:space-y-6 lg:space-y-8">
             <!-- Overview View -->
             <div x-show="currentView === 'overview'" x-transition>
-                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
                     <!-- Left Column: Productivity + Task Orchestration -->
                     <div class="space-y-6">
                         <!-- Productivity Card -->
-                        <div class="bg-gradient-to-br from-purple-50 to-blue-50 dark:from-gray-800 dark:to-gray-900 rounded-xl shadow-lg p-4 border-2 border-purple-200 dark:border-purple-900">
-                            <div class="flex items-center justify-between mb-3">
-                                <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Productivity</h3>
+                        <div class="bg-gradient-to-br from-purple-50 to-blue-50 dark:from-gray-800 dark:to-gray-900 rounded-xl shadow-lg p-3 sm:p-4 border-2 border-purple-200 dark:border-purple-900">
+                            <div class="flex items-center justify-between mb-2 sm:mb-3">
+                                <h3 class="text-base sm:text-lg font-semibold text-gray-900 dark:text-white">Productivity</h3>
                                 <div class="px-2 py-1 rounded-full bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300 text-xs font-semibold animate-pulse">
                                     ACTIVE
                                 </div>
@@ -388,20 +397,50 @@
                             <!-- Stats Grid - 2x2 Compact -->
                             <div class="grid grid-cols-2 gap-2">
                                 <div class="bg-white dark:bg-gray-800 rounded-lg p-2 shadow">
-                                    <div class="text-xl font-bold text-purple-600 dark:text-purple-400" x-text="metrics.workers?.completed || 0">0</div>
+                                    <div class="text-lg sm:text-xl font-bold text-purple-600 dark:text-purple-400" x-text="metrics.workers?.completed || 0">0</div>
                                     <div class="text-xs text-gray-600 dark:text-gray-400">Commits</div>
                                 </div>
                                 <div class="bg-white dark:bg-gray-800 rounded-lg p-2 shadow border-2 border-red-200 dark:border-red-900">
-                                    <div class="text-xl font-bold text-red-600 dark:text-red-400" x-text="metrics.workers?.zombiesKilled || 0">0</div>
-                                    <div class="text-xs text-gray-600 dark:text-gray-400">Zombies</div>
+                                    <div class="text-lg sm:text-xl font-bold text-red-600 dark:text-red-400" x-text="metrics.workers?.zombiesKilled || 0">0</div>
+                                    <div class="text-xs text-gray-600 dark:text-gray-400">Zombies Killed</div>
                                 </div>
                                 <div class="bg-white dark:bg-gray-800 rounded-lg p-2 shadow">
-                                    <div class="text-xl font-bold text-indigo-600 dark:text-indigo-400" x-text="metrics.tasks?.completed || 0">0</div>
+                                    <div class="text-lg sm:text-xl font-bold text-indigo-600 dark:text-indigo-400" x-text="metrics.tasks?.completed || 0">0</div>
                                     <div class="text-xs text-gray-600 dark:text-gray-400">Tasks</div>
                                 </div>
                                 <div class="bg-white dark:bg-gray-800 rounded-lg p-2 shadow border-2 border-cyan-200 dark:border-cyan-900">
-                                    <div class="text-xl font-bold text-cyan-600 dark:text-cyan-400" x-text="(metrics.tokens?.efficiency || 0) > 0 ? Math.round(metrics.tokens.efficiency) + '%' : '-'">-</div>
+                                    <div class="text-lg sm:text-xl font-bold text-cyan-600 dark:text-cyan-400" x-text="(metrics.tokens?.efficiency || 0) > 0 ? Math.round(metrics.tokens.efficiency) + '%' : '-'">-</div>
                                     <div class="text-xs text-gray-600 dark:text-gray-400">Efficiency</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- System Metrics Card -->
+                        <div class="bg-gradient-to-br from-green-50 to-teal-50 dark:from-gray-800 dark:to-gray-900 rounded-xl shadow-lg p-3 sm:p-4 border-2 border-green-200 dark:border-green-900">
+                            <div class="flex items-center justify-between mb-2 sm:mb-3">
+                                <h3 class="text-base sm:text-lg font-semibold text-gray-900 dark:text-white">System Metrics</h3>
+                                <div class="px-2 py-1 rounded-full text-xs font-semibold" :class="(metrics.workers?.active || 0) > 0 ? 'bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300 animate-pulse' : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300'" x-text="(metrics.workers?.active || 0) > 0 ? 'ACTIVE' : 'IDLE'">
+                                    IDLE
+                                </div>
+                            </div>
+
+                            <!-- Stats Grid - 2x2 Compact (matching Productivity style) -->
+                            <div class="grid grid-cols-2 gap-2">
+                                <div class="bg-white dark:bg-gray-800 rounded-lg p-2 shadow border-2 border-blue-200 dark:border-blue-900 cursor-pointer hover:shadow-md transition-shadow" @click="switchView('workers')">
+                                    <div class="text-lg sm:text-xl font-bold text-blue-600 dark:text-blue-400" x-text="metrics.workers?.active || 0">0</div>
+                                    <div class="text-xs text-gray-600 dark:text-gray-400">Active Workers</div>
+                                </div>
+                                <div class="bg-white dark:bg-gray-800 rounded-lg p-2 shadow border-2 border-green-200 dark:border-green-900 cursor-pointer hover:shadow-md transition-shadow" @click="switchView('metrics')">
+                                    <div class="text-lg sm:text-xl font-bold text-green-600 dark:text-green-400" x-text="(metrics.workers?.successRate || 0) + '%'">0%</div>
+                                    <div class="text-xs text-gray-600 dark:text-gray-400">Success Rate</div>
+                                </div>
+                                <div class="bg-white dark:bg-gray-800 rounded-lg p-2 shadow border-2 border-orange-200 dark:border-orange-900 cursor-pointer hover:shadow-md transition-shadow" @click="switchView('tasks')">
+                                    <div class="text-lg sm:text-xl font-bold text-orange-600 dark:text-orange-400" x-text="metrics.tasks?.inProgress || 0">0</div>
+                                    <div class="text-xs text-gray-600 dark:text-gray-400">Tasks In Progress</div>
+                                </div>
+                                <div class="bg-white dark:bg-gray-800 rounded-lg p-2 shadow">
+                                    <div class="text-lg sm:text-xl font-bold text-gray-600 dark:text-gray-400" x-text="metrics.tasks?.completed || 0">0</div>
+                                    <div class="text-xs text-gray-600 dark:text-gray-400">Tasks Done</div>
                                 </div>
                             </div>
                         </div>
@@ -433,9 +472,6 @@
                                     <div class="text-xl font-bold text-red-600 dark:text-red-400" x-text="metrics.orchestrator?.failed || 0">0</div>
                                     <div class="text-xs text-gray-600 dark:text-gray-400">Failed</div>
                                 </div>
-                            </div>
-                            <div class="text-center text-xs text-gray-500 dark:text-gray-400">
-                                v4.0 Multi-Master Coordination
                             </div>
                         </div>
 
@@ -476,9 +512,6 @@
                                 </div>
                             </div>
 
-                            <div class="text-center text-xs text-gray-500 dark:text-gray-400 mt-2">
-                                v4.0 Multi-Worker Coordination
-                            </div>
                         </div>
                     </div>
 
@@ -491,7 +524,7 @@
                                 <span class="text-xs text-gray-500 dark:text-gray-400">Live</span>
                             </div>
                         </div>
-                        <div class="space-y-1.5 max-h-[470px] overflow-y-auto">
+                        <div class="space-y-1.5 max-h-[800px] overflow-y-auto">
                             <!-- Using index as key - events have duplicate IDs -->
                             <template x-for="(event, eventIndex) in events.slice(0, 20)" :key="'overview-event-' + eventIndex">
                                 <div class="flex items-start space-x-2 p-2 rounded-lg bg-gray-50 dark:bg-gray-700/50 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
@@ -505,7 +538,10 @@
                                     <div class="flex-1 min-w-0">
                                         <div class="flex items-baseline justify-between gap-2">
                                             <p class="text-sm font-medium text-gray-900 dark:text-white truncate" x-text="formatEventType(event.type)"></p>
-                                            <p class="text-xs text-gray-400 dark:text-gray-500 flex-shrink-0" x-text="new Date(event.timestamp).toLocaleTimeString()"></p>
+                                            <div class="text-right flex-shrink-0">
+                                                <p class="text-xs text-gray-400 dark:text-gray-500" x-text="new Date(event.timestamp).toLocaleDateString()"></p>
+                                                <p class="text-xs text-gray-400 dark:text-gray-500" x-text="new Date(event.timestamp).toLocaleTimeString()"></p>
+                                            </div>
                                         </div>
                                         <p class="text-xs text-gray-500 dark:text-gray-400 truncate" x-text="formatEventMessage(event)"></p>
                                     </div>
@@ -622,7 +658,7 @@
                                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Status</th>
                                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Priority</th>
                                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Assigned To</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Git Commits</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Created</th>
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
@@ -655,15 +691,12 @@
                                             }" x-text="task.priority"></span>
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400" x-text="task.assigned_to || 'Unassigned'"></td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm">
-                                            <!-- Using index-based key to avoid duplicate key errors -->
-                                            <template x-for="(commit, commitIndex) in getTaskCommits(task.id)" :key="'commit-' + index + '-' + commitIndex">
-                                                <a :href="'https://github.com/ry-ops/commit-relay/commit/' + commit"
-                                                   target="_blank"
-                                                   class="inline-block px-2 py-1 mr-1 mb-1 text-xs font-mono bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
-                                                   x-text="commit"></a>
-                                            </template>
-                                            <span x-show="getTaskCommits(task.id).length === 0" class="text-gray-400 dark:text-gray-500 text-xs">-</span>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                                            <div x-show="task.created_at">
+                                                <div x-text="new Date(task.created_at).toLocaleDateString()"></div>
+                                                <div class="text-xs text-gray-400 dark:text-gray-500" x-text="new Date(task.created_at).toLocaleTimeString()"></div>
+                                            </div>
+                                            <span x-show="!task.created_at" class="text-gray-400 dark:text-gray-500">-</span>
                                         </td>
                                     </tr>
                                 </template>
@@ -706,6 +739,13 @@
                         });
                     }
 
+                    // Sort by timestamp - most recent first
+                    filtered = [...filtered].sort((a, b) => {
+                        const dateA = new Date(a.timestamp || 0);
+                        const dateB = new Date(b.timestamp || 0);
+                        return dateB - dateA; // Descending order (most recent first)
+                    });
+
                     return filtered;
                 },
                 get eventStats() {
@@ -736,7 +776,7 @@
                             </div>
                             <div class="flex items-center space-x-3">
                                 <!-- Auto-scroll toggle -->
-                                <button @click="autoScroll = !autoScroll" class="flex items-center space-x-2 px-3 py-2 rounded-lg transition-colors" :class="autoScroll ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300' : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400'">
+                                <button @click="autoScroll = !autoScroll" class="flex items-center space-x-2 px-3 py-2 rounded-lg transition-colors" :class="autoScroll ? 'bg-green-500 hover:bg-green-600 text-white' : 'bg-red-500 hover:bg-red-600 text-white'">
                                     <i :data-lucide="autoScroll ? 'play' : 'pause'" class="w-4 h-4"></i>
                                     <span class="text-xs font-medium">Auto-scroll</span>
                                 </button>
@@ -876,85 +916,288 @@
                     <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 border border-gray-200 dark:border-gray-700">
                         <div class="flex items-center justify-between">
                             <div>
-                                <h2 class="text-2xl font-bold text-gray-900 dark:text-white">API Explorer</h2>
-                                <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Interactive API testing and exploration</p>
+                                <h2 class="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                                    <i data-lucide="zap" class="w-7 h-7 text-primary-600"></i>
+                                    API Explorer
+                                </h2>
+                                <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                                    Test and explore all <span class="font-semibold" x-text="apiExplorer.endpoints.length"></span> dashboard API endpoints
+                                </p>
                             </div>
-                            <div class="flex items-center space-x-2">
-                                <span class="px-3 py-1 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 rounded-full text-sm font-medium">
-                                    Coming Soon
-                                </span>
+                            <div class="flex items-center space-x-3">
+                                <button
+                                    @click="testAllGetEndpoints()"
+                                    :disabled="apiExplorer.isTestingAll"
+                                    class="px-4 py-2 bg-primary-600 hover:bg-primary-700 disabled:bg-gray-400 text-white rounded-lg font-medium transition-colors flex items-center gap-2"
+                                >
+                                    <i data-lucide="play" class="w-4 h-4"></i>
+                                    <span x-show="!apiExplorer.isTestingAll">Test All GET</span>
+                                    <span x-show="apiExplorer.isTestingAll">
+                                        Testing <span x-text="apiExplorer.testAllProgress"></span>/<span x-text="apiExplorer.testAllTotal"></span>
+                                    </span>
+                                </button>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Feature Preview Cards -->
-                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                        <!-- REST API Testing -->
-                        <div class="bg-white dark:bg-gray-800 rounded-lg shadow border border-gray-200 dark:border-gray-700 p-6">
-                            <div class="w-12 h-12 bg-blue-100 dark:bg-blue-900/30 rounded-lg flex items-center justify-center mb-4">
-                                <i data-lucide="zap" class="w-6 h-6 text-blue-600 dark:text-blue-400"></i>
-                            </div>
-                            <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">REST API Testing</h3>
-                            <p class="text-sm text-gray-600 dark:text-gray-400">Test all dashboard endpoints with an interactive request builder and response viewer</p>
+                    <!-- Request History -->
+                    <div x-show="apiExplorer.requestHistory.length > 0" class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 border border-gray-200 dark:border-gray-700">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+                                <i data-lucide="history" class="w-5 h-5"></i>
+                                Recent Requests
+                            </h3>
+                            <button @click="clearRequestHistory()" class="text-sm text-red-600 hover:text-red-700 dark:text-red-400">
+                                Clear History
+                            </button>
                         </div>
-
-                        <!-- WebSocket Monitor -->
-                        <div class="bg-white dark:bg-gray-800 rounded-lg shadow border border-gray-200 dark:border-gray-700 p-6">
-                            <div class="w-12 h-12 bg-purple-100 dark:bg-purple-900/30 rounded-lg flex items-center justify-center mb-4">
-                                <i data-lucide="radio" class="w-6 h-6 text-purple-600 dark:text-purple-400"></i>
-                            </div>
-                            <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">WebSocket Monitor</h3>
-                            <p class="text-sm text-gray-600 dark:text-gray-400">Monitor real-time WebSocket events and messages with filtering and replay</p>
-                        </div>
-
-                        <!-- API Documentation -->
-                        <div class="bg-white dark:bg-gray-800 rounded-lg shadow border border-gray-200 dark:border-gray-700 p-6">
-                            <div class="w-12 h-12 bg-green-100 dark:bg-green-900/30 rounded-lg flex items-center justify-center mb-4">
-                                <i data-lucide="book-open" class="w-6 h-6 text-green-600 dark:text-green-400"></i>
-                            </div>
-                            <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">API Documentation</h3>
-                            <p class="text-sm text-gray-600 dark:text-gray-400">Complete API reference with examples, schemas, and authentication details</p>
-                        </div>
-
-                        <!-- Request History -->
-                        <div class="bg-white dark:bg-gray-800 rounded-lg shadow border border-gray-200 dark:border-gray-700 p-6">
-                            <div class="w-12 h-12 bg-orange-100 dark:bg-orange-900/30 rounded-lg flex items-center justify-center mb-4">
-                                <i data-lucide="history" class="w-6 h-6 text-orange-600 dark:text-orange-400"></i>
-                            </div>
-                            <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">Request History</h3>
-                            <p class="text-sm text-gray-600 dark:text-gray-400">Save and replay API requests with full history and favorites management</p>
-                        </div>
-
-                        <!-- Code Generation -->
-                        <div class="bg-white dark:bg-gray-800 rounded-lg shadow border border-gray-200 dark:border-gray-700 p-6">
-                            <div class="w-12 h-12 bg-red-100 dark:bg-red-900/30 rounded-lg flex items-center justify-center mb-4">
-                                <i data-lucide="code-2" class="w-6 h-6 text-red-600 dark:text-red-400"></i>
-                            </div>
-                            <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">Code Generation</h3>
-                            <p class="text-sm text-gray-600 dark:text-gray-400">Generate client code in multiple languages for API integration</p>
-                        </div>
-
-                        <!-- Environment Manager -->
-                        <div class="bg-white dark:bg-gray-800 rounded-lg shadow border border-gray-200 dark:border-gray-700 p-6">
-                            <div class="w-12 h-12 bg-indigo-100 dark:bg-indigo-900/30 rounded-lg flex items-center justify-center mb-4">
-                                <i data-lucide="settings" class="w-6 h-6 text-indigo-600 dark:text-indigo-400"></i>
-                            </div>
-                            <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">Environment Manager</h3>
-                            <p class="text-sm text-gray-600 dark:text-gray-400">Manage multiple environments with variables and configuration profiles</p>
+                        <div class="space-y-2 max-h-48 overflow-y-auto">
+                            <template x-for="req in apiExplorer.requestHistory.slice(0, 10)" :key="req.id">
+                                <div class="flex items-center justify-between p-2 bg-gray-50 dark:bg-gray-700/50 rounded-lg text-sm">
+                                    <div class="flex items-center gap-3">
+                                        <span class="px-2 py-0.5 rounded text-xs font-medium"
+                                              :class="{
+                                                  'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300': req.method === 'GET',
+                                                  'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300': req.method === 'POST',
+                                                  'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300': req.method === 'DELETE'
+                                              }"
+                                              x-text="req.method"></span>
+                                        <span class="text-gray-700 dark:text-gray-300 font-mono" x-text="req.path"></span>
+                                    </div>
+                                    <div class="flex items-center gap-3">
+                                        <span class="text-gray-500 dark:text-gray-400" x-text="req.responseTime + 'ms'"></span>
+                                        <span class="px-2 py-0.5 rounded text-xs font-medium"
+                                              :class="{
+                                                  'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300': req.status === 'success',
+                                                  'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300': req.status === 'error'
+                                              }"
+                                              x-text="req.statusCode || req.status"></span>
+                                        <span class="text-xs text-gray-400" x-text="new Date(req.timestamp).toLocaleTimeString()"></span>
+                                    </div>
+                                </div>
+                            </template>
                         </div>
                     </div>
 
-                    <!-- Placeholder Message -->
-                    <div class="bg-gradient-to-br from-primary-50 to-blue-50 dark:from-gray-800 dark:to-gray-700 rounded-xl shadow-lg border border-primary-200 dark:border-gray-600 p-12">
-                        <div class="text-center">
-                            <div class="text-6xl mb-4">🚀</div>
-                            <h3 class="text-2xl font-bold text-gray-900 dark:text-white mb-3">API Explorer Coming Soon</h3>
-                            <p class="text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
-                                We're building a comprehensive API testing and exploration tool to help you integrate with the Commit-Relay API.
-                                Stay tuned for interactive testing, documentation, and code generation features.
-                            </p>
+                    <!-- API Endpoints by Category -->
+                    <template x-for="category in getCategories()" :key="category">
+                        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
+                            <!-- Category Header -->
+                            <button
+                                @click="toggleCategory(category)"
+                                class="w-full px-6 py-4 flex items-center justify-between bg-gray-50 dark:bg-gray-700/50 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                            >
+                                <div class="flex items-center gap-3">
+                                    <i data-lucide="folder" class="w-5 h-5 text-gray-500"></i>
+                                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white" x-text="category"></h3>
+                                    <span class="px-2 py-0.5 bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-full text-xs font-medium"
+                                          x-text="getEndpointsByCategory(category).length + ' endpoints'"></span>
+                                </div>
+                                <i data-lucide="chevron-down" class="w-5 h-5 text-gray-500 transition-transform"
+                                   :class="{ 'rotate-180': apiExplorer.expandedCategories[category] }"></i>
+                            </button>
+
+                            <!-- Endpoints List -->
+                            <div x-show="apiExplorer.expandedCategories[category]" x-collapse class="divide-y divide-gray-200 dark:divide-gray-700">
+                                <template x-for="endpoint in getEndpointsByCategory(category)" :key="endpoint.path">
+                                    <div class="p-6">
+                                        <!-- Endpoint Header -->
+                                        <div class="flex items-start justify-between mb-3">
+                                            <div class="flex-1">
+                                                <div class="flex items-center gap-3 mb-2">
+                                                    <span class="px-2 py-1 rounded font-mono text-xs font-bold"
+                                                          :class="{
+                                                              'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300': endpoint.method === 'GET',
+                                                              'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300': endpoint.method === 'POST',
+                                                              'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300': endpoint.method === 'DELETE',
+                                                              'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300': endpoint.method === 'PUT'
+                                                          }"
+                                                          x-text="endpoint.method"></span>
+                                                    <code class="text-sm font-mono text-gray-900 dark:text-gray-100" x-text="endpoint.path"></code>
+                                                    <template x-if="endpoint.requiresParams">
+                                                        <span class="px-2 py-0.5 bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300 rounded text-xs">
+                                                            Requires Params
+                                                        </span>
+                                                    </template>
+                                                </div>
+                                                <p class="text-sm text-gray-600 dark:text-gray-400" x-text="endpoint.description"></p>
+                                            </div>
+                                            <button
+                                                @click="testEndpoint(endpoint, buildTestParams(endpoint))"
+                                                :disabled="getTestResult(endpoint)?.status === 'pending'"
+                                                class="ml-4 px-4 py-2 bg-primary-600 hover:bg-primary-700 disabled:bg-gray-400 text-white rounded-lg text-sm font-medium transition-colors flex items-center gap-2"
+                                            >
+                                                <i data-lucide="play" class="w-3 h-3"></i>
+                                                Test
+                                            </button>
+                                        </div>
+
+                                        <!-- Parameter Inputs -->
+                                        <template x-if="endpoint.requiresParams">
+                                            <div class="mb-3 space-y-3 p-4 bg-orange-50 dark:bg-orange-900/10 border border-orange-200 dark:border-orange-800 rounded-lg">
+                                                <div class="flex items-center gap-2 mb-2">
+                                                    <i data-lucide="settings" class="w-4 h-4 text-orange-600 dark:text-orange-400"></i>
+                                                    <h5 class="text-sm font-semibold text-gray-900 dark:text-white">Parameters Required</h5>
+                                                </div>
+
+                                                <!-- Path Parameters -->
+                                                <template x-if="endpoint.pathParams">
+                                                    <div class="space-y-2">
+                                                        <template x-for="param in endpoint.pathParams" :key="param.name">
+                                                            <div>
+                                                                <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                                                    <span x-text="param.name"></span>
+                                                                    <span class="text-gray-500" x-text="' - ' + param.description"></span>
+                                                                </label>
+                                                                <input
+                                                                    type="text"
+                                                                    x-model="getEndpointParams(endpoint)[param.name]"
+                                                                    :placeholder="param.example"
+                                                                    class="w-full px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                                                                />
+                                                            </div>
+                                                        </template>
+                                                    </div>
+                                                </template>
+
+                                                <!-- Body Parameters -->
+                                                <template x-if="endpoint.bodyParams">
+                                                    <div class="space-y-2">
+                                                        <template x-for="param in endpoint.bodyParams" :key="param.name">
+                                                            <div>
+                                                                <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                                                    <span x-text="param.name"></span>
+                                                                    <span class="text-gray-500" x-text="' - ' + param.description"></span>
+                                                                    <template x-if="param.enum">
+                                                                        <span class="text-xs text-gray-500" x-text="' (options: ' + param.enum.join(', ') + ')'"></span>
+                                                                    </template>
+                                                                </label>
+                                                                <template x-if="param.enum">
+                                                                    <select
+                                                                        x-model="getEndpointParams(endpoint)[param.name]"
+                                                                        class="w-full px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                                                                    >
+                                                                        <option value="">Select...</option>
+                                                                        <template x-for="option in param.enum" :key="option">
+                                                                            <option :value="option" x-text="option"></option>
+                                                                        </template>
+                                                                    </select>
+                                                                </template>
+                                                                <template x-if="!param.enum">
+                                                                    <input
+                                                                        type="text"
+                                                                        x-model="getEndpointParams(endpoint)[param.name]"
+                                                                        :placeholder="param.example"
+                                                                        class="w-full px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                                                                    />
+                                                                </template>
+                                                            </div>
+                                                        </template>
+                                                    </div>
+                                                </template>
+                                            </div>
+                                        </template>
+
+                                        <!-- Test Result Status -->
+                                        <template x-if="getTestResult(endpoint)">
+                                            <div class="mb-3">
+                                                <div class="flex items-center gap-2">
+                                                    <template x-if="getTestResult(endpoint).status === 'pending'">
+                                                        <span class="px-2 py-1 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded text-xs font-medium flex items-center gap-1">
+                                                            <i data-lucide="loader" class="w-3 h-3 animate-spin"></i>
+                                                            Testing...
+                                                        </span>
+                                                    </template>
+                                                    <template x-if="getTestResult(endpoint).status === 'success'">
+                                                        <span class="px-2 py-1 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 rounded text-xs font-medium flex items-center gap-1">
+                                                            <i data-lucide="check" class="w-3 h-3"></i>
+                                                            <span x-text="getTestResult(endpoint).statusCode"></span>
+                                                            - <span x-text="getTestResult(endpoint).responseTime + 'ms'"></span>
+                                                        </span>
+                                                    </template>
+                                                    <template x-if="getTestResult(endpoint).status === 'error'">
+                                                        <span class="px-2 py-1 bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 rounded text-xs font-medium flex items-center gap-1">
+                                                            <i data-lucide="x" class="w-3 h-3"></i>
+                                                            <span x-text="getTestResult(endpoint).error"></span>
+                                                        </span>
+                                                    </template>
+                                                    <button
+                                                        @click="toggleEndpointDetails(endpoint)"
+                                                        class="text-xs text-primary-600 hover:text-primary-700 dark:text-primary-400 font-medium"
+                                                    >
+                                                        <span x-show="!isEndpointExpanded(endpoint)">Show Details</span>
+                                                        <span x-show="isEndpointExpanded(endpoint)">Hide Details</span>
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </template>
+
+                                        <!-- Expandable Details -->
+                                        <div x-show="isEndpointExpanded(endpoint)" x-collapse class="mt-4 space-y-4">
+                                            <!-- Response -->
+                                            <template x-if="getTestResult(endpoint)?.response">
+                                                <div>
+                                                    <div class="flex items-center justify-between mb-2">
+                                                        <h4 class="text-sm font-semibold text-gray-900 dark:text-white">Response</h4>
+                                                        <button
+                                                            @click="copyToClipboard(formatJson(getTestResult(endpoint).response))"
+                                                            class="text-xs text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100 flex items-center gap-1"
+                                                        >
+                                                            <i data-lucide="copy" class="w-3 h-3"></i>
+                                                            Copy
+                                                        </button>
+                                                    </div>
+                                                    <pre class="bg-gray-900 text-green-400 p-4 rounded-lg overflow-x-auto text-xs"><code x-text="formatJson(getTestResult(endpoint).response)"></code></pre>
+                                                </div>
+                                            </template>
+
+                                            <!-- Code Generation -->
+                                            <div>
+                                                <h4 class="text-sm font-semibold text-gray-900 dark:text-white mb-2">Code Examples</h4>
+                                                <div class="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
+                                                    <!-- Language Tabs -->
+                                                    <div class="flex border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700/50">
+                                                        <button
+                                                            @click="apiExplorer.selectedCodeLang = 'python'"
+                                                            class="px-4 py-2 text-sm font-medium transition-colors"
+                                                            :class="apiExplorer.selectedCodeLang === 'python' ? 'bg-white dark:bg-gray-800 text-primary-600 border-b-2 border-primary-600' : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100'"
+                                                        >
+                                                            Python
+                                                        </button>
+                                                        <button
+                                                            @click="apiExplorer.selectedCodeLang = 'javascript'"
+                                                            class="px-4 py-2 text-sm font-medium transition-colors"
+                                                            :class="apiExplorer.selectedCodeLang === 'javascript' ? 'bg-white dark:bg-gray-800 text-primary-600 border-b-2 border-primary-600' : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100'"
+                                                        >
+                                                            JavaScript
+                                                        </button>
+                                                        <button
+                                                            @click="apiExplorer.selectedCodeLang = 'curl'"
+                                                            class="px-4 py-2 text-sm font-medium transition-colors"
+                                                            :class="apiExplorer.selectedCodeLang === 'curl' ? 'bg-white dark:bg-gray-800 text-primary-600 border-b-2 border-primary-600' : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100'"
+                                                        >
+                                                            cURL
+                                                        </button>
+                                                    </div>
+                                                    <!-- Code Display -->
+                                                    <div class="relative">
+                                                        <pre class="bg-gray-900 text-gray-100 p-4 overflow-x-auto text-xs"><code x-text="generateCode(endpoint, apiExplorer.selectedCodeLang)"></code></pre>
+                                                        <button
+                                                            @click="copyToClipboard(generateCode(endpoint, apiExplorer.selectedCodeLang))"
+                                                            class="absolute top-2 right-2 p-2 bg-gray-800 hover:bg-gray-700 text-gray-300 rounded transition-colors"
+                                                            title="Copy code"
+                                                        >
+                                                            <i data-lucide="copy" class="w-4 h-4"></i>
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </template>
+                            </div>
                         </div>
-                    </div>
+                    </template>
                 </div>
             </div>
 
@@ -1146,7 +1389,7 @@
             <div x-show="currentView === 'metrics'" x-transition>
                 <div class="space-y-6">
                     <!-- Historical Analytics Section -->
-                    <div class="bg-gradient-to-r from-primary-50 to-purple-50 dark:from-primary-900/20 dark:to-purple-900/20 rounded-xl shadow-lg p-6 border border-primary-200 dark:border-primary-700">
+                    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 border border-gray-200 dark:border-gray-700">
                         <div class="flex items-center justify-between mb-4">
                             <div class="flex items-center space-x-3">
                                 <i data-lucide="trending-up" class="w-6 h-6 text-primary-600 dark:text-primary-400"></i>
@@ -1383,135 +1626,6 @@
                         </div>
                     </div>
 
-                    <!-- EM Coordination Flow Diagram -->
-                    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 border border-gray-200 dark:border-gray-700">
-                        <div class="flex items-center justify-between mb-4">
-                            <div class="flex items-center space-x-3">
-                                <i data-lucide="workflow" class="w-6 h-6 text-teal-600 dark:text-teal-400"></i>
-                                <h3 class="text-xl font-bold text-gray-900 dark:text-white">Execution Manager Coordination Flow</h3>
-                            </div>
-                        </div>
-                        <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">Visual representation of EM orchestration patterns for complex multi-step tasks</p>
-
-                        <!-- Mermaid Flow Diagram -->
-                        <div class="bg-gray-50 dark:bg-gray-900 rounded-lg p-6 border border-gray-200 dark:border-gray-700">
-                            <pre class="mermaid">
-graph TB
-    subgraph Complex_Task[Complex Task Requires EM]
-        CT[Multi-Step Task<br/>Assigned to Master]
-    end
-
-    subgraph Master[Master Agent]
-        MC{Complexity<br/>Check}
-        MD[Task Analysis]
-    end
-
-    subgraph EM[Execution Manager]
-        EM1[Parse Task]
-        EM2[Decompose Steps]
-        EM3[Allocate Resources]
-        EM4[Spawn Workers]
-        EM5[Monitor Progress]
-        EM6[Aggregate Results]
-    end
-
-    subgraph Workers[Worker Pool]
-        W1[Worker 1<br/>Step A]
-        W2[Worker 2<br/>Step B]
-        W3[Worker 3<br/>Step C]
-    end
-
-    subgraph Results[Completion]
-        R1[EM Aggregates<br/>All Results]
-        R2[Master Validates]
-        R3[Task Complete]
-    end
-
-    CT --> MC
-    MC -->|Complex| MD
-    MC -->|Simple| W1
-    MD --> EM1
-    EM1 --> EM2
-    EM2 --> EM3
-    EM3 --> EM4
-
-    EM4 -->|Spawn| W1
-    EM4 -->|Spawn| W2
-    EM4 -->|Spawn| W3
-
-    W1 -->|Result| EM5
-    W2 -->|Result| EM5
-    W3 -->|Result| EM5
-
-    EM5 --> EM6
-    EM6 --> R1
-    R1 --> R2
-    R2 --> R3
-
-    style CT fill:#fef3c7,stroke:#f59e0b,stroke-width:2px
-    style MC fill:#dbeafe,stroke:#3b82f6,stroke-width:2px
-    style EM1 fill:#d1fae5,stroke:#10b981,stroke-width:2px
-    style EM2 fill:#d1fae5,stroke:#10b981,stroke-width:2px
-    style EM3 fill:#d1fae5,stroke:#10b981,stroke-width:2px
-    style EM4 fill:#d1fae5,stroke:#10b981,stroke-width:2px
-    style EM5 fill:#d1fae5,stroke:#10b981,stroke-width:2px
-    style EM6 fill:#d1fae5,stroke:#10b981,stroke-width:2px
-    style W1 fill:#e0e7ff,stroke:#818cf8,stroke-width:2px
-    style W2 fill:#e0e7ff,stroke:#818cf8,stroke-width:2px
-    style W3 fill:#e0e7ff,stroke:#818cf8,stroke-width:2px
-    style R1 fill:#fce7f3,stroke:#ec4899,stroke-width:2px
-    style R2 fill:#fce7f3,stroke:#ec4899,stroke-width:2px
-    style R3 fill:#dcfce7,stroke:#16a34a,stroke-width:3px
-                            </pre>
-                        </div>
-
-                        <!-- EM Statistics -->
-                        <div class="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
-                            <div class="bg-green-50 dark:bg-green-900/20 p-4 rounded-lg border border-green-200 dark:border-green-800">
-                                <div class="flex items-center justify-between">
-                                    <div>
-                                        <p class="text-xs font-medium text-green-700 dark:text-green-300 uppercase">EM Instances</p>
-                                        <p class="text-2xl font-bold text-green-900 dark:text-green-100 mt-1" x-text="0">0</p>
-                                    </div>
-                                    <i data-lucide="git-branch" class="w-8 h-8 text-green-500"></i>
-                                </div>
-                                <p class="text-xs text-green-600 dark:text-green-400 mt-2">Total EMs spawned</p>
-                            </div>
-
-                            <div class="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg border border-blue-200 dark:border-blue-800">
-                                <div class="flex items-center justify-between">
-                                    <div>
-                                        <p class="text-xs font-medium text-blue-700 dark:text-blue-300 uppercase">Workers Managed</p>
-                                        <p class="text-2xl font-bold text-blue-900 dark:text-blue-100 mt-1" x-text="0">0</p>
-                                    </div>
-                                    <i data-lucide="users" class="w-8 h-8 text-blue-500"></i>
-                                </div>
-                                <p class="text-xs text-blue-600 dark:text-blue-400 mt-2">Workers coordinated by EMs</p>
-                            </div>
-
-                            <div class="bg-purple-50 dark:bg-purple-900/20 p-4 rounded-lg border border-purple-200 dark:border-purple-800">
-                                <div class="flex items-center justify-between">
-                                    <div>
-                                        <p class="text-xs font-medium text-purple-700 dark:text-purple-300 uppercase">Success Rate</p>
-                                        <p class="text-2xl font-bold text-purple-900 dark:text-purple-100 mt-1" x-text="'N/A'">N/A</p>
-                                    </div>
-                                    <i data-lucide="check-circle" class="w-8 h-8 text-purple-500"></i>
-                                </div>
-                                <p class="text-xs text-purple-600 dark:text-purple-400 mt-2">EM-managed task success</p>
-                            </div>
-                        </div>
-
-                        <div class="mt-4 p-4 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg">
-                            <div class="flex items-start space-x-3">
-                                <i data-lucide="info" class="w-5 h-5 text-amber-600 dark:text-amber-400 flex-shrink-0 mt-0.5"></i>
-                                <div class="text-sm text-amber-800 dark:text-amber-200">
-                                    <p class="font-semibold mb-1">Execution Managers (v4.0+)</p>
-                                    <p>EMs are spawned for complex multi-step tasks that require decomposition and parallel worker coordination. They handle resource allocation, progress monitoring, and result aggregation.</p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
                     <!-- Top row: Pie Chart and Pareto Chart -->
                     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
                         <!-- Pie Chart: Worker Status Distribution -->
@@ -1604,8 +1718,748 @@ graph TB
                 </div>
             </div>
 
+            <!-- Admin View -->
+            <div x-show="currentView === 'admin'" x-transition>
+                <div class="space-y-6 max-w-4xl">
+                    <!-- Daemon Controls -->
+                    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-8 border border-gray-200 dark:border-gray-700">
+                        <div class="flex items-center space-x-3 mb-6">
+                            <i data-lucide="settings" class="w-8 h-8 text-primary-500"></i>
+                            <h3 class="text-2xl font-bold text-gray-900 dark:text-white">Daemon Controls</h3>
+                        </div>
+                        <p class="text-gray-600 dark:text-gray-400 mb-8">
+                            Manage system daemons for the commit-relay automation system.
+                        </p>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <!-- Worker Daemon Card -->
+                            <div class="border-2 rounded-xl p-6" :class="daemon?.status === 'running' ? 'border-green-300 dark:border-green-700 bg-green-50 dark:bg-green-900/20' : 'border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700/50'">
+                                <div class="flex items-center justify-between mb-4">
+                                    <div class="flex items-center space-x-3">
+                                        <i data-lucide="bot" class="w-6 h-6" :class="daemon?.status === 'running' ? 'text-green-600 dark:text-green-400' : 'text-gray-600 dark:text-gray-400'"></i>
+                                        <h4 class="text-lg font-semibold text-gray-900 dark:text-white">Worker Daemon</h4>
+                                    </div>
+                                    <span class="px-3 py-1 rounded-full text-sm font-medium" :class="daemon?.status === 'running' ? 'bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300' : 'bg-red-100 dark:bg-red-900 text-red-700 dark:text-red-300'" x-text="daemon?.status === 'running' ? 'Running' : 'Stopped'"></span>
+                                </div>
+
+                                <div class="space-y-2 mb-6">
+                                    <div class="flex justify-between text-sm">
+                                        <span class="text-gray-600 dark:text-gray-400">PID:</span>
+                                        <span class="font-medium text-gray-900 dark:text-white" x-text="daemon?.pid || 'N/A'"></span>
+                                    </div>
+                                    <div class="flex justify-between text-sm">
+                                        <span class="text-gray-600 dark:text-gray-400">Uptime:</span>
+                                        <span class="font-medium text-gray-900 dark:text-white" x-text="daemon?.status === 'running' ? formatUptime(daemon?.uptime) : 'N/A'"></span>
+                                    </div>
+                                    <div class="flex justify-between text-sm">
+                                        <span class="text-gray-600 dark:text-gray-400">Workers Launched:</span>
+                                        <span class="font-medium text-gray-900 dark:text-white" x-text="daemon?.launchCount || 0"></span>
+                                    </div>
+                                </div>
+
+                                <div class="flex space-x-2">
+                                    <button @click="controlWorkerDaemon('start')" :disabled="daemon?.status === 'running'" class="flex-1 px-4 py-2 rounded-lg font-medium transition-colors bg-green-600 text-white hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed">
+                                        <i data-lucide="play" class="w-4 h-4 inline-block mr-2"></i>
+                                        Start
+                                    </button>
+                                    <button @click="controlWorkerDaemon('stop')" :disabled="daemon?.status !== 'running'" class="flex-1 px-4 py-2 rounded-lg font-medium transition-colors bg-red-600 text-white hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed">
+                                        <i data-lucide="square" class="w-4 h-4 inline-block mr-2"></i>
+                                        Stop
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- PM Daemon Card -->
+                            <div class="border-2 rounded-xl p-6" :class="pmDaemon?.status === 'running' ? 'border-purple-300 dark:border-purple-700 bg-purple-50 dark:bg-purple-900/20' : 'border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700/50'">
+                                <div class="flex items-center justify-between mb-4">
+                                    <div class="flex items-center space-x-3">
+                                        <i data-lucide="activity" class="w-6 h-6" :class="pmDaemon?.status === 'running' ? 'text-purple-600 dark:text-purple-400' : 'text-gray-600 dark:text-gray-400'"></i>
+                                        <h4 class="text-lg font-semibold text-gray-900 dark:text-white">PM Daemon</h4>
+                                    </div>
+                                    <span class="px-3 py-1 rounded-full text-sm font-medium" :class="pmDaemon?.status === 'running' ? 'bg-purple-100 dark:bg-purple-900 text-purple-700 dark:text-purple-300' : 'bg-red-100 dark:bg-red-900 text-red-700 dark:text-red-300'" x-text="pmDaemon?.status === 'running' ? 'Running' : 'Stopped'"></span>
+                                </div>
+
+                                <div class="space-y-2 mb-6">
+                                    <div class="flex justify-between text-sm">
+                                        <span class="text-gray-600 dark:text-gray-400">PID:</span>
+                                        <span class="font-medium text-gray-900 dark:text-white" x-text="pmDaemon?.pid || 'N/A'"></span>
+                                    </div>
+                                    <div class="flex justify-between text-sm">
+                                        <span class="text-gray-600 dark:text-gray-400">Uptime:</span>
+                                        <span class="font-medium text-gray-900 dark:text-white" x-text="pmDaemon?.status === 'running' ? formatUptime(pmDaemon?.uptime_seconds) : 'N/A'"></span>
+                                    </div>
+                                    <div class="flex justify-between text-sm">
+                                        <span class="text-gray-600 dark:text-gray-400">Loops Completed:</span>
+                                        <span class="font-medium text-gray-900 dark:text-white" x-text="pmDaemon?.loops_completed || 0"></span>
+                                    </div>
+                                </div>
+
+                                <div class="flex space-x-2">
+                                    <button @click="controlPmDaemon('start')" :disabled="pmDaemon?.status === 'running'" class="flex-1 px-4 py-2 rounded-lg font-medium transition-colors bg-green-600 text-white hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed">
+                                        <i data-lucide="play" class="w-4 h-4 inline-block mr-2"></i>
+                                        Start
+                                    </button>
+                                    <button @click="controlPmDaemon('stop')" :disabled="pmDaemon?.status !== 'running'" class="flex-1 px-4 py-2 rounded-lg font-medium transition-colors bg-red-600 text-white hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed">
+                                        <i data-lucide="square" class="w-4 h-4 inline-block mr-2"></i>
+                                        Stop
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mt-8 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+                            <div class="flex items-start space-x-3">
+                                <i data-lucide="info" class="w-5 h-5 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5"></i>
+                                <div class="text-sm text-blue-900 dark:text-blue-100">
+                                    <p class="font-semibold mb-1">About Daemon Controls</p>
+                                    <p class="text-blue-700 dark:text-blue-200">
+                                        Use the start/stop buttons above to control the Worker Daemon (spawns and monitors workers) and PM Daemon (monitors worker health and collects metrics). Changes take effect immediately.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Event Log Management -->
+                    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-8 border border-gray-200 dark:border-gray-700">
+                        <div class="flex items-center space-x-3 mb-6">
+                            <i data-lucide="database" class="w-8 h-8 text-orange-500"></i>
+                            <h3 class="text-2xl font-bold text-gray-900 dark:text-white">Event Log Management</h3>
+                        </div>
+                        <p class="text-gray-600 dark:text-gray-400 mb-8">
+                            Monitor and manage the dashboard-events.jsonl file (Single Source of Truth for all events).
+                        </p>
+
+                        <div class="border-2 border-orange-300 dark:border-orange-700 bg-orange-50 dark:bg-orange-900/20 rounded-xl p-6">
+                            <div class="flex items-center justify-between mb-6">
+                                <div class="flex items-center space-x-3">
+                                    <i data-lucide="file-text" class="w-6 h-6 text-orange-600 dark:text-orange-400"></i>
+                                    <h4 class="text-lg font-semibold text-gray-900 dark:text-white">dashboard-events.jsonl</h4>
+                                </div>
+                                <span class="px-3 py-1 rounded-full text-sm font-medium bg-orange-100 dark:bg-orange-900 text-orange-700 dark:text-orange-300">
+                                    Active
+                                </span>
+                            </div>
+
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                                <div class="bg-white dark:bg-gray-800 rounded-lg p-4 border border-orange-200 dark:border-orange-800">
+                                    <div class="flex items-center space-x-2 mb-2">
+                                        <i data-lucide="calendar" class="w-4 h-4 text-orange-600 dark:text-orange-400"></i>
+                                        <span class="text-sm font-medium text-gray-600 dark:text-gray-400">Created</span>
+                                    </div>
+                                    <p class="text-lg font-bold text-gray-900 dark:text-white" x-text="eventLogInfo.created_date || 'N/A'"></p>
+                                </div>
+
+                                <div class="bg-white dark:bg-gray-800 rounded-lg p-4 border border-orange-200 dark:border-orange-800">
+                                    <div class="flex items-center space-x-2 mb-2">
+                                        <i data-lucide="hash" class="w-4 h-4 text-orange-600 dark:text-orange-400"></i>
+                                        <span class="text-sm font-medium text-gray-600 dark:text-gray-400">Total Events</span>
+                                    </div>
+                                    <p class="text-lg font-bold text-gray-900 dark:text-white" x-text="eventLogInfo.event_count?.toLocaleString() || '0'"></p>
+                                </div>
+
+                                <div class="bg-white dark:bg-gray-800 rounded-lg p-4 border border-orange-200 dark:border-orange-800">
+                                    <div class="flex items-center space-x-2 mb-2">
+                                        <i data-lucide="hard-drive" class="w-4 h-4 text-orange-600 dark:text-orange-400"></i>
+                                        <span class="text-sm font-medium text-gray-600 dark:text-gray-400">File Size</span>
+                                    </div>
+                                    <p class="text-lg font-bold text-gray-900 dark:text-white" x-text="eventLogInfo.file_size || 'N/A'"></p>
+                                </div>
+                            </div>
+
+                            <div class="flex items-center justify-between p-4 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg mb-6">
+                                <div class="flex items-start space-x-3">
+                                    <i data-lucide="alert-triangle" class="w-5 h-5 text-amber-600 dark:text-amber-400 flex-shrink-0 mt-0.5"></i>
+                                    <div class="text-sm text-amber-900 dark:text-amber-100">
+                                        <p class="font-semibold mb-1">Warning: Purge Operation</p>
+                                        <p class="text-amber-700 dark:text-amber-200">
+                                            Purging will archive all events to a timestamped backup and create a fresh empty event log. This action cannot be undone.
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <button @click="purgeEventLog()" class="w-full px-6 py-3 rounded-lg font-medium transition-colors bg-red-600 text-white hover:bg-red-700 flex items-center justify-center space-x-2">
+                                <i data-lucide="trash-2" class="w-5 h-5"></i>
+                                <span>Purge Event Log</span>
+                            </button>
+                        </div>
+
+                        <div class="mt-6 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+                            <div class="flex items-start space-x-3">
+                                <i data-lucide="info" class="w-5 h-5 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5"></i>
+                                <div class="text-sm text-blue-900 dark:text-blue-100">
+                                    <p class="font-semibold mb-1">About Event Logs</p>
+                                    <p class="text-blue-700 dark:text-blue-200">
+                                        The dashboard-events.jsonl file is the single source of truth for all system events. Events are automatically rotated after 2 days. Purging creates a backup in coordination/dashboard-events-archive/ before clearing.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Git & Server Management -->
+                    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-8 border border-gray-200 dark:border-gray-700">
+                        <div class="flex items-center space-x-3 mb-6">
+                            <i data-lucide="git-branch" class="w-8 h-8 text-purple-500"></i>
+                            <h3 class="text-2xl font-bold text-gray-900 dark:text-white">Git & Server Management</h3>
+                        </div>
+                        <p class="text-gray-600 dark:text-gray-400 mb-8">
+                            View git repository status and control the dashboard server.
+                        </p>
+
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                            <!-- Last PR Card -->
+                            <div class="border-2 border-orange-300 dark:border-orange-700 bg-orange-50 dark:bg-orange-900/20 rounded-xl p-6">
+                                <div class="flex items-center justify-between mb-4">
+                                    <div class="flex items-center space-x-3">
+                                        <i data-lucide="git-pull-request" class="w-6 h-6 text-orange-600 dark:text-orange-400"></i>
+                                        <h4 class="text-lg font-semibold text-gray-900 dark:text-white">Last PR</h4>
+                                    </div>
+                                </div>
+
+                                <div class="space-y-2">
+                                    <div>
+                                        <span class="text-sm text-gray-600 dark:text-gray-400">Message:</span>
+                                        <p class="text-sm font-medium text-gray-900 dark:text-white mt-1" x-text="truncateText(gitInfo.lastCommit?.message || 'No commits', 60)"></p>
+                                    </div>
+                                    <div>
+                                        <span class="text-sm text-gray-600 dark:text-gray-400">Time:</span>
+                                        <p class="text-sm font-medium text-orange-600 dark:text-orange-400 mt-1" x-text="gitInfo.lastCommit?.timeAgo || 'Never'"></p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Last Repo Sync Card -->
+                            <div class="border-2 border-teal-300 dark:border-teal-700 bg-teal-50 dark:bg-teal-900/20 rounded-xl p-6">
+                                <div class="flex items-center justify-between mb-4">
+                                    <div class="flex items-center space-x-3">
+                                        <i data-lucide="refresh-cw" class="w-6 h-6 text-teal-600 dark:text-teal-400"></i>
+                                        <h4 class="text-lg font-semibold text-gray-900 dark:text-white">Last Repo Sync</h4>
+                                    </div>
+                                </div>
+
+                                <div class="space-y-2">
+                                    <div>
+                                        <span class="text-sm text-gray-600 dark:text-gray-400">Synced with origin:</span>
+                                        <p class="text-2xl font-bold text-teal-600 dark:text-teal-400 mt-2" x-text="gitInfo.lastSync || 'Never'"></p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Dashboard Server Card -->
+                            <div class="border-2 rounded-xl p-6" :class="dashboardServerStatus?.status === 'running' ? 'border-green-300 dark:border-green-700 bg-green-50 dark:bg-green-900/20' : 'border-red-300 dark:border-red-700 bg-red-50 dark:bg-red-900/20'">
+                                <div class="flex items-center justify-between mb-4">
+                                    <div class="flex items-center space-x-3">
+                                        <i data-lucide="server" class="w-6 h-6" :class="dashboardServerStatus?.status === 'running' ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'"></i>
+                                        <h4 class="text-lg font-semibold text-gray-900 dark:text-white">Dashboard Server</h4>
+                                    </div>
+                                    <span class="px-3 py-1 rounded-full text-sm font-medium" :class="dashboardServerStatus?.status === 'running' ? 'bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300' : 'bg-red-100 dark:bg-red-900 text-red-700 dark:text-red-300'" x-text="dashboardServerStatus?.status === 'running' ? 'Running' : 'Stopped'"></span>
+                                </div>
+
+                                <div class="space-y-2 mb-6">
+                                    <div class="flex justify-between text-sm">
+                                        <span class="text-gray-600 dark:text-gray-400">PID:</span>
+                                        <span class="font-medium text-gray-900 dark:text-white" x-text="dashboardServerStatus?.pid || 'N/A'"></span>
+                                    </div>
+                                    <div class="flex justify-between text-sm">
+                                        <span class="text-gray-600 dark:text-gray-400">Port:</span>
+                                        <span class="font-medium text-gray-900 dark:text-white" x-text="dashboardServerStatus?.port || 'N/A'"></span>
+                                    </div>
+                                </div>
+
+                                <button @click="restartDashboardServer()" class="w-full px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white text-sm font-medium rounded-lg transition-colors flex items-center justify-center space-x-2">
+                                    <i data-lucide="refresh-cw" class="w-4 h-4"></i>
+                                    <span>Restart Server</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="mt-8 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+                            <div class="flex items-start space-x-3">
+                                <i data-lucide="info" class="w-5 h-5 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5"></i>
+                                <div class="text-sm text-blue-900 dark:text-blue-100">
+                                    <p class="font-semibold mb-1">About Git & Server Management</p>
+                                    <p class="text-blue-700 dark:text-blue-200">
+                                        Monitor the latest pull request and repository synchronization status. Restart the dashboard server if needed (page will reload automatically after restart).
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Health Alerts View -->
+            <div x-show="currentView === 'health-alerts'" x-transition>
+                <div class="space-y-6">
+                    <!-- Summary Stats -->
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+                        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 border border-gray-200 dark:border-gray-700">
+                            <div class="flex items-center space-x-3">
+                                <i data-lucide="alert-circle" class="w-8 h-8 text-red-600 dark:text-red-400"></i>
+                                <div>
+                                    <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Total Alerts</p>
+                                    <p class="text-3xl font-bold text-gray-900 dark:text-white" x-text="healthAlerts.length"></p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 border border-gray-200 dark:border-gray-700">
+                            <div class="flex items-center space-x-3">
+                                <i data-lucide="activity" class="w-8 h-8 text-orange-600 dark:text-orange-400"></i>
+                                <div>
+                                    <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Active</p>
+                                    <p class="text-3xl font-bold text-gray-900 dark:text-white" x-text="healthAlerts.filter(a => a.status === 'active').length"></p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 border border-gray-200 dark:border-gray-700">
+                            <div class="flex items-center space-x-3">
+                                <i data-lucide="eye" class="w-8 h-8 text-blue-600 dark:text-blue-400"></i>
+                                <div>
+                                    <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Monitoring</p>
+                                    <p class="text-3xl font-bold text-gray-900 dark:text-white" x-text="healthAlerts.filter(a => a.status === 'monitoring').length"></p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 border border-gray-200 dark:border-gray-700">
+                            <div class="flex items-center space-x-3">
+                                <i data-lucide="check-circle" class="w-8 h-8 text-green-600 dark:text-green-400"></i>
+                                <div>
+                                    <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Resolved</p>
+                                    <p class="text-3xl font-bold text-gray-900 dark:text-white" x-text="healthAlerts.filter(a => a.status === 'resolved').length"></p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Alerts List -->
+                    <div class="space-y-4">
+                        <template x-for="alert in healthAlerts" :key="alert.id">
+                            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg border-2 transition-all" :class="getSeverityBgColor(alert.severity)">
+                                <!-- Alert Header -->
+                                <div class="p-6">
+                                    <div class="flex items-start justify-between">
+                                        <div class="flex-1">
+                                            <div class="flex items-center space-x-3 mb-2">
+                                                <!-- Severity Badge -->
+                                                <span class="px-3 py-1 rounded-full text-xs font-bold uppercase" :class="{
+                                                    'bg-red-600 text-white': alert.severity === 'critical',
+                                                    'bg-orange-600 text-white': alert.severity === 'high',
+                                                    'bg-yellow-600 text-white': alert.severity === 'medium',
+                                                    'bg-blue-600 text-white': alert.severity === 'low'
+                                                }" x-text="alert.severity"></span>
+
+                                                <!-- Status Badge -->
+                                                <span class="px-3 py-1 rounded-full text-xs font-semibold" :class="getStatusColor(alert.status)" x-text="alert.status"></span>
+
+                                                <!-- Alert Type -->
+                                                <span class="text-sm text-gray-600 dark:text-gray-400" x-text="alert.type.replace(/_/g, ' ').toUpperCase()"></span>
+                                            </div>
+
+                                            <!-- Alert Message -->
+                                            <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2" x-text="alert.message"></h3>
+
+                                            <!-- Alert Meta -->
+                                            <div class="flex flex-wrap gap-4 text-sm text-gray-600 dark:text-gray-400">
+                                                <div class="flex items-center space-x-1">
+                                                    <i data-lucide="calendar" class="w-4 h-4"></i>
+                                                    <span x-text="'Created: ' + formatTimestamp(alert.created_at)"></span>
+                                                </div>
+                                                <div x-show="alert.metric_value !== null && alert.metric_value !== undefined" class="flex items-center space-x-1">
+                                                    <i data-lucide="gauge" class="w-4 h-4"></i>
+                                                    <span x-text="'Metric: ' + (typeof alert.metric_value === 'number' ? alert.metric_value.toFixed(2) : alert.metric_value)"></span>
+                                                </div>
+                                                <div x-show="alert.threshold !== null && alert.threshold !== undefined" class="flex items-center space-x-1">
+                                                    <i data-lucide="alert-triangle" class="w-4 h-4"></i>
+                                                    <span x-text="'Threshold: ' + (typeof alert.threshold === 'number' ? alert.threshold.toFixed(2) : alert.threshold)"></span>
+                                                </div>
+                                                <div x-show="alert.worker_id" class="flex items-center space-x-1">
+                                                    <i data-lucide="cpu" class="w-4 h-4"></i>
+                                                    <span x-text="'Worker: ' + alert.worker_id"></span>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <!-- Actions Dropdown -->
+                                        <div class="flex items-center space-x-2">
+                                            <button @click="expandAlertDetails(alert.id)" class="p-2 rounded-lg hover:bg-black/5 dark:hover:bg-white/10 transition-colors">
+                                                <i :data-lucide="isAlertExpanded(alert.id) ? 'chevron-up' : 'chevron-down'" class="w-5 h-5 text-gray-600 dark:text-gray-400"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Expanded Details -->
+                                <div x-show="isAlertExpanded(alert.id)" x-transition class="px-6 pb-6 space-y-4">
+                                    <!-- Investigation Notes -->
+                                    <div x-show="alert.investigation_notes && alert.investigation_notes.length > 0" class="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4">
+                                        <h4 class="font-semibold text-blue-900 dark:text-blue-100 mb-2 flex items-center space-x-2">
+                                            <i data-lucide="file-text" class="w-4 h-4"></i>
+                                            <span>Investigation Notes</span>
+                                        </h4>
+                                        <div class="space-y-2">
+                                            <template x-for="(note, index) in alert.investigation_notes" :key="index">
+                                                <p class="text-sm text-blue-800 dark:text-blue-200" x-text="note"></p>
+                                            </template>
+                                        </div>
+                                    </div>
+
+                                    <!-- Resolution Notes -->
+                                    <div x-show="alert.resolution_notes && alert.resolution_notes.length > 0" class="bg-green-50 dark:bg-green-900/20 rounded-lg p-4">
+                                        <h4 class="font-semibold text-green-900 dark:text-green-100 mb-2 flex items-center space-x-2">
+                                            <i data-lucide="check-circle" class="w-4 h-4"></i>
+                                            <span>Resolution Notes</span>
+                                        </h4>
+                                        <div class="space-y-2">
+                                            <template x-for="(note, index) in alert.resolution_notes" :key="index">
+                                                <p class="text-sm text-green-800 dark:text-green-200" x-text="note"></p>
+                                            </template>
+                                        </div>
+                                    </div>
+
+                                    <!-- Action Buttons -->
+                                    <div class="flex flex-wrap gap-2 pt-2">
+                                        <button @click="addAlertNote(alert.id)" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors flex items-center space-x-2">
+                                            <i data-lucide="file-plus" class="w-4 h-4"></i>
+                                            <span>Add Note</span>
+                                        </button>
+
+                                        <button x-show="alert.worker_id && alert.status !== 'resolved'" @click="restartWorkerFromAlert(alert.id, alert.worker_id)" class="px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white rounded-lg transition-colors flex items-center space-x-2">
+                                            <i data-lucide="refresh-cw" class="w-4 h-4"></i>
+                                            <span>Restart Worker</span>
+                                        </button>
+
+                                        <button x-show="alert.status !== 'resolved'" @click="resolveAlert(alert.id)" class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors flex items-center space-x-2">
+                                            <i data-lucide="check-circle" class="w-4 h-4"></i>
+                                            <span>Mark Resolved</span>
+                                        </button>
+
+                                        <button @click="deleteAlert(alert.id)" class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors flex items-center space-x-2">
+                                            <i data-lucide="trash-2" class="w-4 h-4"></i>
+                                            <span>Delete</span>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </template>
+
+                        <!-- Empty State -->
+                        <div x-show="healthAlerts.length === 0" class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-12 text-center border border-gray-200 dark:border-gray-700">
+                            <i data-lucide="check-circle" class="w-16 h-16 mx-auto mb-4 text-green-500"></i>
+                            <h3 class="text-xl font-semibold text-gray-900 dark:text-white mb-2">No Health Alerts</h3>
+                            <p class="text-gray-600 dark:text-gray-400">All systems are operating normally.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- MoE Routing Intelligence View -->
+            <div x-show="currentView === 'moe-routing'" x-transition>
+                <div class="space-y-4 sm:space-y-6">
+                    <!-- MoE Overview Stats -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+                        <div class="bg-white dark:bg-gray-800 rounded-lg sm:rounded-xl shadow-lg p-4 sm:p-6 border border-gray-200 dark:border-gray-700">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-400">Total Routes</p>
+                                    <p class="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mt-1" x-text="moeMetrics.totalRoutes || 0"></p>
+                                </div>
+                                <i data-lucide="zap" class="w-8 h-8 sm:w-10 sm:h-10 text-blue-500"></i>
+                            </div>
+                        </div>
+
+                        <div class="bg-white dark:bg-gray-800 rounded-lg sm:rounded-xl shadow-lg p-4 sm:p-6 border border-gray-200 dark:border-gray-700">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-400">Avg Confidence</p>
+                                    <p class="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mt-1" x-text="(moeMetrics.avgConfidence || 0) + '%'"></p>
+                                </div>
+                                <i data-lucide="target" class="w-8 h-8 sm:w-10 sm:h-10 text-green-500"></i>
+                            </div>
+                        </div>
+
+                        <div class="bg-white dark:bg-gray-800 rounded-lg sm:rounded-xl shadow-lg p-4 sm:p-6 border border-gray-200 dark:border-gray-700">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-400">Parallel Routes</p>
+                                    <p class="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mt-1" x-text="moeMetrics.parallelRoutes || 0"></p>
+                                </div>
+                                <i data-lucide="git-branch" class="w-8 h-8 sm:w-10 sm:h-10 text-purple-500"></i>
+                            </div>
+                        </div>
+
+                        <div class="bg-white dark:bg-gray-800 rounded-lg sm:rounded-xl shadow-lg p-4 sm:p-6 border border-gray-200 dark:border-gray-700">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-400">Accuracy</p>
+                                    <p class="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mt-1" x-text="(moeMetrics.accuracy || 0) + '%'"></p>
+                                </div>
+                                <i data-lucide="check-circle" class="w-8 h-8 sm:w-10 sm:h-10 text-emerald-500"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Recent Routing Decisions -->
+                    <div class="bg-white dark:bg-gray-800 rounded-lg sm:rounded-xl shadow-lg border border-gray-200 dark:border-gray-700">
+                        <div class="p-4 sm:p-6 border-b border-gray-200 dark:border-gray-700">
+                            <h3 class="text-base sm:text-lg font-semibold text-gray-900 dark:text-white flex items-center">
+                                <i data-lucide="zap" class="w-5 h-5 mr-2 text-primary-500"></i>
+                                Recent Routing Decisions
+                            </h3>
+                        </div>
+                        <div class="p-4 sm:p-6">
+                            <div class="space-y-3 sm:space-y-4" x-show="moeRoutingDecisions.length > 0">
+                                <template x-for="decision in moeRoutingDecisions.slice(0, 10)" :key="decision.task_id">
+                                    <div class="border border-gray-200 dark:border-gray-700 rounded-lg p-3 sm:p-4 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                                        <div class="flex items-start justify-between mb-2">
+                                            <div class="flex-1">
+                                                <p class="text-sm font-mono text-gray-900 dark:text-white" x-text="decision.task_id"></p>
+                                                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1" x-text="decision.timestamp"></p>
+                                            </div>
+                                            <span class="px-2 py-1 rounded text-xs font-semibold"
+                                                  :class="{
+                                                    'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300': decision.decision?.primary_expert === 'development',
+                                                    'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300': decision.decision?.primary_expert === 'security',
+                                                    'bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300': decision.decision?.primary_expert === 'inventory'
+                                                  }"
+                                                  x-text="decision.decision?.primary_expert || 'unknown'"></span>
+                                        </div>
+                                        <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-4 text-xs">
+                                            <div>
+                                                <p class="text-gray-500 dark:text-gray-400">Confidence</p>
+                                                <p class="font-semibold text-gray-900 dark:text-white" x-text="((decision.decision?.primary_confidence || 0) * 100).toFixed(0) + '%'"></p>
+                                            </div>
+                                            <div>
+                                                <p class="text-gray-500 dark:text-gray-400">Strategy</p>
+                                                <p class="font-semibold text-gray-900 dark:text-white" x-text="decision.decision?.strategy || 'N/A'"></p>
+                                            </div>
+                                            <div class="col-span-2">
+                                                <p class="text-gray-500 dark:text-gray-400">Scores</p>
+                                                <div class="flex space-x-2 mt-1">
+                                                    <span class="text-xs font-mono text-blue-600 dark:text-blue-400" x-text="'Dev: ' + (decision.decision?.scores?.development || 0)"></span>
+                                                    <span class="text-xs font-mono text-red-600 dark:text-red-400" x-text="'Sec: ' + (decision.decision?.scores?.security || 0)"></span>
+                                                    <span class="text-xs font-mono text-purple-600 dark:text-purple-400" x-text="'Inv: ' + (decision.decision?.scores?.inventory || 0)"></span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </template>
+                            </div>
+                            <p x-show="moeRoutingDecisions.length === 0" class="text-center text-gray-500 dark:text-gray-400 py-8">
+                                No routing decisions yet
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Expert Distribution Chart -->
+                    <div class="bg-white dark:bg-gray-800 rounded-lg sm:rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 p-4 sm:p-6">
+                        <h3 class="text-base sm:text-lg font-semibold text-gray-900 dark:text-white mb-4">Expert Distribution</h3>
+                        <div class="grid grid-cols-3 gap-4">
+                            <div class="text-center">
+                                <div class="text-3xl sm:text-4xl font-bold text-blue-600 dark:text-blue-400" x-text="moeMetrics.expertCounts?.development || 0"></div>
+                                <p class="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mt-1">Development</p>
+                            </div>
+                            <div class="text-center">
+                                <div class="text-3xl sm:text-4xl font-bold text-red-600 dark:text-red-400" x-text="moeMetrics.expertCounts?.security || 0"></div>
+                                <p class="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mt-1">Security</p>
+                            </div>
+                            <div class="text-center">
+                                <div class="text-3xl sm:text-4xl font-bold text-purple-600 dark:text-purple-400" x-text="moeMetrics.expertCounts?.inventory || 0"></div>
+                                <p class="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mt-1">Inventory</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- MoE Worker Pool View -->
+            <div x-show="currentView === 'moe-pool'" x-transition>
+                <div class="space-y-4 sm:space-y-6">
+                    <!-- Pool Metrics -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+                        <div class="bg-white dark:bg-gray-800 rounded-lg sm:rounded-xl shadow-lg p-4 sm:p-6 border border-gray-200 dark:border-gray-700">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-400">Active Workers</p>
+                                    <p class="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mt-1" x-text="(moePoolMetrics.active_workers || 0) + '/' + (moePoolMetrics.max_capacity || 64)"></p>
+                                </div>
+                                <i data-lucide="cpu" class="w-8 h-8 sm:w-10 sm:h-10 text-blue-500"></i>
+                            </div>
+                        </div>
+
+                        <div class="bg-white dark:bg-gray-800 rounded-lg sm:rounded-xl shadow-lg p-4 sm:p-6 border border-gray-200 dark:border-gray-700">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-400">Activation Rate</p>
+                                    <p class="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mt-1" x-text="(moePoolMetrics.activation_rate || 0) + '%'"></p>
+                                </div>
+                                <i data-lucide="activity" class="w-8 h-8 sm:w-10 sm:h-10 text-green-500"></i>
+                            </div>
+                            <p class="text-xs text-gray-500 dark:text-gray-400 mt-2">~14% sparse (like MoE 1B/7B)</p>
+                        </div>
+
+                        <div class="bg-white dark:bg-gray-800 rounded-lg sm:rounded-xl shadow-lg p-4 sm:p-6 border border-gray-200 dark:border-gray-700">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-400">Target Workers</p>
+                                    <p class="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mt-1" x-text="moePoolMetrics.target_workers || 0"></p>
+                                </div>
+                                <i data-lucide="target" class="w-8 h-8 sm:w-10 sm:h-10 text-purple-500"></i>
+                            </div>
+                        </div>
+
+                        <div class="bg-white dark:bg-gray-800 rounded-lg sm:rounded-xl shadow-lg p-4 sm:p-6 border border-gray-200 dark:border-gray-700">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-400">Utilization</p>
+                                    <p class="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mt-1" x-text="(moePoolMetrics.utilization || 0) + '%'"></p>
+                                </div>
+                                <i data-lucide="gauge" class="w-8 h-8 sm:w-10 sm:h-10 text-orange-500"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Activation Gauge -->
+                    <div class="bg-white dark:bg-gray-800 rounded-lg sm:rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 p-4 sm:p-6">
+                        <h3 class="text-base sm:text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center">
+                            <i data-lucide="activity" class="w-5 h-5 mr-2 text-primary-500"></i>
+                            Sparse Activation (MoE-Inspired)
+                        </h3>
+                        <div class="relative pt-1">
+                            <div class="flex mb-2 items-center justify-between">
+                                <div>
+                                    <span class="text-xs font-semibold inline-block py-1 px-2 uppercase rounded-full text-blue-600 bg-blue-200 dark:bg-blue-900/30 dark:text-blue-300">
+                                        <span x-text="(moePoolMetrics.activation_rate || 0) + '%'"></span> Activation
+                                    </span>
+                                </div>
+                                <div class="text-right">
+                                    <span class="text-xs font-semibold inline-block text-gray-600 dark:text-gray-400">
+                                        <span x-text="moePoolMetrics.active_workers || 0"></span> / <span x-text="moePoolMetrics.max_capacity || 64"></span> Workers
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="overflow-hidden h-4 mb-4 text-xs flex rounded bg-gray-200 dark:bg-gray-700">
+                                <div :style="'width: ' + (moePoolMetrics.activation_rate || 0) + '%'"
+                                     class="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center transition-all duration-500"
+                                     :class="{
+                                        'bg-green-500': (moePoolMetrics.activation_rate || 0) <= 20,
+                                        'bg-yellow-500': (moePoolMetrics.activation_rate || 0) > 20 && (moePoolMetrics.activation_rate || 0) <= 50,
+                                        'bg-orange-500': (moePoolMetrics.activation_rate || 0) > 50 && (moePoolMetrics.activation_rate || 0) <= 80,
+                                        'bg-red-500': (moePoolMetrics.activation_rate || 0) > 80
+                                     }">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- MoE Analogy -->
+                        <div class="mt-6 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
+                            <p class="text-sm font-semibold text-blue-900 dark:text-blue-200 mb-2">MoE Analogy</p>
+                            <p class="text-xs text-blue-700 dark:text-blue-300" x-text="moePoolMetrics.moe_analogy?.active_params || 'No data'"></p>
+                            <p class="text-xs text-blue-600 dark:text-blue-400 mt-1">Like activating 1B out of 7B parameters in a Mixture of Experts model</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- MoE Learning View -->
+            <div x-show="currentView === 'moe-learning'" x-transition>
+                <div class="space-y-4 sm:space-y-6">
+                    <!-- Learning Stats -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+                        <div class="bg-white dark:bg-gray-800 rounded-lg sm:rounded-xl shadow-lg p-4 sm:p-6 border border-gray-200 dark:border-gray-700">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-400">Tasks Processed</p>
+                                    <p class="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mt-1" x-text="moeLearningMetrics.total_tasks || 0"></p>
+                                </div>
+                                <i data-lucide="brain" class="w-8 h-8 sm:w-10 sm:h-10 text-purple-500"></i>
+                            </div>
+                        </div>
+
+                        <div class="bg-white dark:bg-gray-800 rounded-lg sm:rounded-xl shadow-lg p-4 sm:p-6 border border-gray-200 dark:border-gray-700">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-400">Success Rate</p>
+                                    <p class="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mt-1" x-text="(moeLearningMetrics.success_rate || 0) + '%'"></p>
+                                </div>
+                                <i data-lucide="trending-up" class="w-8 h-8 sm:w-10 sm:h-10 text-green-500"></i>
+                            </div>
+                        </div>
+
+                        <div class="bg-white dark:bg-gray-800 rounded-lg sm:rounded-xl shadow-lg p-4 sm:p-6 border border-gray-200 dark:border-gray-700">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-400">Avg Completion</p>
+                                    <p class="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mt-1" x-text="(moeLearningMetrics.avg_time || 0) + 'm'"></p>
+                                </div>
+                                <i data-lucide="clock" class="w-8 h-8 sm:w-10 sm:h-10 text-blue-500"></i>
+                            </div>
+                        </div>
+
+                        <div class="bg-white dark:bg-gray-800 rounded-lg sm:rounded-xl shadow-lg p-4 sm:p-6 border border-gray-200 dark:border-gray-700">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-400">Learned Patterns</p>
+                                    <p class="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mt-1" x-text="moeLearningMetrics.learned_keywords || 0"></p>
+                                </div>
+                                <i data-lucide="sparkles" class="w-8 h-8 sm:w-10 sm:h-10 text-yellow-500"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Expert Performance -->
+                    <div class="bg-white dark:bg-gray-800 rounded-lg sm:rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 p-4 sm:p-6">
+                        <h3 class="text-base sm:text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center">
+                            <i data-lucide="users" class="w-5 h-5 mr-2 text-primary-500"></i>
+                            Expert Performance
+                        </h3>
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                            <template x-for="expert in ['development', 'security', 'inventory']" :key="expert">
+                                <div class="p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
+                                    <p class="font-semibold text-gray-900 dark:text-white capitalize mb-3" x-text="expert"></p>
+                                    <div class="space-y-2 text-sm">
+                                        <div class="flex justify-between">
+                                            <span class="text-gray-600 dark:text-gray-400">Tasks:</span>
+                                            <span class="font-semibold text-gray-900 dark:text-white" x-text="moeLearningMetrics.experts?.[expert]?.tasks || 0"></span>
+                                        </div>
+                                        <div class="flex justify-between">
+                                            <span class="text-gray-600 dark:text-gray-400">Success Rate:</span>
+                                            <span class="font-semibold text-gray-900 dark:text-white" x-text="(moeLearningMetrics.experts?.[expert]?.success_rate || 0) + '%'"></span>
+                                        </div>
+                                        <div class="flex justify-between">
+                                            <span class="text-gray-600 dark:text-gray-400">Avg Time:</span>
+                                            <span class="font-semibold text-gray-900 dark:text-white" x-text="(moeLearningMetrics.experts?.[expert]?.avg_time || 0) + 'm'"></span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </template>
+                        </div>
+                    </div>
+
+                    <!-- Learning Insights -->
+                    <div class="bg-white dark:bg-gray-800 rounded-lg sm:rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 p-4 sm:p-6">
+                        <h3 class="text-base sm:text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center">
+                            <i data-lucide="lightbulb" class="w-5 h-5 mr-2 text-primary-500"></i>
+                            Learning Insights
+                        </h3>
+                        <div class="space-y-3" x-show="moeLearningInsights.length > 0">
+                            <template x-for="insight in moeLearningInsights" :key="insight.id">
+                                <div class="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
+                                    <p class="text-sm text-blue-900 dark:text-blue-200" x-text="insight.message"></p>
+                                    <p class="text-xs text-blue-600 dark:text-blue-400 mt-1" x-text="insight.timestamp"></p>
+                                </div>
+                            </template>
+                        </div>
+                        <p x-show="moeLearningInsights.length === 0" class="text-center text-gray-500 dark:text-gray-400 py-4">
+                            System is learning from routing decisions...
+                        </p>
+                    </div>
+                </div>
+            </div>
+
             <!-- About View -->
-            <div x-show="currentView === 'about'" x-transition @transitionend="if (currentView === 'about') { setTimeout(() => { try { mermaid.run(); console.log('Mermaid rendered'); } catch(e) { console.error('Mermaid error:', e); } }, 50); }">
+            <div x-show="currentView === 'about'" x-transition>
                 <div class="space-y-6 max-w-6xl">
                     <!-- Overview Section -->
                     <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-8 border border-gray-200 dark:border-gray-700">
@@ -1642,88 +2496,6 @@ graph TB
                                     <h4 class="font-semibold text-orange-700 dark:text-orange-300 mb-2">📊 Historical Analytics</h4>
                                     <p class="text-sm">Real-time metrics with 5-minute snapshots, daily aggregation, and trend visualization.</p>
                                 </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- System Architecture Flowchart -->
-                    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-8 border border-gray-200 dark:border-gray-700">
-                        <div class="flex items-center space-x-3 mb-6">
-                            <i data-lucide="git-branch" class="w-8 h-8 text-primary-500"></i>
-                            <h3 class="text-2xl font-bold text-gray-900 dark:text-white">System Architecture</h3>
-                        </div>
-
-                        <pre class="mermaid bg-gray-50 dark:bg-gray-900 p-6 rounded-lg">
-graph TB
-    subgraph Strategic["🎯 Strategic Layer - Daemons"]
-        TO["Task Orchestrator<br/>Complex Coordination"]
-        ZK["Zombie Killer<br/>Health Monitoring"]
-        MS["Metrics Snapshot<br/>Historical Data"]
-    end
-
-    subgraph Tactical["👨‍💼 Tactical & Execution Layer"]
-        CM["Coordinator Master<br/>MoE Routing"]
-        SM["Security Master"]
-        DM["Development Master"]
-        IM["Inventory Master"]
-
-        W1["Scan Workers"]
-        W2["Implementation Workers"]
-        W3["Test Workers"]
-        W4["16 Worker Types"]
-    end
-
-    subgraph Observer["📊 Observer Layer"]
-        DA["Dashboard"]
-    end
-
-    TO --> CM
-    TO --> SM
-    TO --> DM
-    TO --> IM
-
-    CM -->|Routes| SM
-    CM -->|Routes| DM
-    CM -->|Routes| IM
-
-    SM -->|Spawns| W1
-    SM -->|Spawns| W2
-    DM -->|Spawns| W2
-    DM -->|Spawns| W3
-    IM -->|Spawns| W1
-    IM -->|Spawns| W2
-
-    W1 -.->|Heartbeat| ZK
-    W2 -.->|Heartbeat| ZK
-    W3 -.->|Heartbeat| ZK
-    W4 -.->|Heartbeat| ZK
-
-    ZK -.->|Reports| DA
-    MS -.->|Feeds| DA
-    DA -.->|Monitors| TO
-    DA -.->|Monitors| CM
-    DA -.->|Monitors| SM
-    DA -.->|Monitors| DM
-    DA -.->|Monitors| IM
-
-    style TO fill:#e1bee7,stroke:#8e24aa
-    style ZK fill:#ffccbc,stroke:#ff6f00
-    style MS fill:#fff9c4,stroke:#f57f17
-    style DA fill:#b2dfdb,stroke:#00897b
-    style CM fill:#fef3c7,stroke:#f59e0b
-    style SM fill:#fee2e2,stroke:#ef4444
-    style DM fill:#dbeafe,stroke:#3b82f6
-    style IM fill:#e9d5ff,stroke:#a855f7
-                        </pre>
-
-                        <div class="mt-6 grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                            <div>
-                                <h4 class="font-semibold text-gray-900 dark:text-white mb-2">🎯 Strategic Layer</h4>
-                                <p class="text-gray-600 dark:text-gray-400">Task Orchestrator decomposes complex tasks → Zombie Killer monitors health → Metrics Snapshot collects history</p>
-                            </div>
-                            <div>
-                                <h4 class="font-semibold text-gray-900 dark:text-white mb-2">⚙️ Tactical & Execution Layer</h4>
-                                <p class="text-gray-600 dark:text-gray-400">Coordinator routes via MoE → Masters spawn workers directly → Workers send heartbeats → Zombie detection → Auto cleanup</p>
                             </div>
                         </div>
                     </div>

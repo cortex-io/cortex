@@ -62,9 +62,56 @@ trap cleanup SIGTERM SIGINT EXIT
 TRACKING_DIR="/tmp/commit-relay-workers"
 mkdir -p "$TRACKING_DIR"
 
+# Sparse Pool Manager Integration (MoE-inspired)
+check_pool_capacity() {
+    local sparse_manager="$COMMIT_RELAY_HOME/scripts/sparse-pool-manager.sh"
+
+    if [ ! -f "$sparse_manager" ]; then
+        # No sparse manager - allow unlimited (legacy mode)
+        return 0
+    fi
+
+    # Run sparse pool manager to get recommendations
+    local pool_output=$("$sparse_manager" 2>/dev/null || echo "")
+
+    if [ -z "$pool_output" ]; then
+        # Manager failed - allow launch (fail-open)
+        log_daemon "WARN: Sparse pool manager check failed, allowing worker launch"
+        return 0
+    fi
+
+    # Check pool state file for capacity
+    local pool_state="$COMMIT_RELAY_HOME/coordination/memory/working/pool-state.json"
+    if [ -f "$pool_state" ]; then
+        local active_workers=$(jq -r '.pool_metrics.active_workers' "$pool_state" 2>/dev/null || echo 0)
+        local target_workers=$(jq -r '.pool_metrics.target_workers' "$pool_state" 2>/dev/null || echo 99)
+        local activation_rate=$(jq -r '.pool_metrics.activation_rate' "$pool_state" 2>/dev/null || echo 100)
+
+        log_daemon "INFO: Pool capacity check - Active: $active_workers, Target: $target_workers, Rate: ${activation_rate}%"
+
+        if [ "$active_workers" -ge "$target_workers" ]; then
+            log_daemon "WARN: Worker pool at capacity ($active_workers/$target_workers), deferring launch"
+            return 1  # At capacity, don't launch
+        fi
+
+        log_daemon "INFO: Pool has capacity, allowing launch ($active_workers < $target_workers)"
+        return 0
+    fi
+
+    # No pool state - allow launch
+    return 0
+}
+
 # Main daemon loop
 while true; do
     cd "$COMMIT_RELAY_HOME"
+
+    # MoE: Check pool capacity before processing workers
+    if ! check_pool_capacity; then
+        log_daemon "INFO: Pool at capacity, skipping this cycle"
+        sleep "$POLL_INTERVAL"
+        continue
+    fi
 
     # Pull latest coordination state (quietly)
     if git pull origin main --quiet 2>/dev/null; then

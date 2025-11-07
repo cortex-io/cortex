@@ -218,7 +218,75 @@ route_task() {
 
     local task_type=$(echo "$task" | jq -r '.type')
     local task_title=$(echo "$task" | jq -r '.title // ""')
-    local task_desc="$task_type: $task_title"
+    local task_description=$(echo "$task" | jq -r '.description // ""')
+    local task_desc="$task_type: $task_title $task_description"
+
+    # ========================================================================
+    # NEW: Use MoE Router for intelligent routing with confidence scoring
+    # ========================================================================
+    log_info "Using MoE Router for intelligent task routing..."
+
+    local moe_router="$MASTER_CONTEXT_DIR/lib/moe-router.sh"
+    if [ -f "$moe_router" ]; then
+        # Call MoE router with task description
+        local routing_decision=$("$moe_router" "$task_id" "$task_desc" 2>/dev/null)
+
+        if [ $? -eq 0 ] && [ -n "$routing_decision" ]; then
+            # Extract routing info from MoE decision
+            local target_master=$(echo "$routing_decision" | jq -r '.decision.primary_expert')
+            local confidence=$(echo "$routing_decision" | jq -r '.decision.primary_confidence')
+            local strategy=$(echo "$routing_decision" | jq -r '.decision.strategy')
+            local parallel_experts=$(echo "$routing_decision" | jq -r '.decision.parallel_experts[]' 2>/dev/null)
+
+            log_success "MoE Routing: $target_master (confidence: $confidence, strategy: $strategy)"
+
+            # Emit MoE routing event for dashboard
+            local event_script="$SCRIPT_DIR/emit-event.sh"
+            if [ -f "$event_script" ]; then
+                local event_data=$(jq -nc \
+                    --arg task "$task_id" \
+                    --arg expert "$target_master" \
+                    --arg conf "$confidence" \
+                    --arg strat "$strategy" \
+                    '{task_id: $task, expert: $expert, confidence: ($conf | tonumber), strategy: $strat}')
+                "$event_script" "moe_routing_decision" "$event_data" "coordinator-master" 2>/dev/null || true
+            fi
+
+            # Handle parallel expert activation if needed
+            if [ -n "$parallel_experts" ]; then
+                log_info "Parallel experts detected: $parallel_experts"
+                # Call parallel activation script
+                local parallel_script="$SCRIPT_DIR/activate-experts-parallel.sh"
+                if [ -f "$parallel_script" ]; then
+                    "$parallel_script" "$task_id" "$task_desc" 2>/dev/null &
+                    log_success "Triggered parallel expert activation"
+                fi
+            else
+                # Single expert - assign task
+                assign_task_to_master "$task_id" "$target_master" "$routing_decision"
+            fi
+
+            # Record MoE routing decision for learning
+            record_moe_routing_decision "$task_id" "$routing_decision"
+
+            # Update memory/learning system
+            local memory_manager="$MASTER_CONTEXT_DIR/lib/memory-manager.sh"
+            if [ -f "$memory_manager" ]; then
+                "$memory_manager" analyze "$task_id" "$task_desc" "$routing_decision" 2>/dev/null &
+                log_info "Triggered memory/learning update"
+            fi
+
+            return 0
+        else
+            log_warning "MoE router failed, falling back to pattern-based routing"
+        fi
+    else
+        log_warning "MoE router not found, using legacy pattern-based routing"
+    fi
+
+    # ========================================================================
+    # FALLBACK: Legacy pattern-based routing (kept for compatibility)
+    # ========================================================================
 
     # Retrieve routing rules (RAG: retrieve from knowledge base)
     local routing_rules="$MASTER_KB_DIR/routing-rules.json"
@@ -261,38 +329,67 @@ route_task() {
 assign_task_to_master() {
     local task_id="$1"
     local target_master="$2"
+    local routing_decision="${3:-}"  # Optional MoE routing decision
 
     log_info "Assigning $task_id to $target_master master"
 
+    # Extract confidence and strategy if MoE decision provided
+    local confidence="N/A"
+    local strategy="pattern-based"
+    local routing_reason="Pattern-based routing via MoE"
+
+    if [ -n "$routing_decision" ]; then
+        confidence=$(echo "$routing_decision" | jq -r '.decision.primary_confidence // "N/A"')
+        strategy=$(echo "$routing_decision" | jq -r '.decision.strategy // "pattern-based"')
+        routing_reason="MoE confidence-based routing (confidence: $confidence, strategy: $strategy)"
+    fi
+
     # Update task with assignment
-    update_task_status "$task_id" "assigned" "{\"assigned_to\": \"$target_master\", \"assigned_by\": \"$MASTER_ID\", \"assigned_at\": \"$(date -u +%Y-%m-%dT%H:%M:%SZ)\"}"
+    update_task_status "$task_id" "assigned" "{\"assigned_to\": \"$target_master\", \"assigned_by\": \"$MASTER_ID\", \"assigned_at\": \"$(date -u +%Y-%m-%dT%H:%M:%SZ)\", \"routing_confidence\": \"$confidence\", \"routing_strategy\": \"$strategy\"}"
 
     # Create handoff for target master
     local handoff_file="$MASTER_CONTEXT_DIR/handoffs/to-${target_master}-${task_id}.json"
     local task_queue="$SCRIPT_DIR/../coordination/task-queue.json"
     local task=$(jq -r --arg id "$task_id" '.tasks[] | select(.id == $id)' "$task_queue")
 
-    cat > "$handoff_file" <<EOF
-{
-  "handoff_id": "coord-to-${target_master}-$(uuidgen)",
-  "from_master": "$MASTER_ID",
-  "to_master": "$target_master",
-  "task_id": "$task_id",
-  "task_data": $task,
-  "context": {
-    "routing_reason": "Pattern-based routing via MoE",
-    "priority": "$(echo "$task" | jq -r '.priority // "medium"')",
-    "expected_outcome": "Task completion with results handoff"
-  },
-  "created_at": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
-  "status": "pending_pickup"
-}
-EOF
+    # Build handoff with routing metadata
+    local handoff_content=$(jq -n \
+        --arg handoff_id "coord-to-${target_master}-$(uuidgen)" \
+        --arg from "$MASTER_ID" \
+        --arg to "$target_master" \
+        --arg tid "$task_id" \
+        --argjson tdata "$task" \
+        --arg reason "$routing_reason" \
+        --arg priority "$(echo "$task" | jq -r '.priority // "medium"')" \
+        --arg conf "$confidence" \
+        --arg strat "$strategy" \
+        --arg created "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+        '{
+            handoff_id: $handoff_id,
+            from_master: $from,
+            to_master: $to,
+            task_id: $tid,
+            task_data: $tdata,
+            context: {
+                routing_reason: $reason,
+                priority: $priority,
+                expected_outcome: "Task completion with results handoff",
+                moe_metadata: {
+                    confidence: $conf,
+                    strategy: $strat,
+                    routed_at: $created
+                }
+            },
+            created_at: $created,
+            status: "pending_pickup"
+        }')
 
-    log_success "Created handoff for $target_master master"
+    echo "$handoff_content" > "$handoff_file"
+
+    log_success "Created handoff for $target_master master (confidence: $confidence)"
 
     # Trigger target master (if daemon is running, it will pick this up)
-    log_event "task_routed" "{\"task_id\": \"$task_id\", \"target_master\": \"$target_master\"}"
+    log_event "task_routed" "{\"task_id\": \"$task_id\", \"target_master\": \"$target_master\", \"confidence\": \"$confidence\"}"
 }
 
 # Handle multi-master tasks
@@ -346,6 +443,43 @@ record_routing_decision() {
         '{task_id: $task, routed_to: $master, rule_used: $rule, timestamp: $ts}')
 
     echo "$decision" >> "$decision_file"
+}
+
+# Record MoE routing decision for learning and analytics
+record_moe_routing_decision() {
+    local task_id="$1"
+    local routing_decision="$2"
+
+    # Save to MoE-specific log (used by memory/learning system)
+    local moe_log="$MASTER_CONTEXT_DIR/logs/routing-decisions.jsonl"
+    mkdir -p "$(dirname "$moe_log")"
+
+    # Extract key routing info
+    local primary_expert=$(echo "$routing_decision" | jq -r '.decision.primary_expert')
+    local confidence=$(echo "$routing_decision" | jq -r '.decision.primary_confidence')
+    local strategy=$(echo "$routing_decision" | jq -r '.decision.strategy')
+
+    # Create enriched log entry
+    local log_entry=$(echo "$routing_decision" | jq \
+        --arg task "$task_id" \
+        '. + {enriched_metadata: {logged_by: "coordinator-master", logged_at: (now | strftime("%Y-%m-%dT%H:%M:%SZ"))}}')
+
+    echo "$log_entry" >> "$moe_log"
+
+    # Also log to legacy format for compatibility
+    local decision_file="$MASTER_KB_DIR/routing-decisions.jsonl"
+    local legacy_decision=$(jq -nc \
+        --arg task "$task_id" \
+        --arg master "$primary_expert" \
+        --arg rule "moe-confidence-based" \
+        --arg conf "$confidence" \
+        --arg strat "$strategy" \
+        --arg ts "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+        '{task_id: $task, routed_to: $master, rule_used: $rule, confidence: $conf, strategy: $strat, timestamp: $ts}')
+
+    echo "$legacy_decision" >> "$decision_file"
+
+    log_info "Recorded MoE routing decision for task $task_id"
 }
 
 # Main execution

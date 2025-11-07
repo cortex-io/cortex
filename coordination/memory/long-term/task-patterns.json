@@ -1,0 +1,41 @@
+{
+  "version": "1.0.0",
+  "last_updated": "2025-11-07T21:35:00Z",
+  "patterns": {
+    "by_expert": {
+      "development": {
+        "common_keywords": [],
+        "typical_complexity": "medium",
+        "average_completion_time": 0,
+        "success_rate": 0,
+        "total_tasks": 0
+      },
+      "security": {
+        "common_keywords": [],
+        "typical_complexity": "high",
+        "average_completion_time": 0,
+        "success_rate": 0,
+        "total_tasks": 0
+      },
+      "inventory": {
+        "common_keywords": [],
+        "typical_complexity": "low",
+        "average_completion_time": 0,
+        "success_rate": 0,
+        "total_tasks": 0
+      }
+    },
+    "routing_accuracy": {
+      "correct_routes": 0,
+      "total_routes": 0,
+      "accuracy_percentage": 0,
+      "confidence_threshold_adjustments": []
+    },
+    "parallel_activation_patterns": {
+      "total_parallel_activations": 0,
+      "success_rate": 0,
+      "common_combinations": []
+    }
+  },
+  "learned_insights": []
+}
