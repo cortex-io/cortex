@@ -243,9 +243,15 @@ if [ "${BASH_SOURCE[0]}" == "${0}" ]; then
     task_description="$2"
 
     routing_decision=$(route_task_moe "$task_id" "$task_description")
-    echo "$routing_decision" | jq '.'
 
-    echo ""
-    echo "Activated experts:"
-    get_activated_experts "$routing_decision"
+    # Output compact JSON for machine consumption
+    echo "$routing_decision"
+
+    # If running interactively, show pretty output to stderr
+    if [ -t 1 ]; then
+        echo "$routing_decision" | jq '.' >&2
+        echo "" >&2
+        echo "Activated experts:" >&2
+        get_activated_experts "$routing_decision" >&2
+    fi
 fi
