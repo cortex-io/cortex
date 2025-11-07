@@ -283,5 +283,12 @@
       "stream-d": 0,
       "stream-e": 0
     }
-  }
+  },
+  "workers": {
+    "active": 0,
+    "completed": 12,
+    "failed": 0,
+    "zombie": 0
+  },
+  "last_updated": "2025-11-07T22:09:04Z"
 }

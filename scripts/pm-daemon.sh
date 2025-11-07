@@ -13,6 +13,7 @@ COMMIT_RELAY_HOME="${COMMIT_RELAY_HOME:-$(cd "$SCRIPT_DIR/.." && pwd)}"
 PM_ID="pm-001"
 PM_VERSION="1.0.0"
 LOOP_INTERVAL="${PM_LOOP_INTERVAL:-180}"  # 3 minutes
+SNAPSHOT_INTERVAL="${SNAPSHOT_INTERVAL:-300}"  # 5 minutes for historical snapshots
 TEST_MODE="${1:-}"
 
 # Paths
@@ -26,6 +27,9 @@ WORKER_SPECS_DIR="$COMMIT_RELAY_HOME/coordination/worker-specs"
 CHECKINS_DIR="$COMMIT_RELAY_HOME/coordination/worker-checkins"
 REQUESTS_DIR="$COMMIT_RELAY_HOME/coordination/pm-requests"
 ALERTS_DIR="$COMMIT_RELAY_HOME/coordination/pm-alerts"
+HISTORY_DIR="$COMMIT_RELAY_HOME/coordination/history"
+HOURLY_DIR="$HISTORY_DIR/hourly"
+DAILY_DIR="$HISTORY_DIR/daily"
 
 # Ensure directories exist
 mkdir -p "$(dirname "$LOG_FILE")"
@@ -33,6 +37,8 @@ mkdir -p "$CHECKINS_DIR"
 mkdir -p "$REQUESTS_DIR"/{pending,processed}
 mkdir -p "$ALERTS_DIR"/{pending,resolved}
 mkdir -p "$WORKER_SPECS_DIR"/{active,completed,failed}
+mkdir -p "$HOURLY_DIR"
+mkdir -p "$DAILY_DIR"
 
 # Redirect output to log file
 exec >> "$LOG_FILE" 2>&1
@@ -45,7 +51,12 @@ log_pm() {
 log_pm_event() {
     local event_type="$1"
     local worker_id="${2:-}"
-    local data_json="${3:-{}}"
+    local data_json="${3:-}"
+
+    # Default to empty object if not provided
+    if [ -z "$data_json" ]; then
+        data_json="{}"
+    fi
 
     local timestamp=$(date -u +%Y-%m-%dT%H:%M:%SZ)
 
@@ -164,7 +175,17 @@ save_pm_state() {
 calculate_age_minutes() {
     local timestamp="$1"
     local now=$(date -u +%s)
-    local then=$(date -u -d "$timestamp" +%s 2>/dev/null || echo 0)
+
+    # macOS-compatible date parsing
+    local then
+    if [[ "$OSTYPE" == "darwin"* ]]; then
+        # macOS: use -j -f for ISO8601 parsing
+        then=$(date -j -f "%Y-%m-%dT%H:%M:%SZ" "$timestamp" +%s 2>/dev/null || echo 0)
+    else
+        # Linux: use -d
+        then=$(date -u -d "$timestamp" +%s 2>/dev/null || echo 0)
+    fi
+
     local age_seconds=$((now - then))
     echo $((age_seconds / 60))
 }
@@ -395,6 +416,8 @@ check_worker_timeouts() {
 # Detect zombie workers
 detect_zombies() {
     local active_dir="$WORKER_SPECS_DIR/active"
+    local zombie_count=0
+    local zombie_workers=()
 
     for spec_file in "$active_dir"/*.json; do
         [ ! -f "$spec_file" ] && continue
@@ -418,49 +441,287 @@ detect_zombies() {
             log_pm "ERROR: Zombie worker detected: $worker_id (no process, age: $age_minutes min)"
             log_pm_event "zombie_detected" "$worker_id" \
                 "{\"age_minutes\": $age_minutes, \"process_found\": false}"
-            # Will implement kill in Phase 2
+
+            zombie_count=$((zombie_count + 1))
+            zombie_workers+=("$worker_id")
         fi
     done
+
+    # Create health alert if 10+ zombies detected
+    if [ $zombie_count -ge 10 ]; then
+        log_pm "CRITICAL: Zombie threshold exceeded ($zombie_count zombies detected)"
+
+        # Create health alert
+        local alert_id="alert-zombie-threshold-$(date +%s)"
+        local zombie_list=$(printf '%s,' "${zombie_workers[@]}" | sed 's/,$//')
+
+        # Check if alert already exists
+        if [ -f "$COMMIT_RELAY_HOME/coordination/health-alerts.json" ]; then
+            local existing_zombie_alerts=$(jq '[.alerts[] | select(.type == "zombie_threshold" and .status == "active")] | length' \
+                "$COMMIT_RELAY_HOME/coordination/health-alerts.json" 2>/dev/null || echo 0)
+
+            if [ "$existing_zombie_alerts" -eq 0 ]; then
+                log_pm "Creating zombie threshold health alert"
+
+                "$COMMIT_RELAY_HOME/scripts/log-health-incident.sh" \
+                    "$alert_id" \
+                    "pm-daemon" \
+                    "zombie_threshold_exceeded" \
+                    "$zombie_count zombie workers detected (threshold: 10). Workers: $zombie_list" \
+                    2>/dev/null || true
+
+                # Add alert to health-alerts.json
+                local temp_alerts=$(mktemp)
+                jq --arg id "$alert_id" \
+                   --arg count "$zombie_count" \
+                   --arg workers "$zombie_list" \
+                   --arg ts "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+                   '.alerts += [{
+                       "id": $id,
+                       "type": "zombie_threshold",
+                       "severity": "high",
+                       "status": "active",
+                       "message": "Zombie threshold exceeded: \($count) zombies detected (threshold: 10)",
+                       "metric_value": ($count | tonumber),
+                       "threshold": 10,
+                       "sla_minutes": 30,
+                       "created_at": $ts,
+                       "worker_id": null,
+                       "investigation_notes": [],
+                       "zombie_workers": $workers
+                   }]' "$COMMIT_RELAY_HOME/coordination/health-alerts.json" > "$temp_alerts" && \
+                   mv "$temp_alerts" "$COMMIT_RELAY_HOME/coordination/health-alerts.json"
+
+                log_pm_event "zombie_threshold_alert" "" \
+                    "{\"zombie_count\": $zombie_count, \"threshold\": 10, \"alert_id\": \"$alert_id\"}"
+            fi
+        fi
+    fi
+
+    return 0
 }
 
 # Calculate metrics
 calculate_metrics() {
-    local active_count=$(ls -1 "$WORKER_SPECS_DIR/active"/*.json 2>/dev/null | wc -l | tr -d ' ')
-    local completed_count=$(find "$WORKER_SPECS_DIR/completed" -name "*.json" -mtime -1 2>/dev/null | wc -l | tr -d ' ')
-    local failed_count=$(find "$WORKER_SPECS_DIR/failed" -name "*.json" -mtime -1 2>/dev/null | wc -l | tr -d ' ')
+    # Get all-time counts for dashboard
+    local active_count=$(find "$WORKER_SPECS_DIR/active" -name "*.json" 2>/dev/null | wc -l | tr -d ' ')
+    local completed_count=$(find "$WORKER_SPECS_DIR/completed" -name "*.json" 2>/dev/null | wc -l | tr -d ' ')
+    local failed_count=$(find "$WORKER_SPECS_DIR/failed" -name "*.json" 2>/dev/null | wc -l | tr -d ' ')
+    local zombie_count=$(find "$WORKER_SPECS_DIR/zombie" -name "*.json" 2>/dev/null | wc -l | tr -d ' ')
 
-    local total=$((completed_count + failed_count))
-    local success_rate=0
+    # Get today-only counts for daily metrics
+    local completed_today=$(find "$WORKER_SPECS_DIR/completed" -name "*.json" -mtime -1 2>/dev/null | wc -l | tr -d ' ')
+    local failed_today=$(find "$WORKER_SPECS_DIR/failed" -name "*.json" -mtime -1 2>/dev/null | wc -l | tr -d ' ')
 
-    if [ $total -gt 0 ]; then
-        success_rate=$(echo "scale=1; $completed_count * 100 / $total" | bc 2>/dev/null || echo 0)
+    # Calculate all-time success rate
+    local total_all=$((active_count + completed_count + failed_count + zombie_count))
+    local success_rate_all=0
+    if [ $total_all -gt 0 ]; then
+        success_rate_all=$(echo "scale=1; $completed_count * 100 / $total_all" | bc 2>/dev/null || echo 0)
+    fi
+
+    # Calculate today's success rate
+    local total_today=$((completed_today + failed_today))
+    local success_rate_today=0
+    if [ $total_today -gt 0 ]; then
+        success_rate_today=$(echo "scale=1; $completed_today * 100 / $total_today" | bc 2>/dev/null || echo 0)
     fi
 
     # Update metrics in PM state
     jq --arg active "$active_count" \
        --arg completed "$completed_count" \
        --arg failed "$failed_count" \
-       --arg rate "$success_rate" \
-       '.metrics.total_workers_monitored = ($active | tonumber) |
-        .metrics.completed_today = ($completed | tonumber) |
-        .metrics.failed_today = ($failed | tonumber) |
-        .metrics.success_rate_today = ($rate | tonumber)' \
+       --arg zombie "$zombie_count" \
+       --arg total "$total_all" \
+       --arg rate "$success_rate_all" \
+       --arg completed_today "$completed_today" \
+       --arg failed_today "$failed_today" \
+       --arg rate_today "$success_rate_today" \
+       '.metrics.active_workers = ($active | tonumber) |
+        .metrics.completed_workers = ($completed | tonumber) |
+        .metrics.failed_workers = ($failed | tonumber) |
+        .metrics.total_workers = ($total | tonumber) |
+        .metrics.success_rate = ($rate | tonumber) |
+        .metrics.completed_today = ($completed_today | tonumber) |
+        .metrics.failed_today = ($failed_today | tonumber) |
+        .metrics.success_rate_today = ($rate_today | tonumber)' \
        "$PM_STATE_FILE" > "${PM_STATE_FILE}.tmp" && \
        mv "${PM_STATE_FILE}.tmp" "$PM_STATE_FILE"
+
+    # Update workforce-streams.json for dashboard
+    jq --arg active "$active_count" \
+       --arg completed "$completed_count" \
+       --arg failed "$failed_count" \
+       --arg zombie "$zombie_count" \
+       '.workers.active = ($active | tonumber) |
+        .workers.completed = ($completed | tonumber) |
+        .workers.failed = ($failed | tonumber) |
+        .workers.zombie = ($zombie | tonumber) |
+        .last_updated = "'$(date -u +%Y-%m-%dT%H:%M:%SZ)'"' \
+       "$COMMIT_RELAY_HOME/coordination/workforce-streams.json" > \
+       "$COMMIT_RELAY_HOME/coordination/workforce-streams.json.tmp" && \
+       mv "$COMMIT_RELAY_HOME/coordination/workforce-streams.json.tmp" \
+          "$COMMIT_RELAY_HOME/coordination/workforce-streams.json"
+}
+
+# Create historical snapshot
+create_snapshot() {
+    local timestamp="$1"
+    local snapshot_file="${HOURLY_DIR}/${timestamp}.json"
+
+    # Read current metrics from PM state
+    local active_workers=$(jq -r '.metrics.active_workers // 0' "$PM_STATE_FILE")
+    local completed_workers=$(jq -r '.metrics.completed_workers // 0' "$PM_STATE_FILE")
+    local failed_workers=$(jq -r '.metrics.failed_workers // 0' "$PM_STATE_FILE")
+    local success_rate=$(jq -r '.metrics.success_rate // 0' "$PM_STATE_FILE")
+    local total_workers=$(jq -r '.metrics.total_workers // 0' "$PM_STATE_FILE")
+    local completed_today=$(jq -r '.metrics.completed_today // 0' "$PM_STATE_FILE")
+    local failed_today=$(jq -r '.metrics.failed_today // 0' "$PM_STATE_FILE")
+
+    # Count zombie workers
+    local zombie_count=$(find "$WORKER_SPECS_DIR/zombie" -name "*.json" 2>/dev/null | wc -l | tr -d ' ')
+
+    # Read token budget if exists
+    local total_budget=200000
+    local total_used=0
+    local token_budget_file="$COMMIT_RELAY_HOME/coordination/token-budget.json"
+
+    if [ -f "$token_budget_file" ]; then
+        total_budget=$(jq -r '.total_budget // 200000' "$token_budget_file" 2>/dev/null || echo 200000)
+        total_used=$(jq -r '.usage_metrics.total_tokens_used_today // 0' "$token_budget_file" 2>/dev/null || echo 0)
+    fi
+
+    local usage_pct=0
+    if [ $total_budget -gt 0 ]; then
+        usage_pct=$(echo "scale=2; ($total_used * 100) / $total_budget" | bc 2>/dev/null || echo 0)
+    fi
+
+    # Read task queue if exists
+    local pending_tasks=0
+    local in_progress_tasks=0
+    local completed_tasks=0
+    local task_queue_file="$COMMIT_RELAY_HOME/coordination/task-queue.json"
+
+    if [ -f "$task_queue_file" ]; then
+        pending_tasks=$(jq -r '[.tasks[] | select(.status == "pending")] | length' "$task_queue_file" 2>/dev/null || echo 0)
+        in_progress_tasks=$(jq -r '[.tasks[] | select(.status == "in_progress" or .status == "assigned")] | length' "$task_queue_file" 2>/dev/null || echo 0)
+        completed_tasks=$(jq -r '[.tasks[] | select(.status == "completed")] | length' "$task_queue_file" 2>/dev/null || echo 0)
+    fi
+
+    # Create snapshot JSON
+    cat > "$snapshot_file" <<EOF
+{
+  "timestamp": "$timestamp",
+  "workers": {
+    "active": $active_workers,
+    "completed": $completed_workers,
+    "failed": $failed_workers,
+    "zombie": $zombie_count,
+    "total": $total_workers,
+    "success_rate": $success_rate,
+    "completed_today": $completed_today,
+    "failed_today": $failed_today
+  },
+  "tokens": {
+    "total_budget": $total_budget,
+    "total_used": $total_used,
+    "available": $((total_budget - total_used)),
+    "usage_percentage": $usage_pct
+  },
+  "tasks": {
+    "pending": $pending_tasks,
+    "in_progress": $in_progress_tasks,
+    "completed": $completed_tasks,
+    "total": $((pending_tasks + in_progress_tasks + completed_tasks))
+  },
+  "pm_daemon": {
+    "pid": $$,
+    "uptime_seconds": $SECONDS,
+    "loops_completed": $LOOP_COUNT
+  }
+}
+EOF
+
+    log_pm "DEBUG: Historical snapshot created: $snapshot_file"
+}
+
+# Aggregate daily snapshots
+aggregate_daily_snapshot() {
+    local date_prefix="$1"
+    local daily_file="${DAILY_DIR}/${date_prefix}.json"
+
+    # Find all hourly snapshots for this day
+    local hourly_pattern="${HOURLY_DIR}/${date_prefix}T*.json"
+    local hourly_count=$(ls -1 $hourly_pattern 2>/dev/null | wc -l | tr -d ' ')
+
+    if [ "$hourly_count" -eq 0 ]; then
+        return
+    fi
+
+    log_pm "INFO: Aggregating daily snapshot for $date_prefix from $hourly_count hourly snapshots"
+
+    # Use jq to aggregate
+    jq -s '[.[] | {
+        timestamp: .timestamp,
+        workers: .workers,
+        tokens: .tokens,
+        tasks: .tasks
+    }] | {
+        date: "'$date_prefix'",
+        snapshots_count: length,
+        first_snapshot: .[0].timestamp,
+        last_snapshot: .[-1].timestamp,
+        workers: {
+            avg_active: ([.[].workers.active] | add / length),
+            total_completed: .[-1].workers.completed,
+            total_failed: .[-1].workers.failed,
+            total_zombie: .[-1].workers.zombie,
+            avg_success_rate: ([.[].workers.success_rate] | add / length)
+        },
+        tokens: {
+            total_budget: .[-1].tokens.total_budget,
+            total_used: .[-1].tokens.total_used,
+            avg_usage_percentage: ([.[].tokens.usage_percentage] | add / length)
+        },
+        tasks: {
+            total_completed: .[-1].tasks.completed,
+            avg_pending: ([.[].tasks.pending] | add / length),
+            avg_in_progress: ([.[].tasks.in_progress] | add / length)
+        }
+    }' $hourly_pattern > "$daily_file" 2>/dev/null
+
+    log_pm "INFO: Daily snapshot saved to $daily_file"
+}
+
+# Cleanup old hourly snapshots (keep last 7 days)
+cleanup_old_snapshots() {
+    local cutoff_date=$(date -u -v-7d +%Y-%m-%d 2>/dev/null || date -u -d '7 days ago' +%Y-%m-%d)
+
+    log_pm "DEBUG: Cleaning up hourly snapshots older than $cutoff_date"
+
+    find "$HOURLY_DIR" -name "*.json" -type f | while read -r file; do
+        local file_date=$(basename "$file" | cut -d'T' -f1)
+        if [[ "$file_date" < "$cutoff_date" ]]; then
+            rm -f "$file"
+            log_pm "DEBUG: Removed old hourly snapshot: $(basename $file)"
+        fi
+    done
 }
 
 # Main PM daemon loop
 PM_START_TIME=$(date -u +%Y-%m-%dT%H:%M:%SZ)
 LOOP_COUNT=0
+LAST_SNAPSHOT_TIME=0
+LAST_DAILY_AGGREGATION=""
 
 log_pm "INFO: PM daemon starting (PID $$, version $PM_VERSION)"
-log_pm "INFO: Loop interval: ${LOOP_INTERVAL}s"
+log_pm "INFO: Loop interval: ${LOOP_INTERVAL}s, Snapshot interval: ${SNAPSHOT_INTERVAL}s"
 log_pm "INFO: Working directory: $COMMIT_RELAY_HOME"
 
 initialize_pm_state
 
 log_pm_event "pm_started" "" \
-    "{\"version\": \"$PM_VERSION\", \"loop_interval\": $LOOP_INTERVAL}"
+    "{\"version\": \"$PM_VERSION\", \"loop_interval\": $LOOP_INTERVAL, \"snapshot_interval\": $SNAPSHOT_INTERVAL}"
 
 # Test mode: run once and exit
 if [ "$TEST_MODE" = "--test-mode" ]; then
@@ -482,6 +743,9 @@ fi
 while true; do
     LOOP_START=$(date +%s)
     LOOP_COUNT=$((LOOP_COUNT + 1))
+    CURRENT_TIME=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+    CURRENT_DATE=$(date -u +%Y-%m-%d)
+    CURRENT_HOUR=$(date -u +%H)
 
     log_pm "DEBUG: Starting loop $LOOP_COUNT"
 
@@ -493,6 +757,23 @@ while true; do
     detect_zombies
     calculate_metrics
     save_pm_state
+
+    # Historical snapshot (every SNAPSHOT_INTERVAL seconds)
+    TIME_SINCE_SNAPSHOT=$((LOOP_START - LAST_SNAPSHOT_TIME))
+    if [ $TIME_SINCE_SNAPSHOT -ge $SNAPSHOT_INTERVAL ]; then
+        create_snapshot "$CURRENT_TIME"
+        LAST_SNAPSHOT_TIME=$LOOP_START
+
+        # Aggregate daily snapshot at midnight UTC
+        if [ "$CURRENT_HOUR" = "00" ] && [ "$LAST_DAILY_AGGREGATION" != "$CURRENT_DATE" ]; then
+            YESTERDAY=$(date -u -v-1d +%Y-%m-%d 2>/dev/null || date -u -d 'yesterday' +%Y-%m-%d)
+            aggregate_daily_snapshot "$YESTERDAY"
+            LAST_DAILY_AGGREGATION="$CURRENT_DATE"
+
+            # Cleanup old hourly snapshots
+            cleanup_old_snapshots
+        fi
+    fi
 
     LOOP_END=$(date +%s)
     LOOP_DURATION=$((LOOP_END - LOOP_START))

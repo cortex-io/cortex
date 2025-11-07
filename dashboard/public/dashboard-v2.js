@@ -13,9 +13,22 @@ function dashboard() {
         lastUpdate: 'Never',
         lastUpdateTimestamp: null,
         dataFreshness: 'fresh', // fresh, stale, very-stale
-        currentView: 'overview', // overview, workers, tasks, events, masters
+        currentView: 'overview', // overview, workers, tasks, events, masters, admin
         successRatePeriod: localStorage.getItem('successRatePeriod') || 'all_time',
         showPeriodSelector: false,
+        mobileMenuOpen: false, // Mobile sidebar menu state
+
+        // Card visibility toggles
+        cardVisibility: {
+            activeWorkers: localStorage.getItem('card_activeWorkers') !== 'false',
+            successRate: localStorage.getItem('card_successRate') !== 'false',
+            tasksInProgress: localStorage.getItem('card_tasksInProgress') !== 'false',
+            workerDaemon: localStorage.getItem('card_workerDaemon') !== 'false',
+            pmDaemon: localStorage.getItem('card_pmDaemon') !== 'false',
+            lastPR: localStorage.getItem('card_lastPR') !== 'false',
+            lastRepoSync: localStorage.getItem('card_lastRepoSync') !== 'false',
+            dashboardServer: localStorage.getItem('card_dashboardServer') !== 'false'
+        },
 
         // Loading states for different components
         loadingStates: {
@@ -42,11 +55,21 @@ function dashboard() {
             tokens: { total: 0, used: 0, available: 0, usagePercentage: 0 }
         },
         daemon: null,
+        pmDaemon: null,
         tasks: [],
         events: [],
         workers: [], // Will store worker pool data
         gitOperations: [], // Git commit/push operations
         streams: null, // Workforce streams data
+        healthAlerts: [], // Health alerts
+        expandedAlertIds: [], // Track which alerts are expanded
+        gitInfo: { lastCommit: { message: '', timeAgo: '' }, lastSync: '' },
+        dashboardServerStatus: { status: 'running', pid: null, port: 3000 },
+        eventLogInfo: {
+            created_date: null,
+            event_count: 0,
+            file_size: null
+        },
 
         // Pagination
         pagination: {
@@ -78,6 +101,21 @@ function dashboard() {
             inventory: []
         },
 
+        // API Explorer
+        apiExplorer: {
+            endpoints: [],
+            testResults: {},
+            requestHistory: [],
+            selectedEndpoint: null,
+            selectedCodeLang: 'python',
+            isTestingAll: false,
+            testAllProgress: 0,
+            testAllTotal: 0,
+            expandedCategories: {},
+            expandedEndpoints: {},
+            endpointParams: {} // Store parameter values for each endpoint
+        },
+
         // Alerting System
         activeAlerts: [],
         alertThresholds: {
@@ -88,10 +126,58 @@ function dashboard() {
             highActiveWorkers: { enabled: false, threshold: 20, severity: 'info' } // count
         },
 
+        // MoE Intelligence Data
+        moeMetrics: {
+            totalRoutes: 0,
+            avgConfidence: 0,
+            parallelRoutes: 0,
+            accuracy: 0,
+            expertCounts: {
+                development: 0,
+                security: 0,
+                inventory: 0
+            }
+        },
+        moeRoutingDecisions: [],
+        moePoolMetrics: {
+            active_workers: 0,
+            max_capacity: 64,
+            activation_rate: 0,
+            target_workers: 0,
+            utilization: 0,
+            moe_analogy: {
+                active_params: 'No data'
+            }
+        },
+        moeLearningMetrics: {
+            total_tasks: 0,
+            success_rate: 0,
+            avg_time: 0,
+            learned_keywords: 0,
+            experts: {
+                development: { tasks: 0, success_rate: 0, avg_time: 0 },
+                security: { tasks: 0, success_rate: 0, avg_time: 0 },
+                inventory: { tasks: 0, success_rate: 0, avg_time: 0 }
+            }
+        },
+        moeLearningInsights: [],
+
         // Watch for view changes to reinitialize icons
         changeView(view) {
             this.currentView = view;
             // Reinitialize Lucide icons after view change
+            this.$nextTick(() => {
+                if (typeof lucide !== 'undefined') {
+                    lucide.createIcons();
+                }
+            });
+        },
+
+        // Toggle card visibility
+        toggleCard(cardName) {
+            this.cardVisibility[cardName] = !this.cardVisibility[cardName];
+            localStorage.setItem('card_' + cardName, this.cardVisibility[cardName]);
+            // Reinitialize icons after toggle
             this.$nextTick(() => {
                 if (typeof lucide !== 'undefined') {
                     lucide.createIcons();
@@ -195,6 +281,10 @@ function dashboard() {
                 this.$nextTick(() => {
                     this.initCharts();
                 });
+
+                // Initialize API Explorer
+                console.log('Initializing API Explorer...');
+                this.initApiExplorer();
 
                 // Add click listener to close period selector when clicking outside
                 document.addEventListener('click', (e) => {
@@ -343,6 +433,8 @@ function dashboard() {
                 this.addEvent(message.event);
             } else if (message.type === 'daemon_status') {
                 this.daemon = message.data;
+            } else if (message.type === 'pm_daemon_status') {
+                this.pmDaemon = message.data;
             } else if (message.type === 'buffered_events') {
                 // Handle buffered events for reconnecting clients
                 console.log(`Received ${message.count} buffered events`);
@@ -400,6 +492,12 @@ function dashboard() {
                 this.daemon = await daemonRes.json();
                 console.log('Daemon status loaded');
 
+                // Fetch PM daemon status
+                console.log('Fetching PM daemon status...');
+                const pmDaemonRes = await fetch('/api/pm-daemon/status');
+                this.pmDaemon = await pmDaemonRes.json();
+                console.log('PM daemon status loaded');
+
                 // Fetch tasks
                 console.log('Fetching tasks...');
                 const tasksRes = await fetch('/api/tasks');
@@ -430,6 +528,31 @@ function dashboard() {
                 console.log('Fetching workforce streams...');
                 await this.fetchStreams();
                 console.log('Workforce streams loaded');
+
+                // Fetch health alerts
+                console.log('Fetching health alerts...');
+                await this.fetchHealthAlerts();
+                console.log('Health alerts loaded');
+
+                // Fetch git info
+                console.log('Fetching git info...');
+                await this.fetchGitInfo();
+                console.log('Git info loaded');
+
+                // Fetch dashboard server status
+                console.log('Fetching dashboard server status...');
+                await this.fetchDashboardServerStatus();
+                console.log('Dashboard server status loaded');
+
+                // Fetch event log info
+                console.log('Fetching event log info...');
+                await this.fetchEventLogInfo();
+                console.log('Event log info loaded');
+
+                // Fetch MoE data
+                console.log('Fetching MoE intelligence data...');
+                await this.fetchMoEData();
+                console.log('MoE intelligence data loaded');
 
                 console.log('Initial data loaded successfully!');
             } catch (error) {
@@ -540,6 +663,18 @@ function dashboard() {
                         this.daemon = await res.json();
                     } catch (error) {
                         console.error('Error polling daemon status:', error);
+                    }
+                }
+            }, 10000);
+
+            // Fallback: Poll PM daemon status only if WebSocket is disconnected
+            setInterval(async () => {
+                if (!this.ws || this.ws.readyState !== WebSocket.OPEN) {
+                    try {
+                        const res = await fetch('/api/pm-daemon/status');
+                        this.pmDaemon = await res.json();
+                    } catch (error) {
+                        console.error('Error polling PM daemon status:', error);
                     }
                 }
             }, 10000);
@@ -1896,6 +2031,7 @@ function dashboard() {
         // Navigation
         switchView(view) {
             this.currentView = view;
+            this.mobileMenuOpen = false; // Close mobile menu when switching views
 
             // Lazy loading: Fetch workers data only when viewing workers page
             if (view === 'workers') {
@@ -2023,6 +2159,10 @@ function dashboard() {
                 'worker_completed': 'Worker Completed',
                 'worker_failed': 'Worker Failed',
                 'worker_spawned': 'Worker Spawned',
+                'worker_restarted': 'Worker Restarted',
+                'health_alert_resolved': 'Alert Resolved',
+                'health_alert_note_added': 'Alert Note Added',
+                'health_alert_deleted': 'Alert Deleted',
                 'error': 'Error',
                 'dashboard_event': 'System Event'
             };
@@ -2054,6 +2194,18 @@ function dashboard() {
 
                 case 'worker_failed':
                     return `Worker Failed: ${data.worker_id || 'unknown'}`;
+
+                case 'worker_restarted':
+                    return `Worker ${data.worker_id || 'unknown'} restarted from ${data.source_dir || 'unknown'} directory`;
+
+                case 'health_alert_resolved':
+                    return `${data.severity || ''} alert resolved: ${data.alert_type || 'unknown'}`.trim();
+
+                case 'health_alert_note_added':
+                    return `Note added to ${data.severity || ''} ${data.alert_type || 'unknown'} alert`.trim();
+
+                case 'health_alert_deleted':
+                    return `${data.severity || ''} alert deleted: ${data.alert_type || 'unknown'}`.trim();
 
                 default:
                     return event.message || JSON.stringify(data);
@@ -2091,6 +2243,933 @@ function dashboard() {
                 })
                 .filter(hash => hash !== null);
         },
+
+        // Daemon control functions
+        async controlWorkerDaemon(action) {
+            try {
+                const response = await fetch('/api/daemon/control', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ action })
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    console.log(`Worker daemon ${action} successful:`, result.message);
+                    // Refresh daemon status after a moment
+                    setTimeout(() => this.fetchDaemonStatus(), 1000);
+                } else {
+                    console.error(`Worker daemon ${action} failed:`, result.message);
+                    alert(`Failed to ${action} worker daemon: ${result.message}`);
+                }
+            } catch (error) {
+                console.error(`Error controlling worker daemon:`, error);
+                alert(`Error: ${error.message}`);
+            }
+        },
+
+        async controlPmDaemon(action) {
+            try {
+                const response = await fetch('/api/pm-daemon/control', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ action })
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    console.log(`PM daemon ${action} successful:`, result.message);
+                    // Refresh daemon status after a moment
+                    setTimeout(() => this.fetchPmDaemonStatus(), 1000);
+                } else {
+                    console.error(`PM daemon ${action} failed:`, result.message);
+                    alert(`Failed to ${action} PM daemon: ${result.message}`);
+                }
+            } catch (error) {
+                console.error(`Error controlling PM daemon:`, error);
+                alert(`Error: ${error.message}`);
+            }
+        },
+
+        // Health Alerts Functions
+        async fetchHealthAlerts() {
+            try {
+                const response = await fetch('/api/health-alerts');
+                const data = await response.json();
+                this.healthAlerts = data.alerts || [];
+                console.log('Health alerts loaded:', this.healthAlerts.length);
+            } catch (error) {
+                console.error('Error fetching health alerts:', error);
+            }
+        },
+
+        getSeverityColor(severity) {
+            const colors = {
+                'critical': 'text-red-600 dark:text-red-400',
+                'high': 'text-orange-600 dark:text-orange-400',
+                'medium': 'text-yellow-600 dark:text-yellow-400',
+                'low': 'text-blue-600 dark:text-blue-400'
+            };
+            return colors[severity] || 'text-gray-600 dark:text-gray-400';
+        },
+
+        getSeverityBgColor(severity) {
+            const colors = {
+                'critical': 'bg-red-100 dark:bg-red-900/30 border-red-300 dark:border-red-700',
+                'high': 'bg-orange-100 dark:bg-orange-900/30 border-orange-300 dark:border-orange-700',
+                'medium': 'bg-yellow-100 dark:bg-yellow-900/30 border-yellow-300 dark:border-yellow-700',
+                'low': 'bg-blue-100 dark:bg-blue-900/30 border-blue-300 dark:border-blue-700'
+            };
+            return colors[severity] || 'bg-gray-100 dark:bg-gray-900/30 border-gray-300 dark:border-gray-700';
+        },
+
+        getStatusColor(status) {
+            const colors = {
+                'monitoring': 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300',
+                'resolved': 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300',
+                'active': 'bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300'
+            };
+            return colors[status] || 'bg-gray-100 dark:bg-gray-900/30 text-gray-700 dark:text-gray-300';
+        },
+
+        isAlertExpanded(alertId) {
+            return this.expandedAlertIds.includes(alertId);
+        },
+
+        expandAlertDetails(alertId) {
+            const index = this.expandedAlertIds.indexOf(alertId);
+            if (index > -1) {
+                this.expandedAlertIds.splice(index, 1);
+            } else {
+                this.expandedAlertIds.push(alertId);
+            }
+            // Reinitialize icons after expansion
+            this.$nextTick(() => {
+                if (typeof lucide !== 'undefined') {
+                    lucide.createIcons();
+                }
+            });
+        },
+
+        async resolveAlert(alertId) {
+            if (!confirm('Are you sure you want to mark this alert as resolved?')) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`/api/health-alerts/${alertId}/resolve`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        resolution_note: 'Resolved via dashboard'
+                    })
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    console.log('Alert resolved:', result.message);
+                    // Refresh alerts
+                    await this.fetchHealthAlerts();
+                } else {
+                    alert(`Failed to resolve alert: ${result.error || 'Unknown error'}`);
+                }
+            } catch (error) {
+                console.error('Error resolving alert:', error);
+                alert(`Error resolving alert: ${error.message}`);
+            }
+        },
+
+        async restartWorkerFromAlert(alertId, workerId) {
+            if (!confirm(`Are you sure you want to restart worker ${workerId}? This will move it from stuck/failed to active and attempt to respawn it.`)) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`/api/health-alerts/${alertId}/restart-worker`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    console.log('Worker restarted:', result.message);
+                    alert(`Worker ${workerId} restarted successfully!`);
+                    // Refresh alerts
+                    await this.fetchHealthAlerts();
+                } else {
+                    alert(`Failed to restart worker: ${result.error || 'Unknown error'}`);
+                }
+            } catch (error) {
+                console.error('Error restarting worker:', error);
+                alert(`Error restarting worker: ${error.message}`);
+            }
+        },
+
+        async addAlertNote(alertId) {
+            const note = prompt('Enter investigation note:');
+            if (!note || !note.trim()) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`/api/health-alerts/${alertId}/note`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ note: note.trim() })
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    console.log('Note added:', result.message);
+                    // Refresh alerts
+                    await this.fetchHealthAlerts();
+                } else {
+                    alert(`Failed to add note: ${result.error || 'Unknown error'}`);
+                }
+            } catch (error) {
+                console.error('Error adding note:', error);
+                alert(`Error adding note: ${error.message}`);
+            }
+        },
+
+        async deleteAlert(alertId) {
+            if (!confirm('Are you sure you want to delete this alert? This action cannot be undone.')) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`/api/health-alerts/${alertId}`, {
+                    method: 'DELETE'
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    console.log('Alert deleted:', result.message);
+                    // Refresh alerts
+                    await this.fetchHealthAlerts();
+                } else {
+                    alert(`Failed to delete alert: ${result.error || 'Unknown error'}`);
+                }
+            } catch (error) {
+                console.error('Error deleting alert:', error);
+                alert(`Error deleting alert: ${error.message}`);
+            }
+        },
+
+        formatTimestamp(timestamp) {
+            if (!timestamp) return 'N/A';
+            try {
+                return new Date(timestamp).toLocaleString();
+            } catch (e) {
+                return timestamp;
+            }
+        },
+
+        // Fetch git info (last commit and last sync)
+        async fetchGitInfo() {
+            try {
+                const response = await fetch('/api/git-info');
+                const data = await response.json();
+                this.gitInfo = data;
+            } catch (error) {
+                console.error('Error fetching git info:', error);
+                this.gitInfo = {
+                    lastCommit: { message: 'Error loading', timeAgo: 'Unknown' },
+                    lastSync: 'Unknown'
+                };
+            }
+        },
+
+        // Fetch dashboard server status
+        async fetchDashboardServerStatus() {
+            try {
+                const response = await fetch('/api/dashboard-server/status');
+                const data = await response.json();
+                this.dashboardServerStatus = data;
+            } catch (error) {
+                console.error('Error fetching dashboard server status:', error);
+                this.dashboardServerStatus = {
+                    status: 'error',
+                    pid: null,
+                    port: 3000
+                };
+            }
+        },
+
+        // Restart dashboard server
+        async restartDashboardServer() {
+            if (!confirm('Restart dashboard server? The page will reload automatically in 2-3 seconds.')) {
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/dashboard-server/control', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ action: 'restart' })
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    alert('Dashboard server is restarting. Please wait...');
+                    // Wait 3 seconds then reload
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 3000);
+                } else {
+                    alert(`Failed to restart server: ${result.message}`);
+                }
+            } catch (error) {
+                console.error('Error restarting dashboard server:', error);
+                alert(`Error restarting server: ${error.message}`);
+            }
+        },
+
+        // Fetch event log information
+        async fetchEventLogInfo() {
+            try {
+                const response = await fetch('/api/event-log/info');
+                const data = await response.json();
+                this.eventLogInfo = data;
+            } catch (error) {
+                console.error('Error fetching event log info:', error);
+                this.eventLogInfo = {
+                    created_date: 'Error loading',
+                    event_count: 0,
+                    file_size: 'N/A'
+                };
+            }
+        },
+
+        // Fetch MoE Intelligence Data
+        async fetchMoEData() {
+            try {
+                // Fetch MoE routing decisions
+                const routingRes = await fetch('/api/moe/routing');
+                if (routingRes.ok) {
+                    const routingData = await routingRes.json();
+                    this.moeRoutingDecisions = routingData.decisions || [];
+
+                    // Calculate metrics from routing decisions
+                    const totalRoutes = this.moeRoutingDecisions.length;
+                    const avgConfidence = totalRoutes > 0
+                        ? (this.moeRoutingDecisions.reduce((sum, d) => sum + (d.decision?.primary_confidence || 0) * 100, 0) / totalRoutes).toFixed(0)
+                        : 0;
+                    const parallelRoutes = this.moeRoutingDecisions.filter(d =>
+                        d.decision?.parallel_experts && d.decision.parallel_experts.length > 0
+                    ).length;
+
+                    // Count expert distribution
+                    const expertCounts = { development: 0, security: 0, inventory: 0 };
+                    this.moeRoutingDecisions.forEach(d => {
+                        const expert = d.decision?.primary_expert;
+                        if (expert && expertCounts.hasOwnProperty(expert)) {
+                            expertCounts[expert]++;
+                        }
+                    });
+
+                    this.moeMetrics = {
+                        totalRoutes,
+                        avgConfidence,
+                        parallelRoutes,
+                        accuracy: 95, // Placeholder - would need to calculate from actual success data
+                        expertCounts
+                    };
+                }
+
+                // Fetch MoE pool state
+                const poolRes = await fetch('/api/moe/pool');
+                if (poolRes.ok) {
+                    const poolData = await poolRes.json();
+                    this.moePoolMetrics = poolData;
+                }
+
+                // Fetch MoE learning metrics
+                const learningRes = await fetch('/api/moe/learning');
+                if (learningRes.ok) {
+                    const learningData = await learningRes.json();
+                    this.moeLearningMetrics = learningData.metrics || this.moeLearningMetrics;
+                    this.moeLearningInsights = learningData.insights || [];
+                }
+            } catch (error) {
+                console.error('Error fetching MoE data:', error);
+                // Keep default values on error
+            }
+        },
+
+        // Purge event log
+        async purgeEventLog() {
+            if (!confirm('Are you sure you want to purge the event log? All events will be archived to a backup file. This action cannot be undone.')) {
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/event-log/purge', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    alert(`Event log purged successfully. ${result.archived_count} events archived to:\n${result.archive_file}`);
+                    // Refresh the event log info
+                    await this.fetchEventLogInfo();
+                    // Refresh other data that may depend on events
+                    await this.fetchInitialData();
+                } else {
+                    alert(`Failed to purge event log: ${result.message}`);
+                }
+            } catch (error) {
+                console.error('Error purging event log:', error);
+                alert(`Error purging event log: ${error.message}`);
+            }
+        },
+
+        // Truncate text to max length
+        truncateText(text, maxLength = 40) {
+            if (!text) return '';
+            if (text.length <= maxLength) return text;
+            return text.substring(0, maxLength) + '...';
+        },
+
+        // ==================== API EXPLORER FUNCTIONS ====================
+
+        // Initialize API Explorer
+        initApiExplorer() {
+            // Define all API endpoints
+            this.apiExplorer.endpoints = [
+                // Metrics & Health
+                {
+                    category: 'Metrics & Health',
+                    method: 'GET',
+                    path: '/api/health',
+                    description: 'Health check endpoint - returns basic health status',
+                    requiresParams: false
+                },
+                {
+                    category: 'Metrics & Health',
+                    method: 'GET',
+                    path: '/api/metrics',
+                    description: 'Get current system metrics (workers, tasks, tokens)',
+                    requiresParams: false,
+                    queryParams: [{ name: 'period', description: 'Time period: last_hour, last_24h, last_7d, all_time', optional: true }]
+                },
+                {
+                    category: 'Metrics & Health',
+                    method: 'GET',
+                    path: '/api/metrics/history',
+                    description: 'Get historical metrics for charts and analytics',
+                    requiresParams: false
+                },
+
+                // Workers & Tasks
+                {
+                    category: 'Workers & Tasks',
+                    method: 'GET',
+                    path: '/api/workers',
+                    description: 'Get all workers from active worker specs directory',
+                    requiresParams: false
+                },
+                {
+                    category: 'Workers & Tasks',
+                    method: 'GET',
+                    path: '/api/tasks',
+                    description: 'Get all tasks from coordination system',
+                    requiresParams: false
+                },
+                {
+                    category: 'Workers & Tasks',
+                    method: 'GET',
+                    path: '/api/execution-managers',
+                    description: 'Get execution manager configurations',
+                    requiresParams: false
+                },
+                {
+                    category: 'Workers & Tasks',
+                    method: 'GET',
+                    path: '/api/streams',
+                    description: 'Get workforce streams configuration and metrics',
+                    requiresParams: false
+                },
+                {
+                    category: 'Workers & Tasks',
+                    method: 'GET',
+                    path: '/api/coordination/raw',
+                    description: 'Get raw coordination data for debugging',
+                    requiresParams: false
+                },
+
+                // Events & Logs
+                {
+                    category: 'Events & Logs',
+                    method: 'GET',
+                    path: '/api/events',
+                    description: 'Get system events log',
+                    requiresParams: false,
+                    queryParams: [{ name: 'limit', description: 'Max number of events to return', optional: true }]
+                },
+
+                // Git Operations
+                {
+                    category: 'Git Operations',
+                    method: 'GET',
+                    path: '/api/git-operations',
+                    description: 'Get git commit and push operations',
+                    requiresParams: false
+                },
+                {
+                    category: 'Git Operations',
+                    method: 'GET',
+                    path: '/api/git-info',
+                    description: 'Get last commit and repo sync information',
+                    requiresParams: false
+                },
+
+                // Daemon Status
+                {
+                    category: 'Daemon Status',
+                    method: 'GET',
+                    path: '/api/daemon/status',
+                    description: 'Get worker daemon status',
+                    requiresParams: false
+                },
+                {
+                    category: 'Daemon Status',
+                    method: 'GET',
+                    path: '/api/pm-daemon/status',
+                    description: 'Get project manager daemon status',
+                    requiresParams: false
+                },
+                {
+                    category: 'Daemon Status',
+                    method: 'GET',
+                    path: '/api/dashboard-server/status',
+                    description: 'Get dashboard server status',
+                    requiresParams: false
+                },
+
+                // Health Alerts
+                {
+                    category: 'Health Alerts',
+                    method: 'GET',
+                    path: '/api/health-alerts',
+                    description: 'Get active health alerts',
+                    requiresParams: false
+                },
+                {
+                    category: 'Health Alerts',
+                    method: 'POST',
+                    path: '/api/health-alerts/:id/resolve',
+                    description: 'Resolve a health alert',
+                    requiresParams: true,
+                    pathParams: [{ name: 'id', description: 'Alert ID', example: 'alert-001' }]
+                },
+                {
+                    category: 'Health Alerts',
+                    method: 'POST',
+                    path: '/api/health-alerts/:id/restart-worker',
+                    description: 'Restart worker associated with alert',
+                    requiresParams: true,
+                    pathParams: [{ name: 'id', description: 'Alert ID', example: 'alert-001' }]
+                },
+                {
+                    category: 'Health Alerts',
+                    method: 'POST',
+                    path: '/api/health-alerts/:id/note',
+                    description: 'Add a note to an alert',
+                    requiresParams: true,
+                    pathParams: [{ name: 'id', description: 'Alert ID', example: 'alert-001' }],
+                    bodyParams: [{ name: 'note', description: 'Note text', example: 'Investigating issue...' }]
+                },
+                {
+                    category: 'Health Alerts',
+                    method: 'DELETE',
+                    path: '/api/health-alerts/:id',
+                    description: 'Delete a health alert',
+                    requiresParams: true,
+                    pathParams: [{ name: 'id', description: 'Alert ID', example: 'alert-001' }]
+                },
+
+                // Daemon Controls
+                {
+                    category: 'Daemon Controls',
+                    method: 'POST',
+                    path: '/api/daemon/control',
+                    description: 'Start or stop worker daemon',
+                    requiresParams: true,
+                    bodyParams: [{ name: 'action', description: 'Action to perform', example: 'start', enum: ['start', 'stop'] }]
+                },
+                {
+                    category: 'Daemon Controls',
+                    method: 'POST',
+                    path: '/api/pm-daemon/control',
+                    description: 'Start or stop PM daemon',
+                    requiresParams: true,
+                    bodyParams: [{ name: 'action', description: 'Action to perform', example: 'start', enum: ['start', 'stop'] }]
+                },
+                {
+                    category: 'Daemon Controls',
+                    method: 'POST',
+                    path: '/api/dashboard-server/control',
+                    description: 'Restart dashboard server',
+                    requiresParams: true,
+                    bodyParams: [{ name: 'action', description: 'Action to perform', example: 'restart', enum: ['restart'] }]
+                }
+            ];
+
+            // Load request history from localStorage
+            const savedHistory = localStorage.getItem('apiExplorerHistory');
+            if (savedHistory) {
+                try {
+                    this.apiExplorer.requestHistory = JSON.parse(savedHistory);
+                } catch (e) {
+                    console.error('Error loading API explorer history:', e);
+                    this.apiExplorer.requestHistory = [];
+                }
+            }
+
+            // Initialize category expansion state (all expanded by default)
+            const categories = [...new Set(this.apiExplorer.endpoints.map(e => e.category))];
+            categories.forEach(cat => {
+                this.apiExplorer.expandedCategories[cat] = true;
+            });
+        },
+
+        // Test a single endpoint
+        async testEndpoint(endpoint, params = {}) {
+            const endpointKey = `${endpoint.method}:${endpoint.path}`;
+
+            // Set test status to pending
+            this.apiExplorer.testResults[endpointKey] = {
+                status: 'pending',
+                response: null,
+                error: null,
+                responseTime: null,
+                timestamp: null
+            };
+
+            const startTime = Date.now();
+
+            try {
+                // Build URL with path params
+                let url = endpoint.path;
+                if (params.pathParams) {
+                    Object.entries(params.pathParams).forEach(([key, value]) => {
+                        url = url.replace(`:${key}`, value);
+                    });
+                }
+
+                // Add query params
+                if (params.queryParams) {
+                    const queryString = new URLSearchParams(params.queryParams).toString();
+                    if (queryString) {
+                        url += '?' + queryString;
+                    }
+                }
+
+                // Build request options
+                const options = {
+                    method: endpoint.method,
+                    headers: { 'Content-Type': 'application/json' }
+                };
+
+                // Add body for POST/DELETE
+                if (endpoint.method !== 'GET' && params.bodyParams) {
+                    options.body = JSON.stringify(params.bodyParams);
+                }
+
+                // Make request
+                const response = await fetch(url, options);
+                const responseTime = Date.now() - startTime;
+
+                let responseData;
+                const contentType = response.headers.get('content-type');
+                if (contentType && contentType.includes('application/json')) {
+                    responseData = await response.json();
+                } else {
+                    responseData = await response.text();
+                }
+
+                // Update test results
+                this.apiExplorer.testResults[endpointKey] = {
+                    status: response.ok ? 'success' : 'error',
+                    statusCode: response.status,
+                    response: responseData,
+                    error: response.ok ? null : `HTTP ${response.status}: ${response.statusText}`,
+                    responseTime,
+                    timestamp: new Date().toISOString(),
+                    headers: Object.fromEntries(response.headers.entries())
+                };
+
+                // Save to request history
+                this.saveRequestHistory(endpoint, params, this.apiExplorer.testResults[endpointKey]);
+
+                return this.apiExplorer.testResults[endpointKey];
+
+            } catch (error) {
+                const responseTime = Date.now() - startTime;
+
+                this.apiExplorer.testResults[endpointKey] = {
+                    status: 'error',
+                    response: null,
+                    error: error.message,
+                    responseTime,
+                    timestamp: new Date().toISOString()
+                };
+
+                this.saveRequestHistory(endpoint, params, this.apiExplorer.testResults[endpointKey]);
+
+                return this.apiExplorer.testResults[endpointKey];
+            }
+        },
+
+        // Test all GET endpoints
+        async testAllGetEndpoints() {
+            const getEndpoints = this.apiExplorer.endpoints.filter(e => e.method === 'GET' && !e.requiresParams);
+
+            this.apiExplorer.isTestingAll = true;
+            this.apiExplorer.testAllProgress = 0;
+            this.apiExplorer.testAllTotal = getEndpoints.length;
+
+            for (let i = 0; i < getEndpoints.length; i++) {
+                const endpoint = getEndpoints[i];
+                await this.testEndpoint(endpoint);
+                this.apiExplorer.testAllProgress = i + 1;
+
+                // Small delay between requests
+                await new Promise(resolve => setTimeout(resolve, 200));
+            }
+
+            this.apiExplorer.isTestingAll = false;
+
+            // Show summary
+            const results = Object.values(this.apiExplorer.testResults);
+            const successCount = results.filter(r => r.status === 'success').length;
+            const failCount = results.filter(r => r.status === 'error').length;
+
+            alert(`Test Complete!\n\nPassed: ${successCount}\nFailed: ${failCount}\nTotal: ${results.length}`);
+        },
+
+        // Generate code for endpoint
+        generateCode(endpoint, lang, params = {}) {
+            // Build URL
+            let url = `http://localhost:3000${endpoint.path}`;
+            if (params.pathParams) {
+                Object.entries(params.pathParams).forEach(([key, value]) => {
+                    url = url.replace(`:${key}`, value);
+                });
+            }
+            if (params.queryParams) {
+                const queryString = new URLSearchParams(params.queryParams).toString();
+                if (queryString) {
+                    url += '?' + queryString;
+                }
+            }
+
+            if (lang === 'python') {
+                if (endpoint.method === 'GET') {
+                    return `import requests
+
+response = requests.get('${url}')
+data = response.json()
+print(data)`;
+                } else {
+                    const body = params.bodyParams ? JSON.stringify(params.bodyParams, null, 2) : '{}';
+                    return `import requests
+
+payload = ${body}
+response = requests.${endpoint.method.toLowerCase()}('${url}', json=payload)
+data = response.json()
+print(data)`;
+                }
+            } else if (lang === 'javascript') {
+                if (endpoint.method === 'GET') {
+                    return `const response = await fetch('${url}');
+const data = await response.json();
+console.log(data);`;
+                } else {
+                    const body = params.bodyParams ? JSON.stringify(params.bodyParams, null, 2) : '{}';
+                    return `const response = await fetch('${url}', {
+  method: '${endpoint.method}',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify(${body})
+});
+const data = await response.json();
+console.log(data);`;
+                }
+            } else if (lang === 'curl') {
+                if (endpoint.method === 'GET') {
+                    return `curl -X GET '${url}'`;
+                } else {
+                    const body = params.bodyParams ? JSON.stringify(params.bodyParams) : '{}';
+                    return `curl -X ${endpoint.method} '${url}' \\
+  -H 'Content-Type: application/json' \\
+  -d '${body}'`;
+                }
+            }
+
+            return '# Unsupported language';
+        },
+
+        // Copy text to clipboard
+        async copyToClipboard(text) {
+            try {
+                await navigator.clipboard.writeText(text);
+                // Could add a toast notification here
+                return true;
+            } catch (error) {
+                console.error('Failed to copy to clipboard:', error);
+                // Fallback method
+                const textarea = document.createElement('textarea');
+                textarea.value = text;
+                textarea.style.position = 'fixed';
+                textarea.style.opacity = '0';
+                document.body.appendChild(textarea);
+                textarea.select();
+                try {
+                    document.execCommand('copy');
+                    document.body.removeChild(textarea);
+                    return true;
+                } catch (err) {
+                    document.body.removeChild(textarea);
+                    return false;
+                }
+            }
+        },
+
+        // Save request to history
+        saveRequestHistory(endpoint, params, result) {
+            const historyItem = {
+                id: Date.now().toString(),
+                timestamp: new Date().toISOString(),
+                method: endpoint.method,
+                path: endpoint.path,
+                params,
+                status: result.status,
+                statusCode: result.statusCode,
+                responseTime: result.responseTime
+            };
+
+            // Add to beginning of array
+            this.apiExplorer.requestHistory.unshift(historyItem);
+
+            // Keep only last 50 requests
+            if (this.apiExplorer.requestHistory.length > 50) {
+                this.apiExplorer.requestHistory = this.apiExplorer.requestHistory.slice(0, 50);
+            }
+
+            // Save to localStorage
+            try {
+                localStorage.setItem('apiExplorerHistory', JSON.stringify(this.apiExplorer.requestHistory));
+            } catch (e) {
+                console.error('Error saving API explorer history:', e);
+            }
+        },
+
+        // Clear request history
+        clearRequestHistory() {
+            if (confirm('Clear all request history?')) {
+                this.apiExplorer.requestHistory = [];
+                localStorage.removeItem('apiExplorerHistory');
+            }
+        },
+
+        // Toggle category expansion
+        toggleCategory(category) {
+            this.apiExplorer.expandedCategories[category] = !this.apiExplorer.expandedCategories[category];
+        },
+
+        // Toggle endpoint details expansion
+        toggleEndpointDetails(endpoint) {
+            const key = `${endpoint.method}:${endpoint.path}`;
+            this.apiExplorer.expandedEndpoints[key] = !this.apiExplorer.expandedEndpoints[key];
+        },
+
+        // Get/set endpoint parameters
+        getEndpointParams(endpoint) {
+            const key = `${endpoint.method}:${endpoint.path}`;
+            if (!this.apiExplorer.endpointParams[key]) {
+                this.apiExplorer.endpointParams[key] = {};
+            }
+            return this.apiExplorer.endpointParams[key];
+        },
+
+        // Build params object for testEndpoint from stored endpoint parameters
+        buildTestParams(endpoint) {
+            const storedParams = this.getEndpointParams(endpoint);
+            const params = {};
+
+            // Build pathParams object if endpoint has path parameters
+            if (endpoint.pathParams && endpoint.pathParams.length > 0) {
+                params.pathParams = {};
+                endpoint.pathParams.forEach(param => {
+                    if (storedParams[param.name]) {
+                        params.pathParams[param.name] = storedParams[param.name];
+                    }
+                });
+            }
+
+            // Build bodyParams object if endpoint has body parameters
+            if (endpoint.bodyParams && endpoint.bodyParams.length > 0) {
+                params.bodyParams = {};
+                endpoint.bodyParams.forEach(param => {
+                    if (storedParams[param.name]) {
+                        params.bodyParams[param.name] = storedParams[param.name];
+                    }
+                });
+            }
+
+            // Build queryParams object if endpoint has query parameters
+            if (endpoint.queryParams && endpoint.queryParams.length > 0) {
+                params.queryParams = {};
+                endpoint.queryParams.forEach(param => {
+                    if (storedParams[param.name]) {
+                        params.queryParams[param.name] = storedParams[param.name];
+                    }
+                });
+            }
+
+            return params;
+        },
+
+        // Get endpoints by category
+        getEndpointsByCategory(category) {
+            return this.apiExplorer.endpoints.filter(e => e.category === category);
+        },
+
+        // Get all categories
+        getCategories() {
+            return [...new Set(this.apiExplorer.endpoints.map(e => e.category))];
+        },
+
+        // Get test result for endpoint
+        getTestResult(endpoint) {
+            const key = `${endpoint.method}:${endpoint.path}`;
+            return this.apiExplorer.testResults[key] || null;
+        },
+
+        // Check if endpoint details are expanded
+        isEndpointExpanded(endpoint) {
+            const key = `${endpoint.method}:${endpoint.path}`;
+            return this.apiExplorer.expandedEndpoints[key] || false;
+        },
+
+        // Format JSON for display
+        formatJson(obj) {
+            try {
+                return JSON.stringify(obj, null, 2);
+            } catch (e) {
+                return String(obj);
+            }
+        }
 
     };
 }

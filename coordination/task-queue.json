@@ -49,6 +49,33 @@
           "secrets"
         ]
       }
+    },
+    {
+      "id": "task-1762553420",
+      "title": "Complete MoE Architecture Integration - Phase 4 Testing & Advanced Features",
+      "type": "feature",
+      "priority": "medium",
+      "status": "pending",
+      "created_at": "2025-11-07T22:10:20Z",
+      "context": {
+        "description": "Complete the MoE architecture integration by: 1) Testing the full pipeline end-to-end (routing → spawning → execution → learning), 2) Verify dashboard displays MoE metrics correctly, 3) Document the event flow and MoE components, 4) Create example tasks to demonstrate MoE routing with different confidence levels, 5) Test sparse pool activation at different load levels (14%, 50%, 100%), 6) Optional: Implement adaptive threshold optimization for routing confidence scores based on historical accuracy",
+        "requirements": [
+          "Test MoE routing with sample tasks",
+          "Verify event emissions throughout pipeline",
+          "Check dashboard MoE views display data",
+          "Test sparse pool scaling behavior",
+          "Validate learning system updates patterns",
+          "Create documentation for MoE architecture"
+        ],
+        "acceptance_criteria": [
+          "All MoE events appear in dashboard-events.jsonl",
+          "Dashboard MoE Intelligence views show real data",
+          "Routing decisions logged with confidence scores",
+          "Pool activation adjusts based on load",
+          "Memory manager learns new keywords from tasks",
+          "Documentation includes architecture diagram and flow"
+        ]
+      }
     }
   ],
   "metadata": {

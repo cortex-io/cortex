@@ -990,13 +990,14 @@ app.get('/api/events', async (req, res) => {
     const sessionOnly = req.query.session === 'current';
     const fsSync = require('fs');
 
-    let dashboardEvents = [];
+    let events = [];
 
-    // Read dashboard-events.jsonl
+    // SINGLE SOURCE OF TRUTH: dashboard-events.jsonl
+    // All events (task, git, worker, system, etc.) should be written to this file
     if (fsSync.existsSync(FILES.dashboardEvents)) {
       const content = fsSync.readFileSync(FILES.dashboardEvents, 'utf-8');
       const lines = content.trim().split('\n').filter(line => line);
-      dashboardEvents = lines.map(line => {
+      events = lines.map(line => {
         try {
           return normalizeEvent(JSON.parse(line));
         } catch (e) {
@@ -1008,119 +1009,15 @@ app.get('/api/events', async (req, res) => {
 
     // If session=current, only show events from event buffer (events since server started)
     if (sessionOnly) {
-      dashboardEvents = eventBuffer.slice();
+      events = eventBuffer.slice();
     }
 
-    // Generate task events from current task queue
-    const taskQueue = await readJSON(FILES.taskQueue);
-    const taskEvents = [];
-
-    if (taskQueue && taskQueue.tasks) {
-      // Create events for recent task status changes
-      for (const task of taskQueue.tasks) {
-        // Add event for task creation
-        if (task.created_at) {
-          taskEvents.push({
-            id: `task-created-${task.id}`,
-            type: 'task_created',
-            timestamp: task.created_at,
-            data: {
-              task_id: task.id,
-              task_title: task.title,
-              task_type: task.type,
-              priority: task.priority
-            },
-            message: `Task Created: '${task.id}: ${task.title}'`
-          });
-        }
-
-        // Add event for task assignment
-        if (task.assigned_at) {
-          taskEvents.push({
-            id: `task-assigned-${task.id}`,
-            type: 'task_assigned',
-            timestamp: task.assigned_at,
-            data: {
-              task_id: task.id,
-              task_title: task.title,
-              assigned_to: task.assigned_to,
-              priority: task.priority
-            },
-            message: `Task Assigned: '${task.id}' → ${task.assigned_to}`
-          });
-        }
-
-        // Add event for task completion
-        if (task.status === 'completed' && task.completed_at) {
-          taskEvents.push({
-            id: `task-completed-${task.id}`,
-            type: 'task_completed',
-            timestamp: task.completed_at,
-            data: {
-              task_id: task.id,
-              task_title: task.title,
-              assigned_to: task.assigned_to
-            },
-            message: `Task Completed: '${task.id}: ${task.title}' ✓`
-          });
-        }
-
-        // Add event for task failure
-        if (task.status === 'failed' && task.failed_at) {
-          taskEvents.push({
-            id: `task-failed-${task.id}`,
-            type: 'task_failed',
-            timestamp: task.failed_at,
-            data: {
-              task_id: task.id,
-              task_title: task.title,
-              assigned_to: task.assigned_to
-            },
-            message: `Task Failed: '${task.id}: ${task.title}' ✗`
-          });
-        }
-      }
-    }
-
-    // Read git operations and convert to events
-    let gitEvents = [];
-    const gitOpsPath = path.join(COORD_DIR, 'git-operations.jsonl');
-    if (fsSync.existsSync(gitOpsPath)) {
-      const gitContent = fsSync.readFileSync(gitOpsPath, 'utf-8');
-      const gitOps = gitContent
-        .split('\n')
-        .filter(line => line.trim())
-        .map(line => JSON.parse(line));
-
-      // Convert git operations to events
-      gitEvents = gitOps.map(op => {
-        const isSuccess = op.status === 'success';
-        const commitHash = op.details && op.details.includes('Commit:') ?
-          op.details.split('Commit:')[1].trim().split(' ')[0] : '';
-
-        return {
-          id: `git-${op.worker_id}-${op.timestamp}`,
-          type: isSuccess ? 'git_push_success' : 'git_push_failed',
-          timestamp: op.timestamp,
-          data: {
-            worker_id: op.worker_id,
-            operation: op.operation,
-            commit_hash: commitHash,
-            details: op.details
-          },
-          message: isSuccess ?
-            `Git Push: ${op.worker_id}${commitHash ? ` (${commitHash})` : ''} ✓` :
-            `Git Push Failed: ${op.worker_id} ✗`
-        };
-      });
-    }
-
-    // Merge all events and sort by timestamp (most recent first)
-    const allEvents = [...dashboardEvents, ...taskEvents, ...gitEvents]
+    // Sort by timestamp (most recent first) and limit
+    const sortedEvents = events
       .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
       .slice(0, limit);
 
-    res.json({ events: allEvents, total: allEvents.length });
+    res.json({ events: sortedEvents, total: sortedEvents.length });
   } catch (error) {
     console.error('Error reading events:', error);
     res.status(500).json({ error: 'Internal server error' });
@@ -1196,6 +1093,339 @@ app.get('/api/daemon/status', async (req, res) => {
 });
 
 /**
+ * GET /api/pm-daemon/status
+ * Get PM daemon status from pm-state.json
+ */
+app.get('/api/pm-daemon/status', async (req, res) => {
+  try {
+    const pmStatePath = path.join(__dirname, '../../coordination/pm-state.json');
+    const pmState = await readJSON(pmStatePath);
+
+    if (!pmState || !pmState.pm_daemon) {
+      return res.json({
+        status: 'stopped',
+        pid: null,
+        uptime_seconds: 0,
+        loops_completed: 0,
+        last_loop: null
+      });
+    }
+
+    const pmDaemon = pmState.pm_daemon;
+    const status = pmDaemon.pid ? 'running' : 'stopped';
+
+    res.json({
+      status,
+      pid: pmDaemon.pid || null,
+      uptime_seconds: pmDaemon.uptime_seconds || 0,
+      loops_completed: pmDaemon.loops_completed || 0,
+      last_loop: pmDaemon.last_loop || null,
+      started_at: pmDaemon.started_at || null
+    });
+  } catch (error) {
+    console.error('Error getting PM daemon status:', error);
+    res.json({
+      status: 'stopped',
+      pid: null,
+      uptime_seconds: 0,
+      loops_completed: 0,
+      last_loop: null
+    });
+  }
+});
+
+/**
+ * GET /api/health-alerts
+ * Get all health alerts from health-alerts.json
+ */
+app.get('/api/health-alerts', async (req, res) => {
+  try {
+    const healthAlertsPath = path.join(__dirname, '../../coordination/health-alerts.json');
+    const healthAlertsData = await readJSON(healthAlertsPath);
+
+    if (!healthAlertsData || !healthAlertsData.alerts) {
+      return res.json({ alerts: [], sla_config: {} });
+    }
+
+    res.json({
+      alerts: healthAlertsData.alerts || [],
+      sla_config: healthAlertsData.sla_config || {}
+    });
+  } catch (error) {
+    console.error('Error reading health alerts:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+/**
+ * POST /api/health-alerts/:id/resolve
+ * Mark a health alert as resolved
+ */
+app.post('/api/health-alerts/:id/resolve', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { resolution_note } = req.body;
+
+    const healthAlertsPath = path.join(__dirname, '../../coordination/health-alerts.json');
+    const healthAlertsData = await readJSON(healthAlertsPath);
+
+    if (!healthAlertsData || !healthAlertsData.alerts) {
+      return res.status(404).json({ error: 'Health alerts file not found' });
+    }
+
+    const alertIndex = healthAlertsData.alerts.findIndex(a => a.id === id);
+    if (alertIndex === -1) {
+      return res.status(404).json({ error: 'Alert not found' });
+    }
+
+    // Update alert
+    healthAlertsData.alerts[alertIndex].status = 'resolved';
+    healthAlertsData.alerts[alertIndex].resolved_at = new Date().toISOString();
+
+    if (!healthAlertsData.alerts[alertIndex].resolution_notes) {
+      healthAlertsData.alerts[alertIndex].resolution_notes = [];
+    }
+
+    if (resolution_note) {
+      healthAlertsData.alerts[alertIndex].resolution_notes.push(resolution_note);
+    }
+
+    // Write back to file
+    await fs.writeFile(healthAlertsPath, JSON.stringify(healthAlertsData, null, 2), 'utf-8');
+
+    // Emit dashboard event
+    const alert = healthAlertsData.alerts[alertIndex];
+    emitDashboardEvent('health_alert_resolved', {
+      alert_id: alert.id,
+      alert_type: alert.type,
+      severity: alert.severity,
+      message: `Health alert resolved: ${alert.message}`
+    });
+
+    res.json({
+      success: true,
+      alert: healthAlertsData.alerts[alertIndex],
+      message: 'Alert marked as resolved'
+    });
+  } catch (error) {
+    console.error('Error resolving alert:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+/**
+ * POST /api/health-alerts/:id/restart-worker
+ * Restart worker associated with an alert
+ */
+app.post('/api/health-alerts/:id/restart-worker', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { execSync } = require('child_process');
+
+    const healthAlertsPath = path.join(__dirname, '../../coordination/health-alerts.json');
+    const healthAlertsData = await readJSON(healthAlertsPath);
+
+    if (!healthAlertsData || !healthAlertsData.alerts) {
+      return res.status(404).json({ error: 'Health alerts file not found' });
+    }
+
+    const alert = healthAlertsData.alerts.find(a => a.id === id);
+    if (!alert) {
+      return res.status(404).json({ error: 'Alert not found' });
+    }
+
+    if (!alert.worker_id) {
+      return res.status(400).json({ error: 'Alert does not have an associated worker' });
+    }
+
+    const workerId = alert.worker_id;
+    const workerSpecsDir = path.join(__dirname, '../../coordination/worker-specs');
+    const stuckDir = path.join(workerSpecsDir, 'stuck');
+    const failedDir = path.join(workerSpecsDir, 'failed');
+    const activeDir = path.join(workerSpecsDir, 'active');
+
+    // Find worker spec in stuck or failed directories
+    let workerSpecPath = null;
+    let sourceDir = null;
+
+    const stuckPath = path.join(stuckDir, `${workerId}.json`);
+    const failedPath = path.join(failedDir, `${workerId}.json`);
+
+    if (await fs.access(stuckPath).then(() => true).catch(() => false)) {
+      workerSpecPath = stuckPath;
+      sourceDir = 'stuck';
+    } else if (await fs.access(failedPath).then(() => true).catch(() => false)) {
+      workerSpecPath = failedPath;
+      sourceDir = 'failed';
+    } else {
+      return res.status(404).json({ error: 'Worker spec not found in stuck/ or failed/ directories' });
+    }
+
+    // Read worker spec
+    const workerSpec = await readJSON(workerSpecPath);
+    if (!workerSpec) {
+      return res.status(500).json({ error: 'Failed to read worker spec' });
+    }
+
+    // Reset worker spec status
+    workerSpec.status = 'pending';
+    workerSpec.execution = {
+      ...workerSpec.execution,
+      restarted_at: new Date().toISOString(),
+      restarted_from: sourceDir,
+      restart_reason: `Restarted from health alert ${id}`
+    };
+
+    // Move to active directory
+    const activePath = path.join(activeDir, `${workerId}.json`);
+    await fs.writeFile(activePath, JSON.stringify(workerSpec, null, 2), 'utf-8');
+
+    // Remove from stuck/failed directory
+    await fs.unlink(workerSpecPath);
+
+    // Add note to alert
+    const alertIndex = healthAlertsData.alerts.findIndex(a => a.id === id);
+    if (!healthAlertsData.alerts[alertIndex].investigation_notes) {
+      healthAlertsData.alerts[alertIndex].investigation_notes = [];
+    }
+    healthAlertsData.alerts[alertIndex].investigation_notes.push(
+      `${new Date().toISOString()} - Worker ${workerId} restarted from ${sourceDir}/ directory`
+    );
+
+    await fs.writeFile(healthAlertsPath, JSON.stringify(healthAlertsData, null, 2), 'utf-8');
+
+    // Emit dashboard event (alert already declared earlier in function)
+    emitDashboardEvent('worker_restarted', {
+      worker_id: workerId,
+      alert_id: id,
+      alert_type: alert?.type || 'unknown',
+      source_dir: sourceDir,
+      message: `Worker ${workerId} restarted from health alert`
+    });
+
+    // Attempt to spawn the worker using the autonomous worker script
+    try {
+      const spawnScript = path.join(__dirname, '../../agents/workers/autonomous-worker.sh');
+      execSync(`bash ${spawnScript} ${activePath} > /dev/null 2>&1 &`);
+    } catch (spawnError) {
+      console.error('Error spawning worker:', spawnError);
+      // Don't fail the request - worker spec is moved, spawn will be attempted by daemon
+    }
+
+    res.json({
+      success: true,
+      message: `Worker ${workerId} restarted from ${sourceDir}/ directory`,
+      worker_id: workerId
+    });
+  } catch (error) {
+    console.error('Error restarting worker:', error);
+    res.status(500).json({ error: 'Internal server error', details: error.message });
+  }
+});
+
+/**
+ * POST /api/health-alerts/:id/note
+ * Add investigation note to alert
+ */
+app.post('/api/health-alerts/:id/note', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { note } = req.body;
+
+    if (!note || !note.trim()) {
+      return res.status(400).json({ error: 'Note is required' });
+    }
+
+    const healthAlertsPath = path.join(__dirname, '../../coordination/health-alerts.json');
+    const healthAlertsData = await readJSON(healthAlertsPath);
+
+    if (!healthAlertsData || !healthAlertsData.alerts) {
+      return res.status(404).json({ error: 'Health alerts file not found' });
+    }
+
+    const alertIndex = healthAlertsData.alerts.findIndex(a => a.id === id);
+    if (alertIndex === -1) {
+      return res.status(404).json({ error: 'Alert not found' });
+    }
+
+    // Add note with timestamp
+    if (!healthAlertsData.alerts[alertIndex].investigation_notes) {
+      healthAlertsData.alerts[alertIndex].investigation_notes = [];
+    }
+
+    const timestampedNote = `${new Date().toISOString()} - ${note}`;
+    healthAlertsData.alerts[alertIndex].investigation_notes.push(timestampedNote);
+
+    // Write back to file
+    await fs.writeFile(healthAlertsPath, JSON.stringify(healthAlertsData, null, 2), 'utf-8');
+
+    // Emit dashboard event
+    const alert = healthAlertsData.alerts[alertIndex];
+    emitDashboardEvent('health_alert_note_added', {
+      alert_id: alert.id,
+      alert_type: alert.type,
+      severity: alert.severity,
+      note: note,
+      message: `Note added to ${alert.type} alert`
+    });
+
+    res.json({
+      success: true,
+      alert: healthAlertsData.alerts[alertIndex],
+      message: 'Note added successfully'
+    });
+  } catch (error) {
+    console.error('Error adding note to alert:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+/**
+ * DELETE /api/health-alerts/:id
+ * Delete a health alert
+ */
+app.delete('/api/health-alerts/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const healthAlertsPath = path.join(__dirname, '../../coordination/health-alerts.json');
+    const healthAlertsData = await readJSON(healthAlertsPath);
+
+    if (!healthAlertsData || !healthAlertsData.alerts) {
+      return res.status(404).json({ error: 'Health alerts file not found' });
+    }
+
+    const alertIndex = healthAlertsData.alerts.findIndex(a => a.id === id);
+    if (alertIndex === -1) {
+      return res.status(404).json({ error: 'Alert not found' });
+    }
+
+    // Remove alert
+    const removedAlert = healthAlertsData.alerts.splice(alertIndex, 1)[0];
+
+    // Write back to file
+    await fs.writeFile(healthAlertsPath, JSON.stringify(healthAlertsData, null, 2), 'utf-8');
+
+    // Emit dashboard event
+    emitDashboardEvent('health_alert_deleted', {
+      alert_id: removedAlert.id,
+      alert_type: removedAlert.type,
+      severity: removedAlert.severity,
+      message: `Health alert deleted: ${removedAlert.message}`
+    });
+
+    res.json({
+      success: true,
+      message: 'Alert deleted successfully',
+      deleted_alert: removedAlert
+    });
+  } catch (error) {
+    console.error('Error deleting alert:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+/**
  * Parse elapsed time string (format: [[DD-]HH:]MM:SS) to seconds
  */
 function parseElapsedTime(timeStr) {
@@ -1216,6 +1446,496 @@ function parseElapsedTime(timeStr) {
 
   return seconds;
 }
+
+/**
+ * Helper function to get last commit info from git
+ */
+function getLastCommitInfo() {
+  const { execSync } = require('child_process');
+  try {
+    const output = execSync('git log -1 --format="%s|%ar"', {
+      cwd: path.join(__dirname, '../../'),
+      encoding: 'utf-8'
+    }).toString().trim();
+    const [message, timeAgo] = output.split('|');
+    return { message: message || 'No commits', timeAgo: timeAgo || 'Never' };
+  } catch (e) {
+    return { message: 'No commits', timeAgo: 'Never' };
+  }
+}
+
+/**
+ * Helper function to get last repo sync time
+ */
+function getLastRepoSync() {
+  const fsSync = require('fs');
+  const fetchHeadPath = path.join(__dirname, '../../.git/FETCH_HEAD');
+
+  if (fsSync.existsSync(fetchHeadPath)) {
+    const stats = fsSync.statSync(fetchHeadPath);
+    const now = Date.now();
+    const diff = now - stats.mtimeMs;
+
+    // Convert to human readable
+    const minutes = Math.floor(diff / 60000);
+    const hours = Math.floor(minutes / 60);
+    const days = Math.floor(hours / 24);
+
+    if (days > 0) return `${days} day${days > 1 ? 's' : ''} ago`;
+    if (hours > 0) return `${hours} hour${hours > 1 ? 's' : ''} ago`;
+    if (minutes > 0) return `${minutes} minute${minutes > 1 ? 's' : ''} ago`;
+    return 'Just now';
+  }
+  return 'Never';
+}
+
+/**
+ * GET /api/git-info
+ * Get git information (last commit and last repo sync)
+ */
+app.get('/api/git-info', async (req, res) => {
+  try {
+    const lastCommit = getLastCommitInfo();
+    const lastSync = getLastRepoSync();
+    res.json({ lastCommit, lastSync });
+  } catch (error) {
+    console.error('Error getting git info:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+/**
+ * GET /api/dashboard-server/status
+ * Get dashboard server status
+ */
+app.get('/api/dashboard-server/status', (req, res) => {
+  res.json({
+    status: 'running',
+    pid: process.pid,
+    port: PORT,
+    uptime: process.uptime()
+  });
+});
+
+/**
+ * POST /api/dashboard-server/control
+ * Control dashboard server (restart only - can't stop itself)
+ */
+app.post('/api/dashboard-server/control', async (req, res) => {
+  const { action } = req.body;
+
+  if (action === 'restart') {
+    try {
+      const { spawn } = require('child_process');
+      const serverScript = path.join(__dirname, 'index.js');
+
+      // Send success response first
+      res.json({
+        success: true,
+        message: 'Dashboard server restarting...',
+        note: 'Please refresh the page in 2-3 seconds'
+      });
+
+      // Spawn new server process
+      setTimeout(() => {
+        spawn('node', [serverScript], {
+          detached: true,
+          stdio: 'ignore',
+          cwd: path.dirname(serverScript)
+        }).unref();
+
+        // Exit current process after allowing response to be sent
+        setTimeout(() => {
+          process.exit(0);
+        }, 500);
+      }, 1000);
+    } catch (error) {
+      console.error('Error restarting dashboard server:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Failed to restart server',
+        error: error.message
+      });
+    }
+  } else {
+    res.status(400).json({
+      success: false,
+      message: 'Invalid action. Only "restart" is supported.'
+    });
+  }
+});
+
+/**
+ * GET /api/event-log/info
+ * Get information about the event log file
+ */
+app.get('/api/event-log/info', (req, res) => {
+  try {
+    const fsSync = require('fs');
+    const eventLogPath = FILES.dashboardEvents;
+
+    if (!fsSync.existsSync(eventLogPath)) {
+      return res.json({
+        created_date: 'N/A',
+        event_count: 0,
+        file_size: '0 B'
+      });
+    }
+
+    const stats = fsSync.statSync(eventLogPath);
+    const content = fsSync.readFileSync(eventLogPath, 'utf-8');
+    const lines = content.trim().split('\n').filter(line => line);
+    const eventCount = lines.length;
+
+    // Format file size
+    const formatBytes = (bytes) => {
+      if (bytes === 0) return '0 B';
+      const k = 1024;
+      const sizes = ['B', 'KB', 'MB', 'GB'];
+      const i = Math.floor(Math.log(bytes) / Math.log(k));
+      return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
+    };
+
+    res.json({
+      created_date: stats.birthtime.toISOString().split('T')[0], // YYYY-MM-DD format
+      event_count: eventCount,
+      file_size: formatBytes(stats.size)
+    });
+  } catch (error) {
+    console.error('Error getting event log info:', error);
+    res.status(500).json({ error: 'Failed to get event log information' });
+  }
+});
+
+/**
+ * POST /api/event-log/purge
+ * Purge event log by archiving current events and creating new empty log
+ */
+app.post('/api/event-log/purge', (req, res) => {
+  try {
+    const fsSync = require('fs');
+    const eventLogPath = FILES.dashboardEvents;
+    const archiveDir = path.join(COMMIT_RELAY_HOME, 'coordination', 'dashboard-events-archive');
+
+    // Create archive directory if it doesn't exist
+    if (!fsSync.existsSync(archiveDir)) {
+      fsSync.mkdirSync(archiveDir, { recursive: true });
+    }
+
+    // Count events before purging
+    let eventCount = 0;
+    if (fsSync.existsSync(eventLogPath)) {
+      const content = fsSync.readFileSync(eventLogPath, 'utf-8');
+      const lines = content.trim().split('\n').filter(line => line);
+      eventCount = lines.length;
+    }
+
+    // Create archive file with timestamp
+    const timestamp = new Date().toISOString().replace(/[:.]/g, '-').split('T')[0];
+    const archiveFile = path.join(archiveDir, `dashboard-events-${timestamp}.jsonl`);
+
+    // Copy current log to archive
+    if (fsSync.existsSync(eventLogPath) && eventCount > 0) {
+      fsSync.copyFileSync(eventLogPath, archiveFile);
+    }
+
+    // Create new empty event log
+    fsSync.writeFileSync(eventLogPath, '', 'utf-8');
+
+    res.json({
+      success: true,
+      message: 'Event log purged successfully',
+      archived_count: eventCount,
+      archive_file: archiveFile
+    });
+  } catch (error) {
+    console.error('Error purging event log:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to purge event log',
+      error: error.message
+    });
+  }
+});
+
+/**
+ * Start/Stop Worker Daemon
+ */
+app.post('/api/daemon/control', async (req, res) => {
+  const { execSync } = require('child_process');
+  const { action } = req.body; // 'start' or 'stop'
+
+  try {
+    const scriptPath = path.join(__dirname, '../../scripts/worker-daemon.sh');
+
+    if (action === 'start') {
+      // Check if already running
+      const PID_FILE = '/tmp/commit-relay-worker-daemon.pid';
+      const fsSync = require('fs');
+
+      if (fsSync.existsSync(PID_FILE)) {
+        const pid = parseInt(fsSync.readFileSync(PID_FILE, 'utf-8').trim());
+        try {
+          execSync(`ps -p ${pid}`, { stdio: 'pipe' });
+          return res.json({ success: false, message: 'Worker daemon is already running', pid });
+        } catch (e) {
+          // PID file exists but process is dead, clean it up
+          fsSync.unlinkSync(PID_FILE);
+        }
+      }
+
+      // Start the daemon
+      execSync(`bash ${scriptPath} > /tmp/worker-daemon-start.log 2>&1 &`);
+
+      // Give it a moment to start
+      await new Promise(resolve => setTimeout(resolve, 1000));
+
+      // Read the new PID
+      if (fsSync.existsSync(PID_FILE)) {
+        const pid = parseInt(fsSync.readFileSync(PID_FILE, 'utf-8').trim());
+        res.json({ success: true, message: 'Worker daemon started', pid });
+      } else {
+        res.json({ success: false, message: 'Worker daemon may have failed to start' });
+      }
+    } else if (action === 'stop') {
+      // Stop the daemon using its control script
+      execSync(`bash ${scriptPath} stop`, { stdio: 'pipe' });
+      res.json({ success: true, message: 'Worker daemon stopped' });
+    } else {
+      res.status(400).json({ success: false, message: 'Invalid action. Use "start" or "stop"' });
+    }
+  } catch (error) {
+    console.error('Error controlling worker daemon:', error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+/**
+ * Start/Stop PM Daemon
+ */
+app.post('/api/pm-daemon/control', async (req, res) => {
+  const { execSync } = require('child_process');
+  const { action } = req.body; // 'start' or 'stop'
+
+  try {
+    const scriptPath = path.join(__dirname, '../../scripts/pm-daemon.sh');
+
+    if (action === 'start') {
+      // Check if already running
+      const PID_FILE = '/tmp/commit-relay-pm-daemon.pid';
+      const fsSync = require('fs');
+
+      if (fsSync.existsSync(PID_FILE)) {
+        const pid = parseInt(fsSync.readFileSync(PID_FILE, 'utf-8').trim());
+        try {
+          execSync(`ps -p ${pid}`, { stdio: 'pipe' });
+          return res.json({ success: false, message: 'PM daemon is already running', pid });
+        } catch (e) {
+          // PID file exists but process is dead, clean it up
+          fsSync.unlinkSync(PID_FILE);
+        }
+      }
+
+      // Start the daemon
+      execSync(`bash ${scriptPath} > /tmp/pm-daemon-start.log 2>&1 &`);
+
+      // Give it a moment to start
+      await new Promise(resolve => setTimeout(resolve, 1000));
+
+      // Read the new PID
+      if (fsSync.existsSync(PID_FILE)) {
+        const pid = parseInt(fsSync.readFileSync(PID_FILE, 'utf-8').trim());
+        res.json({ success: true, message: 'PM daemon started', pid });
+      } else {
+        res.json({ success: false, message: 'PM daemon may have failed to start' });
+      }
+    } else if (action === 'stop') {
+      // Stop the daemon by killing its PID
+      const PID_FILE = '/tmp/commit-relay-pm-daemon.pid';
+      const fsSync = require('fs');
+
+      if (fsSync.existsSync(PID_FILE)) {
+        const pid = parseInt(fsSync.readFileSync(PID_FILE, 'utf-8').trim());
+        try {
+          execSync(`kill ${pid}`, { stdio: 'pipe' });
+          fsSync.unlinkSync(PID_FILE);
+          res.json({ success: true, message: 'PM daemon stopped' });
+        } catch (e) {
+          res.json({ success: false, message: 'Failed to stop PM daemon' });
+        }
+      } else {
+        res.json({ success: false, message: 'PM daemon is not running' });
+      }
+    } else {
+      res.status(400).json({ success: false, message: 'Invalid action. Use "start" or "stop"' });
+    }
+  } catch (error) {
+    console.error('Error controlling PM daemon:', error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+// ============================================================================
+// MoE Intelligence API Endpoints
+// ============================================================================
+
+/**
+ * GET /api/moe/routing
+ * Get MoE routing decisions from coordinator logs
+ */
+app.get('/api/moe/routing', async (req, res) => {
+  try {
+    const fsSync = require('fs');
+    const routingLogPath = path.join(COMMIT_RELAY_HOME, 'coordination', 'masters', 'coordinator', 'logs', 'routing-decisions.jsonl');
+
+    if (!fsSync.existsSync(routingLogPath)) {
+      return res.json({ decisions: [] });
+    }
+
+    const content = fsSync.readFileSync(routingLogPath, 'utf-8');
+    const lines = content.trim().split('\n').filter(line => line);
+
+    // Parse JSONL and get last 100 decisions
+    const decisions = lines
+      .map(line => {
+        try {
+          return JSON.parse(line);
+        } catch (e) {
+          return null;
+        }
+      })
+      .filter(d => d !== null)
+      .slice(-100)
+      .reverse(); // Most recent first
+
+    res.json({ decisions });
+  } catch (error) {
+    console.error('Error fetching MoE routing decisions:', error);
+    res.status(500).json({ error: 'Failed to fetch routing decisions' });
+  }
+});
+
+/**
+ * GET /api/moe/pool
+ * Get MoE worker pool state and metrics
+ */
+app.get('/api/moe/pool', async (req, res) => {
+  try {
+    const fsSync = require('fs');
+    const poolStatePath = path.join(COMMIT_RELAY_HOME, 'coordination', 'memory', 'working', 'pool-state.json');
+
+    if (!fsSync.existsSync(poolStatePath)) {
+      return res.json({
+        active_workers: 0,
+        max_capacity: 64,
+        activation_rate: 0,
+        target_workers: 0,
+        utilization: 0,
+        moe_analogy: {
+          active_params: 'No data'
+        }
+      });
+    }
+
+    const poolData = JSON.parse(fsSync.readFileSync(poolStatePath, 'utf-8'));
+
+    // Extract pool metrics
+    const metrics = poolData.pool_metrics || {};
+
+    res.json({
+      active_workers: metrics.active_workers || 0,
+      max_capacity: metrics.max_capacity || 64,
+      activation_rate: metrics.activation_rate || 0,
+      target_workers: metrics.target_workers || 0,
+      utilization: metrics.utilization || 0,
+      moe_analogy: poolData.moe_analogy || { active_params: 'No data' }
+    });
+  } catch (error) {
+    console.error('Error fetching MoE pool state:', error);
+    res.status(500).json({ error: 'Failed to fetch pool state' });
+  }
+});
+
+/**
+ * GET /api/moe/learning
+ * Get MoE learning system metrics and insights
+ */
+app.get('/api/moe/learning', async (req, res) => {
+  try {
+    const fsSync = require('fs');
+    const successMetricsPath = path.join(COMMIT_RELAY_HOME, 'coordination', 'memory', 'long-term', 'success-metrics.json');
+    const taskPatternsPath = path.join(COMMIT_RELAY_HOME, 'coordination', 'memory', 'long-term', 'task-patterns.json');
+
+    let metrics = {
+      total_tasks: 0,
+      success_rate: 0,
+      avg_time: 0,
+      learned_keywords: 0,
+      experts: {
+        development: { tasks: 0, success_rate: 0, avg_time: 0 },
+        security: { tasks: 0, success_rate: 0, avg_time: 0 },
+        inventory: { tasks: 0, success_rate: 0, avg_time: 0 }
+      }
+    };
+
+    let insights = [];
+
+    // Load success metrics
+    if (fsSync.existsSync(successMetricsPath)) {
+      const successData = JSON.parse(fsSync.readFileSync(successMetricsPath, 'utf-8'));
+
+      metrics.total_tasks = successData.overall_metrics?.total_tasks_processed || 0;
+      metrics.success_rate = successData.overall_metrics?.success_rate || 0;
+      metrics.avg_time = successData.overall_metrics?.average_completion_time_minutes || 0;
+
+      // Extract expert-specific metrics
+      const expertPerf = successData.expert_performance || {};
+      ['development', 'security', 'inventory'].forEach(expert => {
+        if (expertPerf[expert]) {
+          metrics.experts[expert] = {
+            tasks: expertPerf[expert].tasks_completed || 0,
+            success_rate: expertPerf[expert].success_rate || 0,
+            avg_time: expertPerf[expert].average_time_minutes || 0
+          };
+        }
+      });
+    }
+
+    // Load task patterns for learned keywords
+    if (fsSync.existsSync(taskPatternsPath)) {
+      const patternsData = JSON.parse(fsSync.readFileSync(taskPatternsPath, 'utf-8'));
+      const allKeywords = new Set();
+
+      Object.values(patternsData.expert_patterns || {}).forEach(expertData => {
+        Object.keys(expertData.keywords || {}).forEach(keyword => allKeywords.add(keyword));
+      });
+
+      metrics.learned_keywords = allKeywords.size;
+
+      // Generate insights based on patterns
+      if (metrics.total_tasks > 0) {
+        insights.push({
+          id: 'insight-1',
+          message: `System has learned ${metrics.learned_keywords} keywords from ${metrics.total_tasks} tasks`,
+          timestamp: new Date().toISOString()
+        });
+
+        if (metrics.success_rate > 90) {
+          insights.push({
+            id: 'insight-2',
+            message: `Excellent routing accuracy: ${metrics.success_rate.toFixed(1)}% success rate`,
+            timestamp: new Date().toISOString()
+          });
+        }
+      }
+    }
+
+    res.json({ metrics, insights });
+  } catch (error) {
+    console.error('Error fetching MoE learning metrics:', error);
+    res.status(500).json({ error: 'Failed to fetch learning metrics' });
+  }
+});
 
 // ============================================================================
 // WebSocket Server for Real-time Updates
@@ -1261,6 +1981,28 @@ wss.on('connection', async (ws) => {
       type: 'daemon_status',
       data: daemonStatus
     }));
+
+    // Send initial PM daemon status
+    const pmStatePath = path.join(__dirname, '../../coordination/pm-state.json');
+    const pmState = await readJSON(pmStatePath);
+    const pmDaemonStatus = pmState?.pm_daemon ? {
+      status: pmState.pm_daemon.pid ? 'running' : 'stopped',
+      pid: pmState.pm_daemon.pid || null,
+      uptime_seconds: pmState.pm_daemon.uptime_seconds || 0,
+      loops_completed: pmState.pm_daemon.loops_completed || 0,
+      last_loop: pmState.pm_daemon.last_loop || null,
+      started_at: pmState.pm_daemon.started_at || null
+    } : {
+      status: 'stopped',
+      pid: null,
+      uptime_seconds: 0,
+      loops_completed: 0,
+      last_loop: null
+    };
+    ws.send(JSON.stringify({
+      type: 'pm_daemon_status',
+      data: pmDaemonStatus
+    }));
   } catch (error) {
     console.error('Error sending initial data:', error);
   }
@@ -1292,6 +2034,28 @@ function broadcastUpdate(data) {
       client.send(message);
     }
   });
+}
+
+/**
+ * Emit a dashboard event to dashboard-events.jsonl
+ */
+function emitDashboardEvent(type, data) {
+  try {
+    const fsSync = require('fs');
+    const event = {
+      id: `evt-${Date.now()}-${process.pid}`,
+      timestamp: new Date().toISOString(),
+      type: type,
+      data: typeof data === 'string' ? data : JSON.stringify(data),
+      source: 'dashboard'
+    };
+
+    const eventLine = JSON.stringify(event) + '\n';
+    fsSync.appendFileSync(FILES.dashboardEvents, eventLine, 'utf-8');
+    console.log(`Dashboard event emitted: ${type}`);
+  } catch (error) {
+    console.error('Error emitting dashboard event:', error);
+  }
 }
 
 /**
@@ -1436,6 +2200,42 @@ setInterval(async () => {
       broadcastDaemonStatus(daemonStatus);
     } catch (error) {
       console.error('Error polling daemon status:', error);
+    }
+  }
+}, 10000);
+
+// Poll PM daemon status every 10 seconds and push via WebSocket
+setInterval(async () => {
+  if (clients.size > 0) {
+    try {
+      const pmStatePath = path.join(__dirname, '../../coordination/pm-state.json');
+      const pmState = await readJSON(pmStatePath);
+      const pmDaemonStatus = pmState?.pm_daemon ? {
+        status: pmState.pm_daemon.pid ? 'running' : 'stopped',
+        pid: pmState.pm_daemon.pid || null,
+        uptime_seconds: pmState.pm_daemon.uptime_seconds || 0,
+        loops_completed: pmState.pm_daemon.loops_completed || 0,
+        last_loop: pmState.pm_daemon.last_loop || null,
+        started_at: pmState.pm_daemon.started_at || null
+      } : {
+        status: 'stopped',
+        pid: null,
+        uptime_seconds: 0,
+        loops_completed: 0,
+        last_loop: null
+      };
+
+      // Broadcast to all connected clients
+      clients.forEach(client => {
+        if (client.readyState === 1) { // WebSocket.OPEN
+          client.send(JSON.stringify({
+            type: 'pm_daemon_status',
+            data: pmDaemonStatus
+          }));
+        }
+      });
+    } catch (error) {
+      console.error('Error polling PM daemon status:', error);
     }
   }
 }, 10000);
