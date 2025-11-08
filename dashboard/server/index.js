@@ -1775,6 +1775,186 @@ app.post('/api/pm-daemon/control', async (req, res) => {
   }
 });
 
+/**
+ * GET /api/health-daemon/status
+ * Get health monitor daemon status
+ */
+app.get('/api/health-daemon/status', async (req, res) => {
+  const { execSync } = require('child_process');
+  const fsSync = require('fs');
+  const PID_FILE = '/tmp/commit-relay-health-monitor.pid';
+
+  try {
+    if (!fsSync.existsSync(PID_FILE)) {
+      return res.json({ status: 'stopped', pid: null });
+    }
+
+    const pid = parseInt(fsSync.readFileSync(PID_FILE, 'utf-8').trim());
+
+    try {
+      execSync(`ps -p ${pid}`, { stdio: 'pipe' });
+
+      // Get uptime
+      const psOutput = execSync(`ps -o etime= -p ${pid}`).toString().trim();
+      const uptime = parseElapsedTime(psOutput);
+
+      res.json({ status: 'running', pid, uptime_seconds: uptime });
+    } catch (e) {
+      // Process not running, clean up stale PID
+      fsSync.unlinkSync(PID_FILE);
+      res.json({ status: 'stopped', pid: null });
+    }
+  } catch (error) {
+    console.error('Error getting health daemon status:', error);
+    res.json({ status: 'stopped', pid: null });
+  }
+});
+
+/**
+ * POST /api/health-daemon/control
+ * Start/Stop Health Monitor Daemon
+ */
+app.post('/api/health-daemon/control', async (req, res) => {
+  const { execSync } = require('child_process');
+  const { action } = req.body;
+
+  try {
+    const scriptPath = path.join(__dirname, '../../scripts/health-monitor-daemon.sh');
+    const PID_FILE = '/tmp/commit-relay-health-monitor.pid';
+    const fsSync = require('fs');
+
+    if (action === 'start') {
+      if (fsSync.existsSync(PID_FILE)) {
+        const pid = parseInt(fsSync.readFileSync(PID_FILE, 'utf-8').trim());
+        try {
+          execSync(`ps -p ${pid}`, { stdio: 'pipe' });
+          return res.json({ success: false, message: 'Health monitor daemon is already running', pid });
+        } catch (e) {
+          fsSync.unlinkSync(PID_FILE);
+        }
+      }
+
+      execSync(`bash ${scriptPath} > /tmp/health-monitor-start.log 2>&1 &`);
+      await new Promise(resolve => setTimeout(resolve, 1000));
+
+      if (fsSync.existsSync(PID_FILE)) {
+        const pid = parseInt(fsSync.readFileSync(PID_FILE, 'utf-8').trim());
+        res.json({ success: true, message: 'Health monitor daemon started', pid });
+      } else {
+        res.json({ success: false, message: 'Health monitor daemon may have failed to start' });
+      }
+    } else if (action === 'stop') {
+      if (fsSync.existsSync(PID_FILE)) {
+        const pid = parseInt(fsSync.readFileSync(PID_FILE, 'utf-8').trim());
+        try {
+          execSync(`kill ${pid}`, { stdio: 'pipe' });
+          fsSync.unlinkSync(PID_FILE);
+          res.json({ success: true, message: 'Health monitor daemon stopped' });
+        } catch (e) {
+          res.json({ success: false, message: 'Failed to stop health monitor daemon' });
+        }
+      } else {
+        res.json({ success: false, message: 'Health monitor daemon is not running' });
+      }
+    } else {
+      res.status(400).json({ success: false, message: 'Invalid action. Use "start" or "stop"' });
+    }
+  } catch (error) {
+    console.error('Error controlling health monitor daemon:', error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+/**
+ * GET /api/metrics-daemon/status
+ * Get metrics snapshot daemon status
+ */
+app.get('/api/metrics-daemon/status', async (req, res) => {
+  const { execSync } = require('child_process');
+  const fsSync = require('fs');
+  const PID_FILE = '/tmp/commit-relay-metrics-snapshot.pid';
+
+  try {
+    if (!fsSync.existsSync(PID_FILE)) {
+      return res.json({ status: 'stopped', pid: null });
+    }
+
+    const pid = parseInt(fsSync.readFileSync(PID_FILE, 'utf-8').trim());
+
+    try {
+      execSync(`ps -p ${pid}`, { stdio: 'pipe' });
+
+      // Get uptime
+      const psOutput = execSync(`ps -o etime= -p ${pid}`).toString().trim();
+      const uptime = parseElapsedTime(psOutput);
+
+      res.json({ status: 'running', pid, uptime_seconds: uptime });
+    } catch (e) {
+      // Process not running, clean up stale PID
+      fsSync.unlinkSync(PID_FILE);
+      res.json({ status: 'stopped', pid: null });
+    }
+  } catch (error) {
+    console.error('Error getting metrics daemon status:', error);
+    res.json({ status: 'stopped', pid: null });
+  }
+});
+
+/**
+ * POST /api/metrics-daemon/control
+ * Start/Stop Metrics Snapshot Daemon
+ */
+app.post('/api/metrics-daemon/control', async (req, res) => {
+  const { execSync } = require('child_process');
+  const { action } = req.body;
+
+  try {
+    const scriptPath = path.join(__dirname, '../../scripts/metrics-snapshot-daemon.sh');
+    const PID_FILE = '/tmp/commit-relay-metrics-snapshot.pid';
+    const fsSync = require('fs');
+
+    if (action === 'start') {
+      if (fsSync.existsSync(PID_FILE)) {
+        const pid = parseInt(fsSync.readFileSync(PID_FILE, 'utf-8').trim());
+        try {
+          execSync(`ps -p ${pid}`, { stdio: 'pipe' });
+          return res.json({ success: false, message: 'Metrics snapshot daemon is already running', pid });
+        } catch (e) {
+          fsSync.unlinkSync(PID_FILE);
+        }
+      }
+
+      execSync(`bash ${scriptPath} > /tmp/metrics-snapshot-start.log 2>&1 &`);
+      await new Promise(resolve => setTimeout(resolve, 1000));
+
+      if (fsSync.existsSync(PID_FILE)) {
+        const pid = parseInt(fsSync.readFileSync(PID_FILE, 'utf-8').trim());
+        res.json({ success: true, message: 'Metrics snapshot daemon started', pid });
+      } else {
+        res.json({ success: false, message: 'Metrics snapshot daemon may have failed to start' });
+      }
+    } else if (action === 'stop') {
+      if (fsSync.existsSync(PID_FILE)) {
+        const pid = parseInt(fsSync.readFileSync(PID_FILE, 'utf-8').trim());
+        try {
+          execSync(`kill ${pid}`, { stdio: 'pipe' });
+          fsSync.unlinkSync(PID_FILE);
+          res.json({ success: true, message: 'Metrics snapshot daemon stopped' });
+        } catch (e) {
+          res.json({ success: false, message: 'Failed to stop metrics snapshot daemon' });
+        }
+      } else {
+        res.json({ success: false, message: 'Metrics snapshot daemon is not running' });
+      }
+    } else {
+      res.status(400).json({ success: false, message: 'Invalid action. Use "start" or "stop"' });
+    }
+  } catch (error) {
+    console.error('Error controlling metrics snapshot daemon:', error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
 // ============================================================================
 // MoE Intelligence API Endpoints
 // ============================================================================

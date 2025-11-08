@@ -56,6 +56,8 @@ function dashboard() {
         },
         daemon: null,
         pmDaemon: null,
+        healthDaemon: null,
+        metricsDaemon: null,
         tasks: [],
         events: [],
         workers: [], // Will store worker pool data
@@ -498,6 +500,18 @@ function dashboard() {
                 this.pmDaemon = await pmDaemonRes.json();
                 console.log('PM daemon status loaded');
 
+                // Fetch Health daemon status
+                console.log('Fetching Health daemon status...');
+                const healthDaemonRes = await fetch('/api/health-daemon/status');
+                this.healthDaemon = await healthDaemonRes.json();
+                console.log('Health daemon status loaded');
+
+                // Fetch Metrics daemon status
+                console.log('Fetching Metrics daemon status...');
+                const metricsDaemonRes = await fetch('/api/metrics-daemon/status');
+                this.metricsDaemon = await metricsDaemonRes.json();
+                console.log('Metrics daemon status loaded');
+
                 // Fetch tasks
                 console.log('Fetching tasks...');
                 const tasksRes = await fetch('/api/tasks');
@@ -675,6 +689,30 @@ function dashboard() {
                         this.pmDaemon = await res.json();
                     } catch (error) {
                         console.error('Error polling PM daemon status:', error);
+                    }
+                }
+            }, 10000);
+
+            // Fallback: Poll Health daemon status only if WebSocket is disconnected
+            setInterval(async () => {
+                if (!this.ws || this.ws.readyState !== WebSocket.OPEN) {
+                    try {
+                        const res = await fetch('/api/health-daemon/status');
+                        this.healthDaemon = await res.json();
+                    } catch (error) {
+                        console.error('Error polling Health daemon status:', error);
+                    }
+                }
+            }, 10000);
+
+            // Fallback: Poll Metrics daemon status only if WebSocket is disconnected
+            setInterval(async () => {
+                if (!this.ws || this.ws.readyState !== WebSocket.OPEN) {
+                    try {
+                        const res = await fetch('/api/metrics-daemon/status');
+                        this.metricsDaemon = await res.json();
+                    } catch (error) {
+                        console.error('Error polling Metrics daemon status:', error);
                     }
                 }
             }, 10000);
@@ -2290,6 +2328,72 @@ function dashboard() {
             } catch (error) {
                 console.error(`Error controlling PM daemon:`, error);
                 alert(`Error: ${error.message}`);
+            }
+        },
+
+        async controlHealthDaemon(action) {
+            try {
+                const response = await fetch('/api/health-daemon/control', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ action })
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    console.log(`Health monitor daemon ${action} successful:`, result.message);
+                    // Refresh daemon status after a moment
+                    setTimeout(() => this.fetchHealthDaemonStatus(), 1000);
+                } else {
+                    console.error(`Health monitor daemon ${action} failed:`, result.message);
+                    alert(`Failed to ${action} health monitor daemon: ${result.message}`);
+                }
+            } catch (error) {
+                console.error(`Error controlling health monitor daemon:`, error);
+                alert(`Error: ${error.message}`);
+            }
+        },
+
+        async controlMetricsDaemon(action) {
+            try {
+                const response = await fetch('/api/metrics-daemon/control', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ action })
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    console.log(`Metrics snapshot daemon ${action} successful:`, result.message);
+                    // Refresh daemon status after a moment
+                    setTimeout(() => this.fetchMetricsDaemonStatus(), 1000);
+                } else {
+                    console.error(`Metrics snapshot daemon ${action} failed:`, result.message);
+                    alert(`Failed to ${action} metrics snapshot daemon: ${result.message}`);
+                }
+            } catch (error) {
+                console.error(`Error controlling metrics snapshot daemon:`, error);
+                alert(`Error: ${error.message}`);
+            }
+        },
+
+        async fetchHealthDaemonStatus() {
+            try {
+                const res = await fetch('/api/health-daemon/status');
+                this.healthDaemon = await res.json();
+            } catch (error) {
+                console.error('Error fetching health daemon status:', error);
+            }
+        },
+
+        async fetchMetricsDaemonStatus() {
+            try {
+                const res = await fetch('/api/metrics-daemon/status');
+                this.metricsDaemon = await res.json();
+            } catch (error) {
+                console.error('Error fetching metrics daemon status:', error);
             }
         },
 
