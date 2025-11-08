@@ -1,0 +1,390 @@
+{
+  "timestamp": "2025-11-08T12:08:28-0600",
+  "type": "moe_routing_decision",
+  "data": {
+    "task_id": "test-task-123",
+    "expert": "security",
+    "confidence": 0.95,
+    "strategy": "single_expert"
+  }
+}
+{
+  "timestamp": "2025-11-08T12:26:21-0600",
+  "type": "moe_routing_decision",
+  "data": {
+    "task_id": "moe-test-ddqd-v5-1762626013-4130b075",
+    "expert": "security",
+    "confidence": 0.95,
+    "strategy": "single_expert"
+  }
+}
+{
+  "timestamp": "2025-11-08T12:26:21-0600",
+  "type": "moe_routing_decision",
+  "data": {
+    "task_id": "moe-test-ddqd-v5-1762626013-c0a4d2d1",
+    "expert": "security",
+    "confidence": 0.95,
+    "strategy": "single_expert"
+  }
+}
+{
+  "timestamp": "2025-11-08T12:26:22-0600",
+  "type": "moe_routing_decision",
+  "data": {
+    "task_id": "moe-test-ddqd-v5-1762626013-578b7e04",
+    "expert": "development",
+    "confidence": 0.95,
+    "strategy": "single_expert"
+  }
+}
+{
+  "timestamp": "2025-11-08T12:26:22-0600",
+  "type": "moe_routing_decision",
+  "data": {
+    "task_id": "moe-test-ddqd-v5-1762626013-d03c64a3",
+    "expert": "development",
+    "confidence": 0.95,
+    "strategy": "single_expert"
+  }
+}
+{
+  "timestamp": "2025-11-08T12:26:23-0600",
+  "type": "moe_routing_decision",
+  "data": {
+    "task_id": "moe-test-ddqd-v5-1762626013-67081586",
+    "expert": "inventory",
+    "confidence": 0.95,
+    "strategy": "single_expert"
+  }
+}
+{
+  "timestamp": "2025-11-08T12:26:23-0600",
+  "type": "moe_routing_decision",
+  "data": {
+    "task_id": "moe-test-ddqd-v5-1762626013-786cc0fa",
+    "expert": "inventory",
+    "confidence": 0.95,
+    "strategy": "single_expert"
+  }
+}
+{
+  "timestamp": "2025-11-08T12:26:24-0600",
+  "type": "moe_routing_decision",
+  "data": {
+    "task_id": "moe-test-ddqd-v5-1762626228-43c88d46",
+    "expert": "security",
+    "confidence": 0.95,
+    "strategy": "single_expert"
+  }
+}
+{
+  "timestamp": "2025-11-08T12:26:24-0600",
+  "type": "moe_routing_decision",
+  "data": {
+    "task_id": "moe-test-ddqd-v5-1762626228-ae2a8949",
+    "expert": "security",
+    "confidence": 0.95,
+    "strategy": "single_expert"
+  }
+}
+{
+  "timestamp": "2025-11-08T12:26:25-0600",
+  "type": "moe_routing_decision",
+  "data": {
+    "task_id": "moe-test-ddqd-v5-1762626228-7b06116b",
+    "expert": "development",
+    "confidence": 0.95,
+    "strategy": "single_expert"
+  }
+}
+{
+  "timestamp": "2025-11-08T12:26:26-0600",
+  "type": "moe_routing_decision",
+  "data": {
+    "task_id": "moe-test-ddqd-v5-1762626228-b63efc1b",
+    "expert": "development",
+    "confidence": 0.95,
+    "strategy": "single_expert"
+  }
+}
+{
+  "timestamp": "2025-11-08T12:26:26-0600",
+  "type": "moe_routing_decision",
+  "data": {
+    "task_id": "moe-test-ddqd-v5-1762626228-271c79ce",
+    "expert": "inventory",
+    "confidence": 0.95,
+    "strategy": "single_expert"
+  }
+}
+{
+  "timestamp": "2025-11-08T12:26:27-0600",
+  "type": "moe_routing_decision",
+  "data": {
+    "task_id": "moe-test-ddqd-v5-1762626228-a4d79b93",
+    "expert": "inventory",
+    "confidence": 0.95,
+    "strategy": "single_expert"
+  }
+}
+{
+  "timestamp": "2025-11-08T12:29:08-0600",
+  "type": "moe_routing_decision",
+  "data": {
+    "task_id": "moe-test-ddqd-v5-1762626428-0922fb5a",
+    "expert": "security",
+    "confidence": 0.95,
+    "strategy": "single_expert"
+  }
+}
+{
+  "timestamp": "2025-11-08T12:29:09-0600",
+  "type": "moe_routing_decision",
+  "data": {
+    "task_id": "moe-test-ddqd-v5-1762626428-f4171764",
+    "expert": "security",
+    "confidence": 0.95,
+    "strategy": "single_expert"
+  }
+}
+{
+  "timestamp": "2025-11-08T12:29:09-0600",
+  "type": "moe_routing_decision",
+  "data": {
+    "task_id": "moe-test-ddqd-v5-1762626428-41391183",
+    "expert": "development",
+    "confidence": 0.95,
+    "strategy": "single_expert"
+  }
+}
+{
+  "timestamp": "2025-11-08T12:29:10-0600",
+  "type": "moe_routing_decision",
+  "data": {
+    "task_id": "moe-test-ddqd-v5-1762626428-db0eb0ae",
+    "expert": "development",
+    "confidence": 0.95,
+    "strategy": "single_expert"
+  }
+}
+{
+  "timestamp": "2025-11-08T12:29:10-0600",
+  "type": "moe_routing_decision",
+  "data": {
+    "task_id": "moe-test-ddqd-v5-1762626428-e9d2f359",
+    "expert": "inventory",
+    "confidence": 0.95,
+    "strategy": "single_expert"
+  }
+}
+{
+  "timestamp": "2025-11-08T12:29:11-0600",
+  "type": "moe_routing_decision",
+  "data": {
+    "task_id": "moe-test-ddqd-v5-1762626428-0f64f3ea",
+    "expert": "inventory",
+    "confidence": 0.95,
+    "strategy": "single_expert"
+  }
+}
+{
+  "timestamp": "2025-11-08T12:29:11-0600",
+  "type": "moe_routing_decision",
+  "data": {
+    "task_id": "moe-test-ddqd-v5-1762626495-aa30ca25",
+    "expert": "security",
+    "confidence": 0.95,
+    "strategy": "single_expert"
+  }
+}
+{
+  "timestamp": "2025-11-08T12:29:12-0600",
+  "type": "moe_routing_decision",
+  "data": {
+    "task_id": "moe-test-ddqd-v5-1762626495-28b1a031",
+    "expert": "security",
+    "confidence": 0.95,
+    "strategy": "single_expert"
+  }
+}
+{
+  "timestamp": "2025-11-08T12:29:13-0600",
+  "type": "moe_routing_decision",
+  "data": {
+    "task_id": "moe-test-ddqd-v5-1762626495-7728f5cb",
+    "expert": "development",
+    "confidence": 0.95,
+    "strategy": "single_expert"
+  }
+}
+{
+  "timestamp": "2025-11-08T12:29:13-0600",
+  "type": "moe_routing_decision",
+  "data": {
+    "task_id": "moe-test-ddqd-v5-1762626495-48fe8ed1",
+    "expert": "development",
+    "confidence": 0.95,
+    "strategy": "single_expert"
+  }
+}
+{
+  "timestamp": "2025-11-08T12:29:14-0600",
+  "type": "moe_routing_decision",
+  "data": {
+    "task_id": "moe-test-ddqd-v5-1762626495-42745965",
+    "expert": "inventory",
+    "confidence": 0.95,
+    "strategy": "single_expert"
+  }
+}
+{
+  "timestamp": "2025-11-08T12:29:14-0600",
+  "type": "moe_routing_decision",
+  "data": {
+    "task_id": "moe-test-ddqd-v5-1762626495-0ffc35ec",
+    "expert": "inventory",
+    "confidence": 0.95,
+    "strategy": "single_expert"
+  }
+}
+{
+  "timestamp": "2025-11-08T12:32:06-0600",
+  "type": "moe_routing_decision",
+  "data": {
+    "task_id": "moe-test-ddqd-v5-1762626673-00728032",
+    "expert": "security",
+    "confidence": 0.95,
+    "strategy": "single_expert"
+  }
+}
+{
+  "timestamp": "2025-11-08T12:32:07-0600",
+  "type": "moe_routing_decision",
+  "data": {
+    "task_id": "moe-test-ddqd-v5-1762626673-ede2eb9a",
+    "expert": "security",
+    "confidence": 0.95,
+    "strategy": "single_expert"
+  }
+}
+{
+  "timestamp": "2025-11-08T12:32:07-0600",
+  "type": "moe_routing_decision",
+  "data": {
+    "task_id": "moe-test-ddqd-v5-1762626673-d3baf6b1",
+    "expert": "development",
+    "confidence": 0.95,
+    "strategy": "single_expert"
+  }
+}
+{
+  "timestamp": "2025-11-08T12:32:08-0600",
+  "type": "moe_routing_decision",
+  "data": {
+    "task_id": "moe-test-ddqd-v5-1762626673-1f8a4f39",
+    "expert": "development",
+    "confidence": 0.95,
+    "strategy": "single_expert"
+  }
+}
+{
+  "timestamp": "2025-11-08T12:32:08-0600",
+  "type": "moe_routing_decision",
+  "data": {
+    "task_id": "moe-test-ddqd-v5-1762626673-e32e4e94",
+    "expert": "inventory",
+    "confidence": 0.95,
+    "strategy": "single_expert"
+  }
+}
+{
+  "timestamp": "2025-11-08T12:32:09-0600",
+  "type": "moe_routing_decision",
+  "data": {
+    "task_id": "moe-test-ddqd-v5-1762626673-c264c1c6",
+    "expert": "inventory",
+    "confidence": 0.95,
+    "strategy": "single_expert"
+  }
+}
+{
+  "timestamp": "2025-11-08T12:35:40-0600",
+  "type": "moe_routing_decision",
+  "data": {
+    "task_id": "moe-test-ddqd-v5-1762626887-50a7ec23",
+    "expert": "security",
+    "confidence": 0.95,
+    "strategy": "single_expert"
+  }
+}
+{
+  "timestamp": "2025-11-08T12:35:41-0600",
+  "type": "moe_routing_decision",
+  "data": {
+    "task_id": "moe-test-ddqd-v5-1762626887-8e44f42f",
+    "expert": "security",
+    "confidence": 0.95,
+    "strategy": "single_expert"
+  }
+}
+{
+  "timestamp": "2025-11-08T12:35:41-0600",
+  "type": "moe_routing_decision",
+  "data": {
+    "task_id": "moe-test-ddqd-v5-1762626887-daf73212",
+    "expert": "development",
+    "confidence": 0.95,
+    "strategy": "single_expert"
+  }
+}
+{
+  "timestamp": "2025-11-08T12:35:42-0600",
+  "type": "moe_routing_decision",
+  "data": {
+    "task_id": "moe-test-ddqd-v5-1762626887-6a084ece",
+    "expert": "development",
+    "confidence": 0.95,
+    "strategy": "single_expert"
+  }
+}
+{
+  "timestamp": "2025-11-08T12:35:42-0600",
+  "type": "moe_routing_decision",
+  "data": {
+    "task_id": "moe-test-ddqd-v5-1762626887-b298c5c1",
+    "expert": "inventory",
+    "confidence": 0.95,
+    "strategy": "single_expert"
+  }
+}
+{
+  "timestamp": "2025-11-08T12:35:43-0600",
+  "type": "moe_routing_decision",
+  "data": {
+    "task_id": "moe-test-ddqd-v5-1762626887-42d13af1",
+    "expert": "inventory",
+    "confidence": 0.95,
+    "strategy": "single_expert"
+  }
+}
+{
+  "timestamp": "2025-11-08T14:18:50-0600",
+  "type": "moe_routing_decision",
+  "data": {
+    "task_id": "task-1762553437",
+    "expert": "development",
+    "confidence": 0.95,
+    "strategy": "single_expert"
+  }
+}
+{
+  "timestamp": "2025-11-08T14:43:22-0600",
+  "type": "moe_routing_decision",
+  "data": {
+    "task_id": "task-1762553438",
+    "expert": "development",
+    "confidence": 0.95,
+    "strategy": "single_expert"
+  }
+}

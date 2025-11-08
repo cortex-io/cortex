@@ -1,0 +1,30 @@
+{
+  "timestamp": "2025-11-08T11:59:36-0600",
+  "workers": {
+    "active": 5,
+    "completed": 12,
+    "failed": 0,
+    "zombie": 0,
+    "total": 17,
+    "success_rate": 70.5,
+    "completed_today": 12,
+    "failed_today": 0
+  },
+  "tokens": {
+    "total_budget": 305000,
+    "total_used": 65000,
+    "available": 240000,
+    "usage_percentage": 21.31
+  },
+  "tasks": {
+    "pending": 0,
+    "in_progress": 0,
+    "completed": 2,
+    "total": 2
+  },
+  "pm_daemon": {
+    "pid": 7675,
+    "uptime_seconds": 10128,
+    "loops_completed": 57
+  }
+}
