@@ -5,7 +5,6 @@
   "created_at": "2025-11-07T19:30:00Z",
   "cache_strategy": "kv_cache",
   "description": "Pre-loaded static knowledge for Coordinator Master - MoE routing and system orchestration",
-
   "moe_routing_rules": [
     {
       "rule_id": "security-scan",
@@ -13,7 +12,15 @@
       "target_master": "security",
       "priority": "high",
       "confidence": 0.95,
-      "keywords": ["security", "vulnerability", "audit", "cve", "scan", "exploit", "patch"]
+      "keywords": [
+        "security",
+        "vulnerability",
+        "audit",
+        "cve",
+        "scan",
+        "exploit",
+        "patch"
+      ]
     },
     {
       "rule_id": "code-development",
@@ -21,7 +28,16 @@
       "target_master": "development",
       "priority": "medium",
       "confidence": 0.90,
-      "keywords": ["implement", "develop", "code", "feature", "bug", "fix", "refactor", "optimize"]
+      "keywords": [
+        "implement",
+        "develop",
+        "code",
+        "feature",
+        "bug",
+        "fix",
+        "refactor",
+        "optimize"
+      ]
     },
     {
       "rule_id": "inventory-management",
@@ -29,7 +45,14 @@
       "target_master": "inventory",
       "priority": "low",
       "confidence": 0.85,
-      "keywords": ["inventory", "catalog", "document", "health", "dependency", "discovery"]
+      "keywords": [
+        "inventory",
+        "catalog",
+        "document",
+        "health",
+        "dependency",
+        "discovery"
+      ]
     },
     {
       "rule_id": "cicd-operations",
@@ -37,50 +60,81 @@
       "target_master": "cicd",
       "priority": "medium",
       "confidence": 0.88,
-      "keywords": ["build", "deploy", "test", "pipeline", "release", "ci", "cd", "workflow"]
+      "keywords": [
+        "build",
+        "deploy",
+        "test",
+        "pipeline",
+        "release",
+        "ci",
+        "cd",
+        "workflow"
+      ]
     },
     {
       "rule_id": "multi-master",
       "pattern": "comprehensive|full.*audit|major.*update",
       "target_master": "multiple",
-      "involved_masters": ["security", "development", "inventory"],
+      "involved_masters": [
+        "security",
+        "development",
+        "inventory"
+      ],
       "priority": "high",
       "confidence": 0.80,
       "orchestration_required": true
     }
   ],
-
   "master_registry": {
     "security": {
       "token_budget": 30000,
       "worker_pool": 15000,
       "specialization": "security_vulnerability_management",
-      "capabilities": ["scanning", "remediation", "audit", "verification"],
+      "capabilities": [
+        "scanning",
+        "remediation",
+        "audit",
+        "verification"
+      ],
       "sla_driven": true
     },
     "development": {
       "token_budget": 30000,
       "worker_pool": 20000,
       "specialization": "feature_development_bug_fixing",
-      "capabilities": ["implementation", "refactoring", "optimization", "debugging"],
+      "capabilities": [
+        "implementation",
+        "refactoring",
+        "optimization",
+        "debugging"
+      ],
       "sla_driven": false
     },
     "inventory": {
       "token_budget": 35000,
       "worker_pool": 15000,
       "specialization": "repository_cataloging_health",
-      "capabilities": ["discovery", "cataloging", "documentation", "health_monitoring"],
+      "capabilities": [
+        "discovery",
+        "cataloging",
+        "documentation",
+        "health_monitoring"
+      ],
       "sla_driven": false
     },
     "cicd": {
       "token_budget": 25000,
       "worker_pool": 12000,
       "specialization": "build_deploy_test_automation",
-      "capabilities": ["building", "testing", "deployment", "release_management"],
+      "capabilities": [
+        "building",
+        "testing",
+        "deployment",
+        "release_management"
+      ],
       "sla_driven": false
     }
   },
-
   "token_budgets": {
     "daily_total": 270000,
     "coordinator_budget": 50000,
@@ -92,7 +146,6 @@
       "shared_worker_pool": 80000
     }
   },
-
   "coordination_protocol": {
     "task_routing": {
       "step_1": "Parse task description",
@@ -113,14 +166,12 @@
       "step_7": "Generate final report"
     }
   },
-
   "fallback_strategy": {
     "default_master": "development",
     "confidence_threshold": 0.70,
     "low_confidence_action": "route_to_default",
     "ambiguous_task_action": "request_clarification"
   },
-
   "metadata": {
     "estimated_tokens": 3200,
     "load_time_target_ms": 50,
@@ -131,5 +182,6 @@
       "master_registry_update",
       "token_budget_policy_change"
     ]
-  }
+  },
+  "last_updated": "2025-11-07T20:06:45-0600"
 }

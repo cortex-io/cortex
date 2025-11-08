@@ -5,7 +5,6 @@
   "created_at": "2025-11-07T19:30:00Z",
   "cache_strategy": "kv_cache",
   "description": "Pre-loaded static knowledge for Development Master - loaded at initialization for zero-latency access",
-
   "worker_types": [
     {
       "type_id": "feature-implementer",
@@ -13,7 +12,11 @@
       "specialization": "feature_development",
       "typical_token_allocation": 15000,
       "timeout_minutes": 45,
-      "skills": ["design", "implementation", "testing"],
+      "skills": [
+        "design",
+        "implementation",
+        "testing"
+      ],
       "output_format": "implementation_report"
     },
     {
@@ -22,7 +25,11 @@
       "specialization": "bug_resolution",
       "typical_token_allocation": 10000,
       "timeout_minutes": 30,
-      "skills": ["debugging", "root_cause_analysis", "testing"],
+      "skills": [
+        "debugging",
+        "root_cause_analysis",
+        "testing"
+      ],
       "output_format": "fix_report"
     },
     {
@@ -31,7 +38,11 @@
       "specialization": "code_improvement",
       "typical_token_allocation": 12000,
       "timeout_minutes": 40,
-      "skills": ["refactoring", "design_patterns", "best_practices"],
+      "skills": [
+        "refactoring",
+        "design_patterns",
+        "best_practices"
+      ],
       "output_format": "refactor_report"
     },
     {
@@ -40,11 +51,14 @@
       "specialization": "performance",
       "typical_token_allocation": 13000,
       "timeout_minutes": 35,
-      "skills": ["profiling", "optimization", "benchmarking"],
+      "skills": [
+        "profiling",
+        "optimization",
+        "benchmarking"
+      ],
       "output_format": "optimization_report"
     }
   ],
-
   "coordination_protocol": {
     "worker_spawn_procedure": {
       "step_1": "Check token budget availability",
@@ -70,7 +84,6 @@
       "step_5": "Generate task completion report"
     }
   },
-
   "token_budgets": {
     "master_budget": 30000,
     "worker_pool_budget": 20000,
@@ -82,7 +95,6 @@
     },
     "emergency_reserve": 5000
   },
-
   "execution_manager_triggers": {
     "file_count_threshold": 5,
     "worker_count_threshold": 5,
@@ -95,38 +107,46 @@
       "performance-critical code"
     ]
   },
-
   "common_patterns": {
     "simple_feature": {
-      "worker_sequence": ["feature-implementer"],
+      "worker_sequence": [
+        "feature-implementer"
+      ],
       "parallel": false,
       "typical_duration_minutes": 45
     },
     "bug_fix_cycle": {
-      "worker_sequence": ["bug-fixer"],
+      "worker_sequence": [
+        "bug-fixer"
+      ],
       "parallel": false,
       "typical_duration_minutes": 30
     },
     "complex_feature": {
-      "worker_sequence": ["feature-implementer", "feature-implementer", "refactorer"],
+      "worker_sequence": [
+        "feature-implementer",
+        "feature-implementer",
+        "refactorer"
+      ],
       "parallel": false,
       "typical_duration_minutes": 120,
       "use_execution_manager": true
     },
     "performance_optimization": {
-      "worker_sequence": ["optimizer", "refactorer"],
+      "worker_sequence": [
+        "optimizer",
+        "refactorer"
+      ],
       "parallel": false,
       "typical_duration_minutes": 75
     }
   },
-
   "quality_gates": {
     "code_review_required": true,
     "test_coverage_minimum": 80,
     "linting_required": true,
     "type_checking_required": true
   },
-
   "metadata": {
     "estimated_tokens": 2600,
     "load_time_target_ms": 50,
@@ -137,5 +157,6 @@
       "coordination_protocol_update",
       "quality_gate_change"
     ]
-  }
+  },
+  "last_updated": "2025-11-07T20:06:45-0600"
 }

@@ -5,7 +5,6 @@
   "created_at": "2025-11-07T19:30:00Z",
   "cache_strategy": "kv_cache",
   "description": "Pre-loaded static knowledge for Inventory Master - repository cataloging and health monitoring",
-
   "worker_types": [
     {
       "type_id": "catalog-worker",
@@ -13,7 +12,11 @@
       "specialization": "repository_cataloging",
       "typical_token_allocation": 8000,
       "timeout_minutes": 15,
-      "skills": ["metadata_extraction", "dependency_analysis", "documentation_generation"],
+      "skills": [
+        "metadata_extraction",
+        "dependency_analysis",
+        "documentation_generation"
+      ],
       "output_format": "catalog_report"
     },
     {
@@ -22,7 +25,11 @@
       "specialization": "repository_discovery",
       "typical_token_allocation": 6000,
       "timeout_minutes": 10,
-      "skills": ["github_api", "search", "filtering"],
+      "skills": [
+        "github_api",
+        "search",
+        "filtering"
+      ],
       "output_format": "discovery_report"
     },
     {
@@ -31,7 +38,11 @@
       "specialization": "health_monitoring",
       "typical_token_allocation": 7000,
       "timeout_minutes": 12,
-      "skills": ["activity_tracking", "stale_detection", "health_scoring"],
+      "skills": [
+        "activity_tracking",
+        "stale_detection",
+        "health_scoring"
+      ],
       "output_format": "health_report"
     },
     {
@@ -40,11 +51,14 @@
       "specialization": "documentation",
       "typical_token_allocation": 9000,
       "timeout_minutes": 20,
-      "skills": ["readme_generation", "api_docs", "architecture_diagrams"],
+      "skills": [
+        "readme_generation",
+        "api_docs",
+        "architecture_diagrams"
+      ],
       "output_format": "documentation_report"
     }
   ],
-
   "token_budgets": {
     "master_budget": 35000,
     "worker_pool_budget": 15000,
@@ -56,7 +70,6 @@
     },
     "emergency_reserve": 5000
   },
-
   "coordination_protocol": {
     "worker_spawn_procedure": {
       "step_1": "Check token budget availability",
@@ -67,11 +80,11 @@
       "step_6": "Emit dashboard event"
     }
   },
-
   "metadata": {
     "estimated_tokens": 2400,
     "load_time_target_ms": 50,
     "update_frequency": "rarely",
     "last_updated": "2025-11-07T19:30:00Z"
-  }
+  },
+  "last_updated": "2025-11-07T20:06:45-0600"
 }
