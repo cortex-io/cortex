@@ -102,7 +102,7 @@ fi
 
 # Generate unique Execution Manager ID
 EXEC_MGR_ID="exec-mgr-${MASTER_TYPE:0:3}-$(uuidgen | tr '[:upper:]' '[:lower:]' | cut -d'-' -f1)"
-TIMESTAMP=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+TIMESTAMP=$(date +%Y-%m-%dT%H:%M:%S%z)
 
 echo -e "${BLUE}========================================${NC}"
 echo -e "${BLUE}Spawning Execution Manager${NC}"

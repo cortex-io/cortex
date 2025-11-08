@@ -29,7 +29,7 @@ mkdir -p "$(dirname "$LOG_FILE")"
 exec >> "$LOG_FILE" 2>&1
 
 log_zombie() {
-    echo "[$(date -u +%Y-%m-%dT%H:%M:%SZ)] $1"
+    echo "[$(date +%Y-%m-%dT%H:%M:%S%z)] $1"
 }
 
 # Check if daemon is already running
@@ -69,7 +69,7 @@ get_timestamp_seconds() {
 # Convert ISO 8601 timestamp to seconds since epoch
 iso_to_seconds() {
     local iso_time="$1"
-    date -j -f "%Y-%m-%dT%H:%M:%SZ" "$iso_time" +%s 2>/dev/null || echo "0"
+    date -j -f "%Y-%m-%dT%H:%M:%S%z" "$iso_time" +%s 2>/dev/null || echo "0"
 }
 
 # Main zombie killer loop
@@ -151,7 +151,7 @@ while true; do
                 log_zombie "  Active Claude processes: $CLAUDE_PROCESSES"
 
                 # Mark as failed and move to failed directory
-                jq --arg ts "$(date -u +%Y-%m-%dT%H:%M:%SZ)" --arg runtime "$RUNNING_TIME" \
+                jq --arg ts "$(date +%Y-%m-%dT%H:%M:%S%z)" --arg runtime "$RUNNING_TIME" \
                    '.status = "failed" |
                     .execution.completed_at = $ts |
                     .execution.error = "Zombie worker detected - running for \($runtime)s with no completion" |
@@ -164,7 +164,7 @@ while true; do
                 if [ -n "$TASK_ID" ] && [ "$TASK_ID" != "null" ]; then
                     TASK_QUEUE="coordination/task-queue.json"
                     if [ -f "$TASK_QUEUE" ]; then
-                        jq --arg id "$TASK_ID" --arg ts "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+                        jq --arg id "$TASK_ID" --arg ts "$(date +%Y-%m-%dT%H:%M:%S%z)" \
                            '.tasks |= map(
                                if .id == $id then
                                    .status = "failed" |
@@ -253,7 +253,7 @@ while true; do
 
                 # Mark as failed and move to completed directory
                 mkdir -p "$EM_COMPLETED_DIR"
-                jq --arg ts "$(date -u +%Y-%m-%dT%H:%M:%SZ)" --arg runtime "$EM_RUNNING_TIME" \
+                jq --arg ts "$(date +%Y-%m-%dT%H:%M:%S%z)" --arg runtime "$EM_RUNNING_TIME" \
                    '.status = "failed" |
                     .current_phase = "zombie_detected" |
                     .failed_at = $ts |

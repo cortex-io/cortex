@@ -10,7 +10,7 @@ if [ -z "$1" ]; then
 fi
 
 AGENT_NAME=$1
-DATE=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+DATE=$(date +"%Y-%m-%dT%H:%M:%S%z")
 
 cd ~/commit-relay
 

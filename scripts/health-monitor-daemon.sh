@@ -89,7 +89,7 @@ create_health_alert() {
 
     # Add alert
     local timestamp
-    timestamp=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+    timestamp=$(date +"%Y-%m-%dT%H:%M:%S%z")
 
     local sla_minutes
     sla_minutes=$(jq -r --arg sev "$severity" '.sla_config[$sev] // 60' "$HEALTH_ALERTS_FILE")

@@ -35,7 +35,7 @@ start_heartbeat() {
         while true; do
             # Update heartbeat timestamp in worker spec
             if [ -f "$WORKER_SPEC_FILE" ]; then
-                local current_time=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+                local current_time=$(date +%Y-%m-%dT%H:%M:%S%z)
 
                 # Update last_heartbeat field
                 jq --arg time "$current_time" \
@@ -83,7 +83,7 @@ update_progress() {
     local progress_message="$1"
 
     if [ -f "$WORKER_SPEC_FILE" ]; then
-        local current_time=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+        local current_time=$(date +%Y-%m-%dT%H:%M:%S%z)
 
         jq --arg time "$current_time" \
            --arg msg "$progress_message" \

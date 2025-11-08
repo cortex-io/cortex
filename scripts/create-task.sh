@@ -280,7 +280,7 @@ interactive_mode() {
 # Create task in coordination file
 create_task() {
     local task_id=$(generate_task_id)
-    local created_at=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+    local created_at=$(date +%Y-%m-%dT%H:%M:%S%z)
 
     # Build context based on task type
     local context=""
@@ -357,7 +357,7 @@ create_task() {
     # Add task to queue
     cd "$COMMIT_RELAY_HOME"
     jq --argjson task "$task" \
-       '.tasks += [$task] | .updated_at = "'$(date -u +%Y-%m-%dT%H:%M:%SZ)'"' \
+       '.tasks += [$task] | .updated_at = "'$(date +%Y-%m-%dT%H:%M:%S%z)'"' \
        coordination/task-queue.json > /tmp/task-queue-updated.json
     mv /tmp/task-queue-updated.json coordination/task-queue.json
 

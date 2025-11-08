@@ -23,7 +23,7 @@ Incident ID: inc-$(date +%s)
 Alert ID: ${ALERT_ID}
 Worker ID: ${WORKER_ID}
 Outcome: ${OUTCOME}
-Timestamp: $(date -u +"%Y-%m-%dT%H:%M:%SZ")
+Timestamp: $(date +"%Y-%m-%dT%H:%M:%S%z")
 
 DETAILS:
 ${NOTES}
