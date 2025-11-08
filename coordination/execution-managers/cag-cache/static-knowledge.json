@@ -2,10 +2,9 @@
   "cache_id": "execution-manager-static-v1",
   "cache_type": "em_coordination_knowledge",
   "cache_version": "1.0.0",
-  "last_updated": "2025-11-07T20:00:00-0600",
+  "last_updated": "2025-11-07T20:06:56-0600",
   "estimated_tokens": 4200,
   "description": "Static knowledge cache for Execution Manager multi-worker coordination (v5.0 Hybrid RAG+CAG)",
-
   "worker_types": {
     "security_workers": [
       {
@@ -95,7 +94,6 @@
       }
     ]
   },
-
   "coordination_protocols": {
     "parallel_batch": {
       "description": "Spawn multiple workers in parallel for independent tasks",
@@ -138,60 +136,114 @@
       "example": "Migrate authentication system across 5 services"
     }
   },
-
   "quality_gates": {
     "code_quality": {
       "required_before": "review-worker or pr-worker",
-      "checks": ["linting", "type_checking", "unit_tests_pass"],
+      "checks": [
+        "linting",
+        "type_checking",
+        "unit_tests_pass"
+      ],
       "auto_skip": false
     },
     "security_validation": {
       "required_before": "deployment or pr-worker",
-      "checks": ["no_new_vulnerabilities", "secrets_detection", "dependency_audit"],
+      "checks": [
+        "no_new_vulnerabilities",
+        "secrets_detection",
+        "dependency_audit"
+      ],
       "auto_skip": false
     },
     "test_coverage": {
       "required_before": "pr-worker",
-      "checks": ["min_coverage_80_percent", "critical_paths_tested"],
+      "checks": [
+        "min_coverage_80_percent",
+        "critical_paths_tested"
+      ],
       "auto_skip": "if no code changes"
     },
     "documentation_complete": {
       "required_before": "pr-worker",
-      "checks": ["readme_updated", "api_docs_generated", "changelog_entry"],
+      "checks": [
+        "readme_updated",
+        "api_docs_generated",
+        "changelog_entry"
+      ],
       "auto_skip": "if minor fix"
     }
   },
-
   "resource_budgets": {
     "small_operation": {
       "max_workers": 3,
       "total_token_budget": 15000,
       "estimated_duration_minutes": 30,
-      "examples": ["Single repo security fix", "Minor feature addition"]
+      "examples": [
+        "Single repo security fix",
+        "Minor feature addition"
+      ]
     },
     "medium_operation": {
       "max_workers": 6,
       "total_token_budget": 30000,
       "estimated_duration_minutes": 90,
-      "examples": ["Multi-repo CVE remediation", "Feature with tests and docs"]
+      "examples": [
+        "Multi-repo CVE remediation",
+        "Feature with tests and docs"
+      ]
     },
     "large_operation": {
       "max_workers": 10,
       "total_token_budget": 50000,
       "estimated_duration_minutes": 180,
-      "examples": ["Major refactoring", "System-wide security audit"]
+      "examples": [
+        "Major refactoring",
+        "System-wide security audit"
+      ]
     }
   },
-
   "common_dag_patterns": {
     "feature_development": {
       "description": "Full feature development lifecycle",
       "phases": [
-        {"phase": "research", "workers": ["analysis-worker"], "parallel": false},
-        {"phase": "implementation", "workers": ["implementation-worker", "implementation-worker", "implementation-worker"], "parallel": true},
-        {"phase": "testing", "workers": ["test-worker"], "parallel": false},
-        {"phase": "documentation", "workers": ["documentation-worker"], "parallel": false},
-        {"phase": "review_and_pr", "workers": ["review-worker", "pr-worker"], "parallel": false}
+        {
+          "phase": "research",
+          "workers": [
+            "analysis-worker"
+          ],
+          "parallel": false
+        },
+        {
+          "phase": "implementation",
+          "workers": [
+            "implementation-worker",
+            "implementation-worker",
+            "implementation-worker"
+          ],
+          "parallel": true
+        },
+        {
+          "phase": "testing",
+          "workers": [
+            "test-worker"
+          ],
+          "parallel": false
+        },
+        {
+          "phase": "documentation",
+          "workers": [
+            "documentation-worker"
+          ],
+          "parallel": false
+        },
+        {
+          "phase": "review_and_pr",
+          "workers": [
+            "review-worker",
+            "pr-worker"
+          ],
+          "parallel": false
+        }
       ],
       "estimated_workers": 7,
       "estimated_tokens": 42000,
@@ -200,9 +252,36 @@
     "security_remediation": {
       "description": "CVE remediation across multiple repositories",
       "phases": [
-        {"phase": "scan", "workers": ["scan-worker", "scan-worker", "scan-worker", "scan-worker"], "parallel": true},
-        {"phase": "fix", "workers": ["fix-worker", "fix-worker", "fix-worker", "fix-worker"], "parallel": true},
-        {"phase": "verify", "workers": ["scan-worker", "scan-worker", "scan-worker", "scan-worker"], "parallel": true}
+        {
+          "phase": "scan",
+          "workers": [
+            "scan-worker",
+            "scan-worker",
+            "scan-worker",
+            "scan-worker"
+          ],
+          "parallel": true
+        },
+        {
+          "phase": "fix",
+          "workers": [
+            "fix-worker",
+            "fix-worker",
+            "fix-worker",
+            "fix-worker"
+          ],
+          "parallel": true
+        },
+        {
+          "phase": "verify",
+          "workers": [
+            "scan-worker",
+            "scan-worker",
+            "scan-worker",
+            "scan-worker"
+          ],
+          "parallel": true
+        }
       ],
       "estimated_workers": 12,
       "estimated_tokens": 36000,
@@ -211,17 +290,42 @@
     "documentation_sprint": {
       "description": "Comprehensive documentation generation",
       "phases": [
-        {"phase": "audit", "workers": ["analysis-worker"], "parallel": false},
-        {"phase": "generate", "workers": ["documentation-worker", "documentation-worker", "documentation-worker"], "parallel": true},
-        {"phase": "review", "workers": ["review-worker"], "parallel": false},
-        {"phase": "publish", "workers": ["pr-worker"], "parallel": false}
+        {
+          "phase": "audit",
+          "workers": [
+            "analysis-worker"
+          ],
+          "parallel": false
+        },
+        {
+          "phase": "generate",
+          "workers": [
+            "documentation-worker",
+            "documentation-worker",
+            "documentation-worker"
+          ],
+          "parallel": true
+        },
+        {
+          "phase": "review",
+          "workers": [
+            "review-worker"
+          ],
+          "parallel": false
+        },
+        {
+          "phase": "publish",
+          "workers": [
+            "pr-worker"
+          ],
+          "parallel": false
+        }
       ],
       "estimated_workers": 6,
       "estimated_tokens": 25000,
       "estimated_duration_minutes": 75
     }
   },
-
   "failure_recovery_strategies": {
     "worker_timeout": {
       "detection": "No heartbeat for 15 minutes",
@@ -244,7 +348,6 @@
       "retry_limit": 0
     }
   },
-
   "em_session_caching": {
     "description": "v5.0 Hybrid RAG+CAG for EM operations",
     "cag_usage": "This entire static-knowledge.json is pre-loaded into EM's KV cache at spawn time",
@@ -263,7 +366,6 @@
     "initialization_cost": "~350ms one-time load for ~4,200 tokens",
     "session_duration": "Cached for entire EM session (typically 60-180 minutes)"
   },
-
   "metadata": {
     "total_worker_types": 9,
     "coordination_patterns": 5,
@@ -272,6 +374,9 @@
     "resource_budgets": 3,
     "failure_strategies": 4,
     "estimated_em_speedup": "90-95% faster decision-making",
-    "compatible_with": ["v4.0 Execution Managers", "v5.0 Hybrid RAG+CAG masters"]
+    "compatible_with": [
+      "v4.0 Execution Managers",
+      "v5.0 Hybrid RAG+CAG masters"
+    ]
   }
 }
