@@ -1427,6 +1427,130 @@ app.delete('/api/health-alerts/:id', async (req, res) => {
 });
 
 /**
+ * POST /api/health-alerts/:id/repair
+ * Create automated repair task for health alert via commit-relay
+ */
+app.post('/api/health-alerts/:id/repair', async (req, res) => {
+  const { id } = req.params;
+  const { execSync } = require('child_process');
+
+  try {
+    const healthAlertsPath = path.join(COMMIT_RELAY_HOME, 'coordination', 'health-alerts.json');
+    const healthAlertsContent = await fs.readFile(healthAlertsPath, 'utf-8');
+    const healthAlertsData = JSON.parse(healthAlertsContent);
+
+    if (!healthAlertsData || !healthAlertsData.alerts) {
+      return res.status(404).json({ error: 'Health alerts file not found' });
+    }
+
+    const alert = healthAlertsData.alerts.find(a => a.id === id);
+    if (!alert) {
+      return res.status(404).json({ error: 'Alert not found' });
+    }
+
+    // Create repair task
+    const taskId = `task-repair-${Date.now()}`;
+    const taskTitle = `REPAIR: ${alert.type.replace(/_/g, ' ')} - ${alert.message}`;
+
+    const repairTask = {
+      id: taskId,
+      title: taskTitle,
+      type: 'development',
+      priority: alert.severity === 'critical' ? 'critical' : 'high',
+      status: 'pending',
+      created_at: new Date().toISOString(),
+      created_by: 'health-alert-repair-system',
+      context: {
+        repository: 'ry-ops/commit-relay',
+        branch: 'main',
+        description: `Automated repair task from health alert: ${alert.message}`,
+        alert: {
+          id: alert.id,
+          type: alert.type,
+          severity: alert.severity,
+          message: alert.message,
+          created_at: alert.created_at,
+          worker_id: alert.worker_id
+        },
+        repair_actions: [
+          `Investigate ${alert.type} issue`,
+          'Diagnose root cause',
+          'Implement fix or workaround',
+          'Verify resolution',
+          'Update health monitoring if needed',
+          'Document findings and solution'
+        ],
+        requirements: []
+      }
+    };
+
+    // Emit task created event
+    try {
+      const eventScript = path.join(COMMIT_RELAY_HOME, 'scripts', 'emit-event.sh');
+      execSync(`${eventScript} task_created ${taskId} "Repair task created from health alert ${alert.id}"`, {
+        cwd: COMMIT_RELAY_HOME,
+        stdio: 'pipe'
+      });
+    } catch (emitError) {
+      console.warn('Failed to emit task_created event:', emitError.message);
+    }
+
+    // Route task through MoE coordinator
+    try {
+      const moeRouter = path.join(COMMIT_RELAY_HOME, 'coordination', 'masters', 'coordinator', 'lib', 'moe-router.sh');
+      const taskDesc = `${taskTitle}. ${alert.message}`;
+      const routeCmd = `TASK_DESC="${taskDesc}" ${moeRouter} "${taskId}" "${taskDesc}"`;
+      const routeOutput = execSync(routeCmd, {
+        cwd: COMMIT_RELAY_HOME,
+        stdio: 'pipe',
+        encoding: 'utf-8'
+      });
+
+      console.log(`Task ${taskId} routed through MoE:`, routeOutput);
+    } catch (routeError) {
+      console.error('Failed to route task through MoE:', routeError.message);
+      // Continue anyway - task will be picked up by worker daemon
+    }
+
+    // Update alert status to indicate repair initiated
+    alert.status = 'repair_initiated';
+    if (!alert.investigation_notes) {
+      alert.investigation_notes = [];
+    }
+    alert.investigation_notes.push({
+      timestamp: new Date().toISOString(),
+      note: `Automated repair task created: ${taskId}`,
+      task_id: taskId
+    });
+
+    await fs.writeFile(healthAlertsPath, JSON.stringify(healthAlertsData, null, 2), 'utf-8');
+
+    // Emit dashboard event
+    emitDashboardEvent('health_alert_repair_initiated', {
+      alert_id: alert.id,
+      alert_type: alert.type,
+      severity: alert.severity,
+      task_id: taskId,
+      message: `Automated repair initiated for: ${alert.message}`
+    });
+
+    res.json({
+      success: true,
+      message: 'Repair task created and routed to commit-relay',
+      task_id: taskId,
+      alert_id: alert.id,
+      task: repairTask
+    });
+  } catch (error) {
+    console.error('Error creating repair task:', error);
+    res.status(500).json({
+      error: 'Failed to create repair task',
+      details: error.message
+    });
+  }
+});
+
+/**
  * Parse elapsed time string (format: [[DD-]HH:]MM:SS) to seconds
  */
 function parseElapsedTime(timeStr) {
