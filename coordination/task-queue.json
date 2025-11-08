@@ -76,14 +76,50 @@
           "Documentation includes architecture diagram and flow"
         ]
       }
+    },
+    {
+      "id": "task-cag-hybrid-001",
+      "title": "Implement Hybrid RAG + CAG Architecture for Performance Optimization",
+      "type": "feature",
+      "priority": "high",
+      "status": "in_progress",
+      "created_at": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
+      "assigned_to": "development-master",
+      "created_by": "claude-code",
+      "context": {
+        "description": "Implement hybrid RAG + CAG architecture to optimize commit-relay performance. CAG (Cache Augmented Generation) will pre-load static knowledge into KV cache for zero-latency access, while RAG handles dynamic/growing knowledge. Expected 90-95% latency reduction for worker spawning and MoE routing.",
+        "requirements": [
+          "Create CAG static knowledge caches for all 5 masters",
+          "Update master agent prompts to use cached context",
+          "Add vector database for enhanced RAG retrieval",
+          "Implement hybrid EM caching for v4.0",
+          "Create cache loading utilities",
+          "Run performance benchmarks"
+        ],
+        "acceptance_criteria": [
+          "All masters have static-knowledge.json CAG caches",
+          "Master prompts reference cached knowledge",
+          "Vector DB operational for historical data",
+          "EMs use hybrid RAG+CAG for multi-worker ops",
+          "95% latency reduction on worker spawn decisions",
+          "Documentation updated with architecture changes"
+        ],
+        "estimated_duration_hours": 4,
+        "files_modified": [
+          "coordination/masters/*/cag-cache/static-knowledge.json",
+          "agents/prompts/*-master.md",
+          "scripts/cag/load-cache.sh",
+          "scripts/cag/benchmark-cag.sh"
+        ]
+      }
     }
   ],
   "metadata": {
     "last_updated": "2025-11-07T20:18:45.388655Z",
-    "total_tasks": 2,
-    "pending_tasks": 1,
+    "total_tasks": 3,
+    "pending_tasks": 2,
     "in_progress_tasks": 0,
     "completed_tasks": 1
   },
-  "updated_at": "2025-11-07T21:51:32Z"
+  "updated_at": "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
 }
