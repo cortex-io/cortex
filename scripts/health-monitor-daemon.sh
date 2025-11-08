@@ -10,7 +10,7 @@ HEARTBEAT_THRESHOLD=300  # 5 minutes (300 seconds)
 HEALTH_ALERTS_FILE="coordination/health-alerts.json"
 HEALTH_INCIDENTS_DIR="coordination/health-incidents"
 HEALTH_MONITOR_LOG="agents/logs/system/health-monitor.log"
-PID_FILE="/tmp/health-monitor-daemon.pid"
+PID_FILE="/tmp/commit-relay-health-monitor.pid"
 
 # Component heartbeat files
 PM_DAEMON_STATE="coordination/pm-state.json"  # PM daemon uses pm-state.json for heartbeats
