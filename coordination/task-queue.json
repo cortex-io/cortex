@@ -403,6 +403,22 @@
         "description": "CRITICAL: Admin page restart button not working. Investigate dashboard/public/index.html admin panel restart functionality, /api/admin/restart endpoint implementation, server process management logic, and permission issues. Fix restart button to properly restart dashboard server and provide user feedback. Also fix event log purge button that shows 'Failed to purge event log' error.",
         "requirements": []
       }
+    },
+    {
+      "id": "task-1762553433",
+      "title": "Generate comprehensive PDF report documenting all dashboard issues found: 1) KPI metrics not reporting, 2) Admin restart button failure, 3) Event log purge failure. For each issue document: root cause analysis, why it occurred, technical details, fix approach used, code changes made, testing performed, and prevention measures. Use markdown-pdf or similar to generate professional PDF report in docs/dashboard-issues-report.pdf",
+      "type": "development",
+      "priority": "high",
+      "status": "pending",
+      "assigned_to": null,
+      "created_at": "2025-11-08T08:29:01-0600",
+      "created_by": "create-task-cli",
+      "context": {
+        "repository": "ry-ops/commit-relay",
+        "branch": "main",
+        "description": "Generate comprehensive PDF report documenting all dashboard issues found: 1) KPI metrics not reporting, 2) Admin restart button failure, 3) Event log purge failure. For each issue document: root cause analysis, why it occurred, technical details, fix approach used, code changes made, testing performed, and prevention measures. Use markdown-pdf or similar to generate professional PDF report in docs/dashboard-issues-report.pdf",
+        "requirements": []
+      }
     }
   ],
   "metadata": {
@@ -412,5 +428,5 @@
     "in_progress_tasks": 0,
     "completed_tasks": 2
   },
-  "updated_at": "2025-11-08T08:28:49-0600"
+  "updated_at": "2025-11-08T08:29:01-0600"
 }
