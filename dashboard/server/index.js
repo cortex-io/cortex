@@ -21,7 +21,8 @@ app.use(express.json());
 app.use(express.static(path.join(__dirname, '../public')));
 
 // Paths to coordination files
-const COORD_DIR = path.join(__dirname, '../../coordination');
+const COMMIT_RELAY_HOME = process.env.COMMIT_RELAY_HOME || path.join(__dirname, '../..');
+const COORD_DIR = path.join(COMMIT_RELAY_HOME, 'coordination');
 const FILES = {
   workerPool: path.join(COORD_DIR, 'worker-pool.json'),
   tokenBudget: path.join(COORD_DIR, 'token-budget.json'),
@@ -1966,32 +1967,28 @@ app.post('/api/metrics-daemon/control', async (req, res) => {
 app.get('/api/moe/routing', async (req, res) => {
   try {
     const fsSync = require('fs');
+    const { exec } = require('child_process');
+    const { promisify } = require('util');
+    const execAsync = promisify(exec);
+
     const routingLogPath = path.join(COMMIT_RELAY_HOME, 'coordination', 'masters', 'coordinator', 'logs', 'routing-decisions.jsonl');
 
     if (!fsSync.existsSync(routingLogPath)) {
       return res.json({ decisions: [] });
     }
 
-    const content = fsSync.readFileSync(routingLogPath, 'utf-8');
-    const lines = content.trim().split('\n').filter(line => line);
+    // Use jq to parse multi-line JSON objects and convert to array
+    // This handles both JSONL (single-line) and pretty-printed multi-line JSON
+    const { stdout } = await execAsync(`jq -s '.' "${routingLogPath}"`);
+    const allDecisions = JSON.parse(stdout);
 
-    // Parse JSONL and get last 100 decisions
-    const decisions = lines
-      .map(line => {
-        try {
-          return JSON.parse(line);
-        } catch (e) {
-          return null;
-        }
-      })
-      .filter(d => d !== null)
-      .slice(-100)
-      .reverse(); // Most recent first
+    // Get last 100 decisions, most recent first
+    const decisions = allDecisions.slice(-100).reverse();
 
     res.json({ decisions });
   } catch (error) {
     console.error('Error fetching MoE routing decisions:', error);
-    res.status(500).json({ error: 'Failed to fetch routing decisions' });
+    res.status(500).json({ error: 'Failed to fetch routing decisions', details: error.message });
   }
 });
 
