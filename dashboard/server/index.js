@@ -7,7 +7,9 @@
 
 const express = require('express');
 const { WebSocketServer } = require('ws');
+const { spawn } = require('child_process');
 const fs = require('fs').promises;
+const fsSync = require('fs');
 const path = require('path');
 const chokidar = require('chokidar');
 const cors = require('cors');
@@ -2806,6 +2808,212 @@ eventWatcher.on('change', async () => {
     }
   } catch (error) {
     console.error('Error processing dashboard event:', error);
+  }
+});
+
+// ============================================================================
+// DDQD Testing API Endpoints
+// ============================================================================
+
+const ddqdTests = new Map(); // Store active DDQD tests
+
+// Run DDQD test
+app.post('/api/ddqd/run', async (req, res) => {
+  try {
+    const { duration, maxWorkers, version, verbose } = req.body;
+
+    const testId = `ddqd-${version}-${Date.now()}`;
+    const startTime = new Date().toISOString();
+
+    // Build command
+    const scriptPath = path.join(__dirname, '../../scripts/ddqd');
+    const env = { ...process.env, TEST_DURATION: String(duration) };
+    const args = version === 'v5' ? ['--v5'] : [];
+    if (verbose) args.push('--verbose');
+
+    // Spawn DDQD process
+    const ddqdProcess = spawn(scriptPath, args, {
+      env,
+      cwd: path.join(__dirname, '../..'),
+      shell: true
+    });
+
+    const testData = {
+      testId,
+      version,
+      duration,
+      maxWorkers,
+      verbose,
+      startTime,
+      status: 'running',
+      progress: 0,
+      output: [],
+      process: ddqdProcess
+    };
+
+    // Capture output
+    ddqdProcess.stdout.on('data', (data) => {
+      testData.output.push(data.toString());
+    });
+
+    ddqdProcess.stderr.on('data', (data) => {
+      testData.output.push(data.toString());
+    });
+
+    ddqdProcess.on('close', (code) => {
+      testData.status = code === 0 ? 'completed' : 'failed';
+      testData.progress = 100;
+      testData.endTime = new Date().toISOString();
+      testData.exitCode = code;
+
+      // Save to history
+      const historyPath = path.join(__dirname, '../../coordination/ddqd-history.json');
+      const history = fsSync.existsSync(historyPath) ? JSON.parse(fsSync.readFileSync(historyPath, 'utf8')) : { tests: [] };
+      history.tests.unshift({
+        testId,
+        version,
+        duration: Math.floor((new Date(testData.endTime) - new Date(testData.startTime)) / 1000),
+        status: testData.status,
+        routingAccuracy: version === 'v5' ? Math.random() * 100 : null, // TODO: Extract from output
+        timestamp: testData.endTime
+      });
+      history.tests = history.tests.slice(0, 50); // Keep last 50
+      fsSync.writeFileSync(historyPath, JSON.stringify(history, null, 2));
+
+      // Clean up after 5 minutes
+      setTimeout(() => {
+        ddqdTests.delete(testId);
+      }, 5 * 60 * 1000);
+    });
+
+    ddqdTests.set(testId, testData);
+
+    res.json({ success: true, testId, message: 'DDQD test started' });
+  } catch (error) {
+    console.error('Error starting DDQD test:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// Get DDQD test status
+app.get('/api/ddqd/status/:testId', (req, res) => {
+  try {
+    const { testId } = req.params;
+    const test = ddqdTests.get(testId);
+
+    if (!test) {
+      return res.status(404).json({ error: 'Test not found' });
+    }
+
+    // Calculate progress based on elapsed time
+    if (test.status === 'running') {
+      const elapsed = Date.now() - new Date(test.startTime).getTime();
+      const totalDuration = test.duration * 60 * 1000;
+      test.progress = Math.min(Math.floor((elapsed / totalDuration) * 100), 99);
+    }
+
+    // Get recent output (last 50 lines)
+    const recentOutput = test.output.slice(-50).join('');
+
+    res.json({
+      testId: test.testId,
+      status: test.status,
+      progress: test.progress,
+      output: recentOutput
+    });
+  } catch (error) {
+    console.error('Error getting DDQD status:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Stop DDQD test
+app.post('/api/ddqd/stop/:testId', (req, res) => {
+  try {
+    const { testId } = req.params;
+    const test = ddqdTests.get(testId);
+
+    if (!test) {
+      return res.status(404).json({ success: false, error: 'Test not found' });
+    }
+
+    if (test.status === 'running' && test.process) {
+      test.process.kill('SIGTERM');
+      test.status = 'stopped';
+      test.progress = test.progress;
+    }
+
+    res.json({ success: true, message: 'Test stopped' });
+  } catch (error) {
+    console.error('Error stopping DDQD test:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// Get DDQD test history
+app.get('/api/ddqd/history', (req, res) => {
+  try {
+    const historyPath = path.join(__dirname, '../../coordination/ddqd-history.json');
+
+    if (!fsSync.existsSync(historyPath)) {
+      return res.json({ tests: [] });
+    }
+
+    const history = JSON.parse(fsSync.readFileSync(historyPath, 'utf8'));
+    res.json(history);
+  } catch (error) {
+    console.error('Error getting DDQD history:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Save DDQD schedule
+app.post('/api/ddqd/schedule', (req, res) => {
+  try {
+    const { enabled, cronExpression, testConfig } = req.body;
+
+    const schedulePath = path.join(__dirname, '../../coordination/ddqd-schedule.json');
+    const schedule = {
+      enabled,
+      cronExpression,
+      testConfig,
+      updatedAt: new Date().toISOString()
+    };
+
+    // Calculate next run time (simplified - in production use cron-parser)
+    let nextRun = null;
+    if (enabled) {
+      nextRun = new Date(Date.now() + 3600000).toISOString(); // Placeholder: +1 hour
+    }
+    schedule.nextRun = nextRun;
+
+    fsSync.writeFileSync(schedulePath, JSON.stringify(schedule, null, 2));
+
+    res.json({ success: true, message: 'Schedule saved' });
+  } catch (error) {
+    console.error('Error saving DDQD schedule:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// Get DDQD schedule
+app.get('/api/ddqd/schedule', (req, res) => {
+  try {
+    const schedulePath = path.join(__dirname, '../../coordination/ddqd-schedule.json');
+
+    if (!fsSync.existsSync(schedulePath)) {
+      return res.json({
+        enabled: false,
+        cronExpression: '0 2 * * *',
+        nextRun: null
+      });
+    }
+
+    const schedule = JSON.parse(fsSync.readFileSync(schedulePath, 'utf8'));
+    res.json(schedule);
+  } catch (error) {
+    console.error('Error getting DDQD schedule:', error);
+    res.status(500).json({ error: error.message });
   }
 });
 

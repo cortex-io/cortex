@@ -5,23 +5,5 @@
     "medium": 60,
     "low": 120
   },
-  "alerts": [
-    {
-      "id": "alert-coordinator-stale",
-      "type": "coordinator_failure",
-      "severity": "critical",
-      "status": "resolved",
-      "message": "Coordinator heartbeat stale for  seconds",
-      "created_at": "2025-11-08T09:11:02-0600",
-      "resolved_at": "2025-11-08T10:15:00-0600",
-      "sla_minutes": 15,
-      "worker_id": null,
-      "investigation_notes": [
-        "Investigation found coordinator runs on-demand, not as continuous daemon",
-        "Last run: 08:29:09 - expected behavior for task-based execution",
-        "False positive - heartbeat monitoring not appropriate for on-demand services",
-        "Alert resolved by automated repair system (task-1762617941)"
-      ]
-    }
-  ]
+  "alerts": []
 }
