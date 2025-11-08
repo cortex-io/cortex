@@ -361,14 +361,15 @@ monitor_loop() {
     while true; do
         log "Running health checks..."
 
-        # Check all components and report
-        check_pm_health && report_health_check "pm_daemon" "healthy" "Process running, state fresh"
-        check_coordinator_health && report_health_check "coordinator" "healthy" "On-demand service operating normally"
+        # Check all components
+        check_pm_health
+        check_coordinator_health
         check_master_activity
-        check_dashboard_health && report_health_check "dashboard" "healthy" "Port 3000 responding"
-        check_worker_daemon_health && report_health_check "worker_daemon" "healthy" "Process running"
+        check_dashboard_health
+        check_worker_daemon_health
 
-        report_health_check "health_monitor" "healthy" "All checks completed successfully"
+        # Report all checks completed via API
+        report_health_check "health_monitor" "healthy" "All system checks completed"
 
         log "Health checks complete, sleeping for ${MONITOR_INTERVAL}s"
         sleep "$MONITOR_INTERVAL"
