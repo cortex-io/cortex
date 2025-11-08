@@ -102,18 +102,66 @@ calculate_expert_score() {
 # route_task_moe: Perform MoE-style routing with sparse activation
 # Args:
 #   $1: task_id
-#   $2: task_description
+#   $2: task_description (format: "type: title description")
 # Outputs: JSON routing decision
 ##############################################################################
 route_task_moe() {
     local task_id="$1"
     local task_description="$2"
-    local timestamp=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+    local timestamp=$(date +"%Y-%m-%dT%H:%M:%S%z")
 
-    # Calculate confidence scores for all experts
+    # v5.0 CAG Enhancement: Extract task type for direct routing
+    local task_type=""
+    if [[ "$task_description" =~ ^([a-z0-9-]+): ]]; then
+        task_type="${BASH_REMATCH[1]}"
+    fi
+
+    # v5.0 CAG Enhancement: Type-based routing (high confidence)
+    local type_routed_expert=""
+    local type_confidence=0
+
+    if [ -n "$task_type" ]; then
+        # Normalize task type for matching (handle CVE-YYYY-NNNN format)
+        local normalized_type="$task_type"
+        if [[ "$task_type" =~ ^cve- ]]; then
+            normalized_type="cve"
+        elif [[ "$task_type" =~ ^vulnerability- ]]; then
+            normalized_type="vulnerability"
+        fi
+
+        case "$normalized_type" in
+            security-scan|security-audit|security-fix|cve|vulnerability|security)
+                type_routed_expert="security"
+                type_confidence=95
+                ;;
+            feature|bug-fix|refactor|optimization|development)
+                type_routed_expert="development"
+                type_confidence=95
+                ;;
+            inventory|catalog|discovery|documentation)
+                type_routed_expert="inventory"
+                type_confidence=95
+                ;;
+            build|deploy|test|ci-cd|release)
+                type_routed_expert="cicd"
+                type_confidence=95
+                ;;
+        esac
+    fi
+
+    # Calculate confidence scores for all experts (keyword-based)
     local dev_score=$(calculate_expert_score "$task_description" "development")
     local sec_score=$(calculate_expert_score "$task_description" "security")
     local inv_score=$(calculate_expert_score "$task_description" "inventory")
+
+    # v5.0 CAG: Boost scores with type-based routing
+    if [ "$type_routed_expert" = "development" ]; then
+        dev_score=$((dev_score > type_confidence ? dev_score : type_confidence))
+    elif [ "$type_routed_expert" = "security" ]; then
+        sec_score=$((sec_score > type_confidence ? sec_score : type_confidence))
+    elif [ "$type_routed_expert" = "inventory" ]; then
+        inv_score=$((inv_score > type_confidence ? inv_score : type_confidence))
+    fi
 
     # Convert to decimal for jq (0.0 - 1.0 scale)
     local dev_conf=$(echo "scale=2; $dev_score / 100" | bc)
