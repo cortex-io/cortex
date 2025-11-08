@@ -3,7 +3,18 @@
 /**
  * Commit-Relay Dashboard Server
  * Real-time metrics and monitoring for the master-worker system
+ *
+ * Security Features (v2.0):
+ * - API key authentication
+ * - Rate limiting
+ * - Input validation
+ * - Command injection protection
+ * - Path traversal protection
+ * - CORS restrictions
  */
+
+// Load environment variables
+require('dotenv').config();
 
 const express = require('express');
 const { WebSocketServer } = require('ws');
@@ -13,14 +24,75 @@ const fsSync = require('fs');
 const path = require('path');
 const chokidar = require('chokidar');
 const cors = require('cors');
+const helmet = require('helmet');
+
+// Security middleware
+const { authMiddleware, confirmationMiddleware } = require('./middleware/auth');
+const { apiLimiter, controlLimiter, expensiveLimiter } = require('./middleware/rateLimiter');
+const {
+  validate,
+  validatePid,
+  validatePath,
+  sanitizeWorkerId,
+  sanitizeAlertId,
+  ddqdValidationRules,
+  daemonControlValidationRules,
+  alertResolutionValidationRules,
+  workerRestartValidationRules
+} = require('./middleware/validators');
+
+// Security utilities
+const {
+  safeExec,
+  isProcessRunning,
+  safeKillProcess,
+  safeStartScript,
+  sanitizeError
+} = require('./utils/security');
 
 const app = express();
 const PORT = process.env.DASHBOARD_PORT || 3000;
 
-// Middleware
-app.use(cors());
-app.use(express.json());
+// Security: Helmet for security headers
+app.use(helmet({
+  contentSecurityPolicy: false, // Allow inline scripts for dashboard
+  crossOriginEmbedderPolicy: false
+}));
+
+// Security: CORS configuration
+const allowedOrigins = process.env.ALLOWED_ORIGINS
+  ? process.env.ALLOWED_ORIGINS.split(',').map(origin => origin.trim())
+  : ['http://localhost:3000'];
+
+app.use(cors({
+  origin: (origin, callback) => {
+    // Allow requests with no origin (mobile apps, curl, etc.)
+    if (!origin) return callback(null, true);
+
+    if (allowedOrigins.indexOf(origin) !== -1 || allowedOrigins.includes('*')) {
+      callback(null, true);
+    } else {
+      console.warn(`⚠️  Blocked CORS request from unauthorized origin: ${origin}`);
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  credentials: true
+}));
+
+// Security: JSON body size limit (prevent DoS)
+app.use(express.json({ limit: '1mb' }));
+
+// Security: Trust proxy (for rate limiting behind reverse proxy)
+app.set('trust proxy', 1);
+
+// Static files (no auth required for public dashboard)
 app.use(express.static(path.join(__dirname, '../public')));
+
+// Security: Apply rate limiting to all API routes
+app.use('/api', apiLimiter);
+
+// Security: Apply authentication to all API routes
+app.use('/api', authMiddleware);
 
 // Paths to coordination files
 const COMMIT_RELAY_HOME = process.env.COMMIT_RELAY_HOME || path.join(__dirname, '../..');
@@ -1219,112 +1291,137 @@ app.post('/api/health-alerts/:id/resolve', async (req, res) => {
 /**
  * POST /api/health-alerts/:id/restart-worker
  * Restart worker associated with an alert
+ * Security: Input validation, path validation, safe command execution, rate limiting
  */
-app.post('/api/health-alerts/:id/restart-worker', async (req, res) => {
-  try {
-    const { id } = req.params;
-    const { execSync } = require('child_process');
-
-    const healthAlertsPath = path.join(__dirname, '../../coordination/health-alerts.json');
-    const healthAlertsData = await readJSON(healthAlertsPath);
-
-    if (!healthAlertsData || !healthAlertsData.alerts) {
-      return res.status(404).json({ error: 'Health alerts file not found' });
-    }
-
-    const alert = healthAlertsData.alerts.find(a => a.id === id);
-    if (!alert) {
-      return res.status(404).json({ error: 'Alert not found' });
-    }
-
-    if (!alert.worker_id) {
-      return res.status(400).json({ error: 'Alert does not have an associated worker' });
-    }
-
-    const workerId = alert.worker_id;
-    const workerSpecsDir = path.join(__dirname, '../../coordination/worker-specs');
-    const stuckDir = path.join(workerSpecsDir, 'stuck');
-    const failedDir = path.join(workerSpecsDir, 'failed');
-    const activeDir = path.join(workerSpecsDir, 'active');
-
-    // Find worker spec in stuck or failed directories
-    let workerSpecPath = null;
-    let sourceDir = null;
-
-    const stuckPath = path.join(stuckDir, `${workerId}.json`);
-    const failedPath = path.join(failedDir, `${workerId}.json`);
-
-    if (await fs.access(stuckPath).then(() => true).catch(() => false)) {
-      workerSpecPath = stuckPath;
-      sourceDir = 'stuck';
-    } else if (await fs.access(failedPath).then(() => true).catch(() => false)) {
-      workerSpecPath = failedPath;
-      sourceDir = 'failed';
-    } else {
-      return res.status(404).json({ error: 'Worker spec not found in stuck/ or failed/ directories' });
-    }
-
-    // Read worker spec
-    const workerSpec = await readJSON(workerSpecPath);
-    if (!workerSpec) {
-      return res.status(500).json({ error: 'Failed to read worker spec' });
-    }
-
-    // Reset worker spec status
-    workerSpec.status = 'pending';
-    workerSpec.execution = {
-      ...workerSpec.execution,
-      restarted_at: new Date().toISOString(),
-      restarted_from: sourceDir,
-      restart_reason: `Restarted from health alert ${id}`
-    };
-
-    // Move to active directory
-    const activePath = path.join(activeDir, `${workerId}.json`);
-    await fs.writeFile(activePath, JSON.stringify(workerSpec, null, 2), 'utf-8');
-
-    // Remove from stuck/failed directory
-    await fs.unlink(workerSpecPath);
-
-    // Add note to alert
-    const alertIndex = healthAlertsData.alerts.findIndex(a => a.id === id);
-    if (!healthAlertsData.alerts[alertIndex].investigation_notes) {
-      healthAlertsData.alerts[alertIndex].investigation_notes = [];
-    }
-    healthAlertsData.alerts[alertIndex].investigation_notes.push(
-      `${new Date().toISOString()} - Worker ${workerId} restarted from ${sourceDir}/ directory`
-    );
-
-    await fs.writeFile(healthAlertsPath, JSON.stringify(healthAlertsData, null, 2), 'utf-8');
-
-    // Emit dashboard event (alert already declared earlier in function)
-    emitDashboardEvent('worker_restarted', {
-      worker_id: workerId,
-      alert_id: id,
-      alert_type: alert?.type || 'unknown',
-      source_dir: sourceDir,
-      message: `Worker ${workerId} restarted from health alert`
-    });
-
-    // Attempt to spawn the worker using the autonomous worker script
+app.post('/api/health-alerts/:id/restart-worker',
+  controlLimiter,
+  workerRestartValidationRules,
+  validate,
+  async (req, res) => {
     try {
-      const spawnScript = path.join(__dirname, '../../agents/workers/autonomous-worker.sh');
-      execSync(`bash ${spawnScript} ${activePath} > /dev/null 2>&1 &`);
-    } catch (spawnError) {
-      console.error('Error spawning worker:', spawnError);
-      // Don't fail the request - worker spec is moved, spawn will be attempted by daemon
-    }
+      const { id } = req.params;
 
-    res.json({
-      success: true,
-      message: `Worker ${workerId} restarted from ${sourceDir}/ directory`,
-      worker_id: workerId
-    });
-  } catch (error) {
-    console.error('Error restarting worker:', error);
-    res.status(500).json({ error: 'Internal server error', details: error.message });
+      // Sanitize alert ID
+      const safeAlertId = sanitizeAlertId(id);
+
+      const healthAlertsPath = path.join(__dirname, '../../coordination/health-alerts.json');
+      const healthAlertsData = await readJSON(healthAlertsPath);
+
+      if (!healthAlertsData || !healthAlertsData.alerts) {
+        return res.status(404).json({ error: 'Health alerts file not found' });
+      }
+
+      const alert = healthAlertsData.alerts.find(a => a.id === safeAlertId);
+      if (!alert) {
+        return res.status(404).json({ error: 'Alert not found' });
+      }
+
+      if (!alert.worker_id) {
+        return res.status(400).json({ error: 'Alert does not have an associated worker' });
+      }
+
+      // Sanitize worker ID
+      const workerId = sanitizeWorkerId(alert.worker_id);
+
+      const workerSpecsDir = path.join(__dirname, '../../coordination/worker-specs');
+      const stuckDir = path.join(workerSpecsDir, 'stuck');
+      const failedDir = path.join(workerSpecsDir, 'failed');
+      const activeDir = path.join(workerSpecsDir, 'active');
+
+      // Find worker spec in stuck or failed directories
+      let workerSpecPath = null;
+      let sourceDir = null;
+
+      // Use basename to prevent path traversal
+      const safeWorkerFilename = path.basename(`${workerId}.json`);
+      const stuckPath = path.join(stuckDir, safeWorkerFilename);
+      const failedPath = path.join(failedDir, safeWorkerFilename);
+
+      if (await fs.access(stuckPath).then(() => true).catch(() => false)) {
+        workerSpecPath = stuckPath;
+        sourceDir = 'stuck';
+      } else if (await fs.access(failedPath).then(() => true).catch(() => false)) {
+        workerSpecPath = failedPath;
+        sourceDir = 'failed';
+      } else {
+        return res.status(404).json({ error: 'Worker spec not found in stuck/ or failed/ directories' });
+      }
+
+      // Read worker spec
+      const workerSpec = await readJSON(workerSpecPath);
+      if (!workerSpec) {
+        return res.status(500).json({ error: 'Failed to read worker spec' });
+      }
+
+      // Reset worker spec status
+      workerSpec.status = 'pending';
+      workerSpec.execution = {
+        ...workerSpec.execution,
+        restarted_at: new Date().toISOString(),
+        restarted_from: sourceDir,
+        restart_reason: `Restarted from health alert ${safeAlertId}`
+      };
+
+      // Move to active directory with safe path
+      const activePath = path.join(activeDir, safeWorkerFilename);
+      await fs.writeFile(activePath, JSON.stringify(workerSpec, null, 2), 'utf-8');
+
+      // Remove from stuck/failed directory
+      await fs.unlink(workerSpecPath);
+
+      // Add note to alert
+      const alertIndex = healthAlertsData.alerts.findIndex(a => a.id === safeAlertId);
+      if (!healthAlertsData.alerts[alertIndex].investigation_notes) {
+        healthAlertsData.alerts[alertIndex].investigation_notes = [];
+      }
+      healthAlertsData.alerts[alertIndex].investigation_notes.push(
+        `${new Date().toISOString()} - Worker ${workerId} restarted from ${sourceDir}/ directory`
+      );
+
+      await fs.writeFile(healthAlertsPath, JSON.stringify(healthAlertsData, null, 2), 'utf-8');
+
+      // Emit dashboard event
+      emitDashboardEvent('worker_restarted', {
+        worker_id: workerId,
+        alert_id: safeAlertId,
+        alert_type: alert?.type || 'unknown',
+        source_dir: sourceDir,
+        message: `Worker ${workerId} restarted from health alert`
+      });
+
+      // Attempt to spawn the worker using safe execution
+      // Note: Worker daemon will pick this up automatically, so spawning here is optional
+      try {
+        const spawnScript = path.join(__dirname, '../../agents/workers/autonomous-worker.sh');
+        // Validate script path is within expected directory
+        const baseDir = path.join(__dirname, '../..');
+        const validatedScript = validatePath(spawnScript, baseDir);
+
+        // Use safe execution with validated path
+        safeExec('bash', [validatedScript, activePath], {
+          cwd: baseDir,
+          detached: true,
+          stdio: 'ignore'
+        }).catch(err => {
+          console.warn('Worker spawn failed, daemon will retry:', err.message);
+        });
+      } catch (spawnError) {
+        console.warn('Error spawning worker, daemon will retry:', spawnError.message);
+        // Don't fail the request - worker spec is moved, spawn will be attempted by daemon
+      }
+
+      res.json({
+        success: true,
+        message: `Worker ${workerId} restarted from ${sourceDir}/ directory`,
+        worker_id: workerId
+      });
+    } catch (error) {
+      console.error('Error restarting worker:', error);
+      const safeError = sanitizeError(error, process.env.NODE_ENV === 'development');
+      res.status(500).json({ error: 'Failed to restart worker', ...safeError });
+    }
   }
-});
+);
 
 /**
  * POST /api/health-alerts/:id/note
@@ -1787,120 +1884,164 @@ app.post('/api/event-log/purge', (req, res) => {
 
 /**
  * Start/Stop Worker Daemon
+ * Security: Input validation, safe command execution, rate limiting
  */
-app.post('/api/daemon/control', async (req, res) => {
-  const { execSync } = require('child_process');
-  const { action } = req.body; // 'start' or 'stop'
+app.post('/api/daemon/control',
+  controlLimiter,
+  daemonControlValidationRules,
+  validate,
+  async (req, res) => {
+    const { action } = req.body;
 
-  try {
-    const scriptPath = path.join(__dirname, '../../scripts/worker-daemon.sh');
-
-    if (action === 'start') {
-      // Check if already running
+    try {
+      const scriptPath = path.join(__dirname, '../../scripts/worker-daemon.sh');
       const PID_FILE = '/tmp/commit-relay-worker-daemon.pid';
-      const fsSync = require('fs');
 
-      if (fsSync.existsSync(PID_FILE)) {
-        const pid = parseInt(fsSync.readFileSync(PID_FILE, 'utf-8').trim());
-        try {
-          execSync(`ps -p ${pid}`, { stdio: 'pipe' });
-          return res.json({ success: false, message: 'Worker daemon is already running', pid });
-        } catch (e) {
-          // PID file exists but process is dead, clean it up
-          fsSync.unlinkSync(PID_FILE);
+      if (action === 'start') {
+        // Check if already running using safe PID validation
+        if (fsSync.existsSync(PID_FILE)) {
+          try {
+            const pidContent = fsSync.readFileSync(PID_FILE, 'utf-8').trim();
+            const pid = validatePid(pidContent);
+
+            if (isProcessRunning(pid)) {
+              return res.json({
+                success: false,
+                message: 'Worker daemon is already running',
+                pid
+              });
+            }
+
+            // PID file exists but process is dead, clean it up
+            fsSync.unlinkSync(PID_FILE);
+          } catch (err) {
+            // Invalid PID file, clean it up
+            fsSync.unlinkSync(PID_FILE);
+          }
         }
+
+        // Start the daemon using safe execution
+        await safeStartScript(scriptPath, [], path.join(__dirname, '../..'));
+
+        // Give it a moment to start
+        await new Promise(resolve => setTimeout(resolve, 1000));
+
+        // Read the new PID
+        if (fsSync.existsSync(PID_FILE)) {
+          try {
+            const pidContent = fsSync.readFileSync(PID_FILE, 'utf-8').trim();
+            const pid = validatePid(pidContent);
+            res.json({ success: true, message: 'Worker daemon started', pid });
+          } catch (err) {
+            res.json({ success: false, message: 'Worker daemon may have failed to start' });
+          }
+        } else {
+          res.json({ success: false, message: 'Worker daemon may have failed to start' });
+        }
+      } else if (action === 'stop') {
+        // Stop the daemon using safe script execution
+        await safeExec('bash', [scriptPath, 'stop'], { cwd: path.join(__dirname, '../..') });
+        res.json({ success: true, message: 'Worker daemon stopped' });
+      } else if (action === 'restart') {
+        // Restart using safe script execution
+        await safeExec('bash', [scriptPath, 'restart'], { cwd: path.join(__dirname, '../..') });
+        res.json({ success: true, message: 'Worker daemon restarted' });
       }
-
-      // Start the daemon
-      execSync(`bash ${scriptPath} > /tmp/worker-daemon-start.log 2>&1 &`);
-
-      // Give it a moment to start
-      await new Promise(resolve => setTimeout(resolve, 1000));
-
-      // Read the new PID
-      if (fsSync.existsSync(PID_FILE)) {
-        const pid = parseInt(fsSync.readFileSync(PID_FILE, 'utf-8').trim());
-        res.json({ success: true, message: 'Worker daemon started', pid });
-      } else {
-        res.json({ success: false, message: 'Worker daemon may have failed to start' });
-      }
-    } else if (action === 'stop') {
-      // Stop the daemon using its control script
-      execSync(`bash ${scriptPath} stop`, { stdio: 'pipe' });
-      res.json({ success: true, message: 'Worker daemon stopped' });
-    } else {
-      res.status(400).json({ success: false, message: 'Invalid action. Use "start" or "stop"' });
+    } catch (error) {
+      console.error('Error controlling worker daemon:', error);
+      const safeError = sanitizeError(error, process.env.NODE_ENV === 'development');
+      res.status(500).json({ success: false, ...safeError });
     }
-  } catch (error) {
-    console.error('Error controlling worker daemon:', error);
-    res.status(500).json({ success: false, message: error.message });
   }
-});
+);
 
 /**
  * Start/Stop PM Daemon
+ * Security: Input validation, safe command execution, rate limiting
  */
-app.post('/api/pm-daemon/control', async (req, res) => {
-  const { execSync } = require('child_process');
-  const { action } = req.body; // 'start' or 'stop'
+app.post('/api/pm-daemon/control',
+  controlLimiter,
+  daemonControlValidationRules,
+  validate,
+  async (req, res) => {
+    const { action } = req.body;
 
-  try {
-    const scriptPath = path.join(__dirname, '../../scripts/pm-daemon.sh');
-
-    if (action === 'start') {
-      // Check if already running
+    try {
+      const scriptPath = path.join(__dirname, '../../scripts/pm-daemon.sh');
       const PID_FILE = '/tmp/commit-relay-pm-daemon.pid';
-      const fsSync = require('fs');
 
-      if (fsSync.existsSync(PID_FILE)) {
-        const pid = parseInt(fsSync.readFileSync(PID_FILE, 'utf-8').trim());
-        try {
-          execSync(`ps -p ${pid}`, { stdio: 'pipe' });
-          return res.json({ success: false, message: 'PM daemon is already running', pid });
-        } catch (e) {
-          // PID file exists but process is dead, clean it up
-          fsSync.unlinkSync(PID_FILE);
+      if (action === 'start') {
+        // Check if already running using safe PID validation
+        if (fsSync.existsSync(PID_FILE)) {
+          try {
+            const pidContent = fsSync.readFileSync(PID_FILE, 'utf-8').trim();
+            const pid = validatePid(pidContent);
+
+            if (isProcessRunning(pid)) {
+              return res.json({
+                success: false,
+                message: 'PM daemon is already running',
+                pid
+              });
+            }
+
+            // PID file exists but process is dead, clean it up
+            fsSync.unlinkSync(PID_FILE);
+          } catch (err) {
+            // Invalid PID file, clean it up
+            fsSync.unlinkSync(PID_FILE);
+          }
         }
-      }
 
-      // Start the daemon
-      execSync(`bash ${scriptPath} > /tmp/pm-daemon-start.log 2>&1 &`);
+        // Start the daemon using safe execution
+        await safeStartScript(scriptPath, [], path.join(__dirname, '../..'));
 
-      // Give it a moment to start
-      await new Promise(resolve => setTimeout(resolve, 1000));
+        // Give it a moment to start
+        await new Promise(resolve => setTimeout(resolve, 1000));
 
-      // Read the new PID
-      if (fsSync.existsSync(PID_FILE)) {
-        const pid = parseInt(fsSync.readFileSync(PID_FILE, 'utf-8').trim());
-        res.json({ success: true, message: 'PM daemon started', pid });
-      } else {
-        res.json({ success: false, message: 'PM daemon may have failed to start' });
-      }
-    } else if (action === 'stop') {
-      // Stop the daemon by killing its PID
-      const PID_FILE = '/tmp/commit-relay-pm-daemon.pid';
-      const fsSync = require('fs');
-
-      if (fsSync.existsSync(PID_FILE)) {
-        const pid = parseInt(fsSync.readFileSync(PID_FILE, 'utf-8').trim());
-        try {
-          execSync(`kill ${pid}`, { stdio: 'pipe' });
-          fsSync.unlinkSync(PID_FILE);
-          res.json({ success: true, message: 'PM daemon stopped' });
-        } catch (e) {
-          res.json({ success: false, message: 'Failed to stop PM daemon' });
+        // Read the new PID
+        if (fsSync.existsSync(PID_FILE)) {
+          try {
+            const pidContent = fsSync.readFileSync(PID_FILE, 'utf-8').trim();
+            const pid = validatePid(pidContent);
+            res.json({ success: true, message: 'PM daemon started', pid });
+          } catch (err) {
+            res.json({ success: false, message: 'PM daemon may have failed to start' });
+          }
+        } else {
+          res.json({ success: false, message: 'PM daemon may have failed to start' });
         }
-      } else {
-        res.json({ success: false, message: 'PM daemon is not running' });
+      } else if (action === 'stop') {
+        // Stop the daemon using safe PID handling
+        if (fsSync.existsSync(PID_FILE)) {
+          try {
+            const pidContent = fsSync.readFileSync(PID_FILE, 'utf-8').trim();
+            const pid = validatePid(pidContent);
+
+            if (safeKillProcess(pid)) {
+              fsSync.unlinkSync(PID_FILE);
+              res.json({ success: true, message: 'PM daemon stopped' });
+            } else {
+              res.json({ success: false, message: 'Failed to stop PM daemon' });
+            }
+          } catch (err) {
+            res.json({ success: false, message: 'Failed to stop PM daemon: Invalid PID' });
+          }
+        } else {
+          res.json({ success: false, message: 'PM daemon is not running' });
+        }
+      } else if (action === 'restart') {
+        // Restart using safe script execution
+        await safeExec('bash', [scriptPath, 'restart'], { cwd: path.join(__dirname, '../..') });
+        res.json({ success: true, message: 'PM daemon restarted' });
       }
-    } else {
-      res.status(400).json({ success: false, message: 'Invalid action. Use "start" or "stop"' });
+    } catch (error) {
+      console.error('Error controlling PM daemon:', error);
+      const safeError = sanitizeError(error, process.env.NODE_ENV === 'development');
+      res.status(500).json({ success: false, ...safeError });
     }
-  } catch (error) {
-    console.error('Error controlling PM daemon:', error);
-    res.status(500).json({ success: false, message: error.message });
   }
-});
+);
 
 /**
  * GET /api/health-daemon/status
@@ -2818,25 +2959,43 @@ eventWatcher.on('change', async () => {
 const ddqdTests = new Map(); // Store active DDQD tests
 
 // Run DDQD test
-app.post('/api/ddqd/run', async (req, res) => {
-  try {
-    const { duration, maxWorkers, version, verbose } = req.body;
+// Security: Input validation, rate limiting (expensive operation)
+app.post('/api/ddqd/run',
+  expensiveLimiter,
+  confirmationMiddleware,
+  ddqdValidationRules,
+  validate,
+  async (req, res) => {
+    try {
+      const { duration, maxWorkers, version, verbose } = req.body;
 
-    const testId = `ddqd-${version}-${Date.now()}`;
-    const startTime = new Date().toISOString();
+      const testId = `ddqd-${version}-${Date.now()}`;
+      const startTime = new Date().toISOString();
 
-    // Build command
-    const scriptPath = path.join(__dirname, '../../scripts/ddqd');
-    const env = { ...process.env, TEST_DURATION: String(duration) };
-    const args = version === 'v5' ? ['--v5'] : [];
-    if (verbose) args.push('--verbose');
+      // Build command with validated inputs
+      const scriptPath = path.join(__dirname, '../../scripts/ddqd');
+      const baseDir = path.join(__dirname, '../..');
 
-    // Spawn DDQD process
-    const ddqdProcess = spawn(scriptPath, args, {
-      env,
-      cwd: path.join(__dirname, '../..'),
-      shell: true
-    });
+      // Validate script path
+      const validatedScript = validatePath(scriptPath, baseDir);
+
+      const env = {
+        ...process.env,
+        TEST_DURATION: String(parseInt(duration, 10)) // Ensure numeric
+      };
+
+      // Build args array safely
+      const args = [];
+      if (version === 'v5') args.push('--v5');
+      if (verbose === true) args.push('--verbose');
+
+      // Spawn DDQD process WITHOUT shell (prevents command injection)
+      const ddqdProcess = spawn('bash', [validatedScript, ...args], {
+        env,
+        cwd: baseDir,
+        shell: false,
+        detached: false
+      });
 
     const testData = {
       testId,
