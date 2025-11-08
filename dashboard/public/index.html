@@ -1805,6 +1805,80 @@
                                     </button>
                                 </div>
                             </div>
+
+                            <!-- Health Monitor Daemon Card -->
+                            <div class="border-2 rounded-xl p-6" :class="healthDaemon?.status === 'running' ? 'border-blue-300 dark:border-blue-700 bg-blue-50 dark:bg-blue-900/20' : 'border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700/50'">
+                                <div class="flex items-center justify-between mb-4">
+                                    <div class="flex items-center space-x-3">
+                                        <i data-lucide="heart-pulse" class="w-6 h-6" :class="healthDaemon?.status === 'running' ? 'text-blue-600 dark:text-blue-400' : 'text-gray-600 dark:text-gray-400'"></i>
+                                        <h4 class="text-lg font-semibold text-gray-900 dark:text-white">Health Monitor</h4>
+                                    </div>
+                                    <span class="px-3 py-1 rounded-full text-sm font-medium" :class="healthDaemon?.status === 'running' ? 'bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300' : 'bg-red-100 dark:bg-red-900 text-red-700 dark:text-red-300'" x-text="healthDaemon?.status === 'running' ? 'Running' : 'Stopped'"></span>
+                                </div>
+
+                                <div class="space-y-2 mb-6">
+                                    <div class="flex justify-between text-sm">
+                                        <span class="text-gray-600 dark:text-gray-400">PID:</span>
+                                        <span class="font-medium text-gray-900 dark:text-white" x-text="healthDaemon?.pid || 'N/A'"></span>
+                                    </div>
+                                    <div class="flex justify-between text-sm">
+                                        <span class="text-gray-600 dark:text-gray-400">Uptime:</span>
+                                        <span class="font-medium text-gray-900 dark:text-white" x-text="healthDaemon?.status === 'running' ? formatUptime(healthDaemon?.uptime_seconds) : 'N/A'"></span>
+                                    </div>
+                                    <div class="flex justify-between text-sm">
+                                        <span class="text-gray-600 dark:text-gray-400">Purpose:</span>
+                                        <span class="font-medium text-gray-900 dark:text-white">Health Alerts</span>
+                                    </div>
+                                </div>
+
+                                <div class="flex space-x-2">
+                                    <button @click="controlHealthDaemon('start')" :disabled="healthDaemon?.status === 'running'" class="flex-1 px-4 py-2 rounded-lg font-medium transition-colors bg-green-600 text-white hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed">
+                                        <i data-lucide="play" class="w-4 h-4 inline-block mr-2"></i>
+                                        Start
+                                    </button>
+                                    <button @click="controlHealthDaemon('stop')" :disabled="healthDaemon?.status !== 'running'" class="flex-1 px-4 py-2 rounded-lg font-medium transition-colors bg-red-600 text-white hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed">
+                                        <i data-lucide="square" class="w-4 h-4 inline-block mr-2"></i>
+                                        Stop
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Metrics Snapshot Daemon Card -->
+                            <div class="border-2 rounded-xl p-6" :class="metricsDaemon?.status === 'running' ? 'border-amber-300 dark:border-amber-700 bg-amber-50 dark:bg-amber-900/20' : 'border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700/50'">
+                                <div class="flex items-center justify-between mb-4">
+                                    <div class="flex items-center space-x-3">
+                                        <i data-lucide="bar-chart-3" class="w-6 h-6" :class="metricsDaemon?.status === 'running' ? 'text-amber-600 dark:text-amber-400' : 'text-gray-600 dark:text-gray-400'"></i>
+                                        <h4 class="text-lg font-semibold text-gray-900 dark:text-white">Metrics Snapshot</h4>
+                                    </div>
+                                    <span class="px-3 py-1 rounded-full text-sm font-medium" :class="metricsDaemon?.status === 'running' ? 'bg-amber-100 dark:bg-amber-900 text-amber-700 dark:text-amber-300' : 'bg-red-100 dark:bg-red-900 text-red-700 dark:text-red-300'" x-text="metricsDaemon?.status === 'running' ? 'Running' : 'Stopped'"></span>
+                                </div>
+
+                                <div class="space-y-2 mb-6">
+                                    <div class="flex justify-between text-sm">
+                                        <span class="text-gray-600 dark:text-gray-400">PID:</span>
+                                        <span class="font-medium text-gray-900 dark:text-white" x-text="metricsDaemon?.pid || 'N/A'"></span>
+                                    </div>
+                                    <div class="flex justify-between text-sm">
+                                        <span class="text-gray-600 dark:text-gray-400">Uptime:</span>
+                                        <span class="font-medium text-gray-900 dark:text-white" x-text="metricsDaemon?.status === 'running' ? formatUptime(metricsDaemon?.uptime_seconds) : 'N/A'"></span>
+                                    </div>
+                                    <div class="flex justify-between text-sm">
+                                        <span class="text-gray-600 dark:text-gray-400">Purpose:</span>
+                                        <span class="font-medium text-gray-900 dark:text-white">Historical Metrics</span>
+                                    </div>
+                                </div>
+
+                                <div class="flex space-x-2">
+                                    <button @click="controlMetricsDaemon('start')" :disabled="metricsDaemon?.status === 'running'" class="flex-1 px-4 py-2 rounded-lg font-medium transition-colors bg-green-600 text-white hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed">
+                                        <i data-lucide="play" class="w-4 h-4 inline-block mr-2"></i>
+                                        Start
+                                    </button>
+                                    <button @click="controlMetricsDaemon('stop')" :disabled="metricsDaemon?.status !== 'running'" class="flex-1 px-4 py-2 rounded-lg font-medium transition-colors bg-red-600 text-white hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed">
+                                        <i data-lucide="square" class="w-4 h-4 inline-block mr-2"></i>
+                                        Stop
+                                    </button>
+                                </div>
+                            </div>
                         </div>
 
                         <div class="mt-8 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
@@ -1813,7 +1887,7 @@
                                 <div class="text-sm text-blue-900 dark:text-blue-100">
                                     <p class="font-semibold mb-1">About Daemon Controls</p>
                                     <p class="text-blue-700 dark:text-blue-200">
-                                        Use the start/stop buttons above to control the Worker Daemon (spawns and monitors workers) and PM Daemon (monitors worker health and collects metrics). Changes take effect immediately.
+                                        Control all system daemons: Worker Daemon (spawns workers), PM Daemon (monitors worker health), Health Monitor (generates health alerts), and Metrics Snapshot (collects historical metrics). Changes take effect immediately.
                                     </p>
                                 </div>
                             </div>
