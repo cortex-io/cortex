@@ -469,7 +469,7 @@
       "title": "MoE Self-Improvement: Execute DDQD v5 stress test to collect MoE intelligence metrics, analyze routing accuracy and worker pool efficiency, clean up stale workers (17→8-10 active), commit DDQD v5 work, create dashboard enhancements for real-time MoE visibility. Keywords: development MoE testing optimization self-improvement routing worker-pool dashboard analytics. Learning objectives: understand routing patterns, optimize worker pool, improve confidence scores, enhance keyword matching. Run TEST_DURATION=5 ./scripts/ddqd --v5, analyze results, document insights in coordination/moe-insights.md",
       "type": "development",
       "priority": "high",
-      "status": "worker_spawned",
+      "status": "failed",
       "assigned_to": "development",
       "created_at": "2025-11-08T10:57:25-0600",
       "created_by": "create-task-cli",
@@ -485,14 +485,16 @@
       "routing_strategy": "single_expert",
       "updated_at": "2025-11-08T10:57:50-06:00",
       "worker_id": "dev-worker-DB09CBC9",
-      "worker_type": "feature-implementer"
+      "worker_type": "feature-implementer",
+      "completed_at": "2025-11-08T15:38:12-0600",
+      "error": "Worker became zombie and was killed"
     },
     {
       "id": "task-1762553436",
       "title": "MoE Self-Improvement Phase 2: Fix routing decision logging (Priority 1), create automated worker cleanup cron job (Priority 2), build real-time MoE dashboard widgets (Priority 4), review and commit coordination/moe-insights.md insights, push commit f8385c4. Keywords: development MoE observability automation dashboard real-time monitoring routing-logging worker-lifecycle. Critical fixes: investigate coordinator master routing-decisions.jsonl logging mechanism, add real-time validation, create worker cleanup automation, build confidence score chart, MoE metrics widget, pool utilization graph. Run DDQD v5.1 to validate routing accuracy measurement after logging fix.",
       "type": "development",
       "priority": "critical",
-      "status": "worker_spawned",
+      "status": "failed",
       "assigned_to": "development",
       "created_at": "2025-11-08T12:00:36-0600",
       "created_by": "create-task-cli",
@@ -508,7 +510,9 @@
       "routing_strategy": "single_expert",
       "updated_at": "2025-11-08T12:05:13-06:00",
       "worker_id": "dev-worker-F2110EA0",
-      "worker_type": "feature-implementer"
+      "worker_type": "feature-implementer",
+      "completed_at": "2025-11-08T15:38:12-0600",
+      "error": "Worker became zombie and was killed"
     },
     {
       "id": "moe-test-ddqd-v5-1762626013-4130b075",
@@ -1263,6 +1267,22 @@
       "updated_at": "2025-11-08T14:55:59-06:00",
       "worker_id": "dev-worker-EB497613",
       "worker_type": "feature-implementer"
+    },
+    {
+      "id": "task-1762553439",
+      "title": "Comprehensive API Security Review and Learning: Review dashboard server API (dashboard/server/index.js) and Python SDK API (python-sdk/commit_relay/*). Focus on: 1) Authentication/Authorization vulnerabilities, 2) Input validation and injection risks, 3) CORS and CSRF protection, 4) API rate limiting, 5) Sensitive data exposure, 6) Error handling and information leakage, 7) Dependency vulnerabilities. Document all security issues found with severity ratings and recommended fixes. Then review overall API design, performance, and code quality issues.",
+      "type": "development",
+      "priority": "critical",
+      "status": "pending",
+      "assigned_to": null,
+      "created_at": "2025-11-08T15:38:44-0600",
+      "created_by": "create-task-cli",
+      "context": {
+        "repository": "ry-ops/commit-relay",
+        "branch": "main",
+        "description": "Comprehensive API Security Review and Learning: Review dashboard server API (dashboard/server/index.js) and Python SDK API (python-sdk/commit_relay/*). Focus on: 1) Authentication/Authorization vulnerabilities, 2) Input validation and injection risks, 3) CORS and CSRF protection, 4) API rate limiting, 5) Sensitive data exposure, 6) Error handling and information leakage, 7) Dependency vulnerabilities. Document all security issues found with severity ratings and recommended fixes. Then review overall API design, performance, and code quality issues.",
+        "requirements": []
+      }
     }
   ],
   "metadata": {
@@ -1272,5 +1292,5 @@
     "in_progress_tasks": 0,
     "completed_tasks": 2
   },
-  "updated_at": "2025-11-08T14:43:16-0600"
+  "updated_at": "2025-11-08T15:38:44-0600"
 }
