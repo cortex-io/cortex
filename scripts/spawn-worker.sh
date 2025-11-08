@@ -201,7 +201,7 @@ WORKER_ID="worker-${WORKER_TYPE%-worker}-${WORKER_NUM}"
 print_info "Generating worker: $WORKER_ID"
 
 # Generate timestamps
-CREATED_AT=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+CREATED_AT=$(date +"%Y-%m-%dT%H:%M:%S%z")
 if [ -z "$DEADLINE" ]; then
     DEADLINE="null"
 else

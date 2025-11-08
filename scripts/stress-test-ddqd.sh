@@ -141,7 +141,7 @@ create_task() {
   "description": "Implement a simple utility function for stress testing",
   "priority": 3,
   "assigned_to": "development-master",
-  "created_at": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
+  "created_at": "$(date +%Y-%m-%dT%H:%M:%S%z)",
   "stress_test": true,
   "test_id": "$TEST_ID"
 }
@@ -161,7 +161,7 @@ EOF
     {"type": "inventory-update", "assigned_to": "inventory-master"},
     {"type": "ci-pipeline", "assigned_to": "cicd-master"}
   ],
-  "created_at": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
+  "created_at": "$(date +%Y-%m-%dT%H:%M:%S%z)",
   "stress_test": true,
   "test_id": "$TEST_ID"
 }
@@ -176,7 +176,7 @@ EOF
   "description": "Perform comprehensive security audit for stress testing",
   "priority": 1,
   "assigned_to": "security-master",
-  "created_at": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
+  "created_at": "$(date +%Y-%m-%dT%H:%M:%S%z)",
   "stress_test": true,
   "test_id": "$TEST_ID"
 }
@@ -191,7 +191,7 @@ EOF
   "description": "Catalog repository metadata and dependencies",
   "priority": 2,
   "assigned_to": "inventory-master",
-  "created_at": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
+  "created_at": "$(date +%Y-%m-%dT%H:%M:%S%z)",
   "stress_test": true,
   "test_id": "$TEST_ID"
 }
@@ -218,8 +218,8 @@ create_zombie() {
   "type": "development",
   "status": "running",
   "task_id": "zombie-task-timeout",
-  "started_at": "$(date -u -v-20M +%Y-%m-%dT%H:%M:%SZ 2>/dev/null || date -u -d '20 minutes ago' +%Y-%m-%dT%H:%M:%SZ)",
-  "last_heartbeat": "$(date -u -v-20M +%Y-%m-%dT%H:%M:%SZ 2>/dev/null || date -u -d '20 minutes ago' +%Y-%m-%dT%H:%M:%SZ)",
+  "started_at": "$(date -v-20M +%Y-%m-%dT%H:%M:%S%z 2>/dev/null || date -d '20 minutes ago' +%Y-%m-%dT%H:%M:%S%z)",
+  "last_heartbeat": "$(date -v-20M +%Y-%m-%dT%H:%M:%S%z 2>/dev/null || date -d '20 minutes ago' +%Y-%m-%dT%H:%M:%S%z)",
   "tokens_used": 1000,
   "stress_test": true,
   "zombie_type": "timeout",
@@ -235,8 +235,8 @@ EOF
   "type": "security",
   "status": "running",
   "task_id": "zombie-task-stale",
-  "started_at": "$(date -u -v-10M +%Y-%m-%dT%H:%M:%SZ 2>/dev/null || date -u -d '10 minutes ago' +%Y-%m-%dT%H:%M:%SZ)",
-  "last_heartbeat": "$(date -u -v-8M +%Y-%m-%dT%H:%M:%SZ 2>/dev/null || date -u -d '8 minutes ago' +%Y-%m-%dT%H:%M:%SZ)",
+  "started_at": "$(date -v-10M +%Y-%m-%dT%H:%M:%S%z 2>/dev/null || date -d '10 minutes ago' +%Y-%m-%dT%H:%M:%S%z)",
+  "last_heartbeat": "$(date -v-8M +%Y-%m-%dT%H:%M:%S%z 2>/dev/null || date -d '8 minutes ago' +%Y-%m-%dT%H:%M:%S%z)",
   "tokens_used": 500,
   "stress_test": true,
   "zombie_type": "stale_heartbeat",
@@ -269,8 +269,8 @@ create_execution_manager() {
   "master_type": "development",
   "subtask_id": "$subtask_id",
   "status": "ready",
-  "started_at": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
-  "last_heartbeat": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
+  "started_at": "$(date +%Y-%m-%dT%H:%M:%S%z)",
+  "last_heartbeat": "$(date +%Y-%m-%dT%H:%M:%S%z)",
   "workers_spawned": 0,
   "workers_completed": 0,
   "workers_failed": 0,
@@ -294,8 +294,8 @@ EOF
   "acceptance_criteria": [],
   "dependencies": [],
   "status": "pending",
-  "created_at": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
-  "updated_at": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
+  "created_at": "$(date +%Y-%m-%dT%H:%M:%S%z)",
+  "updated_at": "$(date +%Y-%m-%dT%H:%M:%S%z)",
   "stress_test": true
 }
 EOF
@@ -308,8 +308,8 @@ EOF
   "master_type": "security",
   "subtask_id": "$subtask_id",
   "status": "running",
-  "started_at": "$(date -u -v-70M +%Y-%m-%dT%H:%M:%SZ 2>/dev/null || date -u -d '70 minutes ago' +%Y-%m-%dT%H:%M:%SZ)",
-  "last_heartbeat": "$(date -u -v-65M +%Y-%m-%dT%H:%M:%SZ 2>/dev/null || date -u -d '65 minutes ago' +%Y-%m-%dT%H:%M:%SZ)",
+  "started_at": "$(date -v-70M +%Y-%m-%dT%H:%M:%S%z 2>/dev/null || date -d '70 minutes ago' +%Y-%m-%dT%H:%M:%S%z)",
+  "last_heartbeat": "$(date -v-65M +%Y-%m-%dT%H:%M:%S%z 2>/dev/null || date -d '65 minutes ago' +%Y-%m-%dT%H:%M:%S%z)",
   "workers_spawned": 3,
   "workers_completed": 0,
   "workers_failed": 0,
@@ -329,7 +329,7 @@ EOF
 
 # Collect metrics snapshot
 collect_metrics() {
-    local timestamp=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+    local timestamp=$(date +%Y-%m-%dT%H:%M:%S%z)
     local current_time=$(date +%s)
     local elapsed=$((current_time - TEST_START_TIME))
     local token_pct=$(check_tokens 2>/dev/null || echo "0")

@@ -40,7 +40,7 @@ mkdir -p "$HOURLY_DIR"
 exec >> "$LOG_FILE" 2>&1
 
 log_snapshot() {
-    echo "[$(date -u +%Y-%m-%dT%H:%M:%SZ)] $1"
+    echo "[$(date +%Y-%m-%dT%H:%M:%S%z)] $1"
 }
 
 # Check if daemon is already running
@@ -281,7 +281,7 @@ aggregate_daily_snapshot() {
 
 # Cleanup old snapshots (keep last 7 days of hourly, keep all daily)
 cleanup_old_snapshots() {
-    local cutoff_date=$(date -u -v-7d +%Y-%m-%d 2>/dev/null || date -u -d '7 days ago' +%Y-%m-%d)
+    local cutoff_date=$(date -v-7d +%Y-%m-%d 2>/dev/null || date -d '7 days ago' +%Y-%m-%d)
 
     log_snapshot "INFO: Cleaning up hourly snapshots older than $cutoff_date"
 
@@ -301,9 +301,9 @@ SNAPSHOTS_COLLECTED=0
 while true; do
     cd "$COMMIT_RELAY_HOME"
 
-    CURRENT_TIME=$(date -u +%Y-%m-%dT%H:%M:%SZ)
-    CURRENT_DATE=$(date -u +%Y-%m-%d)
-    CURRENT_HOUR=$(date -u +%H)
+    CURRENT_TIME=$(date +%Y-%m-%dT%H:%M:%S%z)
+    CURRENT_DATE=$(date +%Y-%m-%d)
+    CURRENT_HOUR=$(date +%H)
 
     # Collect snapshot
     SNAPSHOT_FILE="${HOURLY_DIR}/${CURRENT_TIME}.json"
@@ -312,7 +312,7 @@ while true; do
 
     # Aggregate daily snapshot at midnight UTC
     if [ "$CURRENT_HOUR" = "00" ] && [ "$LAST_DAILY_AGGREGATION" != "$CURRENT_DATE" ]; then
-        YESTERDAY=$(date -u -v-1d +%Y-%m-%d 2>/dev/null || date -u -d 'yesterday' +%Y-%m-%d)
+        YESTERDAY=$(date -v-1d +%Y-%m-%d 2>/dev/null || date -d 'yesterday' +%Y-%m-%d)
         aggregate_daily_snapshot "$YESTERDAY"
         LAST_DAILY_AGGREGATION="$CURRENT_DATE"
 

@@ -18,7 +18,7 @@ jq --arg active "$ACTIVE" --arg completed "$COMPLETED" --arg failed "$FAILED" --
    .workers.completed = ($completed | tonumber) | 
    .workers.failed = ($failed | tonumber) | 
    .workers.zombie = ($zombie | tonumber) | 
-   .last_updated = "'$(date -u +%Y-%m-%dT%H:%M:%SZ)'"' \
+   .last_updated = "'$(date +%Y-%m-%dT%H:%M:%S%z)'"' \
   coordination/workforce-streams.json > /tmp/workforce-streams-updated.json && \
   mv /tmp/workforce-streams-updated.json coordination/workforce-streams.json
 
@@ -31,7 +31,7 @@ jq --arg active "$ACTIVE" --arg completed "$COMPLETED" --arg failed "$FAILED" --
    .metrics.failed_workers = ($failed | tonumber) | 
    .metrics.total_workers = ($total | tonumber) | 
    .metrics.success_rate = ($rate | tonumber) | 
-   .last_check = "'$(date -u +%Y-%m-%dT%H:%M:%SZ)'"' \
+   .last_check = "'$(date +%Y-%m-%dT%H:%M:%S%z)'"' \
   coordination/pm-state.json > /tmp/pm-state-updated.json && \
   mv /tmp/pm-state-updated.json coordination/pm-state.json
 

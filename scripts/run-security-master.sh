@@ -56,7 +56,7 @@ init_security_master() {
 {
   "master_id": "$MASTER_ID",
   "master_name": "$MASTER_NAME",
-  "initialized_at": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
+  "initialized_at": "$(date +%Y-%m-%dT%H:%M:%S%z)",
   "session_id": "$(uuidgen)",
   "status": "initializing",
   "expertise": {
@@ -95,7 +95,7 @@ EOF
         cat > "$kb_index" <<EOF
 {
   "knowledge_base_id": "security-kb",
-  "created_at": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
+  "created_at": "$(date +%Y-%m-%dT%H:%M:%S%z)",
   "categories": {
     "vulnerability_database": {
       "description": "Known vulnerabilities and their fixes",
@@ -119,7 +119,7 @@ EOF
     }
   },
   "total_entries": 0,
-  "last_updated": "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+  "last_updated": "$(date +%Y-%m-%dT%H:%M:%S%z)"
 }
 EOF
         log_success "Created knowledge base index"
@@ -160,7 +160,7 @@ EOF
       "skills": ["compliance_checking", "report_generation", "policy_enforcement"]
     }
   ],
-  "last_updated": "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+  "last_updated": "$(date +%Y-%m-%dT%H:%M:%S%z)"
 }
 EOF
         log_success "Created worker types registry"
@@ -299,7 +299,7 @@ spawn_security_worker() {
     "time_limit_minutes": 60
   },
   "status": "pending",
-  "created_at": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
+  "created_at": "$(date +%Y-%m-%dT%H:%M:%S%z)",
   "created_by": "$MASTER_ID"
 }
 EOF
@@ -323,7 +323,7 @@ register_worker() {
     local worker_entry=$(jq -nc \
         --arg id "$worker_id" \
         --arg type "$worker_type" \
-        --arg ts "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+        --arg ts "$(date +%Y-%m-%dT%H:%M:%S%z)" \
         '{worker_id: $id, worker_type: $type, spawned_at: $ts, status: "active"}')
 
     local updated=$(jq --argjson worker "$worker_entry" '.active_workers += [$worker]' "$state_file")
@@ -352,7 +352,7 @@ main() {
     else
         log_info "$MASTER_NAME already initialized, loading state..."
         update_master_state "status" "active"
-        update_master_state "last_started" "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+        update_master_state "last_started" "$(date +%Y-%m-%dT%H:%M:%S%z)"
     fi
 
     # Process assigned tasks
@@ -360,7 +360,7 @@ main() {
 
     # Update final state
     update_master_state "status" "idle"
-    update_master_state "last_run" "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+    update_master_state "last_run" "$(date +%Y-%m-%dT%H:%M:%S%z)"
 
     log_success "$MASTER_NAME completed successfully"
 }

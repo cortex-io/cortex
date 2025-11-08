@@ -276,7 +276,7 @@ record_git_operation() {
     local status="$3"
     local details="$4"
 
-    local timestamp=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+    local timestamp=$(date +%Y-%m-%dT%H:%M:%S%z)
     local log_entry=$(jq -nc \
         --arg worker "$worker_id" \
         --arg op "$operation" \
