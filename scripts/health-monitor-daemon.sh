@@ -13,7 +13,7 @@ HEALTH_MONITOR_LOG="agents/logs/system/health-monitor.log"
 PID_FILE="/tmp/health-monitor-daemon.pid"
 
 # Component heartbeat files
-PM_DAEMON_HEARTBEAT="coordination/pm-daemon-heartbeat.json"
+PM_DAEMON_STATE="coordination/pm-state.json"  # PM daemon uses pm-state.json for heartbeats
 PM_AGENT_HEARTBEAT="coordination/pm-agent-heartbeat.json"
 COORDINATOR_HEARTBEAT="coordination/coordinator-heartbeat.json"
 
@@ -60,6 +60,44 @@ check_heartbeat() {
     current_time=$(date +%s)
 
     local age=$((current_time - heartbeat_time))
+
+    if [ "$age" -gt "$threshold_seconds" ]; then
+        echo "$age"  # Return age in seconds
+        return 1  # Stale
+    fi
+
+    return 0  # Fresh
+}
+
+# Check PM daemon state file for freshness (uses last_check field)
+check_pm_state() {
+    local state_file="$1"
+    local threshold_seconds="$2"
+
+    if [ ! -f "$state_file" ]; then
+        return 1  # File doesn't exist = stale
+    fi
+
+    # Parse last_check timestamp (format: "2025-11-08T10:11:06-0600")
+    local last_check
+    last_check=$(jq -r '.pm_daemon.last_loop // .last_check' "$state_file" 2>/dev/null || echo "")
+
+    if [ -z "$last_check" ] || [ "$last_check" = "null" ]; then
+        return 1  # Invalid timestamp = stale
+    fi
+
+    # Convert ISO timestamp to epoch
+    local last_check_epoch
+    last_check_epoch=$(date -j -f "%Y-%m-%dT%H:%M:%S%z" "$last_check" "+%s" 2>/dev/null || echo "0")
+
+    if [ "$last_check_epoch" = "0" ]; then
+        return 1  # Failed to parse = stale
+    fi
+
+    local current_time
+    current_time=$(date +%s)
+
+    local age=$((current_time - last_check_epoch))
 
     if [ "$age" -gt "$threshold_seconds" ]; then
         echo "$age"  # Return age in seconds
@@ -171,35 +209,70 @@ spawn_pm_agent() {
 check_pm_health() {
     local age
 
-    if ! age=$(check_heartbeat "$PM_DAEMON_HEARTBEAT" "$HEARTBEAT_THRESHOLD"); then
-        log "WARNING: PM Daemon heartbeat is stale (age: ${age}s, threshold: ${HEARTBEAT_THRESHOLD}s)"
+    # First check if PM daemon process is actually running via PID file
+    local pm_daemon_pid_file="/tmp/commit-relay-pm-daemon.pid"
+    local pm_daemon_running=false
 
-        # Check if PM Agent can cover
-        if check_heartbeat "$PM_AGENT_HEARTBEAT" "$HEARTBEAT_THRESHOLD"; then
-            log "PM Agent is healthy, no action needed"
+    if [ -f "$pm_daemon_pid_file" ]; then
+        local pm_pid
+        pm_pid=$(cat "$pm_daemon_pid_file" 2>/dev/null || echo "")
+        if [ -n "$pm_pid" ] && kill -0 "$pm_pid" 2>/dev/null; then
+            pm_daemon_running=true
+            log "PM Daemon process confirmed running (PID: $pm_pid)"
+        fi
+    fi
+
+    # Check PM state file for freshness (uses last_loop timestamp)
+    if ! age=$(check_pm_state "$PM_DAEMON_STATE" "$HEARTBEAT_THRESHOLD"); then
+        log "WARNING: PM Daemon state is stale (age: ${age}s, threshold: ${HEARTBEAT_THRESHOLD}s)"
+
+        # Only create alert if process is actually NOT running
+        if [ "$pm_daemon_running" = false ]; then
+            log "PM Daemon process NOT running, taking action"
+
+            # Check if PM Agent can cover
+            if check_heartbeat "$PM_AGENT_HEARTBEAT" "$HEARTBEAT_THRESHOLD"; then
+                log "PM Agent is healthy, no action needed"
+            else
+                log "PM Agent also unhealthy, spawning backup"
+                spawn_pm_agent
+            fi
         else
-            log "PM Agent also unhealthy, spawning backup"
-            spawn_pm_agent
+            log "PM Daemon process IS running - state file may be outdated but daemon is healthy"
+            # Resolve any false positive alerts
+            resolve_health_alert "alert-pm-daemon-down" 2>/dev/null || true
         fi
     else
         # PM Daemon healthy, resolve any alerts
+        log "PM Daemon healthy (state fresh, process running)"
         resolve_health_alert "alert-pm-daemon-down" 2>/dev/null || true
     fi
 }
 
 # Check Coordinator health
+# NOTE: Coordinator runs on-demand (task-based), not as continuous daemon
+# Heartbeat monitoring is not appropriate for this architecture
 check_coordinator_health() {
     local age
 
-    if ! age=$(check_heartbeat "$COORDINATOR_HEARTBEAT" "$HEARTBEAT_THRESHOLD"); then
-        log "WARNING: Coordinator heartbeat is stale (age: ${age}s, threshold: ${HEARTBEAT_THRESHOLD}s)"
+    # Use a much longer threshold for on-demand services (24 hours)
+    local coordinator_threshold=$((86400))  # 24 hours
 
-        create_health_alert \
-            "alert-coordinator-stale" \
-            "coordinator_failure" \
-            "critical" \
-            "Coordinator heartbeat stale for ${age} seconds"
+    if ! age=$(check_heartbeat "$COORDINATOR_HEARTBEAT" "$coordinator_threshold"); then
+        # Only log info, don't create critical alert for expected behavior
+        log "INFO: Coordinator last ran ${age}s ago (on-demand service)"
+
+        # Only create alert if coordinator hasn't run in over 48 hours
+        if [ "$age" -gt 172800 ]; then
+            log "WARNING: Coordinator hasn't run in over 48 hours"
+            create_health_alert \
+                "alert-coordinator-stale" \
+                "coordinator_failure" \
+                "medium" \
+                "Coordinator hasn't run in over 48 hours (on-demand service may need attention)"
+        fi
     else
+        log "Coordinator recently active (last run within 24h)"
         resolve_health_alert "alert-coordinator-stale" 2>/dev/null || true
     fi
 }
