@@ -249,6 +249,22 @@
         "description": "Implement adaptive caching system that promotes frequently-accessed RAG knowledge to CAG cache. Track access patterns, identify hot data, and automatically update CAG caches when access frequency exceeds threshold (>10 accesses/day).",
         "requirements": []
       }
+    },
+    {
+      "id": "task-1762553426",
+      "title": "Implement multi-vector hybrid search combining keyword-based and semantic similarity search. Create unified search interface that merges results from grep pattern matching and vector embeddings using weighted ranking algorithm.",
+      "type": "development",
+      "priority": "low",
+      "status": "pending",
+      "assigned_to": null,
+      "created_at": "2025-11-08T04:44:01-0600",
+      "created_by": "create-task-cli",
+      "context": {
+        "repository": "ry-ops/commit-relay",
+        "branch": "main",
+        "description": "Implement multi-vector hybrid search combining keyword-based and semantic similarity search. Create unified search interface that merges results from grep pattern matching and vector embeddings using weighted ranking algorithm.",
+        "requirements": []
+      }
     }
   ],
   "metadata": {
@@ -258,5 +274,5 @@
     "in_progress_tasks": 0,
     "completed_tasks": 2
   },
-  "updated_at": "2025-11-08T04:43:47-0600"
+  "updated_at": "2025-11-08T04:44:01-0600"
 }
