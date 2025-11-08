@@ -27,7 +27,7 @@ mkdir -p "$(dirname "$LOG_FILE")"
 exec >> "$LOG_FILE" 2>&1
 
 log_daemon() {
-    echo "[$(date -u +%Y-%m-%dT%H:%M:%SZ)] $1"
+    echo "[$(date +%Y-%m-%dT%H:%M:%S%z)] $1"
 }
 
 # Check if daemon is already running
@@ -156,7 +156,7 @@ while true; do
                 log_daemon "INFO: Launching $WORKER_ID in new Claude Code session..."
 
                 # Update worker status to running
-                jq --arg started "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+                jq --arg started "$(date +%Y-%m-%dT%H:%M:%S%z)" \
                    '.status = "running" | .execution.started_at = $started' \
                    "$spec_file" > "${spec_file}.tmp" && \
                    mv "${spec_file}.tmp" "$spec_file"

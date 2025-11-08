@@ -48,7 +48,7 @@ log() {
     local level="$1"
     shift
     local message="$*"
-    local timestamp=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+    local timestamp=$(date +"%Y-%m-%dT%H:%M:%S%z")
     echo "[$timestamp] [$level] $message" | tee -a "$LOG_FILE"
 }
 
@@ -81,7 +81,7 @@ log_dashboard_event() {
     local event_data="$2"
 
     local event_json=$(cat <<EOF
-{"timestamp":"$(date -u +%Y-%m-%dT%H:%M:%SZ)","type":"$event_type","data":$event_data}
+{"timestamp":"$(date +%Y-%m-%dT%H:%M:%S%z)","type":"$event_type","data":$event_data}
 EOF
 )
     echo "$event_json" >> "$EVENTS_FILE"
@@ -107,7 +107,7 @@ initialize() {
   "completed_orchestrations": 0,
   "failed_orchestrations": 0,
   "current_orchestrations": [],
-  "last_update": "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+  "last_update": "$(date +%Y-%m-%dT%H:%M:%S%z)"
 }
 EOF
         log_info "Created initial orchestrator state file"
@@ -196,7 +196,7 @@ YOUR MISSION:
 Remember: You are a strategic thinker. Break down complexity into manageable, coordinated steps.
 
 Orchestration ID: $orch_id
-Start time: $(date -u +%Y-%m-%dT%H:%M:%SZ)
+Start time: $(date +%Y-%m-%dT%H:%M:%S%z)
 
 Read the full Task Orchestrator prompt at: $PROMPT_FILE
 EOF
@@ -219,7 +219,7 @@ EOF
   "parent_task_id": "$task_id",
   "task_title": "$task_title",
   "status": "pending_analysis",
-  "created_at": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
+  "created_at": "$(date +%Y-%m-%dT%H:%M:%S%z)",
   "prompt_file": "$temp_prompt",
   "notes": "Awaiting Task Orchestrator agent analysis. Run: claude < $temp_prompt"
 }
@@ -335,7 +335,7 @@ update_orchestrator_state() {
   "completed_orchestrations": $completed,
   "failed_orchestrations": $failed,
   "current_orchestrations": [],
-  "last_update": "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+  "last_update": "$(date +%Y-%m-%dT%H:%M:%S%z)"
 }
 EOF
 }

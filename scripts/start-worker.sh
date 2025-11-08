@@ -66,11 +66,11 @@ log_info ""
 
 # Update worker status to running
 UPDATE_DATA=$(jq -nc \
-    --arg started "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+    --arg started "$(date +%Y-%m-%dT%H:%M:%S%z)" \
     '{started_at: $started}')
 
 # Use jq to update the worker spec file
-jq --arg started "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+jq --arg started "$(date +%Y-%m-%dT%H:%M:%S%z)" \
    '.status = "running" | .execution.started_at = $started' \
    "$WORKER_SPEC_PATH" > "${WORKER_SPEC_PATH}.tmp" && \
    mv "${WORKER_SPEC_PATH}.tmp" "$WORKER_SPEC_PATH"

@@ -37,7 +37,7 @@ Autonomous Worker Demonstration
 
 Worker ID: $WORKER_ID
 Task ID: $TASK_ID
-Timestamp: $(date -u +%Y-%m-%dT%H:%M:%SZ)
+Timestamp: $(date +%Y-%m-%dT%H:%M:%S%z)
 
 This file was created automatically by an autonomous commit-relay worker.
 
@@ -57,7 +57,7 @@ log_info ""
 
 # Update a tracking file
 TRACKER_FILE="examples/autonomous-demo/execution-log.txt"
-echo "[$(date -u +%Y-%m-%dT%H:%M:%SZ)] Worker $WORKER_ID completed successfully" >> "$TRACKER_FILE"
+echo "[$(date +%Y-%m-%dT%H:%M:%S%z)] Worker $WORKER_ID completed successfully" >> "$TRACKER_FILE"
 
 log_success "Updated execution log"
 log_info ""

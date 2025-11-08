@@ -21,9 +21,9 @@ log_intervention() {
     local worker_id="$2"
     local details="${3:-{}}"
 
-    local timestamp=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+    local timestamp=$(date +%Y-%m-%dT%H:%M:%S%z)
 
-    echo "[$(date -u +%Y-%m-%dT%H:%M:%SZ)] [INTERVENTION] $action: $worker_id" >&2
+    echo "[$(date +%Y-%m-%dT%H:%M:%S%z)] [INTERVENTION] $action: $worker_id" >&2
 
     # Log to PM activity log
     local log_entry=$(jq -nc \
@@ -50,7 +50,7 @@ send_warning_to_worker() {
         --arg wid "$worker_id" \
         --arg type "$warning_type" \
         --arg msg "$message" \
-        --arg ts "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+        --arg ts "$(date +%Y-%m-%dT%H:%M:%S%z)" \
         '{
             worker_id: $wid,
             warning_type: $type,
@@ -93,7 +93,7 @@ escalate_to_master() {
         --arg master "$parent_master" \
         --arg issue "$issue_type" \
         --arg det "$details" \
-        --arg ts "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+        --arg ts "$(date +%Y-%m-%dT%H:%M:%S%z)" \
         '{
             alert_id: $aid,
             created_at: $ts,
@@ -181,7 +181,7 @@ mark_worker_failed() {
     local temp_spec="/tmp/${worker_id}-failed.json"
 
     jq --arg reason "$reason" \
-       --arg ts "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+       --arg ts "$(date +%Y-%m-%dT%H:%M:%S%z)" \
        --arg by "pm-daemon" \
        '.status = "failed" |
         .execution.failed_at = $ts |
@@ -230,7 +230,7 @@ restart_worker() {
     local new_spec="$WORKER_SPECS_DIR/active/${new_worker_id}.json"
 
     jq --arg wid "$new_worker_id" \
-       --arg ts "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+       --arg ts "$(date +%Y-%m-%dT%H:%M:%S%z)" \
        --arg restart_from "$worker_id" \
        '.worker_id = $wid |
         .created_at = $ts |
@@ -269,7 +269,7 @@ approve_time_extension() {
     local temp_spec="/tmp/${worker_id}-extended.json"
 
     jq --arg new_limit "$new_limit" \
-       --arg ts "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+       --arg ts "$(date +%Y-%m-%dT%H:%M:%S%z)" \
        --arg just "$justification" \
        '.resources.time_limit_minutes = ($new_limit | tonumber) |
         .execution.time_extensions = (.execution.time_extensions // []) +
@@ -312,7 +312,7 @@ allocate_resources() {
             local new_allocation=$((current + additional_amount))
 
             jq --arg new_alloc "$new_allocation" \
-               --arg ts "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+               --arg ts "$(date +%Y-%m-%dT%H:%M:%S%z)" \
                --arg just "$justification" \
                '.resources.token_allocation = ($new_alloc | tonumber) |
                 .execution.resource_adjustments = (.execution.resource_adjustments // []) +
@@ -371,7 +371,7 @@ handle_worker_request() {
                 jq '.status = "approved" |
                     .response = {
                         responded_by: "pm-daemon",
-                        responded_at: "'$(date -u +%Y-%m-%dT%H:%M:%SZ)'",
+                        responded_at: "'$(date +%Y-%m-%dT%H:%M:%S%z)'",
                         decision: "approved",
                         response_message: "Time extension approved automatically"
                     }' "$request_file" > "${request_file}.tmp"
@@ -397,7 +397,7 @@ handle_worker_request() {
                 jq '.status = "approved" |
                     .response = {
                         responded_by: "pm-daemon",
-                        responded_at: "'$(date -u +%Y-%m-%dT%H:%M:%SZ)'",
+                        responded_at: "'$(date +%Y-%m-%dT%H:%M:%S%z)'",
                         decision: "approved",
                         response_message: "Resource allocation approved automatically"
                     }' "$request_file" > "${request_file}.tmp"
@@ -442,7 +442,7 @@ escalate_request_to_master() {
 
     # Mark request as escalated
     jq '.status = "escalated" |
-        .escalated_at = "'$(date -u +%Y-%m-%dT%H:%M:%SZ)'" |
+        .escalated_at = "'$(date +%Y-%m-%dT%H:%M:%S%z)'" |
         .escalated_by = "pm-daemon"' \
         "$request_file" > "${request_file}.tmp"
 

@@ -138,9 +138,9 @@ if [ -n "$WORKER_SPECS" ]; then
 fi
 
 # Calculate total duration
-COMPLETED_AT=$(date -u +%Y-%m-%dT%H:%M:%SZ)
-START_EPOCH=$(date -j -f "%Y-%m-%dT%H:%M:%SZ" "$STARTED_AT" "+%s" 2>/dev/null || echo 0)
-END_EPOCH=$(date -j -f "%Y-%m-%dT%H:%M:%SZ" "$COMPLETED_AT" "+%s" 2>/dev/null || date +%s)
+COMPLETED_AT=$(date +%Y-%m-%dT%H:%M:%S%z)
+START_EPOCH=$(date -j -f "%Y-%m-%dT%H:%M:%S%z" "$STARTED_AT" "+%s" 2>/dev/null || echo 0)
+END_EPOCH=$(date -j -f "%Y-%m-%dT%H:%M:%S%z" "$COMPLETED_AT" "+%s" 2>/dev/null || date +%s)
 DURATION_SECONDS=$((END_EPOCH - START_EPOCH))
 DURATION_MINUTES=$((DURATION_SECONDS / 60))
 

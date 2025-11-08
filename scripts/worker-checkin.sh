@@ -114,8 +114,8 @@ worker_checkin() {
     done
 
     # Generate timestamp
-    local timestamp=$(date -u +%Y-%m-%dT%H:%M:%SZ)
-    local timestamp_compact=$(date -u +%Y%m%dT%H%M%SZ)
+    local timestamp=$(date +%Y-%m-%dT%H:%M:%S%z)
+    local timestamp_compact=$(date +%Y%m%dT%H%M%SZ)
 
     # Build check-in JSON
     local checkin_file="$CHECKINS_DIR/${WORKER_ID}-${timestamp_compact}.json"

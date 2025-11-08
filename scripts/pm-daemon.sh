@@ -45,7 +45,7 @@ exec >> "$LOG_FILE" 2>&1
 
 # Logging functions
 log_pm() {
-    echo "[$(date -u +%Y-%m-%dT%H:%M:%SZ)] [PM] $1"
+    echo "[$(date +%Y-%m-%dT%H:%M:%S%z)] [PM] $1"
 }
 
 log_pm_event() {
@@ -58,7 +58,7 @@ log_pm_event() {
         data_json="{}"
     fi
 
-    local timestamp=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+    local timestamp=$(date +%Y-%m-%dT%H:%M:%S%z)
 
     local log_entry
     if [ -n "$worker_id" ]; then
@@ -113,7 +113,7 @@ initialize_pm_state() {
         jq -n \
             --arg pm_id "$PM_ID" \
             --arg version "$PM_VERSION" \
-            --arg started "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+            --arg started "$(date +%Y-%m-%dT%H:%M:%S%z)" \
             '{
                 version: $version,
                 pm_daemon: {
@@ -151,7 +151,7 @@ initialize_pm_state() {
 
     # Update PID and start time
     jq --arg pid "$$" \
-       --arg started "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+       --arg started "$(date +%Y-%m-%dT%H:%M:%S%z)" \
        '.pm_daemon.pid = ($pid | tonumber) | .pm_daemon.started_at = $started' \
        "$PM_STATE_FILE" > "${PM_STATE_FILE}.tmp" && \
        mv "${PM_STATE_FILE}.tmp" "$PM_STATE_FILE"
@@ -161,7 +161,7 @@ initialize_pm_state() {
 save_pm_state() {
     local temp_state="/tmp/pm-state-$$.json"
 
-    jq --arg last_loop "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+    jq --arg last_loop "$(date +%Y-%m-%dT%H:%M:%S%z)" \
        --arg loops "$LOOP_COUNT" \
        --arg uptime "$SECONDS" \
        '.pm_daemon.last_loop = $last_loop |
@@ -174,16 +174,16 @@ save_pm_state() {
 # Calculate age in minutes
 calculate_age_minutes() {
     local timestamp="$1"
-    local now=$(date -u +%s)
+    local now=$(date +%s)
 
     # macOS-compatible date parsing
     local then
     if [[ "$OSTYPE" == "darwin"* ]]; then
         # macOS: use -j -f for ISO8601 parsing
-        then=$(date -j -f "%Y-%m-%dT%H:%M:%SZ" "$timestamp" +%s 2>/dev/null || echo 0)
+        then=$(date -j -f "%Y-%m-%dT%H:%M:%S%z" "$timestamp" +%s 2>/dev/null || echo 0)
     else
         # Linux: use -d
-        then=$(date -u -d "$timestamp" +%s 2>/dev/null || echo 0)
+        then=$(date -d "$timestamp" +%s 2>/dev/null || echo 0)
     fi
 
     local age_seconds=$((now - then))
@@ -212,7 +212,7 @@ register_worker() {
        --arg tid "$task_id" \
        --arg wtype "$worker_type" \
        --arg started "$started_at" \
-       --arg registered "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+       --arg registered "$(date +%Y-%m-%dT%H:%M:%S%z)" \
        '.monitored_workers[$wid] = {
            worker_id: $wid,
            task_id: $tid,
@@ -255,7 +255,7 @@ process_checkins() {
         local worker_id=$(echo "$filename" | sed 's/-[0-9T]*Z\.json$//')
         local status=$(jq -r '.status' "$checkin_file" 2>/dev/null || echo "unknown")
         local progress=$(jq -r '.progress_pct' "$checkin_file" 2>/dev/null || echo 0)
-        local timestamp=$(jq -r '.timestamp' "$checkin_file" 2>/dev/null || date -u +%Y-%m-%dT%H:%M:%SZ)
+        local timestamp=$(jq -r '.timestamp' "$checkin_file" 2>/dev/null || date +%Y-%m-%dT%H:%M:%S%z)
 
         # Update worker state
         update_worker_checkin "$worker_id" "$status" "$progress" "$timestamp"
@@ -475,7 +475,7 @@ detect_zombies() {
                 jq --arg id "$alert_id" \
                    --arg count "$zombie_count" \
                    --arg workers "$zombie_list" \
-                   --arg ts "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+                   --arg ts "$(date +%Y-%m-%dT%H:%M:%S%z)" \
                    '.alerts += [{
                        "id": $id,
                        "type": "zombie_threshold",
@@ -557,7 +557,7 @@ calculate_metrics() {
         .workers.completed = ($completed | tonumber) |
         .workers.failed = ($failed | tonumber) |
         .workers.zombie = ($zombie | tonumber) |
-        .last_updated = "'$(date -u +%Y-%m-%dT%H:%M:%SZ)'"' \
+        .last_updated = "'$(date +%Y-%m-%dT%H:%M:%S%z)'"' \
        "$COMMIT_RELAY_HOME/coordination/workforce-streams.json" > \
        "$COMMIT_RELAY_HOME/coordination/workforce-streams.json.tmp" && \
        mv "$COMMIT_RELAY_HOME/coordination/workforce-streams.json.tmp" \
@@ -695,7 +695,7 @@ aggregate_daily_snapshot() {
 
 # Cleanup old hourly snapshots (keep last 7 days)
 cleanup_old_snapshots() {
-    local cutoff_date=$(date -u -v-7d +%Y-%m-%d 2>/dev/null || date -u -d '7 days ago' +%Y-%m-%d)
+    local cutoff_date=$(date -v-7d +%Y-%m-%d 2>/dev/null || date -d '7 days ago' +%Y-%m-%d)
 
     log_pm "DEBUG: Cleaning up hourly snapshots older than $cutoff_date"
 
@@ -709,7 +709,7 @@ cleanup_old_snapshots() {
 }
 
 # Main PM daemon loop
-PM_START_TIME=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+PM_START_TIME=$(date +%Y-%m-%dT%H:%M:%S%z)
 LOOP_COUNT=0
 LAST_SNAPSHOT_TIME=0
 LAST_DAILY_AGGREGATION=""
@@ -743,9 +743,9 @@ fi
 while true; do
     LOOP_START=$(date +%s)
     LOOP_COUNT=$((LOOP_COUNT + 1))
-    CURRENT_TIME=$(date -u +%Y-%m-%dT%H:%M:%SZ)
-    CURRENT_DATE=$(date -u +%Y-%m-%d)
-    CURRENT_HOUR=$(date -u +%H)
+    CURRENT_TIME=$(date +%Y-%m-%dT%H:%M:%S%z)
+    CURRENT_DATE=$(date +%Y-%m-%d)
+    CURRENT_HOUR=$(date +%H)
 
     log_pm "DEBUG: Starting loop $LOOP_COUNT"
 
@@ -766,7 +766,7 @@ while true; do
 
         # Aggregate daily snapshot at midnight UTC
         if [ "$CURRENT_HOUR" = "00" ] && [ "$LAST_DAILY_AGGREGATION" != "$CURRENT_DATE" ]; then
-            YESTERDAY=$(date -u -v-1d +%Y-%m-%d 2>/dev/null || date -u -d 'yesterday' +%Y-%m-%d)
+            YESTERDAY=$(date -v-1d +%Y-%m-%d 2>/dev/null || date -d 'yesterday' +%Y-%m-%d)
             aggregate_daily_snapshot "$YESTERDAY"
             LAST_DAILY_AGGREGATION="$CURRENT_DATE"
 

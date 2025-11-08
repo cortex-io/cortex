@@ -324,4 +324,4 @@ else
 fi
 
 # Log report generation
-echo "$(date -u +"%Y-%m-%dT%H:%M:%SZ") - Health report generated: $(basename $REPORT_FILE 2>/dev/null || basename $MARKDOWN_FILE)" >> "${REPORT_DIR}/generation.log"
+echo "$(date +"%Y-%m-%dT%H:%M:%S%z") - Health report generated: $(basename $REPORT_FILE 2>/dev/null || basename $MARKDOWN_FILE)" >> "${REPORT_DIR}/generation.log"

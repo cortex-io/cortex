@@ -55,7 +55,7 @@ init_coordinator_master() {
 {
   "master_id": "$MASTER_ID",
   "master_name": "$MASTER_NAME",
-  "initialized_at": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
+  "initialized_at": "$(date +%Y-%m-%dT%H:%M:%S%z)",
   "session_id": "$(uuidgen)",
   "status": "initializing",
   "capabilities": [
@@ -96,7 +96,7 @@ EOF
         cat > "$kb_index" <<EOF
 {
   "knowledge_base_id": "coordinator-kb",
-  "created_at": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
+  "created_at": "$(date +%Y-%m-%dT%H:%M:%S%z)",
   "categories": {
     "task_routing_rules": {
       "description": "Rules for routing tasks to specialist masters",
@@ -116,7 +116,7 @@ EOF
     }
   },
   "total_entries": 0,
-  "last_updated": "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+  "last_updated": "$(date +%Y-%m-%dT%H:%M:%S%z)"
 }
 EOF
         log_success "Created knowledge base index"
@@ -159,7 +159,7 @@ EOF
     }
   ],
   "fallback_master": "development",
-  "last_updated": "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+  "last_updated": "$(date +%Y-%m-%dT%H:%M:%S%z)"
 }
 EOF
         log_success "Created routing rules"
@@ -345,7 +345,7 @@ assign_task_to_master() {
     fi
 
     # Update task with assignment
-    update_task_status "$task_id" "assigned" "{\"assigned_to\": \"$target_master\", \"assigned_by\": \"$MASTER_ID\", \"assigned_at\": \"$(date -u +%Y-%m-%dT%H:%M:%SZ)\", \"routing_confidence\": \"$confidence\", \"routing_strategy\": \"$strategy\"}"
+    update_task_status "$task_id" "assigned" "{\"assigned_to\": \"$target_master\", \"assigned_by\": \"$MASTER_ID\", \"assigned_at\": \"$(date +%Y-%m-%dT%H:%M:%S%z)\", \"routing_confidence\": \"$confidence\", \"routing_strategy\": \"$strategy\"}"
 
     # Create handoff for target master
     local handoff_file="$MASTER_CONTEXT_DIR/handoffs/to-${target_master}-${task_id}.json"
@@ -363,7 +363,7 @@ assign_task_to_master() {
         --arg priority "$(echo "$task" | jq -r '.priority // "medium"')" \
         --arg conf "$confidence" \
         --arg strat "$strategy" \
-        --arg created "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+        --arg created "$(date +%Y-%m-%dT%H:%M:%S%z)" \
         '{
             handoff_id: $handoff_id,
             from_master: $from,
@@ -439,7 +439,7 @@ record_routing_decision() {
         --arg task "$task_id" \
         --arg master "$target_master" \
         --arg rule "$rule_id" \
-        --arg ts "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+        --arg ts "$(date +%Y-%m-%dT%H:%M:%S%z)" \
         '{task_id: $task, routed_to: $master, rule_used: $rule, timestamp: $ts}')
 
     echo "$decision" >> "$decision_file"
@@ -462,7 +462,7 @@ record_moe_routing_decision() {
     # Create enriched log entry
     local log_entry=$(echo "$routing_decision" | jq \
         --arg task "$task_id" \
-        '. + {enriched_metadata: {logged_by: "coordinator-master", logged_at: (now | strftime("%Y-%m-%dT%H:%M:%SZ"))}}')
+        '. + {enriched_metadata: {logged_by: "coordinator-master", logged_at: (now | strftime("%Y-%m-%dT%H:%M:%S%z"))}}')
 
     echo "$log_entry" >> "$moe_log"
 
@@ -474,7 +474,7 @@ record_moe_routing_decision() {
         --arg rule "moe-confidence-based" \
         --arg conf "$confidence" \
         --arg strat "$strategy" \
-        --arg ts "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+        --arg ts "$(date +%Y-%m-%dT%H:%M:%S%z)" \
         '{task_id: $task, routed_to: $master, rule_used: $rule, confidence: $conf, strategy: $strat, timestamp: $ts}')
 
     echo "$legacy_decision" >> "$decision_file"
@@ -492,7 +492,7 @@ main() {
     else
         log_info "$MASTER_NAME already initialized, loading state..."
         update_master_state "status" "active"
-        update_master_state "last_started" "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+        update_master_state "last_started" "$(date +%Y-%m-%dT%H:%M:%S%z)"
     fi
 
     # Process task queue
@@ -500,7 +500,7 @@ main() {
 
     # Update final state
     update_master_state "status" "idle"
-    update_master_state "last_run" "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+    update_master_state "last_run" "$(date +%Y-%m-%dT%H:%M:%S%z)"
 
     log_success "$MASTER_NAME completed successfully"
 }

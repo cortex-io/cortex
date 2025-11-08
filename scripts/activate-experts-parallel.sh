@@ -137,7 +137,7 @@ if [ ! -f "$handoff_file" ]; then
     jq -n \
         --arg task_id "$task_id" \
         --arg description "$task_description" \
-        --arg timestamp "$(date -u +"%Y-%m-%dT%H:%M:%SZ")" \
+        --arg timestamp "$(date +"%Y-%m-%dT%H:%M:%S%z")" \
         '{
             task_id: $task_id,
             description: $description,

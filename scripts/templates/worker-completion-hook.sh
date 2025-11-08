@@ -116,7 +116,7 @@ WORKER_SPEC="$COMMIT_RELAY_HOME/coordination/worker-specs/active/${WORKER_ID}.js
 if [ -f "$WORKER_SPEC" ]; then
     # Update worker spec with completion info
     jq --arg status "completed" \
-       --arg completed_at "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+       --arg completed_at "$(date +%Y-%m-%dT%H:%M:%S%z)" \
        --arg git_status "${GIT_STATUS:-skipped}" \
        --arg commit_hash "${GIT_COMMIT_HASH:-}" \
        '.status = $status |

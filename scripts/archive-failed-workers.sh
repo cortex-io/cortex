@@ -89,7 +89,7 @@ echo ""
 MANIFEST_FILE="${ARCHIVE_DIR}/MANIFEST.json"
 echo -e "${BLUE}Generating archive manifest: $MANIFEST_FILE${NC}"
 jq -n \
-  --arg date "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+  --arg date "$(date +%Y-%m-%dT%H:%M:%S%z)" \
   --arg count "$ARCHIVED_COUNT" \
   --arg location "$ARCHIVE_DIR" \
   '{

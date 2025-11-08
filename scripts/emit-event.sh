@@ -26,7 +26,7 @@ fi
 
 # Generate event ID and timestamp
 EVENT_ID="evt-$(date +%s)-$$"
-TIMESTAMP=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+TIMESTAMP=$(date +"%Y-%m-%dT%H:%M:%S%z")
 
 # Create event JSON
 EVENT_JSON=$(cat <<EOF

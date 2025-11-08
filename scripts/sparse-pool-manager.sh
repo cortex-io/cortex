@@ -126,7 +126,7 @@ update_pool_state() {
     local equiv_params=$(echo "scale=2; $current_workers * 7 / $MAX_WORKER_CAPACITY" | bc)
 
     jq -n \
-        --arg timestamp "$(date -u +"%Y-%m-%dT%H:%M:%SZ")" \
+        --arg timestamp "$(date +"%Y-%m-%dT%H:%M:%S%z")" \
         --argjson queue "$queue_size" \
         --argjson current "$current_workers" \
         --argjson target "$target_workers" \

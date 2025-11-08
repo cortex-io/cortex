@@ -16,10 +16,10 @@ mkdir -p "$ARCHIVE_DIR"
 # Calculate cutoff timestamp (2 days ago)
 if [[ "$OSTYPE" == "darwin"* ]]; then
     # macOS
-    CUTOFF_TIMESTAMP=$(date -v-${KEEP_DAYS}d -u +"%Y-%m-%dT%H:%M:%SZ")
+    CUTOFF_TIMESTAMP=$(date -v-${KEEP_DAYS}d -u +"%Y-%m-%dT%H:%M:%S%z")
 else
     # Linux
-    CUTOFF_TIMESTAMP=$(date -u -d "${KEEP_DAYS} days ago" +"%Y-%m-%dT%H:%M:%SZ")
+    CUTOFF_TIMESTAMP=$(date -d "${KEEP_DAYS} days ago" +"%Y-%m-%dT%H:%M:%S%z")
 fi
 
 echo "Rotating dashboard events..."
@@ -32,7 +32,7 @@ if [ ! -f "$EVENTS_FILE" ]; then
 fi
 
 # Create archive filename with date
-ARCHIVE_DATE=$(date -u +"%Y-%m-%d")
+ARCHIVE_DATE=$(date +"%Y-%m-%d")
 ARCHIVE_FILE="${ARCHIVE_DIR}/events-${ARCHIVE_DATE}.jsonl"
 
 # Count events before rotation
