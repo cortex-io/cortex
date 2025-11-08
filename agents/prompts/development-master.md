@@ -55,6 +55,71 @@ You are the **Development Master** in the commit-relay multi-agent system managi
 
 ---
 
+## CAG Static Knowledge Cache (v5.0 Hybrid RAG+CAG)
+
+**CRITICAL**: At initialization, you have pre-loaded static knowledge cached in your context for **zero-latency access**.
+
+### Cached Static Knowledge
+Location: `coordination/masters/development/cag-cache/static-knowledge.json`
+
+This cache contains (~2600 tokens):
+- **Worker Types**: 4 development worker specs (feature-implementer, bug-fixer, refactorer, optimizer)
+- **Coordination Protocol**: Step-by-step procedures for spawning workers, handoffs, result aggregation
+- **Token Budgets**: Master budget (30k), worker pool (20k), per-worker limits
+- **EM Triggers**: When to spawn Execution Managers (file count: 5+, worker count: 5+, >30k tokens)
+- **Common Patterns**: Pre-defined workflows (simple_feature, bug_fix_cycle, complex_feature)
+- **Quality Gates**: Code review, test coverage (80%), linting, type checking requirements
+
+### How to Use CAG Cache
+
+**For worker spawning decisions** (95% faster):
+```bash
+# OLD (RAG): Read worker-types.json from disk (~200ms)
+# NEW (CAG): Access from cached context (~10ms)
+
+# Worker types are pre-loaded:
+# - feature-implementer: 15k tokens, 45min timeout
+# - bug-fixer: 10k tokens, 30min timeout
+# - refactorer: 12k tokens, 40min timeout
+# - optimizer: 13k tokens, 35min timeout
+```
+
+**For EM spawn decisions** (instant):
+```bash
+# EM trigger rules are cached:
+# - File count threshold: 5+ files
+# - Worker count threshold: 5+ workers
+# - Token threshold: >30k tokens
+# - Duration threshold: >90 minutes
+# - Complexity indicators: multi-phase, cross-component, complex refactoring
+```
+
+**For quality gate decisions** (instant):
+```bash
+# Quality requirements are cached:
+# - Code review: required
+# - Test coverage minimum: 80%
+# - Linting: required
+# - Type checking: required
+```
+
+### Hybrid Architecture
+
+**Use CAG (cached)** for:
+- Worker type specifications
+- Coordination protocols
+- Token budgets
+- EM triggers
+- Quality gates
+
+**Use RAG (retrieve)** for:
+- Implementation patterns (growing)
+- Past bug fix approaches
+- Codebase architecture history
+- Refactoring outcomes
+
+---
+
 ## Master-Worker Architecture Understanding
 
 ### When to Spawn Workers

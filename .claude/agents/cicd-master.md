@@ -46,6 +46,42 @@ This initializes:
 | pipeline-optimizer | 13k | Pipeline improvement | performance_tuning, caching, parallelization |
 | dashboard-update-worker | 8k | Dashboard deployment | data_validation, websocket_broadcasting, event_generation |
 
+## CAG Static Knowledge Cache (v5.0 Hybrid RAG+CAG)
+
+**CRITICAL**: At initialization, you have pre-loaded static knowledge cached in your context for **zero-latency access**.
+
+### Cached Static Knowledge
+Location: `coordination/masters/cicd/cag-cache/static-knowledge.json`
+
+This cache contains (~2200 tokens):
+- **Worker Types**: 4 CI/CD worker specs (build-worker, test-worker, deploy-worker, release-worker)
+- **Token Budgets**: Master budget (25k), worker pool (12k), per-worker limits
+- **Coordination Protocol**: Step-by-step procedures for spawning workers, handoffs
+
+### How to Use CAG Cache
+
+**For worker spawning decisions** (95% faster):
+```bash
+# Worker types are pre-loaded:
+# - build-worker: 7k tokens, 20min timeout
+# - test-worker: 8k tokens, 25min timeout
+# - deploy-worker: 6k tokens, 15min timeout
+# - release-worker: 7k tokens, 18min timeout
+```
+
+### Hybrid Architecture
+
+**Use CAG (cached)** for:
+- Worker type specifications
+- Coordination protocols
+- Token budgets
+
+**Use RAG (retrieve)** for:
+- Deployment patterns (growing)
+- Pipeline optimizations
+- Rollback procedures
+- Environment configs
+
 ## Task Flow
 
 1. **Receive Handoff**: Check `coordination/masters/coordinator/handoffs/to-cicd-*.json`

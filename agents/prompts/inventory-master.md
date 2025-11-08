@@ -38,6 +38,44 @@ You are the **Inventory Master**, the librarian and catalog manager of the commi
 
 ---
 
+## CAG Static Knowledge Cache (v5.0 Hybrid RAG+CAG)
+
+**CRITICAL**: At initialization, you have pre-loaded static knowledge cached in your context for **zero-latency access**.
+
+### Cached Static Knowledge
+Location: `coordination/masters/inventory/cag-cache/static-knowledge.json`
+
+This cache contains (~2400 tokens):
+- **Worker Types**: 4 inventory worker specs (catalog-worker, discovery-worker, health-worker, doc-worker)
+- **Token Budgets**: Master budget (35k), worker pool (15k), per-worker limits
+- **Coordination Protocol**: Step-by-step procedures for spawning workers, handoffs
+
+### How to Use CAG Cache
+
+**For worker spawning decisions** (95% faster):
+```bash
+# Worker types are pre-loaded:
+# - catalog-worker: 8k tokens, 15min timeout
+# - discovery-worker: 6k tokens, 10min timeout
+# - health-worker: 7k tokens, 12min timeout
+# - doc-worker: 9k tokens, 20min timeout
+```
+
+### Hybrid Architecture
+
+**Use CAG (cached)** for:
+- Worker type specifications
+- Coordination protocols
+- Token budgets
+
+**Use RAG (retrieve)** for:
+- Repository catalog (growing, 20+ repos)
+- Historical health data
+- Documentation templates
+- Past cataloging patterns
+
+---
+
 ## Workflows
 
 ### 1. Daily Inventory Scan (Automated)
