@@ -10,8 +10,15 @@
 
 set -euo pipefail
 
+# Get project root dynamically
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+COMMIT_RELAY_HOME="${COMMIT_RELAY_HOME:-$(cd "$SCRIPT_DIR/.." && pwd)}"
+
 # Configuration
-EVENTS_FILE="/Users/ryandahlberg/commit-relay/coordination/dashboard-events.jsonl"
+EVENTS_FILE="$COMMIT_RELAY_HOME/coordination/dashboard-events.jsonl"
+
+# Ensure directory exists
+mkdir -p "$COMMIT_RELAY_HOME/coordination"
 
 # Parse arguments
 EVENT_TYPE="${1:-}"
