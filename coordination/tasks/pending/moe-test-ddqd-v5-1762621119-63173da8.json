@@ -1,0 +1,10 @@
+{
+  "id": "moe-test-ddqd-v5-1762621119-63173da8",
+  "type": "feature",
+  "title": "Implement new API endpoint for user management feature",
+  "description": "Implement new API endpoint for user management feature",
+  "priority": 2,
+  "created_at": "2025-11-08T10:59:23-0600",
+  "moe_test": true,
+  "test_id": "ddqd-v5-1762621119"
+}

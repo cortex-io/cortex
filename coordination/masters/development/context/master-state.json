@@ -222,6 +222,186 @@
       "worker_type": "feature-implementer",
       "spawned_at": "2025-11-06T22:13:58Z",
       "status": "active"
+    },
+    {
+      "worker_id": "dev-worker-2A3CE105",
+      "worker_type": "feature-implementer",
+      "spawned_at": "2025-11-08T04:39:48-0600",
+      "status": "active"
+    },
+    {
+      "worker_id": "dev-worker-270892A8",
+      "worker_type": "feature-implementer",
+      "spawned_at": "2025-11-08T04:39:48-0600",
+      "status": "active"
+    },
+    {
+      "worker_id": "dev-worker-98C59170",
+      "worker_type": "feature-implementer",
+      "spawned_at": "2025-11-08T04:39:48-0600",
+      "status": "active"
+    },
+    {
+      "worker_id": "dev-worker-66187EF4",
+      "worker_type": "feature-implementer",
+      "spawned_at": "2025-11-08T04:39:48-0600",
+      "status": "active"
+    },
+    {
+      "worker_id": "dev-worker-95965607",
+      "worker_type": "feature-implementer",
+      "spawned_at": "2025-11-08T04:45:00-0600",
+      "status": "active"
+    },
+    {
+      "worker_id": "dev-worker-F8529436",
+      "worker_type": "feature-implementer",
+      "spawned_at": "2025-11-08T04:45:00-0600",
+      "status": "active"
+    },
+    {
+      "worker_id": "dev-worker-B0AB8D01",
+      "worker_type": "feature-implementer",
+      "spawned_at": "2025-11-08T04:45:01-0600",
+      "status": "active"
+    },
+    {
+      "worker_id": "dev-worker-9F47DD36",
+      "worker_type": "feature-implementer",
+      "spawned_at": "2025-11-08T04:45:01-0600",
+      "status": "active"
+    },
+    {
+      "worker_id": "dev-worker-90D3E9CD",
+      "worker_type": "feature-implementer",
+      "spawned_at": "2025-11-08T04:45:01-0600",
+      "status": "active"
+    },
+    {
+      "worker_id": "dev-worker-DC9BAB5C",
+      "worker_type": "feature-implementer",
+      "spawned_at": "2025-11-08T04:49:17-0600",
+      "status": "active"
+    },
+    {
+      "worker_id": "dev-worker-5E29C44D",
+      "worker_type": "feature-implementer",
+      "spawned_at": "2025-11-08T08:29:15-0600",
+      "status": "active"
+    },
+    {
+      "worker_id": "dev-worker-692C28F8",
+      "worker_type": "feature-implementer",
+      "spawned_at": "2025-11-08T08:29:15-0600",
+      "status": "active"
+    },
+    {
+      "worker_id": "dev-worker-4A6596A8",
+      "worker_type": "feature-implementer",
+      "spawned_at": "2025-11-08T08:29:15-0600",
+      "status": "active"
+    },
+    {
+      "worker_id": "dev-worker-59528050",
+      "worker_type": "feature-implementer",
+      "spawned_at": "2025-11-08T10:41:58-0600",
+      "status": "active"
+    },
+    {
+      "worker_id": "dev-worker-DB09CBC9",
+      "worker_type": "feature-implementer",
+      "spawned_at": "2025-11-08T10:57:50-0600",
+      "status": "active"
+    },
+    {
+      "worker_id": "dev-worker-F2110EA0",
+      "worker_type": "feature-implementer",
+      "spawned_at": "2025-11-08T12:05:13-0600",
+      "status": "active"
+    },
+    {
+      "worker_id": "dev-worker-806FD204",
+      "worker_type": "feature-implementer",
+      "spawned_at": "2025-11-08T14:18:57-0600",
+      "status": "active"
+    },
+    {
+      "worker_id": "dev-worker-EF0985A7",
+      "worker_type": "feature-implementer",
+      "spawned_at": "2025-11-08T14:18:57-0600",
+      "status": "active"
+    },
+    {
+      "worker_id": "dev-worker-FE2F7024",
+      "worker_type": "bug-fixer",
+      "spawned_at": "2025-11-08T14:18:57-0600",
+      "status": "active"
+    },
+    {
+      "worker_id": "dev-worker-B82DCF42",
+      "worker_type": "feature-implementer",
+      "spawned_at": "2025-11-08T14:18:57-0600",
+      "status": "active"
+    },
+    {
+      "worker_id": "dev-worker-0A64CD8C",
+      "worker_type": "bug-fixer",
+      "spawned_at": "2025-11-08T14:18:58-0600",
+      "status": "active"
+    },
+    {
+      "worker_id": "dev-worker-23506DE6",
+      "worker_type": "feature-implementer",
+      "spawned_at": "2025-11-08T14:18:58-0600",
+      "status": "active"
+    },
+    {
+      "worker_id": "dev-worker-1F866C41",
+      "worker_type": "bug-fixer",
+      "spawned_at": "2025-11-08T14:18:58-0600",
+      "status": "active"
+    },
+    {
+      "worker_id": "dev-worker-301B8A31",
+      "worker_type": "bug-fixer",
+      "spawned_at": "2025-11-08T14:18:58-0600",
+      "status": "active"
+    },
+    {
+      "worker_id": "dev-worker-9C963BEE",
+      "worker_type": "feature-implementer",
+      "spawned_at": "2025-11-08T14:18:58-0600",
+      "status": "active"
+    },
+    {
+      "worker_id": "dev-worker-93A56E03",
+      "worker_type": "bug-fixer",
+      "spawned_at": "2025-11-08T14:18:59-0600",
+      "status": "active"
+    },
+    {
+      "worker_id": "dev-worker-2981084C",
+      "worker_type": "feature-implementer",
+      "spawned_at": "2025-11-08T14:18:59-0600",
+      "status": "active"
+    },
+    {
+      "worker_id": "dev-worker-645AE816",
+      "worker_type": "bug-fixer",
+      "spawned_at": "2025-11-08T14:18:59-0600",
+      "status": "active"
+    },
+    {
+      "worker_id": "dev-worker-69400CC7",
+      "worker_type": "feature-implementer",
+      "spawned_at": "2025-11-08T14:18:59-0600",
+      "status": "active"
+    },
+    {
+      "worker_id": "dev-worker-EB497613",
+      "worker_type": "feature-implementer",
+      "spawned_at": "2025-11-08T14:55:59-0600",
+      "status": "active"
     }
   ],
   "completed_tasks": 0,
@@ -231,6 +411,6 @@
     "success_rate": 0,
     "code_quality_score": 0
   },
-  "last_run": "2025-11-06T22:13:58Z",
-  "last_started": "2025-11-06T22:13:57Z"
+  "last_run": "2025-11-08T14:55:59-0600",
+  "last_started": "2025-11-08T14:55:59-0600"
 }

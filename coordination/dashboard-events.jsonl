@@ -1,241 +1,4719 @@
-{"id": "evt-1762546725-1", "timestamp": "2025-11-07T19:18:45.388450Z", "type": "system_started", "data": "{\"message\": \"Dashboard test system initialized\", \"version\": \"3.0\"}", "source": "system"}
-{"id": "evt-1762546725-2", "timestamp": "2025-11-07T19:28:45.388464Z", "type": "task_created", "data": "{\"task_id\": \"test-task-001\", \"title\": \"Test Feature Implementation\", \"type\": \"feature\"}", "source": "coordinator"}
-{"id": "evt-1762546725-3", "timestamp": "2025-11-07T19:33:45.388471Z", "type": "worker_spawned", "data": "{\"worker_id\": \"test-dev-worker-001\", \"task_id\": \"test-task-001\", \"type\": \"feature-implementer\"}", "source": "development-master"}
-{"id": "evt-1762546725-4", "timestamp": "2025-11-07T19:48:45.388476Z", "type": "task_started", "data": "{\"task_id\": \"test-task-001\", \"worker_id\": \"test-dev-worker-001\"}", "source": "worker"}
-{"id": "evt-1762546725-5", "timestamp": "2025-11-07T20:08:45.388481Z", "type": "task_completed", "data": "{\"task_id\": \"test-task-001\", \"worker_id\": \"test-dev-worker-001\", \"success\": true}", "source": "worker"}
-{"id": "evt-1762546725-6", "timestamp": "2025-11-07T20:13:45.388486Z", "type": "metrics_snapshot", "data": "{\"workers\": {\"active\": 0, \"completed\": 1, \"failed\": 0}, \"success_rate\": 100}", "source": "metrics-daemon"}
 {
-  "id": "evt-1762547059-83363",
-  "timestamp": "2025-11-07T20:24:19Z",
-  "type": "system_test",
-  "data": {"message":"Testing unified event system","test_id":"001"}},
-  "source": "test_suite"
-}
-{"id": "evt-1762547197-84060", "timestamp": "2025-11-07T20:26:37.231700Z", "type": "test_event", "data": "{\"message\": \"Python SDK test\", \"test_id\": \"002\"}", "source": "python_test"}
-{"id": "evt-1762547197-84060", "timestamp": "2025-11-07T20:26:37.232027Z", "type": "task_created", "data": "{\"task_id\": \"test-task-python-001\", \"title\": \"Python SDK Test Task\", \"task_type\": \"test\", \"priority\": \"low\"}", "source": "task_manager"}
-{"id": "evt-1762547197-84060", "timestamp": "2025-11-07T20:26:37.232086Z", "type": "worker_spawned", "data": "{\"worker_id\": \"test-worker-001\", \"task_id\": \"test-task-python-001\", \"worker_type\": \"test-worker\"}", "source": "master"}
-{"id": "evt-1762547197-84060", "timestamp": "2025-11-07T20:26:37.232136Z", "type": "system_started", "data": "{\"component\": \"python_sdk_test\", \"version\": \"3.0\"}", "source": "system"}
-{
-  "id": "evt-1762552519-30515",
-  "timestamp": "2025-11-07T21:55:19Z",
-  "type": "task_completed",
-  "data": {"task_id":"task-test-moe-001","expert":"development","success":true,"completion_time_minutes":25}},
-  "source": "system"
-}
-{
-  "id": "evt-1762566709-23235",
-  "timestamp": "2025-11-07T19:51:49-0600",
-  "type": "timestamp_fix_test",
-  "data": {"status":"verified","timezone":"CST"}},
-  "source": "claude-code"
-}
-{
-  "id": "evt-1762566719-23576",
-  "timestamp": "2025-11-07T19:51:59-0600",
+  "id": "evt-1762617026-62119",
+  "timestamp": "2025-11-08T09:50:26-0600",
   "type": "moe_pool_updated",
-  "data": {"current_workers":1,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "data": {"current_workers":17,"target_workers":8,"activation_rate":14,"max_capacity":64}},
   "source": "sparse-pool-manager"
 }
 {
-  "id": "evt-1762566750-24087",
-  "timestamp": "2025-11-07T19:52:30-0600",
+  "id": "evt-1762617056-63060",
+  "timestamp": "2025-11-08T09:50:56-0600",
   "type": "moe_pool_updated",
-  "data": {"current_workers":1,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "data": {"current_workers":17,"target_workers":8,"activation_rate":14,"max_capacity":64}},
   "source": "sparse-pool-manager"
 }
 {
-  "id": "evt-1762566781-24288",
-  "timestamp": "2025-11-07T19:53:01-0600",
+  "id": "evt-1762617086-63509",
+  "timestamp": "2025-11-08T09:51:26-0600",
   "type": "moe_pool_updated",
-  "data": {"current_workers":1,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "data": {"current_workers":17,"target_workers":8,"activation_rate":14,"max_capacity":64}},
   "source": "sparse-pool-manager"
 }
 {
-  "id": "evt-1762566811-24503",
-  "timestamp": "2025-11-07T19:53:31-0600",
+  "id": "evt-1762617116-63738",
+  "timestamp": "2025-11-08T09:51:56-0600",
   "type": "moe_pool_updated",
-  "data": {"current_workers":1,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "data": {"current_workers":17,"target_workers":8,"activation_rate":14,"max_capacity":64}},
   "source": "sparse-pool-manager"
 }
 {
-  "id": "evt-1762566842-24784",
-  "timestamp": "2025-11-07T19:54:02-0600",
+  "id": "evt-1762617146-63940",
+  "timestamp": "2025-11-08T09:52:26-0600",
   "type": "moe_pool_updated",
-  "data": {"current_workers":1,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "data": {"current_workers":17,"target_workers":8,"activation_rate":14,"max_capacity":64}},
   "source": "sparse-pool-manager"
 }
 {
-  "id": "evt-1762566873-24974",
-  "timestamp": "2025-11-07T19:54:33-0600",
+  "id": "evt-1762617176-64270",
+  "timestamp": "2025-11-08T09:52:56-0600",
   "type": "moe_pool_updated",
-  "data": {"current_workers":1,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "data": {"current_workers":17,"target_workers":8,"activation_rate":14,"max_capacity":64}},
   "source": "sparse-pool-manager"
 }
 {
-  "id": "evt-1762566903-25175",
-  "timestamp": "2025-11-07T19:55:03-0600",
+  "id": "evt-1762617207-65995",
+  "timestamp": "2025-11-08T09:53:27-0600",
   "type": "moe_pool_updated",
-  "data": {"current_workers":1,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "data": {"current_workers":17,"target_workers":8,"activation_rate":14,"max_capacity":64}},
   "source": "sparse-pool-manager"
 }
 {
-  "id": "evt-1762566934-25366",
-  "timestamp": "2025-11-07T19:55:34-0600",
+  "id": "evt-1762617237-66706",
+  "timestamp": "2025-11-08T09:53:57-0600",
   "type": "moe_pool_updated",
-  "data": {"current_workers":1,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "data": {"current_workers":17,"target_workers":8,"activation_rate":14,"max_capacity":64}},
   "source": "sparse-pool-manager"
 }
 {
-  "id": "evt-1762566965-25704",
-  "timestamp": "2025-11-07T19:56:05-0600",
+  "id": "evt-1762617267-66888",
+  "timestamp": "2025-11-08T09:54:27-0600",
   "type": "moe_pool_updated",
-  "data": {"current_workers":1,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "data": {"current_workers":17,"target_workers":8,"activation_rate":14,"max_capacity":64}},
   "source": "sparse-pool-manager"
 }
 {
-  "id": "evt-1762566995-25979",
-  "timestamp": "2025-11-07T19:56:35-0600",
+  "id": "evt-1762617297-68122",
+  "timestamp": "2025-11-08T09:54:57-0600",
   "type": "moe_pool_updated",
-  "data": {"current_workers":1,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "data": {"current_workers":17,"target_workers":8,"activation_rate":14,"max_capacity":64}},
   "source": "sparse-pool-manager"
 }
 {
-  "id": "evt-1762567026-26259",
-  "timestamp": "2025-11-07T19:57:06-0600",
+  "id": "evt-1762617327-69328",
+  "timestamp": "2025-11-08T09:55:27-0600",
   "type": "moe_pool_updated",
-  "data": {"current_workers":1,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "data": {"current_workers":17,"target_workers":8,"activation_rate":14,"max_capacity":64}},
   "source": "sparse-pool-manager"
 }
 {
-  "id": "evt-1762567057-26512",
-  "timestamp": "2025-11-07T19:57:37-0600",
+  "id": "evt-1762617357-69504",
+  "timestamp": "2025-11-08T09:55:57-0600",
   "type": "moe_pool_updated",
-  "data": {"current_workers":1,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "data": {"current_workers":17,"target_workers":8,"activation_rate":14,"max_capacity":64}},
   "source": "sparse-pool-manager"
 }
 {
-  "id": "evt-1762567087-26795",
-  "timestamp": "2025-11-07T19:58:07-0600",
+  "id": "evt-1762617387-70390",
+  "timestamp": "2025-11-08T09:56:27-0600",
   "type": "moe_pool_updated",
-  "data": {"current_workers":1,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "data": {"current_workers":17,"target_workers":8,"activation_rate":14,"max_capacity":64}},
   "source": "sparse-pool-manager"
 }
 {
-  "id": "evt-1762567118-27077",
-  "timestamp": "2025-11-07T19:58:38-0600",
+  "id": "evt-1762617417-70583",
+  "timestamp": "2025-11-08T09:56:57-0600",
   "type": "moe_pool_updated",
-  "data": {"current_workers":1,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "data": {"current_workers":17,"target_workers":8,"activation_rate":14,"max_capacity":64}},
   "source": "sparse-pool-manager"
 }
 {
-  "id": "evt-1762567149-27604",
-  "timestamp": "2025-11-07T19:59:09-0600",
+  "id": "evt-1762617447-71035",
+  "timestamp": "2025-11-08T09:57:27-0600",
   "type": "moe_pool_updated",
-  "data": {"current_workers":1,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "data": {"current_workers":17,"target_workers":8,"activation_rate":14,"max_capacity":64}},
   "source": "sparse-pool-manager"
 }
 {
-  "id": "evt-1762567179-27821",
-  "timestamp": "2025-11-07T19:59:39-0600",
+  "id": "evt-1762617477-71547",
+  "timestamp": "2025-11-08T09:57:57-0600",
   "type": "moe_pool_updated",
-  "data": {"current_workers":1,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "data": {"current_workers":17,"target_workers":8,"activation_rate":14,"max_capacity":64}},
   "source": "sparse-pool-manager"
 }
 {
-  "id": "evt-1762567210-28307",
-  "timestamp": "2025-11-07T20:00:10-0600",
+  "id": "evt-1762617508-72232",
+  "timestamp": "2025-11-08T09:58:28-0600",
   "type": "moe_pool_updated",
-  "data": {"current_workers":1,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "data": {"current_workers":17,"target_workers":8,"activation_rate":14,"max_capacity":64}},
   "source": "sparse-pool-manager"
 }
 {
-  "id": "evt-1762567241-28513",
-  "timestamp": "2025-11-07T20:00:41-0600",
+  "id": "evt-1762617538-72442",
+  "timestamp": "2025-11-08T09:58:58-0600",
   "type": "moe_pool_updated",
-  "data": {"current_workers":1,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "data": {"current_workers":17,"target_workers":8,"activation_rate":14,"max_capacity":64}},
   "source": "sparse-pool-manager"
 }
 {
-  "id": "evt-1762567271-28762",
-  "timestamp": "2025-11-07T20:01:11-0600",
+  "id": "evt-1762617568-73073",
+  "timestamp": "2025-11-08T09:59:28-0600",
   "type": "moe_pool_updated",
-  "data": {"current_workers":1,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "data": {"current_workers":17,"target_workers":8,"activation_rate":14,"max_capacity":64}},
   "source": "sparse-pool-manager"
 }
 {
-  "id": "evt-1762567302-29269",
-  "timestamp": "2025-11-07T20:01:42-0600",
+  "id": "evt-1762617598-73262",
+  "timestamp": "2025-11-08T09:59:58-0600",
   "type": "moe_pool_updated",
-  "data": {"current_workers":1,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "data": {"current_workers":17,"target_workers":8,"activation_rate":14,"max_capacity":64}},
   "source": "sparse-pool-manager"
 }
 {
-  "id": "evt-1762567333-29460",
-  "timestamp": "2025-11-07T20:02:13-0600",
+  "id": "evt-1762617628-73453",
+  "timestamp": "2025-11-08T10:00:28-0600",
   "type": "moe_pool_updated",
-  "data": {"current_workers":1,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "data": {"current_workers":17,"target_workers":8,"activation_rate":14,"max_capacity":64}},
   "source": "sparse-pool-manager"
 }
 {
-  "id": "evt-1762567363-30235",
-  "timestamp": "2025-11-07T20:02:43-0600",
+  "id": "evt-1762617658-73634",
+  "timestamp": "2025-11-08T10:00:58-0600",
   "type": "moe_pool_updated",
-  "data": {"current_workers":1,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "data": {"current_workers":17,"target_workers":8,"activation_rate":14,"max_capacity":64}},
   "source": "sparse-pool-manager"
 }
 {
-  "id": "evt-1762567394-31408",
-  "timestamp": "2025-11-07T20:03:14-0600",
+  "id": "evt-1762617688-73811",
+  "timestamp": "2025-11-08T10:01:28-0600",
   "type": "moe_pool_updated",
-  "data": {"current_workers":1,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "data": {"current_workers":17,"target_workers":8,"activation_rate":14,"max_capacity":64}},
   "source": "sparse-pool-manager"
 }
 {
-  "id": "evt-1762567425-31906",
-  "timestamp": "2025-11-07T20:03:45-0600",
+  "id": "evt-1762617718-73990",
+  "timestamp": "2025-11-08T10:01:58-0600",
   "type": "moe_pool_updated",
-  "data": {"current_workers":1,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "data": {"current_workers":17,"target_workers":8,"activation_rate":14,"max_capacity":64}},
   "source": "sparse-pool-manager"
 }
 {
-  "id": "evt-1762567455-32116",
-  "timestamp": "2025-11-07T20:04:15-0600",
+  "id": "evt-1762617748-74607",
+  "timestamp": "2025-11-08T10:02:28-0600",
   "type": "moe_pool_updated",
-  "data": {"current_workers":1,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "data": {"current_workers":17,"target_workers":8,"activation_rate":14,"max_capacity":64}},
   "source": "sparse-pool-manager"
 }
 {
-  "id": "evt-1762567486-32371",
-  "timestamp": "2025-11-07T20:04:46-0600",
+  "id": "evt-1762617779-74845",
+  "timestamp": "2025-11-08T10:02:59-0600",
   "type": "moe_pool_updated",
-  "data": {"current_workers":1,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "data": {"current_workers":17,"target_workers":8,"activation_rate":14,"max_capacity":64}},
   "source": "sparse-pool-manager"
 }
 {
-  "id": "evt-1762567517-32608",
-  "timestamp": "2025-11-07T20:05:17-0600",
+  "id": "evt-1762617809-75022",
+  "timestamp": "2025-11-08T10:03:29-0600",
   "type": "moe_pool_updated",
-  "data": {"current_workers":1,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "data": {"current_workers":17,"target_workers":8,"activation_rate":14,"max_capacity":64}},
   "source": "sparse-pool-manager"
 }
 {
-  "id": "evt-1762567547-33072",
-  "timestamp": "2025-11-07T20:05:47-0600",
+  "id": "evt-1762617839-75200",
+  "timestamp": "2025-11-08T10:03:59-0600",
   "type": "moe_pool_updated",
-  "data": {"current_workers":1,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "data": {"current_workers":17,"target_workers":8,"activation_rate":14,"max_capacity":64}},
   "source": "sparse-pool-manager"
 }
 {
-  "id": "evt-1762567578-33402",
-  "timestamp": "2025-11-07T20:06:18-0600",
+  "id": "evt-1762617869-76647",
+  "timestamp": "2025-11-08T10:04:29-0600",
   "type": "moe_pool_updated",
-  "data": {"current_workers":1,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "data": {"current_workers":17,"target_workers":8,"activation_rate":14,"max_capacity":64}},
   "source": "sparse-pool-manager"
 }
 {
-  "id": "evt-1762567609-34190",
-  "timestamp": "2025-11-07T20:06:49-0600",
+  "id": "evt-1762617899-77583",
+  "timestamp": "2025-11-08T10:04:59-0600",
   "type": "moe_pool_updated",
-  "data": {"current_workers":1,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "data": {"current_workers":17,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762617929-78776",
+  "timestamp": "2025-11-08T10:05:29-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":17,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762617955-79427",
+  "timestamp": "2025-11-08T10:05:55-0600",
+  "type": "task_created",
+  "data": task-1762617941},
+  "source": "REPAIR task created from health alert system"
+}
+{
+  "id": "evt-1762617959-79494",
+  "timestamp": "2025-11-08T10:05:59-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":17,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762617989-80282",
+  "timestamp": "2025-11-08T10:06:29-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":17,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762618019-80571",
+  "timestamp": "2025-11-08T10:06:59-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":17,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762618050-80910",
+  "timestamp": "2025-11-08T10:07:30-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":17,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762618080-81276",
+  "timestamp": "2025-11-08T10:08:00-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":17,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762618110-82654",
+  "timestamp": "2025-11-08T10:08:30-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":17,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762618140-83137",
+  "timestamp": "2025-11-08T10:09:00-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":17,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762618170-83571",
+  "timestamp": "2025-11-08T10:09:30-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":17,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762618200-83980",
+  "timestamp": "2025-11-08T10:10:00-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":17,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762618230-84154",
+  "timestamp": "2025-11-08T10:10:30-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":17,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762618260-84329",
+  "timestamp": "2025-11-08T10:11:00-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":17,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762618290-85071",
+  "timestamp": "2025-11-08T10:11:30-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":17,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762618321-85346",
+  "timestamp": "2025-11-08T10:12:01-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":17,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762618351-85676",
+  "timestamp": "2025-11-08T10:12:31-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":17,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762618381-86053",
+  "timestamp": "2025-11-08T10:13:01-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":17,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762618411-86353",
+  "timestamp": "2025-11-08T10:13:31-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":17,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762618441-86637",
+  "timestamp": "2025-11-08T10:14:01-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":17,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762618471-87406",
+  "timestamp": "2025-11-08T10:14:31-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":17,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762618501-87581",
+  "timestamp": "2025-11-08T10:15:01-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":17,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762618531-88089",
+  "timestamp": "2025-11-08T10:15:31-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":17,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762618561-89299",
+  "timestamp": "2025-11-08T10:16:01-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":17,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762618592-90041",
+  "timestamp": "2025-11-08T10:16:32-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":17,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762618622-90216",
+  "timestamp": "2025-11-08T10:17:02-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":17,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762618652-90821",
+  "timestamp": "2025-11-08T10:17:32-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":17,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762618682-90997",
+  "timestamp": "2025-11-08T10:18:02-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":17,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762618712-91173",
+  "timestamp": "2025-11-08T10:18:32-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":17,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762618742-91434",
+  "timestamp": "2025-11-08T10:19:02-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":17,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762618772-91626",
+  "timestamp": "2025-11-08T10:19:32-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":17,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762618802-92356",
+  "timestamp": "2025-11-08T10:20:02-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":17,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762618832-93679",
+  "timestamp": "2025-11-08T10:20:32-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":17,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762618863-94902",
+  "timestamp": "2025-11-08T10:21:03-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":17,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762618893-95685",
+  "timestamp": "2025-11-08T10:21:33-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":17,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762618923-96390",
+  "timestamp": "2025-11-08T10:22:03-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":17,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762618953-97620",
+  "timestamp": "2025-11-08T10:22:33-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":17,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762618983-98436",
+  "timestamp": "2025-11-08T10:23:03-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":17,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762619013-99045",
+  "timestamp": "2025-11-08T10:23:33-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":17,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762619043-99450",
+  "timestamp": "2025-11-08T10:24:03-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":17,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762619073-99796",
+  "timestamp": "2025-11-08T10:24:33-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":17,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762619103-239",
+  "timestamp": "2025-11-08T10:25:03-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":17,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762619134-673",
+  "timestamp": "2025-11-08T10:25:34-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":17,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762619164-1189",
+  "timestamp": "2025-11-08T10:26:04-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":17,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762619194-2999",
+  "timestamp": "2025-11-08T10:26:34-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":17,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762619224-3728",
+  "timestamp": "2025-11-08T10:27:04-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":17,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762619254-4186",
+  "timestamp": "2025-11-08T10:27:34-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":17,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762619284-4734",
+  "timestamp": "2025-11-08T10:28:04-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":17,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762619314-5582",
+  "timestamp": "2025-11-08T10:28:34-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":17,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762619344-6106",
+  "timestamp": "2025-11-08T10:29:04-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":17,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762619374-7282",
+  "timestamp": "2025-11-08T10:29:34-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":17,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762619404-8074",
+  "timestamp": "2025-11-08T10:30:04-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":17,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762619435-9082",
+  "timestamp": "2025-11-08T10:30:35-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":17,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762619465-10160",
+  "timestamp": "2025-11-08T10:31:05-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":17,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762619495-10411",
+  "timestamp": "2025-11-08T10:31:35-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":17,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762619525-10609",
+  "timestamp": "2025-11-08T10:32:05-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":17,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762619555-11225",
+  "timestamp": "2025-11-08T10:32:35-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":17,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762619585-11456",
+  "timestamp": "2025-11-08T10:33:05-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":17,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762619615-11675",
+  "timestamp": "2025-11-08T10:33:35-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":17,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{"id":"evt-1762619637128-7667","timestamp":"2025-11-08T16:33:57.128Z","type":"health_alert_note_added","data":"{\"alert_id\":\"alert-coordinator-stale\",\"alert_type\":\"coordinator_failure\",\"severity\":\"critical\",\"note\":\"Issue resolved by commit-relay.\",\"message\":\"Note added to coordinator_failure alert\"}","source":"dashboard"}
+{
+  "id": "evt-1762619645-11944",
+  "timestamp": "2025-11-08T10:34:05-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":17,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762619675-12146",
+  "timestamp": "2025-11-08T10:34:35-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":17,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762619706-12328",
+  "timestamp": "2025-11-08T10:35:06-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":17,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762619736-12885",
+  "timestamp": "2025-11-08T10:35:36-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":17,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762619766-13065",
+  "timestamp": "2025-11-08T10:36:06-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":17,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762619796-13239",
+  "timestamp": "2025-11-08T10:36:36-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":17,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762619826-13560",
+  "timestamp": "2025-11-08T10:37:06-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":17,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762619856-13885",
+  "timestamp": "2025-11-08T10:37:36-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":17,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762619886-14070",
+  "timestamp": "2025-11-08T10:38:06-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":17,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762619916-14635",
+  "timestamp": "2025-11-08T10:38:36-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":17,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762619947-14810",
+  "timestamp": "2025-11-08T10:39:07-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":17,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762619977-14985",
+  "timestamp": "2025-11-08T10:39:37-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":17,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762620007-15275",
+  "timestamp": "2025-11-08T10:40:07-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":17,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762620037-16510",
+  "timestamp": "2025-11-08T10:40:37-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":17,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762620067-17376",
+  "timestamp": "2025-11-08T10:41:07-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":17,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762620097-17957",
+  "timestamp": "2025-11-08T10:41:37-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":17,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762620107-18986",
+  "timestamp": "2025-11-08T10:41:47-0600",
+  "type": "moe_routing_decision",
+  "data": {"task_id":"task-1762553434","expert":"development","confidence":0.95,"strategy":"single_expert"}},
+  "source": "coordinator-master"
+}
+{
+  "id": "evt-1762620127-20242",
+  "timestamp": "2025-11-08T10:42:07-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":18,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762620157-20589",
+  "timestamp": "2025-11-08T10:42:37-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":18,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762620187-21098",
+  "timestamp": "2025-11-08T10:43:07-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":18,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762620217-21279",
+  "timestamp": "2025-11-08T10:43:37-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":18,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762620248-21479",
+  "timestamp": "2025-11-08T10:44:08-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":18,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762620278-22018",
+  "timestamp": "2025-11-08T10:44:38-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":18,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762620308-22758",
+  "timestamp": "2025-11-08T10:45:08-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":18,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762620338-23084",
+  "timestamp": "2025-11-08T10:45:38-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":18,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762620368-23539",
+  "timestamp": "2025-11-08T10:46:08-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":18,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{"id":"evt-1762620378946-7667","timestamp":"2025-11-08T16:46:18.946Z","type":"health_alert_deleted","data":"{\"alert_id\":\"alert-coordinator-stale\",\"alert_type\":\"coordinator_failure\",\"severity\":\"critical\",\"message\":\"Health alert deleted: Coordinator heartbeat stale for  seconds\"}","source":"dashboard"}
+{
+  "id": "evt-1762620398-23922",
+  "timestamp": "2025-11-08T10:46:38-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":18,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762620429-24140",
+  "timestamp": "2025-11-08T10:47:09-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":18,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762620459-25112",
+  "timestamp": "2025-11-08T10:47:39-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":18,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762620489-25772",
+  "timestamp": "2025-11-08T10:48:09-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":18,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762620519-26891",
+  "timestamp": "2025-11-08T10:48:39-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":18,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762620549-27148",
+  "timestamp": "2025-11-08T10:49:09-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":18,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762620579-27324",
+  "timestamp": "2025-11-08T10:49:39-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":18,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762620609-27736",
+  "timestamp": "2025-11-08T10:50:09-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":18,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762620639-28346",
+  "timestamp": "2025-11-08T10:50:39-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":18,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762620669-28530",
+  "timestamp": "2025-11-08T10:51:09-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":18,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762620700-28704",
+  "timestamp": "2025-11-08T10:51:40-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":18,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762620730-28957",
+  "timestamp": "2025-11-08T10:52:10-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":18,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762620760-29279",
+  "timestamp": "2025-11-08T10:52:40-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":18,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762620790-30478",
+  "timestamp": "2025-11-08T10:53:10-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":18,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762620820-31811",
+  "timestamp": "2025-11-08T10:53:40-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":18,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762620850-32003",
+  "timestamp": "2025-11-08T10:54:10-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":18,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762620880-32177",
+  "timestamp": "2025-11-08T10:54:40-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":18,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762620910-32434",
+  "timestamp": "2025-11-08T10:55:10-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":18,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762620940-32611",
+  "timestamp": "2025-11-08T10:55:40-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":18,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762620971-32792",
+  "timestamp": "2025-11-08T10:56:11-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":18,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762621001-33329",
+  "timestamp": "2025-11-08T10:56:41-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":18,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762621031-33758",
+  "timestamp": "2025-11-08T10:57:11-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":18,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762621061-35231",
+  "timestamp": "2025-11-08T10:57:41-0600",
+  "type": "moe_routing_decision",
+  "data": {"task_id":"task-1762553435","expert":"development","confidence":0.95,"strategy":"single_expert"}},
+  "source": "coordinator-master"
+}
+{
+  "id": "evt-1762621061-35517",
+  "timestamp": "2025-11-08T10:57:41-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":18,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762621091-36440",
+  "timestamp": "2025-11-08T10:58:11-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":19,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762621121-36924",
+  "timestamp": "2025-11-08T10:58:41-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":19,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762621151-37242",
+  "timestamp": "2025-11-08T10:59:11-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":19,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762621181-37943",
+  "timestamp": "2025-11-08T10:59:41-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":19,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762621211-38411",
+  "timestamp": "2025-11-08T11:00:11-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":19,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762621241-38628",
+  "timestamp": "2025-11-08T11:00:41-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":19,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762621272-39040",
+  "timestamp": "2025-11-08T11:01:12-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":19,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762621302-39237",
+  "timestamp": "2025-11-08T11:01:42-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":19,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762621332-39418",
+  "timestamp": "2025-11-08T11:02:12-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":19,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762621362-40296",
+  "timestamp": "2025-11-08T11:02:42-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":19,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762621392-40493",
+  "timestamp": "2025-11-08T11:03:12-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":19,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762621422-40669",
+  "timestamp": "2025-11-08T11:03:42-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":19,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762621452-40927",
+  "timestamp": "2025-11-08T11:04:12-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":19,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762621482-41176",
+  "timestamp": "2025-11-08T11:04:42-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":19,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762621513-41382",
+  "timestamp": "2025-11-08T11:05:13-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":19,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762621543-41931",
+  "timestamp": "2025-11-08T11:05:43-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":19,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762621573-42109",
+  "timestamp": "2025-11-08T11:06:13-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":19,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762621603-42285",
+  "timestamp": "2025-11-08T11:06:43-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":19,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762621633-42544",
+  "timestamp": "2025-11-08T11:07:13-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":19,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762621663-42777",
+  "timestamp": "2025-11-08T11:07:43-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":19,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762621693-42953",
+  "timestamp": "2025-11-08T11:08:13-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":19,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762621723-43484",
+  "timestamp": "2025-11-08T11:08:43-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":19,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762621754-43659",
+  "timestamp": "2025-11-08T11:09:14-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":19,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762621784-43845",
+  "timestamp": "2025-11-08T11:09:44-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":19,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762621814-44106",
+  "timestamp": "2025-11-08T11:10:14-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":19,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762621844-44287",
+  "timestamp": "2025-11-08T11:10:44-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":19,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762621874-44462",
+  "timestamp": "2025-11-08T11:11:14-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":19,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762621904-45017",
+  "timestamp": "2025-11-08T11:11:44-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":19,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762621934-45193",
+  "timestamp": "2025-11-08T11:12:14-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":19,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762621964-45500",
+  "timestamp": "2025-11-08T11:12:44-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":19,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762621995-45680",
+  "timestamp": "2025-11-08T11:13:15-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":19,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762622025-45854",
+  "timestamp": "2025-11-08T11:13:45-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":19,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762622055-46029",
+  "timestamp": "2025-11-08T11:14:15-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":19,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762622085-46553",
+  "timestamp": "2025-11-08T11:14:45-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":19,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762622115-46744",
+  "timestamp": "2025-11-08T11:15:15-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":19,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762622145-46994",
+  "timestamp": "2025-11-08T11:15:45-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":19,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762622175-47173",
+  "timestamp": "2025-11-08T11:16:15-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":19,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762622205-47347",
+  "timestamp": "2025-11-08T11:16:45-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":19,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762622236-47528",
+  "timestamp": "2025-11-08T11:17:16-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":19,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762622266-48133",
+  "timestamp": "2025-11-08T11:17:46-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":19,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762622296-48309",
+  "timestamp": "2025-11-08T11:18:16-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":19,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762622326-48559",
+  "timestamp": "2025-11-08T11:18:46-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":19,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762622356-48741",
+  "timestamp": "2025-11-08T11:19:16-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":19,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762622386-48916",
+  "timestamp": "2025-11-08T11:19:46-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":19,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762622416-49107",
+  "timestamp": "2025-11-08T11:20:16-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":19,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762622446-49641",
+  "timestamp": "2025-11-08T11:20:46-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":19,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762622477-49817",
+  "timestamp": "2025-11-08T11:21:17-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":19,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762622507-50068",
+  "timestamp": "2025-11-08T11:21:47-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":19,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762622537-50249",
+  "timestamp": "2025-11-08T11:22:17-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":19,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762622567-50480",
+  "timestamp": "2025-11-08T11:22:47-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":19,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762622597-50655",
+  "timestamp": "2025-11-08T11:23:17-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":19,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762622627-51213",
+  "timestamp": "2025-11-08T11:23:47-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":19,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762622657-51389",
+  "timestamp": "2025-11-08T11:24:17-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":19,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762622688-51640",
+  "timestamp": "2025-11-08T11:24:48-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":19,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762622718-51820",
+  "timestamp": "2025-11-08T11:25:18-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":19,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762622748-52002",
+  "timestamp": "2025-11-08T11:25:48-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":19,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762622778-52188",
+  "timestamp": "2025-11-08T11:26:18-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":19,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762622808-52713",
+  "timestamp": "2025-11-08T11:26:48-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":19,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762622838-52887",
+  "timestamp": "2025-11-08T11:27:18-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":19,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762622868-53194",
+  "timestamp": "2025-11-08T11:27:48-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":19,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762622898-53370",
+  "timestamp": "2025-11-08T11:28:18-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":19,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762622928-53543",
+  "timestamp": "2025-11-08T11:28:48-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":19,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762622959-53722",
+  "timestamp": "2025-11-08T11:29:19-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":19,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762622989-54277",
+  "timestamp": "2025-11-08T11:29:49-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":19,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762623019-54455",
+  "timestamp": "2025-11-08T11:30:19-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":19,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762623049-54708",
+  "timestamp": "2025-11-08T11:30:49-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":19,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762623079-54898",
+  "timestamp": "2025-11-08T11:31:19-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":19,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762623109-55079",
+  "timestamp": "2025-11-08T11:31:49-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":19,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762623139-55282",
+  "timestamp": "2025-11-08T11:32:19-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":19,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762623169-55880",
+  "timestamp": "2025-11-08T11:32:49-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":19,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762623200-56092",
+  "timestamp": "2025-11-08T11:33:20-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":19,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762623230-56404",
+  "timestamp": "2025-11-08T11:33:50-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":19,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762623260-56579",
+  "timestamp": "2025-11-08T11:34:20-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":19,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762623290-56755",
+  "timestamp": "2025-11-08T11:34:50-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":19,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762623320-56932",
+  "timestamp": "2025-11-08T11:35:20-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":19,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762623350-57493",
+  "timestamp": "2025-11-08T11:35:50-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":19,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762623380-57670",
+  "timestamp": "2025-11-08T11:36:20-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":19,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762623410-57946",
+  "timestamp": "2025-11-08T11:36:50-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":19,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762623441-58127",
+  "timestamp": "2025-11-08T11:37:21-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":19,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762623471-58355",
+  "timestamp": "2025-11-08T11:37:51-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":19,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762623501-58532",
+  "timestamp": "2025-11-08T11:38:21-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":19,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762623531-59057",
+  "timestamp": "2025-11-08T11:38:51-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":19,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762623561-59232",
+  "timestamp": "2025-11-08T11:39:21-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":19,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762623591-59486",
+  "timestamp": "2025-11-08T11:39:51-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":19,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762623621-60187",
+  "timestamp": "2025-11-08T11:40:21-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":19,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762623651-61426",
+  "timestamp": "2025-11-08T11:40:51-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":19,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762623681-61601",
+  "timestamp": "2025-11-08T11:41:21-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":19,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762623712-62151",
+  "timestamp": "2025-11-08T11:41:52-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":19,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762623742-62336",
+  "timestamp": "2025-11-08T11:42:22-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":19,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762623772-62642",
+  "timestamp": "2025-11-08T11:42:52-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":19,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762623802-62821",
+  "timestamp": "2025-11-08T11:43:22-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":19,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762623832-62999",
+  "timestamp": "2025-11-08T11:43:52-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":19,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762623862-63189",
+  "timestamp": "2025-11-08T11:44:22-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":19,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762623892-63712",
+  "timestamp": "2025-11-08T11:44:52-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":19,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762623922-63887",
+  "timestamp": "2025-11-08T11:45:22-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":19,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762623953-64143",
+  "timestamp": "2025-11-08T11:45:53-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":19,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762623983-64323",
+  "timestamp": "2025-11-08T11:46:23-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":19,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762624013-64500",
+  "timestamp": "2025-11-08T11:46:53-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":19,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762624043-64674",
+  "timestamp": "2025-11-08T11:47:23-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":19,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762624073-65286",
+  "timestamp": "2025-11-08T11:47:53-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":19,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762624103-65462",
+  "timestamp": "2025-11-08T11:48:23-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":19,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762624133-65714",
+  "timestamp": "2025-11-08T11:48:53-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":19,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762624163-65896",
+  "timestamp": "2025-11-08T11:49:23-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":19,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762624194-66072",
+  "timestamp": "2025-11-08T11:49:54-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":19,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762624224-66247",
+  "timestamp": "2025-11-08T11:50:24-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":19,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762624254-66772",
+  "timestamp": "2025-11-08T11:50:54-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":19,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762624284-66947",
+  "timestamp": "2025-11-08T11:51:24-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":19,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762624314-67199",
+  "timestamp": "2025-11-08T11:51:54-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":19,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762624344-67376",
+  "timestamp": "2025-11-08T11:52:24-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":19,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762624374-67609",
+  "timestamp": "2025-11-08T11:52:54-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":19,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762624404-67788",
+  "timestamp": "2025-11-08T11:53:24-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":19,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762624435-68350",
+  "timestamp": "2025-11-08T11:53:55-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":19,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762624465-68526",
+  "timestamp": "2025-11-08T11:54:25-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":19,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762624495-68780",
+  "timestamp": "2025-11-08T11:54:55-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":19,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762624525-68962",
+  "timestamp": "2025-11-08T11:55:25-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":19,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762624555-69136",
+  "timestamp": "2025-11-08T11:55:55-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":19,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762624585-69312",
+  "timestamp": "2025-11-08T11:56:25-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":19,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762624615-70750",
+  "timestamp": "2025-11-08T11:56:55-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":5,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{"id":"evt-1762624616-72307","timestamp":"2025-11-08T11:56:56-06:00","type":"worker_started","data":"{\"worker_id\":\"dev-worker-DB09CBC9\",\"task_id\":\"task-1762553435\",\"worker_type\":\"feature-implementer\",\"launched_by\":\"daemon\"}","source":"automation"}
+{
+  "id": "evt-1762624647-73080",
+  "timestamp": "2025-11-08T11:57:27-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":5,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762624678-73676",
+  "timestamp": "2025-11-08T11:57:58-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":5,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762624709-73897",
+  "timestamp": "2025-11-08T11:58:29-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":5,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762624739-74201",
+  "timestamp": "2025-11-08T11:58:59-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":5,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762624770-74420",
+  "timestamp": "2025-11-08T11:59:30-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":5,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762624801-74968",
+  "timestamp": "2025-11-08T12:00:01-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":5,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762624832-75246",
+  "timestamp": "2025-11-08T12:00:32-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":5,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762624853-76711",
+  "timestamp": "2025-11-08T12:00:53-0600",
+  "type": "moe_routing_decision",
+  "data": {"task_id":"task-1762553436","expert":"development","confidence":0.95,"strategy":"single_expert"}},
+  "source": "coordinator-master"
+}
+{
+  "id": "evt-1762624862-77139",
+  "timestamp": "2025-11-08T12:01:03-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":5,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762624893-77349",
+  "timestamp": "2025-11-08T12:01:33-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":5,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762624924-77564",
+  "timestamp": "2025-11-08T12:02:04-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":5,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762624955-77854",
+  "timestamp": "2025-11-08T12:02:35-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":5,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762624986-78353",
+  "timestamp": "2025-11-08T12:03:06-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":5,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762625016-78585",
+  "timestamp": "2025-11-08T12:03:36-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":5,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762625047-78896",
+  "timestamp": "2025-11-08T12:04:07-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":5,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762625078-79248",
+  "timestamp": "2025-11-08T12:04:38-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":5,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762625109-80750",
+  "timestamp": "2025-11-08T12:05:09-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":5,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762625139-81969",
+  "timestamp": "2025-11-08T12:05:39-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":6,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{"id":"evt-1762625140-72307","timestamp":"2025-11-08T12:05:40-06:00","type":"worker_started","data":"{\"worker_id\":\"dev-worker-F2110EA0\",\"task_id\":\"task-1762553436\",\"worker_type\":\"feature-implementer\",\"launched_by\":\"daemon\"}","source":"automation"}
+{
+  "id": "evt-1762625171-83351",
+  "timestamp": "2025-11-08T12:06:11-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":6,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762625202-84207",
+  "timestamp": "2025-11-08T12:06:42-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":6,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762625232-85954",
+  "timestamp": "2025-11-08T12:07:12-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":6,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762625263-86553",
+  "timestamp": "2025-11-08T12:07:43-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":6,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762625294-86839",
+  "timestamp": "2025-11-08T12:08:14-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":6,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762625325-88636",
+  "timestamp": "2025-11-08T12:08:45-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":6,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762625355-90091",
+  "timestamp": "2025-11-08T12:09:15-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":6,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762625386-90316",
+  "timestamp": "2025-11-08T12:09:46-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":6,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762625417-90889",
+  "timestamp": "2025-11-08T12:10:17-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":6,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762625448-91530",
+  "timestamp": "2025-11-08T12:10:48-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":6,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762625479-91759",
+  "timestamp": "2025-11-08T12:11:19-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":6,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762625509-92380",
+  "timestamp": "2025-11-08T12:11:49-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":6,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762625540-93111",
+  "timestamp": "2025-11-08T12:12:20-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":6,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762625571-93501",
+  "timestamp": "2025-11-08T12:12:51-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":6,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762625602-93733",
+  "timestamp": "2025-11-08T12:13:22-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":6,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762625632-94013",
+  "timestamp": "2025-11-08T12:13:52-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":6,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762625663-94237",
+  "timestamp": "2025-11-08T12:14:23-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":6,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762625694-94814",
+  "timestamp": "2025-11-08T12:14:54-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":6,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762625725-96228",
+  "timestamp": "2025-11-08T12:15:25-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":6,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762625756-96530",
+  "timestamp": "2025-11-08T12:15:56-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":6,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762625786-97498",
+  "timestamp": "2025-11-08T12:16:26-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":6,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762625817-97714",
+  "timestamp": "2025-11-08T12:16:57-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":6,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762625848-97944",
+  "timestamp": "2025-11-08T12:17:28-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":6,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762625879-98652",
+  "timestamp": "2025-11-08T12:17:59-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":6,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762625910-98923",
+  "timestamp": "2025-11-08T12:18:30-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":6,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762625940-99222",
+  "timestamp": "2025-11-08T12:19:00-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":6,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762625971-99446",
+  "timestamp": "2025-11-08T12:19:31-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":6,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762626002-99710",
+  "timestamp": "2025-11-08T12:20:02-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":6,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762626033-625",
+  "timestamp": "2025-11-08T12:20:33-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":6,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762626064-1831",
+  "timestamp": "2025-11-08T12:21:04-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":6,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762626094-2484",
+  "timestamp": "2025-11-08T12:21:34-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":6,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762626125-3183",
+  "timestamp": "2025-11-08T12:22:05-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":6,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762626156-3798",
+  "timestamp": "2025-11-08T12:22:36-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":6,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762626187-5172",
+  "timestamp": "2025-11-08T12:23:07-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":6,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762626217-5775",
+  "timestamp": "2025-11-08T12:23:37-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":6,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762626248-6918",
+  "timestamp": "2025-11-08T12:24:08-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":6,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762626279-7636",
+  "timestamp": "2025-11-08T12:24:39-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":6,"target_workers":14,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762626310-8475",
+  "timestamp": "2025-11-08T12:25:10-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":6,"target_workers":14,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762626340-8998",
+  "timestamp": "2025-11-08T12:25:40-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":6,"target_workers":14,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762626371-9556",
+  "timestamp": "2025-11-08T12:26:11-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":6,"target_workers":14,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762626381-10850",
+  "timestamp": "2025-11-08T12:26:21-0600",
+  "type": "moe_routing_decision",
+  "data": {"task_id":"moe-test-ddqd-v5-1762626013-4130b075","expert":"security","confidence":0.95,"strategy":"single_expert"}},
+  "source": "coordinator-master"
+}
+{
+  "id": "evt-1762626381-11396",
+  "timestamp": "2025-11-08T12:26:21-0600",
+  "type": "moe_routing_decision",
+  "data": {"task_id":"moe-test-ddqd-v5-1762626013-c0a4d2d1","expert":"security","confidence":0.95,"strategy":"single_expert"}},
+  "source": "coordinator-master"
+}
+{
+  "id": "evt-1762626382-11927",
+  "timestamp": "2025-11-08T12:26:22-0600",
+  "type": "moe_routing_decision",
+  "data": {"task_id":"moe-test-ddqd-v5-1762626013-578b7e04","expert":"development","confidence":0.95,"strategy":"single_expert"}},
+  "source": "coordinator-master"
+}
+{
+  "id": "evt-1762626382-12457",
+  "timestamp": "2025-11-08T12:26:22-0600",
+  "type": "moe_routing_decision",
+  "data": {"task_id":"moe-test-ddqd-v5-1762626013-d03c64a3","expert":"development","confidence":0.95,"strategy":"single_expert"}},
+  "source": "coordinator-master"
+}
+{
+  "id": "evt-1762626383-12982",
+  "timestamp": "2025-11-08T12:26:23-0600",
+  "type": "moe_routing_decision",
+  "data": {"task_id":"moe-test-ddqd-v5-1762626013-67081586","expert":"inventory","confidence":0.95,"strategy":"single_expert"}},
+  "source": "coordinator-master"
+}
+{
+  "id": "evt-1762626383-13528",
+  "timestamp": "2025-11-08T12:26:23-0600",
+  "type": "moe_routing_decision",
+  "data": {"task_id":"moe-test-ddqd-v5-1762626013-786cc0fa","expert":"inventory","confidence":0.95,"strategy":"single_expert"}},
+  "source": "coordinator-master"
+}
+{
+  "id": "evt-1762626384-14080",
+  "timestamp": "2025-11-08T12:26:24-0600",
+  "type": "moe_routing_decision",
+  "data": {"task_id":"moe-test-ddqd-v5-1762626228-43c88d46","expert":"security","confidence":0.95,"strategy":"single_expert"}},
+  "source": "coordinator-master"
+}
+{
+  "id": "evt-1762626385-14604",
+  "timestamp": "2025-11-08T12:26:25-0600",
+  "type": "moe_routing_decision",
+  "data": {"task_id":"moe-test-ddqd-v5-1762626228-ae2a8949","expert":"security","confidence":0.95,"strategy":"single_expert"}},
+  "source": "coordinator-master"
+}
+{
+  "id": "evt-1762626385-15132",
+  "timestamp": "2025-11-08T12:26:25-0600",
+  "type": "moe_routing_decision",
+  "data": {"task_id":"moe-test-ddqd-v5-1762626228-7b06116b","expert":"development","confidence":0.95,"strategy":"single_expert"}},
+  "source": "coordinator-master"
+}
+{
+  "id": "evt-1762626386-15656",
+  "timestamp": "2025-11-08T12:26:26-0600",
+  "type": "moe_routing_decision",
+  "data": {"task_id":"moe-test-ddqd-v5-1762626228-b63efc1b","expert":"development","confidence":0.95,"strategy":"single_expert"}},
+  "source": "coordinator-master"
+}
+{
+  "id": "evt-1762626386-16186",
+  "timestamp": "2025-11-08T12:26:26-0600",
+  "type": "moe_routing_decision",
+  "data": {"task_id":"moe-test-ddqd-v5-1762626228-271c79ce","expert":"inventory","confidence":0.95,"strategy":"single_expert"}},
+  "source": "coordinator-master"
+}
+{
+  "id": "evt-1762626387-16706",
+  "timestamp": "2025-11-08T12:26:27-0600",
+  "type": "moe_routing_decision",
+  "data": {"task_id":"moe-test-ddqd-v5-1762626228-a4d79b93","expert":"inventory","confidence":0.95,"strategy":"single_expert"}},
+  "source": "coordinator-master"
+}
+{
+  "id": "evt-1762626402-17062",
+  "timestamp": "2025-11-08T12:26:42-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":6,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762626433-18289",
+  "timestamp": "2025-11-08T12:27:13-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":6,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762626463-18963",
+  "timestamp": "2025-11-08T12:27:43-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":6,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762626494-19713",
+  "timestamp": "2025-11-08T12:28:14-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":6,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762626525-20532",
+  "timestamp": "2025-11-08T12:28:45-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":6,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762626548-21568",
+  "timestamp": "2025-11-08T12:29:08-0600",
+  "type": "moe_routing_decision",
+  "data": {"task_id":"moe-test-ddqd-v5-1762626428-0922fb5a","expert":"security","confidence":0.95,"strategy":"single_expert"}},
+  "source": "coordinator-master"
+}
+{
+  "id": "evt-1762626549-22092",
+  "timestamp": "2025-11-08T12:29:09-0600",
+  "type": "moe_routing_decision",
+  "data": {"task_id":"moe-test-ddqd-v5-1762626428-f4171764","expert":"security","confidence":0.95,"strategy":"single_expert"}},
+  "source": "coordinator-master"
+}
+{
+  "id": "evt-1762626549-22623",
+  "timestamp": "2025-11-08T12:29:09-0600",
+  "type": "moe_routing_decision",
+  "data": {"task_id":"moe-test-ddqd-v5-1762626428-41391183","expert":"development","confidence":0.95,"strategy":"single_expert"}},
+  "source": "coordinator-master"
+}
+{
+  "id": "evt-1762626550-23148",
+  "timestamp": "2025-11-08T12:29:10-0600",
+  "type": "moe_routing_decision",
+  "data": {"task_id":"moe-test-ddqd-v5-1762626428-db0eb0ae","expert":"development","confidence":0.95,"strategy":"single_expert"}},
+  "source": "coordinator-master"
+}
+{
+  "id": "evt-1762626550-23677",
+  "timestamp": "2025-11-08T12:29:10-0600",
+  "type": "moe_routing_decision",
+  "data": {"task_id":"moe-test-ddqd-v5-1762626428-e9d2f359","expert":"inventory","confidence":0.95,"strategy":"single_expert"}},
+  "source": "coordinator-master"
+}
+{
+  "id": "evt-1762626551-24197",
+  "timestamp": "2025-11-08T12:29:11-0600",
+  "type": "moe_routing_decision",
+  "data": {"task_id":"moe-test-ddqd-v5-1762626428-0f64f3ea","expert":"inventory","confidence":0.95,"strategy":"single_expert"}},
+  "source": "coordinator-master"
+}
+{
+  "id": "evt-1762626552-24733",
+  "timestamp": "2025-11-08T12:29:12-0600",
+  "type": "moe_routing_decision",
+  "data": {"task_id":"moe-test-ddqd-v5-1762626495-aa30ca25","expert":"security","confidence":0.95,"strategy":"single_expert"}},
+  "source": "coordinator-master"
+}
+{
+  "id": "evt-1762626552-25264",
+  "timestamp": "2025-11-08T12:29:12-0600",
+  "type": "moe_routing_decision",
+  "data": {"task_id":"moe-test-ddqd-v5-1762626495-28b1a031","expert":"security","confidence":0.95,"strategy":"single_expert"}},
+  "source": "coordinator-master"
+}
+{
+  "id": "evt-1762626553-25792",
+  "timestamp": "2025-11-08T12:29:13-0600",
+  "type": "moe_routing_decision",
+  "data": {"task_id":"moe-test-ddqd-v5-1762626495-7728f5cb","expert":"development","confidence":0.95,"strategy":"single_expert"}},
+  "source": "coordinator-master"
+}
+{
+  "id": "evt-1762626553-26318",
+  "timestamp": "2025-11-08T12:29:13-0600",
+  "type": "moe_routing_decision",
+  "data": {"task_id":"moe-test-ddqd-v5-1762626495-48fe8ed1","expert":"development","confidence":0.95,"strategy":"single_expert"}},
+  "source": "coordinator-master"
+}
+{
+  "id": "evt-1762626554-26838",
+  "timestamp": "2025-11-08T12:29:14-0600",
+  "type": "moe_routing_decision",
+  "data": {"task_id":"moe-test-ddqd-v5-1762626495-42745965","expert":"inventory","confidence":0.95,"strategy":"single_expert"}},
+  "source": "coordinator-master"
+}
+{
+  "id": "evt-1762626554-27375",
+  "timestamp": "2025-11-08T12:29:14-0600",
+  "type": "moe_routing_decision",
+  "data": {"task_id":"moe-test-ddqd-v5-1762626495-0ffc35ec","expert":"inventory","confidence":0.95,"strategy":"single_expert"}},
+  "source": "coordinator-master"
+}
+{
+  "id": "evt-1762626555-27603",
+  "timestamp": "2025-11-08T12:29:15-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":6,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762626586-28738",
+  "timestamp": "2025-11-08T12:29:46-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":6,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762626617-29261",
+  "timestamp": "2025-11-08T12:30:17-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":6,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762626648-30273",
+  "timestamp": "2025-11-08T12:30:48-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":6,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762626678-31236",
+  "timestamp": "2025-11-08T12:31:18-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":6,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762626709-31865",
+  "timestamp": "2025-11-08T12:31:49-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":6,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762626726-32763",
+  "timestamp": "2025-11-08T12:32:06-0600",
+  "type": "moe_routing_decision",
+  "data": {"task_id":"moe-test-ddqd-v5-1762626673-00728032","expert":"security","confidence":0.95,"strategy":"single_expert"}},
+  "source": "coordinator-master"
+}
+{
+  "id": "evt-1762626727-33287",
+  "timestamp": "2025-11-08T12:32:07-0600",
+  "type": "moe_routing_decision",
+  "data": {"task_id":"moe-test-ddqd-v5-1762626673-ede2eb9a","expert":"security","confidence":0.95,"strategy":"single_expert"}},
+  "source": "coordinator-master"
+}
+{
+  "id": "evt-1762626727-33815",
+  "timestamp": "2025-11-08T12:32:07-0600",
+  "type": "moe_routing_decision",
+  "data": {"task_id":"moe-test-ddqd-v5-1762626673-d3baf6b1","expert":"development","confidence":0.95,"strategy":"single_expert"}},
+  "source": "coordinator-master"
+}
+{
+  "id": "evt-1762626728-34339",
+  "timestamp": "2025-11-08T12:32:08-0600",
+  "type": "moe_routing_decision",
+  "data": {"task_id":"moe-test-ddqd-v5-1762626673-1f8a4f39","expert":"development","confidence":0.95,"strategy":"single_expert"}},
+  "source": "coordinator-master"
+}
+{
+  "id": "evt-1762626728-34870",
+  "timestamp": "2025-11-08T12:32:08-0600",
+  "type": "moe_routing_decision",
+  "data": {"task_id":"moe-test-ddqd-v5-1762626673-e32e4e94","expert":"inventory","confidence":0.95,"strategy":"single_expert"}},
+  "source": "coordinator-master"
+}
+{
+  "id": "evt-1762626729-35391",
+  "timestamp": "2025-11-08T12:32:09-0600",
+  "type": "moe_routing_decision",
+  "data": {"task_id":"moe-test-ddqd-v5-1762626673-c264c1c6","expert":"inventory","confidence":0.95,"strategy":"single_expert"}},
+  "source": "coordinator-master"
+}
+{
+  "id": "evt-1762626740-35842",
+  "timestamp": "2025-11-08T12:32:20-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":6,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762626770-36886",
+  "timestamp": "2025-11-08T12:32:50-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":6,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762626801-37397",
+  "timestamp": "2025-11-08T12:33:21-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":6,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762626832-38428",
+  "timestamp": "2025-11-08T12:33:52-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":6,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762626863-38944",
+  "timestamp": "2025-11-08T12:34:23-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":6,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762626893-39801",
+  "timestamp": "2025-11-08T12:34:53-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":6,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762626924-40422",
+  "timestamp": "2025-11-08T12:35:24-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":6,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762626940-41315",
+  "timestamp": "2025-11-08T12:35:40-0600",
+  "type": "moe_routing_decision",
+  "data": {"task_id":"moe-test-ddqd-v5-1762626887-50a7ec23","expert":"security","confidence":0.95,"strategy":"single_expert"}},
+  "source": "coordinator-master"
+}
+{
+  "id": "evt-1762626941-41849",
+  "timestamp": "2025-11-08T12:35:41-0600",
+  "type": "moe_routing_decision",
+  "data": {"task_id":"moe-test-ddqd-v5-1762626887-8e44f42f","expert":"security","confidence":0.95,"strategy":"single_expert"}},
+  "source": "coordinator-master"
+}
+{
+  "id": "evt-1762626941-42370",
+  "timestamp": "2025-11-08T12:35:41-0600",
+  "type": "moe_routing_decision",
+  "data": {"task_id":"moe-test-ddqd-v5-1762626887-daf73212","expert":"development","confidence":0.95,"strategy":"single_expert"}},
+  "source": "coordinator-master"
+}
+{
+  "id": "evt-1762626942-42896",
+  "timestamp": "2025-11-08T12:35:42-0600",
+  "type": "moe_routing_decision",
+  "data": {"task_id":"moe-test-ddqd-v5-1762626887-6a084ece","expert":"development","confidence":0.95,"strategy":"single_expert"}},
+  "source": "coordinator-master"
+}
+{
+  "id": "evt-1762626943-43434",
+  "timestamp": "2025-11-08T12:35:43-0600",
+  "type": "moe_routing_decision",
+  "data": {"task_id":"moe-test-ddqd-v5-1762626887-b298c5c1","expert":"inventory","confidence":0.95,"strategy":"single_expert"}},
+  "source": "coordinator-master"
+}
+{
+  "id": "evt-1762626943-43956",
+  "timestamp": "2025-11-08T12:35:43-0600",
+  "type": "moe_routing_decision",
+  "data": {"task_id":"moe-test-ddqd-v5-1762626887-42d13af1","expert":"inventory","confidence":0.95,"strategy":"single_expert"}},
+  "source": "coordinator-master"
+}
+{
+  "id": "evt-1762626955-44785",
+  "timestamp": "2025-11-08T12:35:55-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":6,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762626986-45428",
+  "timestamp": "2025-11-08T12:36:26-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":6,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762627016-46018",
+  "timestamp": "2025-11-08T12:36:56-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":6,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762627047-46734",
+  "timestamp": "2025-11-08T12:37:27-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":6,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762627078-47302",
+  "timestamp": "2025-11-08T12:37:58-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":6,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762627109-48135",
+  "timestamp": "2025-11-08T12:38:29-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":6,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762627139-49238",
+  "timestamp": "2025-11-08T12:39:00-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":6,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762627170-49499",
+  "timestamp": "2025-11-08T12:39:30-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":6,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762627201-49800",
+  "timestamp": "2025-11-08T12:40:01-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":6,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762627232-50019",
+  "timestamp": "2025-11-08T12:40:32-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":6,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762627263-50241",
+  "timestamp": "2025-11-08T12:41:03-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":6,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762627293-50464",
+  "timestamp": "2025-11-08T12:41:33-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":6,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762627324-51045",
+  "timestamp": "2025-11-08T12:42:04-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":6,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762627355-51329",
+  "timestamp": "2025-11-08T12:42:35-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":6,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762627386-51630",
+  "timestamp": "2025-11-08T12:43:06-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":6,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762627416-51852",
+  "timestamp": "2025-11-08T12:43:36-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":6,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762627447-52132",
+  "timestamp": "2025-11-08T12:44:07-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":6,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762627478-52394",
+  "timestamp": "2025-11-08T12:44:38-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":6,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762627509-52959",
+  "timestamp": "2025-11-08T12:45:09-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":6,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762627540-53183",
+  "timestamp": "2025-11-08T12:45:40-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":6,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762627570-53797",
+  "timestamp": "2025-11-08T12:46:10-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":6,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762627601-54023",
+  "timestamp": "2025-11-08T12:46:41-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":6,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762627632-54239",
+  "timestamp": "2025-11-08T12:47:12-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":6,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762627663-54508",
+  "timestamp": "2025-11-08T12:47:43-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":6,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762627694-55095",
+  "timestamp": "2025-11-08T12:48:14-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":6,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762627724-55310",
+  "timestamp": "2025-11-08T12:48:44-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":6,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762627755-55616",
+  "timestamp": "2025-11-08T12:49:15-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":6,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762627786-55831",
+  "timestamp": "2025-11-08T12:49:46-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":6,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762627817-56049",
+  "timestamp": "2025-11-08T12:50:17-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":6,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762627848-56283",
+  "timestamp": "2025-11-08T12:50:48-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":6,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762627878-56841",
+  "timestamp": "2025-11-08T12:51:18-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":6,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762627909-57063",
+  "timestamp": "2025-11-08T12:51:49-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":6,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762627940-57380",
+  "timestamp": "2025-11-08T12:52:20-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":6,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762627970-57664",
+  "timestamp": "2025-11-08T12:52:50-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":6,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762628001-57892",
+  "timestamp": "2025-11-08T12:53:21-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":6,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762628032-58302",
+  "timestamp": "2025-11-08T12:53:52-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":6,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762628063-58700",
+  "timestamp": "2025-11-08T12:54:23-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":6,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762628093-59000",
+  "timestamp": "2025-11-08T12:54:53-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":6,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762628124-59222",
+  "timestamp": "2025-11-08T12:55:24-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":6,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762628155-59444",
+  "timestamp": "2025-11-08T12:55:55-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":6,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762628186-59665",
+  "timestamp": "2025-11-08T12:56:26-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":6,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762628217-60217",
+  "timestamp": "2025-11-08T12:56:57-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":6,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762628247-60441",
+  "timestamp": "2025-11-08T12:57:27-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":6,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762628278-60797",
+  "timestamp": "2025-11-08T12:57:58-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":6,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762628309-61020",
+  "timestamp": "2025-11-08T12:58:29-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":6,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762628340-61256",
+  "timestamp": "2025-11-08T12:59:00-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":6,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762628370-61487",
+  "timestamp": "2025-11-08T12:59:30-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":6,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762628401-62100",
+  "timestamp": "2025-11-08T13:00:01-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":6,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762628432-62318",
+  "timestamp": "2025-11-08T13:00:32-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":6,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762628463-62616",
+  "timestamp": "2025-11-08T13:01:03-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":6,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762628494-62841",
+  "timestamp": "2025-11-08T13:01:34-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":6,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762628524-63056",
+  "timestamp": "2025-11-08T13:02:04-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":6,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762628555-63284",
+  "timestamp": "2025-11-08T13:02:35-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":6,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762628586-63889",
+  "timestamp": "2025-11-08T13:03:06-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":6,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762628617-64120",
+  "timestamp": "2025-11-08T13:03:37-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":6,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762628647-64421",
+  "timestamp": "2025-11-08T13:04:07-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":6,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762628678-64639",
+  "timestamp": "2025-11-08T13:04:38-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":6,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762628709-64856",
+  "timestamp": "2025-11-08T13:05:09-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":6,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762628740-65081",
+  "timestamp": "2025-11-08T13:05:40-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":6,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762628771-65670",
+  "timestamp": "2025-11-08T13:06:11-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":6,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762628801-65896",
+  "timestamp": "2025-11-08T13:06:41-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":6,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762628832-66196",
+  "timestamp": "2025-11-08T13:07:12-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":6,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762628863-66467",
+  "timestamp": "2025-11-08T13:07:43-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":6,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762628894-66691",
+  "timestamp": "2025-11-08T13:08:14-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":6,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762628924-66922",
+  "timestamp": "2025-11-08T13:08:44-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":6,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762628955-67484",
+  "timestamp": "2025-11-08T13:09:15-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":6,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762628986-67699",
+  "timestamp": "2025-11-08T13:09:46-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":6,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762629017-67996",
+  "timestamp": "2025-11-08T13:10:17-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":6,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762629048-68218",
+  "timestamp": "2025-11-08T13:10:48-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":6,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762629078-68437",
+  "timestamp": "2025-11-08T13:11:18-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":6,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762629109-68679",
+  "timestamp": "2025-11-08T13:11:49-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":6,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762629140-69279",
+  "timestamp": "2025-11-08T13:12:20-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":6,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762629171-69578",
+  "timestamp": "2025-11-08T13:12:51-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":6,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762629202-69921",
+  "timestamp": "2025-11-08T13:13:22-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":6,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762629233-70268",
+  "timestamp": "2025-11-08T13:13:53-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":6,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762629263-70608",
+  "timestamp": "2025-11-08T13:14:23-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":6,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762629294-70958",
+  "timestamp": "2025-11-08T13:14:54-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":6,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762629325-71591",
+  "timestamp": "2025-11-08T13:15:25-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":6,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762629355-71901",
+  "timestamp": "2025-11-08T13:15:55-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":6,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762629386-72121",
+  "timestamp": "2025-11-08T13:16:26-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":6,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762629417-72349",
+  "timestamp": "2025-11-08T13:16:57-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":6,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762629448-72565",
+  "timestamp": "2025-11-08T13:17:28-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":6,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762629479-72851",
+  "timestamp": "2025-11-08T13:17:59-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":6,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762629509-73437",
+  "timestamp": "2025-11-08T13:18:29-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":6,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762629540-73747",
+  "timestamp": "2025-11-08T13:19:00-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":6,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762629571-73981",
+  "timestamp": "2025-11-08T13:19:31-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":6,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762629602-74199",
+  "timestamp": "2025-11-08T13:20:02-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":6,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762629632-74417",
+  "timestamp": "2025-11-08T13:20:32-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":6,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762629663-74981",
+  "timestamp": "2025-11-08T13:21:03-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":6,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762629694-75201",
+  "timestamp": "2025-11-08T13:21:34-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":6,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762629725-75496",
+  "timestamp": "2025-11-08T13:22:05-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":6,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762629756-75724",
+  "timestamp": "2025-11-08T13:22:36-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":6,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762629786-76009",
+  "timestamp": "2025-11-08T13:23:06-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":6,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762629817-76231",
+  "timestamp": "2025-11-08T13:23:37-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":6,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762629848-76823",
+  "timestamp": "2025-11-08T13:24:08-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":6,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762629879-77047",
+  "timestamp": "2025-11-08T13:24:39-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":6,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762629909-77354",
+  "timestamp": "2025-11-08T13:25:09-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":6,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762629940-77574",
+  "timestamp": "2025-11-08T13:25:40-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":6,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762629971-77798",
+  "timestamp": "2025-11-08T13:26:11-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":6,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762630002-78014",
+  "timestamp": "2025-11-08T13:26:42-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":6,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762630033-78573",
+  "timestamp": "2025-11-08T13:27:13-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":6,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762630064-78849",
+  "timestamp": "2025-11-08T13:27:44-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":6,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762630094-79144",
+  "timestamp": "2025-11-08T13:28:14-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":6,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762630125-79366",
+  "timestamp": "2025-11-08T13:28:45-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":6,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762630156-79597",
+  "timestamp": "2025-11-08T13:29:16-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":6,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762630187-79817",
+  "timestamp": "2025-11-08T13:29:47-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":6,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762630217-80409",
+  "timestamp": "2025-11-08T13:30:17-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":6,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762630248-80626",
+  "timestamp": "2025-11-08T13:30:48-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":6,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762630279-80926",
+  "timestamp": "2025-11-08T13:31:19-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":6,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762630310-81148",
+  "timestamp": "2025-11-08T13:31:50-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":6,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762630340-81375",
+  "timestamp": "2025-11-08T13:32:20-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":6,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762630371-81652",
+  "timestamp": "2025-11-08T13:32:51-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":6,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762630402-82212",
+  "timestamp": "2025-11-08T13:33:22-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":6,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762630433-82429",
+  "timestamp": "2025-11-08T13:33:53-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":6,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762630464-82741",
+  "timestamp": "2025-11-08T13:34:24-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":6,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762630494-82966",
+  "timestamp": "2025-11-08T13:34:54-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":6,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762630525-83181",
+  "timestamp": "2025-11-08T13:35:25-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":6,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762630556-83405",
+  "timestamp": "2025-11-08T13:35:56-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":6,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762630587-83989",
+  "timestamp": "2025-11-08T13:36:27-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":6,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762630617-84291",
+  "timestamp": "2025-11-08T13:36:57-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":6,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762630648-84514",
+  "timestamp": "2025-11-08T13:37:28-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":6,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762630679-84783",
+  "timestamp": "2025-11-08T13:37:59-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":6,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762630710-85013",
+  "timestamp": "2025-11-08T13:38:30-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":6,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762630741-85231",
+  "timestamp": "2025-11-08T13:39:01-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":6,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762630771-85793",
+  "timestamp": "2025-11-08T13:39:31-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":6,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762630802-86101",
+  "timestamp": "2025-11-08T13:40:02-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":6,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762630833-86318",
+  "timestamp": "2025-11-08T13:40:33-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":6,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762630864-86540",
+  "timestamp": "2025-11-08T13:41:04-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":6,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762630894-86766",
+  "timestamp": "2025-11-08T13:41:34-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":6,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762630925-86989",
+  "timestamp": "2025-11-08T13:42:05-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":6,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762630956-87576",
+  "timestamp": "2025-11-08T13:42:36-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":6,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762630986-87926",
+  "timestamp": "2025-11-08T13:43:06-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":6,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762631017-88149",
+  "timestamp": "2025-11-08T13:43:37-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":6,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762631048-88381",
+  "timestamp": "2025-11-08T13:44:08-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":6,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762631079-88601",
+  "timestamp": "2025-11-08T13:44:39-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":6,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762631110-89180",
+  "timestamp": "2025-11-08T13:45:10-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":6,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762631140-89402",
+  "timestamp": "2025-11-08T13:45:40-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":6,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762631171-89703",
+  "timestamp": "2025-11-08T13:46:11-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":6,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762631202-89921",
+  "timestamp": "2025-11-08T13:46:42-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":6,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762631233-90135",
+  "timestamp": "2025-11-08T13:47:13-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":6,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762631264-90414",
+  "timestamp": "2025-11-08T13:47:44-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":6,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762631294-90997",
+  "timestamp": "2025-11-08T13:48:14-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":6,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762631325-91214",
+  "timestamp": "2025-11-08T13:48:45-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":6,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762631356-91519",
+  "timestamp": "2025-11-08T13:49:16-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":6,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762631387-91739",
+  "timestamp": "2025-11-08T13:49:47-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":6,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762631417-91980",
+  "timestamp": "2025-11-08T13:50:17-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":6,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762631448-92196",
+  "timestamp": "2025-11-08T13:50:48-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":6,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762631479-92756",
+  "timestamp": "2025-11-08T13:51:19-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":6,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762631510-92979",
+  "timestamp": "2025-11-08T13:51:50-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":6,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762631540-93277",
+  "timestamp": "2025-11-08T13:52:20-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":6,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762631571-93546",
+  "timestamp": "2025-11-08T13:52:51-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":6,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762631602-93769",
+  "timestamp": "2025-11-08T13:53:22-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":6,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762631632-93984",
+  "timestamp": "2025-11-08T13:53:52-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":6,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762631663-94578",
+  "timestamp": "2025-11-08T13:54:23-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":6,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762631694-94793",
+  "timestamp": "2025-11-08T13:54:54-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":6,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762631725-95094",
+  "timestamp": "2025-11-08T13:55:25-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":6,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762631756-95327",
+  "timestamp": "2025-11-08T13:55:56-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":6,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762631786-95547",
+  "timestamp": "2025-11-08T13:56:26-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":6,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762631817-95769",
+  "timestamp": "2025-11-08T13:56:57-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":6,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762631848-96334",
+  "timestamp": "2025-11-08T13:57:28-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":6,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762631879-96681",
+  "timestamp": "2025-11-08T13:57:59-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":6,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762631909-96905",
+  "timestamp": "2025-11-08T13:58:29-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":6,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762631940-97151",
+  "timestamp": "2025-11-08T13:59:00-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":6,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762631971-97368",
+  "timestamp": "2025-11-08T13:59:31-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":6,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762632002-97602",
+  "timestamp": "2025-11-08T14:00:02-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":6,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762632034-98196",
+  "timestamp": "2025-11-08T14:00:34-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":6,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762632065-98501",
+  "timestamp": "2025-11-08T14:01:05-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":6,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762632096-98731",
+  "timestamp": "2025-11-08T14:01:36-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":6,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762632126-98951",
+  "timestamp": "2025-11-08T14:02:06-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":6,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762632157-99222",
+  "timestamp": "2025-11-08T14:02:37-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":6,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762632188-99446",
+  "timestamp": "2025-11-08T14:03:08-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":6,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762632219-108",
+  "timestamp": "2025-11-08T14:03:39-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":6,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762632249-411",
+  "timestamp": "2025-11-08T14:04:09-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":6,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762632280-640",
+  "timestamp": "2025-11-08T14:04:40-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":6,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762632311-947",
+  "timestamp": "2025-11-08T14:05:11-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":6,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762632342-1231",
+  "timestamp": "2025-11-08T14:05:42-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":6,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762632373-1669",
+  "timestamp": "2025-11-08T14:06:13-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":6,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762632403-2080",
+  "timestamp": "2025-11-08T14:06:43-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":6,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762632434-2387",
+  "timestamp": "2025-11-08T14:07:14-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":6,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762632465-2658",
+  "timestamp": "2025-11-08T14:07:45-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":6,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762632496-2883",
+  "timestamp": "2025-11-08T14:08:16-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":6,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762632526-3111",
+  "timestamp": "2025-11-08T14:08:46-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":6,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762632557-3675",
+  "timestamp": "2025-11-08T14:09:17-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":6,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762632588-3904",
+  "timestamp": "2025-11-08T14:09:48-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":6,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762632619-4975",
+  "timestamp": "2025-11-08T14:10:19-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":6,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762632649-5588",
+  "timestamp": "2025-11-08T14:10:49-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":6,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762632680-6237",
+  "timestamp": "2025-11-08T14:11:20-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":6,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762632711-6464",
+  "timestamp": "2025-11-08T14:11:51-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":6,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762632741-7065",
+  "timestamp": "2025-11-08T14:12:21-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":6,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762632772-7335",
+  "timestamp": "2025-11-08T14:12:52-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":6,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762632803-7669",
+  "timestamp": "2025-11-08T14:13:23-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":6,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762632834-7888",
+  "timestamp": "2025-11-08T14:13:54-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":6,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762632865-8108",
+  "timestamp": "2025-11-08T14:14:25-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":6,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762632895-8334",
+  "timestamp": "2025-11-08T14:14:55-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":6,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762632926-8891",
+  "timestamp": "2025-11-08T14:15:26-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":6,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762632957-9193",
+  "timestamp": "2025-11-08T14:15:57-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":6,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762632988-9411",
+  "timestamp": "2025-11-08T14:16:28-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":6,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762633018-9627",
+  "timestamp": "2025-11-08T14:16:58-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":6,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762633049-9849",
+  "timestamp": "2025-11-08T14:17:29-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":6,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762633080-10118",
+  "timestamp": "2025-11-08T14:18:00-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":6,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762633111-10779",
+  "timestamp": "2025-11-08T14:18:31-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":6,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762633130-12160",
+  "timestamp": "2025-11-08T14:18:50-0600",
+  "type": "moe_routing_decision",
+  "data": {"task_id":"task-1762553437","expert":"development","confidence":0.95,"strategy":"single_expert"}},
+  "source": "coordinator-master"
+}
+{
+  "id": "evt-1762633141-15417",
+  "timestamp": "2025-11-08T14:19:01-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":19,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762633171-15636",
+  "timestamp": "2025-11-08T14:19:31-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":19,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762633202-15900",
+  "timestamp": "2025-11-08T14:20:02-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":19,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762633232-16651",
+  "timestamp": "2025-11-08T14:20:32-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":19,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762633262-17364",
+  "timestamp": "2025-11-08T14:21:02-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":19,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762633292-18266",
+  "timestamp": "2025-11-08T14:21:32-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":19,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762633322-18520",
+  "timestamp": "2025-11-08T14:22:02-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":19,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762633352-19005",
+  "timestamp": "2025-11-08T14:22:32-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":19,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762633382-19764",
+  "timestamp": "2025-11-08T14:23:02-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":19,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762633412-20930",
+  "timestamp": "2025-11-08T14:23:32-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":19,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762633443-21376",
+  "timestamp": "2025-11-08T14:24:03-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":19,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762633473-22046",
+  "timestamp": "2025-11-08T14:24:33-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":19,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762633503-23017",
+  "timestamp": "2025-11-08T14:25:03-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":19,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762633533-23722",
+  "timestamp": "2025-11-08T14:25:33-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":19,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762633563-24232",
+  "timestamp": "2025-11-08T14:26:03-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":19,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762633593-24506",
+  "timestamp": "2025-11-08T14:26:33-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":19,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762633623-24990",
+  "timestamp": "2025-11-08T14:27:03-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":19,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762633653-25635",
+  "timestamp": "2025-11-08T14:27:33-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":19,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762633684-26190",
+  "timestamp": "2025-11-08T14:28:04-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":19,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762633714-26857",
+  "timestamp": "2025-11-08T14:28:34-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":19,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762633744-27773",
+  "timestamp": "2025-11-08T14:29:04-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":19,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762633774-28190",
+  "timestamp": "2025-11-08T14:29:34-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":19,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762633804-28428",
+  "timestamp": "2025-11-08T14:30:04-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":19,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762633834-29089",
+  "timestamp": "2025-11-08T14:30:34-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":19,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762633864-29366",
+  "timestamp": "2025-11-08T14:31:04-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":19,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762633894-29580",
+  "timestamp": "2025-11-08T14:31:34-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":19,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762633924-29783",
+  "timestamp": "2025-11-08T14:32:04-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":19,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762633955-29977",
+  "timestamp": "2025-11-08T14:32:35-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":19,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762633985-30390",
+  "timestamp": "2025-11-08T14:33:05-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":19,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762634015-31078",
+  "timestamp": "2025-11-08T14:33:35-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":19,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762634045-31369",
+  "timestamp": "2025-11-08T14:34:05-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":19,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762634075-31544",
+  "timestamp": "2025-11-08T14:34:35-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":19,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762634105-31718",
+  "timestamp": "2025-11-08T14:35:05-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":19,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762634135-32047",
+  "timestamp": "2025-11-08T14:35:35-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":19,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762634165-32432",
+  "timestamp": "2025-11-08T14:36:05-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":19,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762634196-33128",
+  "timestamp": "2025-11-08T14:36:36-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":19,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762634226-33600",
+  "timestamp": "2025-11-08T14:37:06-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":19,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762634256-33901",
+  "timestamp": "2025-11-08T14:37:36-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":19,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762634286-34229",
+  "timestamp": "2025-11-08T14:38:06-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":19,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762634316-34442",
+  "timestamp": "2025-11-08T14:38:36-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":19,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762634346-34616",
+  "timestamp": "2025-11-08T14:39:06-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":19,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762634376-35221",
+  "timestamp": "2025-11-08T14:39:36-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":19,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762634406-35522",
+  "timestamp": "2025-11-08T14:40:06-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":19,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762634437-35717",
+  "timestamp": "2025-11-08T14:40:37-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":19,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762634467-35918",
+  "timestamp": "2025-11-08T14:41:07-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":19,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762634497-36644",
+  "timestamp": "2025-11-08T14:41:37-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":19,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762634527-36820",
+  "timestamp": "2025-11-08T14:42:07-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":19,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762634557-37454",
+  "timestamp": "2025-11-08T14:42:37-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":19,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762634587-37799",
+  "timestamp": "2025-11-08T14:43:07-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":19,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762634603-39127",
+  "timestamp": "2025-11-08T14:43:23-0600",
+  "type": "moe_routing_decision",
+  "data": {"task_id":"task-1762553438","expert":"development","confidence":0.95,"strategy":"single_expert"}},
+  "source": "coordinator-master"
+}
+{
+  "id": "evt-1762634617-40108",
+  "timestamp": "2025-11-08T14:43:37-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":19,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "timestamp": "2025-11-08T14:43:43-0600",
+  "type": "pool_size_alert",
+  "data": {
+    "pool_size": 19,
+    "threshold": 15,
+    "severity": "critical"
+  }
+}
+{
+  "id": "evt-1762634647-40849",
+  "timestamp": "2025-11-08T14:44:07-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":19,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762634677-41044",
+  "timestamp": "2025-11-08T14:44:37-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":19,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762634708-41223",
+  "timestamp": "2025-11-08T14:45:08-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":19,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762634738-41838",
+  "timestamp": "2025-11-08T14:45:38-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":19,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762634768-42091",
+  "timestamp": "2025-11-08T14:46:08-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":19,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762634798-42555",
+  "timestamp": "2025-11-08T14:46:38-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":19,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762634828-42729",
+  "timestamp": "2025-11-08T14:47:08-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":19,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762634858-42957",
+  "timestamp": "2025-11-08T14:47:38-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":19,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762634888-43131",
+  "timestamp": "2025-11-08T14:48:08-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":19,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762634918-43766",
+  "timestamp": "2025-11-08T14:48:38-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":19,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762634949-44022",
+  "timestamp": "2025-11-08T14:49:09-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":19,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762634979-44196",
+  "timestamp": "2025-11-08T14:49:39-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":19,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762635009-44370",
+  "timestamp": "2025-11-08T14:50:09-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":19,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762635039-44545",
+  "timestamp": "2025-11-08T14:50:39-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":19,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762635069-44718",
+  "timestamp": "2025-11-08T14:51:09-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":19,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762635099-45411",
+  "timestamp": "2025-11-08T14:51:39-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":19,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762635129-45665",
+  "timestamp": "2025-11-08T14:52:09-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":19,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762635159-45910",
+  "timestamp": "2025-11-08T14:52:39-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":19,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762635189-46087",
+  "timestamp": "2025-11-08T14:53:09-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":19,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762635220-46264",
+  "timestamp": "2025-11-08T14:53:40-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":19,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762635250-46437",
+  "timestamp": "2025-11-08T14:54:10-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":19,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762635280-47070",
+  "timestamp": "2025-11-08T14:54:40-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":19,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762635310-47617",
+  "timestamp": "2025-11-08T14:55:10-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":19,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762635340-47848",
+  "timestamp": "2025-11-08T14:55:40-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":19,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762635370-48830",
+  "timestamp": "2025-11-08T14:56:10-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":20,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762635400-49345",
+  "timestamp": "2025-11-08T14:56:40-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":20,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762635430-49608",
+  "timestamp": "2025-11-08T14:57:10-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":20,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762635460-50272",
+  "timestamp": "2025-11-08T14:57:40-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":20,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762635491-50516",
+  "timestamp": "2025-11-08T14:58:11-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":20,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762635521-50687",
+  "timestamp": "2025-11-08T14:58:41-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":20,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762635551-50880",
+  "timestamp": "2025-11-08T14:59:11-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":20,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762635581-51062",
+  "timestamp": "2025-11-08T14:59:41-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":20,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "timestamp": "2025-11-08T15:00:01-0600",
+  "type": "pool_size_alert",
+  "data": {
+    "pool_size": 20,
+    "threshold": 15,
+    "severity": "critical"
+  }
+}
+{
+  "id": "evt-1762635611-51576",
+  "timestamp": "2025-11-08T15:00:11-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":20,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762635641-52234",
+  "timestamp": "2025-11-08T15:00:41-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":20,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762635671-52492",
+  "timestamp": "2025-11-08T15:01:11-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":20,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762635701-52668",
+  "timestamp": "2025-11-08T15:01:41-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":20,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762635732-52845",
+  "timestamp": "2025-11-08T15:02:12-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":20,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762635762-53114",
+  "timestamp": "2025-11-08T15:02:42-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":20,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762635792-53310",
+  "timestamp": "2025-11-08T15:03:12-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":20,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762635822-53931",
+  "timestamp": "2025-11-08T15:03:42-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":20,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762635852-54182",
+  "timestamp": "2025-11-08T15:04:12-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":20,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762635882-54379",
+  "timestamp": "2025-11-08T15:04:42-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":20,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762635912-54558",
+  "timestamp": "2025-11-08T15:05:12-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":20,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762635942-54735",
+  "timestamp": "2025-11-08T15:05:42-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":20,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762635972-54928",
+  "timestamp": "2025-11-08T15:06:12-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":20,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762636003-55616",
+  "timestamp": "2025-11-08T15:06:43-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":20,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762636033-55894",
+  "timestamp": "2025-11-08T15:07:13-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":20,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762636063-56127",
+  "timestamp": "2025-11-08T15:07:43-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":20,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762636093-56311",
+  "timestamp": "2025-11-08T15:08:13-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":20,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
+{
+  "id": "evt-1762636123-56506",
+  "timestamp": "2025-11-08T15:08:43-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":20,"target_workers":8,"activation_rate":14,"max_capacity":64}},
   "source": "sparse-pool-manager"
 }

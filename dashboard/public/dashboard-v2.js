@@ -118,6 +118,25 @@ function dashboard() {
             endpointParams: {} // Store parameter values for each endpoint
         },
 
+        // DDQD Testing
+        ddqd: {
+            testDuration: 5,
+            maxWorkers: 15,
+            version: 'v5',
+            verbose: false,
+            currentTest: null,
+            testOutput: [],
+            progress: 0,
+            autoScroll: true,
+            history: [],
+            pollInterval: null,
+            schedule: {
+                enabled: false,
+                cronExpression: '0 2 * * *',
+                nextRun: null
+            }
+        },
+
         // Alerting System
         activeAlerts: [],
         alertThresholds: {
@@ -164,9 +183,44 @@ function dashboard() {
         },
         moeLearningInsights: [],
 
+        // MoE Analytics Widgets
+        moeAnalytics: {
+            routingMetrics: {
+                accuracy: '--',
+                avgConfidence: '--',
+                decisions24h: '--',
+                singleExpertCount: '--',
+                multiExpertCount: '--',
+                sparseActivation: '--',
+                status: 'healthy'
+            },
+            confidenceDistribution: {
+                ranges: []
+            },
+            poolUtilization: {
+                activeWorkers: '--',
+                poolCapacity: 64,
+                status: 'healthy',
+                development: 0,
+                security: 0,
+                inventory: 0,
+                devPct: 0,
+                secPct: 0,
+                invPct: 0
+            },
+            confidenceChart: null,
+            lastUpdate: '--'
+        },
+
         // Watch for view changes to reinitialize icons
         changeView(view) {
             this.currentView = view;
+            // Initialize MoE Analytics if switching to that view
+            if (view === 'moe-analytics') {
+                this.$nextTick(() => {
+                    this.initMoeAnalytics();
+                });
+            }
             // Reinitialize Lucide icons after view change
             this.$nextTick(() => {
                 if (typeof lucide !== 'undefined') {
@@ -567,6 +621,12 @@ function dashboard() {
                 console.log('Fetching MoE intelligence data...');
                 await this.fetchMoEData();
                 console.log('MoE intelligence data loaded');
+
+                // Fetch DDQD data
+                console.log('Fetching DDQD test history...');
+                await this.fetchDDQDHistory();
+                await this.fetchDDQDSchedule();
+                console.log('DDQD data loaded');
 
                 console.log('Initial data loaded successfully!');
             } catch (error) {
@@ -3301,6 +3361,370 @@ console.log(data);`;
                 return JSON.stringify(obj, null, 2);
             } catch (e) {
                 return String(obj);
+            }
+        },
+
+        // ========================
+        // DDQD Testing Functions
+        // ========================
+
+        // Run quick DDQD test from admin page
+        async runQuickDDQD(version, duration) {
+            this.ddqd.version = version;
+            this.ddqd.testDuration = duration;
+            this.switchView('ddqd-testing');
+            // Small delay to let view switch complete
+            setTimeout(() => this.runDDQDTest(), 100);
+        },
+
+        // Run DDQD test with current settings
+        async runDDQDTest() {
+            if (this.ddqd.currentTest) {
+                this.showNotification('Test already running', 'warning');
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/ddqd/run', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        duration: this.ddqd.testDuration,
+                        maxWorkers: this.ddqd.maxWorkers,
+                        version: this.ddqd.version,
+                        verbose: this.ddqd.verbose
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    this.ddqd.currentTest = data.testId;
+                    this.ddqd.testOutput = [];
+                    this.ddqd.progress = 0;
+                    this.showNotification('DDQD test started', 'success');
+                    this.startDDQDPolling();
+                } else {
+                    this.showNotification('Failed to start test: ' + (data.error || 'Unknown error'), 'error');
+                }
+            } catch (error) {
+                console.error('Error starting DDQD test:', error);
+                this.showNotification('Failed to start test: ' + error.message, 'error');
+            }
+        },
+
+        // Stop current DDQD test
+        async stopDDQDTest() {
+            if (!this.ddqd.currentTest) return;
+
+            try {
+                const response = await fetch(`/api/ddqd/stop/${this.ddqd.currentTest}`, {
+                    method: 'POST'
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    this.showNotification('Test stopped', 'info');
+                    this.stopDDQDPolling();
+                    this.ddqd.currentTest = null;
+                    this.fetchDDQDHistory();
+                }
+            } catch (error) {
+                console.error('Error stopping DDQD test:', error);
+                this.showNotification('Failed to stop test', 'error');
+            }
+        },
+
+        // Start polling for DDQD test status
+        startDDQDPolling() {
+            this.stopDDQDPolling(); // Clear any existing interval
+            this.ddqd.pollInterval = setInterval(() => this.pollDDQDStatus(), 2000);
+        },
+
+        // Stop polling for DDQD test status
+        stopDDQDPolling() {
+            if (this.ddqd.pollInterval) {
+                clearInterval(this.ddqd.pollInterval);
+                this.ddqd.pollInterval = null;
+            }
+        },
+
+        // Poll DDQD test status
+        async pollDDQDStatus() {
+            if (!this.ddqd.currentTest) {
+                this.stopDDQDPolling();
+                return;
+            }
+
+            try {
+                const response = await fetch(`/api/ddqd/status/${this.ddqd.currentTest}`);
+                const data = await response.json();
+
+                this.ddqd.progress = data.progress || 0;
+
+                // Update output if available
+                if (data.output && data.output.length > 0) {
+                    const newLines = data.output.split('\n').filter(line => line.trim());
+                    this.ddqd.testOutput = [...this.ddqd.testOutput, ...newLines].slice(-100); // Keep last 100 lines
+
+                    // Auto-scroll if enabled
+                    if (this.ddqd.autoScroll) {
+                        this.$nextTick(() => {
+                            const outputEl = this.$refs.ddqdOutput;
+                            if (outputEl) {
+                                outputEl.scrollTop = outputEl.scrollHeight;
+                            }
+                        });
+                    }
+                }
+
+                // Check if test completed
+                if (data.status === 'completed' || data.status === 'failed') {
+                    this.stopDDQDPolling();
+                    this.ddqd.currentTest = null;
+                    this.ddqd.progress = 100;
+                    this.showNotification(`Test ${data.status}`, data.status === 'completed' ? 'success' : 'error');
+                    this.fetchDDQDHistory();
+                }
+            } catch (error) {
+                console.error('Error polling DDQD status:', error);
+            }
+        },
+
+        // Fetch DDQD test history
+        async fetchDDQDHistory() {
+            try {
+                const response = await fetch('/api/ddqd/history');
+                const data = await response.json();
+
+                if (data.tests) {
+                    this.ddqd.history = data.tests.slice(0, 10); // Keep last 10
+                }
+            } catch (error) {
+                console.error('Error fetching DDQD history:', error);
+            }
+        },
+
+        // Save DDQD schedule
+        async saveDDQDSchedule() {
+            try {
+                const response = await fetch('/api/ddqd/schedule', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        enabled: this.ddqd.schedule.enabled,
+                        cronExpression: this.ddqd.schedule.cronExpression,
+                        testConfig: {
+                            duration: this.ddqd.testDuration,
+                            version: this.ddqd.version
+                        }
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    this.showNotification('Schedule saved successfully', 'success');
+                    this.fetchDDQDSchedule();
+                } else {
+                    this.showNotification('Failed to save schedule', 'error');
+                }
+            } catch (error) {
+                console.error('Error saving DDQD schedule:', error);
+                this.showNotification('Failed to save schedule: ' + error.message, 'error');
+            }
+        },
+
+        // Fetch DDQD schedule
+        async fetchDDQDSchedule() {
+            try {
+                const response = await fetch('/api/ddqd/schedule');
+                const data = await response.json();
+
+                if (data.enabled !== undefined) {
+                    this.ddqd.schedule.enabled = data.enabled;
+                    this.ddqd.schedule.cronExpression = data.cronExpression || '0 2 * * *';
+                    this.ddqd.schedule.nextRun = data.nextRun || null;
+                }
+            } catch (error) {
+                console.error('Error fetching DDQD schedule:', error);
+            }
+        },
+
+        // ========== MoE Analytics Functions ==========
+
+        // Initialize MoE Analytics (called when switching to analytics view)
+        async initMoeAnalytics() {
+            await this.fetchAllMoeAnalytics();
+            // Auto-refresh every 5 seconds
+            if (this.moeAnalytics.refreshInterval) {
+                clearInterval(this.moeAnalytics.refreshInterval);
+            }
+            this.moeAnalytics.refreshInterval = setInterval(() => {
+                if (this.currentView === 'moe-analytics') {
+                    this.fetchAllMoeAnalytics();
+                }
+            }, 5000);
+        },
+
+        // Fetch all MoE analytics metrics
+        async fetchAllMoeAnalytics() {
+            try {
+                await Promise.all([
+                    this.fetchRoutingAccuracyAnalytics(),
+                    this.fetchConfidenceDistributionAnalytics(),
+                    this.fetchPoolUtilizationAnalytics()
+                ]);
+                this.moeAnalytics.lastUpdate = new Date().toLocaleTimeString();
+            } catch (error) {
+                console.error('Error fetching MoE analytics:', error);
+            }
+        },
+
+        // Fetch routing accuracy analytics
+        async fetchRoutingAccuracyAnalytics() {
+            try {
+                const response = await fetch('/api/moe/accuracy');
+                const data = await response.json();
+
+                this.moeAnalytics.routingMetrics.accuracy = `${data.accuracy}%`;
+                this.moeAnalytics.routingMetrics.avgConfidence = data.avg_confidence || '0.00';
+                this.moeAnalytics.routingMetrics.decisions24h = data.last_24h?.decisions || 0;
+
+                // Update status based on accuracy
+                const accuracy = parseFloat(data.accuracy);
+                if (accuracy >= 80) this.moeAnalytics.routingMetrics.status = 'healthy';
+                else if (accuracy >= 60) this.moeAnalytics.routingMetrics.status = 'warning';
+                else this.moeAnalytics.routingMetrics.status = 'critical';
+
+                // Fetch routing decisions for strategy breakdown
+                const routingResponse = await fetch('/api/moe/routing');
+                const routingData = await routingResponse.json();
+                const recentDecisions = routingData.decisions.slice(0, 20);
+
+                const singleExpert = recentDecisions.filter(d => d.decision?.strategy === 'single_expert').length;
+                const multiExpert = recentDecisions.filter(d => d.decision?.strategy === 'multi_expert_parallel').length;
+                const sparseActivation = recentDecisions.length > 0
+                    ? ((singleExpert / recentDecisions.length) * 100).toFixed(0)
+                    : 0;
+
+                this.moeAnalytics.routingMetrics.singleExpertCount = singleExpert;
+                this.moeAnalytics.routingMetrics.multiExpertCount = multiExpert;
+                this.moeAnalytics.routingMetrics.sparseActivation = `${sparseActivation}%`;
+            } catch (error) {
+                console.error('Error fetching routing accuracy analytics:', error);
+            }
+        },
+
+        // Fetch confidence distribution analytics
+        async fetchConfidenceDistributionAnalytics() {
+            try {
+                const response = await fetch('/api/moe/confidence-distribution');
+                const data = await response.json();
+
+                this.moeAnalytics.confidenceDistribution.ranges = data.ranges;
+
+                // Update chart if it exists
+                this.$nextTick(() => {
+                    this.updateConfidenceChart();
+                });
+            } catch (error) {
+                console.error('Error fetching confidence distribution analytics:', error);
+            }
+        },
+
+        // Update or create confidence chart
+        updateConfidenceChart() {
+            if (typeof Chart === 'undefined') {
+                console.error('Chart.js not loaded');
+                return;
+            }
+
+            const canvas = document.getElementById('moe-confidence-chart');
+            if (!canvas) return;
+
+            const ctx = canvas.getContext('2d');
+            const ranges = this.moeAnalytics.confidenceDistribution.ranges;
+
+            const chartData = {
+                labels: ranges.map(r => r.label),
+                datasets: [{
+                    label: 'Routing Decisions',
+                    data: ranges.map(r => r.count),
+                    backgroundColor: [
+                        '#ef4444', // Low - Red
+                        '#f59e0b', // Medium - Orange
+                        '#3b82f6', // High - Blue
+                        '#10b981'  // Excellent - Green
+                    ],
+                    borderWidth: 0
+                }]
+            };
+
+            if (this.moeAnalytics.confidenceChart) {
+                this.moeAnalytics.confidenceChart.data = chartData;
+                this.moeAnalytics.confidenceChart.update();
+            } else {
+                this.moeAnalytics.confidenceChart = new Chart(ctx, {
+                    type: 'bar',
+                    data: chartData,
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                display: false
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                grid: {
+                                    color: 'rgba(255, 255, 255, 0.1)'
+                                },
+                                ticks: {
+                                    color: '#9ca3af',
+                                    precision: 0
+                                }
+                            },
+                            x: {
+                                grid: {
+                                    display: false
+                                },
+                                ticks: {
+                                    color: '#9ca3af'
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+        },
+
+        // Fetch pool utilization analytics
+        async fetchPoolUtilizationAnalytics() {
+            try {
+                const response = await fetch('/api/moe/pool-utilization');
+                const data = await response.json();
+
+                const { utilization, pool_health } = data;
+
+                this.moeAnalytics.poolUtilization.activeWorkers = pool_health.active;
+                this.moeAnalytics.poolUtilization.status = pool_health.status;
+
+                // Update worker counts
+                this.moeAnalytics.poolUtilization.development = utilization.development;
+                this.moeAnalytics.poolUtilization.security = utilization.security;
+                this.moeAnalytics.poolUtilization.inventory = utilization.inventory;
+
+                // Calculate percentages
+                const maxCapacity = data.max_capacity || 64;
+                this.moeAnalytics.poolUtilization.devPct = Math.min((utilization.development / maxCapacity * 100), 100);
+                this.moeAnalytics.poolUtilization.secPct = Math.min((utilization.security / maxCapacity * 100), 100);
+                this.moeAnalytics.poolUtilization.invPct = Math.min((utilization.inventory / maxCapacity * 100), 100);
+            } catch (error) {
+                console.error('Error fetching pool utilization analytics:', error);
             }
         }
 

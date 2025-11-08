@@ -1,0 +1,46 @@
+{
+  "worker_id": "dev-worker-EF0985A7",
+  "worker_type": "feature-implementer",
+  "prompt_template": "agents/prompts/workers/implementation-worker.md",
+  "parent_master": "development",
+  "task_id": "moe-test-ddqd-v5-1762626228-7b06116b",
+  "task_data": {
+  "id": "moe-test-ddqd-v5-1762626228-7b06116b",
+  "title": "Implement new API endpoint for user management feature",
+  "type": "feature",
+  "description": "Implement new API endpoint for user management feature",
+  "priority": "medium",
+  "status": "assigned",
+  "assigned_to": "development",
+  "created_at": "2025-11-08T12:24:33-0600",
+  "created_by": "ddqd-v5-test",
+  "moe_test": true,
+  "test_id": "ddqd-v5-1762626228",
+  "context": {},
+  "assigned_by": "coordinator",
+  "assigned_at": "2025-11-08T12:26:25-0600",
+  "routing_confidence": "0.95",
+  "routing_strategy": "single_expert",
+  "updated_at": "2025-11-08T12:26:25-06:00"
+},
+  "context": {
+    "master_session": "3A24DCEC-39A6-495F-AC3E-262F0EEEDB03",
+    "expertise_area": "feature_development",
+    "skills_required": [
+  "design",
+  "implementation",
+  "testing"
+],
+    "knowledge_base_refs": {
+      "implementation_patterns": "/Users/ryandahlberg/projects/commit-relay/scripts/../coordination/masters/development/knowledge-base/implementation-patterns.jsonl",
+      "architecture_docs": "/Users/ryandahlberg/projects/commit-relay/scripts/../coordination/masters/development/knowledge-base/codebase-architecture.json"
+    }
+  },
+  "resources": {
+    "token_allocation": 15000,
+    "time_limit_minutes": 60
+  },
+  "status": "pending",
+  "created_at": "2025-11-08T14:18:57-0600",
+  "created_by": "development"
+}

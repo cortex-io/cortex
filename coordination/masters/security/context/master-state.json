@@ -49,6 +49,24 @@
       "worker_type": "scan-worker",
       "spawned_at": "2025-11-05T16:44:26Z",
       "status": "active"
+    },
+    {
+      "worker_id": "sec-worker-484EA99D",
+      "worker_type": "scan-worker",
+      "spawned_at": "2025-11-07T20:18:50-0600",
+      "status": "active"
+    },
+    {
+      "worker_id": "sec-worker-CF03574D",
+      "worker_type": "scan-worker",
+      "spawned_at": "2025-11-07T20:18:51-0600",
+      "status": "active"
+    },
+    {
+      "worker_id": "sec-worker-4FA7457D",
+      "worker_type": "scan-worker",
+      "spawned_at": "2025-11-07T20:19:14-0600",
+      "status": "active"
     }
   ],
   "completed_tasks": 0,
@@ -60,6 +78,6 @@
     "high_count": 0,
     "last_scan": null
   },
-  "last_run": "2025-11-05T16:44:27Z",
-  "last_started": "2025-11-05T16:44:26Z"
+  "last_run": "2025-11-07T20:19:15-0600",
+  "last_started": "2025-11-07T20:19:14-0600"
 }
