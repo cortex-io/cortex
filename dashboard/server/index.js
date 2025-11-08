@@ -2239,6 +2239,219 @@ app.get('/api/moe/learning', async (req, res) => {
 });
 
 /**
+ * GET /api/moe/accuracy
+ * Calculate routing accuracy from routing decisions
+ */
+app.get('/api/moe/accuracy', async (req, res) => {
+  try {
+    const fsSync = require('fs');
+    const { exec } = require('child_process');
+    const { promisify } = require('util');
+    const execAsync = promisify(exec);
+
+    const routingLogPath = path.join(COMMIT_RELAY_HOME, 'coordination', 'masters', 'coordinator', 'logs', 'routing-decisions.jsonl');
+
+    if (!fsSync.existsSync(routingLogPath)) {
+      return res.json({
+        accuracy: 0,
+        total_decisions: 0,
+        correct_routes: 0,
+        last_24h: { accuracy: 0, decisions: 0 }
+      });
+    }
+
+    // Parse routing decisions
+    const { stdout } = await execAsync(`jq -s '.' "${routingLogPath}"`);
+    const allDecisions = JSON.parse(stdout);
+
+    // Calculate overall accuracy (last 100 decisions)
+    const recentDecisions = allDecisions.slice(-100);
+    const totalDecisions = recentDecisions.length;
+
+    // Calculate last 24 hours
+    const now = new Date();
+    const last24h = recentDecisions.filter(d => {
+      const decisionTime = new Date(d.timestamp);
+      return (now - decisionTime) < 24 * 60 * 60 * 1000;
+    });
+
+    // Calculate confidence-based accuracy (high confidence = correct routing)
+    const highConfidenceCount = recentDecisions.filter(d =>
+      d.decision.primary_confidence >= 0.7
+    ).length;
+
+    const accuracy = totalDecisions > 0 ? (highConfidenceCount / totalDecisions) * 100 : 0;
+    const accuracy24h = last24h.length > 0 ?
+      (last24h.filter(d => d.decision.primary_confidence >= 0.7).length / last24h.length) * 100 : 0;
+
+    res.json({
+      accuracy: accuracy.toFixed(2),
+      total_decisions: totalDecisions,
+      correct_routes: highConfidenceCount,
+      last_24h: {
+        accuracy: accuracy24h.toFixed(2),
+        decisions: last24h.length
+      },
+      avg_confidence: recentDecisions.length > 0 ?
+        (recentDecisions.reduce((sum, d) => sum + d.decision.primary_confidence, 0) / recentDecisions.length).toFixed(2) : 0
+    });
+  } catch (error) {
+    console.error('Error calculating MoE accuracy:', error);
+    res.status(500).json({ error: 'Failed to calculate accuracy', details: error.message });
+  }
+});
+
+/**
+ * GET /api/moe/confidence-distribution
+ * Get distribution of confidence scores across routing decisions
+ */
+app.get('/api/moe/confidence-distribution', async (req, res) => {
+  try {
+    const fsSync = require('fs');
+    const { exec } = require('child_process');
+    const { promisify } = require('util');
+    const execAsync = promisify(exec);
+
+    const routingLogPath = path.join(COMMIT_RELAY_HOME, 'coordination', 'masters', 'coordinator', 'logs', 'routing-decisions.jsonl');
+
+    if (!fsSync.existsSync(routingLogPath)) {
+      return res.json({
+        distribution: { low: 0, medium: 0, high: 0, excellent: 0 },
+        ranges: [
+          { label: 'Low (0-0.5)', count: 0, percentage: 0 },
+          { label: 'Medium (0.5-0.7)', count: 0, percentage: 0 },
+          { label: 'High (0.7-0.9)', count: 0, percentage: 0 },
+          { label: 'Excellent (0.9-1.0)', count: 0, percentage: 0 }
+        ]
+      });
+    }
+
+    // Parse routing decisions
+    const { stdout } = await execAsync(`jq -s '.' "${routingLogPath}"`);
+    const allDecisions = JSON.parse(stdout);
+    const recentDecisions = allDecisions.slice(-100);
+
+    // Categorize by confidence score
+    const distribution = {
+      low: 0,      // 0 - 0.5
+      medium: 0,   // 0.5 - 0.7
+      high: 0,     // 0.7 - 0.9
+      excellent: 0 // 0.9 - 1.0
+    };
+
+    recentDecisions.forEach(d => {
+      const conf = d.decision.primary_confidence;
+      if (conf < 0.5) distribution.low++;
+      else if (conf < 0.7) distribution.medium++;
+      else if (conf < 0.9) distribution.high++;
+      else distribution.excellent++;
+    });
+
+    const total = recentDecisions.length;
+    const ranges = [
+      {
+        label: 'Low (0-0.5)',
+        count: distribution.low,
+        percentage: total > 0 ? ((distribution.low / total) * 100).toFixed(1) : 0
+      },
+      {
+        label: 'Medium (0.5-0.7)',
+        count: distribution.medium,
+        percentage: total > 0 ? ((distribution.medium / total) * 100).toFixed(1) : 0
+      },
+      {
+        label: 'High (0.7-0.9)',
+        count: distribution.high,
+        percentage: total > 0 ? ((distribution.high / total) * 100).toFixed(1) : 0
+      },
+      {
+        label: 'Excellent (0.9-1.0)',
+        count: distribution.excellent,
+        percentage: total > 0 ? ((distribution.excellent / total) * 100).toFixed(1) : 0
+      }
+    ];
+
+    res.json({ distribution, ranges, total });
+  } catch (error) {
+    console.error('Error calculating confidence distribution:', error);
+    res.status(500).json({ error: 'Failed to calculate distribution', details: error.message });
+  }
+});
+
+/**
+ * GET /api/moe/pool-utilization
+ * Get worker pool utilization by master over time
+ */
+app.get('/api/moe/pool-utilization', async (req, res) => {
+  try {
+    const fsSync = require('fs');
+
+    // Read worker pool
+    const workerPoolPath = path.join(COMMIT_RELAY_HOME, 'coordination', 'worker-pool.json');
+    let poolData = { active_workers: [] };
+
+    if (fsSync.existsSync(workerPoolPath)) {
+      poolData = JSON.parse(fsSync.readFileSync(workerPoolPath, 'utf-8'));
+    }
+
+    // Count workers by master
+    const utilization = {
+      development: 0,
+      security: 0,
+      inventory: 0,
+      cicd: 0,
+      total: 0
+    };
+
+    poolData.active_workers.forEach(worker => {
+      const spawnedBy = worker.spawned_by || 'unknown';
+      if (utilization.hasOwnProperty(spawnedBy)) {
+        utilization[spawnedBy]++;
+      }
+      utilization.total++;
+    });
+
+    // Calculate sparse activation percentage
+    const maxCapacity = 64;
+    const sparseActivation = utilization.total > 0 ?
+      ((utilization.total / maxCapacity) * 100).toFixed(1) : 0;
+
+    // Read worker spec files for detailed status
+    const workerSpecsDir = path.join(COMMIT_RELAY_HOME, 'coordination', 'worker-specs', 'active');
+    let activeCount = 0;
+    let runningCount = 0;
+    let pendingCount = 0;
+
+    if (fsSync.existsSync(workerSpecsDir)) {
+      const files = fsSync.readdirSync(workerSpecsDir).filter(f => f.endsWith('.json'));
+      activeCount = files.length;
+
+      files.forEach(file => {
+        const filePath = path.join(workerSpecsDir, file);
+        const spec = JSON.parse(fsSync.readFileSync(filePath, 'utf-8'));
+        if (spec.status === 'running') runningCount++;
+        else if (spec.status === 'pending') pendingCount++;
+      });
+    }
+
+    res.json({
+      utilization,
+      sparse_activation: sparseActivation,
+      max_capacity: maxCapacity,
+      pool_health: {
+        active: activeCount,
+        running: runningCount,
+        pending: pendingCount,
+        status: activeCount < 10 ? 'healthy' : activeCount < 15 ? 'warning' : 'critical'
+      }
+    });
+  } catch (error) {
+    console.error('Error calculating pool utilization:', error);
+    res.status(500).json({ error: 'Failed to calculate utilization', details: error.message });
+  }
+});
+
+/**
  * POST /api/pm/state
  * PM Daemon reports its current state
  */

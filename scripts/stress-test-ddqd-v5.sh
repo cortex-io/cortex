@@ -354,22 +354,38 @@ create_moe_test_task() {
     local task_type="$1"
     local description="$2"
     local task_id="moe-test-${TEST_ID}-$(uuidgen | tr '[:upper:]' '[:lower:]' | cut -d'-' -f1)"
-    local task_file="$COORDINATION_DIR/tasks/pending/${task_id}.json"
+    local task_queue="$COORDINATION_DIR/task-queue.json"
+    local created_at="$(date +%Y-%m-%dT%H:%M:%S%z)"
 
-    cat > "$task_file" <<EOF
-{
-  "id": "$task_id",
-  "type": "$task_type",
-  "title": "$description",
-  "description": "$description",
-  "priority": 2,
-  "created_at": "$(date +%Y-%m-%dT%H:%M:%S%z)",
-  "moe_test": true,
-  "test_id": "$TEST_ID"
-}
-EOF
+    # Create task object
+    local task=$(jq -nc \
+        --arg id "$task_id" \
+        --arg title "$description" \
+        --arg type "$task_type" \
+        --arg created_at "$created_at" \
+        --arg test_id "$TEST_ID" \
+        '{
+            id: $id,
+            title: $title,
+            type: $type,
+            description: $title,
+            priority: "medium",
+            status: "pending",
+            assigned_to: null,
+            created_at: $created_at,
+            created_by: "ddqd-v5-test",
+            moe_test: true,
+            test_id: $test_id,
+            context: {}
+        }')
 
-    log "MOE_TASK" "Created $task_type task: $task_id"
+    # Add task to queue using jq
+    jq --argjson task "$task" \
+       '.tasks += [$task] | .updated_at = "'$created_at'"' \
+       "$task_queue" > /tmp/task-queue-updated-$$.json
+    mv /tmp/task-queue-updated-$$.json "$task_queue"
+
+    log "MOE_TASK" "Created $task_type task in task-queue: $task_id"
     echo "$task_id"
 }
 
