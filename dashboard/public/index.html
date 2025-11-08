@@ -2204,6 +2204,16 @@
                                             <span>Restart Worker</span>
                                         </button>
 
+                                        <button x-show="alert.status !== 'resolved' && alert.status !== 'repair_initiated'" @click="repairAlert(alert.id)" class="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors flex items-center space-x-2">
+                                            <i data-lucide="wrench" class="w-4 h-4"></i>
+                                            <span>Auto Repair</span>
+                                        </button>
+
+                                        <button x-show="alert.status === 'repair_initiated'" disabled class="px-4 py-2 bg-purple-400 text-white rounded-lg cursor-not-allowed flex items-center space-x-2">
+                                            <i data-lucide="loader" class="w-4 h-4 animate-spin"></i>
+                                            <span>Repairing...</span>
+                                        </button>
+
                                         <button x-show="alert.status !== 'resolved'" @click="resolveAlert(alert.id)" class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors flex items-center space-x-2">
                                             <i data-lucide="check-circle" class="w-4 h-4"></i>
                                             <span>Mark Resolved</span>

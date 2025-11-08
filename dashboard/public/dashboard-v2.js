@@ -2513,6 +2513,35 @@ function dashboard() {
             }
         },
 
+        async repairAlert(alertId) {
+            if (!confirm('Create an automated repair task via commit-relay to fix this health alert?')) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`/api/health-alerts/${alertId}/repair`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    console.log('Repair task created:', result.task_id);
+                    alert(`Automated repair initiated!\n\nTask ID: ${result.task_id}\n\nCommit-relay will investigate and fix this issue. Check the tasks panel for progress.`);
+                    // Refresh alerts to show repair_initiated status
+                    await this.fetchHealthAlerts();
+                    // Refresh tasks to show new repair task
+                    await this.fetchTasks();
+                } else {
+                    alert(`Failed to create repair task: ${result.error || 'Unknown error'}\n\nDetails: ${result.details || 'None'}`);
+                }
+            } catch (error) {
+                console.error('Error creating repair task:', error);
+                alert(`Error creating repair task: ${error.message}`);
+            }
+        },
+
         async addAlertNote(alertId) {
             const note = prompt('Enter investigation note:');
             if (!note || !note.trim()) {
