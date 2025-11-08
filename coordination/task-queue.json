@@ -178,6 +178,22 @@
         "description": "Implement vector embedding generation using sentence-transformers/all-MiniLM-L6-v2 for RAG similarity search. Create Python script to generate 384-dim embeddings for coordination knowledge base and store in JSONL format in coordination/vector-db/embeddings/",
         "requirements": []
       }
+    },
+    {
+      "id": "task-1762553423",
+      "title": "Create automated embedding update system that monitors coordination files for changes and regenerates embeddings automatically. Add file watching daemon that triggers embedding generation on knowledge base updates.",
+      "type": "development",
+      "priority": "low",
+      "status": "pending",
+      "assigned_to": null,
+      "created_at": "2025-11-08T04:39:16-0600",
+      "created_by": "create-task-cli",
+      "context": {
+        "repository": "ry-ops/commit-relay",
+        "branch": "main",
+        "description": "Create automated embedding update system that monitors coordination files for changes and regenerates embeddings automatically. Add file watching daemon that triggers embedding generation on knowledge base updates.",
+        "requirements": []
+      }
     }
   ],
   "metadata": {
@@ -187,5 +203,5 @@
     "in_progress_tasks": 0,
     "completed_tasks": 2
   },
-  "updated_at": "2025-11-08T04:39:05-0600"
+  "updated_at": "2025-11-08T04:39:16-0600"
 }
