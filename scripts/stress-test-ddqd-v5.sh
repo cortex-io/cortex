@@ -8,10 +8,11 @@ set -euo pipefail
 # Directories
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
+COMMIT_RELAY_HOME="$PROJECT_ROOT"
 COORDINATION_DIR="$PROJECT_ROOT/coordination"
 LOGS_DIR="$PROJECT_ROOT/agents/logs/stress-test"
 STRESS_TEST_DIR="$COORDINATION_DIR/stress-test"
-ROUTING_LOG="$COORDINATION_DIR/masters/coordinator/logs/routing-decisions.jsonl"
+ROUTING_LOG="$COORDINATION_DIR/masters/coordinator/knowledge-base/routing-decisions.jsonl"
 
 # Configuration
 TEST_DURATION_MINUTES="${TEST_DURATION:-}"
@@ -79,7 +80,7 @@ log() {
     shift
     local message="$*"
     local timestamp=$(date '+%Y-%m-%d %H:%M:%S')
-    echo "[$timestamp] [$level] $message" | tee -a "$TEST_LOG"
+    echo "[$timestamp] [$level] $message" | tee -a "$TEST_LOG" >&2
 }
 
 log_phase() {
@@ -174,8 +175,13 @@ test_moe_routing() {
     sleep 2
 
     log "MOE" "Created ${#task_ids[@]} keyword-based test tasks"
-    log "MOE" "Waiting 10 seconds for routing decisions to be logged..."
-    sleep 10
+    log "MOE" "Routing tasks through coordinator master..."
+
+    # Call coordinator to route all test tasks
+    "$COMMIT_RELAY_HOME/scripts/run-coordinator-master.sh" > /tmp/ddqd-v5-routing-$$.log 2>&1
+
+    log "MOE" "Waiting 2 seconds for routing decisions to sync..."
+    sleep 2
 
     # Analyze routing decisions
     local routing_new=$(wc -l < "$ROUTING_LOG" 2>/dev/null || echo 0)
@@ -192,7 +198,7 @@ test_moe_routing() {
 
         # Find routing decision for this task
         local actual_expert=$(tail -n "$new_decisions" "$ROUTING_LOG" | \
-                             jq -r "select(.task_id == \"$task_id\") | .decision.primary_expert" | \
+                             jq -r "select(.task_id == \"$task_id\") | .routed_to" | \
                              head -1)
 
         if [ -n "$actual_expert" ] && [ "$actual_expert" = "$expected_expert" ]; then
