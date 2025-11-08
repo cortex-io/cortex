@@ -152,14 +152,14 @@ collect_metrics() {
         total_completed=$(find "$EM_COMPLETED_DIR" -name "*.json" -type f 2>/dev/null | wc -l | tr -d ' ')
         failed_ems=0
 
-        for em_file in "$EM_COMPLETED_DIR"/*.json 2>/dev/null; do
+        for em_file in "$EM_COMPLETED_DIR"/*.json; do
             if [ -f "$em_file" ]; then
                 em_status=$(jq -r '.status // "unknown"' "$em_file" 2>/dev/null || echo "unknown")
                 if [ "$em_status" = "failed" ]; then
                     failed_ems=$((failed_ems + 1))
                 fi
             fi
-        done
+        done 2>/dev/null
 
         completed_ems=$((total_completed - failed_ems))
     fi
@@ -221,6 +221,15 @@ collect_metrics() {
 EOF
 
     log_snapshot "SNAPSHOT: Workers(A:$active_workers C:$completed_workers F:$failed_workers) EMs(A:$active_ems C:$completed_ems F:$failed_ems) Tokens(${total_used}/${total_budget}) Tasks(P:$pending_tasks IP:$in_progress_tasks C:$completed_tasks)"
+
+    # Report metrics via API for real-time dashboard updates
+    if curl -s -X POST http://localhost:3000/api/metrics/report \
+        -H "Content-Type: application/json" \
+        -d @"$snapshot_file" > /dev/null 2>&1; then
+        log_snapshot "Metrics snapshot reported via API"
+    else
+        log_snapshot "WARNING: Failed to report metrics snapshot to API (API may be unavailable)"
+    fi
 }
 
 # Aggregate hourly snapshots into daily snapshot
