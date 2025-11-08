@@ -20,7 +20,7 @@
       "title": "Security Scan - Test Repository",
       "type": "security_scan",
       "priority": "medium",
-      "status": "pending",
+      "status": "worker_spawned",
       "created_at": "2025-11-07T20:03:45.388653Z",
       "context": {
         "repository": "test/repo",
@@ -28,15 +28,23 @@
           "dependencies",
           "static-analysis"
         ]
-      }
+      },
+      "assigned_to": "security",
+      "assigned_by": "coordinator",
+      "assigned_at": "2025-11-07T20:18:32-0600",
+      "routing_confidence": "0.09",
+      "routing_strategy": "single_expert_low_confidence",
+      "updated_at": "2025-11-07T20:18:51-06:00",
+      "worker_id": "sec-worker-CF03574D",
+      "worker_type": "scan-worker"
     },
     {
       "id": "task-003",
       "title": "Test MoE routing integration with security vulnerabilities scan",
       "type": "security-scan",
       "priority": "critical",
-      "status": "pending",
-      "assigned_to": null,
+      "status": "worker_spawned",
+      "assigned_to": "security",
       "created_at": "2025-11-07T21:51:32Z",
       "created_by": "create-task-cli",
       "context": {
@@ -48,14 +56,21 @@
           "static-analysis",
           "secrets"
         ]
-      }
+      },
+      "assigned_by": "coordinator",
+      "assigned_at": "2025-11-07T20:18:33-0600",
+      "routing_confidence": "0.06",
+      "routing_strategy": "single_expert_low_confidence",
+      "updated_at": "2025-11-07T20:18:51-06:00",
+      "worker_id": "sec-worker-484EA99D",
+      "worker_type": "scan-worker"
     },
     {
       "id": "task-1762553420",
       "title": "Complete MoE Architecture Integration - Phase 4 Testing & Advanced Features",
       "type": "feature",
       "priority": "medium",
-      "status": "pending",
+      "status": "assigned",
       "created_at": "2025-11-07T22:10:20Z",
       "context": {
         "description": "Complete the MoE architecture integration by: 1) Testing the full pipeline end-to-end (routing → spawning → execution → learning), 2) Verify dashboard displays MoE metrics correctly, 3) Document the event flow and MoE components, 4) Create example tasks to demonstrate MoE routing with different confidence levels, 5) Test sparse pool activation at different load levels (14%, 50%, 100%), 6) Optional: Implement adaptive threshold optimization for routing confidence scores based on historical accuracy",
@@ -75,7 +90,13 @@
           "Memory manager learns new keywords from tasks",
           "Documentation includes architecture diagram and flow"
         ]
-      }
+      },
+      "assigned_to": "development",
+      "assigned_by": "coordinator",
+      "assigned_at": "2025-11-07T20:18:33-0600",
+      "routing_confidence": "0.03",
+      "routing_strategy": "single_expert_low_confidence",
+      "updated_at": "2025-11-07T20:18:33-06:00"
     },
     {
       "id": "task-cag-hybrid-001",
@@ -120,8 +141,8 @@
       "title": "Phase 1 validation of v5.0 Hybrid RAG+CAG: Scan commit-relay repository to validate CAG performance claims. Exercise MoE routing, Security Master CAG caching, and measure real performance vs theoretical 95% improvement.",
       "type": "security-scan",
       "priority": "high",
-      "status": "pending",
-      "assigned_to": null,
+      "status": "worker_spawned",
+      "assigned_to": "development",
       "created_at": "2025-11-07T20:16:51-0600",
       "created_by": "create-task-cli",
       "context": {
@@ -133,6 +154,29 @@
           "static-analysis",
           "secrets"
         ]
+      },
+      "assigned_by": "coordinator",
+      "assigned_at": "2025-11-07T20:18:34-0600",
+      "routing_confidence": "0.03",
+      "routing_strategy": "single_expert_low_confidence",
+      "updated_at": "2025-11-07T20:19:15-06:00",
+      "worker_id": "sec-worker-4FA7457D",
+      "worker_type": "scan-worker"
+    },
+    {
+      "id": "task-1762553422",
+      "title": "Implement vector embedding generation using sentence-transformers/all-MiniLM-L6-v2 for RAG similarity search. Create Python script to generate 384-dim embeddings for coordination knowledge base and store in JSONL format in coordination/vector-db/embeddings/",
+      "type": "development",
+      "priority": "medium",
+      "status": "pending",
+      "assigned_to": null,
+      "created_at": "2025-11-08T04:39:05-0600",
+      "created_by": "create-task-cli",
+      "context": {
+        "repository": "ry-ops/commit-relay",
+        "branch": "main",
+        "description": "Implement vector embedding generation using sentence-transformers/all-MiniLM-L6-v2 for RAG similarity search. Create Python script to generate 384-dim embeddings for coordination knowledge base and store in JSONL format in coordination/vector-db/embeddings/",
+        "requirements": []
       }
     }
   ],
@@ -143,5 +187,5 @@
     "in_progress_tasks": 0,
     "completed_tasks": 2
   },
-  "updated_at": "2025-11-07T20:16:51-0600"
+  "updated_at": "2025-11-08T04:39:05-0600"
 }
