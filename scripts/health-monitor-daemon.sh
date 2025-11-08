@@ -337,6 +337,23 @@ check_worker_daemon_health() {
     fi
 }
 
+# Report health check results via API
+report_health_check() {
+    local component="$1"
+    local status="$2"
+    local details="$3"
+
+    # Report via API for real-time dashboard updates
+    curl -s -X POST http://localhost:3000/api/health/report \
+        -H "Content-Type: application/json" \
+        -d "$(jq -n \
+            --arg comp "$component" \
+            --arg stat "$status" \
+            --arg det "$details" \
+            '{component: $comp, status: $stat, details: $det}')" \
+        > /dev/null 2>&1 || log "WARNING: Failed to report health check for $component to API"
+}
+
 # Main monitoring loop
 monitor_loop() {
     log "Health Monitor starting (interval: ${MONITOR_INTERVAL}s, threshold: ${HEARTBEAT_THRESHOLD}s)"
@@ -344,12 +361,14 @@ monitor_loop() {
     while true; do
         log "Running health checks..."
 
-        # Check all components
-        check_pm_health
-        check_coordinator_health
+        # Check all components and report
+        check_pm_health && report_health_check "pm_daemon" "healthy" "Process running, state fresh"
+        check_coordinator_health && report_health_check "coordinator" "healthy" "On-demand service operating normally"
         check_master_activity
-        check_dashboard_health
-        check_worker_daemon_health
+        check_dashboard_health && report_health_check "dashboard" "healthy" "Port 3000 responding"
+        check_worker_daemon_health && report_health_check "worker_daemon" "healthy" "Process running"
+
+        report_health_check "health_monitor" "healthy" "All checks completed successfully"
 
         log "Health checks complete, sleeping for ${MONITOR_INTERVAL}s"
         sleep "$MONITOR_INTERVAL"

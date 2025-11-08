@@ -2238,6 +2238,113 @@ app.get('/api/moe/learning', async (req, res) => {
   }
 });
 
+/**
+ * POST /api/pm/state
+ * PM Daemon reports its current state
+ */
+app.post('/api/pm/state', async (req, res) => {
+  try {
+    const fsSync = require('fs');
+    const pmStatePath = path.join(COMMIT_RELAY_HOME, 'coordination', 'pm-state.json');
+
+    // Write state to file
+    fsSync.writeFileSync(pmStatePath, JSON.stringify(req.body, null, 2));
+
+    // Emit event via WebSocket for real-time updates
+    if (wss) {
+      wss.clients.forEach(client => {
+        if (client.readyState === 1) { // WebSocket.OPEN
+          client.send(JSON.stringify({
+            type: 'pm_state_update',
+            data: req.body,
+            timestamp: new Date().toISOString()
+          }));
+        }
+      });
+    }
+
+    res.json({ success: true, message: 'PM state updated' });
+  } catch (error) {
+    console.error('Error updating PM state:', error);
+    res.status(500).json({ error: 'Failed to update PM state', details: error.message });
+  }
+});
+
+/**
+ * POST /api/health/report
+ * Health Monitor Daemon reports health check results
+ */
+app.post('/api/health/report', async (req, res) => {
+  try {
+    const { component, status, details } = req.body;
+    const fsSync = require('fs');
+    const healthLogPath = path.join(COMMIT_RELAY_HOME, 'coordination', 'health-reports.jsonl');
+
+    const report = {
+      component,
+      status,
+      details,
+      timestamp: new Date().toISOString()
+    };
+
+    // Append to JSONL log
+    fsSync.appendFileSync(healthLogPath, JSON.stringify(report) + '\n');
+
+    // Emit event via WebSocket
+    if (wss) {
+      wss.clients.forEach(client => {
+        if (client.readyState === 1) {
+          client.send(JSON.stringify({
+            type: 'health_report',
+            data: report
+          }));
+        }
+      });
+    }
+
+    res.json({ success: true, message: 'Health report recorded' });
+  } catch (error) {
+    console.error('Error recording health report:', error);
+    res.status(500).json({ error: 'Failed to record health report', details: error.message });
+  }
+});
+
+/**
+ * POST /api/metrics/report
+ * Metrics Snapshot Daemon reports metrics snapshot
+ */
+app.post('/api/metrics/report', async (req, res) => {
+  try {
+    const fsSync = require('fs');
+    const metricsLogPath = path.join(COMMIT_RELAY_HOME, 'coordination', 'metrics-snapshots.jsonl');
+
+    const snapshot = {
+      ...req.body,
+      timestamp: req.body.timestamp || new Date().toISOString()
+    };
+
+    // Append to JSONL log
+    fsSync.appendFileSync(metricsLogPath, JSON.stringify(snapshot) + '\n');
+
+    // Emit event via WebSocket
+    if (wss) {
+      wss.clients.forEach(client => {
+        if (client.readyState === 1) {
+          client.send(JSON.stringify({
+            type: 'metrics_snapshot',
+            data: snapshot
+          }));
+        }
+      });
+    }
+
+    res.json({ success: true, message: 'Metrics snapshot recorded' });
+  } catch (error) {
+    console.error('Error recording metrics snapshot:', error);
+    res.status(500).json({ error: 'Failed to record metrics snapshot', details: error.message });
+  }
+});
+
 // ============================================================================
 // WebSocket Server for Real-time Updates
 // ============================================================================

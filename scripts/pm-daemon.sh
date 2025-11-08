@@ -161,14 +161,27 @@ initialize_pm_state() {
 save_pm_state() {
     local temp_state="/tmp/pm-state-$$.json"
 
+    # Update state file via API for event-driven updates
     jq --arg last_loop "$(date +%Y-%m-%dT%H:%M:%S%z)" \
        --arg loops "$LOOP_COUNT" \
        --arg uptime "$SECONDS" \
        '.pm_daemon.last_loop = $last_loop |
         .pm_daemon.loops_completed = ($loops | tonumber) |
         .pm_daemon.uptime_seconds = ($uptime | tonumber)' \
-       "$PM_STATE_FILE" > "$temp_state" && \
-       mv "$temp_state" "$PM_STATE_FILE"
+       "$PM_STATE_FILE" > "$temp_state"
+
+    # Report state via API (triggers WebSocket updates)
+    if curl -s -X POST http://localhost:3000/api/pm/state \
+        -H "Content-Type: application/json" \
+        -d @"$temp_state" > /dev/null 2>&1; then
+        log "PM state reported via API"
+    else
+        # Fallback to direct file write if API unavailable
+        mv "$temp_state" "$PM_STATE_FILE"
+        log "WARNING: API unavailable, wrote state directly to file"
+    fi
+
+    rm -f "$temp_state"
 }
 
 # Calculate age in minutes
