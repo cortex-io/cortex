@@ -70,7 +70,7 @@
       "title": "Complete MoE Architecture Integration - Phase 4 Testing & Advanced Features",
       "type": "feature",
       "priority": "medium",
-      "status": "assigned",
+      "status": "worker_spawned",
       "created_at": "2025-11-07T22:10:20Z",
       "context": {
         "description": "Complete the MoE architecture integration by: 1) Testing the full pipeline end-to-end (routing → spawning → execution → learning), 2) Verify dashboard displays MoE metrics correctly, 3) Document the event flow and MoE components, 4) Create example tasks to demonstrate MoE routing with different confidence levels, 5) Test sparse pool activation at different load levels (14%, 50%, 100%), 6) Optional: Implement adaptive threshold optimization for routing confidence scores based on historical accuracy",
@@ -96,7 +96,9 @@
       "assigned_at": "2025-11-07T20:18:33-0600",
       "routing_confidence": "0.03",
       "routing_strategy": "single_expert_low_confidence",
-      "updated_at": "2025-11-07T20:18:33-06:00"
+      "updated_at": "2025-11-08T04:39:49-06:00",
+      "worker_id": "dev-worker-66187EF4",
+      "worker_type": "feature-implementer"
     },
     {
       "id": "task-cag-hybrid-001",
@@ -168,8 +170,8 @@
       "title": "Implement vector embedding generation using sentence-transformers/all-MiniLM-L6-v2 for RAG similarity search. Create Python script to generate 384-dim embeddings for coordination knowledge base and store in JSONL format in coordination/vector-db/embeddings/",
       "type": "development",
       "priority": "medium",
-      "status": "pending",
-      "assigned_to": null,
+      "status": "worker_spawned",
+      "assigned_to": "development",
       "created_at": "2025-11-08T04:39:05-0600",
       "created_by": "create-task-cli",
       "context": {
@@ -177,15 +179,22 @@
         "branch": "main",
         "description": "Implement vector embedding generation using sentence-transformers/all-MiniLM-L6-v2 for RAG similarity search. Create Python script to generate 384-dim embeddings for coordination knowledge base and store in JSONL format in coordination/vector-db/embeddings/",
         "requirements": []
-      }
+      },
+      "assigned_by": "coordinator",
+      "assigned_at": "2025-11-08T04:39:33-0600",
+      "routing_confidence": "0.95",
+      "routing_strategy": "single_expert",
+      "updated_at": "2025-11-08T04:39:48-06:00",
+      "worker_id": "dev-worker-98C59170",
+      "worker_type": "feature-implementer"
     },
     {
       "id": "task-1762553423",
       "title": "Create automated embedding update system that monitors coordination files for changes and regenerates embeddings automatically. Add file watching daemon that triggers embedding generation on knowledge base updates.",
       "type": "development",
       "priority": "low",
-      "status": "pending",
-      "assigned_to": null,
+      "status": "worker_spawned",
+      "assigned_to": "development",
       "created_at": "2025-11-08T04:39:16-0600",
       "created_by": "create-task-cli",
       "context": {
@@ -193,21 +202,51 @@
         "branch": "main",
         "description": "Create automated embedding update system that monitors coordination files for changes and regenerates embeddings automatically. Add file watching daemon that triggers embedding generation on knowledge base updates.",
         "requirements": []
-      }
+      },
+      "assigned_by": "coordinator",
+      "assigned_at": "2025-11-08T04:39:33-0600",
+      "routing_confidence": "0.95",
+      "routing_strategy": "single_expert",
+      "updated_at": "2025-11-08T04:39:48-06:00",
+      "worker_id": "dev-worker-270892A8",
+      "worker_type": "feature-implementer"
     },
     {
       "id": "task-1762553424",
       "title": "Implement FAISS indexing for vector similarity search to enable sub-linear search performance for >10k documents. Add FAISS index building script and integrate with vector-db query utilities for fast semantic similarity lookups.",
       "type": "development",
       "priority": "low",
-      "status": "pending",
-      "assigned_to": null,
+      "status": "worker_spawned",
+      "assigned_to": "development",
       "created_at": "2025-11-08T04:39:26-0600",
       "created_by": "create-task-cli",
       "context": {
         "repository": "ry-ops/commit-relay",
         "branch": "main",
         "description": "Implement FAISS indexing for vector similarity search to enable sub-linear search performance for >10k documents. Add FAISS index building script and integrate with vector-db query utilities for fast semantic similarity lookups.",
+        "requirements": []
+      },
+      "assigned_by": "coordinator",
+      "assigned_at": "2025-11-08T04:39:34-0600",
+      "routing_confidence": "0.95",
+      "routing_strategy": "single_expert",
+      "updated_at": "2025-11-08T04:39:48-06:00",
+      "worker_id": "dev-worker-2A3CE105",
+      "worker_type": "feature-implementer"
+    },
+    {
+      "id": "task-1762553425",
+      "title": "Implement adaptive caching system that promotes frequently-accessed RAG knowledge to CAG cache. Track access patterns, identify hot data, and automatically update CAG caches when access frequency exceeds threshold (>10 accesses/day).",
+      "type": "development",
+      "priority": "medium",
+      "status": "pending",
+      "assigned_to": null,
+      "created_at": "2025-11-08T04:43:47-0600",
+      "created_by": "create-task-cli",
+      "context": {
+        "repository": "ry-ops/commit-relay",
+        "branch": "main",
+        "description": "Implement adaptive caching system that promotes frequently-accessed RAG knowledge to CAG cache. Track access patterns, identify hot data, and automatically update CAG caches when access frequency exceeds threshold (>10 accesses/day).",
         "requirements": []
       }
     }
@@ -219,5 +258,5 @@
     "in_progress_tasks": 0,
     "completed_tasks": 2
   },
-  "updated_at": "2025-11-08T04:39:26-0600"
+  "updated_at": "2025-11-08T04:43:47-0600"
 }
