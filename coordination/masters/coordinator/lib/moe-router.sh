@@ -250,8 +250,33 @@ route_task_moe() {
             }
         }')
 
-    # Log routing decision
+    # Log routing decision (with immediate flush)
     echo "$routing_decision" >> "$ROUTING_LOG"
+
+    # Force immediate flush to disk (prevents buffering issues during tests)
+    sync "$ROUTING_LOG" 2>/dev/null || true
+
+    # Emit event for real-time dashboard updates
+    local events_file="$SCRIPT_DIR/../../dashboard-events.jsonl"
+    if [ -w "$(dirname "$events_file")" ] || [ -w "$events_file" ]; then
+        local event_json=$(jq -n \
+            --arg timestamp "$(date +%Y-%m-%dT%H:%M:%S%z)" \
+            --arg task_id "$task_id" \
+            --arg primary "$primary_expert" \
+            --argjson confidence "$primary_confidence" \
+            --arg strategy "$strategy" \
+            '{
+                timestamp: $timestamp,
+                type: "moe_routing_decision",
+                data: {
+                    task_id: $task_id,
+                    expert: $primary,
+                    confidence: $confidence,
+                    strategy: $strategy
+                }
+            }')
+        echo "$event_json" >> "$events_file" 2>/dev/null || true
+    fi
 
     # Output decision
     echo "$routing_decision"
