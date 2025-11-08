@@ -114,6 +114,26 @@
           "scripts/cag/benchmark-cag.sh"
         ]
       }
+    },
+    {
+      "id": "task-1762553421",
+      "title": "Phase 1 validation of v5.0 Hybrid RAG+CAG: Scan commit-relay repository to validate CAG performance claims. Exercise MoE routing, Security Master CAG caching, and measure real performance vs theoretical 95% improvement.",
+      "type": "security-scan",
+      "priority": "high",
+      "status": "pending",
+      "assigned_to": null,
+      "created_at": "2025-11-07T20:16:51-0600",
+      "created_by": "create-task-cli",
+      "context": {
+        "repository": "ry-ops/commit-relay",
+        "branch": "main",
+        "description": "Phase 1 validation of v5.0 Hybrid RAG+CAG: Scan commit-relay repository to validate CAG performance claims. Exercise MoE routing, Security Master CAG caching, and measure real performance vs theoretical 95% improvement.",
+        "scan_types": [
+          "dependencies",
+          "static-analysis",
+          "secrets"
+        ]
+      }
     }
   ],
   "metadata": {
@@ -123,5 +143,5 @@
     "in_progress_tasks": 0,
     "completed_tasks": 2
   },
-  "updated_at": "2025-11-07T19:49:32-0600"
+  "updated_at": "2025-11-07T20:16:51-0600"
 }
