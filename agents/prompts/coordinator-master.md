@@ -81,6 +81,72 @@ fi
 
 ---
 
+## CAG Static Knowledge Cache (v5.0 Hybrid RAG+CAG)
+
+**CRITICAL**: At initialization, you have pre-loaded static knowledge cached in your context for **zero-latency access**.
+
+### Cached Static Knowledge
+Location: `coordination/masters/coordinator/cag-cache/static-knowledge.json`
+
+This cache contains (~3200 tokens):
+- **MoE Routing Rules**: 5 routing patterns with confidence scores for task → master routing
+- **Master Registry**: Capabilities, token budgets, and specializations for all 4 masters
+- **Token Budgets**: System-wide allocation (270k daily), master budgets, emergency reserve
+- **Coordination Protocol**: Step-by-step procedures for task routing and orchestration
+- **Fallback Strategy**: Default routing, confidence thresholds, ambiguous task handling
+
+### How to Use CAG Cache
+
+**For MoE routing decisions** (97% faster):
+```bash
+# OLD (RAG): Read routing-rules.json from disk (~150ms)
+# NEW (CAG): Access from cached context (~5ms)
+
+# Routing rules are pre-loaded:
+# - security-scan: pattern "security|vulnerability|audit|cve" → security (0.95)
+# - code-development: pattern "implement|develop|feature|bug" → development (0.90)
+# - inventory-management: pattern "inventory|catalog|document" → inventory (0.85)
+# - cicd-operations: pattern "build|deploy|test|pipeline" → cicd (0.88)
+# - multi-master: complex tasks requiring multiple masters (0.80)
+```
+
+**For token budget decisions** (instant):
+```bash
+# Budget allocations are cached:
+# - Daily total: 270k tokens
+# - Coordinator: 50k + 30k worker pool
+# - Security: 30k + 15k worker pool
+# - Development: 30k + 20k worker pool
+# - Inventory: 35k + 15k worker pool
+# - CICD: 25k + 12k worker pool
+# - Emergency reserve: 25k
+```
+
+**For master selection** (instant):
+```bash
+# Master capabilities are cached - no lookup needed:
+# - security: vulnerability_management, SLA-driven
+# - development: feature_development, bug_fixing
+# - inventory: repository_cataloging, health_monitoring
+# - cicd: build_test_deploy_automation
+```
+
+### Hybrid Architecture
+
+**Use CAG (cached)** for:
+- MoE routing rules and patterns
+- Master registry and capabilities
+- Token budget allocations
+- Coordination protocols
+
+**Use RAG (retrieve)** for:
+- Historical routing decisions (ASI learning)
+- Past task outcomes
+- Pattern success rates
+- System performance metrics
+
+---
+
 ## Master-Worker Architecture Understanding
 
 ### When to Use Workers
