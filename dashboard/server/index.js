@@ -28,7 +28,7 @@ const helmet = require('helmet');
 
 // Security middleware
 const { authMiddleware, confirmationMiddleware } = require('./middleware/auth');
-const { apiLimiter, controlLimiter, expensiveLimiter } = require('./middleware/rateLimiter');
+const { apiLimiter, controlLimiter, expensiveLimiter, getLimiter } = require('./middleware/rateLimiter');
 const {
   validate,
   validatePid,
@@ -1739,6 +1739,92 @@ app.get('/api/daemons/all',
   } catch (error) {
     console.error('Error checking daemon statuses:', error);
     res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+/**
+ * POST /api/health-monitor/start
+ * Start health monitor daemon
+ */
+app.post('/api/health-monitor/start', async (req, res) => {
+  try {
+    const scriptPath = path.join(__dirname, '../../scripts/health-monitor-daemon.sh');
+
+    // Check if already running
+    const isRunning = await safeExec(`pgrep -f "health-monitor-daemon.sh"`);
+    if (isRunning.stdout.trim()) {
+      return res.json({ status: 'already_running', message: 'Health monitor is already running' });
+    }
+
+    // Start the daemon
+    const { spawn } = require('child_process');
+    spawn('bash', [scriptPath], {
+      detached: true,
+      stdio: 'ignore'
+    }).unref();
+
+    setTimeout(() => {
+      res.json({ status: 'started', message: 'Health monitor daemon started successfully' });
+    }, 1000);
+  } catch (error) {
+    console.error('Error starting health monitor:', error);
+    res.status(500).json({ error: 'Failed to start health monitor' });
+  }
+});
+
+/**
+ * POST /api/health-monitor/stop
+ * Stop health monitor daemon
+ */
+app.post('/api/health-monitor/stop', async (req, res) => {
+  try {
+    await safeExec(`pkill -f "health-monitor-daemon.sh"`);
+    res.json({ status: 'stopped', message: 'Health monitor daemon stopped' });
+  } catch (error) {
+    res.json({ status: 'not_running', message: 'Health monitor was not running' });
+  }
+});
+
+/**
+ * POST /api/metrics-snapshot/start
+ * Start metrics snapshot daemon
+ */
+app.post('/api/metrics-snapshot/start', async (req, res) => {
+  try {
+    const scriptPath = path.join(__dirname, '../../scripts/metrics-snapshot-daemon.sh');
+
+    // Check if already running
+    const isRunning = await safeExec(`pgrep -f "metrics-snapshot-daemon.sh"`);
+    if (isRunning.stdout.trim()) {
+      return res.json({ status: 'already_running', message: 'Metrics snapshot is already running' });
+    }
+
+    // Start the daemon
+    const { spawn } = require('child_process');
+    spawn('bash', [scriptPath], {
+      detached: true,
+      stdio: 'ignore'
+    }).unref();
+
+    setTimeout(() => {
+      res.json({ status: 'started', message: 'Metrics snapshot daemon started successfully' });
+    }, 1000);
+  } catch (error) {
+    console.error('Error starting metrics snapshot:', error);
+    res.status(500).json({ error: 'Failed to start metrics snapshot' });
+  }
+});
+
+/**
+ * POST /api/metrics-snapshot/stop
+ * Stop metrics snapshot daemon
+ */
+app.post('/api/metrics-snapshot/stop', async (req, res) => {
+  try {
+    await safeExec(`pkill -f "metrics-snapshot-daemon.sh"`);
+    res.json({ status: 'stopped', message: 'Metrics snapshot daemon stopped' });
+  } catch (error) {
+    res.json({ status: 'not_running', message: 'Metrics snapshot was not running' });
   }
 });
 
