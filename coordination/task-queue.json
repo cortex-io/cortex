@@ -1520,6 +1520,22 @@
         "description": "Fix real-time events disappearing after refresh. Events disappear from dashboard. Fix EVENT_BUFFER_SIZE logic and WebSocket reconnection.",
         "requirements": []
       }
+    },
+    {
+      "id": "task-1762553451",
+      "title": "Create visual alert logic for offline daemons. Add color-coded status badges using health-alerts.json data.",
+      "type": "development",
+      "priority": "medium",
+      "status": "pending",
+      "assigned_to": null,
+      "created_at": "2025-11-09T09:26:06-0600",
+      "created_by": "create-task-cli",
+      "context": {
+        "repository": "ry-ops/commit-relay",
+        "branch": "main",
+        "description": "Create visual alert logic for offline daemons. Add color-coded status badges using health-alerts.json data.",
+        "requirements": []
+      }
     }
   ],
   "metadata": {
@@ -1529,5 +1545,5 @@
     "in_progress_tasks": 0,
     "completed_tasks": 2
   },
-  "updated_at": "2025-11-09T09:26:05-0600"
+  "updated_at": "2025-11-09T09:26:06-0600"
 }
