@@ -169,64 +169,35 @@ while true; do
                     '{worker_id: $worker, task_id: $task, worker_type: $type, launched_by: "daemon"}')
                 broadcast_dashboard_event "worker_started" "$EVENT_DATA" 2>/dev/null || true
 
-                # Check for autonomous worker script (default for all workers)
-                AUTONOMOUS_SCRIPT="$COMMIT_RELAY_HOME/agents/workers/autonomous-worker.sh"
-                WORKER_SCRIPT="$COMMIT_RELAY_HOME/agents/workers/${WORKER_TYPE}.sh"
+                # Use Claude Code launcher to spawn worker with AI capabilities
+                CLAUDE_LAUNCHER="$COMMIT_RELAY_HOME/agents/workers/claude-worker-launcher.sh"
 
-                if [ -f "$AUTONOMOUS_SCRIPT" ]; then
-                    # Use autonomous worker script that reads spec and executes
-                    log_daemon "INFO: Using autonomous worker script"
+                if [ -f "$CLAUDE_LAUNCHER" ]; then
+                    log_daemon "INFO: Launching worker with Claude Code via launcher"
 
-                    # Build worker command with environment variables
-                    TERMINAL_CMD="cd $COMMIT_RELAY_HOME && export WORKER_ID='$WORKER_ID' && export SPEC_FILE='$spec_file' && $AUTONOMOUS_SCRIPT"
+                    # Build launch command
+                    TERMINAL_CMD="cd $COMMIT_RELAY_HOME && $CLAUDE_LAUNCHER $WORKER_ID"
 
-                    # Launch autonomous worker in Terminal
+                    # Launch Claude Code worker in Terminal
                     osascript -e "tell application \"Terminal\"
                         do script \"$TERMINAL_CMD\"
                         activate
                     end tell" > /dev/null 2>&1 &
 
-                elif [ -f "$WORKER_SCRIPT" ]; then
-                    # Use worker-type-specific shell script
-                    log_daemon "INFO: Using type-specific worker: $WORKER_SCRIPT"
-
-                    # Extract worker parameters from spec
-                    SCOPE=$(jq -r '.scope' "$spec_file")
-                    DESCRIPTION=$(jq -r '.scope.description // .context.description // "Worker task"' "$spec_file")
-                    REPOSITORY=$(jq -r '.scope.repository // ""' "$spec_file")
-
-                    # Build worker command with environment variables
-                    TERMINAL_CMD="cd $COMMIT_RELAY_HOME && export WORKER_ID='$WORKER_ID' && export TASK_ID='$TASK_ID' && export TASK_DESCRIPTION='$DESCRIPTION' && export COMMIT_RELAY_HOME='$COMMIT_RELAY_HOME' && $WORKER_SCRIPT --task-id '$TASK_ID' --description '$DESCRIPTION'; read -p 'Press Enter to close...'"
-
-                    # Launch shell worker in Terminal
-                    osascript -e "tell application \"Terminal\"
-                        do script \"$TERMINAL_CMD\"
-                        activate
-                    end tell" > /dev/null 2>&1 &
                 else
-                    # Fallback to Claude CLI prompt-based worker
-                    log_daemon "INFO: Using prompt-based worker (no shell script found)"
+                    log_daemon "ERROR: Claude worker launcher not found: $CLAUDE_LAUNCHER"
+                    log_daemon "ERROR: Cannot launch worker without Claude Code launcher"
 
-                    PROMPT_TEMPLATE=$(jq -r '.prompt_template' "$spec_file")
-                    FULL_PROMPT_PATH="$COMMIT_RELAY_HOME/$PROMPT_TEMPLATE"
+                    # Update worker status to failed
+                    jq --arg failed "$(date +%Y-%m-%dT%H:%M:%S%z)" \
+                       '.status = "failed" | .execution.failed_at = $failed | .execution.error = "Claude launcher not found"' \
+                       "$spec_file" > "${spec_file}.tmp" && \
+                       mv "${spec_file}.tmp" "$spec_file"
 
-                    # Build launch command using Claude CLI
-                    # Note: Workers need interactive mode for tool usage, not --print mode
-                    # Read the prompt content and pass it to claude
-                    PROMPT_CONTENT=$(cat "$FULL_PROMPT_PATH" 2>/dev/null | sed 's/"/\\"/g' | tr '\n' ' ')
+                    # Move to failed directory
+                    mv "$spec_file" "$COMMIT_RELAY_HOME/coordination/worker-specs/failed/"
 
-                    if [ -z "$PROMPT_CONTENT" ]; then
-                        log_daemon "ERROR: Could not read prompt template: $FULL_PROMPT_PATH"
-                        continue
-                    fi
-
-                    # Launch Claude CLI in Terminal with the prompt
-                    TERMINAL_CMD="cd $COMMIT_RELAY_HOME && claude \"$PROMPT_CONTENT\""
-
-                    osascript -e "tell application \"Terminal\"
-                        do script \"$TERMINAL_CMD\"
-                        activate
-                    end tell" > /dev/null 2>&1 &
+                    continue
                 fi
 
                 log_daemon "SUCCESS: Launched $WORKER_ID in new Terminal tab"
