@@ -21046,3 +21046,10 @@
   "data": {"current_workers":0,"target_workers":8,"activation_rate":14,"max_capacity":64}},
   "source": "sparse-pool-manager"
 }
+{
+  "id": "evt-1762707218-92278",
+  "timestamp": "2025-11-09T10:53:38-0600",
+  "type": "moe_pool_updated",
+  "data": {"current_workers":0,"target_workers":8,"activation_rate":14,"max_capacity":64}},
+  "source": "sparse-pool-manager"
+}
