@@ -117,9 +117,22 @@ let cache = {
   lastFileUpdate: {} // Track last update time per file
 };
 
-// Event buffer for reconnecting clients (last 50 events)
-const EVENT_BUFFER_SIZE = 50;
+// Event buffer for reconnecting clients (increased for better persistence)
+const EVENT_BUFFER_SIZE = 500;  // Increased from 50 to 500
 let eventBuffer = [];
+
+// Load previous event buffer from file on startup for persistence
+const EVENT_BUFFER_FILE = path.join(COORD_DIR, 'event-buffer.json');
+try {
+  const fsSync = require('fs');
+  if (fsSync.existsSync(EVENT_BUFFER_FILE)) {
+    const bufferData = fsSync.readFileSync(EVENT_BUFFER_FILE, 'utf-8');
+    eventBuffer = JSON.parse(bufferData);
+    console.log(`Loaded ${eventBuffer.length} events from persistent buffer`);
+  }
+} catch (e) {
+  console.log('No previous event buffer found, starting fresh');
+}
 
 /**
  * Read and parse JSON file safely with retry logic
@@ -1186,6 +1199,111 @@ app.get('/api/events', async (req, res) => {
 });
 
 /**
+ * GET /api/activity-feed
+ * Get activity feed for last 24 hours, grouped by hour
+ */
+app.get('/api/activity-feed', async (req, res) => {
+  try {
+    const fsSync = require('fs');
+    const hours = parseInt(req.query.hours) || 24;
+
+    // Calculate time range
+    const now = new Date();
+    const since = new Date(now.getTime() - (hours * 60 * 60 * 1000));
+
+    let allEvents = [];
+
+    // Read events file
+    if (fsSync.existsSync(FILES.dashboardEvents)) {
+      const content = fsSync.readFileSync(FILES.dashboardEvents, 'utf-8');
+      const lines = content.trim().split('\n').filter(line => line);
+
+      // Parse each line as JSON
+      for (const line of lines) {
+        try {
+          const event = JSON.parse(line);
+          const eventDate = new Date(event.timestamp);
+
+          // Filter by time range
+          if (eventDate >= since && eventDate <= now) {
+            allEvents.push(event);
+          }
+        } catch (e) {
+          // Skip malformed lines
+          continue;
+        }
+      }
+    }
+
+    // Sort by timestamp (newest first)
+    allEvents.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+
+    // Group events by hour for timeline display
+    const hourlyGroups = {};
+    const eventTypeStats = {};
+
+    allEvents.forEach(event => {
+      // Group by hour
+      const eventDate = new Date(event.timestamp);
+      const hourKey = new Date(
+        eventDate.getFullYear(),
+        eventDate.getMonth(),
+        eventDate.getDate(),
+        eventDate.getHours()
+      ).toISOString();
+
+      if (!hourlyGroups[hourKey]) {
+        hourlyGroups[hourKey] = {
+          hour: hourKey,
+          count: 0,
+          events: []
+        };
+      }
+
+      hourlyGroups[hourKey].count++;
+      if (hourlyGroups[hourKey].events.length < 10) { // Limit events per hour for display
+        hourlyGroups[hourKey].events.push({
+          id: event.id,
+          type: event.type,
+          timestamp: event.timestamp,
+          message: event.message || event.data?.message || ''
+        });
+      }
+
+      // Track event type statistics
+      if (!eventTypeStats[event.type]) {
+        eventTypeStats[event.type] = 0;
+      }
+      eventTypeStats[event.type]++;
+    });
+
+    // Convert hourly groups to array and sort
+    const timeline = Object.values(hourlyGroups).sort((a, b) =>
+      new Date(b.hour) - new Date(a.hour)
+    );
+
+    res.json({
+      period: {
+        hours: hours,
+        from: since.toISOString(),
+        to: now.toISOString()
+      },
+      summary: {
+        totalEvents: allEvents.length,
+        uniqueHours: timeline.length,
+        eventTypes: Object.keys(eventTypeStats).length
+      },
+      statistics: eventTypeStats,
+      timeline: timeline,
+      recentEvents: allEvents.slice(0, 20) // Last 20 events for quick view
+    });
+  } catch (error) {
+    console.error('Error generating activity feed:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+/**
  * GET /api/git-operations
  * Get git operations log
  * Query params:
@@ -1333,6 +1451,208 @@ app.get('/api/git-status', async (req, res) => {
     res.json(gitStatus);
   } catch (error) {
     console.error('Error getting git status:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+/**
+ * GET /api/health-alerts
+ * Get current health alerts with visual status indicators
+ */
+app.get('/api/health-alerts',
+  getLimiter,
+  async (req, res) => {
+  try {
+    // Read health alerts file
+    const alertsFile = path.join(__dirname, '../../coordination/health-alerts.json');
+
+    if (!fsSync.existsSync(alertsFile)) {
+      return res.json({
+        alerts: [],
+        summary: {
+          critical: 0,
+          high: 0,
+          medium: 0,
+          low: 0,
+          total: 0
+        },
+        healthStatus: 'healthy'
+      });
+    }
+
+    const alertsData = JSON.parse(fsSync.readFileSync(alertsFile, 'utf-8'));
+    const alerts = alertsData.alerts || [];
+
+    // Count alerts by severity
+    const summary = {
+      critical: alerts.filter(a => a.severity === 'critical').length,
+      high: alerts.filter(a => a.severity === 'high').length,
+      medium: alerts.filter(a => a.severity === 'medium').length,
+      low: alerts.filter(a => a.severity === 'low').length,
+      total: alerts.length
+    };
+
+    // Determine overall health status
+    let healthStatus = 'healthy'; // green
+    let statusColor = '#10b981';
+
+    if (summary.critical > 0) {
+      healthStatus = 'critical'; // red
+      statusColor = '#ef4444';
+    } else if (summary.high > 0) {
+      healthStatus = 'warning'; // yellow/orange
+      statusColor = '#f59e0b';
+    } else if (summary.medium > 0) {
+      healthStatus = 'caution'; // yellow
+      statusColor = '#eab308';
+    }
+
+    // Add visual indicators to each alert
+    const enrichedAlerts = alerts.map(alert => ({
+      ...alert,
+      color: alert.severity === 'critical' ? '#ef4444' :
+             alert.severity === 'high' ? '#f59e0b' :
+             alert.severity === 'medium' ? '#eab308' :
+             '#3b82f6',
+      icon: alert.severity === 'critical' ? '🔴' :
+            alert.severity === 'high' ? '🟠' :
+            alert.severity === 'medium' ? '🟡' :
+            '🔵',
+      isNew: (Date.now() - new Date(alert.created_at).getTime()) < 300000 // New if < 5 minutes
+    }));
+
+    res.json({
+      alerts: enrichedAlerts,
+      summary,
+      healthStatus,
+      statusColor,
+      lastChecked: new Date().toISOString()
+    });
+
+  } catch (error) {
+    console.error('Error reading health alerts:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+/**
+ * GET /api/moe-intelligence
+ * Get MoE routing decisions and pattern analysis for visualizations
+ */
+app.get('/api/moe-intelligence',
+  getLimiter,
+  async (req, res) => {
+  try {
+    const timeRange = req.query.range || '24h'; // 1h, 6h, 24h, 7d, 30d
+
+    // Read routing decisions
+    const decisionsFile = path.join(__dirname, '../../coordination/masters/coordinator/knowledge-base/routing-decisions.jsonl');
+    const patternsFile = path.join(__dirname, '../../coordination/memory/long-term/task-patterns.json');
+
+    let routingDecisions = [];
+    if (fsSync.existsSync(decisionsFile)) {
+      const content = fsSync.readFileSync(decisionsFile, 'utf-8');
+      routingDecisions = content
+        .trim()
+        .split('\n')
+        .filter(line => line)
+        .map(line => JSON.parse(line));
+    }
+
+    // Filter by time range
+    const now = Date.now();
+    const rangeMs = {
+      '1h': 3600000,
+      '6h': 21600000,
+      '24h': 86400000,
+      '7d': 604800000,
+      '30d': 2592000000
+    }[timeRange] || 86400000;
+
+    const filteredDecisions = routingDecisions.filter(d => {
+      const timestamp = new Date(d.timestamp).getTime();
+      return (now - timestamp) <= rangeMs;
+    });
+
+    // Calculate routing flow (for Sankey diagram)
+    const routingFlow = {};
+    filteredDecisions.forEach(d => {
+      const key = `${d.rule_used}->${d.routed_to}`;
+      routingFlow[key] = (routingFlow[key] || 0) + 1;
+    });
+
+    // Calculate confidence distribution
+    const confidenceBuckets = {
+      '0-25': 0,
+      '26-50': 0,
+      '51-75': 0,
+      '76-90': 0,
+      '91-100': 0
+    };
+
+    filteredDecisions.forEach(d => {
+      const conf = parseFloat(d.confidence) * 100;
+      if (conf <= 25) confidenceBuckets['0-25']++;
+      else if (conf <= 50) confidenceBuckets['26-50']++;
+      else if (conf <= 75) confidenceBuckets['51-75']++;
+      else if (conf <= 90) confidenceBuckets['76-90']++;
+      else confidenceBuckets['91-100']++;
+    });
+
+    // Calculate success rates by master type
+    const masterStats = {};
+    filteredDecisions.forEach(d => {
+      if (!masterStats[d.routed_to]) {
+        masterStats[d.routed_to] = {
+          total: 0,
+          highConfidence: 0,
+          strategies: {}
+        };
+      }
+      masterStats[d.routed_to].total++;
+      if (parseFloat(d.confidence) > 0.8) {
+        masterStats[d.routed_to].highConfidence++;
+      }
+      masterStats[d.routed_to].strategies[d.strategy] =
+        (masterStats[d.routed_to].strategies[d.strategy] || 0) + 1;
+    });
+
+    // Read task patterns if available
+    let taskPatterns = null;
+    if (fsSync.existsSync(patternsFile)) {
+      taskPatterns = JSON.parse(fsSync.readFileSync(patternsFile, 'utf-8'));
+    }
+
+    // Create hourly heat map data
+    const hourlyActivity = {};
+    filteredDecisions.forEach(d => {
+      const hour = new Date(d.timestamp).getHours();
+      const master = d.routed_to;
+      if (!hourlyActivity[hour]) hourlyActivity[hour] = {};
+      hourlyActivity[hour][master] = (hourlyActivity[hour][master] || 0) + 1;
+    });
+
+    res.json({
+      summary: {
+        totalDecisions: filteredDecisions.length,
+        timeRange,
+        avgConfidence: filteredDecisions.length > 0
+          ? (filteredDecisions.reduce((sum, d) => sum + parseFloat(d.confidence), 0) / filteredDecisions.length).toFixed(3)
+          : 0,
+        mostUsedMaster: Object.entries(masterStats)
+          .sort((a, b) => b[1].total - a[1].total)[0]?.[0] || 'none',
+        uniqueStrategies: [...new Set(filteredDecisions.map(d => d.strategy))]
+      },
+      routingFlow,
+      confidenceDistribution: confidenceBuckets,
+      masterStatistics: masterStats,
+      hourlyHeatMap: hourlyActivity,
+      taskPatterns: taskPatterns?.patterns || null,
+      recentDecisions: filteredDecisions.slice(-10).reverse() // Last 10 decisions
+    });
+
+  } catch (error) {
+    console.error('Error reading MoE intelligence data:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
@@ -3094,6 +3414,9 @@ function broadcastEvent(event) {
     eventBuffer.shift(); // Remove oldest event
   }
 
+  // Persist buffer to file for recovery after restart
+  saveEventBuffer();
+
   const message = JSON.stringify({
     type: 'event',
     event: event,
@@ -3105,6 +3428,30 @@ function broadcastEvent(event) {
       client.send(message);
     }
   });
+}
+
+// Debounced save function to prevent excessive file writes
+let saveTimeout = null;
+function saveEventBuffer() {
+  // Clear existing timeout
+  if (saveTimeout) {
+    clearTimeout(saveTimeout);
+  }
+
+  // Set new timeout - save after 1 second of no new events
+  saveTimeout = setTimeout(() => {
+    try {
+      const bufferFile = path.join(__dirname, '../../coordination/event-buffer.json');
+      fsSync.writeFileSync(bufferFile, JSON.stringify({
+        events: eventBuffer,
+        savedAt: new Date().toISOString(),
+        bufferSize: EVENT_BUFFER_SIZE
+      }, null, 2));
+      console.log(`Event buffer saved (${eventBuffer.length} events)`);
+    } catch (error) {
+      console.error('Failed to save event buffer:', error);
+    }
+  }, 1000); // 1 second debounce
 }
 
 // Watch dashboard-events.jsonl for new events
