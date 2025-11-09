@@ -1672,6 +1672,77 @@ app.get('/api/daemon/status', async (req, res) => {
 });
 
 /**
+ * GET /api/daemons/all
+ * Get status of all system daemons
+ */
+app.get('/api/daemons/all',
+  getLimiter,
+  async (req, res) => {
+  try {
+    const { execSync } = require('child_process');
+
+    // Check each daemon process
+    const checkDaemon = (name, processName) => {
+      try {
+        const result = execSync(`pgrep -f "${processName}" | head -1`, { encoding: 'utf8' }).trim();
+        if (result) {
+          const pid = parseInt(result);
+          // Get process info
+          const psInfo = execSync(`ps -p ${pid} -o pid,etime,rss | tail -1`, { encoding: 'utf8' }).trim();
+          const [, uptime, memory] = psInfo.split(/\s+/);
+
+          return {
+            status: 'running',
+            pid: pid,
+            uptime: uptime || 'unknown',
+            memory: parseInt(memory) || 0
+          };
+        }
+      } catch (e) {
+        // Process not found
+      }
+      return {
+        status: 'stopped',
+        pid: null,
+        uptime: '0',
+        memory: 0
+      };
+    };
+
+    const daemons = {
+      'worker-daemon': checkDaemon('worker-daemon', 'worker-daemon.sh'),
+      'health-monitor': checkDaemon('health-monitor', 'health-monitor-daemon.sh'),
+      'metrics-snapshot': checkDaemon('metrics-snapshot', 'metrics-snapshot-daemon.sh'),
+      'task-orchestrator': checkDaemon('orchestrator', 'task-orchestrator-daemon.sh'),
+      'pm-daemon': checkDaemon('pm-daemon', 'pm-daemon.sh'),
+      'dashboard': {
+        status: 'running',
+        pid: process.pid,
+        uptime: process.uptime() + 's',
+        memory: process.memoryUsage().rss
+      }
+    };
+
+    // Count running/stopped
+    const summary = {
+      total: Object.keys(daemons).length,
+      running: Object.values(daemons).filter(d => d.status === 'running').length,
+      stopped: Object.values(daemons).filter(d => d.status === 'stopped').length
+    };
+
+    res.json({
+      daemons,
+      summary,
+      timestamp: new Date().toISOString()
+    });
+
+  } catch (error) {
+    console.error('Error checking daemon statuses:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+/**
  * GET /api/pm-daemon/status
  * Get PM daemon status from pm-state.json
  */

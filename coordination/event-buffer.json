@@ -53,8 +53,30 @@
         "priority": "high"
       },
       "message": "Task Assigned: 'task-1762553453' → development"
+    },
+    {
+      "id": "evt-1762699286-28520",
+      "type": "worker_started",
+      "timestamp": "2025-11-09T08:41:26-06:00",
+      "data": {
+        "worker_id": "dev-worker-45BE28AF",
+        "task_id": "task-1762553445",
+        "worker_type": "implementation-worker",
+        "launched_by": "daemon"
+      },
+      "message": "worker started: task-1762553445"
+    },
+    {
+      "id": "evt-test-3",
+      "type": "task_updated",
+      "timestamp": "2025-11-09T20:26:42Z",
+      "data": {
+        "task_id": "task-1762553453",
+        "status": "worker_spawned"
+      },
+      "message": "task updated: task-1762553453"
     }
   ],
-  "savedAt": "2025-11-09T20:12:24.335Z",
+  "savedAt": "2025-11-09T20:26:43.242Z",
   "bufferSize": 500
 }
