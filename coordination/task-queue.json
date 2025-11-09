@@ -1488,6 +1488,22 @@
         "description": "Fix task queue display - 62 active tasks not showing (24 assigned + 38 worker_spawned). Update frontend to display these statuses.",
         "requirements": []
       }
+    },
+    {
+      "id": "task-1762553449",
+      "title": "Fix activity feed - enable 24hr event reporting from dashboard-events.jsonl. Currently showing no items despite 19,802 events.",
+      "type": "development",
+      "priority": "high",
+      "status": "pending",
+      "assigned_to": null,
+      "created_at": "2025-11-09T09:25:48-0600",
+      "created_by": "create-task-cli",
+      "context": {
+        "repository": "ry-ops/commit-relay",
+        "branch": "main",
+        "description": "Fix activity feed - enable 24hr event reporting from dashboard-events.jsonl. Currently showing no items despite 19,802 events.",
+        "requirements": []
+      }
     }
   ],
   "metadata": {
@@ -1497,5 +1513,5 @@
     "in_progress_tasks": 0,
     "completed_tasks": 2
   },
-  "updated_at": "2025-11-09T09:25:47-0600"
+  "updated_at": "2025-11-09T09:25:48-0600"
 }
