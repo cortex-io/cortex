@@ -487,9 +487,13 @@ function calculateMetrics(data, successRatePeriod = 'all_time') {
   const inProgressTasks = tasks.filter(t =>
     t.status === 'in_progress' ||
     t.status === 'in-progress' ||
+    t.status === 'assigned' ||
+    t.status === 'worker_spawned' ||
     t.status === 'scan_worker_spawned'
   ).length;
   const completedTasks = tasks.filter(t => t.status === 'completed').length;
+  const failedTasks = tasks.filter(t => t.status === 'failed').length;
+  const cancelledTasks = tasks.filter(t => t.status === 'cancelled').length;
   const totalTasks = tasks.length;
 
   // Master agent status
@@ -581,7 +585,18 @@ function calculateMetrics(data, successRatePeriod = 'all_time') {
       pending: pendingTasks,
       inProgress: inProgressTasks,
       completed: completedTasks,
-      total: totalTasks
+      failed: failedTasks,
+      cancelled: cancelledTasks,
+      total: totalTasks,
+      // Breakdown for debugging
+      breakdown: {
+        pending: pendingTasks,
+        assigned: tasks.filter(t => t.status === 'assigned').length,
+        worker_spawned: tasks.filter(t => t.status === 'worker_spawned').length,
+        completed: completedTasks,
+        failed: failedTasks,
+        cancelled: cancelledTasks
+      }
     },
     orchestrator: {
       active: orchestrator.active_orchestrations || 0,
@@ -1061,7 +1076,9 @@ function normalizeEvent(event) {
  */
 app.get('/api/events', async (req, res) => {
   try {
-    const limit = parseInt(req.query.limit) || 50;
+    const limit = parseInt(req.query.limit) || 100;  // Increased default from 50 to 100
+    const offset = parseInt(req.query.offset) || 0;
+    const since = req.query.since;  // ISO date string for filtering
     const sessionOnly = req.query.session === 'current';
     const fsSync = require('fs');
 
@@ -1071,15 +1088,65 @@ app.get('/api/events', async (req, res) => {
     // All events (task, git, worker, system, etc.) should be written to this file
     if (fsSync.existsSync(FILES.dashboardEvents)) {
       const content = fsSync.readFileSync(FILES.dashboardEvents, 'utf-8');
-      const lines = content.trim().split('\n').filter(line => line);
-      events = lines.map(line => {
-        try {
-          return normalizeEvent(JSON.parse(line));
-        } catch (e) {
-          console.error('Error parsing event line:', e);
-          return null;
+
+      // Handle both JSONL (one JSON per line) and pretty-printed multi-line JSON
+      // Try to detect format by checking if first line is a complete JSON object
+      const firstLine = content.split('\n')[0];
+      let isJsonl = false;
+      try {
+        if (firstLine && firstLine.trim().startsWith('{') && firstLine.trim().endsWith('}')) {
+          JSON.parse(firstLine);
+          isJsonl = true;
         }
-      }).filter(e => e !== null);
+      } catch (e) {
+        // Not JSONL format
+      }
+
+      if (isJsonl) {
+        // Original JSONL parsing
+        const lines = content.trim().split('\n').filter(line => line);
+        events = lines.map(line => {
+          try {
+            return normalizeEvent(JSON.parse(line));
+          } catch (e) {
+            console.error('Error parsing event line:', e.message);
+            return null;
+          }
+        }).filter(e => e !== null);
+      } else {
+        // Parse multi-line JSON format
+        // Split by pattern: }\n{ to find object boundaries
+        const chunks = content.split(/}\s*\n\s*{/);
+        events = [];
+
+        chunks.forEach((chunk, index) => {
+          let jsonStr = chunk.trim();
+
+          // Add back the braces we split on (except first and last)
+          if (index > 0) jsonStr = '{' + jsonStr;
+          if (index < chunks.length - 1) jsonStr = jsonStr + '}';
+
+          // Skip empty or incomplete chunks
+          if (!jsonStr || jsonStr.length < 10 || !jsonStr.includes('"id"')) {
+            return;
+          }
+
+          try {
+            const event = JSON.parse(jsonStr);
+            // Validate required fields
+            if (event.id && event.timestamp && event.type) {
+              events.push(normalizeEvent(event));
+            }
+          } catch (e) {
+            // Skip malformed entries silently to avoid console spam
+            if (index === chunks.length - 1 && !jsonStr.includes('"id"')) {
+              // Last chunk is often incomplete, ignore it
+              return;
+            }
+            console.error(`Error parsing event chunk ${index}:`, e.message.substring(0, 100));
+          }
+        });
+      }
     }
 
     // If session=current, only show events from event buffer (events since server started)
@@ -1087,12 +1154,31 @@ app.get('/api/events', async (req, res) => {
       events = eventBuffer.slice();
     }
 
-    // Sort by timestamp (most recent first) and limit
-    const sortedEvents = events
-      .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
-      .slice(0, limit);
+    // Filter by timestamp if 'since' parameter provided
+    if (since) {
+      const sinceDate = new Date(since);
+      events = events.filter(event => {
+        const eventDate = new Date(event.timestamp);
+        return eventDate >= sinceDate;
+      });
+    }
 
-    res.json({ events: sortedEvents, total: sortedEvents.length });
+    // Sort by timestamp (most recent first)
+    const sortedEvents = events.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+
+    // Apply pagination
+    const totalEvents = sortedEvents.length;
+    const paginatedEvents = sortedEvents.slice(offset, offset + limit);
+
+    res.json({
+      events: paginatedEvents,
+      total: totalEvents,
+      page: {
+        offset: offset,
+        limit: limit,
+        hasMore: (offset + limit) < totalEvents
+      }
+    });
   } catch (error) {
     console.error('Error reading events:', error);
     res.status(500).json({ error: 'Internal server error' });
@@ -1149,6 +1235,104 @@ app.get('/api/git-operations', async (req, res) => {
     });
   } catch (error) {
     console.error('Error reading git operations:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+/**
+ * GET /api/git-status
+ * Get current git repository status and last operations
+ */
+app.get('/api/git-status', async (req, res) => {
+  try {
+    const fsSync = require('fs');
+    const { execSync } = require('child_process');
+
+    let gitStatus = {
+      online: true,
+      lastPR: null,
+      lastPush: null,
+      lastSync: null,
+      currentBranch: 'unknown',
+      ahead: 0,
+      behind: 0
+    };
+
+    // Try to get current git status
+    try {
+      gitStatus.currentBranch = execSync('git rev-parse --abbrev-ref HEAD', { encoding: 'utf-8' }).trim();
+
+      // Get ahead/behind counts
+      const status = execSync('git status --porcelain -b', { encoding: 'utf-8' });
+      const branchLine = status.split('\n')[0];
+      const aheadMatch = branchLine.match(/ahead (\d+)/);
+      const behindMatch = branchLine.match(/behind (\d+)/);
+
+      if (aheadMatch) gitStatus.ahead = parseInt(aheadMatch[1]);
+      if (behindMatch) gitStatus.behind = parseInt(behindMatch[1]);
+    } catch (e) {
+      gitStatus.online = false;
+    }
+
+    // Read git operations to find last PR, push, etc.
+    const gitOpsPath = path.join(COORD_DIR, 'git-operations.jsonl');
+    if (fsSync.existsSync(gitOpsPath)) {
+      const content = fsSync.readFileSync(gitOpsPath, 'utf-8');
+      const operations = content
+        .split('\n')
+        .filter(line => line.trim())
+        .map(line => {
+          try {
+            return JSON.parse(line);
+          } catch (e) {
+            return null;
+          }
+        })
+        .filter(op => op !== null);
+
+      // Find last PR creation
+      const prOps = operations.filter(op => op.operation === 'pr_create' || op.operation === 'pr_created');
+      if (prOps.length > 0) {
+        const lastPR = prOps[prOps.length - 1];
+        gitStatus.lastPR = {
+          timestamp: lastPR.timestamp,
+          pr_number: lastPR.pr_number,
+          title: lastPR.pr_title || lastPR.title,
+          branch: lastPR.branch
+        };
+      }
+
+      // Find last push
+      const pushOps = operations.filter(op =>
+        op.operation === 'push' ||
+        op.operation === 'manual_commit_push' ||
+        op.operation === 'auto_commit_push'
+      );
+      if (pushOps.length > 0) {
+        const lastPush = pushOps[pushOps.length - 1];
+        gitStatus.lastPush = {
+          timestamp: lastPush.timestamp,
+          branch: lastPush.branch,
+          commits: lastPush.commits_count || 1,
+          worker_id: lastPush.worker_id
+        };
+      }
+
+      // Last sync is the most recent of PR or push
+      const allSyncOps = [...prOps, ...pushOps].sort((a, b) =>
+        new Date(b.timestamp) - new Date(a.timestamp)
+      );
+      if (allSyncOps.length > 0) {
+        gitStatus.lastSync = {
+          timestamp: allSyncOps[0].timestamp,
+          operation: allSyncOps[0].operation
+        };
+      }
+    }
+
+    res.json(gitStatus);
+  } catch (error) {
+    console.error('Error getting git status:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
