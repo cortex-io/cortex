@@ -1,6 +1,6 @@
 {
   "version": "1.0.0",
-  "last_updated": "2025-11-09T14:26:22Z",
+  "last_updated": "2025-11-09T20:12:22Z",
   "patterns": {
     "by_expert": {
       "development": {
@@ -685,12 +685,13 @@
           "launcher",
           "simple",
           "straightforward",
-          "verified"
+          "verified",
+          "infrastructure"
         ],
         "typical_complexity": "medium",
         "average_completion_time": 0,
         "success_rate": 0,
-        "total_tasks": 44
+        "total_tasks": 45
       },
       "security": {
         "common_keywords": [
@@ -736,7 +737,7 @@
     },
     "routing_accuracy": {
       "correct_routes": 0,
-      "total_routes": 70,
+      "total_routes": 71,
       "accuracy_percentage": 0,
       "confidence_threshold_adjustments": []
     },

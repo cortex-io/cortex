@@ -3222,3 +3222,39 @@
     "logged_at": "2025-11-09T14:26:22-0600"
   }
 }
+{
+  "task_id": "task-1762553453",
+  "timestamp": "2025-11-09T14:12:21-0600",
+  "routing_strategy": "mixture_of_experts",
+  "decision": {
+    "primary_expert": "development",
+    "primary_confidence": 0.95,
+    "strategy": "single_expert",
+    "parallel_experts": [],
+    "scores": {
+      "development": 0.95,
+      "security": 0,
+      "inventory": 0.07
+    }
+  }
+}
+{
+  "task_id": "task-1762553453",
+  "timestamp": "2025-11-09T14:12:21-0600",
+  "routing_strategy": "mixture_of_experts",
+  "decision": {
+    "primary_expert": "development",
+    "primary_confidence": 0.95,
+    "strategy": "single_expert",
+    "parallel_experts": [],
+    "scores": {
+      "development": 0.95,
+      "security": 0,
+      "inventory": 0.07
+    }
+  },
+  "enriched_metadata": {
+    "logged_by": "coordinator-master",
+    "logged_at": "2025-11-09T20:12:22-0600"
+  }
+}
