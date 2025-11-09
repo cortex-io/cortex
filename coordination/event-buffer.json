@@ -1,0 +1,35 @@
+{
+  "events": [
+    {
+      "id": "evt-test4-1762710675",
+      "type": "buffer_test_fixed",
+      "timestamp": "2025-11-09T17:51:15Z",
+      "data": {
+        "message": "Testing persistence with fsSync"
+      },
+      "message": "buffer test fixed"
+    },
+    {
+      "id": "evt-batch-1762710703-1",
+      "type": "batch_event_1",
+      "timestamp": "2025-11-09T17:51:43Z",
+      "data": {
+        "sequence": 1,
+        "message": "Batch event number 1"
+      },
+      "message": "batch event 1"
+    },
+    {
+      "id": "evt-batch-1762710704-5",
+      "type": "batch_event_5",
+      "timestamp": "2025-11-09T17:51:44Z",
+      "data": {
+        "sequence": 5,
+        "message": "Batch event number 5"
+      },
+      "message": "batch event 5"
+    }
+  ],
+  "savedAt": "2025-11-09T17:51:45.586Z",
+  "bufferSize": 500
+}
