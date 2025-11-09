@@ -1552,6 +1552,22 @@
         "description": "Enhance MoE intelligence pages with routing visualizations. Display routing decisions, confidence scores from routing-decisions.jsonl.",
         "requirements": []
       }
+    },
+    {
+      "id": "task-1762553453",
+      "title": "Post-dashboard fix system improvements: testing, health monitoring, UI enhancements, documentation, performance optimization, and monitoring infrastructure",
+      "type": "development",
+      "priority": "high",
+      "status": "pending",
+      "assigned_to": null,
+      "created_at": "2025-11-09T14:08:40-0600",
+      "created_by": "create-task-cli",
+      "context": {
+        "repository": "ry-ops/commit-relay",
+        "branch": "main",
+        "description": "Post-dashboard fix system improvements: testing, health monitoring, UI enhancements, documentation, performance optimization, and monitoring infrastructure",
+        "requirements": []
+      }
     }
   ],
   "metadata": {
@@ -1561,5 +1577,5 @@
     "in_progress_tasks": 0,
     "completed_tasks": 2
   },
-  "updated_at": "2025-11-09T09:26:08-0600"
+  "updated_at": "2025-11-09T14:08:40-0600"
 }
