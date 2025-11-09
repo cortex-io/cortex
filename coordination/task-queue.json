@@ -1423,14 +1423,37 @@
       "title": "SIMPLE TEST to verify the worker launcher fix works end-to-end. Create a test file at tests/launcher-verification.txt with content 'Worker launcher fix verified successfully\\!' and commit with message 'test: worker launcher end-to-end verification'. This is a straightforward task to confirm the architecture fix is working.",
       "type": "development",
       "priority": "high",
-      "status": "pending",
-      "assigned_to": null,
+      "status": "worker_spawned",
+      "assigned_to": "development",
       "created_at": "2025-11-09T08:25:28-0600",
       "created_by": "create-task-cli",
       "context": {
         "repository": "ry-ops/commit-relay",
         "branch": "main",
         "description": "SIMPLE TEST to verify the worker launcher fix works end-to-end. Create a test file at tests/launcher-verification.txt with content 'Worker launcher fix verified successfully\\!' and commit with message 'test: worker launcher end-to-end verification'. This is a straightforward task to confirm the architecture fix is working.",
+        "requirements": []
+      },
+      "assigned_by": "coordinator",
+      "assigned_at": "2025-11-09T08:26:22-0600",
+      "routing_confidence": "0.95",
+      "routing_strategy": "single_expert",
+      "updated_at": "2025-11-09T08:26:34-06:00",
+      "worker_id": "dev-worker-45BE28AF",
+      "worker_type": "feature-implementer"
+    },
+    {
+      "id": "task-1762553446",
+      "title": "Fix dashboard-events.jsonl display on admin page. 19,802 events exist but not showing. Fix frontend event parsing and display logic.",
+      "type": "development",
+      "priority": "critical",
+      "status": "pending",
+      "assigned_to": null,
+      "created_at": "2025-11-09T09:25:44-0600",
+      "created_by": "create-task-cli",
+      "context": {
+        "repository": "ry-ops/commit-relay",
+        "branch": "main",
+        "description": "Fix dashboard-events.jsonl display on admin page. 19,802 events exist but not showing. Fix frontend event parsing and display logic.",
         "requirements": []
       }
     }
@@ -1442,5 +1465,5 @@
     "in_progress_tasks": 0,
     "completed_tasks": 2
   },
-  "updated_at": "2025-11-09T08:25:28-0600"
+  "updated_at": "2025-11-09T09:25:44-0600"
 }
