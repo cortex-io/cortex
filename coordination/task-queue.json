@@ -1504,6 +1504,22 @@
         "description": "Fix activity feed - enable 24hr event reporting from dashboard-events.jsonl. Currently showing no items despite 19,802 events.",
         "requirements": []
       }
+    },
+    {
+      "id": "task-1762553450",
+      "title": "Fix real-time events disappearing after refresh. Events disappear from dashboard. Fix EVENT_BUFFER_SIZE logic and WebSocket reconnection.",
+      "type": "development",
+      "priority": "high",
+      "status": "pending",
+      "assigned_to": null,
+      "created_at": "2025-11-09T09:26:05-0600",
+      "created_by": "create-task-cli",
+      "context": {
+        "repository": "ry-ops/commit-relay",
+        "branch": "main",
+        "description": "Fix real-time events disappearing after refresh. Events disappear from dashboard. Fix EVENT_BUFFER_SIZE logic and WebSocket reconnection.",
+        "requirements": []
+      }
     }
   ],
   "metadata": {
@@ -1513,5 +1529,5 @@
     "in_progress_tasks": 0,
     "completed_tasks": 2
   },
-  "updated_at": "2025-11-09T09:25:48-0600"
+  "updated_at": "2025-11-09T09:26:05-0600"
 }
