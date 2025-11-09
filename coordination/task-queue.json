@@ -1456,6 +1456,22 @@
         "description": "Fix dashboard-events.jsonl display on admin page. 19,802 events exist but not showing. Fix frontend event parsing and display logic.",
         "requirements": []
       }
+    },
+    {
+      "id": "task-1762553447",
+      "title": "Fix Git & Server manager status - no last PR, no repo sync, false offline indicator. Fix git API endpoints.",
+      "type": "development",
+      "priority": "critical",
+      "status": "pending",
+      "assigned_to": null,
+      "created_at": "2025-11-09T09:25:45-0600",
+      "created_by": "create-task-cli",
+      "context": {
+        "repository": "ry-ops/commit-relay",
+        "branch": "main",
+        "description": "Fix Git & Server manager status - no last PR, no repo sync, false offline indicator. Fix git API endpoints.",
+        "requirements": []
+      }
     }
   ],
   "metadata": {
@@ -1465,5 +1481,5 @@
     "in_progress_tasks": 0,
     "completed_tasks": 2
   },
-  "updated_at": "2025-11-09T09:25:44-0600"
+  "updated_at": "2025-11-09T09:25:45-0600"
 }
