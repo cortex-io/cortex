@@ -28,8 +28,33 @@
         "message": "Batch event number 5"
       },
       "message": "batch event 5"
+    },
+    {
+      "id": "task-event-1762718921316-9ocledqi7",
+      "type": "task_created",
+      "timestamp": "2025-11-09T14:08:40-0600",
+      "data": {
+        "task_id": "task-1762553453",
+        "task_title": "Post-dashboard fix system improvements: testing, health monitoring, UI enhancements, documentation, performance optimization, and monitoring infrastructure",
+        "task_type": "development",
+        "priority": "high",
+        "created_by": "create-task-cli"
+      },
+      "message": "Task Created: 'task-1762553453: Post-dashboard fix system improvements: testing, health monitoring, UI enhancements, documentation, performance optimization, and monitoring infrastructure'"
+    },
+    {
+      "id": "task-event-1762719143334-gre9a8ydn",
+      "type": "task_assigned",
+      "timestamp": "2025-11-09T14:12:22-0600",
+      "data": {
+        "task_id": "task-1762553453",
+        "task_title": "Post-dashboard fix system improvements: testing, health monitoring, UI enhancements, documentation, performance optimization, and monitoring infrastructure",
+        "assigned_to": "development",
+        "priority": "high"
+      },
+      "message": "Task Assigned: 'task-1762553453' → development"
     }
   ],
-  "savedAt": "2025-11-09T17:51:45.586Z",
+  "savedAt": "2025-11-09T20:12:24.335Z",
   "bufferSize": 500
 }
