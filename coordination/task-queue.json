@@ -1273,8 +1273,8 @@
       "title": "Comprehensive API Security Review and Learning: Review dashboard server API (dashboard/server/index.js) and Python SDK API (python-sdk/commit_relay/*). Focus on: 1) Authentication/Authorization vulnerabilities, 2) Input validation and injection risks, 3) CORS and CSRF protection, 4) API rate limiting, 5) Sensitive data exposure, 6) Error handling and information leakage, 7) Dependency vulnerabilities. Document all security issues found with severity ratings and recommended fixes. Then review overall API design, performance, and code quality issues.",
       "type": "development",
       "priority": "critical",
-      "status": "pending",
-      "assigned_to": null,
+      "status": "worker_spawned",
+      "assigned_to": "development",
       "created_at": "2025-11-08T15:38:44-0600",
       "created_by": "create-task-cli",
       "context": {
@@ -1282,15 +1282,24 @@
         "branch": "main",
         "description": "Comprehensive API Security Review and Learning: Review dashboard server API (dashboard/server/index.js) and Python SDK API (python-sdk/commit_relay/*). Focus on: 1) Authentication/Authorization vulnerabilities, 2) Input validation and injection risks, 3) CORS and CSRF protection, 4) API rate limiting, 5) Sensitive data exposure, 6) Error handling and information leakage, 7) Dependency vulnerabilities. Document all security issues found with severity ratings and recommended fixes. Then review overall API design, performance, and code quality issues.",
         "requirements": []
-      }
+      },
+      "assigned_by": "coordinator",
+      "assigned_at": "2025-11-09T06:08:49-0600",
+      "routing_confidence": "0.95",
+      "routing_strategy": "single_expert",
+      "worker_id": "dev-worker-FABEC7DC",
+      "worker_type": "feature-implementer",
+      "completed_at": "2025-11-09T06:04:28-0600",
+      "error": "Worker became zombie and was killed",
+      "updated_at": "2025-11-09T06:22:09-06:00"
     },
     {
       "id": "task-1762553440",
       "title": "Complete Medium Priority Security Improvements: 1) CSRF Protection - Implement CSRF tokens for all state-changing POST/PUT/DELETE endpoints using csurf middleware, add /api/csrf-token endpoint, update frontend to include tokens. 2) Dependency Security Audit - Run npm audit in dashboard/, fix all vulnerabilities, update vulnerable dependencies, document any unfixable issues with mitigation strategies. 3) WebSocket Authentication - Add API key validation to WebSocket connections, validate origin headers, implement connection authentication before allowing subscriptions. 4) Python SDK Security Review - Audit python-sdk/commit_relay/client.py for security issues, ensure SSL verification is enforced, add request timeout limits, validate API responses, implement retry limits to prevent infinite loops, add input sanitization. Document all fixes with severity ratings and test thoroughly.",
       "type": "development",
       "priority": "high",
-      "status": "pending",
-      "assigned_to": null,
+      "status": "worker_spawned",
+      "assigned_to": "development",
       "created_at": "2025-11-08T15:59:42-0600",
       "created_by": "create-task-cli",
       "context": {
@@ -1298,15 +1307,24 @@
         "branch": "main",
         "description": "Complete Medium Priority Security Improvements: 1) CSRF Protection - Implement CSRF tokens for all state-changing POST/PUT/DELETE endpoints using csurf middleware, add /api/csrf-token endpoint, update frontend to include tokens. 2) Dependency Security Audit - Run npm audit in dashboard/, fix all vulnerabilities, update vulnerable dependencies, document any unfixable issues with mitigation strategies. 3) WebSocket Authentication - Add API key validation to WebSocket connections, validate origin headers, implement connection authentication before allowing subscriptions. 4) Python SDK Security Review - Audit python-sdk/commit_relay/client.py for security issues, ensure SSL verification is enforced, add request timeout limits, validate API responses, implement retry limits to prevent infinite loops, add input sanitization. Document all fixes with severity ratings and test thoroughly.",
         "requirements": []
-      }
+      },
+      "assigned_by": "coordinator",
+      "assigned_at": "2025-11-09T06:08:49-0600",
+      "routing_confidence": "0.95",
+      "routing_strategy": "single_expert",
+      "worker_id": "dev-worker-9BEC74A2",
+      "worker_type": "feature-implementer",
+      "completed_at": "2025-11-09T06:04:29-0600",
+      "error": "Worker became zombie and was killed",
+      "updated_at": "2025-11-09T06:22:09-06:00"
     },
     {
       "id": "task-1762553441",
       "title": "BUG: Task Queue Metadata Out of Sync - Fix task-queue.json metadata calculation. Actual issue: task-queue.json contains 61 tasks in tasks[] array but metadata shows total_tasks:5, pending_tasks:3, in_progress_tasks:0, completed_tasks:2. This causes dashboard to display incorrect task counts and queue appears empty. Root causes to investigate: 1) Metadata not updated when tasks are added via create-task.sh, 2) Task status changes not triggering metadata recalculation, 3) DDQD stress test tasks (moe-test-ddqd-v5-*) not being counted, 4) Possible race condition in concurrent task updates. Fix requirements: Create task-queue metadata sync utility that recalculates accurate counts from tasks array, add metadata validation on every task queue update, fix create-task.sh to update metadata correctly, add periodic metadata sync job to coordinator daemon, handle edge cases (test tasks, zombie workers, stale assignments). Also investigate why many tasks show status=assigned but no worker progress - may indicate worker spawn failures. Test with current 61-task queue state before cleanup. Keywords: bug-fix critical task-queue metadata synchronization data-integrity dashboard worker-tracking coordination.",
       "type": "development",
       "priority": "critical",
-      "status": "pending",
-      "assigned_to": null,
+      "status": "worker_spawned",
+      "assigned_to": "development",
       "created_at": "2025-11-08T16:03:45-0600",
       "created_by": "create-task-cli",
       "context": {
@@ -1314,15 +1332,24 @@
         "branch": "main",
         "description": "BUG: Task Queue Metadata Out of Sync - Fix task-queue.json metadata calculation. Actual issue: task-queue.json contains 61 tasks in tasks[] array but metadata shows total_tasks:5, pending_tasks:3, in_progress_tasks:0, completed_tasks:2. This causes dashboard to display incorrect task counts and queue appears empty. Root causes to investigate: 1) Metadata not updated when tasks are added via create-task.sh, 2) Task status changes not triggering metadata recalculation, 3) DDQD stress test tasks (moe-test-ddqd-v5-*) not being counted, 4) Possible race condition in concurrent task updates. Fix requirements: Create task-queue metadata sync utility that recalculates accurate counts from tasks array, add metadata validation on every task queue update, fix create-task.sh to update metadata correctly, add periodic metadata sync job to coordinator daemon, handle edge cases (test tasks, zombie workers, stale assignments). Also investigate why many tasks show status=assigned but no worker progress - may indicate worker spawn failures. Test with current 61-task queue state before cleanup. Keywords: bug-fix critical task-queue metadata synchronization data-integrity dashboard worker-tracking coordination.",
         "requirements": []
-      }
+      },
+      "assigned_by": "coordinator",
+      "assigned_at": "2025-11-09T06:08:50-0600",
+      "routing_confidence": "0.95",
+      "routing_strategy": "single_expert",
+      "worker_id": "dev-worker-C4C951EA",
+      "worker_type": "feature-implementer",
+      "completed_at": "2025-11-09T06:04:29-0600",
+      "error": "Worker became zombie and was killed",
+      "updated_at": "2025-11-09T06:22:10-06:00"
     },
     {
       "id": "task-1762553442",
       "title": "BUG: Dashboard Workforce Stream showing no events despite 5,191 events in coordination/dashboard-events.jsonl. User reports workforce event stream panel is empty/blank. Investigate: 1) WebSocket connection between dashboard frontend and server - check WS handshake, connection status, message streaming, 2) Dashboard server event streaming logic in dashboard/server/index.js - verify event reading from JSONL, WebSocket broadcast functionality, file watching with chokidar, 3) Frontend event display in dashboard/public/index.html - check Alpine.js event handling, event rendering, filtering logic, 4) Event parsing errors - check browser console for JSON parse errors (events may be malformed), 5) CORS/authentication issues blocking WebSocket after security updates, 6) File permissions on dashboard-events.jsonl preventing reads. Test with latest event timestamp 2025-11-08T16:03:45-0600. Verify events are being broadcast via WebSocket, frontend is receiving them, and Alpine.js is rendering them. Fix all blocking issues and ensure real-time event streaming works. Keywords: bug-fix critical dashboard WebSocket events real-time streaming frontend Alpine.js chokidar JSONL broadcasting.",
       "type": "development",
       "priority": "critical",
-      "status": "pending",
-      "assigned_to": null,
+      "status": "worker_spawned",
+      "assigned_to": "development",
       "created_at": "2025-11-08T16:04:12-0600",
       "created_by": "create-task-cli",
       "context": {
@@ -1330,15 +1357,24 @@
         "branch": "main",
         "description": "BUG: Dashboard Workforce Stream showing no events despite 5,191 events in coordination/dashboard-events.jsonl. User reports workforce event stream panel is empty/blank. Investigate: 1) WebSocket connection between dashboard frontend and server - check WS handshake, connection status, message streaming, 2) Dashboard server event streaming logic in dashboard/server/index.js - verify event reading from JSONL, WebSocket broadcast functionality, file watching with chokidar, 3) Frontend event display in dashboard/public/index.html - check Alpine.js event handling, event rendering, filtering logic, 4) Event parsing errors - check browser console for JSON parse errors (events may be malformed), 5) CORS/authentication issues blocking WebSocket after security updates, 6) File permissions on dashboard-events.jsonl preventing reads. Test with latest event timestamp 2025-11-08T16:03:45-0600. Verify events are being broadcast via WebSocket, frontend is receiving them, and Alpine.js is rendering them. Fix all blocking issues and ensure real-time event streaming works. Keywords: bug-fix critical dashboard WebSocket events real-time streaming frontend Alpine.js chokidar JSONL broadcasting.",
         "requirements": []
-      }
+      },
+      "assigned_by": "coordinator",
+      "assigned_at": "2025-11-09T06:08:51-0600",
+      "routing_confidence": "0.95",
+      "routing_strategy": "single_expert",
+      "worker_id": "dev-worker-108C3B79",
+      "worker_type": "feature-implementer",
+      "completed_at": "2025-11-09T06:04:29-0600",
+      "error": "Worker became zombie and was killed",
+      "updated_at": "2025-11-09T06:22:09-06:00"
     },
     {
       "id": "task-1762553443",
       "title": "CRITICAL BLOCKER: Worker Pool Clogged with 20 Zombie Workers - System Completely Stalled. IMMEDIATE ACTION REQUIRED. Current state: Worker pool shows 20/8 active workers (250% capacity), all are zombies from DDQD stress tests created Nov 8 15:24 (4+ hours ago). Worker daemon refusing to spawn ANY new workers, blocking 4 critical security tasks (task-1762553439, task-1762553440, task-1762553441, task-1762553442). Root causes: 1) Zombie-killer daemon (PID 76168) running but NOT detecting/cleaning stale workers, 2) Workers stuck in 'pending' status with null heartbeats for hours, 3) 15-minute stale timeout not being enforced, 4) Heartbeat monitoring broken or not implemented. REQUIRED FIXES: 1) IMMEDIATELY move all 20 stale workers from coordination/worker-specs/active/ to coordination/worker-specs/failed/ to unblock pool (CRITICAL - do this first\\!), 2) Debug and fix zombie-killer-daemon.sh stale worker detection logic (check heartbeat comparison, timeout calculation, PID validation), 3) Add aggressive stale worker detection (any worker pending >30 min with null heartbeat = zombie), 4) Implement worker heartbeat monitoring if missing, 5) Add pool capacity safeguards (auto-cleanup when >150% capacity), 6) Test zombie-killer runs and validates cleanup works, 7) Document what went wrong and prevention measures. SUCCESS CRITERIA: Pool capacity drops to 0-2 active workers, 4 pending critical tasks get assigned and spawn workers within 2 minutes, zombie-killer properly detects and cleans future stale workers. URGENT: System is completely non-functional until this is fixed. Keywords: critical blocker bug-fix zombie-workers worker-pool daemon stale-detection heartbeat monitoring capacity cleanup emergency.",
       "type": "development",
       "priority": "critical",
-      "status": "pending",
-      "assigned_to": null,
+      "status": "worker_spawned",
+      "assigned_to": "development",
       "created_at": "2025-11-08T19:22:48-0600",
       "created_by": "create-task-cli",
       "context": {
@@ -1346,21 +1382,55 @@
         "branch": "main",
         "description": "CRITICAL BLOCKER: Worker Pool Clogged with 20 Zombie Workers - System Completely Stalled. IMMEDIATE ACTION REQUIRED. Current state: Worker pool shows 20/8 active workers (250% capacity), all are zombies from DDQD stress tests created Nov 8 15:24 (4+ hours ago). Worker daemon refusing to spawn ANY new workers, blocking 4 critical security tasks (task-1762553439, task-1762553440, task-1762553441, task-1762553442). Root causes: 1) Zombie-killer daemon (PID 76168) running but NOT detecting/cleaning stale workers, 2) Workers stuck in 'pending' status with null heartbeats for hours, 3) 15-minute stale timeout not being enforced, 4) Heartbeat monitoring broken or not implemented. REQUIRED FIXES: 1) IMMEDIATELY move all 20 stale workers from coordination/worker-specs/active/ to coordination/worker-specs/failed/ to unblock pool (CRITICAL - do this first\\!), 2) Debug and fix zombie-killer-daemon.sh stale worker detection logic (check heartbeat comparison, timeout calculation, PID validation), 3) Add aggressive stale worker detection (any worker pending >30 min with null heartbeat = zombie), 4) Implement worker heartbeat monitoring if missing, 5) Add pool capacity safeguards (auto-cleanup when >150% capacity), 6) Test zombie-killer runs and validates cleanup works, 7) Document what went wrong and prevention measures. SUCCESS CRITERIA: Pool capacity drops to 0-2 active workers, 4 pending critical tasks get assigned and spawn workers within 2 minutes, zombie-killer properly detects and cleans future stale workers. URGENT: System is completely non-functional until this is fixed. Keywords: critical blocker bug-fix zombie-workers worker-pool daemon stale-detection heartbeat monitoring capacity cleanup emergency.",
         "requirements": []
-      }
+      },
+      "assigned_by": "coordinator",
+      "assigned_at": "2025-11-09T06:08:51-0600",
+      "routing_confidence": "0.95",
+      "routing_strategy": "single_expert",
+      "worker_id": "dev-worker-072C9FAC",
+      "worker_type": "feature-implementer",
+      "completed_at": "2025-11-09T06:04:29-0600",
+      "error": "Worker became zombie and was killed",
+      "updated_at": "2025-11-09T06:22:09-06:00"
     },
     {
       "id": "task-1762553444",
       "title": "CRITICAL ARCHITECTURE GAP: Build Intelligent Autonomous Task Routing & Worker Lifecycle Management System. Current problem: System is NOT fully autonomous - pending tasks never get assigned because coordinator master only runs manually. Need complete autonomous loop from task creation → routing → execution → completion monitoring → issue resolution. IMPLEMENT THREE CRITICAL COMPONENTS: \n\nCOMPONENT 1 - Coordinator Master Daemon (NEW): Create coordinator-master-daemon.sh that runs coordinator master periodically (every 60 seconds) to: 1) Detect pending tasks in task-queue.json with assigned_to:null, 2) Run scripts/run-coordinator-master.sh to apply MoE routing, 3) Assign tasks to appropriate specialist masters (security/development/inventory), 4) Log all routing decisions with confidence scores, 5) Ensure daemon is robust, handles errors gracefully, prevents duplicate routing. This makes task routing fully autonomous.\n\nCOMPONENT 2 - Remove Worker Pool Cap: Worker pool currently has artificial 8-worker limit causing capacity issues. Change worker-daemon.sh to: 1) Remove or drastically increase target_active_workers cap (suggest 50-100), 2) Use worker pool efficiency metrics instead of hard caps, 3) Allow dynamic scaling based on pending task queue depth, 4) Monitor system resources (memory/CPU) as natural limit, 5) Keep sparse activation benefits but remove artificial bottlenecks.\n\nCOMPONENT 3 - Intelligent PM (Project Manager) System (NEW - MOST IMPORTANT): Replace dumb time-based zombie-killer with smart PM that understands CONTEXT. Create pm-daemon.sh that works WITH coordinator and MoE to intelligently manage worker lifecycle: \n\nPM Intelligence Requirements:\n- Monitor ALL workers continuously (not just >15min timeout)\n- Check actual progress indicators: git commits, file changes, coordination updates, task status changes\n- Understand task CONTEXT from MoE: Is this a 5-minute bug fix or 60-minute feature? Adjust expectations.\n- Communicate with coordinator master: Ask 'Is worker dev-worker-ABC making acceptable progress on task-XYZ?'\n- Use MoE routing confidence: Low confidence tasks may need more time, high confidence should complete quickly\n- Track worker health metrics: heartbeat, token usage, execution patterns, output quality\n\nPM Decision Framework:\n1) WAIT: Worker actively working (recent heartbeat, files changing, making commits) → Keep monitoring\n2) INVESTIGATE: Worker stalled but context suggests complex task → Ask coordinator/MoE for assessment\n3) INTERVENE: Worker truly stuck (no activity, context suggests should be done) → Analyze why, create handoff for replacement\n4) KILL & RESPAWN: Worker zombie confirmed (no heartbeat, no progress, timeout exceeded for task complexity) → Clean up, spawn replacement with learnings from failure\n5) ESCALATE: Repeated failures on same task → Flag to coordinator, may need human review or task redesign\n\nPM Communication Protocol:\n- Read task context from task-queue.json (type, priority, description, requirements)\n- Check MoE routing metadata (confidence scores, specialist assignment, complexity estimates)\n- Query coordinator state to understand task dependencies and blockers\n- Update coordination/pm-state.json with worker assessments and decisions\n- Log all PM decisions to coordination/pm-decisions.jsonl for learning and audit\n\nPM Metrics to Track:\n- Worker lifetime distributions by task type\n- False positive zombie detections (killed workers that were actually progressing)\n- Task completion success rate by worker type\n- Average time-to-completion by task complexity\n- Worker respawn effectiveness (does new worker succeed where old failed?)\n\nImplementation Requirements:\n- Create coordination/pm-state.json schema for PM decision tracking\n- Build PM context gathering utilities (read tasks, routing data, worker specs, git activity)\n- Implement intelligent timeout calculations based on task type/complexity\n- Add worker progress detection (file watcher, git log parsing, coordination file monitoring)\n- Create PM→Coordinator communication interface\n- Build decision tree logic for wait/investigate/intervene/kill/escalate\n- Add learning system: PM learns optimal timeouts from historical completion data\n- Comprehensive logging for PM decision audit trail\n\nTesting & Validation:\n- Test PM correctly waits for long-running legitimate workers\n- Verify PM detects and kills actual zombies (stalled workers)\n- Confirm PM spawns replacements successfully\n- Validate coordinator daemon routes all pending tasks\n- Test full autonomous loop: create task → coordinator routes → worker spawns → PM monitors → completion\n- Run with current 5 pending tasks as validation\n\nSuccess Criteria:\n1) Coordinator daemon running, routing pending tasks every 60s\n2) Worker pool cap removed/increased to 50+\n3) PM daemon running, intelligently monitoring all workers\n4) 5 pending critical tasks get routed, spawned, monitored, completed\n5) No false positive zombie kills on legitimate workers\n6) System fully autonomous from task creation to completion\n7) Documentation of PM decision framework and communication protocol\n\nKeywords: critical architecture autonomous coordinator-daemon pm-daemon intelligent-monitoring worker-lifecycle MoE-integration task-routing context-aware zombie-detection progress-tracking adaptive-timeouts system-intelligence project-management coordination full-autonomy.",
       "type": "development",
       "priority": "critical",
-      "status": "pending",
-      "assigned_to": null,
+      "status": "worker_spawned",
+      "assigned_to": "development",
       "created_at": "2025-11-09T04:33:16-0600",
       "created_by": "create-task-cli",
       "context": {
         "repository": "ry-ops/commit-relay",
         "branch": "main",
         "description": "CRITICAL ARCHITECTURE GAP: Build Intelligent Autonomous Task Routing & Worker Lifecycle Management System. Current problem: System is NOT fully autonomous - pending tasks never get assigned because coordinator master only runs manually. Need complete autonomous loop from task creation → routing → execution → completion monitoring → issue resolution. IMPLEMENT THREE CRITICAL COMPONENTS: \n\nCOMPONENT 1 - Coordinator Master Daemon (NEW): Create coordinator-master-daemon.sh that runs coordinator master periodically (every 60 seconds) to: 1) Detect pending tasks in task-queue.json with assigned_to:null, 2) Run scripts/run-coordinator-master.sh to apply MoE routing, 3) Assign tasks to appropriate specialist masters (security/development/inventory), 4) Log all routing decisions with confidence scores, 5) Ensure daemon is robust, handles errors gracefully, prevents duplicate routing. This makes task routing fully autonomous.\n\nCOMPONENT 2 - Remove Worker Pool Cap: Worker pool currently has artificial 8-worker limit causing capacity issues. Change worker-daemon.sh to: 1) Remove or drastically increase target_active_workers cap (suggest 50-100), 2) Use worker pool efficiency metrics instead of hard caps, 3) Allow dynamic scaling based on pending task queue depth, 4) Monitor system resources (memory/CPU) as natural limit, 5) Keep sparse activation benefits but remove artificial bottlenecks.\n\nCOMPONENT 3 - Intelligent PM (Project Manager) System (NEW - MOST IMPORTANT): Replace dumb time-based zombie-killer with smart PM that understands CONTEXT. Create pm-daemon.sh that works WITH coordinator and MoE to intelligently manage worker lifecycle: \n\nPM Intelligence Requirements:\n- Monitor ALL workers continuously (not just >15min timeout)\n- Check actual progress indicators: git commits, file changes, coordination updates, task status changes\n- Understand task CONTEXT from MoE: Is this a 5-minute bug fix or 60-minute feature? Adjust expectations.\n- Communicate with coordinator master: Ask 'Is worker dev-worker-ABC making acceptable progress on task-XYZ?'\n- Use MoE routing confidence: Low confidence tasks may need more time, high confidence should complete quickly\n- Track worker health metrics: heartbeat, token usage, execution patterns, output quality\n\nPM Decision Framework:\n1) WAIT: Worker actively working (recent heartbeat, files changing, making commits) → Keep monitoring\n2) INVESTIGATE: Worker stalled but context suggests complex task → Ask coordinator/MoE for assessment\n3) INTERVENE: Worker truly stuck (no activity, context suggests should be done) → Analyze why, create handoff for replacement\n4) KILL & RESPAWN: Worker zombie confirmed (no heartbeat, no progress, timeout exceeded for task complexity) → Clean up, spawn replacement with learnings from failure\n5) ESCALATE: Repeated failures on same task → Flag to coordinator, may need human review or task redesign\n\nPM Communication Protocol:\n- Read task context from task-queue.json (type, priority, description, requirements)\n- Check MoE routing metadata (confidence scores, specialist assignment, complexity estimates)\n- Query coordinator state to understand task dependencies and blockers\n- Update coordination/pm-state.json with worker assessments and decisions\n- Log all PM decisions to coordination/pm-decisions.jsonl for learning and audit\n\nPM Metrics to Track:\n- Worker lifetime distributions by task type\n- False positive zombie detections (killed workers that were actually progressing)\n- Task completion success rate by worker type\n- Average time-to-completion by task complexity\n- Worker respawn effectiveness (does new worker succeed where old failed?)\n\nImplementation Requirements:\n- Create coordination/pm-state.json schema for PM decision tracking\n- Build PM context gathering utilities (read tasks, routing data, worker specs, git activity)\n- Implement intelligent timeout calculations based on task type/complexity\n- Add worker progress detection (file watcher, git log parsing, coordination file monitoring)\n- Create PM→Coordinator communication interface\n- Build decision tree logic for wait/investigate/intervene/kill/escalate\n- Add learning system: PM learns optimal timeouts from historical completion data\n- Comprehensive logging for PM decision audit trail\n\nTesting & Validation:\n- Test PM correctly waits for long-running legitimate workers\n- Verify PM detects and kills actual zombies (stalled workers)\n- Confirm PM spawns replacements successfully\n- Validate coordinator daemon routes all pending tasks\n- Test full autonomous loop: create task → coordinator routes → worker spawns → PM monitors → completion\n- Run with current 5 pending tasks as validation\n\nSuccess Criteria:\n1) Coordinator daemon running, routing pending tasks every 60s\n2) Worker pool cap removed/increased to 50+\n3) PM daemon running, intelligently monitoring all workers\n4) 5 pending critical tasks get routed, spawned, monitored, completed\n5) No false positive zombie kills on legitimate workers\n6) System fully autonomous from task creation to completion\n7) Documentation of PM decision framework and communication protocol\n\nKeywords: critical architecture autonomous coordinator-daemon pm-daemon intelligent-monitoring worker-lifecycle MoE-integration task-routing context-aware zombie-detection progress-tracking adaptive-timeouts system-intelligence project-management coordination full-autonomy.",
+        "requirements": []
+      },
+      "assigned_by": "coordinator",
+      "assigned_at": "2025-11-09T06:08:52-0600",
+      "routing_confidence": "0.95",
+      "routing_strategy": "single_expert",
+      "worker_id": "dev-worker-94F62518",
+      "worker_type": "feature-implementer",
+      "completed_at": "2025-11-09T06:04:28-0600",
+      "error": "Worker became zombie and was killed",
+      "updated_at": "2025-11-09T06:22:08-06:00"
+    },
+    {
+      "id": "task-1762553445",
+      "title": "SIMPLE TEST to verify the worker launcher fix works end-to-end. Create a test file at tests/launcher-verification.txt with content 'Worker launcher fix verified successfully\\!' and commit with message 'test: worker launcher end-to-end verification'. This is a straightforward task to confirm the architecture fix is working.",
+      "type": "development",
+      "priority": "high",
+      "status": "pending",
+      "assigned_to": null,
+      "created_at": "2025-11-09T08:25:28-0600",
+      "created_by": "create-task-cli",
+      "context": {
+        "repository": "ry-ops/commit-relay",
+        "branch": "main",
+        "description": "SIMPLE TEST to verify the worker launcher fix works end-to-end. Create a test file at tests/launcher-verification.txt with content 'Worker launcher fix verified successfully\\!' and commit with message 'test: worker launcher end-to-end verification'. This is a straightforward task to confirm the architecture fix is working.",
         "requirements": []
       }
     }
@@ -1372,5 +1442,5 @@
     "in_progress_tasks": 0,
     "completed_tasks": 2
   },
-  "updated_at": "2025-11-09T04:33:16-0600"
+  "updated_at": "2025-11-09T08:25:28-0600"
 }
