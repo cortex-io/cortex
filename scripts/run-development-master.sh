@@ -217,21 +217,21 @@ select_worker_type() {
     local task_type="$1"
     local task_data="$2"
 
-    local worker_type="feature-implementer" # default
+    local worker_type="implementation-worker" # default
 
     # Match task to worker specialization
     case "$task_type" in
         *feature*|*implement*)
-            worker_type="feature-implementer"
+            worker_type="implementation-worker"
             ;;
         *bug*|*fix*|*error*)
-            worker_type="bug-fixer"
+            worker_type="fix-worker"
             ;;
         *refactor*|*improve*|*cleanup*)
-            worker_type="refactorer"
+            worker_type="implementation-worker"
             ;;
         *optimize*|*performance*|*speed*)
-            worker_type="optimizer"
+            worker_type="implementation-worker"
             ;;
     esac
 
