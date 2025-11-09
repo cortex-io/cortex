@@ -518,3 +518,13 @@
     "strategy": "single_expert"
   }
 }
+{
+  "timestamp": "2025-11-09T14:12:22-0600",
+  "type": "moe_routing_decision",
+  "data": {
+    "task_id": "task-1762553453",
+    "expert": "development",
+    "confidence": 0.95,
+    "strategy": "single_expert"
+  }
+}

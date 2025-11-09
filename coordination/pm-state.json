@@ -1,9 +1,10 @@
 {
   "pm_daemon": {
-    "pid": 123,
+    "pid": 67853,
     "last_loop": "2025-11-08T15:06:34-0600",
     "loops_completed": 119,
-    "uptime_seconds": 21346
+    "uptime_seconds": 21346,
+    "started_at": "2025-11-09T14:15:41-0600"
   },
   "monitored_workers": {
     "dev-worker-D6FE104C": {
@@ -92,13 +93,13 @@
     }
   },
   "metrics": {
-    "active_workers": 20,
-    "completed_workers": 12,
-    "failed_workers": 0,
-    "total_workers": 32,
-    "success_rate": 37.5,
-    "completed_today": 12,
-    "failed_today": 0,
-    "success_rate_today": 100.0
+    "active_workers": 1,
+    "completed_workers": 13,
+    "failed_workers": 34,
+    "total_workers": 48,
+    "success_rate": 27.0,
+    "completed_today": 13,
+    "failed_today": 34,
+    "success_rate_today": 27.6
   }
 }
