@@ -1,0 +1,96 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "dashboard-event.schema.json",
+  "title": "Dashboard Event",
+  "description": "Schema for dashboard event stream (JSONL)",
+  "type": "object",
+  "required": ["id", "timestamp", "type", "source"],
+  "additionalProperties": true,
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^evt-(test-)?[0-9]+-?[0-9]*$|^evt-[A-F0-9-]{36}$",
+      "description": "Unique event identifier"
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO 8601 event timestamp"
+    },
+    "type": {
+      "type": "string",
+      "enum": [
+        "system_restart",
+        "services_checked",
+        "task_created",
+        "task_updated",
+        "task_completed",
+        "task_failed",
+        "worker_started",
+        "worker_spawned",
+        "worker_completed",
+        "worker_failed",
+        "worker_stuck",
+        "master_started",
+        "master_stopped",
+        "routing_decision",
+        "handoff_created",
+        "handoff_completed",
+        "health_alert",
+        "health_alert_deleted",
+        "moe_routing",
+        "pool_activation",
+        "learning_update",
+        "token_budget_alert",
+        "git_commit",
+        "deployment"
+      ],
+      "description": "Event type classification"
+    },
+    "data": {
+      "oneOf": [
+        {
+          "type": "object",
+          "description": "Structured event data"
+        },
+        {
+          "type": "string",
+          "description": "JSON-encoded event data (legacy)"
+        }
+      ]
+    },
+    "source": {
+      "type": "string",
+      "enum": [
+        "system",
+        "coordinator",
+        "development",
+        "security",
+        "inventory",
+        "cicd",
+        "worker-daemon",
+        "health-monitor",
+        "automation",
+        "dashboard",
+        "moe-router",
+        "pm-agent"
+      ],
+      "description": "Event source system"
+    },
+    "severity": {
+      "type": "string",
+      "enum": ["info", "warning", "error", "critical"],
+      "description": "Event severity level"
+    },
+    "task_id": {
+      "type": "string",
+      "pattern": "^(task-[0-9]+|test-task-[0-9]+)$",
+      "description": "Associated task ID"
+    },
+    "worker_id": {
+      "type": "string",
+      "pattern": "^(dev|sec|inv|cicd)-worker-[A-F0-9]{8}$",
+      "description": "Associated worker ID"
+    }
+  }
+}

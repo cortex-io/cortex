@@ -1,0 +1,179 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "worker-spec.schema.json",
+  "title": "Worker Specification",
+  "description": "Schema for worker specification files",
+  "type": "object",
+  "required": ["worker_id", "worker_type", "parent_master", "task_id", "status", "created_at", "created_by"],
+  "additionalProperties": false,
+  "properties": {
+    "worker_id": {
+      "type": "string",
+      "pattern": "^(dev|sec|inv|cicd)-worker-[A-F0-9]{8}$|^worker-(scan|implementation)-[0-9]{3}$|^test-worker-LAUNCHER-[0-9]{3}$",
+      "description": "Unique worker identifier"
+    },
+    "worker_type": {
+      "type": "string",
+      "enum": [
+        "feature-implementer",
+        "bug-fixer",
+        "refactorer",
+        "optimizer",
+        "scan-worker",
+        "audit-worker",
+        "compliance-worker",
+        "penetration-tester",
+        "implementation-worker",
+        "test-worker",
+        "review-worker",
+        "doc-worker",
+        "pr-worker",
+        "dashboard-update-worker"
+      ],
+      "description": "Worker specialization type"
+    },
+    "prompt_template": {
+      "type": "string",
+      "pattern": "^agents/prompts/workers/.*\\.md$",
+      "description": "Path to worker prompt template"
+    },
+    "parent_master": {
+      "type": "string",
+      "enum": ["development", "security", "inventory", "cicd", "coordinator"],
+      "description": "Master agent that spawned the worker"
+    },
+    "task_id": {
+      "type": "string",
+      "pattern": "^(task-[0-9]+|test-task-[0-9]+|task-[a-zA-Z0-9-]+)$",
+      "description": "Associated task ID"
+    },
+    "task_data": {
+      "type": "object",
+      "description": "Complete task data"
+    },
+    "context": {
+      "type": "object",
+      "properties": {
+        "master_session": {
+          "type": "string",
+          "pattern": "^[A-F0-9]{8}-[A-F0-9]{4}-[A-F0-9]{4}-[A-F0-9]{4}-[A-F0-9]{12}$"
+        },
+        "expertise_area": {
+          "type": "string"
+        },
+        "skills_required": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "knowledge_base_refs": {
+          "type": "object",
+          "properties": {
+            "implementation_patterns": {
+              "type": "string"
+            },
+            "architecture_docs": {
+              "type": "string"
+            },
+            "security_policies": {
+              "type": "string"
+            },
+            "vulnerability_db": {
+              "type": "string"
+            }
+          }
+        },
+        "relevant_past_implementations": {
+          "type": "array",
+          "description": "RAG-retrieved past patterns"
+        }
+      },
+      "additionalProperties": true
+    },
+    "resources": {
+      "type": "object",
+      "required": ["token_allocation"],
+      "properties": {
+        "token_allocation": {
+          "type": "integer",
+          "minimum": 1000,
+          "maximum": 200000,
+          "description": "Allocated token budget"
+        },
+        "time_limit_minutes": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 480,
+          "description": "Time limit in minutes"
+        }
+      }
+    },
+    "status": {
+      "type": "string",
+      "enum": ["pending", "active", "running", "completed", "failed", "cancelled", "stuck", "zombie"],
+      "description": "Worker execution status"
+    },
+    "created_at": {
+      "type": "string",
+      "description": "Worker creation timestamp"
+    },
+    "created_by": {
+      "type": "string",
+      "enum": ["development", "security", "inventory", "cicd", "coordinator", "daemon"],
+      "description": "Entity that created the worker"
+    },
+    "execution": {
+      "type": "object",
+      "properties": {
+        "started_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "completed_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "duration_seconds": {
+          "type": "number",
+          "minimum": 0
+        },
+        "tokens_used": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    },
+    "completed_at": {
+      "type": "string",
+      "description": "Completion timestamp"
+    },
+    "git_workflow": {
+      "type": "object",
+      "properties": {
+        "status": {
+          "type": "string",
+          "enum": ["success", "failed", "pending", "skipped"]
+        },
+        "commit_hash": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{7,40}$"
+        },
+        "branch": {
+          "type": "string"
+        },
+        "automated": {
+          "type": "boolean"
+        }
+      }
+    },
+    "result": {
+      "type": "object",
+      "description": "Worker execution result"
+    },
+    "error": {
+      "type": "string",
+      "description": "Error message if worker failed"
+    }
+  }
+}
