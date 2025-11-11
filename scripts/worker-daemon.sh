@@ -170,12 +170,8 @@ while true; do
                 broadcast_dashboard_event "worker_started" "$EVENT_DATA" 2>/dev/null || true
 
                 # Use Claude Code launcher to spawn worker with AI capabilities
-                # Use enhanced launcher with service management
+                # Use enhanced launcher with Terminal.app and TTY support
                 CLAUDE_LAUNCHER="$COMMIT_RELAY_HOME/scripts/claude-worker-launcher-v2.sh"
-                # Fallback to original if v2 doesn't exist
-                if [[ ! -f "$CLAUDE_LAUNCHER" ]]; then
-                    CLAUDE_LAUNCHER="$COMMIT_RELAY_HOME/agents/workers/claude-worker-launcher.sh"
-                fi
 
                 if [ -f "$CLAUDE_LAUNCHER" ]; then
                     log_daemon "INFO: Launching worker with Claude Code via launcher"
