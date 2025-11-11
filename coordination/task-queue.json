@@ -1765,6 +1765,22 @@
         "description": "PROMPT ENGINEERING UPGRADE - Phase 6: Production Hardening. Ensure upgraded system is production-ready with monitoring, alerting, and failsafes. OBJECTIVES: 1) Integrate circuit breakers (from task-1762553455) into all agent call paths - coordinator routing, worker spawning, API calls. 2) Implement rate limiting to prevent LLM API overload - 30 calls per 60s window, exponential backoff on limit hit. 3) Create monitoring dashboard with real-time metrics: agent call volume, validation success rates, retry rates, schema violations, circuit breaker states, rate limit usage. 4) Build alerting system that triggers on: validation failure >10%, retry rate >20%, circuit breaker opens, schema violations detected, rate limit exceeded. 5) Create operations runbook documenting: common failure modes, remediation steps, rollback procedures, emergency contacts. 6) Add health check endpoints and implement automated recovery. TECHNICAL: Use existing circuit-breaker.js, add Prometheus-compatible /metrics endpoint, integrate with dashboard server. DELIVERABLES: Circuit breaker integration, rate limiter, monitoring dashboard, alerting system, ops runbook. SUCCESS: 99.9% uptime, <5min MTTR, zero data loss.",
         "requirements": []
       }
+    },
+    {
+      "id": "task-1762553464",
+      "title": "GOVERNANCE UPGRADE - Phase 1: Unified Data & AI Catalog. Implement Databricks-inspired unified governance framework. CRITICAL FOUNDATION for production AI system. OBJECTIVES: 1) Build centralized catalog system (coordination/catalog/) with metastore.json registering all assets. 2) Implement automated asset discovery for all coordination files, agent prompts, worker specs, routing decisions. 3) Add AI asset tracking - track master agents, workers, MoE router, prompts as first-class assets alongside data. 4) Create natural language search using LLM for asset discovery (Find all tasks assigned to security master). 5) Build lineage tracking infrastructure (data-lineage.jsonl, ai-lineage.jsonl, decision-lineage.jsonl). 6) Implement asset tagging with sensitivity levels (public, internal, confidential, pii). INSPIRED BY: 98% of CIOs believe single governance model for data+AI is critical. Amgen reduced 120 roles to 1-2 using unified catalog. DELIVERABLES: Catalog manager, asset registry, search interface, lineage framework. SUCCESS: 100% assets cataloged, search <2s, automated discovery. FOUNDATION for Phase 2-6 (access control, audit trails, monitoring, compliance).",
+      "type": "development",
+      "priority": "critical",
+      "status": "pending",
+      "assigned_to": null,
+      "created_at": "2025-11-11T10:42:54-0600",
+      "created_by": "create-task-cli",
+      "context": {
+        "repository": "ry-ops/commit-relay",
+        "branch": "main",
+        "description": "GOVERNANCE UPGRADE - Phase 1: Unified Data & AI Catalog. Implement Databricks-inspired unified governance framework. CRITICAL FOUNDATION for production AI system. OBJECTIVES: 1) Build centralized catalog system (coordination/catalog/) with metastore.json registering all assets. 2) Implement automated asset discovery for all coordination files, agent prompts, worker specs, routing decisions. 3) Add AI asset tracking - track master agents, workers, MoE router, prompts as first-class assets alongside data. 4) Create natural language search using LLM for asset discovery (Find all tasks assigned to security master). 5) Build lineage tracking infrastructure (data-lineage.jsonl, ai-lineage.jsonl, decision-lineage.jsonl). 6) Implement asset tagging with sensitivity levels (public, internal, confidential, pii). INSPIRED BY: 98% of CIOs believe single governance model for data+AI is critical. Amgen reduced 120 roles to 1-2 using unified catalog. DELIVERABLES: Catalog manager, asset registry, search interface, lineage framework. SUCCESS: 100% assets cataloged, search <2s, automated discovery. FOUNDATION for Phase 2-6 (access control, audit trails, monitoring, compliance).",
+        "requirements": []
+      }
     }
   ],
   "metadata": {
@@ -1774,5 +1790,5 @@
     "in_progress_tasks": 0,
     "completed_tasks": 2
   },
-  "updated_at": "2025-11-11T10:34:01-0600"
+  "updated_at": "2025-11-11T10:42:54-0600"
 }
