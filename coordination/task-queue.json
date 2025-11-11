@@ -1591,6 +1591,22 @@
         "description": "PRIORITY 1 - HIGH Impact: Implement Automatic JSON Validation for dashboard-events.jsonl. Add validation layer to automatically fix malformed JSON before writing. Current issue: Frequent JSON parsing errors causing dashboard disruptions. Solution: Implement pre-write validation that detects and repairs common JSON errors (missing commas, trailing commas, unclosed brackets). Add validation to emit-event.sh and dashboard server. Include error recovery and logging. Technical: Use jq for validation, add JSON repair utilities, implement validation hooks in event emission pipeline. Benefits: Prevents dashboard crashes, eliminates data corruption, improves reliability.",
         "requirements": []
       }
+    },
+    {
+      "id": "task-1762553455",
+      "title": "PRIORITY 2 - MEDIUM Impact: Implement Circuit Breaker Pattern for rate limiting resilience. Current issue: Rate limiting can cascade and block critical operations during high load. Solution: Add circuit breaker pattern to gracefully handle rate limits and API failures. Implement three states: CLOSED (normal), OPEN (failing, reject immediately), HALF-OPEN (testing recovery). Add to dashboard server API calls, GitHub API interactions, and worker spawn operations. Configure thresholds: failure threshold (5 errors in 60s triggers OPEN), timeout (30s before HALF-OPEN), success threshold (3 successes to CLOSED). Include metrics tracking and logging. Benefits: Improved system resilience, prevents cascade failures, graceful degradation during load spikes.",
+      "type": "development",
+      "priority": "high",
+      "status": "pending",
+      "assigned_to": null,
+      "created_at": "2025-11-11T08:09:19-0600",
+      "created_by": "create-task-cli",
+      "context": {
+        "repository": "ry-ops/commit-relay",
+        "branch": "main",
+        "description": "PRIORITY 2 - MEDIUM Impact: Implement Circuit Breaker Pattern for rate limiting resilience. Current issue: Rate limiting can cascade and block critical operations during high load. Solution: Add circuit breaker pattern to gracefully handle rate limits and API failures. Implement three states: CLOSED (normal), OPEN (failing, reject immediately), HALF-OPEN (testing recovery). Add to dashboard server API calls, GitHub API interactions, and worker spawn operations. Configure thresholds: failure threshold (5 errors in 60s triggers OPEN), timeout (30s before HALF-OPEN), success threshold (3 successes to CLOSED). Include metrics tracking and logging. Benefits: Improved system resilience, prevents cascade failures, graceful degradation during load spikes.",
+        "requirements": []
+      }
     }
   ],
   "metadata": {
@@ -1600,5 +1616,5 @@
     "in_progress_tasks": 0,
     "completed_tasks": 2
   },
-  "updated_at": "2025-11-11T08:09:02-0600"
+  "updated_at": "2025-11-11T08:09:19-0600"
 }
