@@ -41,6 +41,9 @@ const {
   workerRestartValidationRules
 } = require('./middleware/validators');
 
+// JSON validation utilities
+const { safeWriteJSON, validateAndRepairJSON, logValidation } = require('./utils/json-validator');
+
 // Security utilities
 const {
   safeExec,
@@ -3463,6 +3466,7 @@ function broadcastUpdate(data) {
 
 /**
  * Emit a dashboard event to dashboard-events.jsonl
+ * Now includes automatic JSON validation and repair
  */
 function emitDashboardEvent(type, data) {
   try {
@@ -3471,15 +3475,22 @@ function emitDashboardEvent(type, data) {
       id: `evt-${Date.now()}-${process.pid}`,
       timestamp: new Date().toISOString(),
       type: type,
-      data: typeof data === 'string' ? data : JSON.stringify(data),
+      data: data,
       source: 'dashboard'
     };
 
-    const eventLine = JSON.stringify(event) + '\n';
-    fsSync.appendFileSync(FILES.dashboardEvents, eventLine, 'utf-8');
-    console.log(`Dashboard event emitted: ${type}`);
+    // Use safe write with validation and repair
+    const result = safeWriteJSON(FILES.dashboardEvents, event, true);
+
+    if (result.success) {
+      console.log(`Dashboard event emitted: ${type}`);
+    } else {
+      console.error(`Failed to emit dashboard event: ${type}`, result.error);
+      logValidation('ERROR', `Event emission failed for type: ${type}`, { error: result.error, event });
+    }
   } catch (error) {
     console.error('Error emitting dashboard event:', error);
+    logValidation('ERROR', 'Exception in emitDashboardEvent', { error: error.message, type });
   }
 }
 
