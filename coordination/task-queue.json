@@ -1575,6 +1575,22 @@
       "updated_at": "2025-11-09T14:12:43-06:00",
       "worker_id": "dev-worker-270EA2BA",
       "worker_type": "implementation-worker"
+    },
+    {
+      "id": "task-1762553454",
+      "title": "PRIORITY 1 - HIGH Impact: Implement Automatic JSON Validation for dashboard-events.jsonl. Add validation layer to automatically fix malformed JSON before writing. Current issue: Frequent JSON parsing errors causing dashboard disruptions. Solution: Implement pre-write validation that detects and repairs common JSON errors (missing commas, trailing commas, unclosed brackets). Add validation to emit-event.sh and dashboard server. Include error recovery and logging. Technical: Use jq for validation, add JSON repair utilities, implement validation hooks in event emission pipeline. Benefits: Prevents dashboard crashes, eliminates data corruption, improves reliability.",
+      "type": "development",
+      "priority": "high",
+      "status": "pending",
+      "assigned_to": null,
+      "created_at": "2025-11-11T08:09:02-0600",
+      "created_by": "create-task-cli",
+      "context": {
+        "repository": "ry-ops/commit-relay",
+        "branch": "main",
+        "description": "PRIORITY 1 - HIGH Impact: Implement Automatic JSON Validation for dashboard-events.jsonl. Add validation layer to automatically fix malformed JSON before writing. Current issue: Frequent JSON parsing errors causing dashboard disruptions. Solution: Implement pre-write validation that detects and repairs common JSON errors (missing commas, trailing commas, unclosed brackets). Add validation to emit-event.sh and dashboard server. Include error recovery and logging. Technical: Use jq for validation, add JSON repair utilities, implement validation hooks in event emission pipeline. Benefits: Prevents dashboard crashes, eliminates data corruption, improves reliability.",
+        "requirements": []
+      }
     }
   ],
   "metadata": {
@@ -1584,5 +1600,5 @@
     "in_progress_tasks": 0,
     "completed_tasks": 2
   },
-  "updated_at": "2025-11-09T14:08:40-0600"
+  "updated_at": "2025-11-11T08:09:02-0600"
 }
