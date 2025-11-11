@@ -1781,6 +1781,56 @@
         "description": "GOVERNANCE UPGRADE - Phase 1: Unified Data & AI Catalog. Implement Databricks-inspired unified governance framework. CRITICAL FOUNDATION for production AI system. OBJECTIVES: 1) Build centralized catalog system (coordination/catalog/) with metastore.json registering all assets. 2) Implement automated asset discovery for all coordination files, agent prompts, worker specs, routing decisions. 3) Add AI asset tracking - track master agents, workers, MoE router, prompts as first-class assets alongside data. 4) Create natural language search using LLM for asset discovery (Find all tasks assigned to security master). 5) Build lineage tracking infrastructure (data-lineage.jsonl, ai-lineage.jsonl, decision-lineage.jsonl). 6) Implement asset tagging with sensitivity levels (public, internal, confidential, pii). INSPIRED BY: 98% of CIOs believe single governance model for data+AI is critical. Amgen reduced 120 roles to 1-2 using unified catalog. DELIVERABLES: Catalog manager, asset registry, search interface, lineage framework. SUCCESS: 100% assets cataloged, search <2s, automated discovery. FOUNDATION for Phase 2-6 (access control, audit trails, monitoring, compliance).",
         "requirements": []
       }
+    },
+    {
+      "id": "task-1762553464",
+      "title": "GOVERNANCE UPGRADE - Phase 1: Unified Data & AI Catalog",
+      "type": "feature",
+      "priority": "critical",
+      "status": "assigned",
+      "created_at": "2025-11-11T14:30:00Z",
+      "created_by": "coordinator",
+      "assigned_to": "development-master",
+      "assigned_by": "coordinator",
+      "assigned_at": "2025-11-11T14:30:00Z",
+      "routing_confidence": "0.95",
+      "routing_strategy": "pattern_match_development",
+      "context": {
+        "description": "CRITICAL foundation task that transforms commit-relay into an enterprise-grade AI system with unified governance",
+        "phase": "Phase 1",
+        "components": [
+          "Unified catalog for all data and AI assets",
+          "Automated asset discovery",
+          "Natural language search",
+          "Lineage tracking infrastructure",
+          "AI asset tracking alongside data assets"
+        ],
+        "governance_patterns": "Databricks-proven governance patterns",
+        "importance": "Foundation for enterprise-grade AI system",
+        "requirements": [
+          "Implement unified catalog schema",
+          "Build asset discovery automation",
+          "Create natural language search interface",
+          "Establish lineage tracking foundation",
+          "Integrate AI asset tracking with data assets"
+        ]
+      }
+    },
+    {
+      "id": "task-1762553465",
+      "title": "GOVERNANCE UPGRADE - Phase 2: Single-Permission Model & Access Controls. Implement unified role-based access control inspired by Amgen (120 roles → 1-2 principal roles). BUILDS ON: Phase 1 unified catalog (task-1762553464). OBJECTIVES: 1) Define 3 principal roles: system-admin (full access), agent-operator (standard operations), observer (read-only). 2) Implement fine-grained access control library (lib/governance/access-control.js) with checkPermission(principal, asset, operation), role-based permissions, asset-level restrictions, PII access requirements. 3) Integrate permission checks into ALL agent calls - update spawn-worker.sh, emit-event.sh, moe-router.sh, create-task.sh to check permissions before operations. 4) Add row/column level security for sensitive coordination files - filter fields based on principal permissions. 5) Create permission logging - log all access decisions to audit trail. 6) Build permission management CLI for role assignment and review. TECHNICAL: Use catalog from Phase 1 for asset metadata, implement deny-by-default security, async permission checks for performance (<5ms overhead). DELIVERABLES: AccessControl class, permission checks in all operations, role definitions, audit logging, CLI tools. SUCCESS: 100% operations check permissions, zero unauthorized access, <5ms latency, all decisions logged. INSPIRED BY: Amgen simplified from 120+ roles to 1-2, Block simplified IAM complexity, 98% of CIOs need unified governance model.",
+      "type": "development",
+      "priority": "critical",
+      "status": "pending",
+      "assigned_to": null,
+      "created_at": "2025-11-11T11:11:00-0600",
+      "created_by": "create-task-cli",
+      "context": {
+        "repository": "ry-ops/commit-relay",
+        "branch": "main",
+        "description": "GOVERNANCE UPGRADE - Phase 2: Single-Permission Model & Access Controls. Implement unified role-based access control inspired by Amgen (120 roles → 1-2 principal roles). BUILDS ON: Phase 1 unified catalog (task-1762553464). OBJECTIVES: 1) Define 3 principal roles: system-admin (full access), agent-operator (standard operations), observer (read-only). 2) Implement fine-grained access control library (lib/governance/access-control.js) with checkPermission(principal, asset, operation), role-based permissions, asset-level restrictions, PII access requirements. 3) Integrate permission checks into ALL agent calls - update spawn-worker.sh, emit-event.sh, moe-router.sh, create-task.sh to check permissions before operations. 4) Add row/column level security for sensitive coordination files - filter fields based on principal permissions. 5) Create permission logging - log all access decisions to audit trail. 6) Build permission management CLI for role assignment and review. TECHNICAL: Use catalog from Phase 1 for asset metadata, implement deny-by-default security, async permission checks for performance (<5ms overhead). DELIVERABLES: AccessControl class, permission checks in all operations, role definitions, audit logging, CLI tools. SUCCESS: 100% operations check permissions, zero unauthorized access, <5ms latency, all decisions logged. INSPIRED BY: Amgen simplified from 120+ roles to 1-2, Block simplified IAM complexity, 98% of CIOs need unified governance model.",
+        "requirements": []
+      }
     }
   ],
   "metadata": {
@@ -1790,5 +1840,5 @@
     "in_progress_tasks": 0,
     "completed_tasks": 2
   },
-  "updated_at": "2025-11-11T10:42:54-0600"
+  "updated_at": "2025-11-11T11:11:00-0600"
 }
