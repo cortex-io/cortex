@@ -160,12 +160,9 @@ cat > "$WORKER_DIR/execute.sh" << 'EOF'
 WORKER_DIR="$(dirname "$0")"
 cd "$WORKER_DIR"
 
-# Start execution with enhanced capabilities
-claude-code --file prompt.md \
-    --capabilities service-management \
-    --auto-execute \
-    --log-level debug \
-    --timeout 3600
+# Start execution - Claude Code will read prompt.md from working directory
+# No special flags needed, just execute with the prompt file
+claude < prompt.md
 
 # Capture exit status
 EXIT_CODE=$?
@@ -183,11 +180,11 @@ EOF
 chmod +x "$WORKER_DIR/execute.sh"
 
 # Execute the worker
-if command -v claude-code &> /dev/null; then
-    log "Executing with Claude Code CLI..."
+if command -v claude &> /dev/null; then
+    log "Executing with Claude CLI..."
     "$WORKER_DIR/execute.sh"
 else
-    log "Claude Code CLI not found, using fallback execution..."
+    log "Claude CLI not found, using fallback execution..."
     # Fallback: Create a marker for manual intervention
     cat > "$WORKER_DIR/ready-for-execution.txt" << EOF
 Worker $WORKER_ID is ready for execution.
