@@ -161,7 +161,7 @@ initialize_pm_state() {
 save_pm_state() {
     local temp_state="/tmp/pm-state-$$.json"
 
-    # Update state file via API for event-driven updates
+    # Update state with current metrics
     jq --arg last_loop "$(date +%Y-%m-%dT%H:%M:%S%z)" \
        --arg loops "$LOOP_COUNT" \
        --arg uptime "$SECONDS" \
@@ -170,18 +170,34 @@ save_pm_state() {
         .pm_daemon.uptime_seconds = ($uptime | tonumber)' \
        "$PM_STATE_FILE" > "$temp_state"
 
-    # Report state via API (triggers WebSocket updates)
-    if curl -s -X POST http://localhost:3000/api/pm/state \
-        -H "Content-Type: application/json" \
-        -d @"$temp_state" > /dev/null 2>&1; then
-        log "PM state reported via API"
-    else
-        # Fallback to direct file write if API unavailable
-        mv "$temp_state" "$PM_STATE_FILE"
-        log "WARNING: API unavailable, wrote state directly to file"
+    # Validate temp file was created successfully
+    if [ ! -s "$temp_state" ]; then
+        log_pm "ERROR: Failed to create temp state file"
+        rm -f "$temp_state"
+        return 1
     fi
 
-    rm -f "$temp_state"
+    # Always write to file first (primary data store)
+    if mv "$temp_state" "$PM_STATE_FILE"; then
+        log_pm "DEBUG: PM state saved to file"
+    else
+        log_pm "ERROR: Failed to save PM state to file"
+        rm -f "$temp_state"
+        return 1
+    fi
+
+    # Optionally report to dashboard API (best effort, non-critical)
+    # This triggers WebSocket updates but is not required for daemon operation
+    if curl -s -f -X POST http://localhost:3000/api/pm/state \
+        -H "Content-Type: application/json" \
+        -d @"$PM_STATE_FILE" \
+        --max-time 2 > /dev/null 2>&1; then
+        log_pm "DEBUG: PM state reported to dashboard API"
+    else
+        # This is expected if dashboard is not running or endpoint not available
+        # Don't log as error - just skip API notification
+        : # no-op
+    fi
 }
 
 # Calculate age in minutes
@@ -762,14 +778,15 @@ while true; do
 
     log_pm "DEBUG: Starting loop $LOOP_COUNT"
 
-    # Monitoring tasks
-    scan_active_workers
-    process_checkins
-    check_missed_checkins
-    check_worker_timeouts
-    detect_zombies
-    calculate_metrics
-    save_pm_state
+    # Monitoring tasks with error handling
+    # Each function failure is logged but doesn't crash the daemon
+    scan_active_workers || log_pm "WARN: scan_active_workers failed in loop $LOOP_COUNT"
+    process_checkins || log_pm "WARN: process_checkins failed in loop $LOOP_COUNT"
+    check_missed_checkins || log_pm "WARN: check_missed_checkins failed in loop $LOOP_COUNT"
+    check_worker_timeouts || log_pm "WARN: check_worker_timeouts failed in loop $LOOP_COUNT"
+    detect_zombies || log_pm "WARN: detect_zombies failed in loop $LOOP_COUNT"
+    calculate_metrics || log_pm "WARN: calculate_metrics failed in loop $LOOP_COUNT"
+    save_pm_state || log_pm "WARN: save_pm_state failed in loop $LOOP_COUNT"
 
     # Historical snapshot (every SNAPSHOT_INTERVAL seconds)
     TIME_SINCE_SNAPSHOT=$((LOOP_START - LAST_SNAPSHOT_TIME))
