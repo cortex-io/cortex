@@ -1581,7 +1581,7 @@
       "title": "PRIORITY 1 - HIGH Impact: Implement Automatic JSON Validation for dashboard-events.jsonl. Add validation layer to automatically fix malformed JSON before writing. Current issue: Frequent JSON parsing errors causing dashboard disruptions. Solution: Implement pre-write validation that detects and repairs common JSON errors (missing commas, trailing commas, unclosed brackets). Add validation to emit-event.sh and dashboard server. Include error recovery and logging. Technical: Use jq for validation, add JSON repair utilities, implement validation hooks in event emission pipeline. Benefits: Prevents dashboard crashes, eliminates data corruption, improves reliability.",
       "type": "development",
       "priority": "high",
-      "status": "assigned",
+      "status": "worker_spawned",
       "assigned_to": "development",
       "created_at": "2025-11-11T08:09:02-0600",
       "created_by": "create-task-cli",
@@ -1595,7 +1595,10 @@
       "assigned_at": "2025-11-11T08:13:10",
       "routing_confidence": "0.95",
       "routing_strategy": "single_expert",
-      "handoff_id": "coord-to-development-85FFD054-D57F-4E0C-B650-F9448FFEF19C"
+      "handoff_id": "coord-to-development-85FFD054-D57F-4E0C-B650-F9448FFEF19C",
+      "worker_id": "dev-worker-77A828C9",
+      "worker_type": "implementation-worker",
+      "updated_at": "2025-11-11T12:01:56-06:00"
     },
     {
       "id": "task-1762553455",
@@ -1644,7 +1647,7 @@
       "title": "PRIORITY 4: Fix PM Daemon - Investigate and resolve PM daemon stability issues. Current issue: PM daemon not staying running consistently, affecting project management automation. Investigation areas: 1) Check for missing dependencies or libraries required by pm-daemon.sh, 2) Review daemon startup scripts and initialization sequence, 3) Analyze crash logs and error messages in agents/logs/system/, 4) Check for configuration issues in coordination/pm-state.json, 5) Verify process monitoring and restart mechanisms, 6) Test daemon under various load conditions. Root cause analysis: Determine if issue is environment-related, code bug, resource exhaustion, or race condition. Implement fixes: Add proper error handling, improve logging, add health checks, implement auto-restart on failure. Validate: Ensure daemon stays running for 24+ hours under normal load.",
       "type": "development",
       "priority": "high",
-      "status": "assigned",
+      "status": "worker_spawned",
       "assigned_to": "development",
       "created_at": "2025-11-11T08:09:54-0600",
       "created_by": "create-task-cli",
@@ -1658,7 +1661,10 @@
       "assigned_at": "2025-11-11T15:13:34Z",
       "routing_confidence": "0.95",
       "routing_strategy": "single_expert",
-      "handoff_id": "coord-to-development-744ADC29-E9EA-4DDB-BD73-7B3448F8713D"
+      "handoff_id": "coord-to-development-744ADC29-E9EA-4DDB-BD73-7B3448F8713D",
+      "worker_id": "dev-worker-68D99489",
+      "worker_type": "implementation-worker",
+      "updated_at": "2025-11-11T12:01:57-06:00"
     },
     {
       "id": "task-1762553458",
@@ -1686,7 +1692,7 @@
       "title": "PROMPT ENGINEERING UPGRADE - Phase 1: Contract Definition. Transform commit-relay into production-grade LLM system using LangChain/PDL patterns. PHASE 1 OBJECTIVES: 1) Create schema registry with 15+ JSON schemas for all agent outputs (task-queue-entry, handoff, master-state, worker-spec, routing-decision, dashboard-event). 2) Define strict contracts for coordinator, development, security, inventory, cicd master agents - document input/output schemas, validation rules, enum values. 3) Create contract documentation in docs/contracts/. TECHNICAL APPROACH: Use JSON Schema draft-07 with strict validation (required fields, additionalProperties:false, enum constraints, regex patterns). Build schema-validator.js library using AJV for validation. Implement safeReadJSON and safeWriteJSON wrappers. DELIVERABLES: coordination/schemas/ directory with all schemas, docs/contracts/ with agent documentation, lib/schema-validator.js validation library. SUCCESS METRICS: 100% agent outputs have schemas, zero surprise fields. Based on transcript: LLMs are probabilistic not deterministic, need contracts+control loops+observability for production software.",
       "type": "development",
       "priority": "high",
-      "status": "assigned",
+      "status": "worker_spawned",
       "assigned_to": "development",
       "created_at": "2025-11-11T10:07:08-0600",
       "created_by": "create-task-cli",
@@ -1700,15 +1706,18 @@
       "assigned_at": "2025-11-11T16:09:47Z",
       "routing_confidence": "0.95",
       "routing_strategy": "single_expert",
-      "handoff_id": "coord-to-development-54030DBC-B10B-4E30-B3EF-77AF0B841A04"
+      "handoff_id": "coord-to-development-54030DBC-B10B-4E30-B3EF-77AF0B841A04",
+      "worker_id": "dev-worker-5BAC7DF8",
+      "worker_type": "implementation-worker",
+      "updated_at": "2025-11-11T12:01:56-06:00"
     },
     {
       "id": "task-1762553460",
       "title": "PROMPT ENGINEERING UPGRADE - Phase 2: Validation & Control Loops. Build validation layers and retry mechanisms for every agent output. OBJECTIVES: 1) Integrate Phase 1 schemas into all agent workflows - add validation wrappers to emit-event.sh, spawn-worker.sh, create-task.sh, moe-router.sh. 2) Implement control loops for critical paths: coordinator routing with validation+retry, handoff creation with validation, task assignment validation. 3) Add retry logic to all agent calls with exponential backoff - max 3 retries with tighter instructions each time. 4) Build validation middleware for all JSON file operations. TECHNICAL: Update all bash scripts to use lib/safe-json.js wrappers, add validation hooks to coordination file writers, implement circuit breaker integration from task-1762553455. DELIVERABLES: All coordination writes use safeWriteJSON, control loops for routing/handoffs/assignments, retry logic library, validation middleware integrated. SUCCESS: 99%+ first-pass validation rate, <1 schema violation per day, <5% retry rate.",
       "type": "development",
       "priority": "high",
-      "status": "pending",
-      "assigned_to": null,
+      "status": "worker_spawned",
+      "assigned_to": "development",
       "created_at": "2025-11-11T10:32:50-0600",
       "created_by": "create-task-cli",
       "context": {
@@ -1716,15 +1725,22 @@
         "branch": "main",
         "description": "PROMPT ENGINEERING UPGRADE - Phase 2: Validation & Control Loops. Build validation layers and retry mechanisms for every agent output. OBJECTIVES: 1) Integrate Phase 1 schemas into all agent workflows - add validation wrappers to emit-event.sh, spawn-worker.sh, create-task.sh, moe-router.sh. 2) Implement control loops for critical paths: coordinator routing with validation+retry, handoff creation with validation, task assignment validation. 3) Add retry logic to all agent calls with exponential backoff - max 3 retries with tighter instructions each time. 4) Build validation middleware for all JSON file operations. TECHNICAL: Update all bash scripts to use lib/safe-json.js wrappers, add validation hooks to coordination file writers, implement circuit breaker integration from task-1762553455. DELIVERABLES: All coordination writes use safeWriteJSON, control loops for routing/handoffs/assignments, retry logic library, validation middleware integrated. SUCCESS: 99%+ first-pass validation rate, <1 schema violation per day, <5% retry rate.",
         "requirements": []
-      }
+      },
+      "assigned_by": "coordinator",
+      "assigned_at": "2025-11-11T11:42:14-0600",
+      "routing_confidence": "N/A",
+      "routing_strategy": "pattern-based",
+      "updated_at": "2025-11-11T12:01:57-06:00",
+      "worker_id": "dev-worker-80098C12",
+      "worker_type": "implementation-worker"
     },
     {
       "id": "task-1762553461",
       "title": "PROMPT ENGINEERING UPGRADE - Phase 3: Observability & Tracing. Implement comprehensive tracing so every prompt→output chain is visible and measurable. OBJECTIVES: 1) Build tracing infrastructure with PromptTracer class - startTrace, recordStep, endTrace methods storing in coordination/traces/. 2) Instrument all agent calls with tracing: coordinator routing, development implementation, security scanning, inventory cataloging. 3) Create trace explorer dashboard at dashboard/public/traces.html - view all traces, filter by operation/agent/status, inspect full prompt→output chains. 4) Add metrics collection: first-pass validation rate by agent, retry rate by operation, tokens per operation, latency p50/p95/p99, schema violation types. 5) Build trace analysis tools in scripts/analyze-traces.sh. TECHNICAL: Store traces as JSONL in coordination/traces/, integrate with dashboard WebSocket for real-time updates, use dashboard event system. DELIVERABLES: lib/tracing/tracer.js, trace storage, trace explorer UI, metrics dashboard, analysis scripts. SUCCESS: 100% agent calls traced, traces retained 30 days, metrics updated every 5min.",
       "type": "development",
       "priority": "high",
-      "status": "pending",
-      "assigned_to": null,
+      "status": "assigned",
+      "assigned_to": "security",
       "created_at": "2025-11-11T10:33:08-0600",
       "created_by": "create-task-cli",
       "context": {
@@ -1732,15 +1748,20 @@
         "branch": "main",
         "description": "PROMPT ENGINEERING UPGRADE - Phase 3: Observability & Tracing. Implement comprehensive tracing so every prompt→output chain is visible and measurable. OBJECTIVES: 1) Build tracing infrastructure with PromptTracer class - startTrace, recordStep, endTrace methods storing in coordination/traces/. 2) Instrument all agent calls with tracing: coordinator routing, development implementation, security scanning, inventory cataloging. 3) Create trace explorer dashboard at dashboard/public/traces.html - view all traces, filter by operation/agent/status, inspect full prompt→output chains. 4) Add metrics collection: first-pass validation rate by agent, retry rate by operation, tokens per operation, latency p50/p95/p99, schema violation types. 5) Build trace analysis tools in scripts/analyze-traces.sh. TECHNICAL: Store traces as JSONL in coordination/traces/, integrate with dashboard WebSocket for real-time updates, use dashboard event system. DELIVERABLES: lib/tracing/tracer.js, trace storage, trace explorer UI, metrics dashboard, analysis scripts. SUCCESS: 100% agent calls traced, traces retained 30 days, metrics updated every 5min.",
         "requirements": []
-      }
+      },
+      "assigned_by": "coordinator",
+      "assigned_at": "2025-11-11T11:42:14-0600",
+      "routing_confidence": "N/A",
+      "routing_strategy": "pattern-based",
+      "updated_at": "2025-11-11T11:42:14-06:00"
     },
     {
       "id": "task-1762553462",
       "title": "PROMPT ENGINEERING UPGRADE - Phase 4: Prompt Templates & Version Control. Standardize all prompts using templates, enabling version control and A/B testing. OBJECTIVES: 1) Create prompt template library in coordination/prompt-templates/ organized by agent type (coordinator/, development/, security/, inventory/, cicd/) with 20+ templates. 2) Build template engine (lib/prompt-templates/engine.js) with render() method supporting variable substitution, required variable validation, strictness levels. 3) Add template metadata (YAML frontmatter) including version, author, success_rate, avg_tokens, required_variables, output_schema. 4) Implement A/B testing framework for comparing prompt versions - run_ab_test.sh script to route traffic, compare_template_performance() analysis. 5) Create prompt registry dashboard showing version history, usage stats, success rates, A/B test results. TECHNICAL: Use Mustache/Handlebars-style templates, store metadata in YAML, track template usage in coordination/prompt-usage.jsonl. DELIVERABLES: 20+ templates, template engine, A/B testing framework, registry dashboard. SUCCESS: 100% agent calls use templates, A/B tests run weekly, template success >95%.",
       "type": "development",
       "priority": "high",
-      "status": "pending",
-      "assigned_to": null,
+      "status": "assigned",
+      "assigned_to": "security",
       "created_at": "2025-11-11T10:33:45-0600",
       "created_by": "create-task-cli",
       "context": {
@@ -1748,15 +1769,20 @@
         "branch": "main",
         "description": "PROMPT ENGINEERING UPGRADE - Phase 4: Prompt Templates & Version Control. Standardize all prompts using templates, enabling version control and A/B testing. OBJECTIVES: 1) Create prompt template library in coordination/prompt-templates/ organized by agent type (coordinator/, development/, security/, inventory/, cicd/) with 20+ templates. 2) Build template engine (lib/prompt-templates/engine.js) with render() method supporting variable substitution, required variable validation, strictness levels. 3) Add template metadata (YAML frontmatter) including version, author, success_rate, avg_tokens, required_variables, output_schema. 4) Implement A/B testing framework for comparing prompt versions - run_ab_test.sh script to route traffic, compare_template_performance() analysis. 5) Create prompt registry dashboard showing version history, usage stats, success rates, A/B test results. TECHNICAL: Use Mustache/Handlebars-style templates, store metadata in YAML, track template usage in coordination/prompt-usage.jsonl. DELIVERABLES: 20+ templates, template engine, A/B testing framework, registry dashboard. SUCCESS: 100% agent calls use templates, A/B tests run weekly, template success >95%.",
         "requirements": []
-      }
+      },
+      "assigned_by": "coordinator",
+      "assigned_at": "2025-11-11T11:42:14-0600",
+      "routing_confidence": "N/A",
+      "routing_strategy": "pattern-based",
+      "updated_at": "2025-11-11T11:42:14-06:00"
     },
     {
       "id": "task-1762553463",
       "title": "PROMPT ENGINEERING UPGRADE - Phase 6: Production Hardening. Ensure upgraded system is production-ready with monitoring, alerting, and failsafes. OBJECTIVES: 1) Integrate circuit breakers (from task-1762553455) into all agent call paths - coordinator routing, worker spawning, API calls. 2) Implement rate limiting to prevent LLM API overload - 30 calls per 60s window, exponential backoff on limit hit. 3) Create monitoring dashboard with real-time metrics: agent call volume, validation success rates, retry rates, schema violations, circuit breaker states, rate limit usage. 4) Build alerting system that triggers on: validation failure >10%, retry rate >20%, circuit breaker opens, schema violations detected, rate limit exceeded. 5) Create operations runbook documenting: common failure modes, remediation steps, rollback procedures, emergency contacts. 6) Add health check endpoints and implement automated recovery. TECHNICAL: Use existing circuit-breaker.js, add Prometheus-compatible /metrics endpoint, integrate with dashboard server. DELIVERABLES: Circuit breaker integration, rate limiter, monitoring dashboard, alerting system, ops runbook. SUCCESS: 99.9% uptime, <5min MTTR, zero data loss.",
       "type": "development",
       "priority": "high",
-      "status": "pending",
-      "assigned_to": null,
+      "status": "worker_spawned",
+      "assigned_to": "development",
       "created_at": "2025-11-11T10:34:01-0600",
       "created_by": "create-task-cli",
       "context": {
@@ -1764,15 +1790,22 @@
         "branch": "main",
         "description": "PROMPT ENGINEERING UPGRADE - Phase 6: Production Hardening. Ensure upgraded system is production-ready with monitoring, alerting, and failsafes. OBJECTIVES: 1) Integrate circuit breakers (from task-1762553455) into all agent call paths - coordinator routing, worker spawning, API calls. 2) Implement rate limiting to prevent LLM API overload - 30 calls per 60s window, exponential backoff on limit hit. 3) Create monitoring dashboard with real-time metrics: agent call volume, validation success rates, retry rates, schema violations, circuit breaker states, rate limit usage. 4) Build alerting system that triggers on: validation failure >10%, retry rate >20%, circuit breaker opens, schema violations detected, rate limit exceeded. 5) Create operations runbook documenting: common failure modes, remediation steps, rollback procedures, emergency contacts. 6) Add health check endpoints and implement automated recovery. TECHNICAL: Use existing circuit-breaker.js, add Prometheus-compatible /metrics endpoint, integrate with dashboard server. DELIVERABLES: Circuit breaker integration, rate limiter, monitoring dashboard, alerting system, ops runbook. SUCCESS: 99.9% uptime, <5min MTTR, zero data loss.",
         "requirements": []
-      }
+      },
+      "assigned_by": "coordinator",
+      "assigned_at": "2025-11-11T11:42:14-0600",
+      "routing_confidence": "N/A",
+      "routing_strategy": "pattern-based",
+      "updated_at": "2025-11-11T12:01:56-06:00",
+      "worker_id": "dev-worker-356E3427",
+      "worker_type": "implementation-worker"
     },
     {
       "id": "task-1762553464",
       "title": "GOVERNANCE UPGRADE - Phase 1: Unified Data & AI Catalog. Implement Databricks-inspired unified governance framework. CRITICAL FOUNDATION for production AI system. OBJECTIVES: 1) Build centralized catalog system (coordination/catalog/) with metastore.json registering all assets. 2) Implement automated asset discovery for all coordination files, agent prompts, worker specs, routing decisions. 3) Add AI asset tracking - track master agents, workers, MoE router, prompts as first-class assets alongside data. 4) Create natural language search using LLM for asset discovery (Find all tasks assigned to security master). 5) Build lineage tracking infrastructure (data-lineage.jsonl, ai-lineage.jsonl, decision-lineage.jsonl). 6) Implement asset tagging with sensitivity levels (public, internal, confidential, pii). INSPIRED BY: 98% of CIOs believe single governance model for data+AI is critical. Amgen reduced 120 roles to 1-2 using unified catalog. DELIVERABLES: Catalog manager, asset registry, search interface, lineage framework. SUCCESS: 100% assets cataloged, search <2s, automated discovery. FOUNDATION for Phase 2-6 (access control, audit trails, monitoring, compliance).",
       "type": "development",
       "priority": "critical",
-      "status": "pending",
-      "assigned_to": null,
+      "status": "assigned",
+      "assigned_to": "security",
       "created_at": "2025-11-11T10:42:54-0600",
       "created_by": "create-task-cli",
       "context": {
@@ -1780,7 +1813,12 @@
         "branch": "main",
         "description": "GOVERNANCE UPGRADE - Phase 1: Unified Data & AI Catalog. Implement Databricks-inspired unified governance framework. CRITICAL FOUNDATION for production AI system. OBJECTIVES: 1) Build centralized catalog system (coordination/catalog/) with metastore.json registering all assets. 2) Implement automated asset discovery for all coordination files, agent prompts, worker specs, routing decisions. 3) Add AI asset tracking - track master agents, workers, MoE router, prompts as first-class assets alongside data. 4) Create natural language search using LLM for asset discovery (Find all tasks assigned to security master). 5) Build lineage tracking infrastructure (data-lineage.jsonl, ai-lineage.jsonl, decision-lineage.jsonl). 6) Implement asset tagging with sensitivity levels (public, internal, confidential, pii). INSPIRED BY: 98% of CIOs believe single governance model for data+AI is critical. Amgen reduced 120 roles to 1-2 using unified catalog. DELIVERABLES: Catalog manager, asset registry, search interface, lineage framework. SUCCESS: 100% assets cataloged, search <2s, automated discovery. FOUNDATION for Phase 2-6 (access control, audit trails, monitoring, compliance).",
         "requirements": []
-      }
+      },
+      "assigned_by": "coordinator",
+      "assigned_at": "2025-11-11T11:42:15-0600",
+      "routing_confidence": "N/A",
+      "routing_strategy": "pattern-based",
+      "updated_at": "2025-11-11T11:42:15-06:00"
     },
     {
       "id": "task-1762553464",
@@ -1790,11 +1828,11 @@
       "status": "assigned",
       "created_at": "2025-11-11T14:30:00Z",
       "created_by": "coordinator",
-      "assigned_to": "development-master",
+      "assigned_to": "security",
       "assigned_by": "coordinator",
-      "assigned_at": "2025-11-11T14:30:00Z",
-      "routing_confidence": "0.95",
-      "routing_strategy": "pattern_match_development",
+      "assigned_at": "2025-11-11T11:42:15-0600",
+      "routing_confidence": "N/A",
+      "routing_strategy": "pattern-based",
       "context": {
         "description": "CRITICAL foundation task that transforms commit-relay into an enterprise-grade AI system with unified governance",
         "phase": "Phase 1",
@@ -1814,7 +1852,8 @@
           "Establish lineage tracking foundation",
           "Integrate AI asset tracking with data assets"
         ]
-      }
+      },
+      "updated_at": "2025-11-11T11:42:15-06:00"
     },
     {
       "id": "task-1762553465",
@@ -1838,14 +1877,37 @@
       "title": "GOVERNANCE UPGRADE - Phase 3: Automated Data Lineage & Audit Trails. Implement comprehensive lineage tracking and audit trail system integrated with Phase 1 catalog and Phase 2 access control. Build LineageTracker class for recording all operations, implement comprehensive audit trail logging, create lineage visualization (source → transformation → target), add audit query interface and compliance reports. Success criteria: 100% operation lineage tracked, audit trail completeness 99.9%, lineage query response <500ms, compliance report generation <2 seconds.",
       "type": "development",
       "priority": "high",
-      "status": "pending",
-      "assigned_to": null,
+      "status": "worker_spawned",
+      "assigned_to": "development",
       "created_at": "2025-11-11T11:36:34-0600",
       "created_by": "create-task-cli",
       "context": {
         "repository": "ry-ops/commit-relay",
         "branch": "main",
         "description": "GOVERNANCE UPGRADE - Phase 3: Automated Data Lineage & Audit Trails. Implement comprehensive lineage tracking and audit trail system integrated with Phase 1 catalog and Phase 2 access control. Build LineageTracker class for recording all operations, implement comprehensive audit trail logging, create lineage visualization (source → transformation → target), add audit query interface and compliance reports. Success criteria: 100% operation lineage tracked, audit trail completeness 99.9%, lineage query response <500ms, compliance report generation <2 seconds.",
+        "requirements": []
+      },
+      "assigned_by": "coordinator",
+      "assigned_at": "2025-11-11T11:43:04-0600",
+      "routing_confidence": "N/A",
+      "routing_strategy": "pattern-based",
+      "updated_at": "2025-11-11T12:01:57-06:00",
+      "worker_id": "dev-worker-C3E89869",
+      "worker_type": "implementation-worker"
+    },
+    {
+      "id": "task-1762553467",
+      "title": "GOVERNANCE UPGRADE - Phase 4: AI-Powered Monitoring & Quality Assurance. Implement AI-powered data quality monitoring, automatic PII detection and tagging, model drift detection for agents, proactive monitoring dashboard. Build QualityMonitor class with automated data quality checks, PII scanner with automatic tagging, agent performance monitoring with drift detection, real-time monitoring dashboard with alerts. Success criteria: 100% data quality monitoring coverage, PII detection accuracy >99%, drift detection latency <1s, zero false positives in monitoring.",
+      "type": "development",
+      "priority": "high",
+      "status": "pending",
+      "assigned_to": null,
+      "created_at": "2025-11-11T12:10:12-0600",
+      "created_by": "create-task-cli",
+      "context": {
+        "repository": "ry-ops/commit-relay",
+        "branch": "main",
+        "description": "GOVERNANCE UPGRADE - Phase 4: AI-Powered Monitoring & Quality Assurance. Implement AI-powered data quality monitoring, automatic PII detection and tagging, model drift detection for agents, proactive monitoring dashboard. Build QualityMonitor class with automated data quality checks, PII scanner with automatic tagging, agent performance monitoring with drift detection, real-time monitoring dashboard with alerts. Success criteria: 100% data quality monitoring coverage, PII detection accuracy >99%, drift detection latency <1s, zero false positives in monitoring.",
         "requirements": []
       }
     }
@@ -1857,5 +1919,5 @@
     "in_progress_tasks": 0,
     "completed_tasks": 2
   },
-  "updated_at": "2025-11-11T11:36:34-0600"
+  "updated_at": "2025-11-11T12:10:12-0600"
 }
