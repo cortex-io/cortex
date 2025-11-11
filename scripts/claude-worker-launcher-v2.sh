@@ -151,54 +151,105 @@ sed -i '' "s/TASK_TITLE_PLACEHOLDER/$TASK_TITLE/g" "$WORKER_DIR/prompt.md"
 sed -i '' "s/WORKER_TYPE_PLACEHOLDER/$WORKER_TYPE/g" "$WORKER_DIR/prompt.md"
 echo "$TASK_CONTEXT" >> "$WORKER_DIR/prompt.md"
 
-# Step 7: Execute worker with Claude Code
+# Step 7: Pre-flight validation
+log "Running pre-flight checks..."
+
+# Check if claude command exists
+if ! command -v claude &> /dev/null; then
+    log "ERROR: claude command not found"
+    echo "{\"status\": \"failed\", \"error\": \"claude_not_found\", \"timestamp\": \"$(date -u +%Y-%m-%dT%H:%M:%SZ)\"}" > "$WORKER_DIR/status.json"
+
+    # Update task status
+    jq --arg tid "$TASK_ID" \
+        '(.tasks[] | select(.id == $tid)).status = "failed"' \
+        "$PROJECT_ROOT/coordination/task-queue.json" > /tmp/task-queue.tmp && \
+        mv /tmp/task-queue.tmp "$PROJECT_ROOT/coordination/task-queue.json"
+
+    log "Worker failed: claude command not available"
+    exit 1
+fi
+
+log "✅ Pre-flight checks passed"
+
+# Step 8: Execute worker with Claude Code via Terminal.app
 log "Launching Claude Code for worker execution..."
 
-# Create execution script
-cat > "$WORKER_DIR/execute.sh" << 'EOF'
+# Create log directories
+mkdir -p "$WORKER_DIR/logs"
+
+# Create execution script that will run in Terminal.app
+cat > "$WORKER_DIR/execute.sh" << 'EXEC_EOF'
 #!/bin/bash
 WORKER_DIR="$(dirname "$0")"
 cd "$WORKER_DIR"
 
-# Start execution - Claude Code will read prompt.md from working directory
-# No special flags needed, just execute with the prompt file
-claude < prompt.md
+# Redirect all output to log files
+exec > >(tee logs/stdout.log) 2> >(tee logs/stderr.log >&2)
+
+echo "[$(date -u +%Y-%m-%dT%H:%M:%SZ)] Worker execution starting..."
+echo "[$(date -u +%Y-%m-%dT%H:%M:%SZ)] Working directory: $WORKER_DIR"
+echo "[$(date -u +%Y-%m-%dT%H:%M:%SZ)] Prompt file: prompt.md"
+
+# Execute Claude Code with prompt file
+# Pass prompt content as positional argument
+claude "$(cat prompt.md)"
 
 # Capture exit status
 EXIT_CODE=$?
 
+echo "[$(date -u +%Y-%m-%dT%H:%M:%SZ)] Claude Code exited with code: $EXIT_CODE"
+
+# Check for Ink TTY errors in stderr
+if grep -q "Raw mode is not supported" logs/stderr.log 2>/dev/null; then
+    echo "[$(date -u +%Y-%m-%dT%H:%M:%SZ)] ERROR: Ink TTY error detected"
+    echo "{\"status\": \"failed\", \"error\": \"ink_tty_error\", \"exit_code\": $EXIT_CODE, \"timestamp\": \"$(date -u +%Y-%m-%dT%H:%M:%SZ)\"}" > status.json
+    exit 1
+fi
+
 # Update completion status
 if [ $EXIT_CODE -eq 0 ]; then
     echo "{\"status\": \"completed\", \"timestamp\": \"$(date -u +%Y-%m-%dT%H:%M:%SZ)\"}" > status.json
+    echo "[$(date -u +%Y-%m-%dT%H:%M:%SZ)] Worker completed successfully"
 else
     echo "{\"status\": \"failed\", \"exit_code\": $EXIT_CODE, \"timestamp\": \"$(date -u +%Y-%m-%dT%H:%M:%SZ)\"}" > status.json
+    echo "[$(date -u +%Y-%m-%dT%H:%M:%SZ)] Worker failed with exit code: $EXIT_CODE"
 fi
 
 exit $EXIT_CODE
-EOF
+EXEC_EOF
 
 chmod +x "$WORKER_DIR/execute.sh"
 
-# Execute the worker
-if command -v claude &> /dev/null; then
-    log "Executing with Claude CLI..."
-    "$WORKER_DIR/execute.sh"
+# Launch worker in Terminal.app with real TTY
+log "Launching worker in Terminal.app with TTY support..."
+osascript -e "tell application \"Terminal\" to do script \"cd '$WORKER_DIR' && ./execute.sh; exit\"" > /dev/null 2>&1
+
+if [ $? -eq 0 ]; then
+    log "✅ Worker launched successfully in Terminal.app"
+    log "Worker directory: $WORKER_DIR"
+    log "Logs available at: $WORKER_DIR/logs/"
 else
-    log "Claude CLI not found, using fallback execution..."
-    # Fallback: Create a marker for manual intervention
-    cat > "$WORKER_DIR/ready-for-execution.txt" << EOF
-Worker $WORKER_ID is ready for execution.
-Task: $TASK_ID
-Type: $WORKER_TYPE
+    log "ERROR: Failed to launch Terminal.app"
+    echo "{\"status\": \"failed\", \"error\": \"terminal_launch_failed\", \"timestamp\": \"$(date -u +%Y-%m-%dT%H:%M:%SZ)\"}" > "$WORKER_DIR/status.json"
 
-To execute manually:
-1. cd $WORKER_DIR
-2. Review prompt.md
-3. Execute the task according to requirements
-4. Update status.json when complete
-EOF
+    # Update task status
+    jq --arg tid "$TASK_ID" \
+        '(.tasks[] | select(.id == $tid)).status = "failed"' \
+        "$PROJECT_ROOT/coordination/task-queue.json" > /tmp/task-queue.tmp && \
+        mv /tmp/task-queue.tmp "$PROJECT_ROOT/coordination/task-queue.json"
 
-    log "Worker prepared for manual execution at: $WORKER_DIR"
+    log "Worker failed: could not launch Terminal.app"
+    exit 1
+fi
+
+# Wait a moment for worker to initialize
+sleep 2
+
+# Verify worker started by checking for execute.sh process
+if pgrep -f "$WORKER_DIR/execute.sh" > /dev/null 2>&1; then
+    log "✅ Worker process confirmed running"
+else
+    log "⚠️ Worker process not detected (may have already completed or failed)"
 fi
 
 # Step 8: Update task status
