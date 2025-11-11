@@ -1733,6 +1733,22 @@
         "description": "PROMPT ENGINEERING UPGRADE - Phase 3: Observability & Tracing. Implement comprehensive tracing so every prompt→output chain is visible and measurable. OBJECTIVES: 1) Build tracing infrastructure with PromptTracer class - startTrace, recordStep, endTrace methods storing in coordination/traces/. 2) Instrument all agent calls with tracing: coordinator routing, development implementation, security scanning, inventory cataloging. 3) Create trace explorer dashboard at dashboard/public/traces.html - view all traces, filter by operation/agent/status, inspect full prompt→output chains. 4) Add metrics collection: first-pass validation rate by agent, retry rate by operation, tokens per operation, latency p50/p95/p99, schema violation types. 5) Build trace analysis tools in scripts/analyze-traces.sh. TECHNICAL: Store traces as JSONL in coordination/traces/, integrate with dashboard WebSocket for real-time updates, use dashboard event system. DELIVERABLES: lib/tracing/tracer.js, trace storage, trace explorer UI, metrics dashboard, analysis scripts. SUCCESS: 100% agent calls traced, traces retained 30 days, metrics updated every 5min.",
         "requirements": []
       }
+    },
+    {
+      "id": "task-1762553462",
+      "title": "PROMPT ENGINEERING UPGRADE - Phase 4: Prompt Templates & Version Control. Standardize all prompts using templates, enabling version control and A/B testing. OBJECTIVES: 1) Create prompt template library in coordination/prompt-templates/ organized by agent type (coordinator/, development/, security/, inventory/, cicd/) with 20+ templates. 2) Build template engine (lib/prompt-templates/engine.js) with render() method supporting variable substitution, required variable validation, strictness levels. 3) Add template metadata (YAML frontmatter) including version, author, success_rate, avg_tokens, required_variables, output_schema. 4) Implement A/B testing framework for comparing prompt versions - run_ab_test.sh script to route traffic, compare_template_performance() analysis. 5) Create prompt registry dashboard showing version history, usage stats, success rates, A/B test results. TECHNICAL: Use Mustache/Handlebars-style templates, store metadata in YAML, track template usage in coordination/prompt-usage.jsonl. DELIVERABLES: 20+ templates, template engine, A/B testing framework, registry dashboard. SUCCESS: 100% agent calls use templates, A/B tests run weekly, template success >95%.",
+      "type": "development",
+      "priority": "high",
+      "status": "pending",
+      "assigned_to": null,
+      "created_at": "2025-11-11T10:33:45-0600",
+      "created_by": "create-task-cli",
+      "context": {
+        "repository": "ry-ops/commit-relay",
+        "branch": "main",
+        "description": "PROMPT ENGINEERING UPGRADE - Phase 4: Prompt Templates & Version Control. Standardize all prompts using templates, enabling version control and A/B testing. OBJECTIVES: 1) Create prompt template library in coordination/prompt-templates/ organized by agent type (coordinator/, development/, security/, inventory/, cicd/) with 20+ templates. 2) Build template engine (lib/prompt-templates/engine.js) with render() method supporting variable substitution, required variable validation, strictness levels. 3) Add template metadata (YAML frontmatter) including version, author, success_rate, avg_tokens, required_variables, output_schema. 4) Implement A/B testing framework for comparing prompt versions - run_ab_test.sh script to route traffic, compare_template_performance() analysis. 5) Create prompt registry dashboard showing version history, usage stats, success rates, A/B test results. TECHNICAL: Use Mustache/Handlebars-style templates, store metadata in YAML, track template usage in coordination/prompt-usage.jsonl. DELIVERABLES: 20+ templates, template engine, A/B testing framework, registry dashboard. SUCCESS: 100% agent calls use templates, A/B tests run weekly, template success >95%.",
+        "requirements": []
+      }
     }
   ],
   "metadata": {
@@ -1742,5 +1758,5 @@
     "in_progress_tasks": 0,
     "completed_tasks": 2
   },
-  "updated_at": "2025-11-11T10:33:08-0600"
+  "updated_at": "2025-11-11T10:33:45-0600"
 }
