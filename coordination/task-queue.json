@@ -1607,6 +1607,22 @@
         "description": "PRIORITY 2 - MEDIUM Impact: Implement Circuit Breaker Pattern for rate limiting resilience. Current issue: Rate limiting can cascade and block critical operations during high load. Solution: Add circuit breaker pattern to gracefully handle rate limits and API failures. Implement three states: CLOSED (normal), OPEN (failing, reject immediately), HALF-OPEN (testing recovery). Add to dashboard server API calls, GitHub API interactions, and worker spawn operations. Configure thresholds: failure threshold (5 errors in 60s triggers OPEN), timeout (30s before HALF-OPEN), success threshold (3 successes to CLOSED). Include metrics tracking and logging. Benefits: Improved system resilience, prevents cascade failures, graceful degradation during load spikes.",
         "requirements": []
       }
+    },
+    {
+      "id": "task-1762553456",
+      "title": "PRIORITY 3: Test MoE with Governance Controls - Real-world validation of governance framework. Create a comprehensive test task for MoE system to execute while observing governance controls in action. Test objectives: 1) Validate risk assessment system correctly evaluates task risk levels (low/medium/high/critical), 2) Verify audit trail generation for all governance decisions, 3) Test service auto-recovery mechanisms under failure scenarios, 4) Validate approval workflows for high-risk operations, 5) Test compliance monitoring and reporting. Create test scenarios: low-risk routine task, medium-risk configuration change, high-risk system modification. Observe MoE routing decisions, governance checkpoints, audit logging, and recovery behaviors. Document findings and validate governance controls are working as designed.",
+      "type": "development",
+      "priority": "high",
+      "status": "pending",
+      "assigned_to": null,
+      "created_at": "2025-11-11T08:09:37-0600",
+      "created_by": "create-task-cli",
+      "context": {
+        "repository": "ry-ops/commit-relay",
+        "branch": "main",
+        "description": "PRIORITY 3: Test MoE with Governance Controls - Real-world validation of governance framework. Create a comprehensive test task for MoE system to execute while observing governance controls in action. Test objectives: 1) Validate risk assessment system correctly evaluates task risk levels (low/medium/high/critical), 2) Verify audit trail generation for all governance decisions, 3) Test service auto-recovery mechanisms under failure scenarios, 4) Validate approval workflows for high-risk operations, 5) Test compliance monitoring and reporting. Create test scenarios: low-risk routine task, medium-risk configuration change, high-risk system modification. Observe MoE routing decisions, governance checkpoints, audit logging, and recovery behaviors. Document findings and validate governance controls are working as designed.",
+        "requirements": []
+      }
     }
   ],
   "metadata": {
@@ -1616,5 +1632,5 @@
     "in_progress_tasks": 0,
     "completed_tasks": 2
   },
-  "updated_at": "2025-11-11T08:09:19-0600"
+  "updated_at": "2025-11-11T08:09:37-0600"
 }
