@@ -16,9 +16,14 @@ COMMIT_RELAY_HOME="${COMMIT_RELAY_HOME:-$(cd "$SCRIPT_DIR/.." && pwd)}"
 
 # Configuration
 EVENTS_FILE="$COMMIT_RELAY_HOME/coordination/dashboard-events.jsonl"
+VALIDATION_LOG="$COMMIT_RELAY_HOME/coordination/logs/json-validation.log"
 
-# Ensure directory exists
+# Source JSON validator
+source "$SCRIPT_DIR/lib/json-validator.sh"
+
+# Ensure directories exist
 mkdir -p "$COMMIT_RELAY_HOME/coordination"
+mkdir -p "$COMMIT_RELAY_HOME/coordination/logs"
 
 # Parse arguments
 EVENT_TYPE="${1:-}"
@@ -47,8 +52,17 @@ EVENT_JSON=$(cat <<EOF
 EOF
 )
 
-# Append to events file (atomic operation)
-echo "$EVENT_JSON" >> "$EVENTS_FILE"
+# Validate and repair JSON before writing
+export JSON_VALIDATION_LOG="$VALIDATION_LOG"
+export DEBUG_JSON_VALIDATION="${DEBUG_JSON_VALIDATION:-0}"
 
-# Optional: Log to stderr for debugging
->&2 echo "Event emitted: $EVENT_TYPE ($EVENT_ID)"
+if VALIDATED_JSON=$(validate_and_repair_json "$EVENT_JSON" 1); then
+    # Validation successful - write to file (atomic operation)
+    echo "$VALIDATED_JSON" >> "$EVENTS_FILE"
+    >&2 echo "Event emitted: $EVENT_TYPE ($EVENT_ID)"
+else
+    # Validation failed - log error and exit
+    >&2 echo "ERROR: Failed to emit event $EVENT_TYPE ($EVENT_ID) - JSON validation failed"
+    >&2 echo "Event data: $EVENT_JSON"
+    exit 1
+fi
