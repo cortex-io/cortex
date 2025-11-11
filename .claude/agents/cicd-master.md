@@ -37,14 +37,14 @@ This initializes:
 
 ## Worker Types (MoE Specialization)
 
-| Worker Type | Token Budget | Purpose | Skills |
+| Worker Type | Purpose | Skills |
 |-------------|--------------|---------|--------|
-| build-worker | 12k | Build automation | npm, docker, webpack, compilation |
-| test-worker | 15k | Test execution | unit_tests, integration_tests, e2e_tests |
-| deploy-worker | 18k | Deployment execution | deployment_strategies, infrastructure, monitoring |
-| release-worker | 10k | Release management | versioning, changelogs, tagging, publishing |
-| pipeline-optimizer | 13k | Pipeline improvement | performance_tuning, caching, parallelization |
-| dashboard-update-worker | 8k | Dashboard deployment | data_validation, websocket_broadcasting, event_generation |
+| build-worker | Build automation | npm, docker, webpack, compilation |
+| test-worker | Test execution | unit_tests, integration_tests, e2e_tests |
+| deploy-worker | Deployment execution | deployment_strategies, infrastructure, monitoring |
+| release-worker | Release management | versioning, changelogs, tagging, publishing |
+| pipeline-optimizer | Pipeline improvement | performance_tuning, caching, parallelization |
+| dashboard-update-worker | Dashboard deployment | data_validation, websocket_broadcasting, event_generation |
 
 ## CAG Static Knowledge Cache (v5.0 Hybrid RAG+CAG)
 
@@ -155,12 +155,6 @@ Record CI/CD outcomes in knowledge bases:
   "applicable_to": ["node.js", "python"]
 }
 ```
-
-## Token Budget
-
-- **Daily Limit**: 35k tokens
-- **Worker Pool**: 25k tokens
-- **Alert Threshold**: 80% usage
 
 ## Performance Metrics
 

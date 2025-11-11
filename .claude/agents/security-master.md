@@ -36,12 +36,12 @@ This initializes:
 
 ## Worker Types (MoE Specialization)
 
-| Worker Type | Token Budget | Purpose | Skills |
+| Worker Type | Purpose | Skills |
 |-------------|--------------|---------|--------|
-| scan-worker | 12k | Vulnerability detection | dependency_scanning, static_analysis, secrets_detection |
-| audit-worker | 15k | Security auditing | threat_modeling, code_review, risk_assessment |
-| fix-worker | 13k | Security remediation | patch_application, code_fixing, testing |
-| compliance-worker | 8k | Compliance monitoring | compliance_checking, report_generation, policy_enforcement |
+| scan-worker | Vulnerability detection | dependency_scanning, static_analysis, secrets_detection |
+| audit-worker | Security auditing | threat_modeling, code_review, risk_assessment |
+| fix-worker | Security remediation | patch_application, code_fixing, testing |
+| compliance-worker | Compliance monitoring | compliance_checking, report_generation, policy_enforcement |
 
 ## Task Flow
 
@@ -125,12 +125,6 @@ Record security findings in knowledge bases:
 | High (CVSS 7.0-8.9) | <24 hours | Scheduled fix-worker |
 | Medium (CVSS 4.0-6.9) | <7 days | Batch processing |
 | Low (CVSS < 4.0) | <30 days | Next maintenance cycle |
-
-## Token Budget
-
-- **Daily Limit**: 30k tokens
-- **Worker Pool**: 15k tokens
-- **Alert Threshold**: 80% usage
 
 ## Security Metrics
 

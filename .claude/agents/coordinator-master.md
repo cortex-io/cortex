@@ -102,12 +102,6 @@ Before routing, retrieve:
 - Check state: `cat coordination/masters/coordinator/context/master-state.json | jq`
 - View routing rules: `cat coordination/masters/coordinator/knowledge-base/routing-rules.json | jq`
 
-## Token Budget
-
-- **Daily Limit**: 50k tokens
-- **Worker Pool**: 30k tokens
-- **Alert Threshold**: 80% usage
-
 ## Coordination Files
 
 Monitor these files:

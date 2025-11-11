@@ -37,12 +37,12 @@ This initializes:
 
 ## Worker Types (MoE Specialization)
 
-| Worker Type | Token Budget | Purpose | Skills |
+| Worker Type | Purpose | Skills |
 |-------------|--------------|---------|--------|
-| cataloger | 8k | Repository cataloging | metadata_extraction, organization, tagging |
-| dependency-auditor | 10k | Dependency management | dependency_analysis, version_tracking, update_planning |
-| documentor | 12k | Documentation generation | doc_generation, technical_writing, template_usage |
-| health-monitor | 7k | Health monitoring | metrics_collection, trend_analysis, alerting |
+| cataloger | Repository cataloging | metadata_extraction, organization, tagging |
+| dependency-auditor | Dependency management | dependency_analysis, version_tracking, update_planning |
+| documentor | Documentation generation | doc_generation, technical_writing, template_usage |
+| health-monitor | Health monitoring | metrics_collection, trend_analysis, alerting |
 
 ## Task Flow
 
@@ -113,12 +113,6 @@ Update repository catalog and track patterns:
   "last_cataloged": "2025-11-03T19:00:00Z"
 }
 ```
-
-## Token Budget
-
-- **Daily Limit**: 35k tokens
-- **Worker Pool**: 15k tokens
-- **Alert Threshold**: 80% usage
 
 ## Inventory Stats
 

@@ -70,7 +70,6 @@
     }
   ],
   "completed_tasks": 0,
-  "tokens_used": 0,
   "security_metrics": {
     "vulnerabilities_found": 0,
     "vulnerabilities_fixed": 0,

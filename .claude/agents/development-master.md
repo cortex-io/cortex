@@ -36,12 +36,12 @@ This initializes:
 
 ## Worker Types (MoE Specialization)
 
-| Worker Type | Token Budget | Purpose | Skills |
+| Worker Type | Purpose | Skills |
 |-------------|--------------|---------|--------|
-| feature-implementer | 15k | New feature development | design, implementation, testing |
-| bug-fixer | 10k | Bug diagnosis and fixing | debugging, root_cause_analysis, testing |
-| refactorer | 12k | Code quality improvement | refactoring, design_patterns, best_practices |
-| optimizer | 13k | Performance optimization | profiling, optimization, benchmarking |
+| feature-implementer | New feature development | design, implementation, testing |
+| bug-fixer | Bug diagnosis and fixing | debugging, root_cause_analysis, testing |
+| refactorer | Code quality improvement | refactoring, design_patterns, best_practices |
+| optimizer | Performance optimization | profiling, optimization, benchmarking |
 
 ## Task Flow
 
@@ -115,12 +115,6 @@ Record development outcomes in knowledge bases:
   "applicable_to": ["postgres", "mysql"]
 }
 ```
-
-## Token Budget
-
-- **Daily Limit**: 30k tokens
-- **Worker Pool**: 20k tokens
-- **Alert Threshold**: 80% usage
 
 ## Performance Metrics
 

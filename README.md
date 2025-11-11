@@ -51,15 +51,26 @@ Each master agent focuses on a domain like development, security, or inventory m
 - 🔒 **Context Isolation**: Separate initialization and state per master
 - 📊 **16 Specialized Workers**: 4 worker types per master domain
 
+**🛡️ v5.1 Governance & Optimization** (NEW):
+- 🔐 **Governance Framework**: Comprehensive risk assessment, approval workflows, and audit trails
+- ⚖️ **Risk-Based Approval**: 4-level risk system (low/medium/high/critical) with automated approval routing
+- 📋 **Audit Trails**: Complete forensic logging for all governance decisions and task execution
+- 🎯 **Compliance Monitoring**: Automated policy enforcement with monthly compliance reporting
+- 🔄 **Circuit Breaker Integration**: Automatic failure detection and service recovery
+- 🧹 **System Maintenance**: Automated cleanup scripts for logs, archives, and temporary files
+- ♻️ **Token Limit Removal**: CAG caching eliminates need for explicit token budgets
+- 📦 **Automated Archival**: Log rotation, history compression, and event archival strategies
+
 **Core Capabilities**:
-- ⚡ **Token Efficient**: 60-80% reduction in token usage for complex workflows
+- ⚡ **Token Efficient**: 60-80% reduction in token usage for complex workflows via CAG caching
 - 🔄 **Parallel Execution**: 3-5x faster through concurrent worker orchestration
 - 🎯 **Complete Lifecycle**: Research → Implementation → Testing → Security → Documentation → PR
-- 🔒 **Security-First**: Automated vulnerability scanning and remediation
+- 🔒 **Security-First**: Automated vulnerability scanning and remediation with governance controls
 - 📊 **Portfolio Management**: Automatic repository discovery and health tracking (20 repos cataloged)
-- 📈 **Scalable**: Handle features that would exhaust single-agent token budgets
+- 📈 **Infinitely Scalable**: No token budget constraints - CAG caching enables unlimited operations
 - 🤖 **Fully Autonomous**: Workers launch automatically via background daemon - zero manual intervention
 - 📡 **Real-Time Monitoring**: Live dashboard with WebSocket updates and system health metrics
+- 🛡️ **Enterprise Governance**: Risk assessment, approvals, audit trails, compliance reporting
 
 ---
 
@@ -1212,6 +1223,14 @@ coordination/vector-db/
 - [Agent Guide](./docs/agent-guide.md) - Using master agents
 - [Worker Specifications](./coordination/worker-specs/README.md) - Worker spec format
 
+### Governance & Optimization (v5.1)
+
+- [**Governance Framework**](./docs/governance-framework.md) - **NEW**: Comprehensive governance system
+- [**Governance Testing Report**](./docs/governance-testing-report.md) - Validation results and metrics
+- [**Token Optimization via CAG**](./docs/token-optimization-via-cag.md) - Token limit removal documentation
+- [System Maintenance Scripts](./scripts/system-maintenance.sh) - Automated cleanup and archival
+- [Remove Token Limits Script](./scripts/remove-token-limits.sh) - CAG-enabled optimization
+
 ---
 
 ## Human Oversight
@@ -1312,9 +1331,10 @@ MIT License - See [LICENSE](./LICENSE) for details
 - ✅ MoE: Pattern-based routing with 97% faster decisions (CAG-enhanced)
 - ✅ Hybrid RAG+CAG: Static knowledge cached, dynamic data via vector search
 - ✅ 16 specialized worker types available
-- ✅ Token budget: 270k daily
-- ✅ Worker pool: 80k available
-- ✅ Emergency reserve: 25k
+- ✅ Token optimization: CAG caching eliminates need for explicit budgets
+- ✅ Infinitely scalable: No artificial token constraints
+- ✅ System maintenance: Automated cleanup and archival active
+- ✅ Governance: Risk assessment, approvals, and audit trails operational
 - ✅ Dashboard: Live orchestration + EM metrics + real-time events
 
 ---

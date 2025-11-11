@@ -38,7 +38,7 @@ OPTIONS:
     -i, --task-id ID          Related task ID (required)
     -m, --master MASTER       Master agent spawning this worker (required)
     -r, --repo REPO           Repository (format: owner/repo)
-    -b, --budget TOKENS       Token budget (default: auto-determined by type)
+# [DEPRECATED - CAG makes this obsolete]     -b, --budget TOKENS       Token budget (default: auto-determined by type)
     -d, --deadline TIMESTAMP  ISO-8601 deadline (optional)
     -p, --priority PRIORITY   Priority: critical|high|medium|low (default: medium)
     -s, --scope JSON          JSON scope object (optional)
@@ -52,21 +52,21 @@ EXAMPLES:
 
     # Spawn fix worker with custom budget
     $0 --type fix-worker --task-id task-011 --master development-master \\
-       --repo ry-ops/n8n-mcp-server --budget 6000 --priority high
+# [DEPRECATED - CAG makes this obsolete]        --repo ry-ops/n8n-mcp-server --budget 6000 --priority high
 
     # Spawn analysis worker
     $0 --type analysis-worker --task-id task-012 --master coordinator-master \\
        --scope '{"question": "How does auth work?"}'
 
 WORKER TYPES:
-    scan-worker          Security scanning (8k tokens, 15min)
-    fix-worker           Apply fixes (5k tokens, 20min)
-    analysis-worker      Research/investigation (5k tokens, 15min)
-    implementation-worker Feature development (10k tokens, 45min)
-    test-worker          Add tests (6k tokens, 20min)
-    review-worker        Code review (5k tokens, 15min)
-    pr-worker            Create PRs (4k tokens, 10min)
-    documentation-worker Write docs (6k tokens, 20min)
+    scan-worker          Security scanning (15min)
+    fix-worker           Apply fixes (20min)
+    analysis-worker      Research/investigation (15min)
+    implementation-worker Feature development (45min)
+    test-worker          Add tests (20min)
+    review-worker        Code review (15min)
+    pr-worker            Create PRs (10min)
+    documentation-worker Write docs (20min)
 
 EOF
     exit 1
@@ -106,7 +106,7 @@ while [[ $# -gt 0 ]]; do
             REPOSITORY="$2"
             shift 2
             ;;
-        -b|--budget)
+# [DEPRECATED - CAG makes this obsolete]         -b|--budget)
             TOKEN_BUDGET="$2"
             shift 2
             ;;
