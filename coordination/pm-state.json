@@ -1,10 +1,10 @@
 {
   "pm_daemon": {
-    "pid": 67853,
-    "last_loop": "2025-11-08T15:06:34-0600",
-    "loops_completed": 119,
-    "uptime_seconds": 21346,
-    "started_at": "2025-11-09T14:15:41-0600"
+    "pid": 84849,
+    "last_loop": "2025-11-11T09:47:41-0600",
+    "loops_completed": 7,
+    "uptime_seconds": 1081,
+    "started_at": "2025-11-11T09:29:40-0600"
   },
   "monitored_workers": {
     "dev-worker-D6FE104C": {
@@ -90,16 +90,30 @@
       "warnings_sent": 3,
       "interventions": [],
       "legacy_worker": false
+    },
+    "dev-worker-270EA2BA": {
+      "worker_id": "dev-worker-270EA2BA",
+      "task_id": "task-1762553453",
+      "worker_type": "implementation-worker",
+      "registered_at": "2025-11-11T14:06:04Z",
+      "started_at": "2025-11-11T14:05:35Z",
+      "last_checkin": null,
+      "checkin_count": 0,
+      "health_state": "unknown",
+      "progress_pct": 0,
+      "warnings_sent": 0,
+      "interventions": [],
+      "legacy_worker": false
     }
   },
   "metrics": {
     "active_workers": 1,
     "completed_workers": 13,
-    "failed_workers": 34,
-    "total_workers": 48,
-    "success_rate": 27.0,
-    "completed_today": 13,
-    "failed_today": 34,
-    "success_rate_today": 27.6
+    "failed_workers": 0,
+    "total_workers": 14,
+    "success_rate": 92.8,
+    "completed_today": 1,
+    "failed_today": 0,
+    "success_rate_today": 100.0
   }
 }
