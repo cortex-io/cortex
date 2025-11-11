@@ -1686,8 +1686,8 @@
       "title": "PROMPT ENGINEERING UPGRADE - Phase 1: Contract Definition. Transform commit-relay into production-grade LLM system using LangChain/PDL patterns. PHASE 1 OBJECTIVES: 1) Create schema registry with 15+ JSON schemas for all agent outputs (task-queue-entry, handoff, master-state, worker-spec, routing-decision, dashboard-event). 2) Define strict contracts for coordinator, development, security, inventory, cicd master agents - document input/output schemas, validation rules, enum values. 3) Create contract documentation in docs/contracts/. TECHNICAL APPROACH: Use JSON Schema draft-07 with strict validation (required fields, additionalProperties:false, enum constraints, regex patterns). Build schema-validator.js library using AJV for validation. Implement safeReadJSON and safeWriteJSON wrappers. DELIVERABLES: coordination/schemas/ directory with all schemas, docs/contracts/ with agent documentation, lib/schema-validator.js validation library. SUCCESS METRICS: 100% agent outputs have schemas, zero surprise fields. Based on transcript: LLMs are probabilistic not deterministic, need contracts+control loops+observability for production software.",
       "type": "development",
       "priority": "high",
-      "status": "pending",
-      "assigned_to": null,
+      "status": "assigned",
+      "assigned_to": "development",
       "created_at": "2025-11-11T10:07:08-0600",
       "created_by": "create-task-cli",
       "context": {
@@ -1695,15 +1695,36 @@
         "branch": "main",
         "description": "PROMPT ENGINEERING UPGRADE - Phase 1: Contract Definition. Transform commit-relay into production-grade LLM system using LangChain/PDL patterns. PHASE 1 OBJECTIVES: 1) Create schema registry with 15+ JSON schemas for all agent outputs (task-queue-entry, handoff, master-state, worker-spec, routing-decision, dashboard-event). 2) Define strict contracts for coordinator, development, security, inventory, cicd master agents - document input/output schemas, validation rules, enum values. 3) Create contract documentation in docs/contracts/. TECHNICAL APPROACH: Use JSON Schema draft-07 with strict validation (required fields, additionalProperties:false, enum constraints, regex patterns). Build schema-validator.js library using AJV for validation. Implement safeReadJSON and safeWriteJSON wrappers. DELIVERABLES: coordination/schemas/ directory with all schemas, docs/contracts/ with agent documentation, lib/schema-validator.js validation library. SUCCESS METRICS: 100% agent outputs have schemas, zero surprise fields. Based on transcript: LLMs are probabilistic not deterministic, need contracts+control loops+observability for production software.",
         "requirements": []
+      },
+      "assigned_by": "coordinator",
+      "assigned_at": "2025-11-11T16:09:47Z",
+      "routing_confidence": "0.95",
+      "routing_strategy": "single_expert",
+      "handoff_id": "coord-to-development-54030DBC-B10B-4E30-B3EF-77AF0B841A04"
+    },
+    {
+      "id": "task-1762553460",
+      "title": "PROMPT ENGINEERING UPGRADE - Phase 2: Validation & Control Loops. Build validation layers and retry mechanisms for every agent output. OBJECTIVES: 1) Integrate Phase 1 schemas into all agent workflows - add validation wrappers to emit-event.sh, spawn-worker.sh, create-task.sh, moe-router.sh. 2) Implement control loops for critical paths: coordinator routing with validation+retry, handoff creation with validation, task assignment validation. 3) Add retry logic to all agent calls with exponential backoff - max 3 retries with tighter instructions each time. 4) Build validation middleware for all JSON file operations. TECHNICAL: Update all bash scripts to use lib/safe-json.js wrappers, add validation hooks to coordination file writers, implement circuit breaker integration from task-1762553455. DELIVERABLES: All coordination writes use safeWriteJSON, control loops for routing/handoffs/assignments, retry logic library, validation middleware integrated. SUCCESS: 99%+ first-pass validation rate, <1 schema violation per day, <5% retry rate.",
+      "type": "development",
+      "priority": "high",
+      "status": "pending",
+      "assigned_to": null,
+      "created_at": "2025-11-11T10:32:50-0600",
+      "created_by": "create-task-cli",
+      "context": {
+        "repository": "ry-ops/commit-relay",
+        "branch": "main",
+        "description": "PROMPT ENGINEERING UPGRADE - Phase 2: Validation & Control Loops. Build validation layers and retry mechanisms for every agent output. OBJECTIVES: 1) Integrate Phase 1 schemas into all agent workflows - add validation wrappers to emit-event.sh, spawn-worker.sh, create-task.sh, moe-router.sh. 2) Implement control loops for critical paths: coordinator routing with validation+retry, handoff creation with validation, task assignment validation. 3) Add retry logic to all agent calls with exponential backoff - max 3 retries with tighter instructions each time. 4) Build validation middleware for all JSON file operations. TECHNICAL: Update all bash scripts to use lib/safe-json.js wrappers, add validation hooks to coordination file writers, implement circuit breaker integration from task-1762553455. DELIVERABLES: All coordination writes use safeWriteJSON, control loops for routing/handoffs/assignments, retry logic library, validation middleware integrated. SUCCESS: 99%+ first-pass validation rate, <1 schema violation per day, <5% retry rate.",
+        "requirements": []
       }
     }
   ],
   "metadata": {
-    "last_updated": "2025-11-11T09:33:42",
+    "last_updated": "2025-11-11T16:09:47Z",
     "total_tasks": 5,
     "pending_tasks": 0,
     "in_progress_tasks": 0,
     "completed_tasks": 2
   },
-  "updated_at": "2025-11-11T10:07:09-0600"
+  "updated_at": "2025-11-11T10:32:50-0600"
 }
