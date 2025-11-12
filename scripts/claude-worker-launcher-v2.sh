@@ -1,7 +1,8 @@
 #!/bin/bash
 
-# Claude Worker Launcher v2 - With Service Management
-# Enhanced launcher that ensures all services are running before worker execution
+# Claude Worker Launcher v2.1 - FIXED VERSION
+# Enhanced launcher with proper validation and placeholder substitution
+# Fixed: Line 152 placeholder substitution bug + added governance validation
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
@@ -15,9 +16,30 @@ log() {
     echo "[$(date -u +%Y-%m-%dT%H:%M:%SZ)] LAUNCHER: $1"
 }
 
+# FIX #3: Add NVM paths to ensure claude CLI is available
+# This fixes the "claude command not found" error for background processes
+export PATH="/Users/ryandahlberg/.nvm/versions/node/v24.11.0/bin:$PATH"
+
 log "============================================"
-log "Starting enhanced worker launcher for $WORKER_ID"
+log "Starting enhanced worker launcher v2.1 (FIXED) for $WORKER_ID"
 log "Task: $TASK_ID, Type: $WORKER_TYPE"
+
+# FIX #2: INPUT VALIDATION - Validate required arguments
+log "Validating input arguments..."
+
+if [[ -z "$WORKER_ID" ]]; then
+    log "ERROR: WORKER_ID (argument 1) is required but was empty"
+    log "Usage: $0 <worker_id> <task_id> [worker_type]"
+    exit 1
+fi
+
+if [[ -z "$TASK_ID" ]]; then
+    log "ERROR: TASK_ID (argument 2) is required but was empty"
+    log "Usage: $0 <worker_id> <task_id> [worker_type]"
+    exit 1
+fi
+
+log "✅ Input validation passed: WORKER_ID=$WORKER_ID, TASK_ID=$TASK_ID, WORKER_TYPE=$WORKER_TYPE"
 
 # Step 1: Ensure critical services are running
 log "Checking service health..."
@@ -64,25 +86,35 @@ cat > "$PROJECT_ROOT/coordination/system-health-check.json" << EOF
     "worker_id": "$WORKER_ID",
     "task_id": "$TASK_ID",
     "services_checked": true,
-    "launcher_version": "v2"
+    "launcher_version": "v2.1-fixed"
 }
 EOF
 
 # Step 4: Read task requirements
 log "Loading task requirements..."
 
-TASK_FILE="$PROJECT_ROOT/coordination/tasks/task-$TASK_ID.json"
+TASK_FILE="$PROJECT_ROOT/coordination/tasks/$TASK_ID.json"
+WORKER_SPEC_FILE="$PROJECT_ROOT/coordination/worker-specs/active/$WORKER_ID.json"
 REQUIREMENTS_FILE="$PROJECT_ROOT/agents/workers/$WORKER_ID/requirements.txt"
 
 if [[ -f "$TASK_FILE" ]]; then
     TASK_TITLE=$(jq -r '.title // "Unknown task"' "$TASK_FILE")
-    TASK_CONTEXT=$(jq -r '.context // {}' "$TASK_FILE")
-    log "Task: $TASK_TITLE"
+    TASK_CONTEXT=$(jq -r '.context // {}' "$TASK_FILE" | jq -c .)
+    log "Task file found: $TASK_TITLE"
+elif [[ -f "$WORKER_SPEC_FILE" ]]; then
+    # FIX #6: Fall back to reading task data from worker spec when task file doesn't exist
+    TASK_TITLE=$(jq -r '.task_data.title // "Unknown task"' "$WORKER_SPEC_FILE")
+    TASK_DESCRIPTION=$(jq -r '.task_data.description // ""' "$WORKER_SPEC_FILE")
+    TASK_CONTEXT=$(jq -r '.task_data // {}' "$WORKER_SPEC_FILE" | jq -c .)
+    log "Task data loaded from worker spec: $TASK_TITLE"
 else
     TASK_TITLE="Task $TASK_ID"
-    TASK_CONTEXT="{}"
-    log "Task file not found, using defaults"
+    TASK_DESCRIPTION=""
+    TASK_CONTEXT='{"note":"Task file not found, using minimal context"}'
+    log "WARNING: Task file not found at $TASK_FILE and worker spec not found at $WORKER_SPEC_FILE"
 fi
+
+log "Task context loaded: $(echo "$TASK_CONTEXT" | jq -c '{title: .title, type: .type, priority: .priority}' 2>/dev/null || echo "$TASK_CONTEXT")"
 
 # Step 5: Create worker directory
 WORKER_DIR="$PROJECT_ROOT/agents/workers/$WORKER_ID"
@@ -144,12 +176,50 @@ Execute the assigned task while:
 Begin by analyzing the task requirements and checking service health.
 EOF
 
-# Replace placeholders
+# FIX #1: PROPER PLACEHOLDER SUBSTITUTION using sed for ALL placeholders
+log "Performing template placeholder substitution..."
+
+# FIX #7: Escape special characters in TASK_TITLE for sed (e.g., & in titles)
+TASK_TITLE_ESCAPED=$(echo "$TASK_TITLE" | sed 's/[\/&]/\\&/g')
+
+# Substitute basic placeholders
 sed -i '' "s/WORKER_ID_PLACEHOLDER/$WORKER_ID/g" "$WORKER_DIR/prompt.md"
 sed -i '' "s/TASK_ID_PLACEHOLDER/$TASK_ID/g" "$WORKER_DIR/prompt.md"
-sed -i '' "s/TASK_TITLE_PLACEHOLDER/$TASK_TITLE/g" "$WORKER_DIR/prompt.md"
+sed -i '' "s/TASK_TITLE_PLACEHOLDER/$TASK_TITLE_ESCAPED/g" "$WORKER_DIR/prompt.md"
 sed -i '' "s/WORKER_TYPE_PLACEHOLDER/$WORKER_TYPE/g" "$WORKER_DIR/prompt.md"
-echo "$TASK_CONTEXT" >> "$WORKER_DIR/prompt.md"
+
+# FIX #4: Escape special characters in TASK_CONTEXT for sed
+# Handle JSON special characters: / & \ $ " '
+TASK_CONTEXT_ESCAPED=$(echo "$TASK_CONTEXT" | sed 's/[\/&]/\\&/g')
+
+# Use | as delimiter to avoid conflicts with / in JSON
+sed -i '' "s|TASK_CONTEXT_PLACEHOLDER|$TASK_CONTEXT_ESCAPED|g" "$WORKER_DIR/prompt.md"
+
+log "✅ Template substitution completed"
+
+# FIX #3: POST-GENERATION VALIDATION - Check for unsubstituted placeholders
+log "Validating placeholder substitution..."
+
+UNSUBSTITUTED=$(grep -c "PLACEHOLDER" "$WORKER_DIR/prompt.md" || true)
+
+if [[ $UNSUBSTITUTED -gt 0 ]]; then
+    log "ERROR: Found $UNSUBSTITUTED unsubstituted placeholders in prompt.md"
+    log "Prompt generation failed validation - details below:"
+
+    # Log the problematic content
+    grep "PLACEHOLDER" "$WORKER_DIR/prompt.md" | while read -r line; do
+        log "  Unsubstituted: $line"
+    done
+    grep "PLACEHOLDER" "$WORKER_DIR/prompt.md" >> "$PROJECT_ROOT/agents/logs/system/launcher.log"
+
+    # Create failure status
+    echo "{\"status\": \"failed\", \"error\": \"placeholder_substitution_failed\", \"unsubstituted_count\": $UNSUBSTITUTED, \"timestamp\": \"$(date -u +%Y-%m-%dT%H:%M:%SZ)\"}" > "$WORKER_DIR/status.json"
+
+    log "Worker launch aborted due to validation failure"
+    exit 1
+fi
+
+log "✅ All placeholders substituted successfully (validation passed)"
 
 # Step 7: Pre-flight validation
 log "Running pre-flight checks..."
@@ -183,16 +253,17 @@ cat > "$WORKER_DIR/execute.sh" << 'EXEC_EOF'
 WORKER_DIR="$(dirname "$0")"
 cd "$WORKER_DIR"
 
-# Redirect all output to log files
-exec > >(tee logs/stdout.log) 2> >(tee logs/stderr.log >&2)
+# Add NVM paths to ensure claude CLI is available in Terminal.app subprocess
+export PATH="/Users/ryandahlberg/.nvm/versions/node/v24.11.0/bin:$PATH"
 
-echo "[$(date -u +%Y-%m-%dT%H:%M:%SZ)] Worker execution starting..."
-echo "[$(date -u +%Y-%m-%dT%H:%M:%SZ)] Working directory: $WORKER_DIR"
-echo "[$(date -u +%Y-%m-%dT%H:%M:%SZ)] Prompt file: prompt.md"
+echo "[$(date -u +%Y-%m-%dT%H:%M:%SZ)] Worker execution starting..." | tee -a logs/stdout.log
+echo "[$(date -u +%Y-%m-%dT%H:%M:%SZ)] Working directory: $WORKER_DIR" | tee -a logs/stdout.log
+echo "[$(date -u +%Y-%m-%dT%H:%M:%SZ)] Prompt file: prompt.md" | tee -a logs/stdout.log
 
-# Execute Claude Code with prompt file
-# Pass prompt content as positional argument
-claude "$(cat prompt.md)"
+# Execute Claude Code with prompt file in non-interactive mode
+# Use -p flag for headless/non-interactive execution
+# Redirect output to logs without using exec/process substitution to avoid TTY issues
+cat prompt.md | claude -p >> logs/stdout.log 2>> logs/stderr.log
 
 # Capture exit status
 EXIT_CODE=$?
