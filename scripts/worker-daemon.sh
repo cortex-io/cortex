@@ -197,16 +197,49 @@ while true; do
                 CLAUDE_LAUNCHER="$COMMIT_RELAY_HOME/scripts/claude-worker-launcher-v2.sh"
 
                 if [ -f "$CLAUDE_LAUNCHER" ]; then
-                    log_daemon "INFO: Launching worker with Claude Code via launcher"
+                    # Read terminal settings
+                    TERMINAL_SETTINGS="$COMMIT_RELAY_HOME/coordination/config/terminal-settings.json"
+                    TERMINAL_ENABLED="true"
+                    HEADLESS_MODE="false"
+                    AUTO_CLOSE_DURATION="0"
+
+                    if [ -f "$TERMINAL_SETTINGS" ]; then
+                        TERMINAL_ENABLED=$(jq -r '.terminal_windows_enabled' "$TERMINAL_SETTINGS" 2>/dev/null || echo "true")
+                        HEADLESS_MODE=$(jq -r '.headless_mode' "$TERMINAL_SETTINGS" 2>/dev/null || echo "false")
+                        AUTO_CLOSE_DURATION=$(jq -r '.auto_close_duration_minutes' "$TERMINAL_SETTINGS" 2>/dev/null || echo "0")
+                    fi
 
                     # Build launch command
                     TERMINAL_CMD="cd $COMMIT_RELAY_HOME && $CLAUDE_LAUNCHER $WORKER_ID"
 
-                    # Launch Claude Code worker in Terminal
-                    osascript -e "tell application \"Terminal\"
-                        do script \"$TERMINAL_CMD\"
-                        activate
-                    end tell" > /dev/null 2>&1 &
+                    if [ "$TERMINAL_ENABLED" = "true" ] && [ "$HEADLESS_MODE" = "false" ]; then
+                        log_daemon "INFO: Launching worker with Claude Code in Terminal window"
+
+                        # Launch Claude Code worker in Terminal
+                        osascript -e "tell application \"Terminal\"
+                            do script \"$TERMINAL_CMD\"
+                            activate
+                        end tell" > /dev/null 2>&1 &
+
+                        # If auto-close duration is set, schedule terminal closure
+                        if [ "$AUTO_CLOSE_DURATION" -gt 0 ]; then
+                            (
+                                sleep $((AUTO_CLOSE_DURATION * 60))
+                                osascript -e "tell application \"Terminal\" to close (every window whose name contains \"$WORKER_ID\")" 2>/dev/null || true
+                            ) &
+                            log_daemon "INFO: Terminal window will auto-close in ${AUTO_CLOSE_DURATION} minutes"
+                        fi
+                    else
+                        log_daemon "INFO: Launching worker with Claude Code in HEADLESS mode (no terminal window)"
+
+                        # Launch worker headless in background
+                        (
+                            cd "$COMMIT_RELAY_HOME"
+                            mkdir -p "agents/workers/$WORKER_ID/logs"
+                            "$CLAUDE_LAUNCHER" "$WORKER_ID" "$TASK_ID" "$WORKER_TYPE" \
+                                > "agents/workers/$WORKER_ID/logs/stdout.log" 2>&1 &
+                        ) &
+                    fi
 
                 else
                     log_daemon "ERROR: Claude worker launcher not found: $CLAUDE_LAUNCHER"
