@@ -20,7 +20,7 @@
       "title": "Security Scan - Test Repository",
       "type": "security_scan",
       "priority": "medium",
-      "status": "worker_spawned",
+      "status": "completed",
       "created_at": "2025-11-07T20:03:45.388653Z",
       "context": {
         "repository": "test/repo",
@@ -34,16 +34,17 @@
       "assigned_at": "2025-11-07T20:18:32-0600",
       "routing_confidence": "0.09",
       "routing_strategy": "single_expert_low_confidence",
-      "updated_at": "2025-11-11T16:36:59-06:00",
+      "updated_at": "2025-11-12T22:10:39Z",
       "worker_id": "sec-worker-82577B3E",
-      "worker_type": "scan-worker"
+      "worker_type": "scan-worker",
+      "completed_at": "2025-11-12T22:10:39Z"
     },
     {
       "id": "task-003",
       "title": "Test MoE routing integration with security vulnerabilities scan",
       "type": "security-scan",
       "priority": "critical",
-      "status": "worker_spawned",
+      "status": "completed",
       "assigned_to": "security",
       "created_at": "2025-11-07T21:51:32Z",
       "created_by": "create-task-cli",
@@ -61,16 +62,17 @@
       "assigned_at": "2025-11-07T20:18:33-0600",
       "routing_confidence": "0.06",
       "routing_strategy": "single_expert_low_confidence",
-      "updated_at": "2025-11-11T16:36:57-06:00",
+      "updated_at": "2025-11-12T22:10:39Z",
       "worker_id": "sec-worker-D20C3813",
-      "worker_type": "scan-worker"
+      "worker_type": "scan-worker",
+      "completed_at": "2025-11-12T22:10:39Z"
     },
     {
       "id": "task-1762553420",
       "title": "Complete MoE Architecture Integration - Phase 4 Testing & Advanced Features",
       "type": "feature",
       "priority": "medium",
-      "status": "worker_spawned",
+      "status": "cancelled",
       "created_at": "2025-11-07T22:10:20Z",
       "context": {
         "description": "Complete the MoE architecture integration by: 1) Testing the full pipeline end-to-end (routing → spawning → execution → learning), 2) Verify dashboard displays MoE metrics correctly, 3) Document the event flow and MoE components, 4) Create example tasks to demonstrate MoE routing with different confidence levels, 5) Test sparse pool activation at different load levels (14%, 50%, 100%), 6) Optional: Implement adaptive threshold optimization for routing confidence scores based on historical accuracy",
@@ -96,9 +98,10 @@
       "assigned_at": "2025-11-07T20:18:33-0600",
       "routing_confidence": "0.03",
       "routing_strategy": "single_expert_low_confidence",
-      "updated_at": "2025-11-08T04:39:49-06:00",
+      "updated_at": "2025-11-12T22:10:39Z",
       "worker_id": "dev-worker-66187EF4",
-      "worker_type": "feature-implementer"
+      "worker_type": "feature-implementer",
+      "cancelled_reason": "orphaned_worker_no_longer_exists"
     },
     {
       "id": "task-cag-hybrid-001",
@@ -143,7 +146,7 @@
       "title": "Phase 1 validation of v5.0 Hybrid RAG+CAG: Scan commit-relay repository to validate CAG performance claims. Exercise MoE routing, Security Master CAG caching, and measure real performance vs theoretical 95% improvement.",
       "type": "security-scan",
       "priority": "high",
-      "status": "worker_spawned",
+      "status": "cancelled",
       "assigned_to": "development",
       "created_at": "2025-11-07T20:16:51-0600",
       "created_by": "create-task-cli",
@@ -161,16 +164,17 @@
       "assigned_at": "2025-11-07T20:18:34-0600",
       "routing_confidence": "0.03",
       "routing_strategy": "single_expert_low_confidence",
-      "updated_at": "2025-11-07T20:19:15-06:00",
+      "updated_at": "2025-11-12T22:10:39Z",
       "worker_id": "sec-worker-4FA7457D",
-      "worker_type": "scan-worker"
+      "worker_type": "scan-worker",
+      "cancelled_reason": "orphaned_worker_no_longer_exists"
     },
     {
       "id": "task-1762553422",
       "title": "Implement vector embedding generation using sentence-transformers/all-MiniLM-L6-v2 for RAG similarity search. Create Python script to generate 384-dim embeddings for coordination knowledge base and store in JSONL format in coordination/vector-db/embeddings/",
       "type": "development",
       "priority": "medium",
-      "status": "worker_spawned",
+      "status": "cancelled",
       "assigned_to": "development",
       "created_at": "2025-11-08T04:39:05-0600",
       "created_by": "create-task-cli",
@@ -184,16 +188,17 @@
       "assigned_at": "2025-11-08T04:39:33-0600",
       "routing_confidence": "0.95",
       "routing_strategy": "single_expert",
-      "updated_at": "2025-11-08T04:39:48-06:00",
+      "updated_at": "2025-11-12T22:10:39Z",
       "worker_id": "dev-worker-98C59170",
-      "worker_type": "feature-implementer"
+      "worker_type": "feature-implementer",
+      "cancelled_reason": "orphaned_worker_no_longer_exists"
     },
     {
       "id": "task-1762553423",
       "title": "Create automated embedding update system that monitors coordination files for changes and regenerates embeddings automatically. Add file watching daemon that triggers embedding generation on knowledge base updates.",
       "type": "development",
       "priority": "low",
-      "status": "worker_spawned",
+      "status": "cancelled",
       "assigned_to": "development",
       "created_at": "2025-11-08T04:39:16-0600",
       "created_by": "create-task-cli",
@@ -207,16 +212,17 @@
       "assigned_at": "2025-11-08T04:39:33-0600",
       "routing_confidence": "0.95",
       "routing_strategy": "single_expert",
-      "updated_at": "2025-11-08T04:39:48-06:00",
+      "updated_at": "2025-11-12T22:10:39Z",
       "worker_id": "dev-worker-270892A8",
-      "worker_type": "feature-implementer"
+      "worker_type": "feature-implementer",
+      "cancelled_reason": "orphaned_worker_no_longer_exists"
     },
     {
       "id": "task-1762553424",
       "title": "Implement FAISS indexing for vector similarity search to enable sub-linear search performance for >10k documents. Add FAISS index building script and integrate with vector-db query utilities for fast semantic similarity lookups.",
       "type": "development",
       "priority": "low",
-      "status": "worker_spawned",
+      "status": "cancelled",
       "assigned_to": "development",
       "created_at": "2025-11-08T04:39:26-0600",
       "created_by": "create-task-cli",
@@ -230,16 +236,17 @@
       "assigned_at": "2025-11-08T04:39:34-0600",
       "routing_confidence": "0.95",
       "routing_strategy": "single_expert",
-      "updated_at": "2025-11-08T04:39:48-06:00",
+      "updated_at": "2025-11-12T22:10:39Z",
       "worker_id": "dev-worker-2A3CE105",
-      "worker_type": "feature-implementer"
+      "worker_type": "feature-implementer",
+      "cancelled_reason": "orphaned_worker_no_longer_exists"
     },
     {
       "id": "task-1762553425",
       "title": "Implement adaptive caching system that promotes frequently-accessed RAG knowledge to CAG cache. Track access patterns, identify hot data, and automatically update CAG caches when access frequency exceeds threshold (>10 accesses/day).",
       "type": "development",
       "priority": "medium",
-      "status": "worker_spawned",
+      "status": "cancelled",
       "assigned_to": "development",
       "created_at": "2025-11-08T04:43:47-0600",
       "created_by": "create-task-cli",
@@ -253,16 +260,17 @@
       "assigned_at": "2025-11-08T04:44:50-0600",
       "routing_confidence": "0.95",
       "routing_strategy": "single_expert",
-      "updated_at": "2025-11-08T04:45:00-06:00",
+      "updated_at": "2025-11-12T22:10:39Z",
       "worker_id": "dev-worker-F8529436",
-      "worker_type": "feature-implementer"
+      "worker_type": "feature-implementer",
+      "cancelled_reason": "orphaned_worker_no_longer_exists"
     },
     {
       "id": "task-1762553426",
       "title": "Implement multi-vector hybrid search combining keyword-based and semantic similarity search. Create unified search interface that merges results from grep pattern matching and vector embeddings using weighted ranking algorithm.",
       "type": "development",
       "priority": "low",
-      "status": "worker_spawned",
+      "status": "cancelled",
       "assigned_to": "development",
       "created_at": "2025-11-08T04:44:01-0600",
       "created_by": "create-task-cli",
@@ -276,16 +284,17 @@
       "assigned_at": "2025-11-08T04:44:51-0600",
       "routing_confidence": "0.95",
       "routing_strategy": "single_expert",
-      "updated_at": "2025-11-08T04:45:01-06:00",
+      "updated_at": "2025-11-12T22:10:39Z",
       "worker_id": "dev-worker-90D3E9CD",
-      "worker_type": "feature-implementer"
+      "worker_type": "feature-implementer",
+      "cancelled_reason": "orphaned_worker_no_longer_exists"
     },
     {
       "id": "task-1762553427",
       "title": "Create comprehensive integration test suite for v5.0 Hybrid RAG+CAG architecture. Test CAG cache loading, MoE router type-based routing, vector similarity search, EM coordination with cached knowledge. Validate 95% performance claims with real benchmarks.",
       "type": "development",
       "priority": "high",
-      "status": "worker_spawned",
+      "status": "cancelled",
       "assigned_to": "development",
       "created_at": "2025-11-08T04:44:17-0600",
       "created_by": "create-task-cli",
@@ -299,16 +308,17 @@
       "assigned_at": "2025-11-08T04:44:51-0600",
       "routing_confidence": "0.95",
       "routing_strategy": "single_expert",
-      "updated_at": "2025-11-08T04:45:01-06:00",
+      "updated_at": "2025-11-12T22:10:39Z",
       "worker_id": "dev-worker-9F47DD36",
-      "worker_type": "feature-implementer"
+      "worker_type": "feature-implementer",
+      "cancelled_reason": "orphaned_worker_no_longer_exists"
     },
     {
       "id": "task-1762553428",
       "title": "Implement real-time performance monitoring dashboard for v5.0 metrics. Track CAG cache hit rates, MoE routing confidence scores, worker spawn latency, token efficiency savings. Create Prometheus-compatible metrics endpoints and grafana dashboard config.",
       "type": "development",
       "priority": "medium",
-      "status": "worker_spawned",
+      "status": "cancelled",
       "assigned_to": "development",
       "created_at": "2025-11-08T04:44:32-0600",
       "created_by": "create-task-cli",
@@ -322,16 +332,17 @@
       "assigned_at": "2025-11-08T04:44:52-0600",
       "routing_confidence": "0.95",
       "routing_strategy": "single_expert",
-      "updated_at": "2025-11-08T04:45:01-06:00",
+      "updated_at": "2025-11-12T22:10:39Z",
       "worker_id": "dev-worker-B0AB8D01",
-      "worker_type": "feature-implementer"
+      "worker_type": "feature-implementer",
+      "cancelled_reason": "orphaned_worker_no_longer_exists"
     },
     {
       "id": "task-1762553429",
       "title": "Implement ML-based cache optimization using historical access patterns. Train model to predict which RAG knowledge should be promoted to CAG cache. Use decision tree or gradient boosting to optimize cache content based on access frequency, query patterns, and worker success rates.",
       "type": "development",
       "priority": "low",
-      "status": "worker_spawned",
+      "status": "cancelled",
       "assigned_to": "development",
       "created_at": "2025-11-08T04:44:43-0600",
       "created_by": "create-task-cli",
@@ -345,16 +356,17 @@
       "assigned_at": "2025-11-08T04:44:52-0600",
       "routing_confidence": "0.95",
       "routing_strategy": "single_expert",
-      "updated_at": "2025-11-08T04:45:00-06:00",
+      "updated_at": "2025-11-12T22:10:39Z",
       "worker_id": "dev-worker-95965607",
-      "worker_type": "feature-implementer"
+      "worker_type": "feature-implementer",
+      "cancelled_reason": "orphaned_worker_no_longer_exists"
     },
     {
       "id": "task-1762553430",
       "title": "BUG FIX: Dashboard admin page event log purge button failing with error 'Failed to purge event log: Failed to purge event log'. User reports purge functionality not working. Investigate dashboard API endpoint, backend purge logic in dashboard server, file permissions on coordination/dashboard-events.jsonl, and error handling. Fix the purge functionality and add proper error messages to help debug future issues.",
       "type": "development",
       "priority": "high",
-      "status": "worker_spawned",
+      "status": "cancelled",
       "assigned_to": "development",
       "created_at": "2025-11-08T04:49:10-0600",
       "created_by": "create-task-cli",
@@ -368,16 +380,17 @@
       "assigned_at": "2025-11-08T04:49:17-0600",
       "routing_confidence": "0.95",
       "routing_strategy": "single_expert",
-      "updated_at": "2025-11-08T04:49:17-06:00",
+      "updated_at": "2025-11-12T22:10:39Z",
       "worker_id": "dev-worker-DC9BAB5C",
-      "worker_type": "feature-implementer"
+      "worker_type": "feature-implementer",
+      "cancelled_reason": "orphaned_worker_no_longer_exists"
     },
     {
       "id": "task-1762553431",
       "title": "CRITICAL: Dashboard KPI metrics not reporting to all panels. Investigate dashboard/public/index.html KPI display logic, dashboard server API endpoints for metrics, coordination file parsing (worker-pool.json, task-queue.json, pm-state.json), WebSocket data streaming, and metric calculation functions. Fix all broken KPI displays and ensure real-time updates work correctly.",
       "type": "development",
       "priority": "critical",
-      "status": "worker_spawned",
+      "status": "cancelled",
       "assigned_to": "development",
       "created_at": "2025-11-08T08:28:34-0600",
       "created_by": "create-task-cli",
@@ -391,16 +404,17 @@
       "assigned_at": "2025-11-08T08:29:08-0600",
       "routing_confidence": "0.95",
       "routing_strategy": "single_expert",
-      "updated_at": "2025-11-08T08:29:15-06:00",
+      "updated_at": "2025-11-12T22:10:39Z",
       "worker_id": "dev-worker-4A6596A8",
-      "worker_type": "feature-implementer"
+      "worker_type": "feature-implementer",
+      "cancelled_reason": "orphaned_worker_no_longer_exists"
     },
     {
       "id": "task-1762553432",
       "title": "CRITICAL: Admin page restart button not working. Investigate dashboard/public/index.html admin panel restart functionality, /api/admin/restart endpoint implementation, server process management logic, and permission issues. Fix restart button to properly restart dashboard server and provide user feedback. Also fix event log purge button that shows 'Failed to purge event log' error.",
       "type": "development",
       "priority": "critical",
-      "status": "worker_spawned",
+      "status": "cancelled",
       "assigned_to": "development",
       "created_at": "2025-11-08T08:28:49-0600",
       "created_by": "create-task-cli",
@@ -414,16 +428,17 @@
       "assigned_at": "2025-11-08T08:29:08-0600",
       "routing_confidence": "0.95",
       "routing_strategy": "single_expert",
-      "updated_at": "2025-11-08T08:29:15-06:00",
+      "updated_at": "2025-11-12T22:10:39Z",
       "worker_id": "dev-worker-692C28F8",
-      "worker_type": "feature-implementer"
+      "worker_type": "feature-implementer",
+      "cancelled_reason": "orphaned_worker_no_longer_exists"
     },
     {
       "id": "task-1762553433",
       "title": "Generate comprehensive PDF report documenting all dashboard issues found: 1) KPI metrics not reporting, 2) Admin restart button failure, 3) Event log purge failure. For each issue document: root cause analysis, why it occurred, technical details, fix approach used, code changes made, testing performed, and prevention measures. Use markdown-pdf or similar to generate professional PDF report in docs/dashboard-issues-report.pdf",
       "type": "development",
       "priority": "high",
-      "status": "worker_spawned",
+      "status": "cancelled",
       "assigned_to": "development",
       "created_at": "2025-11-08T08:29:01-0600",
       "created_by": "create-task-cli",
@@ -437,16 +452,17 @@
       "assigned_at": "2025-11-08T08:29:09-0600",
       "routing_confidence": "0.95",
       "routing_strategy": "single_expert",
-      "updated_at": "2025-11-08T08:29:15-06:00",
+      "updated_at": "2025-11-12T22:10:39Z",
       "worker_id": "dev-worker-5E29C44D",
-      "worker_type": "feature-implementer"
+      "worker_type": "feature-implementer",
+      "cancelled_reason": "orphaned_worker_no_longer_exists"
     },
     {
       "id": "task-1762553434",
       "title": "Create DDQD v5.0 stress test with MoE Intelligence validation: routing accuracy, confidence scores, learning system, sparse activation testing. Keywords: development testing stress-test MoE validation shell-script bash. Implement test_moe_routing test_moe_confidence test_moe_learning test_moe_pool_efficiency functions, run 5min test, generate MoE metrics report.",
       "type": "development",
       "priority": "high",
-      "status": "worker_spawned",
+      "status": "cancelled",
       "assigned_to": "development",
       "created_at": "2025-11-08T10:41:38-0600",
       "created_by": "create-task-cli",
@@ -460,9 +476,10 @@
       "assigned_at": "2025-11-08T10:41:47-0600",
       "routing_confidence": "0.95",
       "routing_strategy": "single_expert",
-      "updated_at": "2025-11-08T10:41:58-06:00",
+      "updated_at": "2025-11-12T22:10:39Z",
       "worker_id": "dev-worker-59528050",
-      "worker_type": "feature-implementer"
+      "worker_type": "feature-implementer",
+      "cancelled_reason": "orphaned_worker_no_longer_exists"
     },
     {
       "id": "task-1762553435",
@@ -520,7 +537,7 @@
       "type": "security",
       "description": "CVE-2024-12345: Fix critical vulnerability in authentication module",
       "priority": "medium",
-      "status": "worker_spawned",
+      "status": "completed",
       "assigned_to": "security",
       "created_at": "2025-11-08T12:20:53-0600",
       "created_by": "ddqd-v5-test",
@@ -531,9 +548,10 @@
       "assigned_at": "2025-11-08T12:26:21-0600",
       "routing_confidence": "0.95",
       "routing_strategy": "single_expert",
-      "updated_at": "2025-11-11T16:37:00-06:00",
+      "updated_at": "2025-11-12T22:10:39Z",
       "worker_id": "sec-worker-39C6E144",
-      "worker_type": "scan-worker"
+      "worker_type": "scan-worker",
+      "completed_at": "2025-11-12T22:10:39Z"
     },
     {
       "id": "moe-test-ddqd-v5-1762626013-c0a4d2d1",
@@ -541,7 +559,7 @@
       "type": "security",
       "description": "Security audit and compliance scanning for production systems",
       "priority": "medium",
-      "status": "worker_spawned",
+      "status": "completed",
       "assigned_to": "security",
       "created_at": "2025-11-08T12:20:55-0600",
       "created_by": "ddqd-v5-test",
@@ -552,9 +570,10 @@
       "assigned_at": "2025-11-08T12:26:21-0600",
       "routing_confidence": "0.95",
       "routing_strategy": "single_expert",
-      "updated_at": "2025-11-11T16:37:00-06:00",
+      "updated_at": "2025-11-12T22:10:39Z",
       "worker_id": "sec-worker-76D0AF62",
-      "worker_type": "scan-worker"
+      "worker_type": "scan-worker",
+      "completed_at": "2025-11-12T22:10:39Z"
     },
     {
       "id": "moe-test-ddqd-v5-1762626013-578b7e04",
@@ -562,7 +581,7 @@
       "type": "feature",
       "description": "Implement new API endpoint for user management feature",
       "priority": "medium",
-      "status": "worker_spawned",
+      "status": "cancelled",
       "assigned_to": "development",
       "created_at": "2025-11-08T12:20:57-0600",
       "created_by": "ddqd-v5-test",
@@ -573,9 +592,10 @@
       "assigned_at": "2025-11-08T12:26:22-0600",
       "routing_confidence": "0.95",
       "routing_strategy": "single_expert",
-      "updated_at": "2025-11-08T14:18:57-06:00",
+      "updated_at": "2025-11-12T22:10:39Z",
       "worker_id": "dev-worker-806FD204",
-      "worker_type": "feature-implementer"
+      "worker_type": "feature-implementer",
+      "cancelled_reason": "orphaned_worker_no_longer_exists"
     },
     {
       "id": "moe-test-ddqd-v5-1762626013-d03c64a3",
@@ -583,7 +603,7 @@
       "type": "bug-fix",
       "description": "Fix performance bug in database query optimization code",
       "priority": "medium",
-      "status": "worker_spawned",
+      "status": "cancelled",
       "assigned_to": "development",
       "created_at": "2025-11-08T12:20:59-0600",
       "created_by": "ddqd-v5-test",
@@ -594,9 +614,10 @@
       "assigned_at": "2025-11-08T12:26:22-0600",
       "routing_confidence": "0.95",
       "routing_strategy": "single_expert",
-      "updated_at": "2025-11-08T14:18:57-06:00",
+      "updated_at": "2025-11-12T22:10:39Z",
       "worker_id": "dev-worker-FE2F7024",
-      "worker_type": "bug-fixer"
+      "worker_type": "bug-fixer",
+      "cancelled_reason": "orphaned_worker_no_longer_exists"
     },
     {
       "id": "moe-test-ddqd-v5-1762626013-67081586",
@@ -642,7 +663,7 @@
       "type": "security",
       "description": "CVE-2024-12345: Fix critical vulnerability in authentication module",
       "priority": "medium",
-      "status": "worker_spawned",
+      "status": "completed",
       "assigned_to": "security",
       "created_at": "2025-11-08T12:24:28-0600",
       "created_by": "ddqd-v5-test",
@@ -653,9 +674,10 @@
       "assigned_at": "2025-11-08T12:26:24-0600",
       "routing_confidence": "0.95",
       "routing_strategy": "single_expert",
-      "updated_at": "2025-11-11T16:36:59-06:00",
+      "updated_at": "2025-11-12T22:10:39Z",
       "worker_id": "sec-worker-8FD950D8",
-      "worker_type": "scan-worker"
+      "worker_type": "scan-worker",
+      "completed_at": "2025-11-12T22:10:39Z"
     },
     {
       "id": "moe-test-ddqd-v5-1762626228-ae2a8949",
@@ -663,7 +685,7 @@
       "type": "security",
       "description": "Security audit and compliance scanning for production systems",
       "priority": "medium",
-      "status": "worker_spawned",
+      "status": "completed",
       "assigned_to": "security",
       "created_at": "2025-11-08T12:24:30-0600",
       "created_by": "ddqd-v5-test",
@@ -674,9 +696,10 @@
       "assigned_at": "2025-11-08T12:26:25-0600",
       "routing_confidence": "0.95",
       "routing_strategy": "single_expert",
-      "updated_at": "2025-11-11T16:36:58-06:00",
+      "updated_at": "2025-11-12T22:10:39Z",
       "worker_id": "sec-worker-CCF9834D",
-      "worker_type": "scan-worker"
+      "worker_type": "scan-worker",
+      "completed_at": "2025-11-12T22:10:39Z"
     },
     {
       "id": "moe-test-ddqd-v5-1762626228-7b06116b",
@@ -684,7 +707,7 @@
       "type": "feature",
       "description": "Implement new API endpoint for user management feature",
       "priority": "medium",
-      "status": "worker_spawned",
+      "status": "cancelled",
       "assigned_to": "development",
       "created_at": "2025-11-08T12:24:33-0600",
       "created_by": "ddqd-v5-test",
@@ -695,9 +718,10 @@
       "assigned_at": "2025-11-08T12:26:25-0600",
       "routing_confidence": "0.95",
       "routing_strategy": "single_expert",
-      "updated_at": "2025-11-08T14:18:57-06:00",
+      "updated_at": "2025-11-12T22:10:39Z",
       "worker_id": "dev-worker-EF0985A7",
-      "worker_type": "feature-implementer"
+      "worker_type": "feature-implementer",
+      "cancelled_reason": "orphaned_worker_no_longer_exists"
     },
     {
       "id": "moe-test-ddqd-v5-1762626228-b63efc1b",
@@ -705,7 +729,7 @@
       "type": "bug-fix",
       "description": "Fix performance bug in database query optimization code",
       "priority": "medium",
-      "status": "worker_spawned",
+      "status": "cancelled",
       "assigned_to": "development",
       "created_at": "2025-11-08T12:24:35-0600",
       "created_by": "ddqd-v5-test",
@@ -716,9 +740,10 @@
       "assigned_at": "2025-11-08T12:26:26-0600",
       "routing_confidence": "0.95",
       "routing_strategy": "single_expert",
-      "updated_at": "2025-11-08T14:18:58-06:00",
+      "updated_at": "2025-11-12T22:10:39Z",
       "worker_id": "dev-worker-0A64CD8C",
-      "worker_type": "bug-fixer"
+      "worker_type": "bug-fixer",
+      "cancelled_reason": "orphaned_worker_no_longer_exists"
     },
     {
       "id": "moe-test-ddqd-v5-1762626228-271c79ce",
@@ -764,7 +789,7 @@
       "type": "security",
       "description": "CVE-2024-12345: Fix critical vulnerability in authentication module",
       "priority": "medium",
-      "status": "worker_spawned",
+      "status": "completed",
       "assigned_to": "security",
       "created_at": "2025-11-08T12:27:48-0600",
       "created_by": "ddqd-v5-test",
@@ -775,9 +800,10 @@
       "assigned_at": "2025-11-08T12:29:08-0600",
       "routing_confidence": "0.95",
       "routing_strategy": "single_expert",
-      "updated_at": "2025-11-11T16:36:59-06:00",
+      "updated_at": "2025-11-12T22:10:39Z",
       "worker_id": "sec-worker-168CF8AF",
-      "worker_type": "scan-worker"
+      "worker_type": "scan-worker",
+      "completed_at": "2025-11-12T22:10:39Z"
     },
     {
       "id": "moe-test-ddqd-v5-1762626428-f4171764",
@@ -785,7 +811,7 @@
       "type": "security",
       "description": "Security audit and compliance scanning for production systems",
       "priority": "medium",
-      "status": "worker_spawned",
+      "status": "completed",
       "assigned_to": "security",
       "created_at": "2025-11-08T12:27:50-0600",
       "created_by": "ddqd-v5-test",
@@ -796,9 +822,10 @@
       "assigned_at": "2025-11-08T12:29:09-0600",
       "routing_confidence": "0.95",
       "routing_strategy": "single_expert",
-      "updated_at": "2025-11-11T16:37:00-06:00",
+      "updated_at": "2025-11-12T22:10:39Z",
       "worker_id": "sec-worker-579F2CFA",
-      "worker_type": "scan-worker"
+      "worker_type": "scan-worker",
+      "completed_at": "2025-11-12T22:10:39Z"
     },
     {
       "id": "moe-test-ddqd-v5-1762626428-41391183",
@@ -806,7 +833,7 @@
       "type": "feature",
       "description": "Implement new API endpoint for user management feature",
       "priority": "medium",
-      "status": "worker_spawned",
+      "status": "cancelled",
       "assigned_to": "development",
       "created_at": "2025-11-08T12:27:53-0600",
       "created_by": "ddqd-v5-test",
@@ -817,9 +844,10 @@
       "assigned_at": "2025-11-08T12:29:09-0600",
       "routing_confidence": "0.95",
       "routing_strategy": "single_expert",
-      "updated_at": "2025-11-08T14:18:58-06:00",
+      "updated_at": "2025-11-12T22:10:39Z",
       "worker_id": "dev-worker-23506DE6",
-      "worker_type": "feature-implementer"
+      "worker_type": "feature-implementer",
+      "cancelled_reason": "orphaned_worker_no_longer_exists"
     },
     {
       "id": "moe-test-ddqd-v5-1762626428-db0eb0ae",
@@ -827,7 +855,7 @@
       "type": "bug-fix",
       "description": "Fix performance bug in database query optimization code",
       "priority": "medium",
-      "status": "worker_spawned",
+      "status": "cancelled",
       "assigned_to": "development",
       "created_at": "2025-11-08T12:27:55-0600",
       "created_by": "ddqd-v5-test",
@@ -838,9 +866,10 @@
       "assigned_at": "2025-11-08T12:29:10-0600",
       "routing_confidence": "0.95",
       "routing_strategy": "single_expert",
-      "updated_at": "2025-11-08T14:18:59-06:00",
+      "updated_at": "2025-11-12T22:10:39Z",
       "worker_id": "dev-worker-93A56E03",
-      "worker_type": "bug-fixer"
+      "worker_type": "bug-fixer",
+      "cancelled_reason": "orphaned_worker_no_longer_exists"
     },
     {
       "id": "moe-test-ddqd-v5-1762626428-e9d2f359",
@@ -886,7 +915,7 @@
       "type": "security",
       "description": "CVE-2024-12345: Fix critical vulnerability in authentication module",
       "priority": "medium",
-      "status": "worker_spawned",
+      "status": "completed",
       "assigned_to": "security",
       "created_at": "2025-11-08T12:28:55-0600",
       "created_by": "ddqd-v5-test",
@@ -897,9 +926,10 @@
       "assigned_at": "2025-11-08T12:29:12-0600",
       "routing_confidence": "0.95",
       "routing_strategy": "single_expert",
-      "updated_at": "2025-11-11T16:36:59-06:00",
+      "updated_at": "2025-11-12T22:10:39Z",
       "worker_id": "sec-worker-CAF80759",
-      "worker_type": "scan-worker"
+      "worker_type": "scan-worker",
+      "completed_at": "2025-11-12T22:10:39Z"
     },
     {
       "id": "moe-test-ddqd-v5-1762626495-28b1a031",
@@ -907,7 +937,7 @@
       "type": "security",
       "description": "Security audit and compliance scanning for production systems",
       "priority": "medium",
-      "status": "worker_spawned",
+      "status": "completed",
       "assigned_to": "security",
       "created_at": "2025-11-08T12:28:57-0600",
       "created_by": "ddqd-v5-test",
@@ -918,9 +948,10 @@
       "assigned_at": "2025-11-08T12:29:12-0600",
       "routing_confidence": "0.95",
       "routing_strategy": "single_expert",
-      "updated_at": "2025-11-11T16:37:00-06:00",
+      "updated_at": "2025-11-12T22:10:39Z",
       "worker_id": "sec-worker-060ED770",
-      "worker_type": "scan-worker"
+      "worker_type": "scan-worker",
+      "completed_at": "2025-11-12T22:10:39Z"
     },
     {
       "id": "moe-test-ddqd-v5-1762626495-7728f5cb",
@@ -928,7 +959,7 @@
       "type": "feature",
       "description": "Implement new API endpoint for user management feature",
       "priority": "medium",
-      "status": "worker_spawned",
+      "status": "cancelled",
       "assigned_to": "development",
       "created_at": "2025-11-08T12:29:00-0600",
       "created_by": "ddqd-v5-test",
@@ -939,9 +970,10 @@
       "assigned_at": "2025-11-08T12:29:13-0600",
       "routing_confidence": "0.95",
       "routing_strategy": "single_expert",
-      "updated_at": "2025-11-08T14:18:59-06:00",
+      "updated_at": "2025-11-12T22:10:39Z",
       "worker_id": "dev-worker-2981084C",
-      "worker_type": "feature-implementer"
+      "worker_type": "feature-implementer",
+      "cancelled_reason": "orphaned_worker_no_longer_exists"
     },
     {
       "id": "moe-test-ddqd-v5-1762626495-48fe8ed1",
@@ -949,7 +981,7 @@
       "type": "bug-fix",
       "description": "Fix performance bug in database query optimization code",
       "priority": "medium",
-      "status": "worker_spawned",
+      "status": "cancelled",
       "assigned_to": "development",
       "created_at": "2025-11-08T12:29:02-0600",
       "created_by": "ddqd-v5-test",
@@ -960,9 +992,10 @@
       "assigned_at": "2025-11-08T12:29:13-0600",
       "routing_confidence": "0.95",
       "routing_strategy": "single_expert",
-      "updated_at": "2025-11-08T14:18:59-06:00",
+      "updated_at": "2025-11-12T22:10:39Z",
       "worker_id": "dev-worker-645AE816",
-      "worker_type": "bug-fixer"
+      "worker_type": "bug-fixer",
+      "cancelled_reason": "orphaned_worker_no_longer_exists"
     },
     {
       "id": "moe-test-ddqd-v5-1762626495-42745965",
@@ -1008,7 +1041,7 @@
       "type": "security",
       "description": "CVE-2024-12345: Fix critical vulnerability in authentication module",
       "priority": "medium",
-      "status": "worker_spawned",
+      "status": "completed",
       "assigned_to": "security",
       "created_at": "2025-11-08T12:31:53-0600",
       "created_by": "ddqd-v5-test",
@@ -1019,9 +1052,10 @@
       "assigned_at": "2025-11-08T12:32:06-0600",
       "routing_confidence": "0.95",
       "routing_strategy": "single_expert",
-      "updated_at": "2025-11-11T16:37:01-06:00",
+      "updated_at": "2025-11-12T22:10:39Z",
       "worker_id": "sec-worker-64C0DA8A",
-      "worker_type": "scan-worker"
+      "worker_type": "scan-worker",
+      "completed_at": "2025-11-12T22:10:39Z"
     },
     {
       "id": "moe-test-ddqd-v5-1762626673-ede2eb9a",
@@ -1029,7 +1063,7 @@
       "type": "security",
       "description": "Security audit and compliance scanning for production systems",
       "priority": "medium",
-      "status": "worker_spawned",
+      "status": "completed",
       "assigned_to": "security",
       "created_at": "2025-11-08T12:31:55-0600",
       "created_by": "ddqd-v5-test",
@@ -1040,9 +1074,10 @@
       "assigned_at": "2025-11-08T12:32:07-0600",
       "routing_confidence": "0.95",
       "routing_strategy": "single_expert",
-      "updated_at": "2025-11-11T16:36:58-06:00",
+      "updated_at": "2025-11-12T22:10:39Z",
       "worker_id": "sec-worker-0E7D5F4F",
-      "worker_type": "scan-worker"
+      "worker_type": "scan-worker",
+      "completed_at": "2025-11-12T22:10:39Z"
     },
     {
       "id": "moe-test-ddqd-v5-1762626673-d3baf6b1",
@@ -1050,7 +1085,7 @@
       "type": "feature",
       "description": "Implement new API endpoint for user management feature",
       "priority": "medium",
-      "status": "worker_spawned",
+      "status": "cancelled",
       "assigned_to": "development",
       "created_at": "2025-11-08T12:31:57-0600",
       "created_by": "ddqd-v5-test",
@@ -1061,9 +1096,10 @@
       "assigned_at": "2025-11-08T12:32:07-0600",
       "routing_confidence": "0.95",
       "routing_strategy": "single_expert",
-      "updated_at": "2025-11-08T14:18:59-06:00",
+      "updated_at": "2025-11-12T22:10:39Z",
       "worker_id": "dev-worker-69400CC7",
-      "worker_type": "feature-implementer"
+      "worker_type": "feature-implementer",
+      "cancelled_reason": "orphaned_worker_no_longer_exists"
     },
     {
       "id": "moe-test-ddqd-v5-1762626673-1f8a4f39",
@@ -1071,7 +1107,7 @@
       "type": "bug-fix",
       "description": "Fix performance bug in database query optimization code",
       "priority": "medium",
-      "status": "worker_spawned",
+      "status": "cancelled",
       "assigned_to": "development",
       "created_at": "2025-11-08T12:32:00-0600",
       "created_by": "ddqd-v5-test",
@@ -1082,9 +1118,10 @@
       "assigned_at": "2025-11-08T12:32:08-0600",
       "routing_confidence": "0.95",
       "routing_strategy": "single_expert",
-      "updated_at": "2025-11-08T14:18:58-06:00",
+      "updated_at": "2025-11-12T22:10:39Z",
       "worker_id": "dev-worker-301B8A31",
-      "worker_type": "bug-fixer"
+      "worker_type": "bug-fixer",
+      "cancelled_reason": "orphaned_worker_no_longer_exists"
     },
     {
       "id": "moe-test-ddqd-v5-1762626673-e32e4e94",
@@ -1130,7 +1167,7 @@
       "type": "security",
       "description": "CVE-2024-12345: Fix critical vulnerability in authentication module",
       "priority": "medium",
-      "status": "worker_spawned",
+      "status": "completed",
       "assigned_to": "security",
       "created_at": "2025-11-08T12:35:27-0600",
       "created_by": "ddqd-v5-test",
@@ -1141,9 +1178,10 @@
       "assigned_at": "2025-11-08T12:35:40-0600",
       "routing_confidence": "0.95",
       "routing_strategy": "single_expert",
-      "updated_at": "2025-11-11T16:36:57-06:00",
+      "updated_at": "2025-11-12T22:10:39Z",
       "worker_id": "sec-worker-C622A67A",
-      "worker_type": "scan-worker"
+      "worker_type": "scan-worker",
+      "completed_at": "2025-11-12T22:10:39Z"
     },
     {
       "id": "moe-test-ddqd-v5-1762626887-8e44f42f",
@@ -1151,7 +1189,7 @@
       "type": "security",
       "description": "Security audit and compliance scanning for production systems",
       "priority": "medium",
-      "status": "worker_spawned",
+      "status": "completed",
       "assigned_to": "security",
       "created_at": "2025-11-08T12:35:29-0600",
       "created_by": "ddqd-v5-test",
@@ -1162,9 +1200,10 @@
       "assigned_at": "2025-11-08T12:35:41-0600",
       "routing_confidence": "0.95",
       "routing_strategy": "single_expert",
-      "updated_at": "2025-11-11T16:36:57-06:00",
+      "updated_at": "2025-11-12T22:10:39Z",
       "worker_id": "sec-worker-2D607E2D",
-      "worker_type": "scan-worker"
+      "worker_type": "scan-worker",
+      "completed_at": "2025-11-12T22:10:39Z"
     },
     {
       "id": "moe-test-ddqd-v5-1762626887-daf73212",
@@ -1172,7 +1211,7 @@
       "type": "feature",
       "description": "Implement new API endpoint for user management feature",
       "priority": "medium",
-      "status": "worker_spawned",
+      "status": "cancelled",
       "assigned_to": "development",
       "created_at": "2025-11-08T12:35:32-0600",
       "created_by": "ddqd-v5-test",
@@ -1183,9 +1222,10 @@
       "assigned_at": "2025-11-08T12:35:41-0600",
       "routing_confidence": "0.95",
       "routing_strategy": "single_expert",
-      "updated_at": "2025-11-08T14:18:58-06:00",
+      "updated_at": "2025-11-12T22:10:39Z",
       "worker_id": "dev-worker-9C963BEE",
-      "worker_type": "feature-implementer"
+      "worker_type": "feature-implementer",
+      "cancelled_reason": "orphaned_worker_no_longer_exists"
     },
     {
       "id": "moe-test-ddqd-v5-1762626887-6a084ece",
@@ -1193,7 +1233,7 @@
       "type": "bug-fix",
       "description": "Fix performance bug in database query optimization code",
       "priority": "medium",
-      "status": "worker_spawned",
+      "status": "cancelled",
       "assigned_to": "development",
       "created_at": "2025-11-08T12:35:34-0600",
       "created_by": "ddqd-v5-test",
@@ -1204,9 +1244,10 @@
       "assigned_at": "2025-11-08T12:35:42-0600",
       "routing_confidence": "0.95",
       "routing_strategy": "single_expert",
-      "updated_at": "2025-11-08T14:18:58-06:00",
+      "updated_at": "2025-11-12T22:10:39Z",
       "worker_id": "dev-worker-1F866C41",
-      "worker_type": "bug-fixer"
+      "worker_type": "bug-fixer",
+      "cancelled_reason": "orphaned_worker_no_longer_exists"
     },
     {
       "id": "moe-test-ddqd-v5-1762626887-b298c5c1",
@@ -1251,7 +1292,7 @@
       "title": "DDQD Dashboard Integration: Create integrated MoE Intelligence dashboard page with on-demand DDQD testing controls. Add new navigation entry under MoE Intelligence section. Create dedicated dashboard view (not standalone page) matching existing dashboard architecture. Implement admin controls for DDQD on-demand execution with configurable test parameters (duration, worker limits, test type). Add DDQD scheduling interface for automated stress testing. Include test configuration options: test duration (minutes), max workers, test phases (v4.0/v5.0), verbosity level. Build responsive UI matching dashboard design system (Tailwind, Alpine.js). Integrate with existing DDQD scripts and API endpoints. Keywords: development dashboard UI frontend testing DDQD stress-test admin-controls MoE integration Alpine.js Tailwind responsive-design.",
       "type": "development",
       "priority": "critical",
-      "status": "worker_spawned",
+      "status": "cancelled",
       "assigned_to": "development",
       "created_at": "2025-11-08T14:18:42-0600",
       "created_by": "create-task-cli",
@@ -1265,16 +1306,17 @@
       "assigned_at": "2025-11-08T14:18:50-0600",
       "routing_confidence": "0.95",
       "routing_strategy": "single_expert",
-      "updated_at": "2025-11-08T14:18:57-06:00",
+      "updated_at": "2025-11-12T22:10:39Z",
       "worker_id": "dev-worker-B82DCF42",
-      "worker_type": "feature-implementer"
+      "worker_type": "feature-implementer",
+      "cancelled_reason": "orphaned_worker_no_longer_exists"
     },
     {
       "id": "task-1762553438",
       "title": "API Review & Analysis: Comprehensive review of commit-relay API endpoints, architecture, and implementation. Identify issues including: endpoint inconsistencies, error handling gaps, missing validation, security vulnerabilities, performance bottlenecks, documentation gaps, and architectural concerns. For each issue found: provide detailed analysis, impact assessment, and actionable solution with code fixes ready. Review includes: dashboard API endpoints (/api/moe/*, /api/ddqd/*, /api/workers/*, /api/tasks/*), server implementation (dashboard/server/index.js), request handling, response formatting, error middleware, authentication/authorization, rate limiting, and API versioning. Generate comprehensive report with prioritized issues and ready-to-apply fixes. Keywords: development API review analysis security validation error-handling performance architecture documentation code-quality technical-debt.",
       "type": "development",
       "priority": "high",
-      "status": "worker_spawned",
+      "status": "cancelled",
       "assigned_to": "development",
       "created_at": "2025-11-08T14:43:16-0600",
       "created_by": "create-task-cli",
@@ -1288,16 +1330,17 @@
       "assigned_at": "2025-11-08T14:43:23-0600",
       "routing_confidence": "0.95",
       "routing_strategy": "single_expert",
-      "updated_at": "2025-11-08T14:55:59-06:00",
+      "updated_at": "2025-11-12T22:10:39Z",
       "worker_id": "dev-worker-EB497613",
-      "worker_type": "feature-implementer"
+      "worker_type": "feature-implementer",
+      "cancelled_reason": "orphaned_worker_no_longer_exists"
     },
     {
       "id": "task-1762553439",
       "title": "Comprehensive API Security Review and Learning: Review dashboard server API (dashboard/server/index.js) and Python SDK API (python-sdk/commit_relay/*). Focus on: 1) Authentication/Authorization vulnerabilities, 2) Input validation and injection risks, 3) CORS and CSRF protection, 4) API rate limiting, 5) Sensitive data exposure, 6) Error handling and information leakage, 7) Dependency vulnerabilities. Document all security issues found with severity ratings and recommended fixes. Then review overall API design, performance, and code quality issues.",
       "type": "development",
       "priority": "critical",
-      "status": "worker_spawned",
+      "status": "cancelled",
       "assigned_to": "development",
       "created_at": "2025-11-08T15:38:44-0600",
       "created_by": "create-task-cli",
@@ -1315,14 +1358,15 @@
       "worker_type": "feature-implementer",
       "completed_at": "2025-11-09T06:04:28-0600",
       "error": "Worker became zombie and was killed",
-      "updated_at": "2025-11-09T06:22:09-06:00"
+      "updated_at": "2025-11-12T22:10:39Z",
+      "cancelled_reason": "orphaned_worker_no_longer_exists"
     },
     {
       "id": "task-1762553440",
       "title": "Complete Medium Priority Security Improvements: 1) CSRF Protection - Implement CSRF tokens for all state-changing POST/PUT/DELETE endpoints using csurf middleware, add /api/csrf-token endpoint, update frontend to include tokens. 2) Dependency Security Audit - Run npm audit in dashboard/, fix all vulnerabilities, update vulnerable dependencies, document any unfixable issues with mitigation strategies. 3) WebSocket Authentication - Add API key validation to WebSocket connections, validate origin headers, implement connection authentication before allowing subscriptions. 4) Python SDK Security Review - Audit python-sdk/commit_relay/client.py for security issues, ensure SSL verification is enforced, add request timeout limits, validate API responses, implement retry limits to prevent infinite loops, add input sanitization. Document all fixes with severity ratings and test thoroughly.",
       "type": "development",
       "priority": "high",
-      "status": "worker_spawned",
+      "status": "cancelled",
       "assigned_to": "development",
       "created_at": "2025-11-08T15:59:42-0600",
       "created_by": "create-task-cli",
@@ -1340,14 +1384,15 @@
       "worker_type": "feature-implementer",
       "completed_at": "2025-11-09T06:04:29-0600",
       "error": "Worker became zombie and was killed",
-      "updated_at": "2025-11-09T06:22:09-06:00"
+      "updated_at": "2025-11-12T22:10:39Z",
+      "cancelled_reason": "orphaned_worker_no_longer_exists"
     },
     {
       "id": "task-1762553441",
       "title": "BUG: Task Queue Metadata Out of Sync - Fix task-queue.json metadata calculation. Actual issue: task-queue.json contains 61 tasks in tasks[] array but metadata shows total_tasks:5, pending_tasks:3, in_progress_tasks:0, completed_tasks:2. This causes dashboard to display incorrect task counts and queue appears empty. Root causes to investigate: 1) Metadata not updated when tasks are added via create-task.sh, 2) Task status changes not triggering metadata recalculation, 3) DDQD stress test tasks (moe-test-ddqd-v5-*) not being counted, 4) Possible race condition in concurrent task updates. Fix requirements: Create task-queue metadata sync utility that recalculates accurate counts from tasks array, add metadata validation on every task queue update, fix create-task.sh to update metadata correctly, add periodic metadata sync job to coordinator daemon, handle edge cases (test tasks, zombie workers, stale assignments). Also investigate why many tasks show status=assigned but no worker progress - may indicate worker spawn failures. Test with current 61-task queue state before cleanup. Keywords: bug-fix critical task-queue metadata synchronization data-integrity dashboard worker-tracking coordination.",
       "type": "development",
       "priority": "critical",
-      "status": "worker_spawned",
+      "status": "cancelled",
       "assigned_to": "development",
       "created_at": "2025-11-08T16:03:45-0600",
       "created_by": "create-task-cli",
@@ -1365,14 +1410,15 @@
       "worker_type": "feature-implementer",
       "completed_at": "2025-11-09T06:04:29-0600",
       "error": "Worker became zombie and was killed",
-      "updated_at": "2025-11-09T06:22:10-06:00"
+      "updated_at": "2025-11-12T22:10:39Z",
+      "cancelled_reason": "orphaned_worker_no_longer_exists"
     },
     {
       "id": "task-1762553442",
       "title": "BUG: Dashboard Workforce Stream showing no events despite 5,191 events in coordination/dashboard-events.jsonl. User reports workforce event stream panel is empty/blank. Investigate: 1) WebSocket connection between dashboard frontend and server - check WS handshake, connection status, message streaming, 2) Dashboard server event streaming logic in dashboard/server/index.js - verify event reading from JSONL, WebSocket broadcast functionality, file watching with chokidar, 3) Frontend event display in dashboard/public/index.html - check Alpine.js event handling, event rendering, filtering logic, 4) Event parsing errors - check browser console for JSON parse errors (events may be malformed), 5) CORS/authentication issues blocking WebSocket after security updates, 6) File permissions on dashboard-events.jsonl preventing reads. Test with latest event timestamp 2025-11-08T16:03:45-0600. Verify events are being broadcast via WebSocket, frontend is receiving them, and Alpine.js is rendering them. Fix all blocking issues and ensure real-time event streaming works. Keywords: bug-fix critical dashboard WebSocket events real-time streaming frontend Alpine.js chokidar JSONL broadcasting.",
       "type": "development",
       "priority": "critical",
-      "status": "worker_spawned",
+      "status": "cancelled",
       "assigned_to": "development",
       "created_at": "2025-11-08T16:04:12-0600",
       "created_by": "create-task-cli",
@@ -1390,14 +1436,15 @@
       "worker_type": "feature-implementer",
       "completed_at": "2025-11-09T06:04:29-0600",
       "error": "Worker became zombie and was killed",
-      "updated_at": "2025-11-09T06:22:09-06:00"
+      "updated_at": "2025-11-12T22:10:39Z",
+      "cancelled_reason": "orphaned_worker_no_longer_exists"
     },
     {
       "id": "task-1762553443",
       "title": "CRITICAL BLOCKER: Worker Pool Clogged with 20 Zombie Workers - System Completely Stalled. IMMEDIATE ACTION REQUIRED. Current state: Worker pool shows 20/8 active workers (250% capacity), all are zombies from DDQD stress tests created Nov 8 15:24 (4+ hours ago). Worker daemon refusing to spawn ANY new workers, blocking 4 critical security tasks (task-1762553439, task-1762553440, task-1762553441, task-1762553442). Root causes: 1) Zombie-killer daemon (PID 76168) running but NOT detecting/cleaning stale workers, 2) Workers stuck in 'pending' status with null heartbeats for hours, 3) 15-minute stale timeout not being enforced, 4) Heartbeat monitoring broken or not implemented. REQUIRED FIXES: 1) IMMEDIATELY move all 20 stale workers from coordination/worker-specs/active/ to coordination/worker-specs/failed/ to unblock pool (CRITICAL - do this first\\!), 2) Debug and fix zombie-killer-daemon.sh stale worker detection logic (check heartbeat comparison, timeout calculation, PID validation), 3) Add aggressive stale worker detection (any worker pending >30 min with null heartbeat = zombie), 4) Implement worker heartbeat monitoring if missing, 5) Add pool capacity safeguards (auto-cleanup when >150% capacity), 6) Test zombie-killer runs and validates cleanup works, 7) Document what went wrong and prevention measures. SUCCESS CRITERIA: Pool capacity drops to 0-2 active workers, 4 pending critical tasks get assigned and spawn workers within 2 minutes, zombie-killer properly detects and cleans future stale workers. URGENT: System is completely non-functional until this is fixed. Keywords: critical blocker bug-fix zombie-workers worker-pool daemon stale-detection heartbeat monitoring capacity cleanup emergency.",
       "type": "development",
       "priority": "critical",
-      "status": "worker_spawned",
+      "status": "cancelled",
       "assigned_to": "development",
       "created_at": "2025-11-08T19:22:48-0600",
       "created_by": "create-task-cli",
@@ -1415,14 +1462,15 @@
       "worker_type": "feature-implementer",
       "completed_at": "2025-11-09T06:04:29-0600",
       "error": "Worker became zombie and was killed",
-      "updated_at": "2025-11-09T06:22:09-06:00"
+      "updated_at": "2025-11-12T22:10:39Z",
+      "cancelled_reason": "orphaned_worker_no_longer_exists"
     },
     {
       "id": "task-1762553444",
       "title": "CRITICAL ARCHITECTURE GAP: Build Intelligent Autonomous Task Routing & Worker Lifecycle Management System. Current problem: System is NOT fully autonomous - pending tasks never get assigned because coordinator master only runs manually. Need complete autonomous loop from task creation → routing → execution → completion monitoring → issue resolution. IMPLEMENT THREE CRITICAL COMPONENTS: \n\nCOMPONENT 1 - Coordinator Master Daemon (NEW): Create coordinator-master-daemon.sh that runs coordinator master periodically (every 60 seconds) to: 1) Detect pending tasks in task-queue.json with assigned_to:null, 2) Run scripts/run-coordinator-master.sh to apply MoE routing, 3) Assign tasks to appropriate specialist masters (security/development/inventory), 4) Log all routing decisions with confidence scores, 5) Ensure daemon is robust, handles errors gracefully, prevents duplicate routing. This makes task routing fully autonomous.\n\nCOMPONENT 2 - Remove Worker Pool Cap: Worker pool currently has artificial 8-worker limit causing capacity issues. Change worker-daemon.sh to: 1) Remove or drastically increase target_active_workers cap (suggest 50-100), 2) Use worker pool efficiency metrics instead of hard caps, 3) Allow dynamic scaling based on pending task queue depth, 4) Monitor system resources (memory/CPU) as natural limit, 5) Keep sparse activation benefits but remove artificial bottlenecks.\n\nCOMPONENT 3 - Intelligent PM (Project Manager) System (NEW - MOST IMPORTANT): Replace dumb time-based zombie-killer with smart PM that understands CONTEXT. Create pm-daemon.sh that works WITH coordinator and MoE to intelligently manage worker lifecycle: \n\nPM Intelligence Requirements:\n- Monitor ALL workers continuously (not just >15min timeout)\n- Check actual progress indicators: git commits, file changes, coordination updates, task status changes\n- Understand task CONTEXT from MoE: Is this a 5-minute bug fix or 60-minute feature? Adjust expectations.\n- Communicate with coordinator master: Ask 'Is worker dev-worker-ABC making acceptable progress on task-XYZ?'\n- Use MoE routing confidence: Low confidence tasks may need more time, high confidence should complete quickly\n- Track worker health metrics: heartbeat, token usage, execution patterns, output quality\n\nPM Decision Framework:\n1) WAIT: Worker actively working (recent heartbeat, files changing, making commits) → Keep monitoring\n2) INVESTIGATE: Worker stalled but context suggests complex task → Ask coordinator/MoE for assessment\n3) INTERVENE: Worker truly stuck (no activity, context suggests should be done) → Analyze why, create handoff for replacement\n4) KILL & RESPAWN: Worker zombie confirmed (no heartbeat, no progress, timeout exceeded for task complexity) → Clean up, spawn replacement with learnings from failure\n5) ESCALATE: Repeated failures on same task → Flag to coordinator, may need human review or task redesign\n\nPM Communication Protocol:\n- Read task context from task-queue.json (type, priority, description, requirements)\n- Check MoE routing metadata (confidence scores, specialist assignment, complexity estimates)\n- Query coordinator state to understand task dependencies and blockers\n- Update coordination/pm-state.json with worker assessments and decisions\n- Log all PM decisions to coordination/pm-decisions.jsonl for learning and audit\n\nPM Metrics to Track:\n- Worker lifetime distributions by task type\n- False positive zombie detections (killed workers that were actually progressing)\n- Task completion success rate by worker type\n- Average time-to-completion by task complexity\n- Worker respawn effectiveness (does new worker succeed where old failed?)\n\nImplementation Requirements:\n- Create coordination/pm-state.json schema for PM decision tracking\n- Build PM context gathering utilities (read tasks, routing data, worker specs, git activity)\n- Implement intelligent timeout calculations based on task type/complexity\n- Add worker progress detection (file watcher, git log parsing, coordination file monitoring)\n- Create PM→Coordinator communication interface\n- Build decision tree logic for wait/investigate/intervene/kill/escalate\n- Add learning system: PM learns optimal timeouts from historical completion data\n- Comprehensive logging for PM decision audit trail\n\nTesting & Validation:\n- Test PM correctly waits for long-running legitimate workers\n- Verify PM detects and kills actual zombies (stalled workers)\n- Confirm PM spawns replacements successfully\n- Validate coordinator daemon routes all pending tasks\n- Test full autonomous loop: create task → coordinator routes → worker spawns → PM monitors → completion\n- Run with current 5 pending tasks as validation\n\nSuccess Criteria:\n1) Coordinator daemon running, routing pending tasks every 60s\n2) Worker pool cap removed/increased to 50+\n3) PM daemon running, intelligently monitoring all workers\n4) 5 pending critical tasks get routed, spawned, monitored, completed\n5) No false positive zombie kills on legitimate workers\n6) System fully autonomous from task creation to completion\n7) Documentation of PM decision framework and communication protocol\n\nKeywords: critical architecture autonomous coordinator-daemon pm-daemon intelligent-monitoring worker-lifecycle MoE-integration task-routing context-aware zombie-detection progress-tracking adaptive-timeouts system-intelligence project-management coordination full-autonomy.",
       "type": "development",
       "priority": "critical",
-      "status": "worker_spawned",
+      "status": "cancelled",
       "assigned_to": "development",
       "created_at": "2025-11-09T04:33:16-0600",
       "created_by": "create-task-cli",
@@ -1440,14 +1488,15 @@
       "worker_type": "feature-implementer",
       "completed_at": "2025-11-09T06:04:28-0600",
       "error": "Worker became zombie and was killed",
-      "updated_at": "2025-11-09T06:22:08-06:00"
+      "updated_at": "2025-11-12T22:10:39Z",
+      "cancelled_reason": "orphaned_worker_no_longer_exists"
     },
     {
       "id": "task-1762553445",
       "title": "SIMPLE TEST to verify the worker launcher fix works end-to-end. Create a test file at tests/launcher-verification.txt with content 'Worker launcher fix verified successfully\\!' and commit with message 'test: worker launcher end-to-end verification'. This is a straightforward task to confirm the architecture fix is working.",
       "type": "development",
       "priority": "high",
-      "status": "worker_spawned",
+      "status": "cancelled",
       "assigned_to": "development",
       "created_at": "2025-11-09T08:25:28-0600",
       "created_by": "create-task-cli",
@@ -1461,9 +1510,10 @@
       "assigned_at": "2025-11-09T08:26:22-0600",
       "routing_confidence": "0.95",
       "routing_strategy": "single_expert",
-      "updated_at": "2025-11-09T08:26:34-06:00",
+      "updated_at": "2025-11-12T22:10:39Z",
       "worker_id": "dev-worker-45BE28AF",
-      "worker_type": "feature-implementer"
+      "worker_type": "feature-implementer",
+      "cancelled_reason": "orphaned_worker_no_longer_exists"
     },
     {
       "id": "task-1762553446",
@@ -1582,7 +1632,7 @@
       "title": "Post-dashboard fix system improvements: testing, health monitoring, UI enhancements, documentation, performance optimization, and monitoring infrastructure",
       "type": "development",
       "priority": "high",
-      "status": "worker_spawned",
+      "status": "cancelled",
       "assigned_to": "development",
       "created_at": "2025-11-09T14:08:40-0600",
       "created_by": "create-task-cli",
@@ -1596,16 +1646,17 @@
       "assigned_at": "2025-11-09T14:12:22-0600",
       "routing_confidence": "0.95",
       "routing_strategy": "single_expert",
-      "updated_at": "2025-11-09T14:12:43-06:00",
+      "updated_at": "2025-11-12T22:10:39Z",
       "worker_id": "dev-worker-270EA2BA",
-      "worker_type": "implementation-worker"
+      "worker_type": "implementation-worker",
+      "cancelled_reason": "orphaned_worker_no_longer_exists"
     },
     {
       "id": "task-1762553454",
       "title": "PRIORITY 1 - HIGH Impact: Implement Automatic JSON Validation for dashboard-events.jsonl. Add validation layer to automatically fix malformed JSON before writing. Current issue: Frequent JSON parsing errors causing dashboard disruptions. Solution: Implement pre-write validation that detects and repairs common JSON errors (missing commas, trailing commas, unclosed brackets). Add validation to emit-event.sh and dashboard server. Include error recovery and logging. Technical: Use jq for validation, add JSON repair utilities, implement validation hooks in event emission pipeline. Benefits: Prevents dashboard crashes, eliminates data corruption, improves reliability.",
       "type": "development",
       "priority": "high",
-      "status": "worker_spawned",
+      "status": "cancelled",
       "assigned_to": "development",
       "created_at": "2025-11-11T08:09:02-0600",
       "created_by": "create-task-cli",
@@ -1622,7 +1673,8 @@
       "handoff_id": "coord-to-development-85FFD054-D57F-4E0C-B650-F9448FFEF19C",
       "worker_id": "dev-worker-77A828C9",
       "worker_type": "implementation-worker",
-      "updated_at": "2025-11-11T12:01:56-06:00"
+      "updated_at": "2025-11-12T22:10:39Z",
+      "cancelled_reason": "orphaned_worker_no_longer_exists"
     },
     {
       "id": "task-1762553455",
@@ -1671,7 +1723,7 @@
       "title": "PRIORITY 4: Fix PM Daemon - Investigate and resolve PM daemon stability issues. Current issue: PM daemon not staying running consistently, affecting project management automation. Investigation areas: 1) Check for missing dependencies or libraries required by pm-daemon.sh, 2) Review daemon startup scripts and initialization sequence, 3) Analyze crash logs and error messages in agents/logs/system/, 4) Check for configuration issues in coordination/pm-state.json, 5) Verify process monitoring and restart mechanisms, 6) Test daemon under various load conditions. Root cause analysis: Determine if issue is environment-related, code bug, resource exhaustion, or race condition. Implement fixes: Add proper error handling, improve logging, add health checks, implement auto-restart on failure. Validate: Ensure daemon stays running for 24+ hours under normal load.",
       "type": "development",
       "priority": "high",
-      "status": "worker_spawned",
+      "status": "cancelled",
       "assigned_to": "development",
       "created_at": "2025-11-11T08:09:54-0600",
       "created_by": "create-task-cli",
@@ -1688,7 +1740,8 @@
       "handoff_id": "coord-to-development-744ADC29-E9EA-4DDB-BD73-7B3448F8713D",
       "worker_id": "dev-worker-68D99489",
       "worker_type": "implementation-worker",
-      "updated_at": "2025-11-11T12:01:57-06:00"
+      "updated_at": "2025-11-12T22:10:39Z",
+      "cancelled_reason": "orphaned_worker_no_longer_exists"
     },
     {
       "id": "task-1762553458",
@@ -1716,7 +1769,7 @@
       "title": "PROMPT ENGINEERING UPGRADE - Phase 1: Contract Definition. Transform commit-relay into production-grade LLM system using LangChain/PDL patterns. PHASE 1 OBJECTIVES: 1) Create schema registry with 15+ JSON schemas for all agent outputs (task-queue-entry, handoff, master-state, worker-spec, routing-decision, dashboard-event). 2) Define strict contracts for coordinator, development, security, inventory, cicd master agents - document input/output schemas, validation rules, enum values. 3) Create contract documentation in docs/contracts/. TECHNICAL APPROACH: Use JSON Schema draft-07 with strict validation (required fields, additionalProperties:false, enum constraints, regex patterns). Build schema-validator.js library using AJV for validation. Implement safeReadJSON and safeWriteJSON wrappers. DELIVERABLES: coordination/schemas/ directory with all schemas, docs/contracts/ with agent documentation, lib/schema-validator.js validation library. SUCCESS METRICS: 100% agent outputs have schemas, zero surprise fields. Based on transcript: LLMs are probabilistic not deterministic, need contracts+control loops+observability for production software.",
       "type": "development",
       "priority": "high",
-      "status": "worker_spawned",
+      "status": "cancelled",
       "assigned_to": "development",
       "created_at": "2025-11-11T10:07:08-0600",
       "created_by": "create-task-cli",
@@ -1733,14 +1786,15 @@
       "handoff_id": "coord-to-development-54030DBC-B10B-4E30-B3EF-77AF0B841A04",
       "worker_id": "dev-worker-5BAC7DF8",
       "worker_type": "implementation-worker",
-      "updated_at": "2025-11-11T12:01:56-06:00"
+      "updated_at": "2025-11-12T22:10:39Z",
+      "cancelled_reason": "orphaned_worker_no_longer_exists"
     },
     {
       "id": "task-1762553460",
       "title": "PROMPT ENGINEERING UPGRADE - Phase 2: Validation & Control Loops. Build validation layers and retry mechanisms for every agent output. OBJECTIVES: 1) Integrate Phase 1 schemas into all agent workflows - add validation wrappers to emit-event.sh, spawn-worker.sh, create-task.sh, moe-router.sh. 2) Implement control loops for critical paths: coordinator routing with validation+retry, handoff creation with validation, task assignment validation. 3) Add retry logic to all agent calls with exponential backoff - max 3 retries with tighter instructions each time. 4) Build validation middleware for all JSON file operations. TECHNICAL: Update all bash scripts to use lib/safe-json.js wrappers, add validation hooks to coordination file writers, implement circuit breaker integration from task-1762553455. DELIVERABLES: All coordination writes use safeWriteJSON, control loops for routing/handoffs/assignments, retry logic library, validation middleware integrated. SUCCESS: 99%+ first-pass validation rate, <1 schema violation per day, <5% retry rate.",
       "type": "development",
       "priority": "high",
-      "status": "worker_spawned",
+      "status": "cancelled",
       "assigned_to": "development",
       "created_at": "2025-11-11T10:32:50-0600",
       "created_by": "create-task-cli",
@@ -1754,16 +1808,17 @@
       "assigned_at": "2025-11-11T11:42:14-0600",
       "routing_confidence": "N/A",
       "routing_strategy": "pattern-based",
-      "updated_at": "2025-11-11T12:01:57-06:00",
+      "updated_at": "2025-11-12T22:10:39Z",
       "worker_id": "dev-worker-80098C12",
-      "worker_type": "implementation-worker"
+      "worker_type": "implementation-worker",
+      "cancelled_reason": "orphaned_worker_no_longer_exists"
     },
     {
       "id": "task-1762553461",
       "title": "PROMPT ENGINEERING UPGRADE - Phase 3: Observability & Tracing. Implement comprehensive tracing so every prompt→output chain is visible and measurable. OBJECTIVES: 1) Build tracing infrastructure with PromptTracer class - startTrace, recordStep, endTrace methods storing in coordination/traces/. 2) Instrument all agent calls with tracing: coordinator routing, development implementation, security scanning, inventory cataloging. 3) Create trace explorer dashboard at dashboard/public/traces.html - view all traces, filter by operation/agent/status, inspect full prompt→output chains. 4) Add metrics collection: first-pass validation rate by agent, retry rate by operation, tokens per operation, latency p50/p95/p99, schema violation types. 5) Build trace analysis tools in scripts/analyze-traces.sh. TECHNICAL: Store traces as JSONL in coordination/traces/, integrate with dashboard WebSocket for real-time updates, use dashboard event system. DELIVERABLES: lib/tracing/tracer.js, trace storage, trace explorer UI, metrics dashboard, analysis scripts. SUCCESS: 100% agent calls traced, traces retained 30 days, metrics updated every 5min.",
       "type": "development",
       "priority": "high",
-      "status": "worker_spawned",
+      "status": "completed",
       "assigned_to": "security",
       "created_at": "2025-11-11T10:33:08-0600",
       "created_by": "create-task-cli",
@@ -1777,16 +1832,17 @@
       "assigned_at": "2025-11-11T11:42:14-0600",
       "routing_confidence": "N/A",
       "routing_strategy": "pattern-based",
-      "updated_at": "2025-11-11T16:36:58-06:00",
+      "updated_at": "2025-11-12T22:10:39Z",
       "worker_id": "sec-worker-B9B8E6B0",
-      "worker_type": "scan-worker"
+      "worker_type": "scan-worker",
+      "completed_at": "2025-11-12T22:10:39Z"
     },
     {
       "id": "task-1762553462",
       "title": "PROMPT ENGINEERING UPGRADE - Phase 4: Prompt Templates & Version Control. Standardize all prompts using templates, enabling version control and A/B testing. OBJECTIVES: 1) Create prompt template library in coordination/prompt-templates/ organized by agent type (coordinator/, development/, security/, inventory/, cicd/) with 20+ templates. 2) Build template engine (lib/prompt-templates/engine.js) with render() method supporting variable substitution, required variable validation, strictness levels. 3) Add template metadata (YAML frontmatter) including version, author, success_rate, avg_tokens, required_variables, output_schema. 4) Implement A/B testing framework for comparing prompt versions - run_ab_test.sh script to route traffic, compare_template_performance() analysis. 5) Create prompt registry dashboard showing version history, usage stats, success rates, A/B test results. TECHNICAL: Use Mustache/Handlebars-style templates, store metadata in YAML, track template usage in coordination/prompt-usage.jsonl. DELIVERABLES: 20+ templates, template engine, A/B testing framework, registry dashboard. SUCCESS: 100% agent calls use templates, A/B tests run weekly, template success >95%.",
       "type": "development",
       "priority": "high",
-      "status": "worker_spawned",
+      "status": "completed",
       "assigned_to": "security",
       "created_at": "2025-11-11T10:33:45-0600",
       "created_by": "create-task-cli",
@@ -1800,16 +1856,17 @@
       "assigned_at": "2025-11-11T11:42:14-0600",
       "routing_confidence": "N/A",
       "routing_strategy": "pattern-based",
-      "updated_at": "2025-11-11T16:36:59-06:00",
+      "updated_at": "2025-11-12T22:10:39Z",
       "worker_id": "sec-worker-2E10F604",
-      "worker_type": "scan-worker"
+      "worker_type": "scan-worker",
+      "completed_at": "2025-11-12T22:10:39Z"
     },
     {
       "id": "task-1762553463",
       "title": "PROMPT ENGINEERING UPGRADE - Phase 6: Production Hardening. Ensure upgraded system is production-ready with monitoring, alerting, and failsafes. OBJECTIVES: 1) Integrate circuit breakers (from task-1762553455) into all agent call paths - coordinator routing, worker spawning, API calls. 2) Implement rate limiting to prevent LLM API overload - 30 calls per 60s window, exponential backoff on limit hit. 3) Create monitoring dashboard with real-time metrics: agent call volume, validation success rates, retry rates, schema violations, circuit breaker states, rate limit usage. 4) Build alerting system that triggers on: validation failure >10%, retry rate >20%, circuit breaker opens, schema violations detected, rate limit exceeded. 5) Create operations runbook documenting: common failure modes, remediation steps, rollback procedures, emergency contacts. 6) Add health check endpoints and implement automated recovery. TECHNICAL: Use existing circuit-breaker.js, add Prometheus-compatible /metrics endpoint, integrate with dashboard server. DELIVERABLES: Circuit breaker integration, rate limiter, monitoring dashboard, alerting system, ops runbook. SUCCESS: 99.9% uptime, <5min MTTR, zero data loss.",
       "type": "development",
       "priority": "high",
-      "status": "worker_spawned",
+      "status": "cancelled",
       "assigned_to": "development",
       "created_at": "2025-11-11T10:34:01-0600",
       "created_by": "create-task-cli",
@@ -1823,9 +1880,10 @@
       "assigned_at": "2025-11-11T11:42:14-0600",
       "routing_confidence": "N/A",
       "routing_strategy": "pattern-based",
-      "updated_at": "2025-11-11T12:01:56-06:00",
+      "updated_at": "2025-11-12T22:10:39Z",
       "worker_id": "dev-worker-356E3427",
-      "worker_type": "implementation-worker"
+      "worker_type": "implementation-worker",
+      "cancelled_reason": "orphaned_worker_no_longer_exists"
     },
     {
       "id": "task-1762553464",
@@ -1989,7 +2047,7 @@
       "title": "Increase Test Coverage to 80% for Internal Policy Compliance",
       "type": "testing",
       "priority": "high",
-      "status": "worker_spawned",
+      "status": "completed",
       "created_at": "2025-11-11T20:33:19Z",
       "created_by": "governance-monitor",
       "context": {
@@ -2040,19 +2098,20 @@
       "assigned_at": "2025-11-11T14:34:07-0600",
       "routing_confidence": "N/A",
       "routing_strategy": "pattern-based",
-      "updated_at": "2025-11-11T16:05:49-06:00",
+      "updated_at": "2025-11-12T22:10:39Z",
       "worker_id": "dev-worker-A21524A6",
       "worker_type": "implementation-worker",
       "zombie_cleanup_at": "2025-11-11T21:55:23Z",
       "previous_worker": "dev-worker-2840BA84",
-      "retry_count": 2
+      "retry_count": 2,
+      "completed_at": "2025-11-12T22:10:39Z"
     },
     {
       "id": "task-1762893929",
       "title": "Modernize Dashboard UI with Commit-Relay Specific Metrics",
       "type": "feature",
       "priority": "medium",
-      "status": "worker_spawned",
+      "status": "completed",
       "created_at": "2025-11-11T20:45:29Z",
       "created_by": "user",
       "context": {
@@ -2165,19 +2224,20 @@
       "assigned_at": "2025-11-11T14:45:40-0600",
       "routing_confidence": "N/A",
       "routing_strategy": "pattern-based",
-      "updated_at": "2025-11-11T16:06:36-06:00",
+      "updated_at": "2025-11-12T22:10:39Z",
       "worker_id": "dev-worker-785586E5",
       "worker_type": "implementation-worker",
       "zombie_cleanup_at": "2025-11-11T21:55:23Z",
       "previous_worker": "dev-worker-9ACF7DE0",
-      "retry_count": 2
+      "retry_count": 2,
+      "completed_at": "2025-11-12T22:10:39Z"
     },
     {
       "id": "task-1762894381",
       "title": "Investigate and Remediate System Health Alerts",
       "type": "bug",
       "priority": "high",
-      "status": "worker_spawned",
+      "status": "completed",
       "created_at": "2025-11-11T20:53:01Z",
       "created_by": "health-monitor",
       "context": {
@@ -2261,19 +2321,20 @@
       "assigned_at": "2025-11-11T14:53:16-0600",
       "routing_confidence": "N/A",
       "routing_strategy": "pattern-based",
-      "updated_at": "2025-11-11T16:06:35-06:00",
+      "updated_at": "2025-11-12T22:10:39Z",
       "worker_id": "dev-worker-693A8576",
       "worker_type": "fix-worker",
       "zombie_cleanup_at": "2025-11-11T21:55:23Z",
       "previous_worker": "dev-worker-E35E4762",
-      "retry_count": 2
+      "retry_count": 2,
+      "completed_at": "2025-11-12T22:10:39Z"
     },
     {
       "id": "task-1762894589",
       "title": "Implement Multi-Lane Task Queue Architecture for Bottleneck Prevention",
       "type": "architecture",
       "priority": "high",
-      "status": "worker_spawned",
+      "status": "completed",
       "created_at": "2025-11-11T20:56:29Z",
       "created_by": "user",
       "context": {
@@ -2446,12 +2507,13 @@
       "assigned_at": "2025-11-11T14:56:53-0600",
       "routing_confidence": "N/A",
       "routing_strategy": "pattern-based",
-      "updated_at": "2025-11-11T16:06:35-06:00",
+      "updated_at": "2025-11-12T22:10:39Z",
       "worker_id": "dev-worker-6A8739DC",
       "worker_type": "implementation-worker",
       "zombie_cleanup_at": "2025-11-11T21:55:23Z",
       "previous_worker": "dev-worker-C07346DD",
-      "retry_count": 2
+      "retry_count": 2,
+      "completed_at": "2025-11-12T22:10:39Z"
     },
     {
       "id": "task-1762896271",
@@ -2594,25 +2656,26 @@
         "requires_testing": true,
         "fixes_health_alerts": true
       },
-      "status": "worker_spawned",
+      "status": "completed",
       "assigned_to": "development",
       "assigned_by": "coordinator",
       "assigned_at": "2025-11-11T15:25:24-0600",
       "routing_confidence": "N/A",
       "routing_strategy": "pattern-based",
-      "updated_at": "2025-11-11T16:06:35-06:00",
+      "updated_at": "2025-11-12T22:10:39Z",
       "worker_id": "dev-worker-9ECB5C27",
       "worker_type": "fix-worker",
       "zombie_cleanup_at": "2025-11-11T21:55:23Z",
       "previous_worker": "dev-worker-0AAEBC29",
-      "retry_count": 2
+      "retry_count": 2,
+      "completed_at": "2025-11-12T22:10:39Z"
     },
     {
       "id": "task-1762896847",
       "title": "CRITICAL: Fix Claude Worker Launcher Ink TTY Error",
       "type": "bug",
       "priority": "critical",
-      "status": "worker_spawned",
+      "status": "completed",
       "created_at": "2025-11-11T21:34:07Z",
       "created_by": "user",
       "context": {
@@ -2707,9 +2770,10 @@
       "assigned_at": "2025-11-11T15:34:21-0600",
       "routing_confidence": "N/A",
       "routing_strategy": "pattern-based",
-      "updated_at": "2025-11-11T16:06:35-06:00",
+      "updated_at": "2025-11-12T22:10:39Z",
       "worker_id": "dev-worker-7BFC15C8",
-      "worker_type": "fix-worker"
+      "worker_type": "fix-worker",
+      "completed_at": "2025-11-12T22:10:39Z"
     },
     {
       "id": "task-1762961220",
