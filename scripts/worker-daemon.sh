@@ -127,10 +127,33 @@ while true; do
                 continue
             fi
 
+            # Validate JSON before parsing (capture errors)
+            JQ_ERROR=$(jq empty "$spec_file" 2>&1 >/dev/null)
+            if [ -n "$JQ_ERROR" ]; then
+                log_daemon "ERROR: Malformed JSON in worker spec: $(basename "$spec_file")"
+                log_daemon "ERROR: jq error: $JQ_ERROR"
+                log_daemon "ERROR: Moving malformed spec to quarantine"
+
+                # Create quarantine directory
+                mkdir -p "$COMMIT_RELAY_HOME/coordination/worker-specs/quarantine"
+
+                # Move malformed spec to quarantine with timestamp
+                quarantine_file="$COMMIT_RELAY_HOME/coordination/worker-specs/quarantine/$(basename "$spec_file" .json)-malformed-$(date +%s).json"
+                mv "$spec_file" "$quarantine_file"
+
+                # Emit governance alert
+                broadcast_dashboard_event "malformed_worker_spec" \
+                    "{\"file\": \"$(basename "$spec_file")\", \"error\": \"jq parse failure\", \"quarantined\": \"$quarantine_file\"}" \
+                    2>/dev/null || true
+
+                continue
+            fi
+
             WORKER_ID=$(jq -r '.worker_id' "$spec_file" 2>/dev/null || echo "")
             WORKER_STATUS=$(jq -r '.status' "$spec_file" 2>/dev/null || echo "")
 
             if [ -z "$WORKER_ID" ] || [ "$WORKER_ID" = "null" ]; then
+                log_daemon "WARN: Worker spec missing worker_id: $(basename "$spec_file")"
                 continue
             fi
 
