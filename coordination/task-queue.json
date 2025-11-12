@@ -1963,7 +1963,7 @@
       "title": "GOVERNANCE UPGRADE - Phase 3: Automated Data Lineage & Audit Trails. Implement comprehensive lineage tracking and audit trail system integrated with Phase 1 catalog and Phase 2 access control. Build LineageTracker class for recording all operations, implement comprehensive audit trail logging, create lineage visualization (source → transformation → target), add audit query interface and compliance reports. Success criteria: 100% operation lineage tracked, audit trail completeness 99.9%, lineage query response <500ms, compliance report generation <2 seconds.",
       "type": "development",
       "priority": "high",
-      "status": "failed",
+      "status": "pending",
       "created_at": "2025-11-11T11:36:34-0600",
       "created_by": "create-task-cli",
       "context": {
@@ -1974,17 +1974,18 @@
       },
       "routing_confidence": "N/A",
       "routing_strategy": "pattern-based",
-      "updated_at": "2025-11-12T13:43:30-06:00",
-      "retry_count": 0,
+      "updated_at": "2025-11-12T22:13:55Z",
+      "retry_count": 1,
       "worker_id": "sec-worker-7A7CFD6E",
-      "worker_type": "scan-worker"
+      "worker_type": "scan-worker",
+      "retry_reason": "infrastructure_fixes_applied_retrying_with_fixed_launcher"
     },
     {
       "id": "task-1762553467",
       "title": "GOVERNANCE UPGRADE - Phase 4: AI-Powered Monitoring & Quality Assurance. Implement AI-powered data quality monitoring, automatic PII detection and tagging, model drift detection for agents, proactive monitoring dashboard. Build QualityMonitor class with automated data quality checks, PII scanner with automatic tagging, agent performance monitoring with drift detection, real-time monitoring dashboard with alerts. Success criteria: 100% data quality monitoring coverage, PII detection accuracy >99%, drift detection latency <1s, zero false positives in monitoring.",
       "type": "development",
       "priority": "high",
-      "status": "failed",
+      "status": "pending",
       "created_at": "2025-11-11T12:10:12-0600",
       "created_by": "create-task-cli",
       "context": {
@@ -1995,17 +1996,18 @@
       },
       "routing_confidence": "N/A",
       "routing_strategy": "pattern-based",
-      "updated_at": "2025-11-12T13:41:36-06:00",
-      "retry_count": 0,
+      "updated_at": "2025-11-12T22:13:55Z",
+      "retry_count": 1,
       "worker_id": "dev-worker-EC1BA777",
-      "worker_type": "implementation-worker"
+      "worker_type": "implementation-worker",
+      "retry_reason": "infrastructure_fixes_applied_retrying_with_fixed_launcher"
     },
     {
       "id": "task-1762553468",
       "title": "GOVERNANCE UPGRADE - Phase 5: Compliance Automation & Reporting. Define compliance frameworks (GDPR, SOC2, internal policies), automated compliance checking engine, policy enforcement with automated remediation, comprehensive compliance reporting dashboard. Build ComplianceEngine class with framework definitions, automated policy validation, violation detection and remediation, executive compliance dashboard with metrics. Success criteria: Support 3+ compliance frameworks, 100% policy enforcement, automated remediation for 80%+ violations, compliance report generation <5s.",
       "type": "development",
       "priority": "high",
-      "status": "failed",
+      "status": "pending",
       "created_at": "2025-11-11T12:10:14-0600",
       "created_by": "create-task-cli",
       "context": {
@@ -2016,17 +2018,18 @@
       },
       "routing_confidence": "N/A",
       "routing_strategy": "pattern-based",
-      "updated_at": "2025-11-12T13:41:36-06:00",
-      "retry_count": 0,
+      "updated_at": "2025-11-12T22:13:55Z",
+      "retry_count": 1,
       "worker_id": "dev-worker-EC993E16",
-      "worker_type": "implementation-worker"
+      "worker_type": "implementation-worker",
+      "retry_reason": "infrastructure_fixes_applied_retrying_with_fixed_launcher"
     },
     {
       "id": "task-1762553469",
       "title": "GOVERNANCE UPGRADE - Phase 6: Governance Metrics & Continuous Improvement. Build governance KPI framework with 20+ metrics, real-time metrics collection system, executive governance dashboard, continuous improvement process with ML-driven insights. Implement MetricsCollector class, governance health score calculation, trend analysis and forecasting, actionable recommendations engine. Success criteria: Track 20+ governance KPIs, real-time metric updates <100ms, 95%+ dashboard uptime, automated improvement recommendations with 80%+ accuracy.",
       "type": "development",
       "priority": "high",
-      "status": "failed",
+      "status": "pending",
       "created_at": "2025-11-11T12:10:16-0600",
       "created_by": "create-task-cli",
       "context": {
@@ -2037,10 +2040,11 @@
       },
       "routing_confidence": "N/A",
       "routing_strategy": "pattern-based",
-      "updated_at": "2025-11-12T13:41:36-06:00",
-      "retry_count": 0,
+      "updated_at": "2025-11-12T22:13:55Z",
+      "retry_count": 1,
       "worker_id": "dev-worker-1FA96AC2",
-      "worker_type": "implementation-worker"
+      "worker_type": "implementation-worker",
+      "retry_reason": "infrastructure_fixes_applied_retrying_with_fixed_launcher"
     },
     {
       "id": "task-1762893199",
@@ -2851,6 +2855,22 @@
         "description": "Investigate and Remediate System Health Alerts\n\nSystem experiencing degraded health metrics:\n- Low Success Rate: 60.9% (threshold: 70%)\n- High Worker Failure Rate: 39.1% (threshold: 30%)\n- Alerts triggered: 11/12/2025, 3:00-3:07 PM\n\nInfrastructure fixes applied in commit fb4ca59:\n- Fixed worker-daemon.sh missing arguments bug\n- Fixed claude-worker-launcher-v2.sh (7 critical fixes)\n- Added headless mode support and TTY patches\n\nInvestigation Tasks:\n1. Analyze worker failure patterns in worker-specs/failed/\n2. Determine if failures were due to infrastructure bugs now fixed\n3. Calculate adjusted success rate post-infrastructure-fix\n4. Identify any remaining failure root causes\n5. Recommend additional remediation if needed\n6. Update health monitoring thresholds if appropriate\n\nSuccess Criteria:\n- Root cause analysis complete\n- Clear determination if infrastructure fixes resolved issues\n- Actionable recommendations for remaining failures (if any)\n- Updated health metrics showing improvement trajectory",
         "requirements": []
       }
+    },
+    {
+      "id": "task-1762961222",
+      "title": "URGENT: Investigate Persistent Health Alert Source - 60.9% Success Rate\n\nUser still seeing health alerts despite task queue remediation:\n- Low Success Rate: 60.9% (threshold: 70%)\n- High Worker Failure Rate: 39.1% (threshold: 30%)\n- Alerts triggered at 4:19:33 PM and 4:20:33 PM (11/12/2025)\n\nInvestigation needed:\n1. Find source of success rate calculation (health-monitor-daemon, dashboard, or other script)\n2. Determine if using worker-spec-based metrics vs task-based metrics\n3. Identify discrepancy between:\n   - Task queue metrics: 80% success rate (24/30)\n   - Alert metrics: 60.9% success rate\n4. Check coordination/worker-specs/failed/ directory (20 failed workers)\n5. Determine if alerts are based on stale data or different calculation window\n\nRoot Cause Analysis:\n- Task queue shows 80% success rate post-remediation\n- Alerts show 60.9% - likely using different data source\n- May be counting worker failures vs task failures\n- Health monitoring may need to be updated to use remediated task queue data\n\nDeliverables:\n1. Identify exact source of health alerts\n2. Explain metric discrepancy\n3. Fix or update health monitoring to use correct post-remediation metrics\n4. Clear false alerts if based on stale data\n5. Document health monitoring architecture",
+      "type": "development",
+      "priority": "critical",
+      "status": "pending",
+      "assigned_to": null,
+      "created_at": "2025-11-12T16:23:07-0600",
+      "created_by": "create-task-cli",
+      "context": {
+        "repository": "ry-ops/commit-relay",
+        "branch": "main",
+        "description": "URGENT: Investigate Persistent Health Alert Source - 60.9% Success Rate\n\nUser still seeing health alerts despite task queue remediation:\n- Low Success Rate: 60.9% (threshold: 70%)\n- High Worker Failure Rate: 39.1% (threshold: 30%)\n- Alerts triggered at 4:19:33 PM and 4:20:33 PM (11/12/2025)\n\nInvestigation needed:\n1. Find source of success rate calculation (health-monitor-daemon, dashboard, or other script)\n2. Determine if using worker-spec-based metrics vs task-based metrics\n3. Identify discrepancy between:\n   - Task queue metrics: 80% success rate (24/30)\n   - Alert metrics: 60.9% success rate\n4. Check coordination/worker-specs/failed/ directory (20 failed workers)\n5. Determine if alerts are based on stale data or different calculation window\n\nRoot Cause Analysis:\n- Task queue shows 80% success rate post-remediation\n- Alerts show 60.9% - likely using different data source\n- May be counting worker failures vs task failures\n- Health monitoring may need to be updated to use remediated task queue data\n\nDeliverables:\n1. Identify exact source of health alerts\n2. Explain metric discrepancy\n3. Fix or update health monitoring to use correct post-remediation metrics\n4. Clear false alerts if based on stale data\n5. Document health monitoring architecture",
+        "requirements": []
+      }
     }
   ],
   "metadata": {
@@ -2860,5 +2880,5 @@
     "in_progress_tasks": 0,
     "completed_tasks": 2
   },
-  "updated_at": "2025-11-12T15:42:14-0600"
+  "updated_at": "2025-11-12T16:23:07-0600"
 }
