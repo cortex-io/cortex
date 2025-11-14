@@ -58,6 +58,11 @@ function dashboard() {
         pmDaemon: null,
         healthDaemon: null,
         metricsDaemon: null,
+        terminalSettings: {
+            terminal_windows_enabled: true,
+            headless_mode: false,
+            auto_close_duration_minutes: 0
+        },
         tasks: [],
         events: [],
         workers: [], // Will store worker pool data
@@ -327,6 +332,10 @@ function dashboard() {
                 // Fetch initial data
                 console.log('Fetching initial data...');
                 await this.fetchInitialData();
+                // Load terminal settings
+                console.log('Loading terminal settings...');
+                await this.loadTerminalSettings();
+
 
                 // Start polling
                 console.log('Starting polling...');
@@ -2436,6 +2445,63 @@ function dashboard() {
             } catch (error) {
                 console.error(`Error controlling metrics snapshot daemon:`, error);
                 alert(`Error: ${error.message}`);
+            }
+        },
+
+        // Terminal Control Functions
+        async loadTerminalSettings() {
+            try {
+                const response = await fetch('/api/terminal-settings');
+                const settings = await response.json();
+                this.terminalSettings = settings;
+                console.log('Terminal settings loaded:', settings);
+            } catch (error) {
+                console.error('Error loading terminal settings:', error);
+            }
+        },
+
+        async saveTerminalSettings() {
+            try {
+                const response = await fetch('/api/terminal-settings', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(this.terminalSettings)
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    console.log('Terminal settings saved successfully');
+                    alert('Terminal settings updated successfully!');
+                } else {
+                    console.error('Failed to save terminal settings');
+                    alert('Failed to update terminal settings');
+                }
+            } catch (error) {
+                console.error('Error saving terminal settings:', error);
+                alert(`Error: ${error.message}`);
+            }
+        },
+
+        toggleTerminalWindows() {
+            this.terminalSettings.terminal_windows_enabled = !this.terminalSettings.terminal_windows_enabled;
+        },
+
+        toggleHeadlessMode() {
+            this.terminalSettings.headless_mode = !this.terminalSettings.headless_mode;
+        },
+
+        getTerminalModeStatus() {
+            if (this.terminalSettings.headless_mode) {
+                return 'Headless Mode (all workers run in background)';
+            } else if (this.terminalSettings.terminal_windows_enabled) {
+                const autoClose = this.terminalSettings.auto_close_duration_minutes;
+                if (autoClose > 0) {
+                    return `Terminal Windows Enabled (auto-close after ${autoClose} min)`;
+                }
+                return 'Terminal Windows Enabled (stay open)';
+            } else {
+                return 'Terminal Windows Disabled';
             }
         },
 

@@ -285,10 +285,10 @@
     }
   },
   "workers": {
-    "active": 1,
-    "completed": 13,
-    "failed": 0,
+    "active": 32,
+    "completed": 14,
+    "failed": 20,
     "zombie": 0
   },
-  "last_updated": "2025-11-11T09:50:41-0600"
+  "last_updated": "2025-11-14T06:35:20-0600"
 }

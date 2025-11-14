@@ -278,10 +278,10 @@ route_task() {
 
             return 0
         else
-            log_warning "MoE router failed, falling back to pattern-based routing"
+            log_warn "MoE router failed, falling back to pattern-based routing"
         fi
     else
-        log_warning "MoE router not found, using legacy pattern-based routing"
+        log_warn "MoE router not found, using legacy pattern-based routing"
     fi
 
     # ========================================================================
@@ -350,7 +350,7 @@ assign_task_to_master() {
     # Create handoff for target master
     local handoff_file="$MASTER_CONTEXT_DIR/handoffs/to-${target_master}-${task_id}.json"
     local task_queue="$SCRIPT_DIR/../coordination/task-queue.json"
-    local task=$(jq -r --arg id "$task_id" '.tasks[] | select(.id == $id)' "$task_queue")
+    local task=$(jq --arg id "$task_id" '.tasks[] | select(.id == $id)' "$task_queue")
 
     # Build handoff with routing metadata
     local handoff_content=$(jq -n \

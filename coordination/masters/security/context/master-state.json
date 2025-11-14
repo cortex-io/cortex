@@ -67,6 +67,126 @@
       "worker_type": "scan-worker",
       "spawned_at": "2025-11-07T20:19:14-0600",
       "status": "active"
+    },
+    {
+      "worker_id": "sec-worker-AAC692A5",
+      "worker_type": "scan-worker",
+      "spawned_at": "2025-11-11T16:36:57-0600",
+      "status": "active"
+    },
+    {
+      "worker_id": "sec-worker-D20C3813",
+      "worker_type": "scan-worker",
+      "spawned_at": "2025-11-11T16:36:57-0600",
+      "status": "active"
+    },
+    {
+      "worker_id": "sec-worker-2D607E2D",
+      "worker_type": "scan-worker",
+      "spawned_at": "2025-11-11T16:36:57-0600",
+      "status": "active"
+    },
+    {
+      "worker_id": "sec-worker-C622A67A",
+      "worker_type": "scan-worker",
+      "spawned_at": "2025-11-11T16:36:57-0600",
+      "status": "active"
+    },
+    {
+      "worker_id": "sec-worker-CCF9834D",
+      "worker_type": "scan-worker",
+      "spawned_at": "2025-11-11T16:36:58-0600",
+      "status": "active"
+    },
+    {
+      "worker_id": "sec-worker-16E1DF67",
+      "worker_type": "scan-worker",
+      "spawned_at": "2025-11-11T16:36:58-0600",
+      "status": "active"
+    },
+    {
+      "worker_id": "sec-worker-0E7D5F4F",
+      "worker_type": "scan-worker",
+      "spawned_at": "2025-11-11T16:36:58-0600",
+      "status": "active"
+    },
+    {
+      "worker_id": "sec-worker-B9B8E6B0",
+      "worker_type": "scan-worker",
+      "spawned_at": "2025-11-11T16:36:58-0600",
+      "status": "active"
+    },
+    {
+      "worker_id": "sec-worker-82577B3E",
+      "worker_type": "scan-worker",
+      "spawned_at": "2025-11-11T16:36:59-0600",
+      "status": "active"
+    },
+    {
+      "worker_id": "sec-worker-CAF80759",
+      "worker_type": "scan-worker",
+      "spawned_at": "2025-11-11T16:36:59-0600",
+      "status": "active"
+    },
+    {
+      "worker_id": "sec-worker-168CF8AF",
+      "worker_type": "scan-worker",
+      "spawned_at": "2025-11-11T16:36:59-0600",
+      "status": "active"
+    },
+    {
+      "worker_id": "sec-worker-2E10F604",
+      "worker_type": "scan-worker",
+      "spawned_at": "2025-11-11T16:36:59-0600",
+      "status": "active"
+    },
+    {
+      "worker_id": "sec-worker-8FD950D8",
+      "worker_type": "scan-worker",
+      "spawned_at": "2025-11-11T16:36:59-0600",
+      "status": "active"
+    },
+    {
+      "worker_id": "sec-worker-76D0AF62",
+      "worker_type": "scan-worker",
+      "spawned_at": "2025-11-11T16:37:00-0600",
+      "status": "active"
+    },
+    {
+      "worker_id": "sec-worker-39C6E144",
+      "worker_type": "scan-worker",
+      "spawned_at": "2025-11-11T16:37:00-0600",
+      "status": "active"
+    },
+    {
+      "worker_id": "sec-worker-579F2CFA",
+      "worker_type": "scan-worker",
+      "spawned_at": "2025-11-11T16:37:00-0600",
+      "status": "active"
+    },
+    {
+      "worker_id": "sec-worker-060ED770",
+      "worker_type": "scan-worker",
+      "spawned_at": "2025-11-11T16:37:00-0600",
+      "status": "active"
+    },
+    {
+      "worker_id": "sec-worker-64C0DA8A",
+      "worker_type": "scan-worker",
+      "spawned_at": "2025-11-11T16:37:01-0600",
+      "status": "active"
+    },
+    {
+      "worker_id": "sec-worker-3A4ECD64",
+      "worker_type": "scan-worker",
+      "spawned_at": "2025-11-11T16:37:01-0600",
+      "status": "active"
+    },
+    {
+      "worker_id": "sec-worker-7A7CFD6E",
+      "worker_type": "scan-worker",
+      "spawned_at": "2025-11-12T13:43:30-0600",
+      "status": "active"
     }
   ],
   "completed_tasks": 0,
@@ -77,6 +197,6 @@
     "high_count": 0,
     "last_scan": null
   },
-  "last_run": "2025-11-07T20:19:15-0600",
-  "last_started": "2025-11-07T20:19:14-0600"
+  "last_run": "2025-11-12T13:43:30-0600",
+  "last_started": "2025-11-12T13:43:30-0600"
 }

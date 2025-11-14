@@ -9,6 +9,20 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 KB_DIR="$SCRIPT_DIR/../knowledge-base"
 ROUTING_PATTERNS="$KB_DIR/routing-patterns.json"
 ROUTING_LOG="$SCRIPT_DIR/../logs/routing-decisions.jsonl"
+COMMIT_RELAY_HOME="${COMMIT_RELAY_HOME:-/Users/ryandahlberg/commit-relay}"
+
+# Governance bypass mode (for bootstrapping governance system itself)
+GOVERNANCE_BYPASS="${GOVERNANCE_BYPASS:-false}"
+
+# Load access control (skip if in bypass mode)
+if [ "$GOVERNANCE_BYPASS" != "true" ]; then
+    source "$COMMIT_RELAY_HOME/scripts/lib/access-check.sh"
+else
+    # Stub function for bypass mode
+    check_permission() {
+        return 0  # Always allow in bypass mode
+    }
+fi
 
 # Ensure log directory exists
 mkdir -p "$(dirname "$ROUTING_LOG")"
@@ -109,6 +123,12 @@ route_task_moe() {
     local task_id="$1"
     local task_description="$2"
     local timestamp=$(date +"%Y-%m-%dT%H:%M:%S%z")
+
+    # Permission check: Can coordinator read routing patterns?
+    check_permission "coordinator-master" "routing-patterns" "read" || {
+        echo '{"error": "Permission denied to access routing patterns"}' >&2
+        return 1
+    }
 
     # v5.0 CAG Enhancement: Extract task type for direct routing
     local task_type=""

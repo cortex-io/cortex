@@ -3,9 +3,11 @@
   "completed_workers": [],
   "failed_workers": [],
   "stats": {
-    "total_spawned_today": 0,
+    "total_spawned_today": 52,
     "total_completed_today": 0,
-    "total_failed_today": 0
+    "total_failed_today": 52,
+    "success_rate": 0,
+    "note": "Synced with worker-specs directories at 2025-11-14T12:37:22Z"
   },
-  "updated_at": "2025-11-09T09:00:01-0600"
+  "updated_at": "2025-11-14T12:37:22Z"
 }
