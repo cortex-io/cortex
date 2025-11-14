@@ -1,9 +1,9 @@
 {
   "pm_daemon": {
     "pid": 48835,
-    "last_loop": "2025-11-14T06:35:20-0600",
-    "loops_completed": 101,
-    "uptime_seconds": 147701,
+    "last_loop": "2025-11-14T06:41:20-0600",
+    "loops_completed": 103,
+    "uptime_seconds": 148061,
     "started_at": "2025-11-12T13:33:39-0600"
   },
   "monitored_workers": {
@@ -751,9 +751,9 @@
     }
   },
   "metrics": {
-    "active_workers": 32,
+    "active_workers": 0,
     "completed_workers": 14,
-    "failed_workers": 20,
+    "failed_workers": 52,
     "total_workers": 66,
     "success_rate": 21.2,
     "completed_today": 0,
