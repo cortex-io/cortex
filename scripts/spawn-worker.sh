@@ -107,7 +107,8 @@ while [[ $# -gt 0 ]]; do
             REPOSITORY="$2"
             shift 2
             ;;
-# [DEPRECATED - CAG makes this obsolete]         -b|--budget)
+        -b|--budget)
+            # DEPRECATED - CAG makes this obsolete
             TOKEN_BUDGET="$2"
             shift 2
             ;;
