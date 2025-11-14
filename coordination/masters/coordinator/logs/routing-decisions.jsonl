@@ -3806,3 +3806,75 @@
 }
 {"task_id":"task-1762553457","title":"PRIORITY 4: Fix PM Daemon - Investigate and resolve PM daemon stability issues","routed_to":"development","rule_used":"code-development-bug-fix","routing_pattern":"implement|develop|code|feature|bug.*fix|refactor","routing_confidence":"0.95","routing_strategy":"single_expert","priority":"high","timestamp":"2025-11-11T15:13:34Z","handoff_id":"coord-to-development-744ADC29-E9EA-4DDB-BD73-7B3448F8713D","outcome":"pending"}
 {"task_id":"task-1762553458","title":"System Optimization - Clean up and optimize commit-relay system","routed_to":"development","rule_used":"code-development","routing_pattern":"implement|develop|code|feature|bug.*fix|refactor","confidence":0.92,"priority":"medium","timestamp":"2025-11-11T15:31:42Z","outcome":"pending","rationale":"System optimization task involving code cleanup, refactoring, log management, and documentation updates"}
+{"task_id":"task-1762553459","title":"PROMPT ENGINEERING UPGRADE - Phase 1: Contract Definition","routed_to":"development","rule_used":"code-development","timestamp":"2025-11-11T16:10:32Z","confidence":0.95,"priority":"high","human_override":true,"architectural":true,"outcome":"pending"}
+{"task_id":"task-1762553464","routed_to":"development","rule_used":"code-development","timestamp":"2025-11-11T16:51:57Z","outcome":"pending","priority":"critical","routing_confidence":0.95,"routing_strategy":"pattern_match_development","task_type":"feature","task_title":"GOVERNANCE UPGRADE - Phase 1: Unified Data & AI Catalog"}
+{"task_id":"task-1762553465","routed_to":"development","rule_used":"governance-implementation-critical","timestamp":"2025-11-11T14:09:00Z","outcome":"pending","priority":"critical","confidence":0.98,"pattern_matched":"implement|governance|access.*control","user_requested":true,"phase":"2","builds_on":"task-1762553464"}
+{"task_id":"task-1762961220","routed_to":"development","rule_used":"code-development","pattern_matched":"bug.*fix|script debugging","confidence":0.95,"priority":"critical","reasoning":"Script debugging and bug investigation requires development expertise","timestamp":"2025-11-12T15:38:13Z","outcome":"pending"}
+{"task_id":"task-1762553466","title":"GOVERNANCE UPGRADE - Phase 3: Automated Data Lineage & Audit Trails","routed_to":"security","rule_used":"security-scan","pattern_matched":"audit","confidence":0.95,"timestamp":"2025-11-12T16:20:00Z","retry_attempt":2,"previous_failure":"launcher_bug_task_context_injection_failure","outcome":"pending"}
+{"task_id":"task-1762553467","title":"GOVERNANCE UPGRADE - Phase 4: AI-Powered Monitoring & Quality Assurance","routed_to":"development","rule_used":"code-development","pattern_matched":"implement","confidence":0.90,"timestamp":"2025-11-12T16:20:00Z","retry_attempt":2,"previous_failure":"launcher_bug_task_context_injection_failure","outcome":"pending"}
+{"task_id":"task-1762553468","title":"GOVERNANCE UPGRADE - Phase 5: Compliance Automation & Reporting","routed_to":"development","rule_used":"code-development","pattern_matched":"implement","confidence":0.90,"timestamp":"2025-11-12T16:20:00Z","retry_attempt":2,"previous_failure":"launcher_bug_task_context_injection_failure","outcome":"pending"}
+{"task_id":"task-1762553469","title":"GOVERNANCE UPGRADE - Phase 6: Governance Metrics & Continuous Improvement","routed_to":"development","rule_used":"code-development","pattern_matched":"implement","confidence":0.90,"timestamp":"2025-11-12T16:20:00Z","retry_attempt":2,"previous_failure":"launcher_bug_task_context_injection_failure","outcome":"pending"}
+{
+  "task_id": "Implement comprehensive data lineage tracking and audit trail system",
+  "timestamp": "2025-11-12T13:06:17-0600",
+  "routing_strategy": "mixture_of_experts",
+  "decision": {
+    "primary_expert": "development",
+    "primary_confidence": 0,
+    "strategy": "single_expert_low_confidence",
+    "parallel_experts": [],
+    "scores": {
+      "development": 0,
+      "security": 0,
+      "inventory": 0
+    }
+  }
+}
+{
+  "task_id": "Implement AI-powered data quality monitoring and PII detection",
+  "timestamp": "2025-11-12T13:06:20-0600",
+  "routing_strategy": "mixture_of_experts",
+  "decision": {
+    "primary_expert": "development",
+    "primary_confidence": 0,
+    "strategy": "single_expert_low_confidence",
+    "parallel_experts": [],
+    "scores": {
+      "development": 0,
+      "security": 0,
+      "inventory": 0
+    }
+  }
+}
+{
+  "task_id": "Build ComplianceEngine with automated policy validation",
+  "timestamp": "2025-11-12T13:06:24-0600",
+  "routing_strategy": "mixture_of_experts",
+  "decision": {
+    "primary_expert": "development",
+    "primary_confidence": 0,
+    "strategy": "single_expert_low_confidence",
+    "parallel_experts": [],
+    "scores": {
+      "development": 0,
+      "security": 0,
+      "inventory": 0
+    }
+  }
+}
+{
+  "task_id": "Build governance KPI framework with 20+ metrics",
+  "timestamp": "2025-11-12T13:06:27-0600",
+  "routing_strategy": "mixture_of_experts",
+  "decision": {
+    "primary_expert": "development",
+    "primary_confidence": 0,
+    "strategy": "single_expert_low_confidence",
+    "parallel_experts": [],
+    "scores": {
+      "development": 0,
+      "security": 0,
+      "inventory": 0
+    }
+  }
+}

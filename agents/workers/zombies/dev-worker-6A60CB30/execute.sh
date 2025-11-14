@@ -1,0 +1,22 @@
+#!/bin/bash
+WORKER_DIR="$(dirname "$0")"
+cd "$WORKER_DIR"
+
+# Start execution with enhanced capabilities
+claude-code --file prompt.md \
+    --capabilities service-management \
+    --auto-execute \
+    --log-level debug \
+    --timeout 3600
+
+# Capture exit status
+EXIT_CODE=$?
+
+# Update completion status
+if [ $EXIT_CODE -eq 0 ]; then
+    echo "{\"status\": \"completed\", \"timestamp\": \"$(date -u +%Y-%m-%dT%H:%M:%SZ)\"}" > status.json
+else
+    echo "{\"status\": \"failed\", \"exit_code\": $EXIT_CODE, \"timestamp\": \"$(date -u +%Y-%m-%dT%H:%M:%SZ)\"}" > status.json
+fi
+
+exit $EXIT_CODE
