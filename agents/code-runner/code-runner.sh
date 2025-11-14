@@ -47,12 +47,12 @@ analyze_shell_script() {
 
     # Syntax check
     if ! bash -n "$file" 2>&1 | grep -q "syntax error"; then
-        log "  ✓ $file: Syntax OK"
+        log "  ✓ $file: Syntax OK" >&2
     else
         local error=$(bash -n "$file" 2>&1)
         findings+=("{\"type\":\"syntax_error\",\"severity\":\"high\",\"file\":\"$file\",\"message\":\"$error\"}")
         ISSUE_COUNT=$((ISSUE_COUNT + 1))
-        log "  ✗ $file: Syntax error found"
+        log "  ✗ $file: Syntax error found" >&2
     fi
 
     # Check for common issues
@@ -90,9 +90,9 @@ analyze_javascript() {
         local error=$(node --check "$file" 2>&1 | head -1)
         findings+=("{\"type\":\"syntax_error\",\"severity\":\"high\",\"file\":\"$file\",\"message\":\"$error\"}")
         ISSUE_COUNT=$((ISSUE_COUNT + 1))
-        log "  ✗ $file: Syntax error found"
+        log "  ✗ $file: Syntax error found" >&2
     else
-        log "  ✓ $file: Syntax OK"
+        log "  ✓ $file: Syntax OK" >&2
     fi
 
     # Check for console.log in production code
@@ -124,9 +124,9 @@ analyze_python() {
         local error=$(python3 -m py_compile "$file" 2>&1 | head -1)
         findings+=("{\"type\":\"syntax_error\",\"severity\":\"high\",\"file\":\"$file\",\"message\":\"$error\"}")
         ISSUE_COUNT=$((ISSUE_COUNT + 1))
-        log "  ✗ $file: Syntax error found"
+        log "  ✗ $file: Syntax error found" >&2
     else
-        log "  ✓ $file: Syntax OK"
+        log "  ✓ $file: Syntax OK" >&2
     fi
 
     # Check for eval/exec usage
@@ -167,9 +167,9 @@ while IFS= read -r file; do
             if ! jq empty "$file" 2>/dev/null; then
                 FINDINGS+=("{\"type\":\"syntax_error\",\"severity\":\"high\",\"file\":\"$file\",\"message\":\"Invalid JSON\"}")
                 ISSUE_COUNT=$((ISSUE_COUNT + 1))
-                log "  ✗ $file: Invalid JSON"
+                log "  ✗ $file: Invalid JSON" >&2
             else
-                log "  ✓ $file: Valid JSON"
+                log "  ✓ $file: Valid JSON" >&2
             fi
             ;;
         *)
@@ -179,24 +179,46 @@ while IFS= read -r file; do
 done <<< "$CHANGED_FILES"
 
 # Generate findings report
-cat > "$REPORT_FILE" << EOF
-{
-  "commit": "$COMMIT_HASH",
-  "commit_message": $(echo "$COMMIT_MSG" | jq -Rs .),
-  "timestamp": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
-  "files_analyzed": $FILES_ANALYZED,
-  "issue_count": $ISSUE_COUNT,
-  "findings": [
-    $(printf '%s\n' "${FINDINGS[@]}" | paste -sd, -)
-  ],
-  "summary": {
-    "critical": $(printf '%s\n' "${FINDINGS[@]}" | grep -c "critical" || echo 0),
-    "high": $(printf '%s\n' "${FINDINGS[@]}" | grep -c "high" || echo 0),
-    "medium": $(printf '%s\n' "${FINDINGS[@]}" | grep -c "medium" || echo 0),
-    "low": $(printf '%s\n' "${FINDINGS[@]}" | grep -c "low" || echo 0)
+# Write findings to temp file for jq to process
+TMP_FINDINGS=$(mktemp)
+if [ "${#FINDINGS[@]}" -gt 0 ]; then
+    printf '%s\n' "${FINDINGS[@]}" > "$TMP_FINDINGS"
+else
+    echo "[]" > "$TMP_FINDINGS"
+fi
+
+# Use jq to build complete JSON report
+jq -n \
+  --arg commit "$COMMIT_HASH" \
+  --arg commit_msg "$COMMIT_MSG" \
+  --arg timestamp "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+  --argjson files "$FILES_ANALYZED" \
+  --argjson issues "$ISSUE_COUNT" \
+  --slurpfile findings_raw "$TMP_FINDINGS" \
+  '
+  # Parse findings or use empty array
+  ($findings_raw[0] // [] | if type == "array" then . else [.] end) as $findings_array |
+  ($findings_array | map(select(.severity == "critical")) | length) as $critical |
+  ($findings_array | map(select(.severity == "high")) | length) as $high |
+  ($findings_array | map(select(.severity == "medium")) | length) as $medium |
+  ($findings_array | map(select(.severity == "low")) | length) as $low |
+  {
+    commit: $commit,
+    commit_message: $commit_msg,
+    timestamp: $timestamp,
+    files_analyzed: $files,
+    issue_count: $issues,
+    findings: $findings_array,
+    summary: {
+      critical: $critical,
+      high: $high,
+      medium: $medium,
+      low: $low
+    }
   }
-}
-EOF
+  ' > "$REPORT_FILE"
+
+rm "$TMP_FINDINGS"
 
 log "Analysis complete. Report: $REPORT_FILE"
 log "Summary: $FILES_ANALYZED files analyzed, $ISSUE_COUNT issues found"
@@ -276,13 +298,18 @@ fi
 log "Code-runner analysis complete"
 
 # Exit with status based on severity
-if [ "$critical_count" -gt 0 ]; then
-    log "CRITICAL issues found - review required"
-    exit 1
-elif [ "$high_count" -gt 0 ]; then
-    log "HIGH severity issues found - review recommended"
-    exit 0  # Don't block commit
-else
-    log "No critical issues found"
-    exit 0
+if [ "$ISSUE_COUNT" -gt 0 ]; then
+    critical_count=$(jq -r '.summary.critical' "$REPORT_FILE")
+    high_count=$(jq -r '.summary.high' "$REPORT_FILE")
+
+    if [ "$critical_count" -gt 0 ]; then
+        log "CRITICAL issues found - review required"
+        exit 1
+    elif [ "$high_count" -gt 0 ]; then
+        log "HIGH severity issues found - review recommended"
+        exit 0  # Don't block commit
+    fi
 fi
+
+log "No critical issues found"
+exit 0
