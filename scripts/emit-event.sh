@@ -21,6 +21,9 @@ VALIDATION_LOG="$COMMIT_RELAY_HOME/coordination/logs/json-validation.log"
 # Source JSON validator
 source "$SCRIPT_DIR/lib/json-validator.sh"
 
+# Source access control
+source "$SCRIPT_DIR/lib/access-check.sh"
+
 # Ensure directories exist
 mkdir -p "$COMMIT_RELAY_HOME/coordination"
 mkdir -p "$COMMIT_RELAY_HOME/coordination/logs"
@@ -35,6 +38,13 @@ if [ -z "$EVENT_TYPE" ]; then
     echo "Usage: $0 <event_type> <data_json> [source]"
     exit 1
 fi
+
+# Permission check: Can this source emit events?
+PRINCIPAL="${EVENT_SOURCE}"
+check_permission "$PRINCIPAL" "dashboard-events" "write" || {
+    >&2 echo "ERROR: Permission denied - $PRINCIPAL cannot emit events"
+    exit 1
+}
 
 # Generate event ID and timestamp
 EVENT_ID="evt-$(date +%s)-$$"

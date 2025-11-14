@@ -2547,6 +2547,90 @@ app.post('/api/event-log/purge', (req, res) => {
 });
 
 /**
+ * GET /api/terminal-settings
+ * Get current terminal window settings
+ */
+app.get('/api/terminal-settings', async (req, res) => {
+  try {
+    const settingsPath = path.join(COMMIT_RELAY_HOME, 'coordination', 'config', 'terminal-settings.json');
+
+    // Default settings if file doesn't exist
+    const defaultSettings = {
+      terminal_windows_enabled: true,
+      headless_mode: false,
+      auto_close_duration_minutes: 0,
+      last_updated: new Date().toISOString(),
+      updated_by: "system"
+    };
+
+    if (!fsSync.existsSync(settingsPath)) {
+      return res.json(defaultSettings);
+    }
+
+    const settings = JSON.parse(await fs.readFile(settingsPath, 'utf-8'));
+    res.json(settings);
+  } catch (error) {
+    console.error('Error reading terminal settings:', error);
+    res.status(500).json({ error: 'Failed to read terminal settings' });
+  }
+});
+
+/**
+ * POST /api/terminal-settings
+ * Update terminal window settings
+ * Body: { terminal_windows_enabled, headless_mode, auto_close_duration_minutes }
+ */
+app.post('/api/terminal-settings', async (req, res) => {
+  try {
+    const settingsPath = path.join(COMMIT_RELAY_HOME, 'coordination', 'config', 'terminal-settings.json');
+    const { terminal_windows_enabled, headless_mode, auto_close_duration_minutes } = req.body;
+
+    // Validation
+    if (typeof terminal_windows_enabled !== 'boolean' && terminal_windows_enabled !== undefined) {
+      return res.status(400).json({ error: 'terminal_windows_enabled must be boolean' });
+    }
+    if (typeof headless_mode !== 'boolean' && headless_mode !== undefined) {
+      return res.status(400).json({ error: 'headless_mode must be boolean' });
+    }
+    if (auto_close_duration_minutes !== undefined &&
+        (typeof auto_close_duration_minutes !== 'number' || auto_close_duration_minutes < 0)) {
+      return res.status(400).json({ error: 'auto_close_duration_minutes must be non-negative number' });
+    }
+
+    // Read current settings
+    let settings = {
+      terminal_windows_enabled: true,
+      headless_mode: false,
+      auto_close_duration_minutes: 0
+    };
+
+    if (fsSync.existsSync(settingsPath)) {
+      settings = JSON.parse(await fs.readFile(settingsPath, 'utf-8'));
+    }
+
+    // Update with new values
+    if (terminal_windows_enabled !== undefined) settings.terminal_windows_enabled = terminal_windows_enabled;
+    if (headless_mode !== undefined) settings.headless_mode = headless_mode;
+    if (auto_close_duration_minutes !== undefined) settings.auto_close_duration_minutes = auto_close_duration_minutes;
+
+    // Add metadata
+    settings.last_updated = new Date().toISOString();
+    settings.updated_by = req.headers['x-user'] || 'dashboard';
+
+    // Write updated settings
+    await fs.writeFile(settingsPath, JSON.stringify(settings, null, 2), 'utf-8');
+
+    res.json({
+      success: true,
+      settings: settings
+    });
+  } catch (error) {
+    console.error('Error updating terminal settings:', error);
+    res.status(500).json({ error: 'Failed to update terminal settings' });
+  }
+});
+
+/**
  * Start/Stop Worker Daemon
  * Security: Input validation, safe command execution, rate limiting
  */

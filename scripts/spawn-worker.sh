@@ -12,6 +12,7 @@ COMMIT_RELAY_HOME="${COMMIT_RELAY_HOME:-$(cd "$SCRIPT_DIR/.." && pwd)}"
 # Load libraries
 source "$SCRIPT_DIR/lib/logging.sh"
 source "$SCRIPT_DIR/lib/coordination.sh"
+source "$SCRIPT_DIR/lib/access-check.sh"
 
 # Color definitions for output formatting
 GREEN="\033[0;32m"
@@ -188,6 +189,14 @@ esac
 
 # Navigate to project root
 cd "$COMMIT_RELAY_HOME"
+
+# Permission check: Can this master spawn workers?
+PRINCIPAL="${MASTER_AGENT}"
+print_info "Checking permissions for $PRINCIPAL to spawn worker..."
+check_permission "$PRINCIPAL" "worker-specs" "write" || {
+    print_error "Permission denied: $PRINCIPAL cannot spawn workers"
+    exit 1
+}
 
 # Pull latest state
 print_info "Pulling latest coordination state..."

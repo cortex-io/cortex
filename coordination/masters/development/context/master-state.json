@@ -5,13 +5,12 @@
   "session_id": "3A24DCEC-39A6-495F-AC3E-262F0EEEDB03",
   "status": "idle",
   "last_task": {
-    "task_id": "task-1762553458",
-    "title": "System Optimization - Clean up and optimize commit-relay system",
-    "picked_up_at": "2025-11-11T15:45:00Z",
-    "completed_at": "2025-11-11T16:10:00Z",
-    "priority": "medium",
+    "task_id": "task-1762961220",
+    "title": "CRITICAL: Investigate Worker Launcher Script Bug - Task Context Injection Failure",
+    "picked_up_at": "2025-11-12T15:40:00Z",
+    "priority": "critical",
     "status": "completed",
-    "duration_minutes": 25
+    "completed_at": "2025-11-12T16:05:00Z"
   },
   "expertise": {
     "languages": [
@@ -30,16 +29,174 @@
       "bug_fixing",
       "code_refactoring",
       "performance_optimization",
-      "technical_debt_resolution"
+      "technical_debt_resolution",
+      "governance_systems"
     ]
   },
-  "active_workers": [],
-  "completed_tasks": 1,
+  "active_workers": [
+    {
+      "worker_id": "dev-worker-77A828C9",
+      "worker_type": "implementation-worker",
+      "spawned_at": "2025-11-11T12:01:56-0600",
+      "status": "active"
+    },
+    {
+      "worker_id": "dev-worker-5BAC7DF8",
+      "worker_type": "implementation-worker",
+      "spawned_at": "2025-11-11T12:01:56-0600",
+      "status": "active"
+    },
+    {
+      "worker_id": "dev-worker-356E3427",
+      "worker_type": "implementation-worker",
+      "spawned_at": "2025-11-11T12:01:56-0600",
+      "status": "active"
+    },
+    {
+      "worker_id": "dev-worker-80098C12",
+      "worker_type": "implementation-worker",
+      "spawned_at": "2025-11-11T12:01:57-0600",
+      "status": "active"
+    },
+    {
+      "worker_id": "dev-worker-68D99489",
+      "worker_type": "implementation-worker",
+      "spawned_at": "2025-11-11T12:01:57-0600",
+      "status": "active"
+    },
+    {
+      "worker_id": "dev-worker-C3E89869",
+      "worker_type": "implementation-worker",
+      "spawned_at": "2025-11-11T12:01:57-0600",
+      "status": "active"
+    },
+    {
+      "worker_id": "dev-worker-6A60CB30",
+      "worker_type": "implementation-worker",
+      "spawned_at": "2025-11-11T12:11:18-0600",
+      "status": "active"
+    },
+    {
+      "worker_id": "dev-worker-A532418A",
+      "worker_type": "implementation-worker",
+      "spawned_at": "2025-11-11T12:11:18-0600",
+      "status": "active"
+    },
+    {
+      "worker_id": "dev-worker-3EFCF595",
+      "worker_type": "implementation-worker",
+      "spawned_at": "2025-11-11T12:11:18-0600",
+      "status": "active"
+    },
+    {
+      "worker_id": "dev-worker-2840BA84",
+      "worker_type": "implementation-worker",
+      "spawned_at": "2025-11-11T14:38:19-0600",
+      "status": "active"
+    },
+    {
+      "worker_id": "dev-worker-9ACF7DE0",
+      "worker_type": "implementation-worker",
+      "spawned_at": "2025-11-11T14:45:49-0600",
+      "status": "active"
+    },
+    {
+      "worker_id": "dev-worker-E35E4762",
+      "worker_type": "fix-worker",
+      "spawned_at": "2025-11-11T14:53:23-0600",
+      "status": "active"
+    },
+    {
+      "worker_id": "dev-worker-C07346DD",
+      "worker_type": "implementation-worker",
+      "spawned_at": "2025-11-11T14:56:53-0600",
+      "status": "active"
+    },
+    {
+      "worker_id": "dev-worker-0AAEBC29",
+      "worker_type": "fix-worker",
+      "spawned_at": "2025-11-11T15:25:34-0600",
+      "status": "active"
+    },
+    {
+      "worker_id": "dev-worker-A21524A6",
+      "worker_type": "implementation-worker",
+      "spawned_at": "2025-11-11T16:05:49-0600",
+      "status": "active"
+    },
+    {
+      "worker_id": "dev-worker-991812ED",
+      "worker_type": "fix-worker",
+      "spawned_at": "2025-11-11T16:05:50-0600",
+      "status": "active"
+    },
+    {
+      "worker_id": "dev-worker-9ECB5C27",
+      "worker_type": "fix-worker",
+      "spawned_at": "2025-11-11T16:06:35-0600",
+      "status": "active"
+    },
+    {
+      "worker_id": "dev-worker-7BFC15C8",
+      "worker_type": "fix-worker",
+      "spawned_at": "2025-11-11T16:06:35-0600",
+      "status": "active"
+    },
+    {
+      "worker_id": "dev-worker-693A8576",
+      "worker_type": "fix-worker",
+      "spawned_at": "2025-11-11T16:06:35-0600",
+      "status": "active"
+    },
+    {
+      "worker_id": "dev-worker-6A8739DC",
+      "worker_type": "implementation-worker",
+      "spawned_at": "2025-11-11T16:06:35-0600",
+      "status": "active"
+    },
+    {
+      "worker_id": "dev-worker-785586E5",
+      "worker_type": "implementation-worker",
+      "spawned_at": "2025-11-11T16:06:36-0600",
+      "status": "active"
+    },
+    {
+      "worker_id": "dev-worker-C3A2B8E5",
+      "worker_type": "implementation-worker",
+      "spawned_at": "2025-11-11T16:36:43-0600",
+      "status": "active"
+    },
+    {
+      "worker_id": "dev-worker-B58F2690",
+      "worker_type": "implementation-worker",
+      "spawned_at": "2025-11-11T16:36:43-0600",
+      "status": "active"
+    },
+    {
+      "worker_id": "dev-worker-EC993E16",
+      "worker_type": "implementation-worker",
+      "spawned_at": "2025-11-12T13:41:36-0600",
+      "status": "active"
+    },
+    {
+      "worker_id": "dev-worker-1FA96AC2",
+      "worker_type": "implementation-worker",
+      "spawned_at": "2025-11-12T13:41:36-0600",
+      "status": "active"
+    },
+    {
+      "worker_id": "dev-worker-EC1BA777",
+      "worker_type": "implementation-worker",
+      "spawned_at": "2025-11-12T13:41:36-0600",
+      "status": "active"
+    }
+  ],
+  "completed_tasks": 4,
   "performance_metrics": {
-    "avg_implementation_time": 25,
+    "avg_implementation_time": 25.0,
     "success_rate": 1.0,
     "code_quality_score": 1.0
   },
-  "last_run": "2025-11-11T16:10:00Z",
-  "last_started": "2025-11-11T15:45:00Z"
+  "last_run": "2025-11-12T13:41:36-0600",
+  "last_started": "2025-11-12T13:41:35-0600"
 }

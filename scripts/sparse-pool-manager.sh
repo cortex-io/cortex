@@ -19,9 +19,9 @@ NC='\033[0m'
 # MoE-Inspired Configuration (like 1B/7B = ~14% activation)
 MAX_WORKER_CAPACITY=64        # Total "parameter" capacity
 MIN_ACTIVATION_RATE=10        # Minimum 10% active (6-7 workers)
-LIGHT_LOAD_RATE=14            # Light load: 14% (like MoE 1B/7B)
-MEDIUM_LOAD_RATE=35           # Medium load: 35%
-HEAVY_LOAD_RATE=70            # Heavy load: 70%
+LIGHT_LOAD_RATE=80            # Light load: 80% (50 workers - increased for governance phases)
+MEDIUM_LOAD_RATE=85           # Medium load: 85%
+HEAVY_LOAD_RATE=95            # Heavy load: 95%
 BUFFER_WORKERS=2              # Extra buffer for spikes
 
 ##############################################################################

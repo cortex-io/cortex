@@ -868,3 +868,43 @@
     "strategy": "single_expert"
   }
 }
+{
+  "timestamp": "2025-11-12T13:06:17-0600",
+  "type": "moe_routing_decision",
+  "data": {
+    "task_id": "Implement comprehensive data lineage tracking and audit trail system",
+    "expert": "development",
+    "confidence": 0,
+    "strategy": "single_expert_low_confidence"
+  }
+}
+{
+  "timestamp": "2025-11-12T13:06:21-0600",
+  "type": "moe_routing_decision",
+  "data": {
+    "task_id": "Implement AI-powered data quality monitoring and PII detection",
+    "expert": "development",
+    "confidence": 0,
+    "strategy": "single_expert_low_confidence"
+  }
+}
+{
+  "timestamp": "2025-11-12T13:06:24-0600",
+  "type": "moe_routing_decision",
+  "data": {
+    "task_id": "Build ComplianceEngine with automated policy validation",
+    "expert": "development",
+    "confidence": 0,
+    "strategy": "single_expert_low_confidence"
+  }
+}
+{
+  "timestamp": "2025-11-12T13:06:27-0600",
+  "type": "moe_routing_decision",
+  "data": {
+    "task_id": "Build governance KPI framework with 20+ metrics",
+    "expert": "development",
+    "confidence": 0,
+    "strategy": "single_expert_low_confidence"
+  }
+}

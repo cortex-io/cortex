@@ -106,9 +106,28 @@ repair_json() {
         log_validation "ERROR" "More closing brackets than opening - cannot auto-repair"
     fi
 
-    # 6. Escape unescaped quotes in string values (basic attempt)
-    # This is tricky and may not work in all cases
-    # We skip this for now as it's complex and error-prone
+    # 6. Fix missing values after colons (e.g., "field": ,)
+    # Replace with null: "field": , → "field": null,
+    if echo "$repaired" | grep -qE ':[[:space:]]*,'; then
+        repaired=$(echo "$repaired" | perl -pe 's/:(\s*),/: null,/g')
+        repair_attempted=1
+        log_validation "INFO" "Fixed missing values (replaced with null)"
+    fi
+
+    # 7. Replace specific null values with appropriate defaults
+    # skills_required should be [] not null
+    if echo "$repaired" | grep -qE '"skills_required"[[:space:]]*:[[:space:]]*null'; then
+        repaired=$(echo "$repaired" | perl -pe 's/"skills_required"\s*:\s*null/"skills_required": []/g')
+        repair_attempted=1
+        log_validation "INFO" "Fixed skills_required null → []"
+    fi
+
+    # token_allocation should be 50000 not null
+    if echo "$repaired" | grep -qE '"token_allocation"[[:space:]]*:[[:space:]]*null'; then
+        repaired=$(echo "$repaired" | perl -pe 's/"token_allocation"\s*:\s*null/"token_allocation": 50000/g')
+        repair_attempted=1
+        log_validation "INFO" "Fixed token_allocation null → 50000"
+    fi
 
     if [ "$repair_attempted" -eq 1 ]; then
         log_validation "INFO" "JSON repair completed"
@@ -255,6 +274,112 @@ repair_jsonl_file() {
     return 0
 }
 
+# Validate worker spec schema
+# Returns: 0 if valid schema, 1 if invalid
+validate_worker_spec() {
+    local json_string="$1"
+    local errors=0
+
+    log_validation "INFO" "Validating worker spec schema"
+
+    # First ensure it's valid JSON
+    if ! validate_json "$json_string"; then
+        log_validation "ERROR" "Worker spec is not valid JSON"
+        return 1
+    fi
+
+    # Check required fields
+    local required_fields=("worker_id" "worker_type" "task_id" "context" "resources" "status")
+    for field in "${required_fields[@]}"; do
+        if ! echo "$json_string" | jq -e ".$field" >/dev/null 2>&1; then
+            log_validation "ERROR" "Missing required field: $field"
+            errors=$((errors + 1))
+        fi
+    done
+
+    # Check context.skills_required is an array
+    if echo "$json_string" | jq -e '.context.skills_required' >/dev/null 2>&1; then
+        local skills_type=$(echo "$json_string" | jq -r '.context.skills_required | type')
+        if [ "$skills_type" != "array" ]; then
+            log_validation "ERROR" "context.skills_required must be an array, got: $skills_type"
+            errors=$((errors + 1))
+        fi
+    fi
+
+    # Check resources.token_allocation is a number
+    if echo "$json_string" | jq -e '.resources.token_allocation' >/dev/null 2>&1; then
+        local token_type=$(echo "$json_string" | jq -r '.resources.token_allocation | type')
+        if [ "$token_type" != "number" ]; then
+            log_validation "ERROR" "resources.token_allocation must be a number, got: $token_type"
+            errors=$((errors + 1))
+        fi
+    fi
+
+    # Check status is valid
+    local status=$(echo "$json_string" | jq -r '.status // empty')
+    if [ -n "$status" ]; then
+        case "$status" in
+            pending|running|completed|failed)
+                # Valid status
+                ;;
+            *)
+                log_validation "ERROR" "Invalid status: $status (must be pending, running, completed, or failed)"
+                errors=$((errors + 1))
+                ;;
+        esac
+    fi
+
+    if [ "$errors" -eq 0 ]; then
+        log_validation "INFO" "Worker spec schema is valid"
+        return 0
+    else
+        log_validation "ERROR" "Worker spec schema validation failed: $errors error(s)"
+        return 1
+    fi
+}
+
+# Validate worker spec file
+validate_worker_spec_file() {
+    local file_path="$1"
+    local repair="${2:-0}"  # Default: no repair
+
+    if [ ! -f "$file_path" ]; then
+        log_validation "ERROR" "File not found: $file_path"
+        return 1
+    fi
+
+    log_validation "INFO" "Validating worker spec file: $file_path"
+
+    # Read entire file as single JSON object
+    local content=$(cat "$file_path")
+
+    # Try to repair if enabled
+    if [ "$repair" = "1" ]; then
+        if repaired=$(validate_and_repair_json "$content" 1); then
+            content="$repaired"
+        else
+            log_validation "ERROR" "Cannot repair worker spec JSON"
+            return 1
+        fi
+    fi
+
+    # Validate schema
+    if validate_worker_spec "$content"; then
+        log_validation "INFO" "Worker spec file is valid"
+
+        # Write repaired content back if repair was enabled and changes were made
+        if [ "$repair" = "1" ] && [ "$content" != "$(cat "$file_path")" ]; then
+            echo "$content" > "$file_path"
+            log_validation "INFO" "Repaired worker spec written to $file_path"
+        fi
+
+        return 0
+    else
+        log_validation "ERROR" "Worker spec file validation failed"
+        return 1
+    fi
+}
+
 # CLI interface
 if [ -n "${BASH_SOURCE:-}" ] && [ "${BASH_SOURCE[0]}" = "${0}" ]; then
     # Script is being run directly, not sourced
@@ -300,6 +425,13 @@ if [ -n "${BASH_SOURCE:-}" ] && [ "${BASH_SOURCE[0]}" = "${0}" ]; then
             fi
             repair_jsonl_file "$2" "${3:-1}"
             ;;
+        validate-worker-spec)
+            if [ -z "${2:-}" ]; then
+                echo "Usage: $0 validate-worker-spec <file_path> [repair:0|1]"
+                exit 1
+            fi
+            validate_worker_spec_file "$2" "${3:-0}"
+            ;;
         *)
             echo "JSON Validation and Repair Utility"
             echo ""
@@ -310,6 +442,7 @@ if [ -n "${BASH_SOURCE:-}" ] && [ "${BASH_SOURCE[0]}" = "${0}" ]; then
             echo "  repair <json_string>          Repair and output valid JSON"
             echo "  validate-file <file_path>     Validate a JSONL file"
             echo "  repair-file <file_path> [backup]  Repair a JSONL file (backup=1 by default)"
+            echo "  validate-worker-spec <file_path> [repair]  Validate a worker spec file"
             echo ""
             echo "Environment variables:"
             echo "  DEBUG_JSON_VALIDATION=1       Enable debug output"

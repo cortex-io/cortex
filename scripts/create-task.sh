@@ -12,6 +12,7 @@ COMMIT_RELAY_HOME="${COMMIT_RELAY_HOME:-$(cd "$SCRIPT_DIR/.." && pwd)}"
 # Load libraries
 source "$SCRIPT_DIR/lib/logging.sh"
 source "$SCRIPT_DIR/lib/coordination.sh"
+source "$SCRIPT_DIR/lib/access-check.sh"
 
 # Colors for interactive mode
 GREEN='\033[0;32m'
@@ -281,6 +282,12 @@ interactive_mode() {
 create_task() {
     local task_id=$(generate_task_id)
     local created_at=$(date +%Y-%m-%dT%H:%M:%S%z)
+
+    # Permission check: Can create-task-cli write to task queue?
+    check_permission "create-task-cli" "task-queue" "write" || {
+        echo -e "${RED}ERROR: Permission denied to create tasks${NC}"
+        exit 1
+    }
 
     # Build context based on task type
     local context=""
