@@ -1,7 +1,7 @@
 {
-  "timestamp": "2025-11-14T12:33:35Z",
+  "timestamp": "2025-11-14T12:38:36Z",
   "health_check": {
-  "generated_at": "2025-11-14T12:33:35.925Z",
+  "generated_at": "2025-11-14T12:38:36.218Z",
   "health_score": 93.9,
   "status": "excellent",
   "kpi_summary": {
@@ -66,7 +66,7 @@
   "uptime_pct": 99.95
 },
   "compliance": {
-  "generated_at": "2025-11-14T12:33:35.958Z",
+  "generated_at": "2025-11-14T12:38:36.252Z",
   "frameworks": [
     {
       "framework": "GDPR (General Data Protection Regulation)",
@@ -81,24 +81,24 @@
           "rule_name": "Data minimization",
           "compliant": true,
           "evidence": "Catalog shows minimal data collection",
-          "timestamp": "2025-11-14T12:33:35.957Z"
+          "timestamp": "2025-11-14T12:38:36.251Z"
         },
         {
           "rule_id": "gdpr-2",
           "rule_name": "Right to erasure",
           "compliant": true,
           "evidence": "Deletion APIs implemented",
-          "timestamp": "2025-11-14T12:33:35.958Z"
+          "timestamp": "2025-11-14T12:38:36.252Z"
         },
         {
           "rule_id": "gdpr-3",
           "rule_name": "Data portability",
           "compliant": true,
           "evidence": "Export functionality available",
-          "timestamp": "2025-11-14T12:33:35.958Z"
+          "timestamp": "2025-11-14T12:38:36.252Z"
         }
       ],
-      "timestamp": "2025-11-14T12:33:35.958Z"
+      "timestamp": "2025-11-14T12:38:36.252Z"
     },
     {
       "framework": "SOC 2 Type II",
@@ -113,24 +113,24 @@
           "rule_name": "Access control",
           "compliant": true,
           "evidence": "Role-based access control active",
-          "timestamp": "2025-11-14T12:33:35.958Z"
+          "timestamp": "2025-11-14T12:38:36.252Z"
         },
         {
           "rule_id": "soc2-2",
           "rule_name": "Audit logging",
           "compliant": true,
           "evidence": "Comprehensive audit trail maintained",
-          "timestamp": "2025-11-14T12:33:35.958Z"
+          "timestamp": "2025-11-14T12:38:36.252Z"
         },
         {
           "rule_id": "soc2-3",
           "rule_name": "Data encryption",
           "compliant": true,
           "evidence": "Data at rest and in transit encrypted",
-          "timestamp": "2025-11-14T12:33:35.958Z"
+          "timestamp": "2025-11-14T12:38:36.252Z"
         }
       ],
-      "timestamp": "2025-11-14T12:33:35.958Z"
+      "timestamp": "2025-11-14T12:38:36.252Z"
     },
     {
       "framework": "Internal Policies",
@@ -145,17 +145,17 @@
           "rule_name": "Code review",
           "compliant": true,
           "evidence": "PR review process enforced",
-          "timestamp": "2025-11-14T12:33:35.958Z"
+          "timestamp": "2025-11-14T12:38:36.252Z"
         },
         {
           "rule_id": "int-2",
           "rule_name": "Testing coverage",
           "compliant": false,
           "evidence": "Coverage at 65%, target 80%",
-          "timestamp": "2025-11-14T12:33:35.958Z"
+          "timestamp": "2025-11-14T12:38:36.252Z"
         }
       ],
-      "timestamp": "2025-11-14T12:33:35.958Z"
+      "timestamp": "2025-11-14T12:38:36.252Z"
     }
   ],
   "summary": {
@@ -168,7 +168,7 @@
   "generation_time_ms": 1
 },
   "metrics": {
-  "timestamp": "2025-11-14T12:33:35.992Z",
+  "timestamp": "2025-11-14T12:38:36.283Z",
   "governance_health_score": 93.9,
   "kpis": {
     "catalog_coverage": 95.2,
