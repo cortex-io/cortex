@@ -1,0 +1,192 @@
+{\rtf1\ansi\ansicpg1252\cocoartf2865
+\cocoatextscaling0\cocoaplatform0{\fonttbl\f0\fmodern\fcharset0 Courier;}
+{\colortbl;\red255\green255\blue255;\red0\green0\blue0;}
+{\*\expandedcolortbl;;\cssrgb\c0\c0\c0;}
+\margl1440\margr1440\vieww11520\viewh8400\viewkind0
+\deftab720
+\pard\pardeftab720\partightenfactor0
+
+\f0\fs26 \cf0 \expnd0\expndtw0\kerning0
+\outl0\strokewidth0 \strokec2 # Security Implementation for commit-relay\
+\
+You are tasked with implementing comprehensive security practices for commit-relay, an AI agent orchestration system with MoE (Mixture of Experts) functionality.\
+\
+## Project Context\
+\
+commit-relay is a Python-based agent orchestration platform with:\
+- GitHub Single Sign-On (SSO) integration for authentication\
+- Bidirectional Slack communication for agent updates and KPI monitoring\
+- GitHub webhook configurations for event-driven architecture\
+- Multiple autonomous agents that can execute code and interact with external APIs\
+- Event-driven architecture requiring secure webhook handling\
+\
+## Security Requirements to Implement\
+\
+### 1. Authentication & Authorization Layer\
+\
+**Implement:**\
+- Principle of least privilege for all agent service accounts\
+- Separate API keys/tokens for different agent types (read-only vs. write access)\
+- OAuth token encryption at rest (for GitHub SSO tokens)\
+- Token rotation mechanism with configurable expiration\
+- Rate limiting per agent and per API endpoint\
+\
+**Deliverables:**\
+- Service account permission matrix documentation\
+- Token management service with encryption\
+- Rate limiter middleware\
+- Token rotation scheduler\
+\
+### 2. Input Validation & Sanitization\
+\
+**Implement:**\
+- Webhook signature verification for GitHub and Slack webhooks\
+- Input sanitization for all Slack messages before agent processing\
+- Command allowlist/denylist for agent execution\
+- Validation schemas for all external inputs (use Pydantic)\
+- SQL injection protection if using database queries\
+- Path traversal prevention for file operations\
+\
+**Deliverables:**\
+- Webhook signature verification utility\
+- Input validation decorators/middleware\
+- Sanitization functions for user-generated content\
+- Command execution validator with safe command registry\
+\
+### 3. Agent Sandboxing & Isolation\
+\
+**Implement:**\
+- Resource limits for agent execution (CPU, memory, time)\
+- Network isolation where possible (agents shouldn't all access production services)\
+- File system access restrictions (read-only where applicable)\
+- Circuit breakers for agents that fail repeatedly or behave abnormally\
+- Agent execution timeout mechanisms\
+\
+**Deliverables:**\
+- Agent execution wrapper with resource limits\
+- Circuit breaker implementation\
+- Sandboxed execution environment configuration\
+- Emergency kill switch for runaway agents\
+\
+### 4. Audit Logging & Monitoring\
+\
+**Implement:**\
+- Structured logging for all agent actions with:\
+  - Agent ID and version\
+  - Timestamp\
+  - Action performed (API calls, code execution, decisions made)\
+  - Input/output summary\
+  - Success/failure status\
+  - User/trigger context\
+- Failed authentication attempt tracking\
+- Unusual behavior detection (rate spikes, repeated failures)\
+- Cost tracking per agent (API usage)\
+- Alerting system for security events\
+\
+**Deliverables:**\
+- Centralized logging service\
+- Log retention policy\
+- Security event alert rules\
+- Monitoring dashboard for agent behavior\
+- Audit log query interface\
+\
+### 5. Secrets Management\
+\
+**Implement:**\
+- Remove all hardcoded secrets from codebase\
+- Environment variable validation on startup\
+- Secrets rotation documentation and procedures\
+- Separate secrets for dev/staging/production\
+- GitHub Actions secrets audit\
+\
+**Deliverables:**\
+- Environment configuration template\
+- Secrets rotation runbook\
+- Secrets scanning in CI/CD pipeline\
+- Encrypted secrets storage recommendation\
+\
+### 6. CI/CD Security Pipeline\
+\
+**Implement:**\
+- Pre-commit hooks with security linters (Bandit, safety)\
+- Dependency scanning (pip-audit or similar)\
+- SAST scanning on pull requests\
+- Container image scanning if using Docker\
+- Automated security test suite\
+- Branch protection rules enforcement\
+\
+**Deliverables:**\
+- `.pre-commit-config.yaml` with security tools\
+- GitHub Actions workflow for security scanning\
+- Security test suite (test for SQL injection, XSS, CSRF, etc.)\
+- Branch protection configuration\
+\
+### 7. Incident Response Preparation\
+\
+**Implement:**\
+- Agent rollback mechanism\
+- Security incident response plan document\
+- Compromised token revocation procedure\
+- Emergency contact list and escalation path\
+- Backup and recovery procedures\
+\
+**Deliverables:**\
+- Incident response playbook\
+- Rollback automation scripts\
+- Token revocation API/script\
+- Recovery time objective (RTO) documentation\
+\
+### 8. Documentation\
+\
+**Create:**\
+- Security architecture diagram\
+- Threat model for the agent system\
+- Permission boundaries documentation\
+- Security review checklist for PRs\
+- Developer security guidelines\
+\
+## Implementation Priority\
+\
+1. **Critical (Do First):**\
+   - Webhook signature verification\
+   - Input sanitization for Slack commands\
+   - OAuth token encryption\
+   - Secrets removal from code\
+\
+2. **High:**\
+   - Audit logging\
+   - Rate limiting\
+   - Agent resource limits\
+   - CI/CD security pipeline\
+\
+3. **Medium:**\
+   - Circuit breakers\
+   - Monitoring dashboard\
+   - Token rotation automation\
+   - Security testing suite\
+\
+4. **Ongoing:**\
+   - Documentation\
+   - Incident response drills\
+   - Dependency updates\
+   - Security training\
+\
+## Constraints\
+\
+- Must maintain compatibility with existing GitHub SSO and Slack integrations\
+- Should use `uv` for Python dependency management\
+- Prefer Python-native solutions where possible\
+- Must not break existing agent functionality\
+- Performance overhead should be minimal\
+\
+## Output Format\
+\
+For each implemented feature, provide:\
+1. Code implementation with inline comments\
+2. Configuration examples\
+3. Testing approach\
+4. Documentation snippet\
+5. Rollout/deployment notes\
+\
+Begin with the Critical priority items and provide a phased implementation plan.\
+}
