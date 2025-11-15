@@ -4458,6 +4458,63 @@ additionalLogs.forEach(log => {
 // ============================================================================
 
 const ddqdTests = new Map(); // Store active DDQD tests
+const DDQD_STATE_FILE = path.join(__dirname, '../../coordination/ddqd-active-tests.json');
+
+// Save active DDQD tests to disk
+function saveDDQDState() {
+  try {
+    const tests = Array.from(ddqdTests.entries()).map(([testId, test]) => ({
+      testId,
+      version: test.version,
+      duration: test.duration,
+      maxWorkers: test.maxWorkers,
+      verbose: test.verbose,
+      startTime: test.startTime,
+      status: test.status,
+      progress: test.progress,
+      pid: test.process?.pid
+    }));
+    fsSync.writeFileSync(DDQD_STATE_FILE, JSON.stringify({ tests }, null, 2));
+  } catch (error) {
+    console.error('Error saving DDQD state:', error);
+  }
+}
+
+// Load active DDQD tests from disk on startup
+function loadDDQDState() {
+  try {
+    if (fsSync.existsSync(DDQD_STATE_FILE)) {
+      const { tests } = JSON.parse(fsSync.readFileSync(DDQD_STATE_FILE, 'utf8'));
+      const now = Date.now();
+
+      tests.forEach(test => {
+        const startTime = new Date(test.startTime).getTime();
+        const maxDuration = test.duration * 60 * 1000 + 60000; // duration + 1 min grace
+
+        // Only restore tests that should still be running
+        if (now - startTime < maxDuration && test.status === 'running') {
+          ddqdTests.set(test.testId, {
+            ...test,
+            output: [],
+            process: null, // Can't restore process handle
+            restoredFromDisk: true
+          });
+          console.log(`📦 Restored DDQD test: ${test.testId}`);
+        }
+      });
+
+      // Clean up old state file
+      if (tests.length === 0 || ddqdTests.size === 0) {
+        fsSync.unlinkSync(DDQD_STATE_FILE);
+      }
+    }
+  } catch (error) {
+    console.error('Error loading DDQD state:', error);
+  }
+}
+
+// Initialize DDQD state on server start
+loadDDQDState();
 
 // Run DDQD test
 // Security: Input validation, rate limiting (expensive operation)
@@ -4526,6 +4583,20 @@ app.post('/api/ddqd/run',
       testData.endTime = new Date().toISOString();
       testData.exitCode = code;
 
+      // Extract routing accuracy from MoE metrics file
+      let routingAccuracy = null;
+      if (version === 'v5') {
+        try {
+          const moeMetricsPath = path.join(__dirname, `../../coordination/stress-test/${testId}-moe-metrics.json`);
+          if (fsSync.existsSync(moeMetricsPath)) {
+            const moeData = JSON.parse(fsSync.readFileSync(moeMetricsPath, 'utf8'));
+            routingAccuracy = moeData.routing_accuracy || null;
+          }
+        } catch (err) {
+          console.warn('Could not extract routing accuracy:', err.message);
+        }
+      }
+
       // Save to history
       const historyPath = path.join(__dirname, '../../coordination/ddqd-history.json');
       const history = fsSync.existsSync(historyPath) ? JSON.parse(fsSync.readFileSync(historyPath, 'utf8')) : { tests: [] };
@@ -4534,19 +4605,24 @@ app.post('/api/ddqd/run',
         version,
         duration: Math.floor((new Date(testData.endTime) - new Date(testData.startTime)) / 1000),
         status: testData.status,
-        routingAccuracy: version === 'v5' ? Math.random() * 100 : null, // TODO: Extract from output
+        routingAccuracy,
         timestamp: testData.endTime
       });
       history.tests = history.tests.slice(0, 50); // Keep last 50
       fsSync.writeFileSync(historyPath, JSON.stringify(history, null, 2));
 
+      // Update state on disk
+      saveDDQDState();
+
       // Clean up after 5 minutes
       setTimeout(() => {
         ddqdTests.delete(testId);
+        saveDDQDState();
       }, 5 * 60 * 1000);
     });
 
     ddqdTests.set(testId, testData);
+    saveDDQDState(); // Persist immediately
 
     res.json({ success: true, testId, message: 'DDQD test started' });
   } catch (error) {
@@ -4570,10 +4646,39 @@ app.get('/api/ddqd/status/:testId', (req, res) => {
       const elapsed = Date.now() - new Date(test.startTime).getTime();
       const totalDuration = test.duration * 60 * 1000;
       test.progress = Math.min(Math.floor((elapsed / totalDuration) * 100), 99);
+      saveDDQDState(); // Update progress on disk
     }
 
-    // Get recent output (last 50 lines)
-    const recentOutput = test.output.slice(-50).join('');
+    // Get output - either from memory or from log file for restored tests
+    let recentOutput = '';
+    if (test.output && test.output.length > 0) {
+      // In-memory output from active process
+      recentOutput = test.output.slice(-50).join('');
+    } else if (test.restoredFromDisk) {
+      // Read from log file for restored tests
+      try {
+        const logPath = path.join(__dirname, `../../agents/logs/stress-test/${testId}.log`);
+        if (fsSync.existsSync(logPath)) {
+          const logContent = fsSync.readFileSync(logPath, 'utf8');
+          const lines = logContent.split('\n').filter(l => l.trim());
+          recentOutput = lines.slice(-50).join('\n');
+        }
+      } catch (err) {
+        console.warn('Could not read log file:', err.message);
+      }
+    }
+
+    // Check if test should be marked as completed
+    if (test.status === 'running' && test.restoredFromDisk) {
+      const metricsPath = path.join(__dirname, `../../coordination/stress-test/${testId}-metrics.json`);
+      const reportPath = path.join(__dirname, `../../coordination/stress-test/${testId}-report.txt`);
+      if (fsSync.existsSync(reportPath) || fsSync.existsSync(metricsPath)) {
+        // Test has completed, update status
+        test.status = 'completed';
+        test.progress = 100;
+        saveDDQDState();
+      }
+    }
 
     res.json({
       testId: test.testId,
@@ -4601,6 +4706,7 @@ app.post('/api/ddqd/stop/:testId', (req, res) => {
       test.process.kill('SIGTERM');
       test.status = 'stopped';
       test.progress = test.progress;
+      saveDDQDState();
     }
 
     res.json({ success: true, message: 'Test stopped' });
