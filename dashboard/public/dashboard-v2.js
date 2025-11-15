@@ -81,6 +81,17 @@ function dashboard() {
             file_size: null
         },
 
+        // Governance data
+        governanceData: {
+            dashboard: null,
+            gdpr: null,
+            soc2: null,
+            internal: null,
+            metrics: null,
+            trends: null
+        },
+        governanceLoading: false,
+
         // Pagination
         pagination: {
             workers: { currentPage: 1, itemsPerPage: 50, total: 0 },
@@ -349,6 +360,10 @@ function dashboard() {
                 // Load terminal settings
                 console.log('Loading terminal settings...');
                 await this.loadTerminalSettings();
+
+                // Load governance data
+                console.log('Loading governance data...');
+                await this.refreshGovernanceData();
 
 
                 // Start polling
@@ -685,6 +700,42 @@ function dashboard() {
             } catch (error) {
                 console.error('Error fetching workforce streams:', error);
                 this.streams = null;
+            }
+        },
+
+        async refreshGovernanceData() {
+            try {
+                console.log('Fetching governance data...');
+                this.governanceLoading = true;
+
+                // Fetch all governance data in parallel
+                const [dashboardRes, gdprRes, soc2Res, internalRes, metricsRes, trendsRes] = await Promise.all([
+                    fetch('/api/governance/dashboard'),
+                    fetch('/api/governance/compliance-check/gdpr'),
+                    fetch('/api/governance/compliance-check/soc2'),
+                    fetch('/api/governance/compliance-check/internal'),
+                    fetch('/api/governance/metrics'),
+                    fetch('/api/governance/trends?period=30d')
+                ]);
+
+                // Parse responses
+                this.governanceData.dashboard = await dashboardRes.json();
+                this.governanceData.gdpr = await gdprRes.json();
+                this.governanceData.soc2 = await soc2Res.json();
+                this.governanceData.internal = await internalRes.json();
+                this.governanceData.metrics = await metricsRes.json();
+                this.governanceData.trends = await trendsRes.json();
+
+                console.log('Governance data loaded:', this.governanceData);
+
+                // Refresh Lucide icons to render new icons
+                this.$nextTick(() => {
+                    lucide.createIcons();
+                });
+            } catch (error) {
+                console.error('Error fetching governance data:', error);
+            } finally {
+                this.governanceLoading = false;
             }
         },
 
