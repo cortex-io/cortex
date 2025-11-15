@@ -58,6 +58,8 @@ function dashboard() {
         pmDaemon: null,
         healthDaemon: null,
         metricsDaemon: null,
+        coordinatorDaemon: null,
+        integrationValidatorDaemon: null,
         terminalSettings: {
             terminal_windows_enabled: true,
             headless_mode: false,
@@ -69,6 +71,7 @@ function dashboard() {
         gitOperations: [], // Git commit/push operations
         streams: null, // Workforce streams data
         healthAlerts: [], // Health alerts
+        alertNotifications: [], // Active alert notifications (for bottom overlay)
         expandedAlertIds: [], // Track which alerts are expanded
         gitInfo: { lastCommit: { message: '', timeAgo: '' }, lastSync: '' },
         dashboardServerStatus: { status: 'running', pid: null, port: 3000 },
@@ -187,6 +190,17 @@ function dashboard() {
             }
         },
         moeLearningInsights: [],
+        learningTaskActivating: false,
+        learningTaskActive: false,
+        learningTaskMessage: '',
+        learningTaskSuccess: false,
+        learningTaskStatus: null, // null, 'pending', 'assigned', 'in_progress', 'completed', 'failed'
+        learningTaskId: null,
+        learningTaskError: null,
+        learningDeliverables: [],
+        selectedDeliverable: null,
+        deliverableContent: null,
+        viewingDeliverable: false,
 
         // MoE Analytics Widgets
         moeAnalytics: {
@@ -575,12 +589,32 @@ function dashboard() {
                 this.metricsDaemon = await metricsDaemonRes.json();
                 console.log('Metrics daemon status loaded');
 
+                // Fetch Coordinator daemon status
+                console.log('Fetching Coordinator daemon status...');
+                const coordinatorDaemonRes = await fetch('/api/coordinator-daemon/status');
+                this.coordinatorDaemon = await coordinatorDaemonRes.json();
+                console.log('Coordinator daemon status loaded');
+
+                // Fetch Integration Validator status
+                console.log('Fetching Integration Validator status...');
+                const integrationValidatorRes = await fetch('/api/integration-validator/status');
+                this.integrationValidatorDaemon = await integrationValidatorRes.json();
+                console.log('Integration Validator status loaded');
+
                 // Fetch tasks
                 console.log('Fetching tasks...');
                 const tasksRes = await fetch('/api/tasks');
                 const tasksData = await tasksRes.json();
                 this.tasks = tasksData.tasks || [];
                 console.log('Tasks loaded:', this.tasks.length, 'tasks');
+
+                // Update learning task status
+                this.updateLearningTaskStatus(this.tasks);
+
+                // Fetch learning deliverables
+                console.log('Fetching learning deliverables...');
+                await this.fetchLearningDeliverables();
+                console.log('Learning deliverables loaded');
 
                 // Fetch workers
                 console.log('Fetching workers...');
@@ -786,12 +820,42 @@ function dashboard() {
                 }
             }, 10000);
 
+            // Fallback: Poll Coordinator daemon status only if WebSocket is disconnected
+            setInterval(async () => {
+                if (!this.ws || this.ws.readyState !== WebSocket.OPEN) {
+                    try {
+                        const res = await fetch('/api/coordinator-daemon/status');
+                        this.coordinatorDaemon = await res.json();
+                    } catch (error) {
+                        console.error('Error polling Coordinator daemon status:', error);
+                    }
+                }
+            }, 10000);
+
+            // Fallback: Poll Integration Validator status only if WebSocket is disconnected
+            setInterval(async () => {
+                if (!this.ws || this.ws.readyState !== WebSocket.OPEN) {
+                    try {
+                        const res = await fetch('/api/integration-validator/status');
+                        this.integrationValidatorDaemon = await res.json();
+                    } catch (error) {
+                        console.error('Error polling Integration Validator status:', error);
+                    }
+                }
+            }, 10000);
+
             // Poll tasks every 15 seconds (tasks not pushed via WebSocket yet)
             setInterval(async () => {
                 try {
                     const res = await fetch('/api/tasks');
                     const data = await res.json();
                     this.tasks = data.tasks || [];
+
+                    // Check for learning task status
+                    this.updateLearningTaskStatus(this.tasks);
+
+                    // Update learning deliverables
+                    await this.fetchLearningDeliverables();
                 } catch (error) {
                     console.error('Error polling tasks:', error);
                 }
@@ -2448,6 +2512,54 @@ function dashboard() {
             }
         },
 
+        async controlCoordinatorDaemon(action) {
+            try {
+                const response = await fetch('/api/coordinator-daemon/control', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ action })
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    console.log(`Coordinator daemon ${action} successful:`, result.message);
+                    // Refresh daemon status after a moment
+                    setTimeout(() => this.fetchCoordinatorDaemonStatus(), 1000);
+                } else {
+                    console.error(`Coordinator daemon ${action} failed:`, result.message);
+                    alert(`Failed to ${action} coordinator daemon: ${result.message}`);
+                }
+            } catch (error) {
+                console.error(`Error controlling coordinator daemon:`, error);
+                alert(`Error: ${error.message}`);
+            }
+        },
+
+        async controlIntegrationValidator(action) {
+            try {
+                const response = await fetch('/api/integration-validator/control', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ action })
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    console.log(`Integration validator ${action} successful:`, result.message);
+                    // Refresh daemon status after a moment
+                    setTimeout(() => this.fetchIntegrationValidatorStatus(), 1000);
+                } else {
+                    console.error(`Integration validator ${action} failed:`, result.message);
+                    alert(`Failed to ${action} integration validator: ${result.message}`);
+                }
+            } catch (error) {
+                console.error(`Error controlling integration validator:`, error);
+                alert(`Error: ${error.message}`);
+            }
+        },
+
         // Terminal Control Functions
         async loadTerminalSettings() {
             try {
@@ -2523,15 +2635,207 @@ function dashboard() {
             }
         },
 
+        async fetchCoordinatorDaemonStatus() {
+            try {
+                const res = await fetch('/api/coordinator-daemon/status');
+                this.coordinatorDaemon = await res.json();
+            } catch (error) {
+                console.error('Error fetching coordinator daemon status:', error);
+            }
+        },
+
+        async fetchIntegrationValidatorStatus() {
+            try {
+                const res = await fetch('/api/integration-validator/status');
+                this.integrationValidatorDaemon = await res.json();
+            } catch (error) {
+                console.error('Error fetching integration validator status:', error);
+            }
+        },
+
         // Health Alerts Functions
         async fetchHealthAlerts() {
             try {
                 const response = await fetch('/api/health-alerts');
                 const data = await response.json();
-                this.healthAlerts = data.alerts || [];
+                const newAlerts = data.alerts || [];
+
+                // Detect new alerts (alerts that weren't in the previous list)
+                if (this.healthAlerts.length > 0) {
+                    const existingIds = this.healthAlerts.map(a => a.id);
+                    const newOnes = newAlerts.filter(a => !existingIds.includes(a.id) && a.status !== 'resolved');
+
+                    // Show notification for each new alert
+                    newOnes.forEach(alert => {
+                        this.showAlertNotification(alert);
+                    });
+                }
+
+                this.healthAlerts = newAlerts;
                 console.log('Health alerts loaded:', this.healthAlerts.length);
             } catch (error) {
                 console.error('Error fetching health alerts:', error);
+            }
+        },
+
+        showAlertNotification(alert) {
+            const notification = {
+                ...alert,
+                notificationId: Date.now() + Math.random(),
+                timestamp: new Date()
+            };
+
+            this.alertNotifications.push(notification);
+
+            // Auto-dismiss after 3 seconds
+            setTimeout(() => {
+                this.dismissNotification(notification.notificationId);
+            }, 3000);
+        },
+
+        dismissNotification(notificationId) {
+            const index = this.alertNotifications.findIndex(n => n.notificationId === notificationId);
+            if (index !== -1) {
+                this.alertNotifications.splice(index, 1);
+            }
+        },
+
+        updateLearningTaskStatus(tasks) {
+            // Find the most recent learning task
+            const learningTask = tasks.find(t =>
+                t.title && t.title.includes('MoE Learning System') &&
+                t.status !== 'completed' && t.status !== 'failed' && t.status !== 'cancelled'
+            );
+
+            if (learningTask) {
+                this.learningTaskStatus = learningTask.status;
+                this.learningTaskId = learningTask.id;
+                this.learningTaskError = learningTask.error || null;
+                this.learningTaskActive = ['pending', 'assigned', 'in_progress'].includes(learningTask.status);
+            } else {
+                // Check if there's a recently completed/failed learning task
+                const recentLearningTask = tasks.find(t =>
+                    t.title && t.title.includes('MoE Learning System') &&
+                    (t.status === 'completed' || t.status === 'failed')
+                );
+
+                if (recentLearningTask) {
+                    this.learningTaskStatus = recentLearningTask.status;
+                    this.learningTaskId = recentLearningTask.id;
+                    this.learningTaskError = recentLearningTask.error || null;
+                    this.learningTaskActive = false;
+                } else {
+                    // No learning task found
+                    this.learningTaskStatus = null;
+                    this.learningTaskId = null;
+                    this.learningTaskError = null;
+                    this.learningTaskActive = false;
+                }
+            }
+        },
+
+        async fetchLearningDeliverables() {
+            try {
+                const response = await fetch('/api/moe/learning/deliverables');
+                const data = await response.json();
+                this.learningDeliverables = data.deliverables || [];
+            } catch (error) {
+                console.error('Error fetching learning deliverables:', error);
+            }
+        },
+
+        async viewDeliverable(deliverable) {
+            if (!deliverable.exists) {
+                return;
+            }
+
+            this.viewingDeliverable = true;
+            this.selectedDeliverable = deliverable;
+            this.deliverableContent = 'Loading...';
+
+            try {
+                const filename = deliverable.file.split('/').pop();
+                const response = await fetch(`/api/moe/learning/deliverables/${filename}`);
+                const data = await response.json();
+
+                if (data.content) {
+                    this.deliverableContent = data.content;
+                } else {
+                    this.deliverableContent = 'Error loading content';
+                }
+            } catch (error) {
+                console.error('Error loading deliverable content:', error);
+                this.deliverableContent = 'Error loading content: ' + error.message;
+            }
+        },
+
+        closeDeliverableView() {
+            this.viewingDeliverable = false;
+            this.selectedDeliverable = null;
+            this.deliverableContent = null;
+        },
+
+        downloadDeliverable(deliverable) {
+            if (!deliverable.exists) {
+                return;
+            }
+
+            const filename = deliverable.file.split('/').pop();
+            window.open(`/api/moe/learning/deliverables/${filename}`, '_blank');
+        },
+
+        async activateLearning() {
+            this.learningTaskActivating = true;
+            this.learningTaskMessage = '';
+            this.learningTaskSuccess = false;
+
+            try {
+                const response = await fetch('/api/moe/learning/activate', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    this.learningTaskSuccess = true;
+                    this.learningTaskActive = true;
+                    this.learningTaskStatus = 'pending';
+                    this.learningTaskId = data.task_id;
+                    this.learningTaskMessage = `Learning task activated successfully! Task ID: ${data.task_id}. Estimated duration: ${data.estimated_duration}`;
+
+                    // Auto-dismiss success message after 10 seconds
+                    setTimeout(() => {
+                        this.learningTaskMessage = '';
+                    }, 10000);
+
+                    // Refresh tasks immediately
+                    const tasksRes = await fetch('/api/tasks');
+                    const tasksData = await tasksRes.json();
+                    this.tasks = tasksData.tasks || [];
+                    this.updateLearningTaskStatus(this.tasks);
+                } else {
+                    this.learningTaskSuccess = false;
+                    this.learningTaskMessage = data.message || 'Failed to activate learning task';
+
+                    // Auto-dismiss error message after 8 seconds
+                    setTimeout(() => {
+                        this.learningTaskMessage = '';
+                    }, 8000);
+                }
+            } catch (error) {
+                console.error('Error activating learning task:', error);
+                this.learningTaskSuccess = false;
+                this.learningTaskMessage = 'Network error: Could not activate learning task';
+
+                // Auto-dismiss error message after 8 seconds
+                setTimeout(() => {
+                    this.learningTaskMessage = '';
+                }, 8000);
+            } finally {
+                this.learningTaskActivating = false;
             }
         },
 

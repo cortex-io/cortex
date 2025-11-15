@@ -2971,6 +2971,427 @@ app.post('/api/metrics-daemon/control', async (req, res) => {
   }
 });
 
+/**
+ * POST /api/coordinator-daemon/control
+ * Control the coordinator daemon (start/stop)
+ */
+app.post('/api/coordinator-daemon/control', async (req, res) => {
+  const { execSync, spawn } = require('child_process');
+  const { action } = req.body;
+
+  try {
+    const scriptPath = path.join(__dirname, '../../scripts/coordinator-daemon.sh');
+    const PID_FILE = '/tmp/commit-relay-coordinator.pid';
+    const fsSync = require('fs');
+
+    if (action === 'start') {
+      if (fsSync.existsSync(PID_FILE)) {
+        const pid = parseInt(fsSync.readFileSync(PID_FILE, 'utf-8').trim());
+        try {
+          execSync(`ps -p ${pid}`, { stdio: 'pipe' });
+          return res.json({ success: false, message: 'Coordinator daemon is already running', pid });
+        } catch (e) {
+          fsSync.unlinkSync(PID_FILE);
+        }
+      }
+
+      // Use spawn to start daemon in background
+      const logFile = fsSync.openSync('/tmp/coordinator-start.log', 'w');
+      const daemon = spawn('bash', [scriptPath], {
+        detached: true,
+        stdio: ['ignore', logFile, logFile]
+      });
+      daemon.unref();
+
+      await new Promise(resolve => setTimeout(resolve, 1000));
+
+      if (fsSync.existsSync(PID_FILE)) {
+        const pid = parseInt(fsSync.readFileSync(PID_FILE, 'utf-8').trim());
+        res.json({ success: true, message: 'Coordinator daemon started', pid });
+      } else {
+        res.json({ success: false, message: 'Coordinator daemon may have failed to start' });
+      }
+    } else if (action === 'stop') {
+      if (fsSync.existsSync(PID_FILE)) {
+        const pid = parseInt(fsSync.readFileSync(PID_FILE, 'utf-8').trim());
+        try {
+          execSync(`kill ${pid}`, { stdio: 'pipe' });
+          fsSync.unlinkSync(PID_FILE);
+          res.json({ success: true, message: 'Coordinator daemon stopped' });
+        } catch (e) {
+          res.json({ success: false, message: 'Failed to stop coordinator daemon' });
+        }
+      } else {
+        res.json({ success: false, message: 'Coordinator daemon is not running' });
+      }
+    } else {
+      res.status(400).json({ success: false, message: 'Invalid action. Use "start" or "stop"' });
+    }
+  } catch (error) {
+    console.error('Error controlling coordinator daemon:', error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+/**
+ * GET /api/coordinator-daemon/status
+ * Get coordinator daemon status
+ */
+app.get('/api/coordinator-daemon/status', (req, res) => {
+  const { execSync } = require('child_process');
+  const fsSync = require('fs');
+  const PID_FILE = '/tmp/commit-relay-coordinator.pid';
+  const STATE_FILE = path.join(COMMIT_RELAY_HOME, 'coordination', 'orchestrator', 'state', 'current.json');
+
+  try {
+    if (fsSync.existsSync(PID_FILE)) {
+      const pid = parseInt(fsSync.readFileSync(PID_FILE, 'utf-8').trim());
+
+      try {
+        execSync(`ps -p ${pid}`, { stdio: 'pipe' });
+
+        let uptimeSeconds = 0;
+        if (fsSync.existsSync(STATE_FILE)) {
+          try {
+            const state = JSON.parse(fsSync.readFileSync(STATE_FILE, 'utf-8'));
+            if (state.started_at) {
+              uptimeSeconds = Math.floor((Date.now() - new Date(state.started_at).getTime()) / 1000);
+            }
+          } catch (e) {
+            console.error('Error reading coordinator state:', e);
+          }
+        }
+
+        res.json({
+          status: 'running',
+          pid: pid,
+          uptime_seconds: uptimeSeconds
+        });
+      } catch (e) {
+        fsSync.unlinkSync(PID_FILE);
+        res.json({ status: 'stopped', pid: null });
+      }
+    } else {
+      res.json({ status: 'stopped', pid: null });
+    }
+  } catch (error) {
+    console.error('Error checking coordinator daemon status:', error);
+    res.json({ status: 'stopped', pid: null });
+  }
+});
+
+/**
+ * POST /api/integration-validator/control
+ * Control the integration validator (start/stop)
+ */
+app.post('/api/integration-validator/control', async (req, res) => {
+  const { execSync, spawn } = require('child_process');
+  const { action } = req.body;
+
+  try {
+    const scriptPath = path.join(__dirname, '../../scripts/integration-validator-daemon.sh');
+    const PID_FILE = '/tmp/commit-relay-integration-validator.pid';
+    const fsSync = require('fs');
+
+    if (action === 'start') {
+      if (fsSync.existsSync(PID_FILE)) {
+        const pid = parseInt(fsSync.readFileSync(PID_FILE, 'utf-8').trim());
+        try {
+          execSync(`ps -p ${pid}`, { stdio: 'pipe' });
+          return res.json({ success: false, message: 'Integration validator is already running', pid });
+        } catch (e) {
+          fsSync.unlinkSync(PID_FILE);
+        }
+      }
+
+      // Use spawn to start daemon in background
+      const logFile = fsSync.openSync('/tmp/integration-validator-start.log', 'w');
+      const daemon = spawn('bash', [scriptPath], {
+        detached: true,
+        stdio: ['ignore', logFile, logFile]
+      });
+      daemon.unref();
+
+      await new Promise(resolve => setTimeout(resolve, 1000));
+
+      if (fsSync.existsSync(PID_FILE)) {
+        const pid = parseInt(fsSync.readFileSync(PID_FILE, 'utf-8').trim());
+        res.json({ success: true, message: 'Integration validator started', pid });
+      } else {
+        res.json({ success: false, message: 'Integration validator may have failed to start' });
+      }
+    } else if (action === 'stop') {
+      if (fsSync.existsSync(PID_FILE)) {
+        const pid = parseInt(fsSync.readFileSync(PID_FILE, 'utf-8').trim());
+        try {
+          execSync(`kill ${pid}`, { stdio: 'pipe' });
+          fsSync.unlinkSync(PID_FILE);
+          res.json({ success: true, message: 'Integration validator stopped' });
+        } catch (e) {
+          res.json({ success: false, message: 'Failed to stop integration validator' });
+        }
+      } else {
+        res.json({ success: false, message: 'Integration validator is not running' });
+      }
+    } else {
+      res.status(400).json({ success: false, message: 'Invalid action. Use "start" or "stop"' });
+    }
+  } catch (error) {
+    console.error('Error controlling integration validator:', error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+/**
+ * GET /api/integration-validator/status
+ * Get integration validator status
+ */
+app.get('/api/integration-validator/status', (req, res) => {
+  const { execSync } = require('child_process');
+  const fsSync = require('fs');
+  const PID_FILE = '/tmp/commit-relay-integration-validator.pid';
+
+  try {
+    if (fsSync.existsSync(PID_FILE)) {
+      const pid = parseInt(fsSync.readFileSync(PID_FILE, 'utf-8').trim());
+
+      try {
+        execSync(`ps -p ${pid}`, { stdio: 'pipe' });
+        res.json({
+          status: 'running',
+          pid: pid,
+          uptime_seconds: 0 // TODO: Track uptime when daemon is implemented
+        });
+      } catch (e) {
+        fsSync.unlinkSync(PID_FILE);
+        res.json({ status: 'stopped', pid: null });
+      }
+    } else {
+      res.json({ status: 'stopped', pid: null });
+    }
+  } catch (error) {
+    console.error('Error checking integration validator status:', error);
+    res.json({ status: 'stopped', pid: null });
+  }
+});
+
+/**
+ * POST /api/moe/learning/activate
+ * Activate the MoE Learning Mastery task
+ */
+app.post('/api/moe/learning/activate', async (req, res) => {
+  const { execSync } = require('child_process');
+  const fsSync = require('fs');
+
+  try {
+    const taskFile = path.join(COMMIT_RELAY_HOME, 'coordination', 'tasks', 'task-moe-learning-mastery.json');
+    const taskQueueFile = path.join(COMMIT_RELAY_HOME, 'coordination', 'task-queue.json');
+
+    // Check if task file exists
+    if (!fsSync.existsSync(taskFile)) {
+      return res.status(404).json({
+        success: false,
+        message: 'Learning task file not found'
+      });
+    }
+
+    // Read the task
+    const task = JSON.parse(fsSync.readFileSync(taskFile, 'utf-8'));
+
+    // Update task with current timestamp and ensure it's pending
+    task.created_at = new Date().toISOString();
+    task.status = 'pending';
+    task.id = `task-moe-learning-${Date.now()}`;
+
+    // Read current task queue
+    let taskQueue = { tasks: [] };
+    if (fsSync.existsSync(taskQueueFile)) {
+      try {
+        taskQueue = JSON.parse(fsSync.readFileSync(taskQueueFile, 'utf-8'));
+      } catch (e) {
+        console.error('Error reading task queue:', e);
+      }
+    }
+
+    // Check if a learning task is already pending or in progress
+    const existingLearningTask = taskQueue.tasks?.find(t =>
+      t.title && t.title.includes('MoE Learning System') &&
+      (t.status === 'pending' || t.status === 'in_progress' || t.status === 'assigned')
+    );
+
+    if (existingLearningTask) {
+      return res.json({
+        success: false,
+        message: 'A learning task is already active',
+        task_id: existingLearningTask.id,
+        status: existingLearningTask.status
+      });
+    }
+
+    // Add task to queue
+    if (!taskQueue.tasks) {
+      taskQueue.tasks = [];
+    }
+    taskQueue.tasks.push(task);
+
+    // Write updated queue
+    fsSync.writeFileSync(taskQueueFile, JSON.stringify(taskQueue, null, 2));
+
+    // Also save the updated task file
+    fsSync.writeFileSync(taskFile, JSON.stringify(task, null, 2));
+
+    console.log(`MoE Learning task activated: ${task.id}`);
+
+    res.json({
+      success: true,
+      message: 'MoE Learning task activated successfully',
+      task_id: task.id,
+      estimated_duration: '2.5-3.5 hours'
+    });
+
+  } catch (error) {
+    console.error('Error activating MoE learning task:', error);
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
+  }
+});
+
+/**
+ * GET /api/moe/learning/deliverables
+ * Get status of learning deliverable files
+ */
+app.get('/api/moe/learning/deliverables', async (req, res) => {
+  const fsSync = require('fs');
+
+  try {
+    const deliverables = [
+      {
+        name: 'Enhanced Task Patterns',
+        file: 'coordination/memory/long-term/task-patterns.json',
+        type: 'json',
+        description: 'Enhanced patterns with architectural understanding and agent specialization insights'
+      },
+      {
+        name: 'Routing Intelligence Model',
+        file: 'coordination/memory/long-term/routing-intelligence.json',
+        type: 'json',
+        description: 'Advanced routing decision model based on architecture and historical patterns'
+      },
+      {
+        name: 'Agent Capability Matrix',
+        file: 'coordination/memory/long-term/agent-capabilities.json',
+        type: 'json',
+        description: 'Detailed matrix of each agent\'s strengths, patterns, and optimal use cases'
+      },
+      {
+        name: 'Security Pattern Library',
+        file: 'coordination/memory/long-term/security-patterns.json',
+        type: 'json',
+        description: 'Library of security patterns, vulnerabilities, and remediation strategies'
+      },
+      {
+        name: 'Development Standards Guide',
+        file: 'coordination/memory/long-term/development-standards.json',
+        type: 'json',
+        description: 'Codified development standards, patterns, and best practices'
+      },
+      {
+        name: 'Operational Insights',
+        file: 'coordination/memory/long-term/operational-insights.json',
+        type: 'json',
+        description: 'Real-time behavioral patterns, performance baselines, and optimization opportunities'
+      },
+      {
+        name: 'Learning Summary Report',
+        file: 'coordination/moe-learning-mastery-report.md',
+        type: 'markdown',
+        description: 'Comprehensive report documenting learned knowledge, insights, and recommendations'
+      }
+    ];
+
+    const deliverableStatus = deliverables.map(d => {
+      const filePath = path.join(COMMIT_RELAY_HOME, d.file);
+      const exists = fsSync.existsSync(filePath);
+
+      let status = 'pending';
+      let size = 0;
+      let modified = null;
+
+      if (exists) {
+        const stats = fsSync.statSync(filePath);
+        size = stats.size;
+        modified = stats.mtime;
+
+        // Check if file was modified in the last 24 hours (likely from recent learning)
+        const dayAgo = Date.now() - (24 * 60 * 60 * 1000);
+        status = stats.mtimeMs > dayAgo ? 'recent' : 'exists';
+      }
+
+      return {
+        ...d,
+        status,
+        exists,
+        size,
+        modified,
+        path: d.file
+      };
+    });
+
+    res.json({ deliverables: deliverableStatus });
+  } catch (error) {
+    console.error('Error checking learning deliverables:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+/**
+ * GET /api/moe/learning/deliverables/:filename
+ * Get content of a specific deliverable file
+ */
+app.get('/api/moe/learning/deliverables/:filename', async (req, res) => {
+  const fsSync = require('fs');
+  const { filename } = req.params;
+
+  try {
+    // Map of allowed files for security
+    const allowedFiles = {
+      'task-patterns.json': 'coordination/memory/long-term/task-patterns.json',
+      'routing-intelligence.json': 'coordination/memory/long-term/routing-intelligence.json',
+      'agent-capabilities.json': 'coordination/memory/long-term/agent-capabilities.json',
+      'security-patterns.json': 'coordination/memory/long-term/security-patterns.json',
+      'development-standards.json': 'coordination/memory/long-term/development-standards.json',
+      'operational-insights.json': 'coordination/memory/long-term/operational-insights.json',
+      'moe-learning-mastery-report.md': 'coordination/moe-learning-mastery-report.md'
+    };
+
+    if (!allowedFiles[filename]) {
+      return res.status(404).json({ error: 'File not found or not allowed' });
+    }
+
+    const filePath = path.join(COMMIT_RELAY_HOME, allowedFiles[filename]);
+
+    if (!fsSync.existsSync(filePath)) {
+      return res.status(404).json({ error: 'File does not exist yet' });
+    }
+
+    const content = fsSync.readFileSync(filePath, 'utf-8');
+    const stats = fsSync.statSync(filePath);
+
+    res.json({
+      filename,
+      content,
+      size: stats.size,
+      modified: stats.mtime,
+      type: filename.endsWith('.json') ? 'json' : 'markdown'
+    });
+  } catch (error) {
+    console.error('Error reading deliverable file:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // ============================================================================
 // MoE Intelligence API Endpoints
 // ============================================================================
@@ -3450,6 +3871,125 @@ app.post('/api/metrics/report', async (req, res) => {
 });
 
 // ============================================================================
+// Server-Sent Events (SSE) for ELK-Style Log Streaming
+// ============================================================================
+
+// Track SSE clients
+const sseClients = new Map();
+
+/**
+ * SSE endpoint for real-time log streaming (ELK-style)
+ * Streams JSONL log files with auto-tail functionality
+ */
+app.get('/api/logs/stream', (req, res) => {
+  const logFile = req.query.file || 'dashboard-events';
+  const clientId = Date.now() + Math.random();
+
+  // Set headers for SSE
+  res.writeHead(200, {
+    'Content-Type': 'text/event-stream',
+    'Cache-Control': 'no-cache',
+    'Connection': 'keep-alive',
+    'X-Accel-Buffering': 'no' // Disable nginx buffering
+  });
+
+  // Send initial connection message
+  res.write(`data: ${JSON.stringify({ type: 'connected', clientId })}\n\n`);
+
+  // Store client
+  sseClients.set(clientId, { res, logFile, connectedAt: new Date() });
+  console.log(`SSE client ${clientId} connected for ${logFile}`);
+
+  // Send heartbeat every 30 seconds to keep connection alive
+  const heartbeat = setInterval(() => {
+    res.write(': heartbeat\n\n');
+  }, 30000);
+
+  // Clean up on disconnect
+  req.on('close', () => {
+    clearInterval(heartbeat);
+    sseClients.delete(clientId);
+    console.log(`SSE client ${clientId} disconnected`);
+  });
+});
+
+/**
+ * Broadcast log event to SSE clients
+ */
+function broadcastLogEvent(logFile, event) {
+  sseClients.forEach((client, clientId) => {
+    if (client.logFile === logFile) {
+      try {
+        client.res.write(`data: ${JSON.stringify(event)}\n\n`);
+      } catch (error) {
+        console.error(`Failed to send to SSE client ${clientId}:`, error);
+        sseClients.delete(clientId);
+      }
+    }
+  });
+}
+
+/**
+ * Get available log files for streaming
+ */
+app.get('/api/logs/available', (req, res) => {
+  const coordDir = path.join(COMMIT_RELAY_HOME, 'coordination');
+  const logFiles = [
+    { name: 'dashboard-events', path: 'dashboard-events.jsonl', description: 'Dashboard events and system activity' },
+    { name: 'health-reports', path: 'health-reports.jsonl', description: 'System health check reports' },
+    { name: 'pm-activity', path: 'pm-activity.jsonl', description: 'Process manager activity log' },
+    { name: 'git-operations', path: 'git-operations.jsonl', description: 'Git push/pull operations' },
+    { name: 'metrics-snapshots', path: 'metrics-snapshots.jsonl', description: 'System metrics snapshots' }
+  ].filter(log => {
+    try {
+      return fsSync.existsSync(path.join(coordDir, log.path));
+    } catch {
+      return false;
+    }
+  });
+
+  res.json({ logs: logFiles, count: logFiles.length });
+});
+
+/**
+ * Tail a log file (get last N lines)
+ */
+app.get('/api/logs/tail', async (req, res) => {
+  try {
+    const logFile = req.query.file || 'dashboard-events';
+    const lines = parseInt(req.query.lines) || 100;
+
+    const logPath = path.join(COMMIT_RELAY_HOME, 'coordination', `${logFile}.jsonl`);
+
+    if (!fsSync.existsSync(logPath)) {
+      return res.status(404).json({ error: 'Log file not found' });
+    }
+
+    const content = await fs.readFile(logPath, 'utf-8');
+    const allLines = content.trim().split('\n').filter(line => line);
+    const tailLines = allLines.slice(-lines);
+
+    const events = tailLines.map(line => {
+      try {
+        return JSON.parse(line);
+      } catch {
+        return { raw: line, parseError: true };
+      }
+    });
+
+    res.json({
+      file: logFile,
+      totalLines: allLines.length,
+      returnedLines: events.length,
+      events
+    });
+  } catch (error) {
+    console.error('Error tailing log file:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// ============================================================================
 // WebSocket Server for Real-time Updates
 // ============================================================================
 
@@ -3459,6 +3999,7 @@ const server = app.listen(PORT, () => {
   console.log(`├─────────────────────────────────────────────────────┤`);
   console.log(`│  HTTP Server:   http://localhost:${PORT}              │`);
   console.log(`│  WebSocket:     ws://localhost:${PORT}                │`);
+  console.log(`│  SSE Streaming: /api/logs/stream                    │`);
   console.log(`│  Dashboard UI:  http://localhost:${PORT}/             │`);
   console.log(`└─────────────────────────────────────────────────────┘\n`);
 });
@@ -3706,32 +4247,83 @@ function saveEventBuffer() {
   }, 1000); // 1 second debounce
 }
 
-// Watch dashboard-events.jsonl for new events
-const eventWatcher = chokidar.watch(FILES.dashboardEvents, {
-  persistent: true,
-  ignoreInitial: true,
-  awaitWriteFinish: {
-    stabilityThreshold: 200,
-    pollInterval: 50
-  }
-});
+// ============================================================================
+// ELK-Style Multi-Log File Watchers
+// ============================================================================
 
-eventWatcher.on('change', async () => {
-  try {
-    // Read the last line of the JSONL file (most recent event)
-    const fsSync = require('fs');
-    if (fsSync.existsSync(FILES.dashboardEvents)) {
-      const content = fsSync.readFileSync(FILES.dashboardEvents, 'utf-8');
+/**
+ * Watch a JSONL log file and broadcast new events to both WebSocket and SSE clients
+ */
+function createLogWatcher(logName, logPath, shouldBroadcastWebSocket = false) {
+  const watcher = chokidar.watch(logPath, {
+    persistent: true,
+    ignoreInitial: true,
+    awaitWriteFinish: {
+      stabilityThreshold: 200,
+      pollInterval: 50
+    }
+  });
+
+  // Track last known line count to only broadcast new lines
+  let lastLineCount = 0;
+
+  watcher.on('change', async () => {
+    try {
+      if (!fsSync.existsSync(logPath)) return;
+
+      const content = fsSync.readFileSync(logPath, 'utf-8');
       const lines = content.trim().split('\n').filter(line => line);
 
-      if (lines.length > 0) {
-        const lastEvent = normalizeEvent(JSON.parse(lines[lines.length - 1]));
-        console.log(`Dashboard event: ${lastEvent.type}`);
-        broadcastEvent(lastEvent);
+      // Get only new lines since last check
+      const newLines = lines.slice(lastLineCount);
+      lastLineCount = lines.length;
+
+      if (newLines.length > 0) {
+        newLines.forEach(line => {
+          try {
+            const event = JSON.parse(line);
+            const normalizedEvent = logName === 'dashboard-events' ? normalizeEvent(event) : event;
+
+            // Broadcast to SSE clients (ELK-style streaming)
+            broadcastLogEvent(logName, normalizedEvent);
+
+            // For dashboard-events, also broadcast to WebSocket (backward compatibility)
+            if (shouldBroadcastWebSocket && logName === 'dashboard-events') {
+              broadcastEvent(normalizedEvent);
+            }
+
+            console.log(`${logName}: ${normalizedEvent.type || 'event'}`);
+          } catch (parseError) {
+            console.error(`Error parsing ${logName} line:`, parseError);
+          }
+        });
       }
+    } catch (error) {
+      console.error(`Error processing ${logName}:`, error);
     }
-  } catch (error) {
-    console.error('Error processing dashboard event:', error);
+  });
+
+  return watcher;
+}
+
+// Watch dashboard-events.jsonl (main event stream)
+const eventWatcher = createLogWatcher('dashboard-events', FILES.dashboardEvents, true);
+
+// Watch additional log files for ELK-style streaming
+const logWatchers = [];
+
+const additionalLogs = [
+  { name: 'health-reports', path: path.join(COORD_DIR, 'health-reports.jsonl') },
+  { name: 'pm-activity', path: path.join(COORD_DIR, 'pm-activity.jsonl') },
+  { name: 'git-operations', path: path.join(COORD_DIR, 'git-operations.jsonl') },
+  { name: 'metrics-snapshots', path: path.join(COORD_DIR, 'metrics-snapshots.jsonl') },
+  { name: 'governance-audit', path: path.join(COORD_DIR, 'governance/audit-trail.jsonl') }
+];
+
+additionalLogs.forEach(log => {
+  if (fsSync.existsSync(log.path)) {
+    logWatchers.push(createLogWatcher(log.name, log.path, false));
+    console.log(`Watching ${log.name} for SSE streaming`);
   }
 });
 
@@ -4019,6 +4611,7 @@ process.on('SIGINT', () => {
   console.log('\nShutting down dashboard server...');
   watcher.close();
   eventWatcher.close();
+  logWatchers.forEach(w => w.close());
   server.close(() => {
     console.log('Server closed');
     process.exit(0);
@@ -4029,6 +4622,7 @@ process.on('SIGTERM', () => {
   console.log('\nShutting down dashboard server...');
   watcher.close();
   eventWatcher.close();
+  logWatchers.forEach(w => w.close());
   server.close(() => {
     console.log('Server closed');
     process.exit(0);

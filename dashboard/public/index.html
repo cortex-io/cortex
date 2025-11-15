@@ -239,12 +239,6 @@
                 <i data-lucide="test-tube" class="w-5 h-5"></i>
                 <span :class="currentView === 'ddqd-testing' ? 'font-medium' : ''">DDQD Testing</span>
             </button>
-            <button @click="switchView('moe-analytics')" class="w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors" :class="currentView === 'moe-analytics' ? 'bg-primary-50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-300' : 'hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300'">
-                <i data-lucide="line-chart" class="w-5 h-5"></i>
-                <span :class="currentView === 'moe-analytics' ? 'font-medium' : ''">Analytics</span>
-                <i data-lucide="sparkles" class="w-4 h-4 ml-auto text-purple-500"></i>
-            </button>
-
             <!-- Integrations Section -->
             <div class="pt-4 pb-1 px-4">
                 <p class="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">Integrations</p>
@@ -331,62 +325,6 @@
             </div>
         </header>
 
-        <!-- Alert Notifications Banner -->
-        <div x-show="activeAlerts.length > 0" x-transition class="mx-8 mt-8 space-y-2">
-            <template x-for="alert in activeAlerts.slice(0, 3)" :key="alert.id">
-                <div class="rounded-lg shadow-lg border p-4 flex items-start space-x-3 animate-fade-in"
-                     :class="{
-                         'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800': alert.severity === 'critical',
-                         'bg-orange-50 dark:bg-orange-900/20 border-orange-200 dark:border-orange-800': alert.severity === 'warning',
-                         'bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800': alert.severity === 'info'
-                     }">
-                    <i :data-lucide="alert.severity === 'critical' ? 'alert-circle' : alert.severity === 'warning' ? 'alert-triangle' : 'info'"
-                       class="w-5 h-5 flex-shrink-0 mt-0.5"
-                       :class="{
-                           'text-red-600 dark:text-red-400': alert.severity === 'critical',
-                           'text-orange-600 dark:text-orange-400': alert.severity === 'warning',
-                           'text-blue-600 dark:text-blue-400': alert.severity === 'info'
-                       }"></i>
-                    <div class="flex-1 min-w-0">
-                        <p class="text-sm font-semibold"
-                           :class="{
-                               'text-red-900 dark:text-red-100': alert.severity === 'critical',
-                               'text-orange-900 dark:text-orange-100': alert.severity === 'warning',
-                               'text-blue-900 dark:text-blue-100': alert.severity === 'info'
-                           }"
-                           x-text="alert.title"></p>
-                        <p class="text-sm mt-1"
-                           :class="{
-                               'text-red-700 dark:text-red-200': alert.severity === 'critical',
-                               'text-orange-700 dark:text-orange-200': alert.severity === 'warning',
-                               'text-blue-700 dark:text-blue-200': alert.severity === 'info'
-                           }"
-                           x-text="alert.message"></p>
-                        <p class="text-xs mt-1"
-                           :class="{
-                               'text-red-600 dark:text-red-300': alert.severity === 'critical',
-                               'text-orange-600 dark:text-orange-300': alert.severity === 'warning',
-                               'text-blue-600 dark:text-blue-300': alert.severity === 'info'
-                           }"
-                           x-text="'Triggered: ' + new Date(alert.timestamp).toLocaleString()"></p>
-                    </div>
-                    <button @click="dismissAlert(alert.id)" class="flex-shrink-0 p-1 rounded hover:bg-black/5 dark:hover:bg-white/10 transition-colors"
-                            :class="{
-                                'text-red-600 dark:text-red-400': alert.severity === 'critical',
-                                'text-orange-600 dark:text-orange-400': alert.severity === 'warning',
-                                'text-blue-600 dark:text-blue-400': alert.severity === 'info'
-                            }">
-                        <i data-lucide="x" class="w-5 h-5"></i>
-                    </button>
-                </div>
-            </template>
-            <div x-show="activeAlerts.length > 3" class="text-center">
-                <button @click="switchView('alerts')" class="text-sm text-primary-600 dark:text-primary-400 hover:underline">
-                    View <span x-text="activeAlerts.length - 3"></span> more alerts
-                </button>
-            </div>
-        </div>
-
         <!-- Content -->
         <div class="p-4 sm:p-6 lg:p-8 space-y-4 sm:space-y-6 lg:space-y-8">
             <!-- Overview View -->
@@ -454,36 +392,6 @@
                             </div>
                         </div>
 
-                        <!-- Task Orchestration Card -->
-                        <div class="bg-gradient-to-br from-indigo-50 to-purple-50 dark:from-gray-800 dark:to-gray-900 rounded-xl shadow-lg p-4 border-2 border-indigo-200 dark:border-indigo-900">
-                            <div class="flex items-center justify-between mb-3">
-                                <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Task Orchestration</h3>
-                                <div x-show="(metrics.orchestrator?.active || 0) > 0" class="px-2 py-1 rounded-full bg-indigo-100 dark:bg-indigo-900 text-indigo-700 dark:text-indigo-300 text-xs font-semibold animate-pulse">
-                                    ACTIVE
-                                </div>
-                            </div>
-
-                            <!-- Orchestration Stats Grid - 2x2 Compact -->
-                            <div class="grid grid-cols-2 gap-2 mb-3">
-                                <div class="bg-white dark:bg-gray-800 rounded-lg p-2 shadow border-2 border-indigo-200 dark:border-indigo-900">
-                                    <div class="text-xl font-bold text-indigo-600 dark:text-indigo-400" x-text="metrics.orchestrator?.active || 0">0</div>
-                                    <div class="text-xs text-gray-600 dark:text-gray-400">Active</div>
-                                </div>
-                                <div class="bg-white dark:bg-gray-800 rounded-lg p-2 shadow">
-                                    <div class="text-xl font-bold text-purple-600 dark:text-purple-400" x-text="metrics.orchestrator?.total || 0">0</div>
-                                    <div class="text-xs text-gray-600 dark:text-gray-400">Total</div>
-                                </div>
-                                <div class="bg-white dark:bg-gray-800 rounded-lg p-2 shadow">
-                                    <div class="text-xl font-bold text-green-600 dark:text-green-400" x-text="metrics.orchestrator?.completed || 0">0</div>
-                                    <div class="text-xs text-gray-600 dark:text-gray-400">Done</div>
-                                </div>
-                                <div class="bg-white dark:bg-gray-800 rounded-lg p-2 shadow">
-                                    <div class="text-xl font-bold text-red-600 dark:text-red-400" x-text="metrics.orchestrator?.failed || 0">0</div>
-                                    <div class="text-xs text-gray-600 dark:text-gray-400">Failed</div>
-                                </div>
-                            </div>
-                        </div>
-
                         <!-- Execution Managers Card (v4.0) -->
                         <div class="bg-gradient-to-br from-cyan-50 to-blue-50 dark:from-gray-800 dark:to-gray-900 rounded-xl shadow-lg p-4 border-2 border-cyan-200 dark:border-cyan-900">
                             <div class="flex items-center justify-between mb-3">
@@ -524,38 +432,228 @@
                         </div>
                     </div>
 
-                    <!-- Right Column: Real-time Events (2/3 width) -->
-                    <div class="lg:col-span-2 bg-white dark:bg-gray-800 rounded-xl shadow-lg p-4 border border-gray-200 dark:border-gray-700">
-                        <div class="flex items-center justify-between mb-3">
-                            <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Real-time Events</h3>
-                            <div class="flex items-center space-x-2">
-                                <div class="w-2 h-2 bg-green-500 rounded-full animate-pulse-slow"></div>
-                                <span class="text-xs text-gray-500 dark:text-gray-400">Live</span>
+                    <!-- Right Column: Worker Pool KPIs + Live Logs (2/3 width) -->
+                    <div class="lg:col-span-2 space-y-4">
+                        <!-- Worker Pool KPI Cards -->
+                        <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
+                            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-4 border border-gray-200 dark:border-gray-700">
+                                <div class="flex items-center justify-between">
+                                    <div>
+                                        <p class="text-xs font-medium text-gray-600 dark:text-gray-400">Active Workers</p>
+                                        <p class="text-2xl font-bold text-gray-900 dark:text-white mt-1" x-text="(moePoolMetrics.active_workers || 0) + '/' + (moePoolMetrics.max_capacity || 64)"></p>
+                                    </div>
+                                    <i data-lucide="cpu" class="w-8 h-8 text-blue-500"></i>
+                                </div>
+                            </div>
+
+                            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-4 border border-gray-200 dark:border-gray-700">
+                                <div class="flex items-center justify-between">
+                                    <div>
+                                        <p class="text-xs font-medium text-gray-600 dark:text-gray-400">Activation Rate</p>
+                                        <p class="text-2xl font-bold text-gray-900 dark:text-white mt-1" x-text="(moePoolMetrics.activation_rate || 0) + '%'"></p>
+                                    </div>
+                                    <i data-lucide="activity" class="w-8 h-8 text-green-500"></i>
+                                </div>
+                            </div>
+
+                            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-4 border border-gray-200 dark:border-gray-700">
+                                <div class="flex items-center justify-between">
+                                    <div>
+                                        <p class="text-xs font-medium text-gray-600 dark:text-gray-400">Target Workers</p>
+                                        <p class="text-2xl font-bold text-gray-900 dark:text-white mt-1" x-text="moePoolMetrics.target_workers || 0"></p>
+                                    </div>
+                                    <i data-lucide="target" class="w-8 h-8 text-purple-500"></i>
+                                </div>
+                            </div>
+
+                            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-4 border border-gray-200 dark:border-gray-700">
+                                <div class="flex items-center justify-between">
+                                    <div>
+                                        <p class="text-xs font-medium text-gray-600 dark:text-gray-400">Utilization Rate</p>
+                                        <p class="text-2xl font-bold text-gray-900 dark:text-white mt-1" x-text="(moePoolMetrics.utilization || 0) + '%'"></p>
+                                    </div>
+                                    <i data-lucide="gauge" class="w-8 h-8 text-orange-500"></i>
+                                </div>
                             </div>
                         </div>
-                        <div class="space-y-1.5 max-h-[800px] overflow-y-auto">
-                            <!-- Using index as key - events have duplicate IDs -->
-                            <template x-for="(event, eventIndex) in events.slice(0, 20)" :key="'overview-event-' + eventIndex">
-                                <div class="flex items-start space-x-2 p-2 rounded-lg bg-gray-50 dark:bg-gray-700/50 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
-                                    <div class="flex-shrink-0 w-2 h-2 mt-1.5 rounded-full" :class="{
-                                        'bg-green-500': event.type === 'worker_completed' || event.type === 'task_completed' || event.type === 'git_push_success',
-                                        'bg-blue-500': event.type === 'worker_started' || event.type === 'task_created',
-                                        'bg-purple-500': event.type === 'task_assigned',
-                                        'bg-orange-500': event.type === 'worker_spawned',
-                                        'bg-red-500': event.type === 'worker_failed' || event.type === 'task_failed' || event.type === 'error' || event.type === 'git_push_failed'
-                                    }"></div>
-                                    <div class="flex-1 min-w-0">
-                                        <div class="flex items-baseline justify-between gap-2">
-                                            <p class="text-sm font-medium text-gray-900 dark:text-white truncate" x-text="formatEventType(event.type)"></p>
-                                            <div class="text-right flex-shrink-0">
-                                                <p class="text-xs text-gray-400 dark:text-gray-500" x-text="new Date(event.timestamp).toLocaleDateString()"></p>
-                                                <p class="text-xs text-gray-400 dark:text-gray-500" x-text="new Date(event.timestamp).toLocaleTimeString()"></p>
+
+                        <!-- Real Time Events -->
+                        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 p-4 mb-4">
+                            <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Real Time Events</h3>
+                        </div>
+
+                        <!-- Live Logs (ELK-Style) - Embedded on Dashboard -->
+                        <div x-data="{
+                            selectedLog: 'dashboard-events',
+                            availableLogs: [],
+                            logEvents: [],
+                            sseConnected: false,
+                            autoScroll: true,
+                            maxEvents: 100,
+                            filterText: '',
+                            sseConnection: null,
+
+                            async init() {
+                                await this.loadAvailableLogs();
+                                await this.loadInitialEvents();
+                                this.connectSSE();
+                            },
+
+                            async loadAvailableLogs() {
+                                try {
+                                    const res = await fetch('/api/logs/available');
+                                    const data = await res.json();
+                                    this.availableLogs = data.logs;
+                                } catch (error) {
+                                    console.error('Failed to load available logs:', error);
+                                }
+                            },
+
+                            async loadInitialEvents() {
+                                try {
+                                    const res = await fetch(`/api/logs/tail?file=${this.selectedLog}&lines=50`);
+                                    const data = await res.json();
+                                    this.logEvents = data.events;
+                                    if (this.autoScroll) {
+                                        this.$nextTick(() => this.scrollToBottom());
+                                    }
+                                } catch (error) {
+                                    console.error('Failed to load initial events:', error);
+                                }
+                            },
+
+                            connectSSE() {
+                                if (this.sseConnection) {
+                                    this.sseConnection.close();
+                                }
+
+                                const url = `/api/logs/stream?file=${this.selectedLog}`;
+                                this.sseConnection = new EventSource(url);
+
+                                this.sseConnection.onopen = () => {
+                                    this.sseConnected = true;
+                                };
+
+                                this.sseConnection.onmessage = (event) => {
+                                    try {
+                                        const data = JSON.parse(event.data);
+                                        if (data.type !== 'connected') {
+                                            this.logEvents.push(data);
+                                            if (this.logEvents.length > this.maxEvents) {
+                                                this.logEvents = this.logEvents.slice(-this.maxEvents);
+                                            }
+                                            if (this.autoScroll) {
+                                                this.$nextTick(() => this.scrollToBottom());
+                                            }
+                                        }
+                                    } catch (error) {
+                                        console.error('Error parsing SSE message:', error);
+                                    }
+                                };
+
+                                this.sseConnection.onerror = () => {
+                                    this.sseConnected = false;
+                                };
+                            },
+
+                            async changeLog(logName) {
+                                this.selectedLog = logName;
+                                this.logEvents = [];
+                                await this.loadInitialEvents();
+                                this.connectSSE();
+                            },
+
+                            toggleAutoScroll() {
+                                this.autoScroll = !this.autoScroll;
+                                if (this.autoScroll) {
+                                    this.scrollToBottom();
+                                }
+                            },
+
+                            scrollToBottom() {
+                                const container = document.getElementById('dashboard-log-container');
+                                if (container) {
+                                    container.scrollTop = container.scrollHeight;
+                                }
+                            },
+
+                            get filteredEvents() {
+                                if (!this.filterText) return this.logEvents;
+                                const filter = this.filterText.toLowerCase();
+                                return this.logEvents.filter(event =>
+                                    JSON.stringify(event).toLowerCase().includes(filter)
+                                );
+                            },
+
+                            formatTimestamp(timestamp) {
+                                if (!timestamp) return '';
+                                const date = new Date(timestamp);
+                                return date.toLocaleTimeString() + '.' + String(date.getMilliseconds()).padStart(3, '0');
+                            },
+
+                            getEventColor(event) {
+                                const type = (event.type || '').toLowerCase();
+                                if (type.includes('error') || type.includes('fail')) return 'text-red-600 dark:text-red-400';
+                                if (type.includes('warn')) return 'text-yellow-600 dark:text-yellow-400';
+                                if (type.includes('success') || type.includes('complete')) return 'text-green-600 dark:text-green-400';
+                                return 'text-gray-600 dark:text-gray-400';
+                            }
+                        }">
+                            <!-- Controls -->
+                            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 p-3">
+                                <div class="flex flex-wrap items-center gap-3">
+                                    <div class="flex items-center gap-2">
+                                        <select x-model="selectedLog" @change="changeLog(selectedLog)" class="px-2 py-1 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded text-xs">
+                                            <template x-for="log in availableLogs" :key="log.name">
+                                                <option :value="log.name" x-text="log.description"></option>
+                                            </template>
+                                        </select>
+                                    </div>
+
+                                    <div class="flex items-center gap-1" :class="sseConnected ? 'text-green-600' : 'text-red-600'">
+                                        <div class="w-2 h-2 rounded-full" :class="sseConnected ? 'bg-green-500 animate-pulse' : 'bg-red-500'"></div>
+                                        <span class="text-xs font-medium" x-text="sseConnected ? 'Live' : 'Disconnected'"></span>
+                                    </div>
+
+                                    <div class="flex-1 min-w-[120px]">
+                                        <input type="text" x-model="filterText" placeholder="Filter..." class="w-full px-2 py-1 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded text-xs">
+                                    </div>
+
+                                    <button @click="toggleAutoScroll()" class="px-2 py-1 rounded text-xs" :class="autoScroll ? 'bg-primary-600 text-white' : 'bg-gray-200 dark:bg-gray-700'">
+                                        <i :data-lucide="autoScroll ? 'scroll' : 'pause'" class="w-3 h-3"></i>
+                                    </button>
+
+                                    <span class="text-xs text-gray-600 dark:text-gray-400" x-text="filteredEvents.length + ' events'"></span>
+                                </div>
+                            </div>
+
+                            <!-- Log Container -->
+                            <div class="bg-gray-900 rounded-xl shadow-lg border border-gray-700 overflow-hidden">
+                                <div id="dashboard-log-container" class="font-mono text-xs overflow-auto" style="height: 400px;">
+                                    <template x-for="(event, index) in filteredEvents" :key="index">
+                                        <div class="flex gap-2 px-3 py-1.5 border-b border-gray-800 hover:bg-gray-800">
+                                            <div class="text-gray-500 whitespace-nowrap text-[10px]" x-text="formatTimestamp(event.timestamp || event.created_at)"></div>
+                                            <div class="w-32 truncate font-semibold text-[10px]" :class="getEventColor(event)" x-text="event.type || 'event'"></div>
+                                            <div class="flex-1 text-gray-300 text-[10px]">
+                                                <template x-if="event.message">
+                                                    <span x-text="event.message"></span>
+                                                </template>
+                                                <template x-if="event.description && !event.message">
+                                                    <span x-text="event.description"></span>
+                                                </template>
+                                                <template x-if="!event.message && !event.description">
+                                                    <span class="text-gray-500" x-text="JSON.stringify(event).substring(0, 150)"></span>
+                                                </template>
                                             </div>
                                         </div>
-                                        <p class="text-xs text-gray-500 dark:text-gray-400 truncate" x-text="formatEventMessage(event)"></p>
+                                    </template>
+
+                                    <div x-show="filteredEvents.length === 0" class="flex flex-col items-center justify-center py-12 text-gray-500">
+                                        <i data-lucide="file-text" class="w-12 h-12 mb-2"></i>
+                                        <p class="text-sm">Waiting for events...</p>
                                     </div>
                                 </div>
-                            </template>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -1159,165 +1257,6 @@
                                 <i data-lucide="refresh-cw" class="w-4 h-4"></i>
                                 Reload
                             </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- MoE Analytics View -->
-            <div x-show="currentView === 'moe-analytics'" x-transition x-cloak>
-                <div class="space-y-6">
-                    <!-- Header -->
-                    <div class="bg-gradient-to-r from-purple-600 to-indigo-600 rounded-xl shadow-lg p-6 text-white">
-                        <div class="flex items-center justify-between">
-                            <div>
-                                <h2 class="text-2xl font-bold flex items-center gap-2">
-                                    <i data-lucide="line-chart" class="w-7 h-7"></i>
-                                    MoE Intelligence Analytics
-                                </h2>
-                                <p class="text-purple-100 mt-1">
-                                    Real-time Mixture of Experts routing metrics and system intelligence
-                                </p>
-                            </div>
-                            <div class="text-right">
-                                <div class="text-sm text-purple-100">Last updated</div>
-                                <div class="text-lg font-semibold" x-text="moeAnalytics.lastUpdate"></div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Widgets Grid -->
-                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                        <!-- Widget 1: Routing Metrics -->
-                        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 border border-gray-200 dark:border-gray-700">
-                            <div class="flex items-center justify-between mb-4 pb-4 border-b border-gray-200 dark:border-gray-700">
-                                <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Routing Metrics</h3>
-                                <span class="px-3 py-1 text-xs font-semibold rounded-full"
-                                      :class="{
-                                          'bg-green-100 text-green-800': moeAnalytics.routingMetrics.status === 'healthy',
-                                          'bg-yellow-100 text-yellow-800': moeAnalytics.routingMetrics.status === 'warning',
-                                          'bg-red-100 text-red-800': moeAnalytics.routingMetrics.status === 'critical'
-                                      }">
-                                    <span x-text="moeAnalytics.routingMetrics.status.toUpperCase()"></span>
-                                </span>
-                            </div>
-
-                            <!-- Key Metrics -->
-                            <div class="space-y-4">
-                                <div class="flex justify-between items-center py-3 border-b border-gray-100 dark:border-gray-700">
-                                    <span class="text-sm text-gray-600 dark:text-gray-400">Routing Accuracy</span>
-                                    <span class="text-2xl font-bold text-green-600 dark:text-green-400" x-text="moeAnalytics.routingMetrics.accuracy"></span>
-                                </div>
-                                <div class="flex justify-between items-center py-3 border-b border-gray-100 dark:border-gray-700">
-                                    <span class="text-sm text-gray-600 dark:text-gray-400">Avg Confidence</span>
-                                    <span class="text-2xl font-bold text-blue-600 dark:text-blue-400" x-text="moeAnalytics.routingMetrics.avgConfidence"></span>
-                                </div>
-                                <div class="flex justify-between items-center py-3">
-                                    <span class="text-sm text-gray-600 dark:text-gray-400">Decisions (24h)</span>
-                                    <span class="text-2xl font-bold text-gray-900 dark:text-white" x-text="moeAnalytics.routingMetrics.decisions24h"></span>
-                                </div>
-                            </div>
-
-                            <!-- Strategy Breakdown -->
-                            <div class="grid grid-cols-3 gap-3 mt-6">
-                                <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-3 text-center">
-                                    <div class="text-xs text-gray-600 dark:text-gray-400 mb-1">Single Expert</div>
-                                    <div class="text-2xl font-bold text-blue-600 dark:text-blue-400" x-text="moeAnalytics.routingMetrics.singleExpertCount"></div>
-                                </div>
-                                <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-3 text-center">
-                                    <div class="text-xs text-gray-600 dark:text-gray-400 mb-1">Multi Expert</div>
-                                    <div class="text-2xl font-bold text-blue-600 dark:text-blue-400" x-text="moeAnalytics.routingMetrics.multiExpertCount"></div>
-                                </div>
-                                <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-3 text-center">
-                                    <div class="text-xs text-gray-600 dark:text-gray-400 mb-1">Sparse Act %</div>
-                                    <div class="text-2xl font-bold text-blue-600 dark:text-blue-400" x-text="moeAnalytics.routingMetrics.sparseActivation"></div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Widget 2: Confidence Distribution Chart -->
-                        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 border border-gray-200 dark:border-gray-700">
-                            <div class="flex items-center justify-between mb-4 pb-4 border-b border-gray-200 dark:border-gray-700">
-                                <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Confidence Score Distribution</h3>
-                                <span class="px-3 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">
-                                    Last 100
-                                </span>
-                            </div>
-                            <div class="relative h-64">
-                                <canvas id="moe-confidence-chart"></canvas>
-                            </div>
-                        </div>
-
-                        <!-- Widget 3: Worker Pool Utilization -->
-                        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 border border-gray-200 dark:border-gray-700 lg:col-span-2">
-                            <div class="flex items-center justify-between mb-4 pb-4 border-b border-gray-200 dark:border-gray-700">
-                                <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Worker Pool Utilization</h3>
-                                <span class="px-3 py-1 text-xs font-semibold rounded-full"
-                                      :class="{
-                                          'bg-green-100 text-green-800': moeAnalytics.poolUtilization.status === 'healthy',
-                                          'bg-yellow-100 text-yellow-800': moeAnalytics.poolUtilization.status === 'warning',
-                                          'bg-red-100 text-red-800': moeAnalytics.poolUtilization.status === 'critical'
-                                      }">
-                                    <span x-text="moeAnalytics.poolUtilization.status.toUpperCase()"></span>
-                                </span>
-                            </div>
-
-                            <!-- Pool Stats -->
-                            <div class="grid grid-cols-2 gap-6 mb-6">
-                                <div class="flex justify-between items-center">
-                                    <span class="text-sm text-gray-600 dark:text-gray-400">Active Workers</span>
-                                    <span class="text-2xl font-bold text-gray-900 dark:text-white" x-text="moeAnalytics.poolUtilization.activeWorkers"></span>
-                                </div>
-                                <div class="flex justify-between items-center">
-                                    <span class="text-sm text-gray-600 dark:text-gray-400">Pool Capacity</span>
-                                    <span class="text-2xl font-bold text-gray-900 dark:text-white" x-text="moeAnalytics.poolUtilization.poolCapacity"></span>
-                                </div>
-                            </div>
-
-                            <!-- Worker Bars -->
-                            <div class="space-y-4">
-                                <!-- Development -->
-                                <div>
-                                    <div class="flex justify-between items-center mb-2">
-                                        <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Development</span>
-                                        <span class="text-sm font-semibold text-gray-900 dark:text-white" x-text="moeAnalytics.poolUtilization.development"></span>
-                                    </div>
-                                    <div class="h-5 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
-                                        <div class="h-full bg-gradient-to-r from-blue-500 to-blue-600 rounded-full transition-all duration-500 flex items-center justify-center"
-                                             :style="`width: ${moeAnalytics.poolUtilization.devPct}%`">
-                                            <span class="text-xs font-semibold text-white" x-show="moeAnalytics.poolUtilization.devPct > 10" x-text="`${moeAnalytics.poolUtilization.devPct.toFixed(0)}%`"></span>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <!-- Security -->
-                                <div>
-                                    <div class="flex justify-between items-center mb-2">
-                                        <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Security</span>
-                                        <span class="text-sm font-semibold text-gray-900 dark:text-white" x-text="moeAnalytics.poolUtilization.security"></span>
-                                    </div>
-                                    <div class="h-5 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
-                                        <div class="h-full bg-gradient-to-r from-blue-500 to-indigo-600 rounded-full transition-all duration-500 flex items-center justify-center"
-                                             :style="`width: ${moeAnalytics.poolUtilization.secPct}%`">
-                                            <span class="text-xs font-semibold text-white" x-show="moeAnalytics.poolUtilization.secPct > 10" x-text="`${moeAnalytics.poolUtilization.secPct.toFixed(0)}%`"></span>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <!-- Inventory -->
-                                <div>
-                                    <div class="flex justify-between items-center mb-2">
-                                        <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Inventory</span>
-                                        <span class="text-sm font-semibold text-gray-900 dark:text-white" x-text="moeAnalytics.poolUtilization.inventory"></span>
-                                    </div>
-                                    <div class="h-5 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
-                                        <div class="h-full bg-gradient-to-r from-blue-500 to-purple-600 rounded-full transition-all duration-500 flex items-center justify-center"
-                                             :style="`width: ${moeAnalytics.poolUtilization.invPct}%`">
-                                            <span class="text-xs font-semibold text-white" x-show="moeAnalytics.poolUtilization.invPct > 10" x-text="`${moeAnalytics.poolUtilization.invPct.toFixed(0)}%`"></span>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
                         </div>
                     </div>
                 </div>
@@ -2318,6 +2257,80 @@
                                     </button>
                                 </div>
                             </div>
+
+                            <!-- Coordinator Daemon Card -->
+                            <div class="border-2 rounded-xl p-6" :class="coordinatorDaemon?.status === 'running' ? 'border-indigo-300 dark:border-indigo-700 bg-indigo-50 dark:bg-indigo-900/20' : 'border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700/50'">
+                                <div class="flex items-center justify-between mb-4">
+                                    <div class="flex items-center space-x-3">
+                                        <i data-lucide="workflow" class="w-6 h-6" :class="coordinatorDaemon?.status === 'running' ? 'text-indigo-600 dark:text-indigo-400' : 'text-gray-600 dark:text-gray-400'"></i>
+                                        <h4 class="text-lg font-semibold text-gray-900 dark:text-white">Coordinator Daemon</h4>
+                                    </div>
+                                    <span class="px-3 py-1 rounded-full text-sm font-medium" :class="coordinatorDaemon?.status === 'running' ? 'bg-indigo-100 dark:bg-indigo-900 text-indigo-700 dark:text-indigo-300' : 'bg-red-100 dark:bg-red-900 text-red-700 dark:text-red-300'" x-text="coordinatorDaemon?.status === 'running' ? 'Running' : 'Stopped'"></span>
+                                </div>
+
+                                <div class="space-y-2 mb-6">
+                                    <div class="flex justify-between text-sm">
+                                        <span class="text-gray-600 dark:text-gray-400">PID:</span>
+                                        <span class="font-medium text-gray-900 dark:text-white" x-text="coordinatorDaemon?.pid || 'N/A'"></span>
+                                    </div>
+                                    <div class="flex justify-between text-sm">
+                                        <span class="text-gray-600 dark:text-gray-400">Uptime:</span>
+                                        <span class="font-medium text-gray-900 dark:text-white" x-text="coordinatorDaemon?.status === 'running' ? formatUptime(coordinatorDaemon?.uptime_seconds) : 'N/A'"></span>
+                                    </div>
+                                    <div class="flex justify-between text-sm">
+                                        <span class="text-gray-600 dark:text-gray-400">Purpose:</span>
+                                        <span class="font-medium text-gray-900 dark:text-white">Task Routing</span>
+                                    </div>
+                                </div>
+
+                                <div class="flex space-x-2">
+                                    <button @click="controlCoordinatorDaemon('start')" :disabled="coordinatorDaemon?.status === 'running'" class="flex-1 px-4 py-2 rounded-lg font-medium transition-colors bg-green-600 text-white hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed">
+                                        <i data-lucide="play" class="w-4 h-4 inline-block mr-2"></i>
+                                        Start
+                                    </button>
+                                    <button @click="controlCoordinatorDaemon('stop')" :disabled="coordinatorDaemon?.status !== 'running'" class="flex-1 px-4 py-2 rounded-lg font-medium transition-colors bg-red-600 text-white hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed">
+                                        <i data-lucide="square" class="w-4 h-4 inline-block mr-2"></i>
+                                        Stop
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Integration Validator Card -->
+                            <div class="border-2 rounded-xl p-6" :class="integrationValidatorDaemon?.status === 'running' ? 'border-teal-300 dark:border-teal-700 bg-teal-50 dark:bg-teal-900/20' : 'border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700/50'">
+                                <div class="flex items-center justify-between mb-4">
+                                    <div class="flex items-center space-x-3">
+                                        <i data-lucide="check-circle-2" class="w-6 h-6" :class="integrationValidatorDaemon?.status === 'running' ? 'text-teal-600 dark:text-teal-400' : 'text-gray-600 dark:text-gray-400'"></i>
+                                        <h4 class="text-lg font-semibold text-gray-900 dark:text-white">Integration Validator</h4>
+                                    </div>
+                                    <span class="px-3 py-1 rounded-full text-sm font-medium" :class="integrationValidatorDaemon?.status === 'running' ? 'bg-teal-100 dark:bg-teal-900 text-teal-700 dark:text-teal-300' : 'bg-red-100 dark:bg-red-900 text-red-700 dark:text-red-300'" x-text="integrationValidatorDaemon?.status === 'running' ? 'Running' : 'Stopped'"></span>
+                                </div>
+
+                                <div class="space-y-2 mb-6">
+                                    <div class="flex justify-between text-sm">
+                                        <span class="text-gray-600 dark:text-gray-400">PID:</span>
+                                        <span class="font-medium text-gray-900 dark:text-white" x-text="integrationValidatorDaemon?.pid || 'N/A'"></span>
+                                    </div>
+                                    <div class="flex justify-between text-sm">
+                                        <span class="text-gray-600 dark:text-gray-400">Uptime:</span>
+                                        <span class="font-medium text-gray-900 dark:text-white" x-text="integrationValidatorDaemon?.status === 'running' ? formatUptime(integrationValidatorDaemon?.uptime_seconds) : 'N/A'"></span>
+                                    </div>
+                                    <div class="flex justify-between text-sm">
+                                        <span class="text-gray-600 dark:text-gray-400">Purpose:</span>
+                                        <span class="font-medium text-gray-900 dark:text-white">Routing Validation</span>
+                                    </div>
+                                </div>
+
+                                <div class="flex space-x-2">
+                                    <button @click="controlIntegrationValidator('start')" :disabled="integrationValidatorDaemon?.status === 'running'" class="flex-1 px-4 py-2 rounded-lg font-medium transition-colors bg-green-600 text-white hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed">
+                                        <i data-lucide="play" class="w-4 h-4 inline-block mr-2"></i>
+                                        Start
+                                    </button>
+                                    <button @click="controlIntegrationValidator('stop')" :disabled="integrationValidatorDaemon?.status !== 'running'" class="flex-1 px-4 py-2 rounded-lg font-medium transition-colors bg-red-600 text-white hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed">
+                                        <i data-lucide="square" class="w-4 h-4 inline-block mr-2"></i>
+                                        Stop
+                                    </button>
+                                </div>
+                            </div>
                         </div>
 
                         <div class="mt-8 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
@@ -2326,7 +2339,7 @@
                                 <div class="text-sm text-blue-900 dark:text-blue-100">
                                     <p class="font-semibold mb-1">About Daemon Controls</p>
                                     <p class="text-blue-700 dark:text-blue-200">
-                                        Control all system daemons: Worker Daemon (spawns workers), PM Daemon (monitors worker health), Health Monitor (generates health alerts), and Metrics Snapshot (collects historical metrics). Changes take effect immediately.
+                                        Control all system daemons: Worker Daemon (spawns workers), PM Daemon (monitors worker health), Health Monitor (generates health alerts), Metrics Snapshot (collects historical metrics), Coordinator Daemon (routes tasks from queue to masters), and Integration Validator (validates routing pipelines). Changes take effect immediately.
                                     </p>
                                 </div>
                             </div>
@@ -3016,6 +3029,109 @@
             <!-- MoE Learning View -->
             <div x-show="currentView === 'moe-learning'" x-transition>
                 <div class="space-y-4 sm:space-y-6">
+                    <!-- Learning Activation Card -->
+                    <div class="bg-gradient-to-br from-purple-50 to-indigo-50 dark:from-purple-900/20 dark:to-indigo-900/20 rounded-xl shadow-lg border-2 border-purple-200 dark:border-purple-800 p-6">
+                        <!-- Status Indicator Bar -->
+                        <div x-show="learningTaskStatus" class="mb-4 p-3 rounded-lg flex items-center justify-between"
+                             :class="{
+                                 'bg-blue-100 dark:bg-blue-900/30 border border-blue-300 dark:border-blue-700': learningTaskStatus === 'pending',
+                                 'bg-yellow-100 dark:bg-yellow-900/30 border border-yellow-300 dark:border-yellow-700': learningTaskStatus === 'assigned',
+                                 'bg-green-100 dark:bg-green-900/30 border border-green-300 dark:border-green-700': learningTaskStatus === 'in_progress',
+                                 'bg-emerald-100 dark:bg-emerald-900/30 border border-emerald-300 dark:border-emerald-700': learningTaskStatus === 'completed',
+                                 'bg-red-100 dark:bg-red-900/30 border border-red-300 dark:border-red-700': learningTaskStatus === 'failed'
+                             }">
+                            <div class="flex items-center gap-3">
+                                <div class="flex items-center gap-2">
+                                    <div class="w-3 h-3 rounded-full animate-pulse"
+                                         :class="{
+                                             'bg-blue-500': learningTaskStatus === 'pending',
+                                             'bg-yellow-500': learningTaskStatus === 'assigned',
+                                             'bg-green-500': learningTaskStatus === 'in_progress',
+                                             'bg-emerald-500': learningTaskStatus === 'completed',
+                                             'bg-red-500': learningTaskStatus === 'failed'
+                                         }"
+                                         x-show="['pending', 'assigned', 'in_progress'].includes(learningTaskStatus)"></div>
+                                    <div class="w-3 h-3 rounded-full"
+                                         :class="{
+                                             'bg-emerald-500': learningTaskStatus === 'completed',
+                                             'bg-red-500': learningTaskStatus === 'failed'
+                                         }"
+                                         x-show="['completed', 'failed'].includes(learningTaskStatus)"></div>
+                                    <span class="font-semibold text-sm"
+                                          :class="{
+                                              'text-blue-800 dark:text-blue-200': learningTaskStatus === 'pending',
+                                              'text-yellow-800 dark:text-yellow-200': learningTaskStatus === 'assigned',
+                                              'text-green-800 dark:text-green-200': learningTaskStatus === 'in_progress',
+                                              'text-emerald-800 dark:text-emerald-200': learningTaskStatus === 'completed',
+                                              'text-red-800 dark:text-red-200': learningTaskStatus === 'failed'
+                                          }">
+                                        <span x-show="learningTaskStatus === 'pending'">Learning Task Pending</span>
+                                        <span x-show="learningTaskStatus === 'assigned'">Learning Task Assigned</span>
+                                        <span x-show="learningTaskStatus === 'in_progress'">Learning In Progress</span>
+                                        <span x-show="learningTaskStatus === 'completed'">Learning Completed</span>
+                                        <span x-show="learningTaskStatus === 'failed'">Learning Failed</span>
+                                    </span>
+                                </div>
+                                <span class="text-xs"
+                                      :class="{
+                                          'text-blue-700 dark:text-blue-300': learningTaskStatus === 'pending',
+                                          'text-yellow-700 dark:text-yellow-300': learningTaskStatus === 'assigned',
+                                          'text-green-700 dark:text-green-300': learningTaskStatus === 'in_progress',
+                                          'text-emerald-700 dark:text-emerald-300': learningTaskStatus === 'completed',
+                                          'text-red-700 dark:text-red-300': learningTaskStatus === 'failed'
+                                      }"
+                                      x-text="learningTaskId ? `ID: ${learningTaskId.substring(0, 20)}...` : ''"></span>
+                            </div>
+                            <div x-show="learningTaskError" class="text-xs text-red-700 dark:text-red-300" x-text="learningTaskError"></div>
+                        </div>
+
+                        <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                            <div class="flex-1">
+                                <div class="flex items-center gap-3 mb-2">
+                                    <i data-lucide="graduation-cap" class="w-8 h-8 text-purple-600 dark:text-purple-400"></i>
+                                    <h3 class="text-xl font-bold text-gray-900 dark:text-white">Activate Deep Learning</h3>
+                                </div>
+                                <p class="text-sm text-gray-700 dark:text-gray-300 mb-2">
+                                    Initiate a comprehensive learning session where MoE will master commit-relay's architecture, workflows, agents, security patterns, and development standards.
+                                </p>
+                                <div class="flex flex-wrap gap-2 text-xs">
+                                    <span class="px-2 py-1 bg-purple-100 dark:bg-purple-900/40 text-purple-700 dark:text-purple-300 rounded-full">
+                                        Architecture Analysis
+                                    </span>
+                                    <span class="px-2 py-1 bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300 rounded-full">
+                                        Agent Specialization
+                                    </span>
+                                    <span class="px-2 py-1 bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 rounded-full">
+                                        Workflow Intelligence
+                                    </span>
+                                    <span class="px-2 py-1 bg-cyan-100 dark:bg-cyan-900/40 text-cyan-700 dark:text-cyan-300 rounded-full">
+                                        Security Patterns
+                                    </span>
+                                    <span class="px-2 py-1 bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300 rounded-full">
+                                        Development Standards
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="flex flex-col gap-2">
+                                <button
+                                    @click="activateLearning()"
+                                    :disabled="learningTaskActivating || learningTaskActive"
+                                    class="px-6 py-3 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 disabled:from-gray-400 disabled:to-gray-500 disabled:cursor-not-allowed text-white font-semibold rounded-lg shadow-lg transition-all duration-200 flex items-center gap-2 whitespace-nowrap"
+                                >
+                                    <i data-lucide="play-circle" class="w-5 h-5"></i>
+                                    <span x-text="learningTaskActivating ? 'Activating...' : (learningTaskActive ? (learningTaskStatus === 'in_progress' ? 'Learning In Progress' : 'Task Active') : 'Start Learning')"></span>
+                                </button>
+                                <p class="text-xs text-center text-gray-600 dark:text-gray-400">
+                                    Est. Duration: 2.5-3.5 hours
+                                </p>
+                            </div>
+                        </div>
+                        <!-- Learning Task Status -->
+                        <div x-show="learningTaskMessage" x-transition class="mt-4 p-3 rounded-lg" :class="learningTaskSuccess ? 'bg-green-100 dark:bg-green-900/20 border border-green-300 dark:border-green-800' : 'bg-red-100 dark:bg-red-900/20 border border-red-300 dark:border-red-800'">
+                            <p class="text-sm" :class="learningTaskSuccess ? 'text-green-800 dark:text-green-200' : 'text-red-800 dark:text-red-200'" x-text="learningTaskMessage"></p>
+                        </div>
+                    </div>
+
                     <!-- Learning Stats -->
                     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
                         <div class="bg-white dark:bg-gray-800 rounded-lg sm:rounded-xl shadow-lg p-4 sm:p-6 border border-gray-200 dark:border-gray-700">
@@ -3105,6 +3221,100 @@
                         <p x-show="moeLearningInsights.length === 0" class="text-center text-gray-500 dark:text-gray-400 py-4">
                             System is learning from routing decisions...
                         </p>
+                    </div>
+
+                    <!-- Learning Deliverables -->
+                    <div class="bg-white dark:bg-gray-800 rounded-lg sm:rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 p-4 sm:p-6">
+                        <h3 class="text-base sm:text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center">
+                            <i data-lucide="file-text" class="w-5 h-5 mr-2 text-primary-500"></i>
+                            Learning Deliverables
+                        </h3>
+                        <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                            Results from the learning task will appear here. Click to view content or download files.
+                        </p>
+
+                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-3">
+                            <template x-for="deliverable in learningDeliverables" :key="deliverable.file">
+                                <div class="border border-gray-200 dark:border-gray-700 rounded-lg p-4 hover:border-purple-300 dark:hover:border-purple-700 transition-colors"
+                                     :class="{
+                                         'bg-gray-50 dark:bg-gray-900/50': !deliverable.exists,
+                                         'bg-white dark:bg-gray-800': deliverable.exists,
+                                         'border-green-300 dark:border-green-700': deliverable.status === 'recent'
+                                     }">
+                                    <div class="flex items-start justify-between mb-2">
+                                        <div class="flex-1">
+                                            <div class="flex items-center gap-2 mb-1">
+                                                <h4 class="font-semibold text-sm text-gray-900 dark:text-white" x-text="deliverable.name"></h4>
+                                                <span x-show="!deliverable.exists" class="px-2 py-0.5 text-xs rounded-full bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-400">
+                                                    Pending
+                                                </span>
+                                                <span x-show="deliverable.status === 'recent'" class="px-2 py-0.5 text-xs rounded-full bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300 flex items-center gap-1">
+                                                    <span class="w-1.5 h-1.5 bg-green-500 rounded-full"></span>
+                                                    New
+                                                </span>
+                                                <span x-show="deliverable.exists && deliverable.status !== 'recent'" class="px-2 py-0.5 text-xs rounded-full bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300">
+                                                    Available
+                                                </span>
+                                            </div>
+                                            <p class="text-xs text-gray-600 dark:text-gray-400" x-text="deliverable.description"></p>
+                                            <div x-show="deliverable.exists" class="mt-2 flex items-center gap-3 text-xs text-gray-500 dark:text-gray-500">
+                                                <span x-text="(deliverable.size / 1024).toFixed(1) + ' KB'"></span>
+                                                <span x-show="deliverable.modified" x-text="'Modified: ' + new Date(deliverable.modified).toLocaleDateString()"></span>
+                                            </div>
+                                        </div>
+                                        <div class="flex items-center gap-2 ml-2">
+                                            <button
+                                                x-show="deliverable.exists"
+                                                @click="viewDeliverable(deliverable)"
+                                                class="p-2 rounded-lg bg-purple-100 dark:bg-purple-900/40 text-purple-700 dark:text-purple-300 hover:bg-purple-200 dark:hover:bg-purple-900/60 transition-colors"
+                                                title="View content">
+                                                <i data-lucide="eye" class="w-4 h-4"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </template>
+                        </div>
+
+                        <p x-show="learningDeliverables.length === 0" class="text-center text-gray-500 dark:text-gray-400 py-4">
+                            Loading deliverables...
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Deliverable Viewer Modal -->
+            <div x-show="viewingDeliverable"
+                 x-transition:enter="transition ease-out duration-300"
+                 x-transition:enter-start="opacity-0"
+                 x-transition:enter-end="opacity-100"
+                 x-transition:leave="transition ease-in duration-200"
+                 x-transition:leave-start="opacity-100"
+                 x-transition:leave-end="opacity-0"
+                 class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4"
+                 @click.self="closeDeliverableView()">
+                <div class="bg-white dark:bg-gray-800 rounded-xl shadow-2xl max-w-5xl w-full max-h-[90vh] overflow-hidden flex flex-col">
+                    <!-- Modal Header -->
+                    <div class="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
+                        <div>
+                            <h3 class="text-xl font-bold text-gray-900 dark:text-white" x-text="selectedDeliverable?.name"></h3>
+                            <p class="text-sm text-gray-600 dark:text-gray-400 mt-1" x-text="selectedDeliverable?.description"></p>
+                        </div>
+                        <button @click="closeDeliverableView()" class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                            <i data-lucide="x" class="w-6 h-6 text-gray-600 dark:text-gray-400"></i>
+                        </button>
+                    </div>
+
+                    <!-- Modal Content -->
+                    <div class="flex-1 overflow-auto p-6">
+                        <pre class="text-sm bg-gray-50 dark:bg-gray-900 p-4 rounded-lg overflow-x-auto"><code x-text="deliverableContent"></code></pre>
+                    </div>
+
+                    <!-- Modal Footer -->
+                    <div class="flex items-center justify-end gap-3 p-6 border-t border-gray-200 dark:border-gray-700">
+                        <button @click="closeDeliverableView()" class="px-4 py-2 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors">
+                            Close
+                        </button>
                     </div>
                 </div>
             </div>
@@ -3211,11 +3421,74 @@
                 </div>
             </div>
         </div>
+
+        <!-- Health Alert Notifications Overlay (Bottom) -->
+        <div class="fixed bottom-4 right-4 z-50 space-y-2" style="max-width: 400px;">
+            <template x-for="notification in alertNotifications" :key="notification.notificationId">
+                <div
+                    x-show="true"
+                    x-transition:enter="transition ease-out duration-300"
+                    x-transition:enter-start="opacity-0 translate-y-4"
+                    x-transition:enter-end="opacity-100 translate-y-0"
+                    x-transition:leave="transition ease-in duration-200"
+                    x-transition:leave-start="opacity-100"
+                    x-transition:leave-end="opacity-0"
+                    class="bg-white dark:bg-gray-800 rounded-xl shadow-2xl border-l-4 p-4 cursor-pointer hover:shadow-3xl transition-shadow"
+                    :class="{
+                        'border-red-500': notification.severity === 'critical',
+                        'border-orange-500': notification.severity === 'high',
+                        'border-yellow-500': notification.severity === 'medium',
+                        'border-blue-500': notification.severity === 'low'
+                    }"
+                    @click="dismissNotification(notification.notificationId)"
+                >
+                    <div class="flex items-start gap-3">
+                        <!-- Icon -->
+                        <div class="flex-shrink-0">
+                            <div class="w-8 h-8 rounded-full flex items-center justify-center"
+                                :class="{
+                                    'bg-red-100 dark:bg-red-900/30': notification.severity === 'critical',
+                                    'bg-orange-100 dark:bg-orange-900/30': notification.severity === 'high',
+                                    'bg-yellow-100 dark:bg-yellow-900/30': notification.severity === 'medium',
+                                    'bg-blue-100 dark:bg-blue-900/30': notification.severity === 'low'
+                                }">
+                                <i data-lucide="alert-circle" class="w-5 h-5"
+                                    :class="{
+                                        'text-red-600 dark:text-red-400': notification.severity === 'critical',
+                                        'text-orange-600 dark:text-orange-400': notification.severity === 'high',
+                                        'text-yellow-600 dark:text-yellow-400': notification.severity === 'medium',
+                                        'text-blue-600 dark:text-blue-400': notification.severity === 'low'
+                                    }">
+                                </i>
+                            </div>
+                        </div>
+
+                        <!-- Content -->
+                        <div class="flex-1 min-w-0">
+                            <div class="flex items-start justify-between gap-2 mb-1">
+                                <h4 class="text-sm font-semibold text-gray-900 dark:text-white" x-text="notification.title"></h4>
+                                <span class="px-2 py-0.5 text-xs font-medium rounded-full uppercase flex-shrink-0"
+                                    :class="{
+                                        'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400': notification.severity === 'critical',
+                                        'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400': notification.severity === 'high',
+                                        'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400': notification.severity === 'medium',
+                                        'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400': notification.severity === 'low'
+                                    }"
+                                    x-text="notification.severity">
+                                </span>
+                            </div>
+                            <p class="text-xs text-gray-600 dark:text-gray-400 line-clamp-2" x-text="notification.message"></p>
+                            <p class="text-xs text-gray-400 dark:text-gray-500 mt-1">Click to dismiss</p>
+                        </div>
+                    </div>
+                </div>
+            </template>
+        </div>
     </main>
 
     <!-- Load dashboard function first -->
     <!-- All x-for loops now use index-based keys to handle duplicate IDs -->
-    <script src="dashboard-v2.js?v=5.4"></script>
+    <script src="dashboard-v2.js?v=5.6"></script>
 
     <!-- Alpine.js with defer to wait for DOM to be fully parsed -->
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>

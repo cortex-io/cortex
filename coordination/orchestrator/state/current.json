@@ -4,5 +4,7 @@
   "completed_orchestrations": 0,
   "failed_orchestrations": 0,
   "current_orchestrations": [],
-  "last_update": "2025-11-14T12:41:59Z"
+  "last_update": "2025-11-14T12:41:59Z",
+  "last_check": "2025-11-15T09:37:50-0600",
+  "tasks_routed": 2
 }

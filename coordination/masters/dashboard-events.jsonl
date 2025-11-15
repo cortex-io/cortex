@@ -908,3 +908,23 @@
     "strategy": "single_expert_low_confidence"
   }
 }
+{
+  "timestamp": "2025-11-15T08:53:45-0600",
+  "type": "moe_routing_decision",
+  "data": {
+    "task_id": "test-routing-pipeline-001",
+    "expert": "development",
+    "confidence": 0.02,
+    "strategy": "single_expert_low_confidence"
+  }
+}
+{
+  "timestamp": "2025-11-15T08:56:53-0600",
+  "type": "moe_routing_decision",
+  "data": {
+    "task_id": "task-moe-learning-1763218612887",
+    "expert": "development",
+    "confidence": 0,
+    "strategy": "single_expert_low_confidence"
+  }
+}
