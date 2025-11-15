@@ -3808,7 +3808,10 @@ console.log(data);`;
             try {
                 const response = await fetch('/api/ddqd/run', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Confirm-Action': 'true'
+                    },
                     body: JSON.stringify({
                         duration: this.ddqd.testDuration,
                         maxWorkers: this.ddqd.maxWorkers,
