@@ -809,6 +809,11 @@ app.get('/api/metrics/history', async (req, res) => {
  */
 app.get('/api/governance/dashboard', async (req, res) => {
   try {
+    // Prevent caching - always return fresh governance data
+    res.set('Cache-Control', 'no-store, no-cache, must-revalidate, private');
+    res.set('Pragma', 'no-cache');
+    res.set('Expires', '0');
+
     const collector = new MetricsCollector();
     const dashboard = await collector.generateDashboard();
     res.json(dashboard);
@@ -824,6 +829,11 @@ app.get('/api/governance/dashboard', async (req, res) => {
  */
 app.get('/api/governance/compliance-report', async (req, res) => {
   try {
+    // Prevent caching - always return fresh compliance data
+    res.set('Cache-Control', 'no-store, no-cache, must-revalidate, private');
+    res.set('Pragma', 'no-cache');
+    res.set('Expires', '0');
+
     const engine = new ComplianceEngine();
     const report = await engine.generateComplianceReport();
     res.json(report);
@@ -849,6 +859,11 @@ app.get('/api/governance/compliance-check/:framework', async (req, res) => {
       });
     }
 
+    // Prevent caching - always return fresh compliance data
+    res.set('Cache-Control', 'no-store, no-cache, must-revalidate, private');
+    res.set('Pragma', 'no-cache');
+    res.set('Expires', '0');
+
     const engine = new ComplianceEngine();
     const result = await engine.checkCompliance(framework);
     res.json(result);
@@ -864,6 +879,11 @@ app.get('/api/governance/compliance-check/:framework', async (req, res) => {
  */
 app.get('/api/governance/metrics', async (req, res) => {
   try {
+    // Prevent caching - always return fresh metrics
+    res.set('Cache-Control', 'no-store, no-cache, must-revalidate, private');
+    res.set('Pragma', 'no-cache');
+    res.set('Expires', '0');
+
     const collector = new MetricsCollector();
     const metrics = await collector.collectMetrics();
     res.json(metrics);
@@ -890,6 +910,11 @@ app.get('/api/governance/trends', async (req, res) => {
         message: `Period must be one of: ${validPeriods.join(', ')}`
       });
     }
+
+    // Prevent caching - always return fresh trend data
+    res.set('Cache-Control', 'no-store, no-cache, must-revalidate, private');
+    res.set('Pragma', 'no-cache');
+    res.set('Expires', '0');
 
     const collector = new MetricsCollector();
     const trends = await collector.analyzeTrends(period);
