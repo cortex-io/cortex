@@ -1,10 +1,10 @@
 {
   "pm_daemon": {
-    "pid": 84287,
-    "last_loop": "2025-11-15T09:38:03-0600",
-    "loops_completed": 61,
-    "uptime_seconds": 10840,
-    "started_at": "2025-11-15T06:37:23-0600"
+    "pid": 15688,
+    "last_loop": "2025-11-15T14:49:06-0600",
+    "loops_completed": 52,
+    "uptime_seconds": 9213,
+    "started_at": "2025-11-15T12:15:33-0600"
   },
   "monitored_workers": {
     "dev-worker-D6FE104C": {
@@ -804,16 +804,44 @@
       "warnings_sent": 3,
       "interventions": [],
       "legacy_worker": false
+    },
+    "worker-analysis-001": {
+      "worker_id": "worker-analysis-001",
+      "task_id": "task-moe-learning-1763235765769",
+      "worker_type": "analysis-worker",
+      "registered_at": "2025-11-15T13:51:54-0600",
+      "started_at": "2025-11-15T13:51:43-0600",
+      "last_checkin": null,
+      "checkin_count": 0,
+      "health_state": "stalled",
+      "progress_pct": 0,
+      "warnings_sent": 1,
+      "interventions": [],
+      "legacy_worker": false
+    },
+    "worker-implementation-005": {
+      "worker_id": "worker-implementation-005",
+      "task_id": "task-routing-intelligence-1763238578",
+      "worker_type": "implementation-worker",
+      "registered_at": "2025-11-15T14:31:03-0600",
+      "started_at": "2025-11-15T14:30:15-0600",
+      "last_checkin": null,
+      "checkin_count": 0,
+      "health_state": "late",
+      "progress_pct": 0,
+      "warnings_sent": 0,
+      "interventions": [],
+      "legacy_worker": false
     }
   },
   "metrics": {
-    "active_workers": 4,
+    "active_workers": 6,
     "completed_workers": 14,
     "failed_workers": 52,
-    "total_workers": 70,
-    "success_rate": 20,
-    "completed_today": 1,
-    "failed_today": 52,
-    "success_rate_today": 1.8
+    "total_workers": 72,
+    "success_rate": 19.4,
+    "completed_today": 0,
+    "failed_today": 0,
+    "success_rate_today": 0
   }
 }

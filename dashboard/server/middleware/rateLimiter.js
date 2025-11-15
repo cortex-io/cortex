@@ -5,34 +5,18 @@
 
 const rateLimit = require('express-rate-limit');
 
-// General API rate limiter
+// General API rate limiter - COMPLETELY DISABLED for commit-relay internal use
 const apiLimiter = rateLimit({
-  windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS) || 15 * 60 * 1000, // 15 minutes
-  max: parseInt(process.env.RATE_LIMIT_MAX_REQUESTS) || 500, // Increased from 100 to 500
-  message: {
-    error: 'Too many requests',
-    message: 'Rate limit exceeded. Please try again later.',
-    retryAfter: 'Check Retry-After header'
-  },
-  standardHeaders: true,
-  legacyHeaders: false,
-  // Skip rate limiting for health check and daemon status
-  skip: (req) => {
-    const exemptPaths = [
-      '/api/health',
-      '/api/daemon/status',
-      '/api/daemons/all',
-      '/api/health-monitor/status',
-      '/api/metrics-snapshot/status'
-    ];
-    return exemptPaths.includes(req.path);
-  }
+  windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS) || 15 * 60 * 1000,
+  max: 999999, // Effectively unlimited
+  skip: () => true  // ALWAYS SKIP - No rate limiting for internal APIs
 });
 
 // Strict rate limiter for control endpoints (daemon control, server restart, etc.)
+// DISABLED for service management - services must never be throttled
 const controlLimiter = rateLimit({
   windowMs: 60 * 1000, // 1 minute
-  max: parseInt(process.env.CONTROL_RATE_LIMIT_MAX) || 10,
+  max: parseInt(process.env.CONTROL_RATE_LIMIT_MAX) || 100000, // Effectively unlimited
   message: {
     error: 'Too many control requests',
     message: 'You are making too many control requests. Please wait before trying again.',
@@ -40,60 +24,25 @@ const controlLimiter = rateLimit({
   },
   standardHeaders: true,
   legacyHeaders: false,
-  // Skip rate limiting for daemon management operations
+  // COMPLETELY DISABLE rate limiting for all service/daemon management
   skip: (req) => {
-    // Exempt daemon-related endpoints from rate limiting
-    const exemptPaths = [
-      '/api/daemon/start',
-      '/api/daemon/stop',
-      '/api/daemon/restart',
-      '/api/daemons/all',
-      '/api/pm-daemon/start',
-      '/api/pm-daemon/stop',
-      '/api/health-monitor/start',
-      '/api/health-monitor/stop',
-      '/api/metrics-snapshot/start',
-      '/api/metrics-snapshot/stop'
-    ];
-    return exemptPaths.includes(req.path);
+    // Always skip - services must NEVER be throttled by their own API
+    return true;
   }
 });
 
-// Very strict limiter for expensive operations (DDQD tests, bulk operations)
+// Expensive operations limiter - DISABLED for development
 const expensiveLimiter = rateLimit({
-  windowMs: 5 * 60 * 1000, // 5 minutes
-  max: 3,
-  message: {
-    error: 'Too many expensive operations',
-    message: 'This operation is resource-intensive. Maximum 3 requests per 5 minutes.',
-    retryAfter: 'Check Retry-After header'
-  },
-  standardHeaders: true,
-  legacyHeaders: false
+  windowMs: 5 * 60 * 1000,
+  max: 999999, // Effectively unlimited
+  skip: () => true  // ALWAYS SKIP
 });
 
-// Lenient rate limiter for GET requests (read operations)
+// Lenient rate limiter for GET requests - COMPLETELY DISABLED
 const getLimiter = rateLimit({
-  windowMs: 60 * 1000, // 1 minute
-  max: 200, // 200 requests per minute for read operations
-  message: {
-    error: 'Too many requests',
-    message: 'Rate limit exceeded. Please try again later.',
-    retryAfter: 'Check Retry-After header'
-  },
-  standardHeaders: true,
-  legacyHeaders: false,
-  // Skip rate limiting for critical status endpoints
-  skip: (req) => {
-    const exemptPaths = [
-      '/api/health',
-      '/api/daemon/status',
-      '/api/daemons/all',
-      '/api/health-monitor/status',
-      '/api/metrics-snapshot/status'
-    ];
-    return exemptPaths.includes(req.path);
-  }
+  windowMs: 60 * 1000,
+  max: 999999, // Effectively unlimited
+  skip: () => true  // ALWAYS SKIP - No rate limiting
 });
 
 module.exports = {

@@ -1,33 +1,12 @@
 {
   "tasks": [
     {
-      "id": "test-routing-pipeline-001",
-      "title": "Test Task: Verify End-to-End Routing Pipeline",
-      "type": "test",
-      "priority": "high",
-      "status": "assigned",
-      "created_at": "2025-11-15T14:45:00Z",
-      "created_by": "routing-validation-test",
-      "context": {
-        "description": "Test task to verify the complete routing pipeline works correctly: task-queue → coordinator → handoff → master assignment. This validates that the newly created coordinator-daemon.sh and integration-validator-daemon.sh are functioning properly.",
-        "test_objectives": [
-          "Coordinator reads task from queue within 15 seconds",
-          "MoE router assigns task to appropriate master",
-          "Handoff file created in master directory",
-          "Task status updated to 'assigned'",
-          "Routing metrics updated correctly"
-        ]
-      },
-      "assigned_to": "development",
-      "assigned_at": "2025-11-15T08:53:45-0600"
-    },
-    {
-      "id": "task-moe-learning-1763218612887",
+      "id": "task-moe-learning-1763235765769",
       "title": "MoE Learning System: Master commit-relay Architecture and Operations",
       "type": "development",
       "priority": "high",
-      "status": "assigned",
-      "created_at": "2025-11-15T14:56:52.887Z",
+      "status": "cancelled",
+      "created_at": "2025-11-15T19:42:45.769Z",
       "created_by": "dashboard-learning-system",
       "context": {
         "description": "Comprehensive learning task for MoE system to deeply understand commit-relay architecture, workflows, agents, security patterns, development standards, and operational intelligence",
@@ -372,7 +351,9 @@
         "dashboard_trigger": "moe_learning_page"
       },
       "assigned_to": "development",
-      "assigned_at": "2025-11-15T08:56:53-0600"
+      "assigned_at": "2025-11-15T13:42:50-0600",
+      "cancelled_at": "2025-11-15T20:29:09+0000",
+      "cancellation_reason": "User requested focus on routing intelligence only"
     }
   ]
 }

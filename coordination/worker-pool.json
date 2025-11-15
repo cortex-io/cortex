@@ -1,13 +1,79 @@
 {
-  "active_workers": [],
+  "active_workers": [
+    {
+      "worker_id": "worker-analysis-001",
+      "worker_type": "analysis-worker",
+      "spawned_by": "development-master",
+      "spawned_at": "2025-11-15T13:51:37-0600",
+      "status": "pending",
+      "task_id": "task-moe-learning-1763235765769",
+      "token_budget": 5000,
+      "tokens_used": 0,
+      "timeout_at": null,
+      "last_heartbeat": null,
+      "session_id": null
+    },
+    {
+      "worker_id": "worker-implementation-002",
+      "worker_type": "implementation-worker",
+      "spawned_by": "development-master",
+      "spawned_at": "2025-11-15T13:54:59-0600",
+      "status": "pending",
+      "task_id": "task-moe-learning-1763235765769",
+      "token_budget": 10000,
+      "tokens_used": 0,
+      "timeout_at": null,
+      "last_heartbeat": null,
+      "session_id": null
+    },
+    {
+      "worker_id": "worker-implementation-003",
+      "worker_type": "implementation-worker",
+      "spawned_by": "development-master",
+      "spawned_at": "2025-11-15T13:55:06-0600",
+      "status": "pending",
+      "task_id": "task-moe-learning-1763235765769",
+      "token_budget": 10000,
+      "tokens_used": 0,
+      "timeout_at": null,
+      "last_heartbeat": null,
+      "session_id": null
+    },
+    {
+      "worker_id": "worker-implementation-004",
+      "worker_type": "implementation-worker",
+      "spawned_by": "development-master",
+      "spawned_at": "2025-11-15T13:55:14-0600",
+      "status": "pending",
+      "task_id": "task-moe-learning-1763235765769",
+      "token_budget": 10000,
+      "tokens_used": 0,
+      "timeout_at": null,
+      "last_heartbeat": null,
+      "session_id": null
+    },
+    {
+      "worker_id": "worker-implementation-005",
+      "worker_type": "implementation-worker",
+      "spawned_by": "development-master",
+      "spawned_at": "2025-11-15T14:29:48-0600",
+      "status": "pending",
+      "task_id": "task-routing-intelligence-1763238578",
+      "token_budget": 10000,
+      "tokens_used": 0,
+      "timeout_at": null,
+      "last_heartbeat": null,
+      "session_id": null
+    }
+  ],
   "completed_workers": [],
   "failed_workers": [],
   "stats": {
-    "total_spawned_today": 52,
+    "total_spawned_today": 57,
     "total_completed_today": 0,
     "total_failed_today": 52,
     "success_rate": 0,
     "note": "Synced with worker-specs directories at 2025-11-14T12:37:22Z"
   },
-  "updated_at": "2025-11-14T12:37:22Z"
+  "updated_at": "2025-11-15T14:29:48-0600"
 }
