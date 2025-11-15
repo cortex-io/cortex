@@ -3910,3 +3910,323 @@
     }
   }
 }
+{
+  "task_id": "task-test-001",
+  "timestamp": "2025-11-15T12:43:07-0600",
+  "routing_strategy": "mixture_of_experts",
+  "decision": {
+    "primary_expert": "security",
+    "primary_confidence": 0.95,
+    "strategy": "single_expert",
+    "parallel_experts": [],
+    "scores": {
+      "development": 0,
+      "security": 0.95,
+      "inventory": 0
+    }
+  }
+}
+{
+  "task_id": "task-test-002",
+  "timestamp": "2025-11-15T12:43:21-0600",
+  "routing_strategy": "mixture_of_experts",
+  "decision": {
+    "primary_expert": "development",
+    "primary_confidence": 0.95,
+    "strategy": "single_expert",
+    "parallel_experts": [],
+    "scores": {
+      "development": 0.95,
+      "security": 0.03,
+      "inventory": 0
+    }
+  }
+}
+{
+  "task_id": "task-test-003",
+  "timestamp": "2025-11-15T12:43:30-0600",
+  "routing_strategy": "mixture_of_experts",
+  "decision": {
+    "primary_expert": "inventory",
+    "primary_confidence": 0.95,
+    "strategy": "single_expert",
+    "parallel_experts": [],
+    "scores": {
+      "development": 0,
+      "security": 0,
+      "inventory": 0.95
+    }
+  }
+}
+{
+  "task_id": "task-test-004",
+  "timestamp": "2025-11-15T12:43:38-0600",
+  "routing_strategy": "mixture_of_experts",
+  "decision": {
+    "primary_expert": "development",
+    "primary_confidence": 0.05,
+    "strategy": "single_expert_low_confidence",
+    "parallel_experts": [],
+    "scores": {
+      "development": 0.05,
+      "security": 0.03,
+      "inventory": 0
+    }
+  }
+}
+{
+  "task_id": "task-test-005",
+  "timestamp": "2025-11-15T12:44:07-0600",
+  "routing_strategy": "mixture_of_experts",
+  "decision": {
+    "primary_expert": "security",
+    "primary_confidence": 0.06,
+    "strategy": "single_expert_low_confidence",
+    "parallel_experts": [],
+    "scores": {
+      "development": 0,
+      "security": 0.06,
+      "inventory": 0
+    }
+  }
+}
+{
+  "task_id": "test-deploy",
+  "timestamp": "2025-11-15T13:11:20-0600",
+  "routing_strategy": "mixture_of_experts",
+  "decision": {
+    "primary_expert": "security",
+    "primary_confidence": 0.06,
+    "strategy": "single_expert_low_confidence",
+    "parallel_experts": [],
+    "scores": {
+      "development": 0,
+      "security": 0.06,
+      "inventory": 0
+    }
+  }
+}
+{
+  "task_id": "demo-001",
+  "timestamp": "2025-11-15T13:12:02-0600",
+  "routing_strategy": "mixture_of_experts",
+  "decision": {
+    "primary_expert": "development",
+    "primary_confidence": 0,
+    "strategy": "single_expert_low_confidence",
+    "parallel_experts": [],
+    "scores": {
+      "development": 0,
+      "security": 0,
+      "inventory": 0
+    }
+  }
+}
+{
+  "task_id": "real-task-001",
+  "timestamp": "2025-11-15T13:21:09-0600",
+  "routing_strategy": "mixture_of_experts",
+  "decision": {
+    "primary_expert": "development",
+    "primary_confidence": 0,
+    "strategy": "single_expert_low_confidence",
+    "parallel_experts": [],
+    "scores": {
+      "development": 0,
+      "security": 0,
+      "inventory": 0
+    }
+  }
+}
+{
+  "task_id": "test-llm-mesh-001",
+  "timestamp": "2025-11-15T13:27:05-0600",
+  "routing_strategy": "mixture_of_experts",
+  "decision": {
+    "primary_expert": "development",
+    "primary_confidence": 0,
+    "strategy": "single_expert_low_confidence",
+    "parallel_experts": [],
+    "scores": {
+      "development": 0,
+      "security": 0,
+      "inventory": 0
+    }
+  }
+}
+{
+  "task_id": "test-after-learning",
+  "timestamp": "2025-11-15T13:33:16-0600",
+  "routing_strategy": "mixture_of_experts",
+  "decision": {
+    "primary_expert": "development",
+    "primary_confidence": 0.14,
+    "strategy": "single_expert_low_confidence",
+    "parallel_experts": [],
+    "scores": {
+      "development": 0.14,
+      "security": 0.03,
+      "inventory": 0
+    }
+  }
+}
+{
+  "task_id": "task-moe-learning-1763235765769",
+  "timestamp": "2025-11-15T13:42:50-0600",
+  "routing_strategy": "mixture_of_experts",
+  "decision": {
+    "primary_expert": "development",
+    "primary_confidence": 0,
+    "strategy": "single_expert_low_confidence",
+    "parallel_experts": [],
+    "scores": {
+      "development": 0,
+      "security": 0,
+      "inventory": 0
+    }
+  }
+}
+{
+  "task_id": "moe-test-ddqd-v5-1763246282-6b58e5a8",
+  "timestamp": "2025-11-15T16:38:55-0600",
+  "routing_strategy": "mixture_of_experts",
+  "decision": {
+    "primary_expert": "security",
+    "primary_confidence": 0.09,
+    "strategy": "single_expert_low_confidence",
+    "parallel_experts": [],
+    "scores": {
+      "development": 0.03,
+      "security": 0.09,
+      "inventory": 0
+    }
+  }
+}
+{
+  "task_id": "moe-test-ddqd-v5-1763246282-ff986227",
+  "timestamp": "2025-11-15T16:38:55-0600",
+  "routing_strategy": "mixture_of_experts",
+  "decision": {
+    "primary_expert": "security",
+    "primary_confidence": 0.09,
+    "strategy": "single_expert_low_confidence",
+    "parallel_experts": [],
+    "scores": {
+      "development": 0,
+      "security": 0.09,
+      "inventory": 0
+    }
+  }
+}
+{
+  "task_id": "moe-test-ddqd-v5-1763246282-e8e7046a",
+  "timestamp": "2025-11-15T16:38:56-0600",
+  "routing_strategy": "mixture_of_experts",
+  "decision": {
+    "primary_expert": "development",
+    "primary_confidence": 0.07,
+    "strategy": "single_expert_low_confidence",
+    "parallel_experts": [],
+    "scores": {
+      "development": 0.07,
+      "security": 0,
+      "inventory": 0
+    }
+  }
+}
+{
+  "task_id": "moe-test-ddqd-v5-1763246282-579254c4",
+  "timestamp": "2025-11-15T16:38:56-0600",
+  "routing_strategy": "mixture_of_experts",
+  "decision": {
+    "primary_expert": "development",
+    "primary_confidence": 0.09,
+    "strategy": "single_expert_low_confidence",
+    "parallel_experts": [],
+    "scores": {
+      "development": 0.09,
+      "security": 0,
+      "inventory": 0
+    }
+  }
+}
+{
+  "task_id": "moe-test-ddqd-v5-1763246282-bb67152d",
+  "timestamp": "2025-11-15T16:38:57-0600",
+  "routing_strategy": "mixture_of_experts",
+  "decision": {
+    "primary_expert": "inventory",
+    "primary_confidence": 0.17,
+    "strategy": "single_expert_low_confidence",
+    "parallel_experts": [],
+    "scores": {
+      "development": 0,
+      "security": 0,
+      "inventory": 0.17
+    }
+  }
+}
+{
+  "task_id": "moe-test-ddqd-v5-1763246282-6b53d344",
+  "timestamp": "2025-11-15T16:38:57-0600",
+  "routing_strategy": "mixture_of_experts",
+  "decision": {
+    "primary_expert": "inventory",
+    "primary_confidence": 0.28,
+    "strategy": "single_expert_low_confidence",
+    "parallel_experts": [],
+    "scores": {
+      "development": 0,
+      "security": 0,
+      "inventory": 0.28
+    }
+  }
+}
+{
+  "task_id": "moe-test-ddqd-v5-1763246822-35699d93",
+  "timestamp": "2025-11-15T16:47:48-0600",
+  "routing_strategy": "mixture_of_experts",
+  "decision": {
+    "primary_expert": "security",
+    "primary_confidence": 0.09,
+    "strategy": "single_expert_low_confidence",
+    "parallel_experts": [],
+    "scores": {
+      "development": 0.03,
+      "security": 0.09,
+      "inventory": 0
+    }
+  }
+}
+{
+  "task_id": "moe-test-ddqd-v5-1763246822-04d8f5e0",
+  "timestamp": "2025-11-15T16:47:49-0600",
+  "routing_strategy": "mixture_of_experts",
+  "decision": {
+    "primary_expert": "security",
+    "primary_confidence": 0.09,
+    "strategy": "single_expert_low_confidence",
+    "parallel_experts": [],
+    "scores": {
+      "development": 0,
+      "security": 0.09,
+      "inventory": 0
+    }
+  }
+}
+{
+  "task_id": "moe-test-ddqd-v5-1763246822-91004f5a",
+  "timestamp": "2025-11-15T16:47:49-0600",
+  "routing_strategy": "mixture_of_experts",
+  "decision": {
+    "primary_expert": "development",
+    "primary_confidence": 0.07,
+    "strategy": "single_expert_low_confidence",
+    "parallel_experts": [],
+    "scores": {
+      "development": 0.07,
+      "security": 0,
+      "inventory": 0
+    }
+  }
+}
