@@ -130,3 +130,11 @@
 {"task_id":"task-1762553467","title":"GOVERNANCE UPGRADE - Phase 4: AI-Powered Monitoring & Quality Assurance","routed_to":"development","rule_used":"code-development","pattern_matched":"implement","confidence":0.90,"timestamp":"2025-11-12T16:20:00Z","retry_attempt":2,"previous_failure":"launcher_bug_task_context_injection_failure","outcome":"pending"}
 {"task_id":"task-1762553468","title":"GOVERNANCE UPGRADE - Phase 5: Compliance Automation & Reporting","routed_to":"development","rule_used":"code-development","pattern_matched":"implement","confidence":0.90,"timestamp":"2025-11-12T16:20:00Z","retry_attempt":2,"previous_failure":"launcher_bug_task_context_injection_failure","outcome":"pending"}
 {"task_id":"task-1762553469","title":"GOVERNANCE UPGRADE - Phase 6: Governance Metrics & Continuous Improvement","routed_to":"development","rule_used":"code-development","pattern_matched":"implement","confidence":0.90,"timestamp":"2025-11-12T16:20:00Z","retry_attempt":2,"previous_failure":"launcher_bug_task_context_injection_failure","outcome":"pending"}
+{"task_id":"moe-test-ddqd-v5-1763246282-ff986227","routed_to":"security","rule_used":"security-scan","timestamp":"2025-11-15T16:38:56-0600"}
+{"task_id":"moe-test-ddqd-v5-1763246282-e8e7046a","routed_to":"development","rule_used":"code-development","timestamp":"2025-11-15T16:38:56-0600"}
+{"task_id":"moe-test-ddqd-v5-1763246282-579254c4","routed_to":"development","rule_used":"code-development","timestamp":"2025-11-15T16:38:56-0600"}
+{"task_id":"moe-test-ddqd-v5-1763246282-bb67152d","routed_to":"inventory","rule_used":"inventory-management","timestamp":"2025-11-15T16:38:56-0600"}
+{"task_id":"moe-test-ddqd-v5-1763246282-6b53d344","routed_to":"inventory","rule_used":"inventory-management","timestamp":"2025-11-15T16:38:57-0600"}
+{"task_id":"moe-test-ddqd-v5-1763246822-8c0d2292","routed_to":"development","rule_used":"code-development","timestamp":"2025-11-15T16:47:56-0600"}
+{"task_id":"moe-test-ddqd-v5-1763246822-1d954f50","routed_to":"inventory","rule_used":"inventory-management","timestamp":"2025-11-15T16:47:56-0600"}
+{"task_id":"moe-test-ddqd-v5-1763246822-33348243","routed_to":"inventory","rule_used":"inventory-management","timestamp":"2025-11-15T16:47:56-0600"}
