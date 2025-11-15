@@ -7,7 +7,7 @@
 #   check_permission "$principal" "$asset" "$operation" || exit 1
 
 # Configuration
-GOVERNANCE_LIB="${COMMIT_RELAY_HOME:-/Users/ryandahlberg/commit-relay}/lib/governance"
+GOVERNANCE_LIB="${COMMIT_RELAY_HOME:-/Users/ryandahlberg/Projects/commit-relay}/lib/governance"
 ACCESS_CLI="$GOVERNANCE_LIB/access-cli.js"
 
 # Permission check cache disabled for Bash 3.2 compatibility

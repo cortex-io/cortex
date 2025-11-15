@@ -55,6 +55,48 @@ else
 fi
 log_info ""
 
+# Start Core Daemons
+log_section "Starting Core Daemons"
+
+# Create logs directory if it doesn't exist
+DAEMON_LOGS_DIR="$COMMIT_RELAY_HOME/logs/daemons"
+mkdir -p "$DAEMON_LOGS_DIR"
+
+# Define daemons to start
+DAEMONS=(
+    "pm-daemon:Process Manager"
+    "health-monitor-daemon:Health Monitor"
+    "metrics-snapshot-daemon:Metrics Snapshot"
+    "coordinator-daemon:Coordinator"
+    "integration-validator-daemon:Integration Validator"
+    "worker-daemon:Worker Manager"
+    "daemon-supervisor:Daemon Supervisor"
+)
+
+# Start each daemon
+for daemon_entry in "${DAEMONS[@]}"; do
+    IFS=: read -r daemon_script daemon_name <<< "$daemon_entry"
+
+    # Check if daemon is already running
+    if pgrep -f "${daemon_script}.sh" > /dev/null 2>&1; then
+        log_info "$daemon_name already running"
+    else
+        log_info "Starting $daemon_name..."
+        nohup "$SCRIPT_DIR/${daemon_script}.sh" > "$DAEMON_LOGS_DIR/${daemon_script}.log" 2>&1 &
+        DAEMON_PID=$!
+        sleep 1
+
+        # Verify daemon started
+        if ps -p $DAEMON_PID > /dev/null 2>&1; then
+            log_success "$daemon_name started (PID: $DAEMON_PID)"
+        else
+            log_warn "$daemon_name may have failed to start. Check logs at logs/daemons/${daemon_script}.log"
+        fi
+    fi
+done
+
+log_info ""
+
 # Verify agents are installed
 log_section "Verifying Claude Code Agents"
 AGENTS_DIR="$COMMIT_RELAY_HOME/.claude/agents"

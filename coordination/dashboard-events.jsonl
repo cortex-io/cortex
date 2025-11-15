@@ -155,3 +155,15 @@
 {"timestamp":"2025-11-15T08:56:53-0600","type":"task_assigned","data":{"task_id":"task-moe-learning-1763218612887","assigned_to":"development","task_title":"MoE Learning System: Master commit-relay Architecture and Operations"}}
 {"timestamp":"2025-11-15T09:38:06-0600","type":"coordinator_stopped","data":{"pid":83911}}
 {"timestamp":"2025-11-15T09:38:06-0600","type":"coordinator_stopped","data":{"pid":83911}}
+{"timestamp":"2025-11-15T12:16:22-0600","type":"coordinator_started","data":{"pid":16874}}
+{"timestamp":"2025-11-15T12:16:25-0600","type":"integration_validator_started","data":{"pid":17147}}
+{"timestamp":"2025-11-15T12:16:26-0600","type":"routing_alert_created","data":{"alert_id":"routing-1763230585-worker_daemon_not_running","type":"worker_daemon_not_running","severity":"high"}}
+{"timestamp":"2025-11-15T13:42:50-0600","type":"task_assigned","data":{"task_id":"task-moe-learning-1763235765769","assigned_to":"development","task_title":"MoE Learning System: Master commit-relay Architecture and Operations"}}
+{"id":"evt-1763236049-10727","timestamp":"2025-11-15T13:47:29-06:00","type":"system_ERROR","data":"Permission denied: development-master cannot spawn workers","source":"automation"}
+{"id":"evt-1763236215-13075","timestamp":"2025-11-15T13:50:15-06:00","type":"system_ERROR","data":"Permission denied: development-master cannot spawn workers","source":"automation"}
+{"id":"evt-1763236303-18041","timestamp":"2025-11-15T13:51:43-06:00","type":"worker_started","data":"{\"worker_id\":\"worker-analysis-001\",\"task_id\":\"task-moe-learning-1763235765769\",\"worker_type\":\"analysis-worker\",\"launched_by\":\"daemon\"}","source":"automation"}
+{"timestamp":"2025-11-15T13:51:43-0600","type":"orchestrator_started","data":{"pid":14941}}
+{"id":"evt-1763236519-18041","timestamp":"2025-11-15T13:55:19-06:00","type":"worker_started","data":"{\"worker_id\":\"worker-implementation-002\",\"task_id\":\"task-moe-learning-1763235765769\",\"worker_type\":\"implementation-worker\",\"launched_by\":\"daemon\"}","source":"automation"}
+{"id":"evt-1763236520-18041","timestamp":"2025-11-15T13:55:20-06:00","type":"worker_started","data":"{\"worker_id\":\"worker-implementation-003\",\"task_id\":\"task-moe-learning-1763235765769\",\"worker_type\":\"implementation-worker\",\"launched_by\":\"daemon\"}","source":"automation"}
+{"id":"evt-1763236521-18041","timestamp":"2025-11-15T13:55:21-06:00","type":"worker_started","data":"{\"worker_id\":\"worker-implementation-004\",\"task_id\":\"task-moe-learning-1763235765769\",\"worker_type\":\"implementation-worker\",\"launched_by\":\"daemon\"}","source":"automation"}
+{"id":"evt-1763238615-18041","timestamp":"2025-11-15T14:30:15-06:00","type":"worker_started","data":"{\"worker_id\":\"worker-implementation-005\",\"task_id\":\"task-routing-intelligence-1763238578\",\"worker_type\":\"implementation-worker\",\"launched_by\":\"daemon\"}","source":"automation"}
