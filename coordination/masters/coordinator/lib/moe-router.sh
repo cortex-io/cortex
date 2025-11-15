@@ -9,16 +9,16 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 KB_DIR="$SCRIPT_DIR/../knowledge-base"
 ROUTING_PATTERNS="$KB_DIR/routing-patterns.json"
 ROUTING_LOG="$SCRIPT_DIR/../logs/routing-decisions.jsonl"
-COMMIT_RELAY_HOME="${COMMIT_RELAY_HOME:-/Users/ryandahlberg/commit-relay}"
+COMMIT_RELAY_HOME="${COMMIT_RELAY_HOME:-$(cd "$SCRIPT_DIR/../../../.." && pwd)}"
 
 # Governance bypass mode (for bootstrapping governance system itself)
 GOVERNANCE_BYPASS="${GOVERNANCE_BYPASS:-false}"
 
-# Load access control (skip if in bypass mode)
-if [ "$GOVERNANCE_BYPASS" != "true" ]; then
+# Load access control (skip if in bypass mode or file doesn't exist)
+if [ "$GOVERNANCE_BYPASS" != "true" ] && [ -f "$COMMIT_RELAY_HOME/scripts/lib/access-check.sh" ]; then
     source "$COMMIT_RELAY_HOME/scripts/lib/access-check.sh"
 else
-    # Stub function for bypass mode
+    # Stub function for bypass mode or when access-check doesn't exist
     check_permission() {
         return 0  # Always allow in bypass mode
     }

@@ -3878,3 +3878,35 @@
     }
   }
 }
+{
+  "task_id": "test-routing-pipeline-001",
+  "timestamp": "2025-11-15T08:53:44-0600",
+  "routing_strategy": "mixture_of_experts",
+  "decision": {
+    "primary_expert": "development",
+    "primary_confidence": 0.02,
+    "strategy": "single_expert_low_confidence",
+    "parallel_experts": [],
+    "scores": {
+      "development": 0.02,
+      "security": 0,
+      "inventory": 0
+    }
+  }
+}
+{
+  "task_id": "task-moe-learning-1763218612887",
+  "timestamp": "2025-11-15T08:56:53-0600",
+  "routing_strategy": "mixture_of_experts",
+  "decision": {
+    "primary_expert": "development",
+    "primary_confidence": 0,
+    "strategy": "single_expert_low_confidence",
+    "parallel_experts": [],
+    "scores": {
+      "development": 0,
+      "security": 0,
+      "inventory": 0
+    }
+  }
+}
