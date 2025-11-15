@@ -133,3 +133,25 @@
 {"id":"evt-1762984970993-98864","timestamp":"2025-11-12T22:02:50.993Z","type":"health_alert_resolved","data":{"alert_id":"alert-zombie-threshold-1762980261","alert_type":"zombie_threshold","severity":"high","message":"Health alert resolved: Zombie threshold exceeded: 28 zombies detected (threshold: 10)"},"source":"dashboard"}
 {"id":"evt-1762985747987-98864","timestamp":"2025-11-12T22:15:47.987Z","type":"health_alert_deleted","data":{"alert_id":"alert-zombie-threshold-1762980261","alert_type":"zombie_threshold","severity":"high","message":"Health alert deleted: Zombie threshold exceeded: 28 zombies detected (threshold: 10)"},"source":"dashboard"}
 {"id":"evt-1762985754871-98864","timestamp":"2025-11-12T22:15:54.871Z","type":"health_alert_deleted","data":{"alert_id":"alert-zombie-threshold-1762985054","alert_type":"zombie_threshold","severity":"high","message":"Health alert deleted: Zombie threshold exceeded: 32 zombies detected (threshold: 10)"},"source":"dashboard"}
+{"id":"evt-1763157758828-20101","timestamp":"2025-11-14T22:02:38.828Z","type":"health_alert_deleted","data":{"alert_id":"alert-zombie-threshold-1762985792","alert_type":"zombie_threshold","severity":"high","message":"Health alert deleted: Zombie threshold exceeded: 32 zombies detected (threshold: 10)"},"source":"dashboard"}
+{"id":"evt-1763157764884-20101","timestamp":"2025-11-14T22:02:44.884Z","type":"health_alert_deleted","data":{"alert_id":"alert-pm-daemon-down","alert_type":"pm_daemon_failure","severity":"high","message":"Health alert deleted: PM Daemon heartbeat stale, PM Agent spawned as backup"},"source":"dashboard"}
+{"id":"evt-1763158370841-27691","timestamp":"2025-11-14T22:12:50.841Z","type":"health_alert_resolved","data":{"alert_id":"alert-dashboard-down","alert_type":"dashboard_failure","severity":"medium","message":"Health alert resolved: Dashboard server not responding on port 3000"},"source":"dashboard"}
+{"id":"evt-1763158375783-27691","timestamp":"2025-11-14T22:12:55.783Z","type":"health_alert_deleted","data":{"alert_id":"alert-dashboard-down","alert_type":"dashboard_failure","severity":"medium","message":"Health alert deleted: Dashboard server not responding on port 3000"},"source":"dashboard"}
+{"timestamp":"2025-11-15T08:20:04-0600","type":"coordinator_started","data":{"pid":48203}}
+{"timestamp":"2025-11-15T08:20:51-0600","type":"coordinator_stopped","data":{"pid":48203}}
+{"timestamp":"2025-11-15T08:20:51-0600","type":"coordinator_stopped","data":{"pid":48203}}
+{"timestamp":"2025-11-15T08:23:17-0600","type":"coordinator_started","data":{"pid":52295}}
+{"timestamp":"2025-11-15T08:23:20-0600","type":"integration_validator_started","data":{"pid":52358}}
+{"timestamp":"2025-11-15T08:46:32-0600","type":"coordinator_stopped","data":{"pid":52295}}
+{"timestamp":"2025-11-15T08:47:24-0600","type":"routing_alert_created","data":{"alert_id":"routing-1763218044-coordinator_not_running","type":"coordinator_not_running","severity":"critical"}}
+{"timestamp":"2025-11-15T08:47:24-0600","type":"integration_validator_stopped","data":{"pid":52358}}
+{"timestamp":"2025-11-15T08:50:56-0600","type":"coordinator_started","data":{"pid":79814}}
+{"timestamp":"2025-11-15T08:50:57-0600","type":"coordinator_stopped","data":{"pid":79814}}
+{"timestamp":"2025-11-15T08:52:42-0600","type":"coordinator_started","data":{"pid":81684}}
+{"timestamp":"2025-11-15T08:52:43-0600","type":"coordinator_stopped","data":{"pid":81684}}
+{"timestamp":"2025-11-15T08:53:44-0600","type":"coordinator_started","data":{"pid":83911}}
+{"timestamp":"2025-11-15T08:53:45-0600","type":"task_assigned","data":{"task_id":"test-routing-pipeline-001","assigned_to":"development","task_title":"Test Task: Verify End-to-End Routing Pipeline"}}
+{"timestamp":"2025-11-15T08:56:27-0600","type":"integration_validator_started","data":{"pid":87782}}
+{"timestamp":"2025-11-15T08:56:53-0600","type":"task_assigned","data":{"task_id":"task-moe-learning-1763218612887","assigned_to":"development","task_title":"MoE Learning System: Master commit-relay Architecture and Operations"}}
+{"timestamp":"2025-11-15T09:38:06-0600","type":"coordinator_stopped","data":{"pid":83911}}
+{"timestamp":"2025-11-15T09:38:06-0600","type":"coordinator_stopped","data":{"pid":83911}}

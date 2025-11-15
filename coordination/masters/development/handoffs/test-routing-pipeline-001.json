@@ -1,0 +1,26 @@
+{
+  "handoff_id": "test-routing-pipeline-001",
+  "task_id": "test-routing-pipeline-001",
+  "assigned_to": "development",
+  "created_at": "2025-11-15T08:53:45-0600",
+  "status": "pending",
+  "task": {
+    "id": "test-routing-pipeline-001",
+    "title": "Test Task: Verify End-to-End Routing Pipeline",
+    "type": "test",
+    "priority": "high",
+    "status": "pending",
+    "created_at": "2025-11-15T14:45:00Z",
+    "created_by": "routing-validation-test",
+    "context": {
+      "description": "Test task to verify the complete routing pipeline works correctly: task-queue → coordinator → handoff → master assignment. This validates that the newly created coordinator-daemon.sh and integration-validator-daemon.sh are functioning properly.",
+      "test_objectives": [
+        "Coordinator reads task from queue within 15 seconds",
+        "MoE router assigns task to appropriate master",
+        "Handoff file created in master directory",
+        "Task status updated to 'assigned'",
+        "Routing metrics updated correctly"
+      ]
+    }
+  }
+}
