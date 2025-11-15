@@ -3925,8 +3925,34 @@ console.log(data);`;
                 if (data.tests) {
                     this.ddqd.history = data.tests.slice(0, 10); // Keep last 10
                 }
+
+                // Also check for active tests and restore them
+                await this.restoreActiveDDQDTest();
             } catch (error) {
                 console.error('Error fetching DDQD history:', error);
+            }
+        },
+
+        // Restore active DDQD test after page refresh
+        async restoreActiveDDQDTest() {
+            try {
+                const response = await fetch('/api/ddqd/active');
+                const data = await response.json();
+
+                if (data.tests && data.tests.length > 0) {
+                    // Restore the first active test
+                    const activeTest = data.tests[0];
+                    this.ddqd.currentTest = activeTest.testId;
+                    this.ddqd.progress = activeTest.progress || 0;
+                    this.ddqd.testOutput = [];
+
+                    console.log('Restored active DDQD test:', activeTest.testId);
+
+                    // Start polling for status
+                    this.startDDQDPolling();
+                }
+            } catch (error) {
+                console.error('Error restoring active DDQD test:', error);
             }
         },
 
