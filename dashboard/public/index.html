@@ -2093,6 +2093,145 @@
                             </div>
                         </div>
                     </div>
+
+                    <!-- Governance Dashboard Section -->
+                    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 border border-gray-200 dark:border-gray-700">
+                        <div class="flex items-center justify-between mb-4">
+                            <div class="flex items-center space-x-3">
+                                <i data-lucide="shield-check" class="w-6 h-6 text-blue-600 dark:text-blue-400"></i>
+                                <h3 class="text-xl font-bold text-gray-900 dark:text-white">Governance Dashboard</h3>
+                            </div>
+                            <button @click="refreshGovernanceData()" class="px-3 py-1.5 text-sm rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors flex items-center gap-2">
+                                <i data-lucide="refresh-cw" class="w-4 h-4" :class="{'animate-spin': governanceLoading}"></i>
+                                Refresh
+                            </button>
+                        </div>
+                        <p class="text-sm text-gray-600 dark:text-gray-400 mb-6">System compliance, security, and quality metrics</p>
+
+                        <!-- Health Score Banner -->
+                        <div class="mb-6 p-6 rounded-lg bg-gradient-to-r from-blue-50 to-green-50 dark:from-blue-900/20 dark:to-green-900/20 border border-blue-200 dark:border-blue-800">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <div class="text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">Overall Health Score</div>
+                                    <div class="text-4xl font-bold" :class="governanceData.dashboard?.health_score >= 90 ? 'text-green-600 dark:text-green-400' : governanceData.dashboard?.health_score >= 75 ? 'text-yellow-600 dark:text-yellow-400' : 'text-red-600 dark:text-red-400'" x-text="governanceData.dashboard?.health_score?.toFixed(1) || '-'"></div>
+                                    <div class="text-sm font-medium mt-1" :class="governanceData.dashboard?.health_score >= 90 ? 'text-green-700 dark:text-green-300' : governanceData.dashboard?.health_score >= 75 ? 'text-yellow-700 dark:text-yellow-300' : 'text-red-700 dark:text-red-300'" x-text="governanceData.dashboard?.status || 'unknown'"></div>
+                                </div>
+                                <div class="flex items-center space-x-6">
+                                    <div class="text-center">
+                                        <div class="text-2xl font-bold text-blue-600 dark:text-blue-400" x-text="governanceData.dashboard?.kpi_summary?.compliance || '-'"></div>
+                                        <div class="text-xs text-gray-600 dark:text-gray-400">Compliance</div>
+                                    </div>
+                                    <div class="text-center">
+                                        <div class="text-2xl font-bold text-green-600 dark:text-green-400" x-text="governanceData.dashboard?.kpi_summary?.security || '-'"></div>
+                                        <div class="text-xs text-gray-600 dark:text-gray-400">Security</div>
+                                    </div>
+                                    <div class="text-center">
+                                        <div class="text-2xl font-bold text-purple-600 dark:text-purple-400" x-text="governanceData.dashboard?.kpi_summary?.quality || '-'"></div>
+                                        <div class="text-xs text-gray-600 dark:text-gray-400">Quality</div>
+                                    </div>
+                                    <div class="text-center">
+                                        <div class="text-2xl font-bold text-indigo-600 dark:text-indigo-400" x-text="governanceData.dashboard?.kpi_summary?.availability || '-'"></div>
+                                        <div class="text-xs text-gray-600 dark:text-gray-400">Availability</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Compliance Framework Cards -->
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                            <!-- GDPR Compliance -->
+                            <div class="bg-white dark:bg-gray-700 rounded-lg p-4 border border-gray-200 dark:border-gray-600">
+                                <div class="flex items-center justify-between mb-3">
+                                    <h4 class="text-sm font-semibold text-gray-900 dark:text-white">GDPR</h4>
+                                    <i data-lucide="check-circle" class="w-5 h-5" :class="governanceData.gdpr?.compliant ? 'text-green-500' : 'text-red-500'"></i>
+                                </div>
+                                <div class="space-y-2">
+                                    <div class="flex justify-between text-xs">
+                                        <span class="text-gray-600 dark:text-gray-400">Compliance</span>
+                                        <span class="font-medium" :class="governanceData.gdpr?.compliant ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'" x-text="governanceData.gdpr?.compliant ? 'Compliant' : 'Issues Found'">-</span>
+                                    </div>
+                                    <div class="flex justify-between text-xs">
+                                        <span class="text-gray-600 dark:text-gray-400">Rules Checked</span>
+                                        <span class="font-medium text-gray-900 dark:text-white" x-text="governanceData.gdpr?.total_rules || '-'"></span>
+                                    </div>
+                                    <div class="flex justify-between text-xs">
+                                        <span class="text-gray-600 dark:text-gray-400">Passed</span>
+                                        <span class="font-medium text-gray-900 dark:text-white" x-text="governanceData.gdpr?.passed || '-'"></span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- SOC2 Compliance -->
+                            <div class="bg-white dark:bg-gray-700 rounded-lg p-4 border border-gray-200 dark:border-gray-600">
+                                <div class="flex items-center justify-between mb-3">
+                                    <h4 class="text-sm font-semibold text-gray-900 dark:text-white">SOC 2</h4>
+                                    <i data-lucide="check-circle" class="w-5 h-5" :class="governanceData.soc2?.compliant ? 'text-green-500' : 'text-red-500'"></i>
+                                </div>
+                                <div class="space-y-2">
+                                    <div class="flex justify-between text-xs">
+                                        <span class="text-gray-600 dark:text-gray-400">Compliance</span>
+                                        <span class="font-medium" :class="governanceData.soc2?.compliant ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'" x-text="governanceData.soc2?.compliant ? 'Compliant' : 'Issues Found'">-</span>
+                                    </div>
+                                    <div class="flex justify-between text-xs">
+                                        <span class="text-gray-600 dark:text-gray-400">Rules Checked</span>
+                                        <span class="font-medium text-gray-900 dark:text-white" x-text="governanceData.soc2?.total_rules || '-'"></span>
+                                    </div>
+                                    <div class="flex justify-between text-xs">
+                                        <span class="text-gray-600 dark:text-gray-400">Passed</span>
+                                        <span class="font-medium text-gray-900 dark:text-white" x-text="governanceData.soc2?.passed || '-'"></span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Internal Policies -->
+                            <div class="bg-white dark:bg-gray-700 rounded-lg p-4 border border-gray-200 dark:border-gray-600">
+                                <div class="flex items-center justify-between mb-3">
+                                    <h4 class="text-sm font-semibold text-gray-900 dark:text-white">Internal Policies</h4>
+                                    <i data-lucide="check-circle" class="w-5 h-5" :class="governanceData.internal?.compliant ? 'text-green-500' : 'text-red-500'"></i>
+                                </div>
+                                <div class="space-y-2">
+                                    <div class="flex justify-between text-xs">
+                                        <span class="text-gray-600 dark:text-gray-400">Compliance</span>
+                                        <span class="font-medium" :class="governanceData.internal?.compliant ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'" x-text="governanceData.internal?.compliant ? 'Compliant' : 'Issues Found'">-</span>
+                                    </div>
+                                    <div class="flex justify-between text-xs">
+                                        <span class="text-gray-600 dark:text-gray-400">Rules Checked</span>
+                                        <span class="font-medium text-gray-900 dark:text-white" x-text="governanceData.internal?.total_rules || '-'"></span>
+                                    </div>
+                                    <div class="flex justify-between text-xs">
+                                        <span class="text-gray-600 dark:text-gray-400">Passed</span>
+                                        <span class="font-medium text-gray-900 dark:text-white" x-text="governanceData.internal?.passed || '-'"></span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Recommendations -->
+                        <div class="bg-gradient-to-r from-yellow-50 to-orange-50 dark:from-yellow-900/10 dark:to-orange-900/10 rounded-lg p-4 border border-yellow-200 dark:border-yellow-800">
+                            <h4 class="text-sm font-semibold text-gray-900 dark:text-white mb-3 flex items-center gap-2">
+                                <i data-lucide="lightbulb" class="w-4 h-4 text-yellow-600 dark:text-yellow-400"></i>
+                                Top Recommendations
+                            </h4>
+                            <div class="space-y-2">
+                                <template x-for="(rec, index) in (governanceData.dashboard?.top_recommendations || []).slice(0, 3)" :key="index">
+                                    <div class="flex items-start space-x-3 p-2 bg-white dark:bg-gray-700/50 rounded border border-yellow-100 dark:border-yellow-900/30">
+                                        <div class="flex-shrink-0 mt-0.5">
+                                            <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium"
+                                                  :class="{
+                                                      'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300': rec.priority === 'high',
+                                                      'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300': rec.priority === 'medium',
+                                                      'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300': rec.priority === 'low'
+                                                  }" x-text="rec.priority"></span>
+                                        </div>
+                                        <div class="flex-1 min-w-0">
+                                            <p class="text-xs font-medium text-gray-900 dark:text-white" x-text="rec.recommendation"></p>
+                                            <p class="text-xs text-gray-600 dark:text-gray-400 mt-0.5" x-text="rec.estimated_impact"></p>
+                                        </div>
+                                    </div>
+                                </template>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
 
