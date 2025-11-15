@@ -4716,6 +4716,25 @@ app.post('/api/ddqd/stop/:testId', (req, res) => {
   }
 });
 
+// Get active DDQD tests
+app.get('/api/ddqd/active', (req, res) => {
+  try {
+    const activeTests = Array.from(ddqdTests.values())
+      .filter(test => test.status === 'running')
+      .map(test => ({
+        testId: test.testId,
+        version: test.version,
+        duration: test.duration,
+        startTime: test.startTime,
+        progress: test.progress
+      }));
+    res.json({ tests: activeTests });
+  } catch (error) {
+    console.error('Error getting active DDQD tests:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // Get DDQD test history
 app.get('/api/ddqd/history', (req, res) => {
   try {
