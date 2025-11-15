@@ -53,6 +53,9 @@ const {
   sanitizeError
 } = require('./utils/security');
 
+// Governance modules
+const { ComplianceEngine, MetricsCollector } = require('../../lib/governance/compliance');
+
 const app = express();
 const PORT = process.env.DASHBOARD_PORT || 3000;
 
@@ -797,6 +800,103 @@ app.get('/api/metrics/history', async (req, res) => {
   } catch (error) {
     console.error('Error loading historical metrics:', error);
     res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+/**
+ * GET /api/governance/dashboard
+ * Get executive governance dashboard with health score, KPIs, and recommendations
+ */
+app.get('/api/governance/dashboard', async (req, res) => {
+  try {
+    const collector = new MetricsCollector();
+    const dashboard = await collector.generateDashboard();
+    res.json(dashboard);
+  } catch (error) {
+    console.error('Error generating governance dashboard:', error);
+    res.status(500).json({ error: 'Internal server error', message: sanitizeError(error.message) });
+  }
+});
+
+/**
+ * GET /api/governance/compliance-report
+ * Get comprehensive compliance report for all frameworks (GDPR, SOC2, Internal)
+ */
+app.get('/api/governance/compliance-report', async (req, res) => {
+  try {
+    const engine = new ComplianceEngine();
+    const report = await engine.generateComplianceReport();
+    res.json(report);
+  } catch (error) {
+    console.error('Error generating compliance report:', error);
+    res.status(500).json({ error: 'Internal server error', message: sanitizeError(error.message) });
+  }
+});
+
+/**
+ * GET /api/governance/compliance-check/:framework
+ * Check compliance for specific framework (gdpr, soc2, internal)
+ */
+app.get('/api/governance/compliance-check/:framework', async (req, res) => {
+  try {
+    const framework = req.params.framework;
+    const validFrameworks = ['gdpr', 'soc2', 'internal'];
+
+    if (!validFrameworks.includes(framework)) {
+      return res.status(400).json({
+        error: 'Invalid framework',
+        message: `Framework must be one of: ${validFrameworks.join(', ')}`
+      });
+    }
+
+    const engine = new ComplianceEngine();
+    const result = await engine.checkCompliance(framework);
+    res.json(result);
+  } catch (error) {
+    console.error('Error checking compliance:', error);
+    res.status(500).json({ error: 'Internal server error', message: sanitizeError(error.message) });
+  }
+});
+
+/**
+ * GET /api/governance/metrics
+ * Get detailed governance metrics (KPIs, trends, quality scores)
+ */
+app.get('/api/governance/metrics', async (req, res) => {
+  try {
+    const collector = new MetricsCollector();
+    const metrics = await collector.collectMetrics();
+    res.json(metrics);
+  } catch (error) {
+    console.error('Error collecting governance metrics:', error);
+    res.status(500).json({ error: 'Internal server error', message: sanitizeError(error.message) });
+  }
+});
+
+/**
+ * GET /api/governance/trends
+ * Get trend analysis for governance metrics
+ * Query params:
+ *   - period: time period (7d, 30d, 90d) - default: 30d
+ */
+app.get('/api/governance/trends', async (req, res) => {
+  try {
+    const period = req.query.period || '30d';
+    const validPeriods = ['7d', '30d', '90d'];
+
+    if (!validPeriods.includes(period)) {
+      return res.status(400).json({
+        error: 'Invalid period',
+        message: `Period must be one of: ${validPeriods.join(', ')}`
+      });
+    }
+
+    const collector = new MetricsCollector();
+    const trends = await collector.analyzeTrends(period);
+    res.json(trends);
+  } catch (error) {
+    console.error('Error analyzing governance trends:', error);
+    res.status(500).json({ error: 'Internal server error', message: sanitizeError(error.message) });
   }
 });
 
