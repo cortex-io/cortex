@@ -1,9 +1,9 @@
 {
   "pm_daemon": {
     "pid": 15688,
-    "last_loop": "2025-11-15T14:49:06-0600",
-    "loops_completed": 52,
-    "uptime_seconds": 9213,
+    "last_loop": "2025-11-15T16:46:25-0600",
+    "loops_completed": 91,
+    "uptime_seconds": 16252,
     "started_at": "2025-11-15T12:15:33-0600"
   },
   "monitored_workers": {
@@ -827,9 +827,9 @@
       "started_at": "2025-11-15T14:30:15-0600",
       "last_checkin": null,
       "checkin_count": 0,
-      "health_state": "late",
+      "health_state": "stalled",
       "progress_pct": 0,
-      "warnings_sent": 0,
+      "warnings_sent": 3,
       "interventions": [],
       "legacy_worker": false
     }
