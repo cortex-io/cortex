@@ -1228,3 +1228,253 @@
     "strategy": "single_expert_low_confidence"
   }
 }
+{
+  "timestamp": "2025-11-15T18:44:36-0600",
+  "type": "moe_routing_decision",
+  "data": {
+    "task_id": "task-moe-learning-1763253866091",
+    "expert": "development",
+    "confidence": 0,
+    "strategy": "single_expert_low_confidence"
+  }
+}
+{
+  "timestamp": "2025-11-16T09:40:02-0600",
+  "type": "moe_routing_decision",
+  "data": {
+    "task_id": "task-confidence-test-001",
+    "expert": "development",
+    "confidence": 0.14,
+    "strategy": "single_expert_low_confidence"
+  }
+}
+{
+  "timestamp": "2025-11-16T09:41:15-0600",
+  "type": "moe_routing_decision",
+  "data": {
+    "task_id": "task-confidence-test-002",
+    "expert": "development",
+    "confidence": 0.84,
+    "strategy": "single_expert"
+  }
+}
+{
+  "timestamp": "2025-11-16T09:41:31-0600",
+  "type": "moe_routing_decision",
+  "data": {
+    "task_id": "task-confidence-test-003",
+    "expert": "security",
+    "confidence": 0.36,
+    "strategy": "single_expert_low_confidence"
+  }
+}
+{
+  "timestamp": "2025-11-16T09:41:44-0600",
+  "type": "moe_routing_decision",
+  "data": {
+    "task_id": "task-confidence-test-004",
+    "expert": "inventory",
+    "confidence": 0.66,
+    "strategy": "single_expert_low_confidence"
+  }
+}
+{
+  "timestamp": "2025-11-16T09:41:51-0600",
+  "type": "moe_routing_decision",
+  "data": {
+    "task_id": "task-confidence-test-005",
+    "expert": "security",
+    "confidence": 0.47,
+    "strategy": "single_expert_low_confidence"
+  }
+}
+{
+  "timestamp": "2025-11-16T09:43:33-0600",
+  "type": "moe_routing_decision",
+  "data": {
+    "task_id": "task-confidence-test-006",
+    "expert": "security",
+    "confidence": 0.54,
+    "strategy": "single_expert_low_confidence"
+  }
+}
+{
+  "timestamp": "2025-11-16T09:43:40-0600",
+  "type": "moe_routing_decision",
+  "data": {
+    "task_id": "task-confidence-test-007",
+    "expert": "security",
+    "confidence": 0.65,
+    "strategy": "single_expert_low_confidence"
+  }
+}
+{
+  "timestamp": "2025-11-16T09:44:58-0600",
+  "type": "moe_routing_decision",
+  "data": {
+    "task_id": "test-final-001",
+    "expert": "development",
+    "confidence": 1.00,
+    "strategy": "single_expert"
+  }
+}
+{
+  "timestamp": "2025-11-16T09:44:59-0600",
+  "type": "moe_routing_decision",
+  "data": {
+    "task_id": "test-final-002",
+    "expert": "security",
+    "confidence": 0.75,
+    "strategy": "single_expert_low_confidence"
+  }
+}
+{
+  "timestamp": "2025-11-16T09:45:01-0600",
+  "type": "moe_routing_decision",
+  "data": {
+    "task_id": "test-final-003",
+    "expert": "inventory",
+    "confidence": 0.61,
+    "strategy": "single_expert_low_confidence"
+  }
+}
+{
+  "timestamp": "2025-11-16T09:45:02-0600",
+  "type": "moe_routing_decision",
+  "data": {
+    "task_id": "test-final-004",
+    "expert": "security",
+    "confidence": 1.00,
+    "strategy": "single_expert"
+  }
+}
+{
+  "timestamp": "2025-11-16T09:47:01-0600",
+  "type": "moe_routing_decision",
+  "data": {
+    "task_id": "moe-test-ddqd-v5-1763307968-4e5562fe",
+    "expert": "security",
+    "confidence": 1.00,
+    "strategy": "single_expert"
+  }
+}
+{
+  "timestamp": "2025-11-16T09:47:01-0600",
+  "type": "moe_routing_decision",
+  "data": {
+    "task_id": "moe-test-ddqd-v5-1763307968-c38fab2c",
+    "expert": "security",
+    "confidence": 1.00,
+    "strategy": "single_expert"
+  }
+}
+{
+  "timestamp": "2025-11-16T09:47:02-0600",
+  "type": "moe_routing_decision",
+  "data": {
+    "task_id": "moe-test-ddqd-v5-1763307968-bb0f7015",
+    "expert": "development",
+    "confidence": 0.61,
+    "strategy": "single_expert_low_confidence"
+  }
+}
+{
+  "timestamp": "2025-11-16T09:47:02-0600",
+  "type": "moe_routing_decision",
+  "data": {
+    "task_id": "moe-test-ddqd-v5-1763307968-d1622fb0",
+    "expert": "development",
+    "confidence": 0.74,
+    "strategy": "single_expert_low_confidence"
+  }
+}
+{
+  "timestamp": "2025-11-16T09:47:03-0600",
+  "type": "moe_routing_decision",
+  "data": {
+    "task_id": "moe-test-ddqd-v5-1763307968-9c6e2cb8",
+    "expert": "inventory",
+    "confidence": 1.00,
+    "strategy": "single_expert"
+  }
+}
+{
+  "timestamp": "2025-11-16T09:47:03-0600",
+  "type": "moe_routing_decision",
+  "data": {
+    "task_id": "moe-test-ddqd-v5-1763307968-68caa71b",
+    "expert": "inventory",
+    "confidence": 1.00,
+    "strategy": "single_expert"
+  }
+}
+{
+  "timestamp": "2025-11-16T10:00:26-0600",
+  "type": "moe_routing_decision",
+  "data": {
+    "task_id": "test-jsonl-format-001",
+    "expert": "development",
+    "confidence": 0.99,
+    "strategy": "single_expert"
+  }
+}
+{
+  "timestamp": "2025-11-16T10:01:32-0600",
+  "type": "moe_routing_decision",
+  "data": {
+    "task_id": "moe-test-ddqd-v5-1763308845-677a1c95",
+    "expert": "security",
+    "confidence": 1.00,
+    "strategy": "single_expert"
+  }
+}
+{
+  "timestamp": "2025-11-16T10:01:32-0600",
+  "type": "moe_routing_decision",
+  "data": {
+    "task_id": "moe-test-ddqd-v5-1763308845-ba35d73a",
+    "expert": "security",
+    "confidence": 1.00,
+    "strategy": "single_expert"
+  }
+}
+{
+  "timestamp": "2025-11-16T10:01:33-0600",
+  "type": "moe_routing_decision",
+  "data": {
+    "task_id": "moe-test-ddqd-v5-1763308845-d67fe411",
+    "expert": "development",
+    "confidence": 0.61,
+    "strategy": "single_expert_low_confidence"
+  }
+}
+{
+  "timestamp": "2025-11-16T10:01:39-0600",
+  "type": "moe_routing_decision",
+  "data": {
+    "task_id": "moe-test-ddqd-v5-1763308845-ffaee228",
+    "expert": "inventory",
+    "confidence": 1.00,
+    "strategy": "single_expert"
+  }
+}
+{
+  "timestamp": "2025-11-16T10:20:10-0600",
+  "type": "moe_routing_decision",
+  "data": {
+    "task_id": "test-system-e2e-001",
+    "expert": "development",
+    "confidence": 0.75,
+    "strategy": "single_expert_low_confidence"
+  }
+}
+{
+  "timestamp": "2025-11-16T10:34:00-0600",
+  "type": "moe_routing_decision",
+  "data": {
+    "task_id": "test-autonomous-001",
+    "expert": "development",
+    "confidence": 0.75,
+    "strategy": "single_expert_low_confidence"
+  }
+}
