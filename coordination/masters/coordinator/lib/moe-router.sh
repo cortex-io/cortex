@@ -8,7 +8,8 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 KB_DIR="$SCRIPT_DIR/../knowledge-base"
 ROUTING_PATTERNS="$KB_DIR/routing-patterns.json"
-ROUTING_LOG="$SCRIPT_DIR/../logs/routing-decisions.jsonl"
+ROUTING_LOG="$KB_DIR/routing-decisions.jsonl"
+ROUTING_LOG_BACKUP="$SCRIPT_DIR/../logs/routing-decisions.jsonl"
 COMMIT_RELAY_HOME="${COMMIT_RELAY_HOME:-$(cd "$SCRIPT_DIR/../../../.." && pwd)}"
 
 # Governance bypass mode (for bootstrapping governance system itself)
@@ -56,7 +57,9 @@ calculate_expert_score() {
 
     # Score activation keywords
     while IFS= read -r keyword; do
-        if echo "$task_lower" | grep -qw "$keyword"; then
+        # v5.1: Use grep -i (case-insensitive) without -w for partial matches
+        # Allows "CVE" to match "CVE-2024-1234" and "fix bug" to match "fixing bugs"
+        if echo "$task_lower" | grep -qi "$keyword"; then
             ((keyword_score++))
         fi
         ((keyword_total++))
@@ -64,7 +67,7 @@ calculate_expert_score() {
 
     # Score confidence boosters (higher weight)
     while IFS= read -r booster; do
-        if echo "$task_lower" | grep -qw "$booster"; then
+        if echo "$task_lower" | grep -qi "$booster"; then
             ((booster_score++))
         fi
         ((booster_total++))
@@ -72,34 +75,24 @@ calculate_expert_score() {
 
     # Score negative indicators (subtract from confidence)
     while IFS= read -r negative; do
-        if echo "$task_lower" | grep -qw "$negative"; then
+        if echo "$task_lower" | grep -qi "$negative"; then
             ((negative_score++))
         fi
         ((negative_total++))
     done < <(jq -r ".experts.$expert.negative_indicators[]" "$ROUTING_PATTERNS")
 
     # Calculate weighted confidence score
-    # Formula: (keyword_match% * 50 + booster_match% * 50) - (negative_match% * 30)
-    local keyword_percentage=0
-    local booster_percentage=0
-    local negative_percentage=0
+    # v5.1 Fix: Use additive scoring instead of percentage-based
+    # Each matched keyword adds confidence points
+    # Formula: (keyword_matches * 25) + (booster_matches * 12) - (negative_matches * 30)
+    # Target: 2-3 activation keywords + 1-2 boosters = 80+ confidence
 
-    if [ $keyword_total -gt 0 ]; then
-        keyword_percentage=$((keyword_score * 100 / keyword_total))
-    fi
-
-    if [ $booster_total -gt 0 ]; then
-        booster_percentage=$((booster_score * 100 / booster_total))
-    fi
-
-    if [ $negative_total -gt 0 ]; then
-        negative_percentage=$((negative_score * 100 / negative_total))
-    fi
+    local keyword_points=$((keyword_score * 25))
+    local booster_points=$((booster_score * 12))
+    local negative_points=$((negative_score * 30))
 
     # Calculate final confidence (0-100)
-    local base_confidence=$(( (keyword_percentage * 50 + booster_percentage * 50) / 100 ))
-    local negative_penalty=$((negative_percentage * 30 / 100))
-    local final_confidence=$((base_confidence - negative_penalty))
+    local final_confidence=$((keyword_points + booster_points - negative_points))
 
     # Clamp to 0-100
     if [ $final_confidence -lt 0 ]; then
@@ -271,7 +264,8 @@ route_task_moe() {
         }')
 
     # Log routing decision (with immediate flush)
-    echo "$routing_decision" >> "$ROUTING_LOG"
+    # v5.1: Output compact single-line JSON (proper JSONL format)
+    echo "$routing_decision" | jq -c '.' >> "$ROUTING_LOG"
 
     # Force immediate flush to disk (prevents buffering issues during tests)
     sync "$ROUTING_LOG" 2>/dev/null || true

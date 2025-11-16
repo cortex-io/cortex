@@ -1,0 +1,24 @@
+{
+  "handoff_id": "test-system-e2e-001",
+  "task_id": "test-system-e2e-001",
+  "assigned_to": "development",
+  "created_at": "2025-11-16T10:20:10-0600",
+  "status": "processed",
+  "task": {
+    "id": "test-system-e2e-001",
+    "title": "System Test: Create simple hello world script",
+    "type": "development",
+    "description": "development: Create a simple hello world bash script in scripts/test-hello.sh that prints 'Hello from commit-relay'",
+    "priority": "high",
+    "status": "pending",
+    "created_at": "2025-11-16T10:15:00-0600",
+    "created_by": "system-test",
+    "metadata": {
+      "test_task": true,
+      "expected_duration_minutes": 5,
+      "deliverable": "scripts/test-hello.sh"
+    }
+  },
+  "processed_at": "2025-11-16T10:33:18-0600",
+  "worker_id": "worker-worker-1763310797-8808"
+}
