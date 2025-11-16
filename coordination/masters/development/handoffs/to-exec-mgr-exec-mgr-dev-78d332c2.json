@@ -6,5 +6,8 @@
   "execution_manager_required": true,
   "reason": "Complex multi-worker coordination required",
   "execution_plan": "/Users/ryandahlberg/commit-relay/coordination/masters/development/execution-plans/dev-v40-test-001.json",
-  "created_at": "2025-11-05T21:38:48Z"
+  "created_at": "2025-11-05T21:38:48Z",
+  "status": "processed",
+  "processed_at": "2025-11-16T10:33:18-0600",
+  "worker_id": "worker-worker-1763310798-13178"
 }

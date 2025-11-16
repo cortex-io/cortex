@@ -1,0 +1,11 @@
+{
+  "id": "ddqd-v5-1763307968-task-d3d3fb4a",
+  "type": "security",
+  "title": "DDQD v5 Test: Security Vulnerability Scan",
+  "description": "Perform comprehensive security audit for stress testing",
+  "priority": 1,
+  "assigned_to": "security-master",
+  "created_at": "2025-11-16T09:46:38-0600",
+  "stress_test": true,
+  "test_id": "ddqd-v5-1763307968"
+}

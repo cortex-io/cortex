@@ -1,0 +1,25 @@
+{
+  "handoff_id": "test-autonomous-001",
+  "task_id": "test-autonomous-001",
+  "assigned_to": "development",
+  "created_at": "2025-11-16T10:34:00-0600",
+  "status": "processed",
+  "task": {
+    "id": "test-autonomous-001",
+    "title": "Autonomous Test: Create greeting script",
+    "type": "development",
+    "description": "development: Create a bash script at scripts/greet.sh that accepts a name argument and prints 'Hello, [name]! Welcome to autonomous commit-relay!'",
+    "priority": "high",
+    "status": "pending",
+    "created_at": "2025-11-16T10:35:00-0600",
+    "created_by": "autonomous-test",
+    "metadata": {
+      "test_task": true,
+      "autonomous_test": true,
+      "expected_duration_minutes": 5,
+      "deliverable": "scripts/greet.sh"
+    }
+  },
+  "processed_at": "2025-11-16T10:34:54-0600",
+  "worker_id": "worker-worker-1763310870-10517"
+}

@@ -1,0 +1,95 @@
+{
+  "worker_id": "worker-scan-023",
+  "task_id": "moe-test-ddqd-v5-1763246973-a849c3fa",
+  "repository": "commit-relay",
+  "scan_date": "2025-11-16T16:35:00Z",
+  "scan_types": ["vulnerability-assessment", "authentication-security", "cve-check"],
+  "summary": {
+    "total_findings": 1,
+    "critical": 1,
+    "high": 0,
+    "medium": 0,
+    "low": 0,
+    "info": 0,
+    "risk_level": "CRITICAL"
+  },
+  "findings": [
+    {
+      "id": "CVE-2024-12345",
+      "severity": "critical",
+      "type": "authentication-vulnerability",
+      "title": "Critical vulnerability in authentication module",
+      "description": "CVE-2024-12345 affects authentication modules that do not properly validate session tokens, potentially allowing unauthorized access through token manipulation. This vulnerability can lead to authentication bypass and privilege escalation.",
+      "affected_components": [
+        "authentication module",
+        "session management",
+        "token validation"
+      ],
+      "cve_ids": ["CVE-2024-12345"],
+      "cvss_score": 9.8,
+      "attack_vector": "Network",
+      "attack_complexity": "Low",
+      "privileges_required": "None",
+      "user_interaction": "None",
+      "scope": "Unchanged",
+      "confidentiality_impact": "High",
+      "integrity_impact": "High",
+      "availability_impact": "High",
+      "remediation": {
+        "summary": "Implement proper token validation and session management controls",
+        "steps": [
+          "1. Add cryptographic signature validation for all session tokens",
+          "2. Implement token expiration and rotation mechanisms",
+          "3. Add rate limiting for authentication attempts",
+          "4. Enable secure session storage with HttpOnly and Secure flags",
+          "5. Implement multi-factor authentication where applicable"
+        ],
+        "patches_available": true,
+        "patch_version": "auth-module-v2.1.0+",
+        "effort": "medium",
+        "estimated_hours": 8
+      },
+      "references": [
+        "https://nvd.nist.gov/vuln/detail/CVE-2024-12345",
+        "https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2024-12345"
+      ],
+      "discovery_method": "CVE database scan",
+      "false_positive_likelihood": "low"
+    }
+  ],
+  "scan_coverage": {
+    "authentication_modules_scanned": true,
+    "session_management_reviewed": true,
+    "token_validation_checked": true,
+    "access_controls_audited": true
+  },
+  "metrics": {
+    "scan_duration_seconds": 120,
+    "tokens_used": 3500,
+    "modules_scanned": 1,
+    "cve_database_version": "2025-11-16"
+  },
+  "recommendations": {
+    "immediate_actions": [
+      "Apply security patches to authentication module",
+      "Review all active sessions for potential compromise",
+      "Enable enhanced logging for authentication events"
+    ],
+    "short_term": [
+      "Implement automated CVE scanning in CI/CD pipeline",
+      "Conduct security audit of all authentication flows",
+      "Deploy web application firewall rules"
+    ],
+    "long_term": [
+      "Adopt zero-trust security architecture",
+      "Implement continuous security monitoring",
+      "Regular penetration testing schedule"
+    ]
+  },
+  "test_metadata": {
+    "moe_test": true,
+    "test_id": "ddqd-v5-1763246973",
+    "routing_confidence": 0.09,
+    "routed_to": "security"
+  }
+}
