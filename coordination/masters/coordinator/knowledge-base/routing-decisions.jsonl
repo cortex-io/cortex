@@ -138,3 +138,17 @@
 {"task_id":"moe-test-ddqd-v5-1763246822-8c0d2292","routed_to":"development","rule_used":"code-development","timestamp":"2025-11-15T16:47:56-0600"}
 {"task_id":"moe-test-ddqd-v5-1763246822-1d954f50","routed_to":"inventory","rule_used":"inventory-management","timestamp":"2025-11-15T16:47:56-0600"}
 {"task_id":"moe-test-ddqd-v5-1763246822-33348243","routed_to":"inventory","rule_used":"inventory-management","timestamp":"2025-11-15T16:47:56-0600"}
+{"task_id":"moe-test-ddqd-v5-1763246973-121f1b91","routed_to":"security","rule_used":"security-scan","timestamp":"2025-11-15T16:50:27-0600"}
+{"task_id":"moe-test-ddqd-v5-1763246973-15a1b47e","routed_to":"development","rule_used":"code-development","timestamp":"2025-11-15T16:50:27-0600"}
+{"task_id":"moe-test-ddqd-v5-1763246973-276431e6","routed_to":"development","rule_used":"code-development","timestamp":"2025-11-15T16:50:27-0600"}
+{"task_id":"moe-test-ddqd-v5-1763246973-f7fc82bc","routed_to":"inventory","rule_used":"inventory-management","timestamp":"2025-11-15T16:50:27-0600"}
+{"task_id":"moe-test-ddqd-v5-1763246973-4324258d","routed_to":"inventory","rule_used":"inventory-management","timestamp":"2025-11-15T16:50:28-0600"}
+{"task_id":"moe-test-ddqd-v5-1763247177-d2866cf8","routed_to":"security","rule_used":"security-scan","timestamp":"2025-11-15T16:53:51-0600"}
+{"task_id":"moe-test-ddqd-v5-1763247177-0adcd7ae","routed_to":"security","rule_used":"security-scan","timestamp":"2025-11-15T16:53:51-0600"}
+{"task_id":"moe-test-ddqd-v5-1763247177-831aecfc","routed_to":"development","rule_used":"code-development","timestamp":"2025-11-15T16:53:51-0600"}
+{"task_id":"moe-test-ddqd-v5-1763247177-947f1b05","routed_to":"development","rule_used":"code-development","timestamp":"2025-11-15T16:53:51-0600"}
+{"task_id":"moe-test-ddqd-v5-1763247177-2f51d7f6","routed_to":"inventory","rule_used":"inventory-management","timestamp":"2025-11-15T16:53:52-0600"}
+{"task_id":"moe-test-ddqd-v5-1763247177-f8d7e80e","routed_to":"inventory","rule_used":"inventory-management","timestamp":"2025-11-15T16:53:52-0600"}
+{"task_id":"moe-test-ddqd-v5-1763253547-a31c8ce5","routed_to":"development","rule_used":"code-development","timestamp":"2025-11-15T18:40:00-0600"}
+{"task_id":"moe-test-ddqd-v5-1763253547-8eb95615","routed_to":"inventory","rule_used":"inventory-management","timestamp":"2025-11-15T18:40:00-0600"}
+{"task_id":"moe-test-ddqd-v5-1763253547-d540bbda","routed_to":"inventory","rule_used":"inventory-management","timestamp":"2025-11-15T18:40:01-0600"}
