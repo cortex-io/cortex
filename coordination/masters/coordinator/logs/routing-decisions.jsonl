@@ -4230,3 +4230,163 @@
     }
   }
 }
+{
+  "task_id": "moe-test-ddqd-v5-1763246973-a849c3fa",
+  "timestamp": "2025-11-15T16:50:26-0600",
+  "routing_strategy": "mixture_of_experts",
+  "decision": {
+    "primary_expert": "security",
+    "primary_confidence": 0.09,
+    "strategy": "single_expert_low_confidence",
+    "parallel_experts": [],
+    "scores": {
+      "development": 0.03,
+      "security": 0.09,
+      "inventory": 0
+    }
+  }
+}
+{
+  "task_id": "moe-test-ddqd-v5-1763246973-121f1b91",
+  "timestamp": "2025-11-15T16:50:26-0600",
+  "routing_strategy": "mixture_of_experts",
+  "decision": {
+    "primary_expert": "security",
+    "primary_confidence": 0.09,
+    "strategy": "single_expert_low_confidence",
+    "parallel_experts": [],
+    "scores": {
+      "development": 0,
+      "security": 0.09,
+      "inventory": 0
+    }
+  }
+}
+{
+  "task_id": "moe-test-ddqd-v5-1763246973-15a1b47e",
+  "timestamp": "2025-11-15T16:50:27-0600",
+  "routing_strategy": "mixture_of_experts",
+  "decision": {
+    "primary_expert": "development",
+    "primary_confidence": 0.07,
+    "strategy": "single_expert_low_confidence",
+    "parallel_experts": [],
+    "scores": {
+      "development": 0.07,
+      "security": 0,
+      "inventory": 0
+    }
+  }
+}
+{
+  "task_id": "moe-test-ddqd-v5-1763246973-276431e6",
+  "timestamp": "2025-11-15T16:50:27-0600",
+  "routing_strategy": "mixture_of_experts",
+  "decision": {
+    "primary_expert": "development",
+    "primary_confidence": 0.09,
+    "strategy": "single_expert_low_confidence",
+    "parallel_experts": [],
+    "scores": {
+      "development": 0.09,
+      "security": 0,
+      "inventory": 0
+    }
+  }
+}
+{
+  "task_id": "moe-test-ddqd-v5-1763246973-f7fc82bc",
+  "timestamp": "2025-11-15T16:50:28-0600",
+  "routing_strategy": "mixture_of_experts",
+  "decision": {
+    "primary_expert": "inventory",
+    "primary_confidence": 0.17,
+    "strategy": "single_expert_low_confidence",
+    "parallel_experts": [],
+    "scores": {
+      "development": 0,
+      "security": 0,
+      "inventory": 0.17
+    }
+  }
+}
+{
+  "task_id": "moe-test-ddqd-v5-1763246973-4324258d",
+  "timestamp": "2025-11-15T16:50:28-0600",
+  "routing_strategy": "mixture_of_experts",
+  "decision": {
+    "primary_expert": "inventory",
+    "primary_confidence": 0.28,
+    "strategy": "single_expert_low_confidence",
+    "parallel_experts": [],
+    "scores": {
+      "development": 0,
+      "security": 0,
+      "inventory": 0.28
+    }
+  }
+}
+{
+  "task_id": "moe-test-ddqd-v5-1763247177-f8d7e80e",
+  "timestamp": "2025-11-15T16:53:52-0600",
+  "routing_strategy": "mixture_of_experts",
+  "decision": {
+    "primary_expert": "inventory",
+    "primary_confidence": 0.28,
+    "strategy": "single_expert_low_confidence",
+    "parallel_experts": [],
+    "scores": {
+      "development": 0,
+      "security": 0,
+      "inventory": 0.28
+    }
+  }
+}
+{
+  "task_id": "moe-test-ddqd-v5-1763253547-f4e113af",
+  "timestamp": "2025-11-15T18:39:53-0600",
+  "routing_strategy": "mixture_of_experts",
+  "decision": {
+    "primary_expert": "security",
+    "primary_confidence": 0.09,
+    "strategy": "single_expert_low_confidence",
+    "parallel_experts": [],
+    "scores": {
+      "development": 0.03,
+      "security": 0.09,
+      "inventory": 0
+    }
+  }
+}
+{
+  "task_id": "moe-test-ddqd-v5-1763253547-daee06d0",
+  "timestamp": "2025-11-15T18:39:53-0600",
+  "routing_strategy": "mixture_of_experts",
+  "decision": {
+    "primary_expert": "security",
+    "primary_confidence": 0.09,
+    "strategy": "single_expert_low_confidence",
+    "parallel_experts": [],
+    "scores": {
+      "development": 0,
+      "security": 0.09,
+      "inventory": 0
+    }
+  }
+}
+{
+  "task_id": "moe-test-ddqd-v5-1763253547-13724645",
+  "timestamp": "2025-11-15T18:39:54-0600",
+  "routing_strategy": "mixture_of_experts",
+  "decision": {
+    "primary_expert": "development",
+    "primary_confidence": 0.07,
+    "strategy": "single_expert_low_confidence",
+    "parallel_experts": [],
+    "scores": {
+      "development": 0.07,
+      "security": 0,
+      "inventory": 0
+    }
+  }
+}
