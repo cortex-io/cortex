@@ -6,7 +6,7 @@
       "type": "development",
       "description": "development: Create a bash script at scripts/greet.sh that accepts a name argument and prints 'Hello, [name]! Welcome to autonomous commit-relay!'",
       "priority": "high",
-      "status": "completed",
+      "status": "failed",
       "created_at": "2025-11-16T10:35:00-0600",
       "created_by": "autonomous-test",
       "metadata": {
@@ -18,8 +18,298 @@
       "assigned_to": "development",
       "assigned_at": "2025-11-16T10:34:00-0600",
       "completed_by": "worker-implementation-017",
-      "completed_at": "2025-11-16T10:34:50-0600"
+      "completed_at": "2025-11-17T07:58:58-0600",
+      "error": "Worker became zombie and was killed"
+    },
+    {
+      "id": "moe-test-ddqd-v5-1763313616-c04d1098",
+      "title": "CVE-2024-12345: Fix critical vulnerability in authentication module",
+      "type": "security",
+      "description": "CVE-2024-12345: Fix critical vulnerability in authentication module",
+      "priority": "medium",
+      "status": "assigned",
+      "assigned_to": "security",
+      "created_at": "2025-11-16T11:20:56-0600",
+      "created_by": "ddqd-v5-test",
+      "moe_test": true,
+      "test_id": "ddqd-v5-1763313616",
+      "context": {},
+      "assigned_at": "2025-11-16T11:21:04-0600"
+    },
+    {
+      "id": "moe-test-ddqd-v5-1763313616-64915431",
+      "title": "Security audit and compliance scanning for production systems",
+      "type": "security",
+      "description": "Security audit and compliance scanning for production systems",
+      "priority": "medium",
+      "status": "assigned",
+      "assigned_to": "security",
+      "created_at": "2025-11-16T11:20:58-0600",
+      "created_by": "ddqd-v5-test",
+      "moe_test": true,
+      "test_id": "ddqd-v5-1763313616",
+      "context": {},
+      "assigned_at": "2025-11-16T11:21:04-0600"
+    },
+    {
+      "id": "moe-test-ddqd-v5-1763313616-a4fd140a",
+      "title": "Implement new API endpoint for user management feature",
+      "type": "feature",
+      "description": "Implement new API endpoint for user management feature",
+      "priority": "medium",
+      "status": "failed",
+      "assigned_to": "development",
+      "created_at": "2025-11-16T11:21:00-0600",
+      "created_by": "ddqd-v5-test",
+      "moe_test": true,
+      "test_id": "ddqd-v5-1763313616",
+      "context": {},
+      "assigned_at": "2025-11-16T11:21:05-0600",
+      "completed_by": "worker-implementation-026",
+      "completed_at": "2025-11-17T07:58:58-0600",
+      "result": {
+        "status": "success",
+        "message": "User management API endpoint already implemented and fully functional",
+        "implementation": {
+          "route_file": "dashboard/server/routes/users.js",
+          "mounted_at": "/api/users",
+          "endpoints": [
+            "GET /api/users - List all users",
+            "POST /api/users - Create new user",
+            "GET /api/users/:id - Get user by ID",
+            "PUT /api/users/:id - Update user",
+            "DELETE /api/users/:id - Delete user"
+          ]
+        },
+        "tests_performed": {
+          "create_user": "passed",
+          "read_user": "passed",
+          "update_user": "passed",
+          "delete_user": "passed",
+          "list_users": "passed"
+        }
+      },
+      "error": "Worker became zombie and was killed"
+    },
+    {
+      "id": "moe-test-ddqd-v5-1763313616-946bd71c",
+      "title": "Fix performance bug in database query optimization code",
+      "type": "bug-fix",
+      "description": "Fix performance bug in database query optimization code",
+      "priority": "medium",
+      "status": "failed",
+      "assigned_to": "development",
+      "created_at": "2025-11-16T11:21:02-0600",
+      "created_by": "ddqd-v5-test",
+      "moe_test": true,
+      "test_id": "ddqd-v5-1763313616",
+      "context": {},
+      "assigned_at": "2025-11-16T11:21:05-0600",
+      "completed_at": "2025-11-17T07:58:58-0600",
+      "error": "Worker became zombie and was killed"
+    },
+    {
+      "id": "moe-test-ddqd-v5-1763313616-e8d90c3b",
+      "title": "Catalog and document all repository metadata and dependencies",
+      "type": "catalog",
+      "description": "Catalog and document all repository metadata and dependencies",
+      "priority": "medium",
+      "status": "assigned",
+      "assigned_to": "inventory",
+      "created_at": "2025-11-16T11:21:04-0600",
+      "created_by": "ddqd-v5-test",
+      "moe_test": true,
+      "test_id": "ddqd-v5-1763313616",
+      "context": {},
+      "assigned_by": "coordinator",
+      "assigned_at": "2025-11-16T11:21:09-0600",
+      "routing_confidence": "N/A",
+      "routing_strategy": "pattern-based",
+      "updated_at": "2025-11-16T11:21:09-06:00"
+    },
+    {
+      "id": "moe-test-ddqd-v5-1763313616-49ab3207",
+      "title": "Discover and track portfolio health status across repositories",
+      "type": "inventory",
+      "description": "Discover and track portfolio health status across repositories",
+      "priority": "medium",
+      "status": "assigned",
+      "assigned_to": "inventory",
+      "created_at": "2025-11-16T11:21:06-0600",
+      "created_by": "ddqd-v5-test",
+      "moe_test": true,
+      "test_id": "ddqd-v5-1763313616",
+      "context": {},
+      "assigned_by": "coordinator",
+      "assigned_at": "2025-11-16T11:21:09-0600",
+      "routing_confidence": "N/A",
+      "routing_strategy": "pattern-based",
+      "updated_at": "2025-11-16T11:21:09-06:00"
+    },
+    {
+      "id": "moe-test-ddqd-v5-1763313927-023fc33b",
+      "title": "CVE-2024-12345: Fix critical vulnerability in authentication module",
+      "type": "security",
+      "description": "CVE-2024-12345: Fix critical vulnerability in authentication module",
+      "priority": "medium",
+      "status": "failed",
+      "assigned_to": "security",
+      "created_at": "2025-11-16T11:26:08-0600",
+      "created_by": "ddqd-v5-test",
+      "moe_test": true,
+      "test_id": "ddqd-v5-1763313927",
+      "context": {},
+      "assigned_at": "2025-11-16T11:26:18-0600",
+      "completed_at": "2025-11-17T07:58:59-0600",
+      "error": "Worker became zombie and was killed"
+    },
+    {
+      "id": "moe-test-ddqd-v5-1763313927-b070dcb0",
+      "title": "Security audit and compliance scanning for production systems",
+      "type": "security",
+      "description": "Security audit and compliance scanning for production systems",
+      "priority": "medium",
+      "status": "completed",
+      "assigned_to": "security",
+      "created_at": "2025-11-16T11:26:10-0600",
+      "created_by": "ddqd-v5-test",
+      "moe_test": true,
+      "test_id": "ddqd-v5-1763313927",
+      "context": {},
+      "assigned_at": "2025-11-16T11:26:19-0600",
+      "completed_by": "worker-scan-032",
+      "completed_at": "2025-11-16T17:28:00-0600",
+      "result": {
+        "status": "success",
+        "message": "Security audit and compliance scanning completed successfully",
+        "findings": {
+          "critical": 1,
+          "high": 2,
+          "moderate": 18,
+          "total": 21
+        },
+        "compliance": {
+          "owasp_top_10": "7/10 PASS, 3/10 WARNINGS",
+          "overall_rating": "GOOD"
+        },
+        "deliverables": {
+          "security_audit_report": "agents/logs/workers/2025-11-16/worker-scan-032/security-audit-report.md",
+          "completion_summary": "agents/logs/workers/2025-11-16/worker-scan-032/completion_summary.md"
+        },
+        "critical_action_required": "Revoke exposed Anthropic API key immediately"
+      }
+    },
+    {
+      "id": "moe-test-ddqd-v5-1763313927-beb20526",
+      "title": "Implement new API endpoint for user management feature",
+      "type": "feature",
+      "description": "Implement new API endpoint for user management feature",
+      "priority": "medium",
+      "status": "failed",
+      "assigned_to": "development",
+      "created_at": "2025-11-16T11:26:12-0600",
+      "created_by": "ddqd-v5-test",
+      "moe_test": true,
+      "test_id": "ddqd-v5-1763313927",
+      "context": {},
+      "assigned_at": "2025-11-16T11:26:19-0600",
+      "completed_by": "worker-implementation-030",
+      "completed_at": "2025-11-17T07:58:58-0600",
+      "result": {
+        "status": "success",
+        "message": "User statistics API endpoint successfully implemented",
+        "implementation": {
+          "endpoint": "GET /api/users/stats",
+          "route_file": "dashboard/server/routes/users.js",
+          "location": "lines 112-166",
+          "features": [
+            "Total user count",
+            "Users by role breakdown (admin, user, viewer)",
+            "Users by status distribution (active, inactive, suspended)",
+            "Top 5 recently created users",
+            "Top 5 recently updated users",
+            "ISO timestamp of stats generation"
+          ]
+        },
+        "tests_performed": {
+          "empty_state": "passed",
+          "data_population": "passed",
+          "statistics_accuracy": "passed",
+          "sorting_verification": "passed"
+        },
+        "deliverables": {
+          "completion_summary": "agents/logs/workers/2025-11-16/worker-implementation-030/completion_summary.md"
+        }
+      },
+      "error": "Worker became zombie and was killed"
+    },
+    {
+      "id": "moe-test-ddqd-v5-1763313927-333125e5",
+      "title": "Fix performance bug in database query optimization code",
+      "type": "bug-fix",
+      "description": "Fix performance bug in database query optimization code",
+      "priority": "medium",
+      "status": "failed",
+      "assigned_to": "development",
+      "created_at": "2025-11-16T11:26:14-0600",
+      "created_by": "ddqd-v5-test",
+      "moe_test": true,
+      "test_id": "ddqd-v5-1763313927",
+      "context": {},
+      "assigned_at": "2025-11-16T11:26:19-0600",
+      "completed_at": "2025-11-17T07:58:58-0600",
+      "error": "Worker became zombie and was killed"
+    },
+    {
+      "id": "moe-test-ddqd-v5-1763313927-083ec654",
+      "title": "Catalog and document all repository metadata and dependencies",
+      "type": "catalog",
+      "description": "Catalog and document all repository metadata and dependencies",
+      "priority": "medium",
+      "status": "assigned",
+      "assigned_to": "inventory",
+      "created_at": "2025-11-16T11:26:16-0600",
+      "created_by": "ddqd-v5-test",
+      "moe_test": true,
+      "test_id": "ddqd-v5-1763313927",
+      "context": {},
+      "assigned_at": "2025-11-16T11:26:20-0600"
+    },
+    {
+      "id": "moe-test-ddqd-v5-1763313927-02b96c6b",
+      "title": "Discover and track portfolio health status across repositories",
+      "type": "inventory",
+      "description": "Discover and track portfolio health status across repositories",
+      "priority": "medium",
+      "status": "assigned",
+      "assigned_to": "inventory",
+      "created_at": "2025-11-16T11:26:18-0600",
+      "created_by": "ddqd-v5-test",
+      "moe_test": true,
+      "test_id": "ddqd-v5-1763313927",
+      "context": {},
+      "assigned_by": "coordinator",
+      "assigned_at": "2025-11-16T11:26:20-0600",
+      "routing_confidence": "N/A",
+      "routing_strategy": "pattern-based",
+      "updated_at": "2025-11-16T11:26:20-06:00"
+    },
+    {
+      "id": "task-64915432",
+      "title": "Build ResuMate: AI-powered resume optimization web app with resume/job description upload, Claude AI analysis, and ATS/LPS compatibility scanning",
+      "type": "development",
+      "priority": "high",
+      "status": "pending",
+      "assigned_to": null,
+      "created_at": "2025-11-17T13:13:51-0600",
+      "created_by": "create-task-cli",
+      "context": {
+        "repository": "ry-ops/ResuMate",
+        "branch": "main",
+        "description": "Build ResuMate: AI-powered resume optimization web app with resume/job description upload, Claude AI analysis, and ATS/LPS compatibility scanning",
+        "requirements": []
+      }
     }
   ],
-  "updated_at": "2025-11-16T10:34:50-0600"
+  "updated_at": "2025-11-17T13:13:51-0600"
 }
