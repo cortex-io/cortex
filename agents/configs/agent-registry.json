@@ -63,7 +63,8 @@
       "repositories": [
         "ry-ops/commit-relay",
         "ry-ops/n8n-mcp-server",
-        "ry-ops/aiana"
+        "ry-ops/aiana",
+        "ry-ops/ResuMate"
       ],
       "capabilities": [
         "feature_development",
