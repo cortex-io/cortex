@@ -129,8 +129,14 @@ extract_failure_signature() {
     local worker_type="unknown"
     local task_id="unknown"
 
-    # Look in zombie specs
-    local zombie_date=$(date -d "$timestamp" +%Y-%m-%d 2>/dev/null || date -j -f "%Y-%m-%dT%H:%M:%S%z" "$timestamp" +%Y-%m-%d 2>/dev/null || date +%Y-%m-%d)
+    # Optimized: Extract date from timestamp string directly (YYYY-MM-DD format)
+    local zombie_date=$(echo "$timestamp" | cut -d'T' -f1)
+
+    # Fallback to current date if extraction failed
+    if [ -z "$zombie_date" ] || [ ${#zombie_date} -ne 10 ]; then
+        zombie_date=$(date +%Y-%m-%d)
+    fi
+
     local zombie_spec="$COMMIT_RELAY_HOME/coordination/worker-specs/zombie/$zombie_date/${worker_id}.json"
 
     if [ -f "$zombie_spec" ]; then
@@ -237,80 +243,95 @@ detect_frequent_patterns() {
 
     log_pattern "INFO: Analyzing ${FREQUENCY_THRESHOLD}+ occurrences in ${TIME_WINDOW_HOURS}h window"
 
-    # Group events by signature similarity
-    declare -A signature_groups
+    # Simplified: Use temp file for counting
+    local tmpfile="/tmp/pattern-count-$$.txt"
+    > "$tmpfile"  # Create empty file
 
+    # Extract signatures and count them
     while IFS= read -r event; do
-        if [ -z "$event" ]; then
-            continue
-        fi
+        [ -z "$event" ] && continue
 
-        local signature=$(extract_failure_signature "$event")
-        local classification=$(classify_failure "$event")
+        local classification=$(classify_failure "$event" 2>/dev/null || echo "unknown:unknown")
         local category=$(echo "$classification" | cut -d: -f1)
         local type=$(echo "$classification" | cut -d: -f2)
 
-        local sig_key="${category}_${type}_$(echo "$signature" | jq -r '.worker_type')"
+        # Get worker_type from event directly to avoid expensive lookup
+        local worker_id=$(echo "$event" | jq -r '.worker_id // "unknown"')
+        local worker_type="unknown"
 
-        if [ -z "${signature_groups[$sig_key]:-}" ]; then
-            signature_groups[$sig_key]="$event"
-        else
-            signature_groups[$sig_key]="${signature_groups[$sig_key]}"$'\n'"$event"
+        # Only do file lookup if we have a valid worker_id
+        if [ "$worker_id" != "unknown" ]; then
+            local timestamp=$(echo "$event" | jq -r '.timestamp')
+            local zombie_date=$(echo "$timestamp" | cut -d'T' -f1)
+            local spec_file="$COMMIT_RELAY_HOME/coordination/worker-specs/zombie/${zombie_date}/${worker_id}.json"
+
+            if [ -f "$spec_file" ]; then
+                worker_type=$(jq -r '.worker_type // "unknown"' "$spec_file" 2>/dev/null || echo "unknown")
+            fi
         fi
+
+        local sig_key="${category}_${type}_${worker_type}"
+        echo "$sig_key|$event" >> "$tmpfile"
     done <<< "$events"
 
-    # Find groups with frequency >= threshold
+    # Count occurrences and find patterns
     local patterns=()
 
-    for sig_key in "${!signature_groups[@]}"; do
-        local group_events="${signature_groups[$sig_key]}"
-        local count=$(echo "$group_events" | grep -c . || echo "0")
+    # Sort and count unique signatures
+    if [ -s "$tmpfile" ]; then
+        while IFS='|' read -r sig_key first_event; do
+            local count=$(grep -c "^${sig_key}|" "$tmpfile")
 
-        if [ "$count" -ge "$FREQUENCY_THRESHOLD" ]; then
-            local first_event=$(echo "$group_events" | head -1)
-            local classification=$(classify_failure "$first_event")
-            local category=$(echo "$classification" | cut -d: -f1)
-            local type=$(echo "$classification" | cut -d: -f2)
-            local signature=$(extract_failure_signature "$first_event")
-            local worker_type=$(echo "$signature" | jq -r '.worker_type')
+            if [ "$count" -ge "$FREQUENCY_THRESHOLD" ]; then
+                local category=$(echo "$sig_key" | cut -d'_' -f1)
+                local type=$(echo "$sig_key" | cut -d'_' -f2)
+                local worker_type=$(echo "$sig_key" | cut -d'_' -f3-)
 
-            local pattern_id=$(generate_pattern_id "$category" "$type" "$worker_type")
+                local pattern_id=$(generate_pattern_id "$category" "$type" "$worker_type")
 
-            # Calculate confidence based on frequency
-            local confidence=$(echo "scale=2; ($count / ($FREQUENCY_THRESHOLD * 3)) " | bc)
-            if (( $(echo "$confidence > 1" | bc -l) )); then
-                confidence="1.00"
+                # Calculate confidence
+                local confidence="0.33"
+                if [ "$count" -ge $((FREQUENCY_THRESHOLD * 3)) ]; then
+                    confidence="1.00"
+                elif [ "$count" -ge $((FREQUENCY_THRESHOLD * 2)) ]; then
+                    confidence="0.67"
+                fi
+
+                # Create minimal signature
+                local signature="{\"event_type\":\"$(echo "$first_event" | jq -r '.event_type')\",\"worker_type\":\"$worker_type\"}"
+
+                # Create pattern
+                local pattern=$(jq -nc \
+                    --arg pattern_id "$pattern_id" \
+                    --arg category "$category" \
+                    --arg type "$type" \
+                    --argjson signature "$signature" \
+                    --argjson count "$count" \
+                    --arg confidence "$confidence" \
+                    --arg created_at "$(date +%Y-%m-%dT%H:%M:%S%z)" \
+                    '{
+                        pattern_id: $pattern_id,
+                        category: $category,
+                        type: $type,
+                        signature: $signature,
+                        frequency: {total_occurrences: $count},
+                        confidence: ($confidence | tonumber),
+                        severity: "medium",
+                        created_at: $created_at,
+                        updated_at: $created_at
+                    }')
+
+                patterns+=("$pattern")
+                log_pattern "INFO: Detected pattern $pattern_id (count: $count, confidence: $confidence)"
+
+                # Remove processed signatures to avoid duplicates
+                grep -v "^${sig_key}|" "$tmpfile" > "${tmpfile}.tmp" && mv "${tmpfile}.tmp" "$tmpfile"
             fi
+        done < "$tmpfile"
+    fi
 
-            # Create pattern JSON
-            local pattern=$(jq -nc \
-                --arg pattern_id "$pattern_id" \
-                --arg category "$category" \
-                --arg type "$type" \
-                --argjson signature "$signature" \
-                --argjson count "$count" \
-                --argjson confidence "$confidence" \
-                --arg created_at "$(date +%Y-%m-%dT%H:%M:%S%z)" \
-                '{
-                    pattern_id: $pattern_id,
-                    category: $category,
-                    type: $type,
-                    signature: $signature,
-                    frequency: {
-                        total_occurrences: $count,
-                        first_seen: $created_at,
-                        last_seen: $created_at
-                    },
-                    confidence: $confidence,
-                    severity: "medium",
-                    created_at: $created_at,
-                    updated_at: $created_at
-                }')
-
-            patterns+=("$pattern")
-            log_pattern "INFO: Detected frequent pattern: $pattern_id (count: $count, confidence: $confidence)"
-        fi
-    done
+    # Cleanup
+    rm -f "$tmpfile" "${tmpfile}.tmp"
 
     printf '%s\n' "${patterns[@]}"
 }
