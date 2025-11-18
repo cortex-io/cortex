@@ -2471,6 +2471,117 @@
                                     </button>
                                 </div>
                             </div>
+
+                            <!-- Pattern Detection Daemon Card (Phase 4.4) -->
+                            <div class="border-2 rounded-xl p-6" :class="patternDaemon?.status === 'running' ? 'border-rose-300 dark:border-rose-700 bg-rose-50 dark:bg-rose-900/20' : 'border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700/50'">
+                                <div class="flex items-center justify-between mb-4">
+                                    <div class="flex items-center space-x-3">
+                                        <i data-lucide="search" class="w-6 h-6" :class="patternDaemon?.status === 'running' ? 'text-rose-600 dark:text-rose-400' : 'text-gray-600 dark:text-gray-400'"></i>
+                                        <h4 class="text-lg font-semibold text-gray-900 dark:text-white">Pattern Detection</h4>
+                                    </div>
+                                    <span class="px-3 py-1 rounded-full text-sm font-medium" :class="patternDaemon?.status === 'running' ? 'bg-rose-100 dark:bg-rose-900 text-rose-700 dark:text-rose-300' : 'bg-red-100 dark:bg-red-900 text-red-700 dark:text-red-300'" x-text="patternDaemon?.status === 'running' ? 'Running' : 'Stopped'"></span>
+                                </div>
+
+                                <div class="space-y-2 mb-6">
+                                    <div class="flex justify-between text-sm">
+                                        <span class="text-gray-600 dark:text-gray-400">PID:</span>
+                                        <span class="font-medium text-gray-900 dark:text-white" x-text="patternDaemon?.pid || 'N/A'"></span>
+                                    </div>
+                                    <div class="flex justify-between text-sm">
+                                        <span class="text-gray-600 dark:text-gray-400">Uptime:</span>
+                                        <span class="font-medium text-gray-900 dark:text-white" x-text="patternDaemon?.status === 'running' ? formatUptime(patternDaemon?.uptime_seconds) : 'N/A'"></span>
+                                    </div>
+                                    <div class="flex justify-between text-sm">
+                                        <span class="text-gray-600 dark:text-gray-400">Purpose:</span>
+                                        <span class="font-medium text-gray-900 dark:text-white">Failure Analysis</span>
+                                    </div>
+                                </div>
+
+                                <div class="flex space-x-2">
+                                    <button @click="controlPatternDaemon('start')" :disabled="patternDaemon?.status === 'running'" class="flex-1 px-4 py-2 rounded-lg font-medium transition-colors bg-green-600 text-white hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed">
+                                        <i data-lucide="play" class="w-4 h-4 inline-block mr-2"></i>
+                                        Start
+                                    </button>
+                                    <button @click="controlPatternDaemon('stop')" :disabled="patternDaemon?.status !== 'running'" class="flex-1 px-4 py-2 rounded-lg font-medium transition-colors bg-red-600 text-white hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed">
+                                        <i data-lucide="square" class="w-4 h-4 inline-block mr-2"></i>
+                                        Stop
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Worker Restart Daemon Card (Phase 4.3) -->
+                            <div class="border-2 rounded-xl p-6" :class="restartDaemon?.status === 'running' ? 'border-orange-300 dark:border-orange-700 bg-orange-50 dark:bg-orange-900/20' : 'border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700/50'">
+                                <div class="flex items-center justify-between mb-4">
+                                    <div class="flex items-center space-x-3">
+                                        <i data-lucide="refresh-cw" class="w-6 h-6" :class="restartDaemon?.status === 'running' ? 'text-orange-600 dark:text-orange-400' : 'text-gray-600 dark:text-gray-400'"></i>
+                                        <h4 class="text-lg font-semibold text-gray-900 dark:text-white">Worker Restart</h4>
+                                    </div>
+                                    <span class="px-3 py-1 rounded-full text-sm font-medium" :class="restartDaemon?.status === 'running' ? 'bg-orange-100 dark:bg-orange-900 text-orange-700 dark:text-orange-300' : 'bg-red-100 dark:bg-red-900 text-red-700 dark:text-red-300'" x-text="restartDaemon?.status === 'running' ? 'Running' : 'Stopped'"></span>
+                                </div>
+
+                                <div class="space-y-2 mb-6">
+                                    <div class="flex justify-between text-sm">
+                                        <span class="text-gray-600 dark:text-gray-400">PID:</span>
+                                        <span class="font-medium text-gray-900 dark:text-white" x-text="restartDaemon?.pid || 'N/A'"></span>
+                                    </div>
+                                    <div class="flex justify-between text-sm">
+                                        <span class="text-gray-600 dark:text-gray-400">Uptime:</span>
+                                        <span class="font-medium text-gray-900 dark:text-white" x-text="restartDaemon?.status === 'running' ? formatUptime(restartDaemon?.uptime_seconds) : 'N/A'"></span>
+                                    </div>
+                                    <div class="flex justify-between text-sm">
+                                        <span class="text-gray-600 dark:text-gray-400">Purpose:</span>
+                                        <span class="font-medium text-gray-900 dark:text-white">Auto Recovery</span>
+                                    </div>
+                                </div>
+
+                                <div class="flex space-x-2">
+                                    <button @click="controlRestartDaemon('start')" :disabled="restartDaemon?.status === 'running'" class="flex-1 px-4 py-2 rounded-lg font-medium transition-colors bg-green-600 text-white hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed">
+                                        <i data-lucide="play" class="w-4 h-4 inline-block mr-2"></i>
+                                        Start
+                                    </button>
+                                    <button @click="controlRestartDaemon('stop')" :disabled="restartDaemon?.status !== 'running'" class="flex-1 px-4 py-2 rounded-lg font-medium transition-colors bg-red-600 text-white hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed">
+                                        <i data-lucide="square" class="w-4 h-4 inline-block mr-2"></i>
+                                        Stop
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Auto-Fix Daemon Card (Phase 4.5) -->
+                            <div class="border-2 rounded-xl p-6" :class="autofixDaemon?.status === 'running' ? 'border-emerald-300 dark:border-emerald-700 bg-emerald-50 dark:bg-emerald-900/20' : 'border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700/50'">
+                                <div class="flex items-center justify-between mb-4">
+                                    <div class="flex items-center space-x-3">
+                                        <i data-lucide="wrench" class="w-6 h-6" :class="autofixDaemon?.status === 'running' ? 'text-emerald-600 dark:text-emerald-400' : 'text-gray-600 dark:text-gray-400'"></i>
+                                        <h4 class="text-lg font-semibold text-gray-900 dark:text-white">Auto-Fix</h4>
+                                    </div>
+                                    <span class="px-3 py-1 rounded-full text-sm font-medium" :class="autofixDaemon?.status === 'running' ? 'bg-emerald-100 dark:bg-emerald-900 text-emerald-700 dark:text-emerald-300' : 'bg-red-100 dark:bg-red-900 text-red-700 dark:text-red-300'" x-text="autofixDaemon?.status === 'running' ? 'Running' : 'Stopped'"></span>
+                                </div>
+
+                                <div class="space-y-2 mb-6">
+                                    <div class="flex justify-between text-sm">
+                                        <span class="text-gray-600 dark:text-gray-400">PID:</span>
+                                        <span class="font-medium text-gray-900 dark:text-white" x-text="autofixDaemon?.pid || 'N/A'"></span>
+                                    </div>
+                                    <div class="flex justify-between text-sm">
+                                        <span class="text-gray-600 dark:text-gray-400">Uptime:</span>
+                                        <span class="font-medium text-gray-900 dark:text-white" x-text="autofixDaemon?.status === 'running' ? formatUptime(autofixDaemon?.uptime_seconds) : 'N/A'"></span>
+                                    </div>
+                                    <div class="flex justify-between text-sm">
+                                        <span class="text-gray-600 dark:text-gray-400">Purpose:</span>
+                                        <span class="font-medium text-gray-900 dark:text-white">Auto Remediation</span>
+                                    </div>
+                                </div>
+
+                                <div class="flex space-x-2">
+                                    <button @click="controlAutofixDaemon('start')" :disabled="autofixDaemon?.status === 'running'" class="flex-1 px-4 py-2 rounded-lg font-medium transition-colors bg-green-600 text-white hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed">
+                                        <i data-lucide="play" class="w-4 h-4 inline-block mr-2"></i>
+                                        Start
+                                    </button>
+                                    <button @click="controlAutofixDaemon('stop')" :disabled="autofixDaemon?.status !== 'running'" class="flex-1 px-4 py-2 rounded-lg font-medium transition-colors bg-red-600 text-white hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed">
+                                        <i data-lucide="square" class="w-4 h-4 inline-block mr-2"></i>
+                                        Stop
+                                    </button>
+                                </div>
+                            </div>
                         </div>
 
                         <div class="mt-8 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
@@ -2479,7 +2590,7 @@
                                 <div class="text-sm text-blue-900 dark:text-blue-100">
                                     <p class="font-semibold mb-1">About Daemon Controls</p>
                                     <p class="text-blue-700 dark:text-blue-200">
-                                        Control all system daemons: Worker Daemon (spawns workers), PM Daemon (monitors worker health), Health Monitor (generates health alerts), Metrics Snapshot (collects historical metrics), Coordinator Daemon (routes tasks from queue to masters), and Integration Validator (validates routing pipelines). Changes take effect immediately.
+                                        Control all system daemons: Worker Daemon (spawns workers), PM Daemon (monitors worker health), Health Monitor (heartbeat monitoring), Metrics Snapshot (collects historical metrics), Coordinator Daemon (routes tasks from queue to masters), Integration Validator (validates routing pipelines), Pattern Detection (analyzes failure patterns), Worker Restart (auto-recovery with exponential backoff), and Auto-Fix (automatic remediation). Phase 4 self-healing daemons enable autonomous failure recovery. Changes take effect immediately.
                                     </p>
                                 </div>
                             </div>
