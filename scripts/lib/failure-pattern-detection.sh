@@ -56,7 +56,7 @@ if [ ! -f "$PATTERN_INDEX" ]; then
 fi
 
 log_pattern() {
-    echo "[$(date +%Y-%m-%dT%H:%M:%S%z)] $1" | tee -a "$PATTERN_LOG"
+    echo "[$(date +%Y-%m-%dT%H:%M:%S%z)] $1" | tee -a "$PATTERN_LOG" >&2
 }
 
 ##############################################################################
@@ -400,7 +400,7 @@ update_pattern() {
                 local current_count=$(echo "$line" | jq -r '.frequency.total_occurrences')
                 local new_count=$((current_count + 1))
 
-                echo "$line" | jq \
+                echo "$line" | jq -c \
                     --argjson new_count "$new_count" \
                     --arg updated_at "$(date +%Y-%m-%dT%H:%M:%S%z)" \
                     '.frequency.total_occurrences = $new_count | .frequency.last_seen = $updated_at | .updated_at = $updated_at'
