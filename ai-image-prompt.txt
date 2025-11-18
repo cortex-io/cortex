@@ -1,0 +1,112 @@
+AI IMAGE GENERATOR PROMPT FOR COMMIT-RELAY PROJECT IMAGE
+===========================================================
+
+MAIN PROMPT:
+------------
+Corporate Memphis style illustration for a GitHub project called "commit-relay".
+Show a central coordinator figure (simplified geometric human) at a computer/laptop
+in the center, surrounded by 4-5 smaller worker figures representing different AI
+agents (development, security, CI/CD, inventory masters). Use dashed lines connecting
+the workers to the central coordinator to show coordination and communication flow.
+Include floating geometric documents and task cards around the scene. Add decorative
+abstract shapes (circles, triangles, semicircles, rectangles) in the corners and
+background. Use bright, flat Corporate Memphis colors: purple (#6C5CE7), teal
+(#00D2D3), coral (#FF6B6B), yellow (#FFD93D), pink (#FF6FB5), mint green (#55EFC4).
+Text overlay at top: "commit-relay - AI-Powered Development Orchestration". Include
+small badge elements at bottom with text: "Multi-Agent", "Autonomous", "Real-Time".
+Clean white background. Flat design, no shadows or gradients. Professional tech
+illustration style suitable for GitHub README header image. 16:9 aspect ratio,
+landscape orientation.
+
+
+ALTERNATIVE SHORTER PROMPT:
+----------------------------
+Corporate Memphis style tech illustration showing AI-powered development orchestration.
+Central figure at laptop coordinating with 4 colorful worker agents around them,
+connected by dashed lines. Floating documents and geometric decorations. Bright colors:
+purple, teal, coral, yellow, pink. Text "commit-relay" at top. Flat design, white
+background, 16:9 landscape for GitHub project banner.
+
+
+DETAILED PROMPT (for more control):
+------------------------------------
+Create a Corporate Memphis style illustration for a GitHub project banner with these
+specific elements:
+
+COMPOSITION:
+- 16:9 landscape format, white background
+- Central focal point with surrounding elements in balanced arrangement
+- Professional tech/SaaS aesthetic
+
+MAIN CHARACTERS:
+- Center: One larger simplified human figure (geometric shapes, round head, rectangular
+  body) sitting at a teal laptop with code lines on screen, colored in purple/blue
+- Around center: 4 smaller human figures positioned at cardinal points (top-left,
+  top-right, bottom-left, bottom-right), each in different colors:
+  * Development agent (coral/salmon color)
+  * Security agent (pink/magenta color)
+  * CI/CD agent (yellow/gold color)
+  * Inventory agent (mint green color)
+
+CONNECTING ELEMENTS:
+- Dashed lines in matching colors connecting each outer figure to the central figure
+- Lines should be semi-transparent, showing data flow and coordination
+
+FLOATING ELEMENTS:
+- 4-6 document/card shapes floating in upper portion (simple rectangles with rounded
+  corners and horizontal lines representing text)
+- Documents colored in purple outlines on white
+
+DECORATIVE SHAPES:
+- Top-left corner: Teal semicircle
+- Top-right corner: Pink/coral rotated square
+- Bottom-left corner: Large yellow circle
+- Bottom-right corner: Pink triangle
+- Scattered small circles in various colors throughout
+
+TEXT ELEMENTS:
+- Top center: "commit-relay" in large, bold sans-serif purple text
+- Below title: "AI-Powered Development Orchestration" in smaller italic blue text
+- Bottom center: "Autonomous • Coordinated • Intelligent" in purple
+- Bottom: Three rounded badge shapes with text:
+  * Purple badge: "AI-Powered"
+  * Teal badge: "Multi-Agent"
+  * Coral badge: "Real-Time"
+
+STYLE SPECIFICATIONS:
+- Pure Corporate Memphis / Big Tech Company illustration style
+- Completely flat design (no shadows, gradients, or 3D effects)
+- Geometric simplified human figures with no facial features or details
+- Bright, saturated, cheerful color palette
+- Clean lines and shapes
+- Minimalist and modern
+- Similar to Atlassian, Asana, Slack illustration style
+
+COLOR PALETTE:
+Primary: #6C5CE7 (purple), #4834DF (blue), #00D2D3 (teal)
+Secondary: #FF6B6B (coral), #FFD93D (yellow), #FF6FB5 (pink), #55EFC4 (mint)
+Background: #FFFFFF (white)
+
+
+STYLE REFERENCE KEYWORDS:
+--------------------------
+Corporate Memphis, flat illustration, geometric humans, tech startup aesthetic,
+SaaS illustration, Atlassian style, Asana style, big tech illustration, flat design,
+no gradients, bright colors, minimal, modern, professional, GitHub banner,
+project header image, developer tools branding
+
+
+NEGATIVE PROMPTS (what to avoid):
+----------------------------------
+realistic, 3D, shadows, gradients, detailed faces, photorealistic, sketchy,
+hand-drawn, messy, cluttered, dark colors, complex details, anime, cartoon style,
+pencil drawing, watercolor, portrait orientation
+
+
+TECHNICAL SPECS:
+----------------
+- Aspect Ratio: 16:9 (landscape)
+- Recommended Resolution: 1920x1080 or 1600x900
+- Format: PNG or PDF
+- Use Case: GitHub repository header/banner image
+- Target Style: Corporate Memphis / Alegria / Big Tech Illustration
