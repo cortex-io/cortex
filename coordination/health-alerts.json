@@ -10,7 +10,7 @@
       "id": "alert-pm-daemon-down",
       "type": "pm_daemon_failure",
       "severity": "high",
-      "status": "active",
+      "status": "needs_review",
       "message": "PM Daemon heartbeat stale, PM Agent spawned as backup",
       "created_at": "2025-11-19T03:43:06-0600",
       "sla_minutes": 30,
