@@ -1,0 +1,23 @@
+{
+  "patterns": [
+    {
+      "pattern_id": "pattern-001",
+      "vulnerability_type": "Prototype Pollution",
+      "package": "js-yaml",
+      "cve": "CVE-2025-64718",
+      "remediation_strategy": "version_upgrade",
+      "affected_versions": "<3.14.2 || 4.0.0-4.1.0",
+      "fix_versions": ["3.14.2", "4.1.1"],
+      "breaking_changes": false,
+      "notes": "js-yaml 3.14.2 and 4.1.1 fix prototype pollution in merge operation. Upgrade is non-breaking for 3.x users.",
+      "alternative_mitigations": [
+        "Run Node.js with --disable-proto=delete flag",
+        "Use Deno (pollution protection on by default)",
+        "Validate/sanitize YAML input before parsing"
+      ],
+      "dependency_analysis": "Often transitive via gatsby, eslint, gray-matter, gatsby-plugin-mdx",
+      "learned_from": ["ry-ops/cara"],
+      "success_rate": 1.0
+    }
+  ]
+}
