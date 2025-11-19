@@ -160,6 +160,169 @@ Each master agent focuses on a domain like development, security, or inventory m
 **Monitoring**:
 9. **Dashboard Server** - Real-time monitoring UI with WebSocket updates
 
+#### System Architecture Diagram
+
+```mermaid
+graph TB
+    subgraph Daemons["🤖 Autonomous Daemons (9)"]
+        CD["Coordinator Daemon<br/>Task Routing"]
+        WD["Worker Daemon<br/>Lifecycle Management"]
+        PM["PM Daemon<br/>Process Monitoring"]
+        HM["Heartbeat Monitor<br/>Health Tracking"]
+        ZC["Zombie Cleanup<br/>Unresponsive Detection"]
+        WR["Worker Restart<br/>Intelligent Restart"]
+        FP["Failure Pattern<br/>ML Detection"]
+        AF["Auto-Fix<br/>12+ Strategies"]
+        DS["Dashboard Server<br/>Real-time UI"]
+    end
+
+    subgraph Masters["🎯 Master Agents (6)"]
+        CM["Coordinator Master<br/>MoE Routing"]
+        DM["Development Master<br/>Feature/Bug Work"]
+        SM["Security Master<br/>CVE/Vulnerability"]
+        IM["Inventory Master<br/>Cataloging"]
+        CI["CI/CD Master<br/>Build/Deploy"]
+        DA["Dashboard Agent<br/>Monitoring (RO)"]
+    end
+
+    subgraph Workers["⚙️ Worker Types (7)"]
+        W1["Implementation"]
+        W2["Fix"]
+        W3["Test"]
+        W4["Scan"]
+        W5["Security Fix"]
+        W6["Documentation"]
+        W7["Analysis"]
+    end
+
+    subgraph Governance["🛡️ Governance Framework (8 Namespaces)"]
+        G1["Coordinator<br/>internal, no-pii"]
+        G2["Development<br/>internal, code"]
+        G3["Security<br/>confidential"]
+        G4["Inventory<br/>internal, metadata"]
+        G5["CI/CD<br/>internal, deployment"]
+        G6["Dashboard<br/>internal, observability"]
+        G7["Governance<br/>confidential, audit"]
+        G8["Self-Healing<br/>internal, automation"]
+    end
+
+    subgraph Enhancements["🚀 Enhancement Systems"]
+        RAG["Vector DB (RAG)<br/>5 collections, 1536-dim<br/>Semantic Search"]
+        EVT["Event-Driven<br/>20+ event types<br/>Pub/Sub, Workflows"]
+        CACHE["Adaptive Caching<br/>LRU, Adaptive TTL<br/>70%+ hit rate"]
+        HARD["Production Hardening<br/>15+ checks<br/>Hardening Score"]
+    end
+
+    subgraph SelfHeal["🔧 Self-Healing System"]
+        SH1["Heartbeat Monitoring<br/>2-min intervals"]
+        SH2["Zombie Cleanup<br/>Auto detection"]
+        SH3["Worker Restart<br/>Exponential backoff"]
+        SH4["Pattern Detection<br/>ML-based"]
+        SH5["Auto-Fix Engine<br/>12+ strategies"]
+        SH6["Circuit Breaker<br/>Cascade prevention"]
+    end
+
+    %% Daemon to Master routing
+    CD --> CM
+    CM -->|Routes to| DM
+    CM -->|Routes to| SM
+    CM -->|Routes to| IM
+    CM -->|Routes to| CI
+
+    %% Masters spawn workers
+    DM -->|Spawns| W1
+    DM -->|Spawns| W2
+    DM -->|Spawns| W3
+    SM -->|Spawns| W4
+    SM -->|Spawns| W5
+    IM -->|Spawns| W6
+    IM -->|Spawns| W7
+    CI -->|Spawns| W3
+
+    %% Workers report health
+    W1 -.->|Heartbeat| HM
+    W2 -.->|Heartbeat| HM
+    W3 -.->|Heartbeat| HM
+    W4 -.->|Heartbeat| HM
+    W5 -.->|Heartbeat| HM
+    W6 -.->|Heartbeat| HM
+    W7 -.->|Heartbeat| HM
+
+    %% Self-healing daemons
+    HM --> ZC
+    ZC --> WR
+    WR --> FP
+    FP --> AF
+
+    %% Worker lifecycle management
+    WD -->|Manages| W1
+    WD -->|Manages| W2
+    WD -->|Manages| W3
+    WD -->|Manages| W4
+    WD -->|Manages| W5
+    WD -->|Manages| W6
+    WD -->|Manages| W7
+
+    %% Governance integration
+    CM -.->|Uses| G1
+    DM -.->|Uses| G2
+    SM -.->|Uses| G3
+    IM -.->|Uses| G4
+    CI -.->|Uses| G5
+    DA -.->|Uses| G6
+    HM -.->|Uses| G8
+
+    %% Enhancement system usage
+    CM -.->|Context| RAG
+    DM -.->|Context| RAG
+    SM -.->|Context| RAG
+    CM -.->|Publishes| EVT
+    DM -.->|Publishes| EVT
+    SM -.->|Publishes| EVT
+    CM -.->|Caches| CACHE
+    DM -.->|Caches| CACHE
+
+    %% Monitoring
+    DA -.->|Monitors| CM
+    DA -.->|Monitors| DM
+    DA -.->|Monitors| SM
+    DA -.->|Monitors| IM
+    DA -.->|Monitors| CI
+    DA -.->|Monitors| W1
+    DA -.->|Monitors| W2
+    DA -.->|Monitors| W3
+    DA -.->|Monitors| W4
+    DA -.->|Monitors| W5
+    DA -.->|Monitors| W6
+    DA -.->|Monitors| W7
+    DS -.->|Feeds| DA
+
+    %% Self-healing components
+    HM -.->|Implements| SH1
+    ZC -.->|Implements| SH2
+    WR -.->|Implements| SH3
+    FP -.->|Implements| SH4
+    AF -.->|Implements| SH5
+
+    style CM fill:#c5cae9,stroke:#3949ab
+    style DM fill:#bbdefb,stroke:#1976d2
+    style SM fill:#ffcdd2,stroke:#d32f2f
+    style IM fill:#e1bee7,stroke:#8e24aa
+    style CI fill:#c8e6c9,stroke:#388e3c
+    style DA fill:#b2dfdb,stroke:#00897b
+    style CD fill:#fff9c4,stroke:#f57f17
+    style HM fill:#ffccbc,stroke:#ff6f00
+    style ZC fill:#ffccbc,stroke:#ff6f00
+    style WR fill:#ffccbc,stroke:#ff6f00
+    style FP fill:#ffccbc,stroke:#ff6f00
+    style AF fill:#ffccbc,stroke:#ff6f00
+    style DS fill:#b2dfdb,stroke:#00897b
+    style RAG fill:#f8bbd0,stroke:#c2185b
+    style EVT fill:#d1c4e9,stroke:#673ab7
+    style CACHE fill:#ffe0b2,stroke:#f57c00
+    style HARD fill:#b2ebf2,stroke:#0097a7
+```
+
 #### Governance Framework (8 Namespaces)
 
 **1. Coordinator** - Task queue, routing decisions, master state
