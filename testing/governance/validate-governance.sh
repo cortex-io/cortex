@@ -6,7 +6,7 @@
 set -euo pipefail
 
 COMMIT_RELAY_HOME="${COMMIT_RELAY_HOME:-/Users/ryandahlberg/commit-relay}"
-TEST_OUTPUT_DIR="${COMMIT_RELAY_HOME}/tests/governance/results"
+TEST_OUTPUT_DIR="${COMMIT_RELAY_HOME}/testing/governance/results"
 ROUTING_RESULTS="${TEST_OUTPUT_DIR}/routing-results.jsonl"
 AUDIT_LOG="${TEST_OUTPUT_DIR}/governance-audit-trail.jsonl"
 VALIDATION_REPORT="${TEST_OUTPUT_DIR}/validation-report.json"
@@ -230,7 +230,7 @@ components=(
     "coordination/masters/coordinator/lib/moe-router.sh:MoE Router"
     "docs/MOE-ARCHITECTURE.md:MoE Documentation"
     "docs/circuit-breaker.md:Circuit Breaker Documentation"
-    "tests/governance/governance-test-framework.sh:Test Framework"
+    "testing/governance/governance-test-framework.sh:Test Framework"
 )
 
 for component_spec in "${components[@]}"; do

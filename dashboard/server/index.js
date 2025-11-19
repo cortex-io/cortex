@@ -56,6 +56,9 @@ const {
 // Governance modules
 const { ComplianceEngine, MetricsCollector } = require('../../lib/governance/compliance');
 
+// API Routes
+const usersRouter = require('./routes/users');
+
 const app = express();
 const PORT = process.env.DASHBOARD_PORT || 3000;
 
@@ -99,6 +102,9 @@ app.use('/api', apiLimiter);
 
 // Security: Apply authentication to all API routes
 app.use('/api', authMiddleware);
+
+// Mount API routers
+app.use('/api/users', usersRouter);
 
 // Paths to coordination files
 const COMMIT_RELAY_HOME = process.env.COMMIT_RELAY_HOME || path.join(__dirname, '../..');
@@ -4116,6 +4122,414 @@ app.get('/api/logs/tail', async (req, res) => {
 });
 
 // ============================================================================
+// User Management API Endpoints
+// ============================================================================
+
+/**
+ * GET /api/users
+ * Get all users with optional filtering and pagination
+ * Query params:
+ *   - role: filter by role (admin, developer, viewer)
+ *   - status: filter by status (active, inactive)
+ *   - limit: number of users to return (default: all)
+ *   - offset: pagination offset (default: 0)
+ */
+app.get('/api/users', async (req, res) => {
+  try {
+    const { role, status, limit, offset } = req.query;
+
+    const usersPath = path.join(__dirname, '../../coordination/users.json');
+    const usersData = await readJSON(usersPath);
+
+    if (!usersData || !usersData.users) {
+      return res.status(500).json({
+        error: 'Users data not found or invalid',
+        users: [],
+        total: 0
+      });
+    }
+
+    let filteredUsers = [...usersData.users];
+
+    // Apply filters
+    if (role) {
+      filteredUsers = filteredUsers.filter(u => u.role === role);
+    }
+    if (status) {
+      filteredUsers = filteredUsers.filter(u => u.status === status);
+    }
+
+    // Apply pagination
+    const total = filteredUsers.length;
+    const offsetNum = parseInt(offset) || 0;
+    const limitNum = parseInt(limit) || total;
+
+    const paginatedUsers = filteredUsers.slice(offsetNum, offsetNum + limitNum);
+
+    res.json({
+      users: paginatedUsers,
+      total: total,
+      limit: limitNum,
+      offset: offsetNum,
+      filters: { role, status }
+    });
+  } catch (error) {
+    console.error('Error fetching users:', error);
+    res.status(500).json({
+      error: 'Internal server error',
+      details: sanitizeError(error)
+    });
+  }
+});
+
+/**
+ * GET /api/users/:id
+ * Get a specific user by ID
+ */
+app.get('/api/users/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const usersPath = path.join(__dirname, '../../coordination/users.json');
+    const usersData = await readJSON(usersPath);
+
+    if (!usersData || !usersData.users) {
+      return res.status(404).json({ error: 'Users data not found' });
+    }
+
+    const user = usersData.users.find(u => u.id === id);
+
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    res.json(user);
+  } catch (error) {
+    console.error('Error fetching user:', error);
+    res.status(500).json({
+      error: 'Internal server error',
+      details: sanitizeError(error)
+    });
+  }
+});
+
+/**
+ * POST /api/users
+ * Create a new user
+ * Body: { username, email, role, status }
+ */
+app.post('/api/users', async (req, res) => {
+  try {
+    const { username, email, role, status } = req.body;
+
+    // Validation
+    if (!username || !email) {
+      return res.status(400).json({
+        error: 'Missing required fields',
+        required: ['username', 'email']
+      });
+    }
+
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return res.status(400).json({ error: 'Invalid email format' });
+    }
+
+    // Validate role
+    const validRoles = ['admin', 'developer', 'viewer'];
+    const userRole = role || 'viewer';
+    if (!validRoles.includes(userRole)) {
+      return res.status(400).json({
+        error: 'Invalid role',
+        validRoles
+      });
+    }
+
+    const usersPath = path.join(__dirname, '../../coordination/users.json');
+    const usersData = await readJSON(usersPath);
+
+    if (!usersData) {
+      return res.status(500).json({ error: 'Failed to load users data' });
+    }
+
+    // Ensure users array exists
+    if (!usersData.users) {
+      usersData.users = [];
+    }
+
+    // Check for duplicate username or email
+    const existingUser = usersData.users.find(
+      u => u.username === username || u.email === email
+    );
+
+    if (existingUser) {
+      return res.status(409).json({
+        error: 'User already exists',
+        conflict: existingUser.username === username ? 'username' : 'email'
+      });
+    }
+
+    // Create new user
+    const newUser = {
+      id: `user-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+      username,
+      email,
+      role: userRole,
+      status: status || 'active',
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+      last_login: null,
+      metadata: {
+        created_by: 'api',
+        source: 'user-management-api'
+      }
+    };
+
+    usersData.users.push(newUser);
+    usersData.updated_at = new Date().toISOString();
+
+    // Write back to file
+    await safeWriteJSON(usersPath, usersData);
+
+    // Emit dashboard event
+    emitDashboardEvent('user_created', {
+      user_id: newUser.id,
+      username: newUser.username,
+      role: newUser.role,
+      message: `New user created: ${username}`
+    });
+
+    res.status(201).json({
+      success: true,
+      user: newUser,
+      message: 'User created successfully'
+    });
+  } catch (error) {
+    console.error('Error creating user:', error);
+    res.status(500).json({
+      error: 'Internal server error',
+      details: sanitizeError(error)
+    });
+  }
+});
+
+/**
+ * PUT /api/users/:id
+ * Update an existing user
+ * Body: { username, email, role, status }
+ */
+app.put('/api/users/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { username, email, role, status } = req.body;
+
+    const usersPath = path.join(__dirname, '../../coordination/users.json');
+    const usersData = await readJSON(usersPath);
+
+    if (!usersData || !usersData.users) {
+      return res.status(404).json({ error: 'Users data not found' });
+    }
+
+    const userIndex = usersData.users.findIndex(u => u.id === id);
+
+    if (userIndex === -1) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    const user = usersData.users[userIndex];
+
+    // Validate role if provided
+    if (role) {
+      const validRoles = ['admin', 'developer', 'viewer'];
+      if (!validRoles.includes(role)) {
+        return res.status(400).json({
+          error: 'Invalid role',
+          validRoles
+        });
+      }
+    }
+
+    // Validate email if provided
+    if (email) {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(email)) {
+        return res.status(400).json({ error: 'Invalid email format' });
+      }
+
+      // Check for duplicate email
+      const duplicateEmail = usersData.users.find(
+        u => u.id !== id && u.email === email
+      );
+      if (duplicateEmail) {
+        return res.status(409).json({ error: 'Email already in use' });
+      }
+    }
+
+    // Check for duplicate username
+    if (username && username !== user.username) {
+      const duplicateUsername = usersData.users.find(
+        u => u.id !== id && u.username === username
+      );
+      if (duplicateUsername) {
+        return res.status(409).json({ error: 'Username already in use' });
+      }
+    }
+
+    // Update user fields
+    const updatedUser = {
+      ...user,
+      username: username || user.username,
+      email: email || user.email,
+      role: role || user.role,
+      status: status || user.status,
+      updated_at: new Date().toISOString()
+    };
+
+    usersData.users[userIndex] = updatedUser;
+    usersData.updated_at = new Date().toISOString();
+
+    // Write back to file
+    await safeWriteJSON(usersPath, usersData);
+
+    // Emit dashboard event
+    emitDashboardEvent('user_updated', {
+      user_id: updatedUser.id,
+      username: updatedUser.username,
+      role: updatedUser.role,
+      status: updatedUser.status,
+      message: `User updated: ${updatedUser.username}`
+    });
+
+    res.json({
+      success: true,
+      user: updatedUser,
+      message: 'User updated successfully'
+    });
+  } catch (error) {
+    console.error('Error updating user:', error);
+    res.status(500).json({
+      error: 'Internal server error',
+      details: sanitizeError(error)
+    });
+  }
+});
+
+/**
+ * DELETE /api/users/:id
+ * Delete a user
+ */
+app.delete('/api/users/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const usersPath = path.join(__dirname, '../../coordination/users.json');
+    const usersData = await readJSON(usersPath);
+
+    if (!usersData || !usersData.users) {
+      return res.status(404).json({ error: 'Users data not found' });
+    }
+
+    const userIndex = usersData.users.findIndex(u => u.id === id);
+
+    if (userIndex === -1) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    const deletedUser = usersData.users.splice(userIndex, 1)[0];
+    usersData.updated_at = new Date().toISOString();
+
+    // Write back to file
+    await safeWriteJSON(usersPath, usersData);
+
+    // Emit dashboard event
+    emitDashboardEvent('user_deleted', {
+      user_id: deletedUser.id,
+      username: deletedUser.username,
+      message: `User deleted: ${deletedUser.username}`
+    });
+
+    res.json({
+      success: true,
+      user: deletedUser,
+      message: 'User deleted successfully'
+    });
+  } catch (error) {
+    console.error('Error deleting user:', error);
+    res.status(500).json({
+      error: 'Internal server error',
+      details: sanitizeError(error)
+    });
+  }
+});
+
+/**
+ * POST /api/users/:id/login
+ * Record user login activity
+ */
+app.post('/api/users/:id/login', async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const usersPath = path.join(__dirname, '../../coordination/users.json');
+    const usersData = await readJSON(usersPath);
+
+    if (!usersData || !usersData.users) {
+      return res.status(404).json({ error: 'Users data not found' });
+    }
+
+    const userIndex = usersData.users.findIndex(u => u.id === id);
+
+    if (userIndex === -1) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    const user = usersData.users[userIndex];
+
+    if (user.status !== 'active') {
+      return res.status(403).json({
+        error: 'User account is not active',
+        status: user.status
+      });
+    }
+
+    // Update last login
+    user.last_login = new Date().toISOString();
+    user.updated_at = new Date().toISOString();
+
+    usersData.updated_at = new Date().toISOString();
+
+    // Write back to file
+    await safeWriteJSON(usersPath, usersData);
+
+    // Emit dashboard event
+    emitDashboardEvent('user_login', {
+      user_id: user.id,
+      username: user.username,
+      timestamp: user.last_login,
+      message: `User logged in: ${user.username}`
+    });
+
+    res.json({
+      success: true,
+      user: {
+        id: user.id,
+        username: user.username,
+        role: user.role,
+        last_login: user.last_login
+      },
+      message: 'Login recorded successfully'
+    });
+  } catch (error) {
+    console.error('Error recording login:', error);
+    res.status(500).json({
+      error: 'Internal server error',
+      details: sanitizeError(error)
+    });
+  }
+});
+
+// ============================================================================
 // WebSocket Server for Real-time Updates
 // ============================================================================
 
@@ -4799,6 +5213,534 @@ app.get('/api/ddqd/schedule', (req, res) => {
   } catch (error) {
     console.error('Error getting DDQD schedule:', error);
     res.status(500).json({ error: error.message });
+  }
+});
+
+// ============================================================================
+// User Management API Endpoints
+// ============================================================================
+
+// In-memory user store (in production, this would be a database)
+const users = new Map();
+let userIdCounter = 1;
+
+// Helper function to validate user data
+function validateUserData(userData) {
+  const errors = [];
+
+  if (!userData.username || typeof userData.username !== 'string' || userData.username.trim().length < 3) {
+    errors.push('Username must be at least 3 characters');
+  }
+
+  if (!userData.email || typeof userData.email !== 'string' || !userData.email.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/)) {
+    errors.push('Valid email is required');
+  }
+
+  if (userData.role && !['admin', 'developer', 'viewer'].includes(userData.role)) {
+    errors.push('Role must be one of: admin, developer, viewer');
+  }
+
+  return errors;
+}
+
+// GET /api/users - List all users
+app.get('/api/users', async (req, res) => {
+  try {
+    const { role, active, search, limit = 100, offset = 0 } = req.query;
+
+    let userList = Array.from(users.values());
+
+    // Filter by role
+    if (role) {
+      userList = userList.filter(u => u.role === role);
+    }
+
+    // Filter by active status
+    if (active !== undefined) {
+      const isActive = active === 'true';
+      userList = userList.filter(u => u.active === isActive);
+    }
+
+    // Search by username or email
+    if (search) {
+      const searchLower = search.toLowerCase();
+      userList = userList.filter(u =>
+        u.username.toLowerCase().includes(searchLower) ||
+        u.email.toLowerCase().includes(searchLower)
+      );
+    }
+
+    // Pagination
+    const total = userList.length;
+    const limitNum = parseInt(limit);
+    const offsetNum = parseInt(offset);
+    userList = userList.slice(offsetNum, offsetNum + limitNum);
+
+    res.json({
+      success: true,
+      data: userList,
+      pagination: {
+        total,
+        limit: limitNum,
+        offset: offsetNum,
+        hasMore: offsetNum + limitNum < total
+      }
+    });
+  } catch (error) {
+    console.error('Error fetching users:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to fetch users',
+      message: sanitizeError(error.message)
+    });
+  }
+});
+
+// GET /api/users/:id - Get a specific user
+app.get('/api/users/:id', async (req, res) => {
+  try {
+    const userId = parseInt(req.params.id);
+
+    if (isNaN(userId)) {
+      return res.status(400).json({
+        success: false,
+        error: 'Invalid user ID'
+      });
+    }
+
+    const user = users.get(userId);
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        error: 'User not found'
+      });
+    }
+
+    res.json({
+      success: true,
+      data: user
+    });
+  } catch (error) {
+    console.error('Error fetching user:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to fetch user',
+      message: sanitizeError(error.message)
+    });
+  }
+});
+
+// POST /api/users - Create a new user
+app.post('/api/users', async (req, res) => {
+  try {
+    const { username, email, role = 'viewer', active = true, metadata = {} } = req.body;
+
+    // Validate user data
+    const validationErrors = validateUserData({ username, email, role });
+    if (validationErrors.length > 0) {
+      return res.status(400).json({
+        success: false,
+        error: 'Validation failed',
+        details: validationErrors
+      });
+    }
+
+    // Check for duplicate username or email
+    const existingUser = Array.from(users.values()).find(
+      u => u.username === username || u.email === email
+    );
+
+    if (existingUser) {
+      return res.status(409).json({
+        success: false,
+        error: 'User already exists with this username or email'
+      });
+    }
+
+    // Create new user
+    const newUser = {
+      id: userIdCounter++,
+      username: username.trim(),
+      email: email.trim(),
+      role,
+      active,
+      metadata,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    };
+
+    users.set(newUser.id, newUser);
+
+    console.log(`✅ Created user: ${newUser.username} (ID: ${newUser.id})`);
+
+    res.status(201).json({
+      success: true,
+      data: newUser,
+      message: 'User created successfully'
+    });
+  } catch (error) {
+    console.error('Error creating user:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to create user',
+      message: sanitizeError(error.message)
+    });
+  }
+});
+
+// PUT /api/users/:id - Update an existing user
+app.put('/api/users/:id', async (req, res) => {
+  try {
+    const userId = parseInt(req.params.id);
+
+    if (isNaN(userId)) {
+      return res.status(400).json({
+        success: false,
+        error: 'Invalid user ID'
+      });
+    }
+
+    const existingUser = users.get(userId);
+
+    if (!existingUser) {
+      return res.status(404).json({
+        success: false,
+        error: 'User not found'
+      });
+    }
+
+    const { username, email, role, active, metadata } = req.body;
+
+    // Build update object with only provided fields
+    const updates = {};
+    if (username !== undefined) updates.username = username;
+    if (email !== undefined) updates.email = email;
+    if (role !== undefined) updates.role = role;
+    if (active !== undefined) updates.active = active;
+    if (metadata !== undefined) updates.metadata = metadata;
+
+    // Validate updates
+    const validationErrors = validateUserData({
+      username: updates.username || existingUser.username,
+      email: updates.email || existingUser.email,
+      role: updates.role || existingUser.role
+    });
+
+    if (validationErrors.length > 0) {
+      return res.status(400).json({
+        success: false,
+        error: 'Validation failed',
+        details: validationErrors
+      });
+    }
+
+    // Check for duplicate username/email (excluding current user)
+    if (updates.username || updates.email) {
+      const duplicate = Array.from(users.values()).find(u =>
+        u.id !== userId && (
+          (updates.username && u.username === updates.username) ||
+          (updates.email && u.email === updates.email)
+        )
+      );
+
+      if (duplicate) {
+        return res.status(409).json({
+          success: false,
+          error: 'Username or email already in use by another user'
+        });
+      }
+    }
+
+    // Update user
+    const updatedUser = {
+      ...existingUser,
+      ...updates,
+      updatedAt: new Date().toISOString()
+    };
+
+    users.set(userId, updatedUser);
+
+    console.log(`✅ Updated user: ${updatedUser.username} (ID: ${userId})`);
+
+    res.json({
+      success: true,
+      data: updatedUser,
+      message: 'User updated successfully'
+    });
+  } catch (error) {
+    console.error('Error updating user:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to update user',
+      message: sanitizeError(error.message)
+    });
+  }
+});
+
+// PATCH /api/users/:id - Partially update a user
+app.patch('/api/users/:id', async (req, res) => {
+  try {
+    const userId = parseInt(req.params.id);
+
+    if (isNaN(userId)) {
+      return res.status(400).json({
+        success: false,
+        error: 'Invalid user ID'
+      });
+    }
+
+    const existingUser = users.get(userId);
+
+    if (!existingUser) {
+      return res.status(404).json({
+        success: false,
+        error: 'User not found'
+      });
+    }
+
+    const { username, email, role, active, metadata } = req.body;
+
+    // Build partial update
+    const updates = {};
+    if (username !== undefined) updates.username = username.trim();
+    if (email !== undefined) updates.email = email.trim();
+    if (role !== undefined) updates.role = role;
+    if (active !== undefined) updates.active = active;
+    if (metadata !== undefined) {
+      // Merge metadata instead of replacing
+      updates.metadata = { ...existingUser.metadata, ...metadata };
+    }
+
+    // Validate only if username/email/role are being updated
+    if (username || email || role) {
+      const validationErrors = validateUserData({
+        username: updates.username || existingUser.username,
+        email: updates.email || existingUser.email,
+        role: updates.role || existingUser.role
+      });
+
+      if (validationErrors.length > 0) {
+        return res.status(400).json({
+          success: false,
+          error: 'Validation failed',
+          details: validationErrors
+        });
+      }
+    }
+
+    // Update user
+    const updatedUser = {
+      ...existingUser,
+      ...updates,
+      updatedAt: new Date().toISOString()
+    };
+
+    users.set(userId, updatedUser);
+
+    console.log(`✅ Patched user: ${updatedUser.username} (ID: ${userId})`);
+
+    res.json({
+      success: true,
+      data: updatedUser,
+      message: 'User updated successfully'
+    });
+  } catch (error) {
+    console.error('Error patching user:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to update user',
+      message: sanitizeError(error.message)
+    });
+  }
+});
+
+// DELETE /api/users/:id - Delete a user
+app.delete('/api/users/:id', async (req, res) => {
+  try {
+    const userId = parseInt(req.params.id);
+
+    if (isNaN(userId)) {
+      return res.status(400).json({
+        success: false,
+        error: 'Invalid user ID'
+      });
+    }
+
+    const user = users.get(userId);
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        error: 'User not found'
+      });
+    }
+
+    // Soft delete option via query parameter
+    if (req.query.soft === 'true') {
+      user.active = false;
+      user.deletedAt = new Date().toISOString();
+      user.updatedAt = new Date().toISOString();
+      users.set(userId, user);
+
+      console.log(`✅ Soft deleted user: ${user.username} (ID: ${userId})`);
+
+      return res.json({
+        success: true,
+        data: user,
+        message: 'User soft deleted successfully'
+      });
+    }
+
+    // Hard delete
+    users.delete(userId);
+
+    console.log(`✅ Deleted user: ${user.username} (ID: ${userId})`);
+
+    res.json({
+      success: true,
+      data: { id: userId },
+      message: 'User deleted successfully'
+    });
+  } catch (error) {
+    console.error('Error deleting user:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to delete user',
+      message: sanitizeError(error.message)
+    });
+  }
+});
+
+// POST /api/users/bulk - Bulk create users
+app.post('/api/users/bulk', async (req, res) => {
+  try {
+    const { users: userList } = req.body;
+
+    if (!Array.isArray(userList) || userList.length === 0) {
+      return res.status(400).json({
+        success: false,
+        error: 'Request body must contain an array of users'
+      });
+    }
+
+    if (userList.length > 100) {
+      return res.status(400).json({
+        success: false,
+        error: 'Maximum 100 users can be created at once'
+      });
+    }
+
+    const results = {
+      created: [],
+      failed: []
+    };
+
+    for (const userData of userList) {
+      try {
+        const { username, email, role = 'viewer', active = true, metadata = {} } = userData;
+
+        // Validate
+        const validationErrors = validateUserData({ username, email, role });
+        if (validationErrors.length > 0) {
+          results.failed.push({
+            username,
+            email,
+            errors: validationErrors
+          });
+          continue;
+        }
+
+        // Check duplicates
+        const existing = Array.from(users.values()).find(
+          u => u.username === username || u.email === email
+        );
+
+        if (existing) {
+          results.failed.push({
+            username,
+            email,
+            errors: ['User already exists']
+          });
+          continue;
+        }
+
+        // Create user
+        const newUser = {
+          id: userIdCounter++,
+          username: username.trim(),
+          email: email.trim(),
+          role,
+          active,
+          metadata,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
+        };
+
+        users.set(newUser.id, newUser);
+        results.created.push(newUser);
+      } catch (error) {
+        results.failed.push({
+          username: userData.username,
+          email: userData.email,
+          errors: [error.message]
+        });
+      }
+    }
+
+    console.log(`✅ Bulk created ${results.created.length} users, ${results.failed.length} failed`);
+
+    res.status(results.created.length > 0 ? 201 : 400).json({
+      success: results.created.length > 0,
+      data: {
+        created: results.created.length,
+        failed: results.failed.length,
+        users: results.created,
+        errors: results.failed
+      },
+      message: `Created ${results.created.length} users, ${results.failed.length} failed`
+    });
+  } catch (error) {
+    console.error('Error bulk creating users:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to bulk create users',
+      message: sanitizeError(error.message)
+    });
+  }
+});
+
+// GET /api/users/stats - Get user statistics
+app.get('/api/users/stats', async (req, res) => {
+  try {
+    const allUsers = Array.from(users.values());
+
+    const stats = {
+      total: allUsers.length,
+      active: allUsers.filter(u => u.active).length,
+      inactive: allUsers.filter(u => !u.active).length,
+      byRole: {
+        admin: allUsers.filter(u => u.role === 'admin').length,
+        developer: allUsers.filter(u => u.role === 'developer').length,
+        viewer: allUsers.filter(u => u.role === 'viewer').length
+      },
+      recentlyCreated: allUsers
+        .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+        .slice(0, 5)
+        .map(u => ({ id: u.id, username: u.username, createdAt: u.createdAt }))
+    };
+
+    res.json({
+      success: true,
+      data: stats
+    });
+  } catch (error) {
+    console.error('Error fetching user stats:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to fetch user statistics',
+      message: sanitizeError(error.message)
+    });
   }
 });
 

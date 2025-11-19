@@ -88,16 +88,16 @@ for test_type in "${TYPES[@]}"; do
 
     case "$test_type" in
         unit)
-            TEST_FILE="tests/unit/${TASK_ID}.test.js"
+            TEST_FILE="testing/unit/${TASK_ID}.test.js"
             ;;
         integration)
-            TEST_FILE="tests/integration/${TASK_ID}.test.js"
+            TEST_FILE="testing/integration/${TASK_ID}.test.js"
             ;;
         e2e)
-            TEST_FILE="tests/e2e/${TASK_ID}.test.js"
+            TEST_FILE="testing/e2e/${TASK_ID}.test.js"
             ;;
         *)
-            TEST_FILE="tests/${TASK_ID}.test.js"
+            TEST_FILE="testing/${TASK_ID}.test.js"
             ;;
     esac
 

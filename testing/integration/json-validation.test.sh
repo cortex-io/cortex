@@ -6,7 +6,7 @@ set -e
 
 # Get project root
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-COMMIT_RELAY_HOME="$(cd "$SCRIPT_DIR/.." && pwd)"
+COMMIT_RELAY_HOME="$(cd "$SCRIPT_DIR/../.." && pwd)"
 
 # Source the validator
 source "$COMMIT_RELAY_HOME/scripts/lib/json-validator.sh"
@@ -126,7 +126,7 @@ fi
 
 # Test 8: JSONL file validation (create test file)
 test_start "JSONL file validation"
-TEST_JSONL="$COMMIT_RELAY_HOME/tests/test-events.jsonl"
+TEST_JSONL="$COMMIT_RELAY_HOME/testing/test-events.jsonl"
 cat > "$TEST_JSONL" <<EOF
 {"id":"evt-1","type":"test","data":"valid"}
 {"id":"evt-2","type":"test","data":"valid"}
@@ -210,7 +210,7 @@ fi
 
 # Test 14: Node.js safeWriteJSON
 test_start "Node.js safeWriteJSON"
-TEST_FILE="$COMMIT_RELAY_HOME/tests/test-safe-write.jsonl"
+TEST_FILE="$COMMIT_RELAY_HOME/testing/test-safe-write.jsonl"
 NODE_TEST_RESULT=$(node -e "
 const validator = require('$COMMIT_RELAY_HOME/dashboard/server/utils/json-validator.js');
 const result = validator.safeWriteJSON('$TEST_FILE', {id: 'test', data: 'value'}, false);

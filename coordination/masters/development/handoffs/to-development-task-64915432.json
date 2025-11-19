@@ -1,0 +1,30 @@
+{
+  "handoff_id": "handoff-resumate-001",
+  "from_master": "coordinator",
+  "to_master": "development",
+  "task_id": "task-64915432",
+  "task_type": "development",
+  "priority": "high",
+  "repository": "ry-ops/ResuMate",
+  "branch": "main",
+  "description": "Build ResuMate: AI-powered resume optimization web app with resume/job description upload, Claude AI analysis, and ATS/LPS compatibility scanning",
+  "requirements": [
+    "HTML/CSS/JavaScript web interface",
+    "Resume upload and paste functionality",
+    "Job description upload and paste functionality",
+    "Claude AI API integration for analysis",
+    "ATS (Applicant Tracking System) compatibility scanning",
+    "LPS (LinkedIn Profile Search) optimization",
+    "Browser-based operation (client-side)",
+    "Responsive design",
+    "User-friendly interface"
+  ],
+  "deliverables": [
+    "Complete web application",
+    "Documentation",
+    "Tests",
+    "README with usage instructions"
+  ],
+  "estimated_complexity": "high",
+  "created_at": "2025-11-17T13:16:30-0600"
+}

@@ -6,7 +6,7 @@ set -euo pipefail
 
 COMMIT_RELAY_HOME="${COMMIT_RELAY_HOME:-/Users/ryandahlberg/commit-relay}"
 TASK_QUEUE="${COMMIT_RELAY_HOME}/coordination/task-queue.json"
-TEST_OUTPUT_DIR="${COMMIT_RELAY_HOME}/tests/governance/results"
+TEST_OUTPUT_DIR="${COMMIT_RELAY_HOME}/testing/governance/results"
 TIMESTAMP=$(date +%s)
 
 # Colors
@@ -210,7 +210,7 @@ echo ""
 echo "Task files saved to: ${TEST_OUTPUT_DIR}"
 echo ""
 echo "Next steps:"
-echo "1. Run governance test framework: ./tests/governance/governance-test-framework.sh"
-echo "2. Route tasks through MoE: ./tests/governance/route-test-tasks.sh"
-echo "3. Validate governance controls: ./tests/governance/validate-governance.sh"
+echo "1. Run governance test framework: ./testing/governance/governance-test-framework.sh"
+echo "2. Route tasks through MoE: ./testing/governance/route-test-tasks.sh"
+echo "3. Validate governance controls: ./testing/governance/validate-governance.sh"
 echo ""

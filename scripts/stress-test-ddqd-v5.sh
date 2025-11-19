@@ -198,7 +198,7 @@ test_moe_routing() {
 
         # Find routing decision for this task
         local actual_expert=$(tail -n "$new_decisions" "$ROUTING_LOG" | \
-                             jq -r "select(.task_id == \"$task_id\") | .routed_to" | \
+                             jq -r "select(.task_id == \"$task_id\") | .decision.primary_expert" | \
                              head -1)
 
         if [ -n "$actual_expert" ] && [ "$actual_expert" = "$expected_expert" ]; then

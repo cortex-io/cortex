@@ -5,7 +5,7 @@
 set -euo pipefail
 
 COMMIT_RELAY_HOME="${COMMIT_RELAY_HOME:-/Users/ryandahlberg/commit-relay}"
-TEST_DIR="${COMMIT_RELAY_HOME}/tests/governance"
+TEST_DIR="${COMMIT_RELAY_HOME}/testing/governance"
 RESULTS_DIR="${TEST_DIR}/results"
 
 # Colors

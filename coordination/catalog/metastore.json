@@ -1,1557 +1,203 @@
 {
-  "catalog_id": "commit_relay_catalog",
-  "catalog_name": "Commit Relay Unified Catalog",
+  "catalog_name": "commit-relay",
   "version": "1.0.0",
-  "created_at": "2025-11-11T16:52:00Z",
-  "description": "Unified catalog for all data and AI assets in commit-relay system. Implements Databricks-proven governance patterns with three-level namespace (catalog.schema.asset).",
-  "governance": {
-    "enabled": true,
-    "policies": [
-      "asset_discovery",
-      "lineage_tracking",
-      "access_control",
-      "sensitivity_tagging"
-    ],
-    "compliance_frameworks": [
-      "enterprise_ai",
-      "data_governance"
-    ]
-  },
-  "namespaces": {
-    "coordination": {
-      "description": "Coordination layer data assets - tasks, handoffs, routing decisions",
-      "schemas": {
-        "tasks": {
-          "description": "Task management data including pending, active, and completed tasks",
-          "asset_types": [
-            "task_queue",
-            "task_definitions",
-            "task_history"
-          ]
-        },
-        "handoffs": {
-          "description": "Master-to-master handoff coordination data",
-          "asset_types": [
-            "handoff_specs",
-            "handoff_history"
-          ]
-        },
-        "routing": {
-          "description": "MoE routing decisions and patterns",
-          "asset_types": [
-            "routing_decisions",
-            "routing_patterns",
-            "routing_confidence"
-          ]
-        },
-        "memory": {
-          "description": "Working and long-term memory for system learning",
-          "asset_types": [
-            "working_memory",
-            "long_term_memory",
-            "task_patterns"
-          ]
-        },
-        "history": {
-          "description": "Historical operational data",
-          "asset_types": [
-            "daily_snapshots",
-            "hourly_snapshots"
-          ]
-        }
-      }
+  "created_at": "2025-11-18T00:00:00Z",
+  "last_updated": "2025-11-18T00:00:00Z",
+  "description": "Unified catalog for all Commit-Relay data and AI assets",
+  "namespaces": [
+    {
+      "name": "coordinator",
+      "type": "master_agent",
+      "owner": "system",
+      "description": "Central coordination and task routing",
+      "assets": {
+        "data_assets": [
+          "task-queue",
+          "routing-decisions",
+          "handoffs",
+          "master-state",
+          "moe-routing-patterns"
+        ],
+        "ai_assets": [
+          "coordinator-master",
+          "moe-router"
+        ],
+        "model_assets": []
+      },
+      "access_policies": ["coordinator-admin", "coordinator-read"],
+      "compliance_tags": ["internal", "no-pii"],
+      "sensitivity_level": "internal"
     },
-    "masters": {
-      "description": "Master agent AI assets - contexts, knowledge bases, states",
-      "schemas": {
-        "coordinator": {
-          "description": "Coordinator master agent assets",
-          "asset_types": [
-            "agent_state",
-            "knowledge_base",
-            "routing_logic"
-          ]
-        },
-        "development": {
-          "description": "Development master agent assets",
-          "asset_types": [
-            "agent_state",
-            "knowledge_base",
-            "implementation_patterns"
-          ]
-        },
-        "security": {
-          "description": "Security master agent assets",
-          "asset_types": [
-            "agent_state",
-            "knowledge_base",
-            "vulnerability_patterns"
-          ]
-        },
-        "cicd": {
-          "description": "CI/CD master agent assets",
-          "asset_types": [
-            "agent_state",
-            "knowledge_base",
-            "deployment_patterns"
-          ]
-        },
-        "inventory": {
-          "description": "Inventory master agent assets",
-          "asset_types": [
-            "agent_state",
-            "knowledge_base",
-            "documentation_patterns"
-          ]
-        },
-        "testing": {
-          "description": "Testing master agent assets",
-          "asset_types": [
-            "agent_state",
-            "knowledge_base",
-            "test_patterns"
-          ]
-        },
-        "monitoring": {
-          "description": "Monitoring master agent assets",
-          "asset_types": [
-            "agent_state",
-            "knowledge_base",
-            "alert_patterns"
-          ]
-        }
-      }
+    {
+      "name": "development",
+      "type": "master_agent",
+      "owner": "development-team",
+      "description": "Feature implementation and bug fixes",
+      "assets": {
+        "data_assets": [
+          "development-tasks",
+          "code-changes",
+          "implementation-history"
+        ],
+        "ai_assets": [
+          "development-master",
+          "implementation-worker",
+          "fix-worker",
+          "test-worker"
+        ],
+        "model_assets": []
+      },
+      "access_policies": ["development-admin", "development-write", "development-read"],
+      "compliance_tags": ["internal", "code"],
+      "sensitivity_level": "internal"
     },
-    "workers": {
-      "description": "Worker agent AI assets - specifications and execution data",
-      "schemas": {
-        "specs": {
-          "description": "Worker specifications and templates",
-          "asset_types": [
-            "worker_specs",
-            "worker_templates",
-            "worker_history"
-          ]
-        },
-        "execution": {
-          "description": "Worker execution data and results",
-          "asset_types": [
-            "execution_logs",
-            "execution_results"
-          ]
-        }
-      }
+    {
+      "name": "security",
+      "type": "master_agent",
+      "owner": "security-team",
+      "description": "Security scanning and vulnerability remediation",
+      "assets": {
+        "data_assets": [
+          "scan-results",
+          "vulnerability-reports",
+          "cve-database",
+          "security-tasks"
+        ],
+        "ai_assets": [
+          "security-master",
+          "scan-worker",
+          "security-fix-worker"
+        ],
+        "model_assets": []
+      },
+      "access_policies": ["security-admin", "security-write", "security-read"],
+      "compliance_tags": ["confidential", "security-sensitive"],
+      "sensitivity_level": "confidential"
     },
-    "moe": {
-      "description": "Mixture of Experts routing system assets",
-      "schemas": {
-        "routing": {
-          "description": "MoE routing engine and rules",
-          "asset_types": [
-            "routing_rules",
-            "routing_model",
-            "routing_metrics"
-          ]
-        },
-        "experts": {
-          "description": "Expert specialization definitions",
-          "asset_types": [
-            "expert_profiles",
-            "expert_capabilities"
-          ]
-        }
-      }
+    {
+      "name": "inventory",
+      "type": "master_agent",
+      "owner": "operations-team",
+      "description": "Repository cataloging and dependency tracking",
+      "assets": {
+        "data_assets": [
+          "repository-catalog",
+          "dependency-graphs",
+          "documentation-index"
+        ],
+        "ai_assets": [
+          "inventory-master",
+          "documentation-worker",
+          "analysis-worker"
+        ],
+        "model_assets": []
+      },
+      "access_policies": ["inventory-admin", "inventory-write", "inventory-read"],
+      "compliance_tags": ["internal", "metadata"],
+      "sensitivity_level": "internal"
     },
-    "prompts": {
-      "description": "AI prompt templates and agent definitions",
-      "schemas": {
-        "agent_definitions": {
-          "description": "Agent prompt definitions from .claude/agents/",
-          "asset_types": [
-            "master_prompts",
-            "worker_prompts",
-            "skill_prompts"
-          ]
-        },
-        "templates": {
-          "description": "Reusable prompt templates",
-          "asset_types": [
-            "task_templates",
-            "query_templates"
-          ]
-        }
-      }
+    {
+      "name": "cicd",
+      "type": "master_agent",
+      "owner": "devops-team",
+      "description": "Build automation and deployment workflows",
+      "assets": {
+        "data_assets": [
+          "build-history",
+          "deployment-logs",
+          "release-manifests"
+        ],
+        "ai_assets": [
+          "cicd-master",
+          "build-worker",
+          "deploy-worker"
+        ],
+        "model_assets": []
+      },
+      "access_policies": ["cicd-admin", "cicd-write", "cicd-read"],
+      "compliance_tags": ["internal", "deployment"],
+      "sensitivity_level": "internal"
+    },
+    {
+      "name": "dashboard",
+      "type": "observability_agent",
+      "owner": "operations-team",
+      "description": "System monitoring and metrics (read-only)",
+      "assets": {
+        "data_assets": [
+          "metrics-snapshots",
+          "dashboard-events",
+          "health-reports",
+          "system-health"
+        ],
+        "ai_assets": [
+          "dashboard-agent"
+        ],
+        "model_assets": []
+      },
+      "access_policies": ["dashboard-read"],
+      "compliance_tags": ["internal", "observability"],
+      "sensitivity_level": "internal"
+    },
+    {
+      "name": "governance",
+      "type": "governance_system",
+      "owner": "compliance-team",
+      "description": "Governance, compliance, and quality assurance",
+      "assets": {
+        "data_assets": [
+          "access-logs",
+          "pii-scan-results",
+          "quality-reports",
+          "compliance-audits"
+        ],
+        "ai_assets": [
+          "pii-scanner",
+          "quality-monitor",
+          "bypass-auditor"
+        ],
+        "model_assets": []
+      },
+      "access_policies": ["governance-admin", "compliance-read"],
+      "compliance_tags": ["confidential", "audit-trail"],
+      "sensitivity_level": "confidential"
+    },
+    {
+      "name": "self-healing",
+      "type": "automation_system",
+      "owner": "system",
+      "description": "Autonomous recovery and pattern detection",
+      "assets": {
+        "data_assets": [
+          "failure-patterns",
+          "auto-fix-history",
+          "circuit-breakers",
+          "restart-queue"
+        ],
+        "ai_assets": [
+          "pattern-detector",
+          "auto-fix-engine",
+          "restart-coordinator"
+        ],
+        "model_assets": []
+      },
+      "access_policies": ["self-healing-admin", "self-healing-read"],
+      "compliance_tags": ["internal", "automation"],
+      "sensitivity_level": "internal"
     }
+  ],
+  "global_policies": {
+    "audit_retention_days": 90,
+    "pii_detection_enabled": true,
+    "lineage_tracking_enabled": true,
+    "quality_monitoring_enabled": true,
+    "access_logging_enabled": true
   },
-  "assets": {
-    "coordination.tasks.task_queue": {
-      "asset_name": "Task Queue",
-      "asset_type": "data",
-      "namespace": "coordination.tasks",
-      "path": "/Users/ryandahlberg/commit-relay/coordination/task-queue.json",
-      "format": "json",
-      "size_bytes": 124249,
-      "last_modified": "2025-11-11T16:50:35.749Z",
-      "sensitivity": "internal",
-      "owner": "system",
-      "tags": [
-        "coordination",
-        "tasks"
-      ],
-      "asset_id": "coordination.tasks.task_queue",
-      "created_at": "2025-11-11T16:59:46.860Z",
-      "updated_at": "2025-11-11T16:59:46.860Z"
-    },
-    "coordination.tasks.pm_state": {
-      "asset_name": "PM State",
-      "asset_type": "data",
-      "namespace": "coordination.tasks",
-      "path": "/Users/ryandahlberg/commit-relay/coordination/pm-state.json",
-      "format": "json",
-      "size_bytes": 3546,
-      "last_modified": "2025-11-11T16:57:54.600Z",
-      "sensitivity": "internal",
-      "owner": "system",
-      "tags": [
-        "coordination",
-        "tasks"
-      ],
-      "asset_id": "coordination.tasks.pm_state",
-      "created_at": "2025-11-11T16:59:46.861Z",
-      "updated_at": "2025-11-11T16:59:46.861Z"
-    },
-    "coordination.tasks.pm_activity_log": {
-      "asset_name": "PM Activity Log",
-      "asset_type": "data",
-      "namespace": "coordination.tasks",
-      "path": "/Users/ryandahlberg/commit-relay/coordination/pm-activity.jsonl",
-      "format": "jsonl",
-      "size_bytes": 497513,
-      "last_modified": "2025-11-11T16:57:54.611Z",
-      "sensitivity": "internal",
-      "owner": "system",
-      "tags": [
-        "coordination",
-        "tasks"
-      ],
-      "asset_id": "coordination.tasks.pm_activity_log",
-      "created_at": "2025-11-11T16:59:46.862Z",
-      "updated_at": "2025-11-11T16:59:46.862Z"
-    },
-    "coordination.tasks.workforce_streams": {
-      "asset_name": "Workforce Streams",
-      "asset_type": "data",
-      "namespace": "coordination.tasks",
-      "path": "/Users/ryandahlberg/commit-relay/coordination/workforce-streams.json",
-      "format": "json",
-      "size_bytes": 8169,
-      "last_modified": "2025-11-11T16:57:54.580Z",
-      "sensitivity": "internal",
-      "owner": "system",
-      "tags": [
-        "coordination",
-        "tasks"
-      ],
-      "asset_id": "coordination.tasks.workforce_streams",
-      "created_at": "2025-11-11T16:59:46.863Z",
-      "updated_at": "2025-11-11T16:59:46.863Z"
-    },
-    "coordination.history.dashboard_events": {
-      "asset_name": "Dashboard Events",
-      "asset_type": "data",
-      "namespace": "coordination.history",
-      "path": "/Users/ryandahlberg/commit-relay/coordination/dashboard-events.jsonl",
-      "format": "jsonl",
-      "size_bytes": 1628,
-      "last_modified": "2025-11-11T16:53:40.748Z",
-      "sensitivity": "internal",
-      "owner": "system",
-      "tags": [
-        "coordination",
-        "history"
-      ],
-      "asset_id": "coordination.history.dashboard_events",
-      "created_at": "2025-11-11T16:59:46.863Z",
-      "updated_at": "2025-11-11T16:59:46.863Z"
-    },
-    "coordination.memory.worker_pool_state": {
-      "asset_name": "Worker Pool State",
-      "asset_type": "data",
-      "namespace": "coordination.memory",
-      "path": "/Users/ryandahlberg/commit-relay/coordination/memory/working/pool-state.json",
-      "format": "json",
-      "size_bytes": 396,
-      "last_modified": "2025-11-11T16:59:46.004Z",
-      "sensitivity": "internal",
-      "owner": "system",
-      "tags": [
-        "coordination",
-        "memory"
-      ],
-      "asset_id": "coordination.memory.worker_pool_state",
-      "created_at": "2025-11-11T16:59:46.864Z",
-      "updated_at": "2025-11-11T16:59:46.864Z"
-    },
-    "coordination.memory.task_patterns": {
-      "asset_name": "Task Patterns",
-      "asset_type": "data",
-      "namespace": "coordination.memory",
-      "path": "/Users/ryandahlberg/commit-relay/coordination/memory/long-term/task-patterns.json",
-      "format": "json",
-      "size_bytes": 16278,
-      "last_modified": "2025-11-11T14:04:26.065Z",
-      "sensitivity": "internal",
-      "owner": "system",
-      "tags": [
-        "coordination",
-        "memory"
-      ],
-      "asset_id": "coordination.memory.task_patterns",
-      "created_at": "2025-11-11T16:59:46.865Z",
-      "updated_at": "2025-11-11T16:59:46.865Z"
-    },
-    "coordination.tasks.orchestrator_state": {
-      "asset_name": "Orchestrator State",
-      "asset_type": "data",
-      "namespace": "coordination.tasks",
-      "path": "/Users/ryandahlberg/commit-relay/coordination/orchestrator/state/current.json",
-      "format": "json",
-      "size_bytes": 198,
-      "last_modified": "2025-11-11T16:59:40.100Z",
-      "sensitivity": "internal",
-      "owner": "system",
-      "tags": [
-        "coordination",
-        "tasks"
-      ],
-      "asset_id": "coordination.tasks.orchestrator_state",
-      "created_at": "2025-11-11T16:59:46.866Z",
-      "updated_at": "2025-11-11T16:59:46.866Z"
-    },
-    "coordination.routing.routing_decisions_logs_": {
-      "asset_name": "Routing Decisions (Logs)",
-      "asset_type": "data",
-      "namespace": "coordination.routing",
-      "path": "/Users/ryandahlberg/commit-relay/coordination/masters/coordinator/logs/routing-decisions.jsonl",
-      "format": "jsonl",
-      "size_bytes": 92666,
-      "last_modified": "2025-11-11T16:51:57.239Z",
-      "sensitivity": "internal",
-      "owner": "coordinator-master",
-      "tags": [
-        "routing",
-        "moe",
-        "decisions"
-      ],
-      "asset_id": "coordination.routing.routing_decisions_logs_",
-      "created_at": "2025-11-11T16:59:46.866Z",
-      "updated_at": "2025-11-11T16:59:46.866Z"
-    },
-    "coordination.routing.routing_decisions_knowledge_base_": {
-      "asset_name": "Routing Decisions (Knowledge Base)",
-      "asset_type": "data",
-      "namespace": "coordination.routing",
-      "path": "/Users/ryandahlberg/commit-relay/coordination/masters/coordinator/knowledge-base/routing-decisions.jsonl",
-      "format": "jsonl",
-      "size_bytes": 23215,
-      "last_modified": "2025-11-11T16:51:41.455Z",
-      "sensitivity": "internal",
-      "owner": "coordinator-master",
-      "tags": [
-        "routing",
-        "moe",
-        "decisions"
-      ],
-      "asset_id": "coordination.routing.routing_decisions_knowledge_base_",
-      "created_at": "2025-11-11T16:59:46.867Z",
-      "updated_at": "2025-11-11T16:59:46.867Z"
-    },
-    "masters.coordinator.coordinator_master_agent": {
-      "asset_name": "Coordinator Master Agent",
-      "asset_type": "ai",
-      "namespace": "masters.coordinator",
-      "agent_type": "master",
-      "capabilities": [],
-      "prompt_path": "/.claude/agents/coordinator-master.md",
-      "state_path": "/Users/ryandahlberg/commit-relay/coordination/masters/coordinator/context/master-state.json",
-      "status": "active",
-      "sensitivity": "internal",
-      "owner": "system",
-      "tags": [
-        "master-agent",
-        "coordinator",
-        "ai"
-      ],
-      "asset_id": "masters.coordinator.coordinator_master_agent",
-      "created_at": "2025-11-11T16:59:46.868Z",
-      "updated_at": "2025-11-11T16:59:46.868Z"
-    },
-    "masters.coordinator.coordinator_knowledge_base_index_json": {
-      "asset_name": "coordinator Knowledge Base - index.json",
-      "asset_type": "data",
-      "namespace": "masters.coordinator",
-      "path": "/Users/ryandahlberg/commit-relay/coordination/masters/coordinator/knowledge-base/index.json",
-      "format": "json",
-      "size_bytes": 692,
-      "sensitivity": "internal",
-      "owner": "coordinator-master",
-      "tags": [
-        "knowledge-base",
-        "coordinator",
-        "learning"
-      ],
-      "asset_id": "masters.coordinator.coordinator_knowledge_base_index_json",
-      "created_at": "2025-11-11T16:59:46.868Z",
-      "updated_at": "2025-11-11T16:59:46.868Z"
-    },
-    "masters.coordinator.coordinator_knowledge_base_routing_decisions_jsonl": {
-      "asset_name": "coordinator Knowledge Base - routing-decisions.jsonl",
-      "asset_type": "data",
-      "namespace": "masters.coordinator",
-      "path": "/Users/ryandahlberg/commit-relay/coordination/masters/coordinator/knowledge-base/routing-decisions.jsonl",
-      "format": "jsonl",
-      "size_bytes": 23215,
-      "sensitivity": "internal",
-      "owner": "coordinator-master",
-      "tags": [
-        "knowledge-base",
-        "coordinator",
-        "learning"
-      ],
-      "asset_id": "masters.coordinator.coordinator_knowledge_base_routing_decisions_jsonl",
-      "created_at": "2025-11-11T16:59:46.869Z",
-      "updated_at": "2025-11-11T16:59:46.869Z"
-    },
-    "masters.coordinator.coordinator_knowledge_base_routing_patterns_json": {
-      "asset_name": "coordinator Knowledge Base - routing-patterns.json",
-      "asset_type": "data",
-      "namespace": "masters.coordinator",
-      "path": "/Users/ryandahlberg/commit-relay/coordination/masters/coordinator/knowledge-base/routing-patterns.json",
-      "format": "json",
-      "size_bytes": 5053,
-      "sensitivity": "internal",
-      "owner": "coordinator-master",
-      "tags": [
-        "knowledge-base",
-        "coordinator",
-        "learning"
-      ],
-      "asset_id": "masters.coordinator.coordinator_knowledge_base_routing_patterns_json",
-      "created_at": "2025-11-11T16:59:46.870Z",
-      "updated_at": "2025-11-11T16:59:46.870Z"
-    },
-    "masters.coordinator.coordinator_knowledge_base_routing_rules_json": {
-      "asset_name": "coordinator Knowledge Base - routing-rules.json",
-      "asset_type": "data",
-      "namespace": "masters.coordinator",
-      "path": "/Users/ryandahlberg/commit-relay/coordination/masters/coordinator/knowledge-base/routing-rules.json",
-      "format": "json",
-      "size_bytes": 992,
-      "sensitivity": "internal",
-      "owner": "coordinator-master",
-      "tags": [
-        "knowledge-base",
-        "coordinator",
-        "learning"
-      ],
-      "asset_id": "masters.coordinator.coordinator_knowledge_base_routing_rules_json",
-      "created_at": "2025-11-11T16:59:46.870Z",
-      "updated_at": "2025-11-11T16:59:46.870Z"
-    },
-    "masters.development.development_master_agent": {
-      "asset_name": "Development Master Agent",
-      "asset_type": "ai",
-      "namespace": "masters.development",
-      "agent_type": "master",
-      "capabilities": [
-        "feature_implementation",
-        "bug_fixing",
-        "code_refactoring",
-        "performance_optimization",
-        "technical_debt_resolution"
-      ],
-      "prompt_path": "/.claude/agents/development-master.md",
-      "state_path": "/Users/ryandahlberg/commit-relay/coordination/masters/development/context/master-state.json",
-      "status": "active",
-      "sensitivity": "internal",
-      "owner": "system",
-      "tags": [
-        "master-agent",
-        "development",
-        "ai"
-      ],
-      "asset_id": "masters.development.development_master_agent",
-      "created_at": "2025-11-11T16:59:46.871Z",
-      "updated_at": "2025-11-11T16:59:46.871Z"
-    },
-    "masters.development.development_knowledge_base_index_json": {
-      "asset_name": "development Knowledge Base - index.json",
-      "asset_type": "data",
-      "namespace": "masters.development",
-      "path": "/Users/ryandahlberg/commit-relay/coordination/masters/development/knowledge-base/index.json",
-      "format": "json",
-      "size_bytes": 756,
-      "sensitivity": "internal",
-      "owner": "development-master",
-      "tags": [
-        "knowledge-base",
-        "development",
-        "learning"
-      ],
-      "asset_id": "masters.development.development_knowledge_base_index_json",
-      "created_at": "2025-11-11T16:59:46.872Z",
-      "updated_at": "2025-11-11T16:59:46.872Z"
-    },
-    "masters.development.development_knowledge_base_worker_types_json": {
-      "asset_name": "development Knowledge Base - worker-types.json",
-      "asset_type": "data",
-      "namespace": "masters.development",
-      "path": "/Users/ryandahlberg/commit-relay/coordination/masters/development/knowledge-base/worker-types.json",
-      "format": "json",
-      "size_bytes": 1079,
-      "sensitivity": "internal",
-      "owner": "development-master",
-      "tags": [
-        "knowledge-base",
-        "development",
-        "learning"
-      ],
-      "asset_id": "masters.development.development_knowledge_base_worker_types_json",
-      "created_at": "2025-11-11T16:59:46.872Z",
-      "updated_at": "2025-11-11T16:59:46.872Z"
-    },
-    "masters.security.security_master_agent": {
-      "asset_name": "Security Master Agent",
-      "asset_type": "ai",
-      "namespace": "masters.security",
-      "agent_type": "master",
-      "capabilities": [],
-      "prompt_path": "/.claude/agents/security-master.md",
-      "state_path": "/Users/ryandahlberg/commit-relay/coordination/masters/security/context/master-state.json",
-      "status": "idle",
-      "sensitivity": "internal",
-      "owner": "system",
-      "tags": [
-        "master-agent",
-        "security",
-        "ai"
-      ],
-      "asset_id": "masters.security.security_master_agent",
-      "created_at": "2025-11-11T16:59:46.873Z",
-      "updated_at": "2025-11-11T16:59:46.873Z"
-    },
-    "masters.security.security_knowledge_base_index_json": {
-      "asset_name": "security Knowledge Base - index.json",
-      "asset_type": "data",
-      "namespace": "masters.security",
-      "path": "/Users/ryandahlberg/commit-relay/coordination/masters/security/knowledge-base/index.json",
-      "format": "json",
-      "size_bytes": 740,
-      "sensitivity": "internal",
-      "owner": "security-master",
-      "tags": [
-        "knowledge-base",
-        "security",
-        "learning"
-      ],
-      "asset_id": "masters.security.security_knowledge_base_index_json",
-      "created_at": "2025-11-11T16:59:46.874Z",
-      "updated_at": "2025-11-11T16:59:46.874Z"
-    },
-    "masters.security.security_knowledge_base_worker_types_json": {
-      "asset_name": "security Knowledge Base - worker-types.json",
-      "asset_type": "data",
-      "namespace": "masters.security",
-      "path": "/Users/ryandahlberg/commit-relay/coordination/masters/security/knowledge-base/worker-types.json",
-      "format": "json",
-      "size_bytes": 1145,
-      "sensitivity": "internal",
-      "owner": "security-master",
-      "tags": [
-        "knowledge-base",
-        "security",
-        "learning"
-      ],
-      "asset_id": "masters.security.security_knowledge_base_worker_types_json",
-      "created_at": "2025-11-11T16:59:46.874Z",
-      "updated_at": "2025-11-11T16:59:46.874Z"
-    },
-    "masters.cicd.cicd_master_agent": {
-      "asset_name": "Cicd Master Agent",
-      "asset_type": "ai",
-      "namespace": "masters.cicd",
-      "agent_type": "master",
-      "capabilities": [],
-      "prompt_path": "/.claude/agents/cicd-master.md",
-      "state_path": "/Users/ryandahlberg/commit-relay/coordination/masters/cicd/context/master-state.json",
-      "status": "idle",
-      "sensitivity": "internal",
-      "owner": "system",
-      "tags": [
-        "master-agent",
-        "cicd",
-        "ai"
-      ],
-      "asset_id": "masters.cicd.cicd_master_agent",
-      "created_at": "2025-11-11T16:59:46.875Z",
-      "updated_at": "2025-11-11T16:59:46.875Z"
-    },
-    "masters.cicd.cicd_knowledge_base_gitkeep": {
-      "asset_name": "cicd Knowledge Base - .gitkeep",
-      "asset_type": "data",
-      "namespace": "masters.cicd",
-      "path": "/Users/ryandahlberg/commit-relay/coordination/masters/cicd/knowledge-base/.gitkeep",
-      "format": "json",
-      "size_bytes": 0,
-      "sensitivity": "internal",
-      "owner": "cicd-master",
-      "tags": [
-        "knowledge-base",
-        "cicd",
-        "learning"
-      ],
-      "asset_id": "masters.cicd.cicd_knowledge_base_gitkeep",
-      "created_at": "2025-11-11T16:59:46.875Z",
-      "updated_at": "2025-11-11T16:59:46.875Z"
-    },
-    "masters.inventory.inventory_master_agent": {
-      "asset_name": "Inventory Master Agent",
-      "asset_type": "ai",
-      "namespace": "masters.inventory",
-      "agent_type": "master",
-      "capabilities": [],
-      "prompt_path": "/.claude/agents/inventory-master.md",
-      "state_path": "/Users/ryandahlberg/commit-relay/coordination/masters/inventory/context/master-state.json",
-      "status": "idle",
-      "sensitivity": "internal",
-      "owner": "system",
-      "tags": [
-        "master-agent",
-        "inventory",
-        "ai"
-      ],
-      "asset_id": "masters.inventory.inventory_master_agent",
-      "created_at": "2025-11-11T16:59:46.876Z",
-      "updated_at": "2025-11-11T16:59:46.876Z"
-    },
-    "masters.inventory.inventory_knowledge_base_index_json": {
-      "asset_name": "inventory Knowledge Base - index.json",
-      "asset_type": "data",
-      "namespace": "masters.inventory",
-      "path": "/Users/ryandahlberg/commit-relay/coordination/masters/inventory/knowledge-base/index.json",
-      "format": "json",
-      "size_bytes": 764,
-      "sensitivity": "internal",
-      "owner": "inventory-master",
-      "tags": [
-        "knowledge-base",
-        "inventory",
-        "learning"
-      ],
-      "asset_id": "masters.inventory.inventory_knowledge_base_index_json",
-      "created_at": "2025-11-11T16:59:46.877Z",
-      "updated_at": "2025-11-11T16:59:46.877Z"
-    },
-    "masters.inventory.inventory_knowledge_base_worker_types_json": {
-      "asset_name": "inventory Knowledge Base - worker-types.json",
-      "asset_type": "data",
-      "namespace": "masters.inventory",
-      "path": "/Users/ryandahlberg/commit-relay/coordination/masters/inventory/knowledge-base/worker-types.json",
-      "format": "json",
-      "size_bytes": 1129,
-      "sensitivity": "internal",
-      "owner": "inventory-master",
-      "tags": [
-        "knowledge-base",
-        "inventory",
-        "learning"
-      ],
-      "asset_id": "masters.inventory.inventory_knowledge_base_worker_types_json",
-      "created_at": "2025-11-11T16:59:46.877Z",
-      "updated_at": "2025-11-11T16:59:46.877Z"
-    },
-    "workers.specs.worker_spec_dev_worker_2d6c668d_json": {
-      "asset_name": "Worker Spec - dev-worker-2D6C668D.json",
-      "asset_type": "data",
-      "namespace": "workers.specs",
-      "path": "/Users/ryandahlberg/commit-relay/coordination/worker-specs/archive/dev-worker-2D6C668D.json",
-      "format": "json",
-      "size_bytes": 2281,
-      "sensitivity": "internal",
-      "owner": "system",
-      "tags": [
-        "worker",
-        "spec",
-        "archive"
-      ],
-      "asset_id": "workers.specs.worker_spec_dev_worker_2d6c668d_json",
-      "created_at": "2025-11-11T16:59:46.878Z",
-      "updated_at": "2025-11-11T16:59:46.878Z"
-    },
-    "workers.specs.worker_spec_dev_worker_31b91f5d_json": {
-      "asset_name": "Worker Spec - dev-worker-31B91F5D.json",
-      "asset_type": "data",
-      "namespace": "workers.specs",
-      "path": "/Users/ryandahlberg/commit-relay/coordination/worker-specs/archive/dev-worker-31B91F5D.json",
-      "format": "json",
-      "size_bytes": 1179,
-      "sensitivity": "internal",
-      "owner": "system",
-      "tags": [
-        "worker",
-        "spec",
-        "archive"
-      ],
-      "asset_id": "workers.specs.worker_spec_dev_worker_31b91f5d_json",
-      "created_at": "2025-11-11T16:59:46.879Z",
-      "updated_at": "2025-11-11T16:59:46.879Z"
-    },
-    "workers.specs.worker_spec_dev_worker_37a01f3d_json": {
-      "asset_name": "Worker Spec - dev-worker-37A01F3D.json",
-      "asset_type": "data",
-      "namespace": "workers.specs",
-      "path": "/Users/ryandahlberg/commit-relay/coordination/worker-specs/archive/dev-worker-37A01F3D.json",
-      "format": "json",
-      "size_bytes": 1878,
-      "sensitivity": "internal",
-      "owner": "system",
-      "tags": [
-        "worker",
-        "spec",
-        "archive"
-      ],
-      "asset_id": "workers.specs.worker_spec_dev_worker_37a01f3d_json",
-      "created_at": "2025-11-11T16:59:46.879Z",
-      "updated_at": "2025-11-11T16:59:46.879Z"
-    },
-    "workers.specs.worker_spec_dev_worker_4fd07a66_json": {
-      "asset_name": "Worker Spec - dev-worker-4FD07A66.json",
-      "asset_type": "data",
-      "namespace": "workers.specs",
-      "path": "/Users/ryandahlberg/commit-relay/coordination/worker-specs/archive/dev-worker-4FD07A66.json",
-      "format": "json",
-      "size_bytes": 1971,
-      "sensitivity": "internal",
-      "owner": "system",
-      "tags": [
-        "worker",
-        "spec",
-        "archive"
-      ],
-      "asset_id": "workers.specs.worker_spec_dev_worker_4fd07a66_json",
-      "created_at": "2025-11-11T16:59:46.880Z",
-      "updated_at": "2025-11-11T16:59:46.880Z"
-    },
-    "workers.specs.worker_spec_dev_worker_5f3cfa26_json": {
-      "asset_name": "Worker Spec - dev-worker-5F3CFA26.json",
-      "asset_type": "data",
-      "namespace": "workers.specs",
-      "path": "/Users/ryandahlberg/commit-relay/coordination/worker-specs/archive/dev-worker-5F3CFA26.json",
-      "format": "json",
-      "size_bytes": 1085,
-      "sensitivity": "internal",
-      "owner": "system",
-      "tags": [
-        "worker",
-        "spec",
-        "archive"
-      ],
-      "asset_id": "workers.specs.worker_spec_dev_worker_5f3cfa26_json",
-      "created_at": "2025-11-11T16:59:46.881Z",
-      "updated_at": "2025-11-11T16:59:46.881Z"
-    },
-    "workers.specs.worker_spec_dev_worker_693450ea_json": {
-      "asset_name": "Worker Spec - dev-worker-693450EA.json",
-      "asset_type": "data",
-      "namespace": "workers.specs",
-      "path": "/Users/ryandahlberg/commit-relay/coordination/worker-specs/archive/dev-worker-693450EA.json",
-      "format": "json",
-      "size_bytes": 1991,
-      "sensitivity": "internal",
-      "owner": "system",
-      "tags": [
-        "worker",
-        "spec",
-        "archive"
-      ],
-      "asset_id": "workers.specs.worker_spec_dev_worker_693450ea_json",
-      "created_at": "2025-11-11T16:59:46.882Z",
-      "updated_at": "2025-11-11T16:59:46.882Z"
-    },
-    "workers.specs.worker_spec_dev_worker_6a53f8d4_json": {
-      "asset_name": "Worker Spec - dev-worker-6A53F8D4.json",
-      "asset_type": "data",
-      "namespace": "workers.specs",
-      "path": "/Users/ryandahlberg/commit-relay/coordination/worker-specs/archive/dev-worker-6A53F8D4.json",
-      "format": "json",
-      "size_bytes": 4719,
-      "sensitivity": "internal",
-      "owner": "system",
-      "tags": [
-        "worker",
-        "spec",
-        "archive"
-      ],
-      "asset_id": "workers.specs.worker_spec_dev_worker_6a53f8d4_json",
-      "created_at": "2025-11-11T16:59:46.882Z",
-      "updated_at": "2025-11-11T16:59:46.882Z"
-    },
-    "workers.specs.worker_spec_dev_worker_89de27b5_json": {
-      "asset_name": "Worker Spec - dev-worker-89DE27B5.json",
-      "asset_type": "data",
-      "namespace": "workers.specs",
-      "path": "/Users/ryandahlberg/commit-relay/coordination/worker-specs/archive/dev-worker-89DE27B5.json",
-      "format": "json",
-      "size_bytes": 2039,
-      "sensitivity": "internal",
-      "owner": "system",
-      "tags": [
-        "worker",
-        "spec",
-        "archive"
-      ],
-      "asset_id": "workers.specs.worker_spec_dev_worker_89de27b5_json",
-      "created_at": "2025-11-11T16:59:46.883Z",
-      "updated_at": "2025-11-11T16:59:46.883Z"
-    },
-    "workers.specs.worker_spec_dev_worker_92d7943c_json": {
-      "asset_name": "Worker Spec - dev-worker-92D7943C.json",
-      "asset_type": "data",
-      "namespace": "workers.specs",
-      "path": "/Users/ryandahlberg/commit-relay/coordination/worker-specs/archive/dev-worker-92D7943C.json",
-      "format": "json",
-      "size_bytes": 2097,
-      "sensitivity": "internal",
-      "owner": "system",
-      "tags": [
-        "worker",
-        "spec",
-        "archive"
-      ],
-      "asset_id": "workers.specs.worker_spec_dev_worker_92d7943c_json",
-      "created_at": "2025-11-11T16:59:46.884Z",
-      "updated_at": "2025-11-11T16:59:46.884Z"
-    },
-    "workers.specs.worker_spec_dev_worker_a290d35e_json": {
-      "asset_name": "Worker Spec - dev-worker-A290D35E.json",
-      "asset_type": "data",
-      "namespace": "workers.specs",
-      "path": "/Users/ryandahlberg/commit-relay/coordination/worker-specs/archive/dev-worker-A290D35E.json",
-      "format": "json",
-      "size_bytes": 3823,
-      "sensitivity": "internal",
-      "owner": "system",
-      "tags": [
-        "worker",
-        "spec",
-        "archive"
-      ],
-      "asset_id": "workers.specs.worker_spec_dev_worker_a290d35e_json",
-      "created_at": "2025-11-11T16:59:46.884Z",
-      "updated_at": "2025-11-11T16:59:46.884Z"
-    },
-    "workers.specs.worker_spec_dev_worker_a2be7a42_json": {
-      "asset_name": "Worker Spec - dev-worker-A2BE7A42.json",
-      "asset_type": "data",
-      "namespace": "workers.specs",
-      "path": "/Users/ryandahlberg/commit-relay/coordination/worker-specs/archive/dev-worker-A2BE7A42.json",
-      "format": "json",
-      "size_bytes": 2045,
-      "sensitivity": "internal",
-      "owner": "system",
-      "tags": [
-        "worker",
-        "spec",
-        "archive"
-      ],
-      "asset_id": "workers.specs.worker_spec_dev_worker_a2be7a42_json",
-      "created_at": "2025-11-11T16:59:46.885Z",
-      "updated_at": "2025-11-11T16:59:46.885Z"
-    },
-    "workers.specs.worker_spec_dev_worker_de5535b6_json": {
-      "asset_name": "Worker Spec - dev-worker-DE5535B6.json",
-      "asset_type": "data",
-      "namespace": "workers.specs",
-      "path": "/Users/ryandahlberg/commit-relay/coordination/worker-specs/archive/dev-worker-DE5535B6.json",
-      "format": "json",
-      "size_bytes": 2187,
-      "sensitivity": "internal",
-      "owner": "system",
-      "tags": [
-        "worker",
-        "spec",
-        "archive"
-      ],
-      "asset_id": "workers.specs.worker_spec_dev_worker_de5535b6_json",
-      "created_at": "2025-11-11T16:59:46.886Z",
-      "updated_at": "2025-11-11T16:59:46.886Z"
-    },
-    "workers.specs.worker_spec_dev_worker_df971c09_json": {
-      "asset_name": "Worker Spec - dev-worker-DF971C09.json",
-      "asset_type": "data",
-      "namespace": "workers.specs",
-      "path": "/Users/ryandahlberg/commit-relay/coordination/worker-specs/archive/dev-worker-DF971C09.json",
-      "format": "json",
-      "size_bytes": 2009,
-      "sensitivity": "internal",
-      "owner": "system",
-      "tags": [
-        "worker",
-        "spec",
-        "archive"
-      ],
-      "asset_id": "workers.specs.worker_spec_dev_worker_df971c09_json",
-      "created_at": "2025-11-11T16:59:46.886Z",
-      "updated_at": "2025-11-11T16:59:46.886Z"
-    },
-    "workers.specs.worker_spec_dev_worker_f9966f3a_json": {
-      "asset_name": "Worker Spec - dev-worker-F9966F3A.json",
-      "asset_type": "data",
-      "namespace": "workers.specs",
-      "path": "/Users/ryandahlberg/commit-relay/coordination/worker-specs/archive/dev-worker-F9966F3A.json",
-      "format": "json",
-      "size_bytes": 2527,
-      "sensitivity": "internal",
-      "owner": "system",
-      "tags": [
-        "worker",
-        "spec",
-        "archive"
-      ],
-      "asset_id": "workers.specs.worker_spec_dev_worker_f9966f3a_json",
-      "created_at": "2025-11-11T16:59:46.887Z",
-      "updated_at": "2025-11-11T16:59:46.887Z"
-    },
-    "workers.specs.worker_spec_dev_worker_fad0b9be_json": {
-      "asset_name": "Worker Spec - dev-worker-FAD0B9BE.json",
-      "asset_type": "data",
-      "namespace": "workers.specs",
-      "path": "/Users/ryandahlberg/commit-relay/coordination/worker-specs/archive/dev-worker-FAD0B9BE.json",
-      "format": "json",
-      "size_bytes": 10719,
-      "sensitivity": "internal",
-      "owner": "system",
-      "tags": [
-        "worker",
-        "spec",
-        "archive"
-      ],
-      "asset_id": "workers.specs.worker_spec_dev_worker_fad0b9be_json",
-      "created_at": "2025-11-11T16:59:46.888Z",
-      "updated_at": "2025-11-11T16:59:46.888Z"
-    },
-    "workers.specs.worker_spec_dev_worker_fb9d03bd_json": {
-      "asset_name": "Worker Spec - dev-worker-FB9D03BD.json",
-      "asset_type": "data",
-      "namespace": "workers.specs",
-      "path": "/Users/ryandahlberg/commit-relay/coordination/worker-specs/archive/dev-worker-FB9D03BD.json",
-      "format": "json",
-      "size_bytes": 4566,
-      "sensitivity": "internal",
-      "owner": "system",
-      "tags": [
-        "worker",
-        "spec",
-        "archive"
-      ],
-      "asset_id": "workers.specs.worker_spec_dev_worker_fb9d03bd_json",
-      "created_at": "2025-11-11T16:59:46.889Z",
-      "updated_at": "2025-11-11T16:59:46.889Z"
-    },
-    "workers.specs.worker_spec_inv_worker_a6a5c517_json": {
-      "asset_name": "Worker Spec - inv-worker-A6A5C517.json",
-      "asset_type": "data",
-      "namespace": "workers.specs",
-      "path": "/Users/ryandahlberg/commit-relay/coordination/worker-specs/archive/inv-worker-A6A5C517.json",
-      "format": "json",
-      "size_bytes": 2019,
-      "sensitivity": "internal",
-      "owner": "system",
-      "tags": [
-        "worker",
-        "spec",
-        "archive"
-      ],
-      "asset_id": "workers.specs.worker_spec_inv_worker_a6a5c517_json",
-      "created_at": "2025-11-11T16:59:46.889Z",
-      "updated_at": "2025-11-11T16:59:46.889Z"
-    },
-    "workers.specs.worker_spec_sec_worker_fd673a67_json": {
-      "asset_name": "Worker Spec - sec-worker-FD673A67.json",
-      "asset_type": "data",
-      "namespace": "workers.specs",
-      "path": "/Users/ryandahlberg/commit-relay/coordination/worker-specs/archive/sec-worker-FD673A67.json",
-      "format": "json",
-      "size_bytes": 2317,
-      "sensitivity": "internal",
-      "owner": "system",
-      "tags": [
-        "worker",
-        "spec",
-        "archive"
-      ],
-      "asset_id": "workers.specs.worker_spec_sec_worker_fd673a67_json",
-      "created_at": "2025-11-11T16:59:46.890Z",
-      "updated_at": "2025-11-11T16:59:46.890Z"
-    },
-    "workers.specs.worker_spec_dev_worker_270892a8_json": {
-      "asset_name": "Worker Spec - dev-worker-270892A8.json",
-      "asset_type": "data",
-      "namespace": "workers.specs",
-      "path": "/Users/ryandahlberg/commit-relay/coordination/worker-specs/archived/dev-worker-270892A8.json",
-      "format": "json",
-      "size_bytes": 1949,
-      "sensitivity": "internal",
-      "owner": "system",
-      "tags": [
-        "worker",
-        "spec",
-        "archived"
-      ],
-      "asset_id": "workers.specs.worker_spec_dev_worker_270892a8_json",
-      "created_at": "2025-11-11T16:59:46.891Z",
-      "updated_at": "2025-11-11T16:59:46.891Z"
-    },
-    "workers.specs.worker_spec_dev_worker_2a3ce105_json": {
-      "asset_name": "Worker Spec - dev-worker-2A3CE105.json",
-      "asset_type": "data",
-      "namespace": "workers.specs",
-      "path": "/Users/ryandahlberg/commit-relay/coordination/worker-specs/archived/dev-worker-2A3CE105.json",
-      "format": "json",
-      "size_bytes": 1977,
-      "sensitivity": "internal",
-      "owner": "system",
-      "tags": [
-        "worker",
-        "spec",
-        "archived"
-      ],
-      "asset_id": "workers.specs.worker_spec_dev_worker_2a3ce105_json",
-      "created_at": "2025-11-11T16:59:46.891Z",
-      "updated_at": "2025-11-11T16:59:46.891Z"
-    },
-    "workers.specs.worker_spec_dev_worker_4a6596a8_json": {
-      "asset_name": "Worker Spec - dev-worker-4A6596A8.json",
-      "asset_type": "data",
-      "namespace": "workers.specs",
-      "path": "/Users/ryandahlberg/commit-relay/coordination/worker-specs/archived/dev-worker-4A6596A8.json",
-      "format": "json",
-      "size_bytes": 2274,
-      "sensitivity": "internal",
-      "owner": "system",
-      "tags": [
-        "worker",
-        "spec",
-        "archived"
-      ],
-      "asset_id": "workers.specs.worker_spec_dev_worker_4a6596a8_json",
-      "created_at": "2025-11-11T16:59:46.892Z",
-      "updated_at": "2025-11-11T16:59:46.892Z"
-    },
-    "workers.specs.worker_spec_dev_worker_59528050_json": {
-      "asset_name": "Worker Spec - dev-worker-59528050.json",
-      "asset_type": "data",
-      "namespace": "workers.specs",
-      "path": "/Users/ryandahlberg/commit-relay/coordination/worker-specs/archived/dev-worker-59528050.json",
-      "format": "json",
-      "size_bytes": 2250,
-      "sensitivity": "internal",
-      "owner": "system",
-      "tags": [
-        "worker",
-        "spec",
-        "archived"
-      ],
-      "asset_id": "workers.specs.worker_spec_dev_worker_59528050_json",
-      "created_at": "2025-11-11T16:59:46.893Z",
-      "updated_at": "2025-11-11T16:59:46.893Z"
-    },
-    "workers.specs.worker_spec_dev_worker_5e29c44d_json": {
-      "asset_name": "Worker Spec - dev-worker-5E29C44D.json",
-      "asset_type": "data",
-      "namespace": "workers.specs",
-      "path": "/Users/ryandahlberg/commit-relay/coordination/worker-specs/archived/dev-worker-5E29C44D.json",
-      "format": "json",
-      "size_bytes": 2378,
-      "sensitivity": "internal",
-      "owner": "system",
-      "tags": [
-        "worker",
-        "spec",
-        "archived"
-      ],
-      "asset_id": "workers.specs.worker_spec_dev_worker_5e29c44d_json",
-      "created_at": "2025-11-11T16:59:46.894Z",
-      "updated_at": "2025-11-11T16:59:46.894Z"
-    },
-    "workers.specs.worker_spec_dev_worker_66187ef4_json": {
-      "asset_name": "Worker Spec - dev-worker-66187EF4.json",
-      "asset_type": "data",
-      "namespace": "workers.specs",
-      "path": "/Users/ryandahlberg/commit-relay/coordination/worker-specs/archived/dev-worker-66187EF4.json",
-      "format": "json",
-      "size_bytes": 2679,
-      "sensitivity": "internal",
-      "owner": "system",
-      "tags": [
-        "worker",
-        "spec",
-        "archived"
-      ],
-      "asset_id": "workers.specs.worker_spec_dev_worker_66187ef4_json",
-      "created_at": "2025-11-11T16:59:46.894Z",
-      "updated_at": "2025-11-11T16:59:46.894Z"
-    },
-    "workers.specs.worker_spec_dev_worker_692c28f8_json": {
-      "asset_name": "Worker Spec - dev-worker-692C28F8.json",
-      "asset_type": "data",
-      "namespace": "workers.specs",
-      "path": "/Users/ryandahlberg/commit-relay/coordination/worker-specs/archived/dev-worker-692C28F8.json",
-      "format": "json",
-      "size_bytes": 2294,
-      "sensitivity": "internal",
-      "owner": "system",
-      "tags": [
-        "worker",
-        "spec",
-        "archived"
-      ],
-      "asset_id": "workers.specs.worker_spec_dev_worker_692c28f8_json",
-      "created_at": "2025-11-11T16:59:46.895Z",
-      "updated_at": "2025-11-11T16:59:46.895Z"
-    },
-    "workers.specs.worker_spec_dev_worker_90d3e9cd_json": {
-      "asset_name": "Worker Spec - dev-worker-90D3E9CD.json",
-      "asset_type": "data",
-      "namespace": "workers.specs",
-      "path": "/Users/ryandahlberg/commit-relay/coordination/worker-specs/archived/dev-worker-90D3E9CD.json",
-      "format": "json",
-      "size_bytes": 1975,
-      "sensitivity": "internal",
-      "owner": "system",
-      "tags": [
-        "worker",
-        "spec",
-        "archived"
-      ],
-      "asset_id": "workers.specs.worker_spec_dev_worker_90d3e9cd_json",
-      "created_at": "2025-11-11T16:59:46.896Z",
-      "updated_at": "2025-11-11T16:59:46.896Z"
-    },
-    "workers.specs.worker_spec_dev_worker_95965607_json": {
-      "asset_name": "Worker Spec - dev-worker-95965607.json",
-      "asset_type": "data",
-      "namespace": "workers.specs",
-      "path": "/Users/ryandahlberg/commit-relay/coordination/worker-specs/archived/dev-worker-95965607.json",
-      "format": "json",
-      "size_bytes": 2083,
-      "sensitivity": "internal",
-      "owner": "system",
-      "tags": [
-        "worker",
-        "spec",
-        "archived"
-      ],
-      "asset_id": "workers.specs.worker_spec_dev_worker_95965607_json",
-      "created_at": "2025-11-11T16:59:46.896Z",
-      "updated_at": "2025-11-11T16:59:46.896Z"
-    },
-    "workers.specs.worker_spec_dev_worker_98c59170_json": {
-      "asset_name": "Worker Spec - dev-worker-98C59170.json",
-      "asset_type": "data",
-      "namespace": "workers.specs",
-      "path": "/Users/ryandahlberg/commit-relay/coordination/worker-specs/archived/dev-worker-98C59170.json",
-      "format": "json",
-      "size_bytes": 2038,
-      "sensitivity": "internal",
-      "owner": "system",
-      "tags": [
-        "worker",
-        "spec",
-        "archived"
-      ],
-      "asset_id": "workers.specs.worker_spec_dev_worker_98c59170_json",
-      "created_at": "2025-11-11T16:59:46.897Z",
-      "updated_at": "2025-11-11T16:59:46.897Z"
-    },
-    "workers.specs.worker_spec_dev_worker_9f47dd36_json": {
-      "asset_name": "Worker Spec - dev-worker-9F47DD36.json",
-      "asset_type": "data",
-      "namespace": "workers.specs",
-      "path": "/Users/ryandahlberg/commit-relay/coordination/worker-specs/archived/dev-worker-9F47DD36.json",
-      "format": "json",
-      "size_bytes": 2032,
-      "sensitivity": "internal",
-      "owner": "system",
-      "tags": [
-        "worker",
-        "spec",
-        "archived"
-      ],
-      "asset_id": "workers.specs.worker_spec_dev_worker_9f47dd36_json",
-      "created_at": "2025-11-11T16:59:46.898Z",
-      "updated_at": "2025-11-11T16:59:46.898Z"
-    },
-    "workers.specs.worker_spec_dev_worker_b0ab8d01_json": {
-      "asset_name": "Worker Spec - dev-worker-B0AB8D01.json",
-      "asset_type": "data",
-      "namespace": "workers.specs",
-      "path": "/Users/ryandahlberg/commit-relay/coordination/worker-specs/archived/dev-worker-B0AB8D01.json",
-      "format": "json",
-      "size_bytes": 2030,
-      "sensitivity": "internal",
-      "owner": "system",
-      "tags": [
-        "worker",
-        "spec",
-        "archived"
-      ],
-      "asset_id": "workers.specs.worker_spec_dev_worker_b0ab8d01_json",
-      "created_at": "2025-11-11T16:59:46.898Z",
-      "updated_at": "2025-11-11T16:59:46.898Z"
-    },
-    "workers.specs.worker_spec_dev_worker_dc9bab5c_json": {
-      "asset_name": "Worker Spec - dev-worker-DC9BAB5C.json",
-      "asset_type": "data",
-      "namespace": "workers.specs",
-      "path": "/Users/ryandahlberg/commit-relay/coordination/worker-specs/archived/dev-worker-DC9BAB5C.json",
-      "format": "json",
-      "size_bytes": 2350,
-      "sensitivity": "internal",
-      "owner": "system",
-      "tags": [
-        "worker",
-        "spec",
-        "archived"
-      ],
-      "asset_id": "workers.specs.worker_spec_dev_worker_dc9bab5c_json",
-      "created_at": "2025-11-11T16:59:46.899Z",
-      "updated_at": "2025-11-11T16:59:46.899Z"
-    },
-    "workers.specs.worker_spec_dev_worker_f8529436_json": {
-      "asset_name": "Worker Spec - dev-worker-F8529436.json",
-      "asset_type": "data",
-      "namespace": "workers.specs",
-      "path": "/Users/ryandahlberg/commit-relay/coordination/worker-specs/archived/dev-worker-F8529436.json",
-      "format": "json",
-      "size_bytes": 1990,
-      "sensitivity": "internal",
-      "owner": "system",
-      "tags": [
-        "worker",
-        "spec",
-        "archived"
-      ],
-      "asset_id": "workers.specs.worker_spec_dev_worker_f8529436_json",
-      "created_at": "2025-11-11T16:59:46.900Z",
-      "updated_at": "2025-11-11T16:59:46.900Z"
-    },
-    "workers.specs.worker_spec_dev_worker_270ea2ba_json": {
-      "asset_name": "Worker Spec - dev-worker-270EA2BA.json",
-      "asset_type": "data",
-      "namespace": "workers.specs",
-      "path": "/Users/ryandahlberg/commit-relay/coordination/worker-specs/completed/dev-worker-270EA2BA.json",
-      "format": "json",
-      "size_bytes": 2023,
-      "sensitivity": "internal",
-      "owner": "system",
-      "tags": [
-        "worker",
-        "spec",
-        "completed"
-      ],
-      "asset_id": "workers.specs.worker_spec_dev_worker_270ea2ba_json",
-      "created_at": "2025-11-11T16:59:46.901Z",
-      "updated_at": "2025-11-11T16:59:46.901Z"
-    },
-    "workers.specs.worker_spec_dev_worker_8581363d_json": {
-      "asset_name": "Worker Spec - dev-worker-8581363D.json",
-      "asset_type": "data",
-      "namespace": "workers.specs",
-      "path": "/Users/ryandahlberg/commit-relay/coordination/worker-specs/completed/dev-worker-8581363D.json",
-      "format": "json",
-      "size_bytes": 1022,
-      "sensitivity": "internal",
-      "owner": "system",
-      "tags": [
-        "worker",
-        "spec",
-        "completed"
-      ],
-      "asset_id": "workers.specs.worker_spec_dev_worker_8581363d_json",
-      "created_at": "2025-11-11T16:59:46.901Z",
-      "updated_at": "2025-11-11T16:59:46.901Z"
-    },
-    "workers.specs.worker_spec_dev_worker_a73e7e3c_json": {
-      "asset_name": "Worker Spec - dev-worker-A73E7E3C.json",
-      "asset_type": "data",
-      "namespace": "workers.specs",
-      "path": "/Users/ryandahlberg/commit-relay/coordination/worker-specs/completed/dev-worker-A73E7E3C.json",
-      "format": "json",
-      "size_bytes": 1022,
-      "sensitivity": "internal",
-      "owner": "system",
-      "tags": [
-        "worker",
-        "spec",
-        "completed"
-      ],
-      "asset_id": "workers.specs.worker_spec_dev_worker_a73e7e3c_json",
-      "created_at": "2025-11-11T16:59:46.902Z",
-      "updated_at": "2025-11-11T16:59:46.902Z"
-    },
-    "workers.specs.worker_spec_dev_worker_b181d3f9_json": {
-      "asset_name": "Worker Spec - dev-worker-B181D3F9.json",
-      "asset_type": "data",
-      "namespace": "workers.specs",
-      "path": "/Users/ryandahlberg/commit-relay/coordination/worker-specs/completed/dev-worker-B181D3F9.json",
-      "format": "json",
-      "size_bytes": 950,
-      "sensitivity": "internal",
-      "owner": "system",
-      "tags": [
-        "worker",
-        "spec",
-        "completed"
-      ],
-      "asset_id": "workers.specs.worker_spec_dev_worker_b181d3f9_json",
-      "created_at": "2025-11-11T16:59:46.903Z",
-      "updated_at": "2025-11-11T16:59:46.903Z"
-    },
-    "workers.specs.worker_spec_dev_worker_e41ddfd9_json": {
-      "asset_name": "Worker Spec - dev-worker-E41DDFD9.json",
-      "asset_type": "data",
-      "namespace": "workers.specs",
-      "path": "/Users/ryandahlberg/commit-relay/coordination/worker-specs/completed/dev-worker-E41DDFD9.json",
-      "format": "json",
-      "size_bytes": 2328,
-      "sensitivity": "internal",
-      "owner": "system",
-      "tags": [
-        "worker",
-        "spec",
-        "completed"
-      ],
-      "asset_id": "workers.specs.worker_spec_dev_worker_e41ddfd9_json",
-      "created_at": "2025-11-11T16:59:46.904Z",
-      "updated_at": "2025-11-11T16:59:46.904Z"
-    },
-    "workers.specs.worker_spec_dev_worker_e4462549_json": {
-      "asset_name": "Worker Spec - dev-worker-E4462549.json",
-      "asset_type": "data",
-      "namespace": "workers.specs",
-      "path": "/Users/ryandahlberg/commit-relay/coordination/worker-specs/completed/dev-worker-E4462549.json",
-      "format": "json",
-      "size_bytes": 1022,
-      "sensitivity": "internal",
-      "owner": "system",
-      "tags": [
-        "worker",
-        "spec",
-        "completed"
-      ],
-      "asset_id": "workers.specs.worker_spec_dev_worker_e4462549_json",
-      "created_at": "2025-11-11T16:59:46.904Z",
-      "updated_at": "2025-11-11T16:59:46.904Z"
-    },
-    "workers.specs.worker_spec_dev_worker_e5c72484_json": {
-      "asset_name": "Worker Spec - dev-worker-E5C72484.json",
-      "asset_type": "data",
-      "namespace": "workers.specs",
-      "path": "/Users/ryandahlberg/commit-relay/coordination/worker-specs/completed/dev-worker-E5C72484.json",
-      "format": "json",
-      "size_bytes": 2078,
-      "sensitivity": "internal",
-      "owner": "system",
-      "tags": [
-        "worker",
-        "spec",
-        "completed"
-      ],
-      "asset_id": "workers.specs.worker_spec_dev_worker_e5c72484_json",
-      "created_at": "2025-11-11T16:59:46.905Z",
-      "updated_at": "2025-11-11T16:59:46.905Z"
-    },
-    "workers.specs.worker_spec_dev_worker_f8659149_json": {
-      "asset_name": "Worker Spec - dev-worker-F8659149.json",
-      "asset_type": "data",
-      "namespace": "workers.specs",
-      "path": "/Users/ryandahlberg/commit-relay/coordination/worker-specs/completed/dev-worker-F8659149.json",
-      "format": "json",
-      "size_bytes": 3058,
-      "sensitivity": "internal",
-      "owner": "system",
-      "tags": [
-        "worker",
-        "spec",
-        "completed"
-      ],
-      "asset_id": "workers.specs.worker_spec_dev_worker_f8659149_json",
-      "created_at": "2025-11-11T16:59:46.906Z",
-      "updated_at": "2025-11-11T16:59:46.906Z"
-    },
-    "workers.specs.worker_spec_sec_worker_03b228a5_json": {
-      "asset_name": "Worker Spec - sec-worker-03B228A5.json",
-      "asset_type": "data",
-      "namespace": "workers.specs",
-      "path": "/Users/ryandahlberg/commit-relay/coordination/worker-specs/completed/sec-worker-03B228A5.json",
-      "format": "json",
-      "size_bytes": 3004,
-      "sensitivity": "internal",
-      "owner": "system",
-      "tags": [
-        "worker",
-        "spec",
-        "completed"
-      ],
-      "asset_id": "workers.specs.worker_spec_sec_worker_03b228a5_json",
-      "created_at": "2025-11-11T16:59:46.907Z",
-      "updated_at": "2025-11-11T16:59:46.907Z"
-    },
-    "workers.specs.worker_spec_sec_worker_14a89c13_json": {
-      "asset_name": "Worker Spec - sec-worker-14A89C13.json",
-      "asset_type": "data",
-      "namespace": "workers.specs",
-      "path": "/Users/ryandahlberg/commit-relay/coordination/worker-specs/completed/sec-worker-14A89C13.json",
-      "format": "json",
-      "size_bytes": 1193,
-      "sensitivity": "internal",
-      "owner": "system",
-      "tags": [
-        "worker",
-        "spec",
-        "completed"
-      ],
-      "asset_id": "workers.specs.worker_spec_sec_worker_14a89c13_json",
-      "created_at": "2025-11-11T16:59:46.908Z",
-      "updated_at": "2025-11-11T16:59:46.908Z"
-    },
-    "workers.specs.worker_spec_sec_worker_aa0d073a_json": {
-      "asset_name": "Worker Spec - sec-worker-AA0D073A.json",
-      "asset_type": "data",
-      "namespace": "workers.specs",
-      "path": "/Users/ryandahlberg/commit-relay/coordination/worker-specs/completed/sec-worker-AA0D073A.json",
-      "format": "json",
-      "size_bytes": 1131,
-      "sensitivity": "internal",
-      "owner": "system",
-      "tags": [
-        "worker",
-        "spec",
-        "completed"
-      ],
-      "asset_id": "workers.specs.worker_spec_sec_worker_aa0d073a_json",
-      "created_at": "2025-11-11T16:59:46.908Z",
-      "updated_at": "2025-11-11T16:59:46.908Z"
-    },
-    "workers.specs.worker_spec_test_worker_launcher_001_json": {
-      "asset_name": "Worker Spec - test-worker-LAUNCHER-001.json",
-      "asset_type": "data",
-      "namespace": "workers.specs",
-      "path": "/Users/ryandahlberg/commit-relay/coordination/worker-specs/completed/test-worker-LAUNCHER-001.json",
-      "format": "json",
-      "size_bytes": 1979,
-      "sensitivity": "internal",
-      "owner": "system",
-      "tags": [
-        "worker",
-        "spec",
-        "completed"
-      ],
-      "asset_id": "workers.specs.worker_spec_test_worker_launcher_001_json",
-      "created_at": "2025-11-11T16:59:46.909Z",
-      "updated_at": "2025-11-11T16:59:46.909Z"
-    },
-    "workers.specs.worker_spec_worker_implementation_002_json": {
-      "asset_name": "Worker Spec - worker-implementation-002.json",
-      "asset_type": "data",
-      "namespace": "workers.specs",
-      "path": "/Users/ryandahlberg/commit-relay/coordination/worker-specs/completed/worker-implementation-002.json",
-      "format": "json",
-      "size_bytes": 1000,
-      "sensitivity": "internal",
-      "owner": "system",
-      "tags": [
-        "worker",
-        "spec",
-        "completed"
-      ],
-      "asset_id": "workers.specs.worker_spec_worker_implementation_002_json",
-      "created_at": "2025-11-11T16:59:46.910Z",
-      "updated_at": "2025-11-11T16:59:46.910Z"
-    },
-    "workers.specs.worker_spec_worker_scan_001_json": {
-      "asset_name": "Worker Spec - worker-scan-001.json",
-      "asset_type": "data",
-      "namespace": "workers.specs",
-      "path": "/Users/ryandahlberg/commit-relay/coordination/worker-specs/completed/worker-scan-001.json",
-      "format": "json",
-      "size_bytes": 1414,
-      "sensitivity": "internal",
-      "owner": "system",
-      "tags": [
-        "worker",
-        "spec",
-        "completed"
-      ],
-      "asset_id": "workers.specs.worker_spec_worker_scan_001_json",
-      "created_at": "2025-11-11T16:59:46.911Z",
-      "updated_at": "2025-11-11T16:59:46.911Z"
-    },
-    "workers.specs.worker_spec_dev_worker_45be28af_report_json": {
-      "asset_name": "Worker Spec - dev-worker-45BE28AF-report.json",
-      "asset_type": "data",
-      "namespace": "workers.specs",
-      "path": "/Users/ryandahlberg/commit-relay/coordination/worker-specs/reports/dev-worker-45BE28AF-report.json",
-      "format": "json",
-      "size_bytes": 1295,
-      "sensitivity": "internal",
-      "owner": "system",
-      "tags": [
-        "worker",
-        "spec",
-        "reports"
-      ],
-      "asset_id": "workers.specs.worker_spec_dev_worker_45be28af_report_json",
-      "created_at": "2025-11-11T16:59:46.912Z",
-      "updated_at": "2025-11-11T16:59:46.912Z"
-    },
-    "workers.specs.worker_spec_dev_worker_a3ba1e63_json": {
-      "asset_name": "Worker Spec - dev-worker-A3BA1E63.json",
-      "asset_type": "data",
-      "namespace": "workers.specs",
-      "path": "/Users/ryandahlberg/commit-relay/coordination/worker-specs/stuck/dev-worker-A3BA1E63.json",
-      "format": "json",
-      "size_bytes": 1241,
-      "sensitivity": "internal",
-      "owner": "system",
-      "tags": [
-        "worker",
-        "spec",
-        "stuck"
-      ],
-      "asset_id": "workers.specs.worker_spec_dev_worker_a3ba1e63_json",
-      "created_at": "2025-11-11T16:59:46.913Z",
-      "updated_at": "2025-11-11T16:59:46.913Z"
-    }
-  },
-  "indexes": {
-    "by_type": "/coordination/catalog/indexes/by-type.json",
-    "by_owner": "/coordination/catalog/indexes/by-owner.json",
-    "by_sensitivity": "/coordination/catalog/indexes/by-sensitivity.json",
-    "by_namespace": "/coordination/catalog/indexes/by-namespace.json"
-  },
-  "lineage": {
-    "data_lineage": "/coordination/catalog/lineage/data-lineage.jsonl",
-    "ai_lineage": "/coordination/catalog/lineage/ai-lineage.jsonl",
-    "decision_lineage": "/coordination/catalog/lineage/decision-lineage.jsonl"
-  },
-  "statistics": {
-    "total_assets": 74,
-    "data_assets": 69,
-    "ai_assets": 5,
-    "model_assets": 0,
-    "last_discovery": "2025-11-11T16:59:46.914Z",
-    "last_updated": "2025-11-11T16:59:46.913Z"
+  "catalog_stats": {
+    "total_namespaces": 8,
+    "total_data_assets": 0,
+    "total_ai_assets": 0,
+    "total_model_assets": 0,
+    "last_scan": null
   }
 }

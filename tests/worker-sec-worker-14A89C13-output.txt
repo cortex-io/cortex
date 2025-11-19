@@ -1,6 +1,0 @@
-Task: 
-Worker: sec-worker-14A89C13
-Type: unknown
-Status: Completed
-
-Task Completed

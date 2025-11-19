@@ -7,7 +7,7 @@ set -euo pipefail
 
 COMMIT_RELAY_HOME="${COMMIT_RELAY_HOME:-/Users/ryandahlberg/commit-relay}"
 MOE_ROUTER="${COMMIT_RELAY_HOME}/coordination/masters/coordinator/lib/moe-router.sh"
-TEST_OUTPUT_DIR="${COMMIT_RELAY_HOME}/tests/governance/results"
+TEST_OUTPUT_DIR="${COMMIT_RELAY_HOME}/testing/governance/results"
 ROUTING_RESULTS="${TEST_OUTPUT_DIR}/routing-results.jsonl"
 
 # Colors
@@ -137,5 +137,5 @@ fi
 
 echo ""
 echo "Next: Run validation script to verify governance controls"
-echo "./tests/governance/validate-governance.sh"
+echo "./testing/governance/validate-governance.sh"
 echo ""
