@@ -7,8 +7,7 @@ module.exports = {
     'lib/governance/compliance.js',
     'lib/governance/quality-validator.js',
     '!**/node_modules/**',
-    '!**/test/**',
-    '!**/tests/**',
+    '!**/testing/**',
     '!**/*.test.js',
     '!**/*-cli.js'
   ],
@@ -21,8 +20,7 @@ module.exports = {
     }
   },
   testMatch: [
-    '**/test/**/*.test.js',
-    '**/tests/**/*.test.js'
+    '**/testing/**/*.test.js'
   ],
   testPathIgnorePatterns: [
     '/node_modules/',

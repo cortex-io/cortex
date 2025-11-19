@@ -1,0 +1,23 @@
+{
+  "handoff_id": "moe-test-ddqd-v5-1763313927-beb20526",
+  "task_id": "moe-test-ddqd-v5-1763313927-beb20526",
+  "assigned_to": "development",
+  "created_at": "2025-11-16T11:26:19-0600",
+  "status": "processed",
+  "task": {
+    "id": "moe-test-ddqd-v5-1763313927-beb20526",
+    "title": "Implement new API endpoint for user management feature",
+    "type": "feature",
+    "description": "Implement new API endpoint for user management feature",
+    "priority": "medium",
+    "status": "pending",
+    "assigned_to": null,
+    "created_at": "2025-11-16T11:26:12-0600",
+    "created_by": "ddqd-v5-test",
+    "moe_test": true,
+    "test_id": "ddqd-v5-1763313927",
+    "context": {}
+  },
+  "processed_at": "2025-11-16T11:26:25-0600",
+  "worker_id": "worker-worker-1763313984-15696"
+}

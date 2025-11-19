@@ -1,6 +1,0 @@
-Task: 
-Worker: dev-worker-A73E7E3C
-Type: unknown
-Status: Completed
-
-Task Completed

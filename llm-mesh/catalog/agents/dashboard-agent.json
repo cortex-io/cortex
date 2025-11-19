@@ -1,0 +1,57 @@
+{
+  "agent_id": "dashboard-agent",
+  "display_name": "Dashboard Agent",
+  "version": "1.5.0",
+  "type": "observer",
+  "specialization": "monitoring",
+  "description": "Real-time monitoring and analytics observer",
+  "capabilities": [
+    "system_observability",
+    "event_detection",
+    "metrics_generation",
+    "health_monitoring",
+    "real_time_analytics",
+    "alerting",
+    "visualization"
+  ],
+  "activation_patterns": {
+    "keywords": [
+      "monitor", "observe", "track", "metrics",
+      "dashboard", "analytics", "health", "status",
+      "events", "alerts", "visualize"
+    ],
+    "confidence_boosters": [
+      "SSE", "real-time", "streaming", "events",
+      "metrics", "monitoring", "observability"
+    ]
+  },
+  "tools": [
+    "event-stream",
+    "metrics-collector",
+    "health-checker",
+    "alert-manager"
+  ],
+  "prompts": [
+    "anomaly-detection-v1",
+    "trend-analysis-v1",
+    "alert-prioritization-v1"
+  ],
+  "performance": {
+    "total_tasks": 234,
+    "success_rate": 0.97,
+    "avg_task_duration_seconds": 120,
+    "avg_quality_score": 0.91
+  },
+  "optimal_for": [
+    "real_time_monitoring",
+    "event_processing",
+    "metrics_collection",
+    "health_checks",
+    "alert_management"
+  ],
+  "resource_requirements": {
+    "avg_llm_calls_per_task": 0.5,
+    "avg_llm_cost_per_task": 0.004,
+    "preferred_model": "claude-haiku"
+  }
+}

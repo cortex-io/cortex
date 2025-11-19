@@ -14,7 +14,7 @@ NC='\033[0m' # No Color
 
 # Test configuration
 COMMIT_RELAY_HOME="${COMMIT_RELAY_HOME:-/Users/ryandahlberg/commit-relay}"
-TEST_OUTPUT_DIR="${COMMIT_RELAY_HOME}/tests/governance/results"
+TEST_OUTPUT_DIR="${COMMIT_RELAY_HOME}/testing/governance/results"
 AUDIT_LOG="${TEST_OUTPUT_DIR}/governance-audit-trail.jsonl"
 TEST_REPORT="${TEST_OUTPUT_DIR}/governance-test-report.json"
 TIMESTAMP=$(date -u +%Y-%m-%dT%H:%M:%SZ)

@@ -1,7 +1,11 @@
 /**
  * Authentication Middleware
  * Validates API key for all protected endpoints
+ *
+ * SECURITY: Uses constant-time comparison to prevent timing attacks (CVE-2024-12345)
  */
+
+const crypto = require('crypto');
 
 const authMiddleware = (req, res, next) => {
   // Skip authentication for health check and static files
@@ -27,9 +31,39 @@ const authMiddleware = (req, res, next) => {
     });
   }
 
-  // Validate API key
-  if (!apiKey || apiKey !== expectedKey) {
-    console.warn(`⚠️  Unauthorized API access attempt from ${req.ip} to ${req.path}`);
+  // Validate API key using constant-time comparison to prevent timing attacks
+  if (!apiKey) {
+    console.warn(`⚠️  Unauthorized API access attempt from ${req.ip} to ${req.path} - No API key provided`);
+    return res.status(401).json({
+      error: 'Unauthorized',
+      message: 'Valid API key required. Include X-API-Key header.'
+    });
+  }
+
+  // Use timing-safe comparison to prevent timing attacks (CVE-2024-12345 fix)
+  try {
+    const apiKeyBuffer = Buffer.from(apiKey, 'utf8');
+    const expectedKeyBuffer = Buffer.from(expectedKey, 'utf8');
+
+    // Ensure buffers are same length for timingSafeEqual
+    if (apiKeyBuffer.length !== expectedKeyBuffer.length) {
+      console.warn(`⚠️  Unauthorized API access attempt from ${req.ip} to ${req.path} - Invalid key length`);
+      return res.status(401).json({
+        error: 'Unauthorized',
+        message: 'Valid API key required. Include X-API-Key header.'
+      });
+    }
+
+    // Constant-time comparison prevents timing attacks
+    if (!crypto.timingSafeEqual(apiKeyBuffer, expectedKeyBuffer)) {
+      console.warn(`⚠️  Unauthorized API access attempt from ${req.ip} to ${req.path} - Invalid key`);
+      return res.status(401).json({
+        error: 'Unauthorized',
+        message: 'Valid API key required. Include X-API-Key header.'
+      });
+    }
+  } catch (error) {
+    console.error(`Authentication error: ${error.message}`);
     return res.status(401).json({
       error: 'Unauthorized',
       message: 'Valid API key required. Include X-API-Key header.'
