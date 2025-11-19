@@ -164,6 +164,15 @@ Each master agent focuses on a domain like development, security, or inventory m
 
 ```mermaid
 graph TB
+    subgraph Legend["📋 LEGEND"]
+        L1["━━━ Task Flow/Routing"]
+        L2["╍╍╍ Data/Integration"]
+        L3["┅┅┅ Monitoring/Reporting"]
+        L4["Solid Arrow = Direct Control"]
+        L5["Dashed Arrow = Data Flow/Usage"]
+        L6["Dotted Arrow = Monitoring/Events"]
+    end
+
     subgraph Daemons["🤖 Autonomous Daemons (9)"]
         CD["Coordinator Daemon<br/>Task Routing"]
         WD["Worker Daemon<br/>Lifecycle Management"]
@@ -222,14 +231,14 @@ graph TB
         SH6["Circuit Breaker<br/>Cascade prevention"]
     end
 
-    %% Daemon to Master routing
+    %% Daemon to Master routing (TASK FLOW)
     CD --> CM
     CM -->|Routes to| DM
     CM -->|Routes to| SM
     CM -->|Routes to| IM
     CM -->|Routes to| CI
 
-    %% Masters spawn workers
+    %% Masters spawn workers (TASK FLOW)
     DM -->|Spawns| W1
     DM -->|Spawns| W2
     DM -->|Spawns| W3
@@ -239,7 +248,7 @@ graph TB
     IM -->|Spawns| W7
     CI -->|Spawns| W3
 
-    %% Workers report health
+    %% Workers report health (MONITORING)
     W1 -.->|Heartbeat| HM
     W2 -.->|Heartbeat| HM
     W3 -.->|Heartbeat| HM
@@ -248,13 +257,13 @@ graph TB
     W6 -.->|Heartbeat| HM
     W7 -.->|Heartbeat| HM
 
-    %% Self-healing daemons
+    %% Self-healing daemons chain (TASK FLOW)
     HM --> ZC
     ZC --> WR
     WR --> FP
     FP --> AF
 
-    %% Worker lifecycle management
+    %% Worker lifecycle management (TASK FLOW)
     WD -->|Manages| W1
     WD -->|Manages| W2
     WD -->|Manages| W3
@@ -263,7 +272,14 @@ graph TB
     WD -->|Manages| W6
     WD -->|Manages| W7
 
-    %% Governance integration
+    %% PM Daemon process monitoring (MONITORING)
+    PM -.->|Monitors| CD
+    PM -.->|Monitors| WD
+    PM -.->|Monitors| HM
+    PM -.->|Monitors| DS
+    PM -.->|Reports to| DA
+
+    %% Governance integration (DATA FLOW)
     CM -.->|Uses| G1
     DM -.->|Uses| G2
     SM -.->|Uses| G3
@@ -272,17 +288,44 @@ graph TB
     DA -.->|Uses| G6
     HM -.->|Uses| G8
 
-    %% Enhancement system usage
+    %% Governance audit trail (DATA FLOW) - FIXED: Connected G7
+    CD -.->|Audit Logs| G7
+    CM -.->|Audit Logs| G7
+    DM -.->|Audit Logs| G7
+    SM -.->|Audit Logs| G7
+    IM -.->|Audit Logs| G7
+    CI -.->|Audit Logs| G7
+    DA -.->|Audit Logs| G7
+
+    %% Enhancement system usage (DATA FLOW)
     CM -.->|Context| RAG
     DM -.->|Context| RAG
     SM -.->|Context| RAG
+    IM -.->|Context| RAG
     CM -.->|Publishes| EVT
     DM -.->|Publishes| EVT
     SM -.->|Publishes| EVT
+    IM -.->|Publishes| EVT
+    CI -.->|Publishes| EVT
     CM -.->|Caches| CACHE
     DM -.->|Caches| CACHE
+    SM -.->|Caches| CACHE
 
-    %% Monitoring
+    %% Production Hardening validation (DATA FLOW) - FIXED: Connected HARD
+    HARD -.->|Validates| CM
+    HARD -.->|Validates| DM
+    HARD -.->|Validates| SM
+    HARD -.->|Validates| IM
+    HARD -.->|Validates| CI
+    HARD -.->|Checks| W1
+    HARD -.->|Checks| W2
+    HARD -.->|Checks| W3
+    HARD -.->|Checks| W4
+    HARD -.->|Checks| W5
+    HARD -.->|Checks| W6
+    HARD -.->|Checks| W7
+
+    %% Monitoring (MONITORING)
     DA -.->|Monitors| CM
     DA -.->|Monitors| DM
     DA -.->|Monitors| SM
@@ -297,31 +340,109 @@ graph TB
     DA -.->|Monitors| W7
     DS -.->|Feeds| DA
 
-    %% Self-healing components
+    %% Self-healing components implementation (DATA FLOW)
     HM -.->|Implements| SH1
     ZC -.->|Implements| SH2
     WR -.->|Implements| SH3
     FP -.->|Implements| SH4
     AF -.->|Implements| SH5
 
-    style CM fill:#c5cae9,stroke:#3949ab
-    style DM fill:#bbdefb,stroke:#1976d2
-    style SM fill:#ffcdd2,stroke:#d32f2f
-    style IM fill:#e1bee7,stroke:#8e24aa
-    style CI fill:#c8e6c9,stroke:#388e3c
-    style DA fill:#b2dfdb,stroke:#00897b
-    style CD fill:#fff9c4,stroke:#f57f17
-    style HM fill:#ffccbc,stroke:#ff6f00
-    style ZC fill:#ffccbc,stroke:#ff6f00
-    style WR fill:#ffccbc,stroke:#ff6f00
-    style FP fill:#ffccbc,stroke:#ff6f00
-    style AF fill:#ffccbc,stroke:#ff6f00
-    style DS fill:#b2dfdb,stroke:#00897b
-    style RAG fill:#f8bbd0,stroke:#c2185b
-    style EVT fill:#d1c4e9,stroke:#673ab7
-    style CACHE fill:#ffe0b2,stroke:#f57c00
-    style HARD fill:#b2ebf2,stroke:#0097a7
+    %% Circuit Breaker integration (TASK FLOW) - FIXED: Connected SH6
+    AF -->|Triggers| SH6
+    SH6 -->|Protects| CM
+    SH6 -->|Protects| DM
+    SH6 -->|Protects| SM
+    SH6 -->|Protects| IM
+    SH6 -->|Protects| CI
+
+    %% Event-driven workflows (DATA FLOW)
+    EVT -.->|Triggers| WD
+    EVT -.->|Triggers| AF
+    EVT -.->|Alerts| DA
+
+    style CM fill:#c5cae9,stroke:#3949ab,stroke-width:3px
+    style DM fill:#bbdefb,stroke:#1976d2,stroke-width:3px
+    style SM fill:#ffcdd2,stroke:#d32f2f,stroke-width:3px
+    style IM fill:#e1bee7,stroke:#8e24aa,stroke-width:3px
+    style CI fill:#c8e6c9,stroke:#388e3c,stroke-width:3px
+    style DA fill:#b2dfdb,stroke:#00897b,stroke-width:3px
+    style CD fill:#fff9c4,stroke:#f57f17,stroke-width:3px
+    style WD fill:#fff9c4,stroke:#f57f17,stroke-width:3px
+    style PM fill:#fff9c4,stroke:#f57f17,stroke-width:3px
+    style HM fill:#ffccbc,stroke:#ff6f00,stroke-width:3px
+    style ZC fill:#ffccbc,stroke:#ff6f00,stroke-width:3px
+    style WR fill:#ffccbc,stroke:#ff6f00,stroke-width:3px
+    style FP fill:#ffccbc,stroke:#ff6f00,stroke-width:3px
+    style AF fill:#ffccbc,stroke:#ff6f00,stroke-width:3px
+    style DS fill:#b2dfdb,stroke:#00897b,stroke-width:3px
+    style RAG fill:#f8bbd0,stroke:#c2185b,stroke-width:3px
+    style EVT fill:#d1c4e9,stroke:#673ab7,stroke-width:3px
+    style CACHE fill:#ffe0b2,stroke:#f57c00,stroke-width:3px
+    style HARD fill:#b2ebf2,stroke:#0097a7,stroke-width:3px
+    style SH6 fill:#ffebee,stroke:#c62828,stroke-width:3px
+    style G7 fill:#fff3e0,stroke:#e65100,stroke-width:3px
+    style Legend fill:#f5f5f5,stroke:#424242,stroke-width:2px
+
+    %% Animate all connections with different styles
+    linkStyle default stroke:#666,stroke-width:2px,fill:none
+
+    %% Task flow connections (solid, animated, blue)
+    linkStyle 0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20 stroke:#2196f3,stroke-width:2.5px,stroke-dasharray:5 5
+
+    %% Monitoring connections (dotted, animated, green)
+    linkStyle 21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49 stroke:#4caf50,stroke-width:2px,stroke-dasharray:2 2
+
+    %% Data flow connections (dashed, animated, purple)
+    linkStyle 50,51,52,53,54,55,56,57,58,59,60,61,62,63,64,65,66,67,68,69,70,71,72,73,74,75,76,77,78,79,80,81,82,83,84,85,86 stroke:#9c27b0,stroke-width:2px,stroke-dasharray:8 4
+
+    %% Circuit breaker connections (solid, animated, red)
+    linkStyle 87,88,89,90,91,92 stroke:#f44336,stroke-width:3px
+
+    %% Event-driven connections (dashed, animated, orange)
+    linkStyle 93,94,95 stroke:#ff9800,stroke-width:2.5px,stroke-dasharray:10 5
 ```
+
+**Understanding the Architecture Flow:**
+
+The diagram illustrates commit-relay's complete orchestration system with color-coded connections showing different types of interactions:
+
+**🔵 Task Flow (Blue, Dashed)**:
+- Coordinator Daemon routes incoming tasks to Coordinator Master
+- Coordinator Master uses MoE (Mixture of Experts) routing to select appropriate specialist masters
+- Masters spawn workers based on task requirements
+- Self-healing daemon chain processes failures (Heartbeat Monitor → Zombie Cleanup → Worker Restart → Failure Pattern Detection → Auto-Fix)
+
+**🟢 Monitoring Flow (Green, Dotted)**:
+- All 7 worker types report health via 2-minute heartbeat intervals to Heartbeat Monitor
+- PM Daemon monitors core daemons (Coordinator, Worker, Heartbeat, Dashboard Server) and reports to Dashboard Agent
+- Dashboard Agent monitors all masters and workers, collecting real-time metrics
+- Dashboard Server feeds aggregated data to Dashboard Agent for visualization
+
+**🟣 Data Flow (Purple, Dashed)**:
+- Each master uses its dedicated governance namespace (Coordinator→G1, Development→G2, Security→G3, etc.)
+- All masters and daemons send audit logs to G7 (Governance namespace) for compliance tracking
+- Masters retrieve context from Vector DB (RAG) for informed decision-making
+- Masters publish events to Event-Driven system for reactive automation
+- Frequently accessed data is cached in Adaptive Cache for performance
+- Production Hardening validates masters and checks workers for security/performance/reliability
+
+**🔴 Circuit Breaker (Red, Solid)**:
+- Auto-Fix daemon can trigger Circuit Breaker when failure patterns indicate systemic issues
+- Circuit Breaker protects all 5 specialist masters from cascading failures
+- Prevents system-wide outages by isolating problematic components
+
+**🟠 Event-Driven (Orange, Dashed)**:
+- Event system triggers Worker Daemon for automated worker spawning
+- Events trigger Auto-Fix daemon for reactive remediation
+- Critical events alert Dashboard Agent for real-time notifications
+
+**Key Highlights:**
+- **G7 (Governance/Audit)**: Central audit trail receiving logs from all masters and coordinator daemon
+- **Production Hardening**: Validates all masters and workers with 15+ security/performance/reliability checks
+- **PM Daemon**: Process monitoring for core orchestration daemons
+- **Circuit Breaker (SH6)**: Critical protection mechanism preventing cascade failures across masters
+
+---
 
 #### Governance Framework (8 Namespaces)
 
