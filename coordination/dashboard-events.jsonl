@@ -2319,3 +2319,128 @@
 {"timestamp":"2025-11-19T05:40:09-0600","type":"routing_alert_created","data":{"alert_id":"routing-1763552409-worker_daemon_not_running","type":"worker_daemon_not_running","severity":"high"}}
 {"timestamp":"2025-11-19T05:41:09-0600","type":"routing_alert_created","data":{"alert_id":"routing-1763552469-worker_daemon_not_running","type":"worker_daemon_not_running","severity":"high"}}
 {"timestamp":"2025-11-19T05:42:09-0600","type":"routing_alert_created","data":{"alert_id":"routing-1763552529-worker_daemon_not_running","type":"worker_daemon_not_running","severity":"high"}}
+{"timestamp":"2025-11-19T05:43:09-0600","type":"routing_alert_created","data":{"alert_id":"routing-1763552589-worker_daemon_not_running","type":"worker_daemon_not_running","severity":"high"}}
+{"timestamp":"2025-11-19T05:44:10-0600","type":"routing_alert_created","data":{"alert_id":"routing-1763552650-worker_daemon_not_running","type":"worker_daemon_not_running","severity":"high"}}
+{"timestamp":"2025-11-19T05:45:10-0600","type":"routing_alert_created","data":{"alert_id":"routing-1763552710-worker_daemon_not_running","type":"worker_daemon_not_running","severity":"high"}}
+{"timestamp":"2025-11-19T05:46:10-0600","type":"routing_alert_created","data":{"alert_id":"routing-1763552770-worker_daemon_not_running","type":"worker_daemon_not_running","severity":"high"}}
+{"timestamp":"2025-11-19T05:47:10-0600","type":"routing_alert_created","data":{"alert_id":"routing-1763552830-worker_daemon_not_running","type":"worker_daemon_not_running","severity":"high"}}
+{"timestamp":"2025-11-19T05:48:10-0600","type":"routing_alert_created","data":{"alert_id":"routing-1763552890-worker_daemon_not_running","type":"worker_daemon_not_running","severity":"high"}}
+{"timestamp":"2025-11-19T05:49:10-0600","type":"routing_alert_created","data":{"alert_id":"routing-1763552950-worker_daemon_not_running","type":"worker_daemon_not_running","severity":"high"}}
+{"timestamp":"2025-11-19T05:50:10-0600","type":"routing_alert_created","data":{"alert_id":"routing-1763553010-worker_daemon_not_running","type":"worker_daemon_not_running","severity":"high"}}
+{"timestamp":"2025-11-19T05:51:11-0600","type":"routing_alert_created","data":{"alert_id":"routing-1763553071-worker_daemon_not_running","type":"worker_daemon_not_running","severity":"high"}}
+{"timestamp":"2025-11-19T05:52:11-0600","type":"routing_alert_created","data":{"alert_id":"routing-1763553131-worker_daemon_not_running","type":"worker_daemon_not_running","severity":"high"}}
+{"timestamp":"2025-11-19T05:53:11-0600","type":"routing_alert_created","data":{"alert_id":"routing-1763553191-worker_daemon_not_running","type":"worker_daemon_not_running","severity":"high"}}
+{"timestamp":"2025-11-19T05:54:11-0600","type":"routing_alert_created","data":{"alert_id":"routing-1763553251-worker_daemon_not_running","type":"worker_daemon_not_running","severity":"high"}}
+{"timestamp":"2025-11-19T05:55:11-0600","type":"routing_alert_created","data":{"alert_id":"routing-1763553311-worker_daemon_not_running","type":"worker_daemon_not_running","severity":"high"}}
+{"timestamp":"2025-11-19T05:56:11-0600","type":"routing_alert_created","data":{"alert_id":"routing-1763553371-worker_daemon_not_running","type":"worker_daemon_not_running","severity":"high"}}
+{"timestamp":"2025-11-19T05:57:11-0600","type":"routing_alert_created","data":{"alert_id":"routing-1763553431-worker_daemon_not_running","type":"worker_daemon_not_running","severity":"high"}}
+{"timestamp":"2025-11-19T05:58:11-0600","type":"routing_alert_created","data":{"alert_id":"routing-1763553491-worker_daemon_not_running","type":"worker_daemon_not_running","severity":"high"}}
+{"timestamp":"2025-11-19T05:59:12-0600","type":"routing_alert_created","data":{"alert_id":"routing-1763553552-worker_daemon_not_running","type":"worker_daemon_not_running","severity":"high"}}
+{
+  "timestamp": "2025-11-19T06:00:03-0600",
+  "type": "pool_size_alert",
+  "data": {
+    "pool_size": 41,
+    "threshold": 15,
+    "severity": "critical"
+  }
+}
+{"timestamp":"2025-11-19T06:00:12-0600","type":"routing_alert_created","data":{"alert_id":"routing-1763553612-worker_daemon_not_running","type":"worker_daemon_not_running","severity":"high"}}
+{"timestamp":"2025-11-19T06:01:12-0600","type":"routing_alert_created","data":{"alert_id":"routing-1763553672-worker_daemon_not_running","type":"worker_daemon_not_running","severity":"high"}}
+{"timestamp":"2025-11-19T06:02:12-0600","type":"routing_alert_created","data":{"alert_id":"routing-1763553732-worker_daemon_not_running","type":"worker_daemon_not_running","severity":"high"}}
+{"timestamp":"2025-11-19T06:03:12-0600","type":"routing_alert_created","data":{"alert_id":"routing-1763553792-worker_daemon_not_running","type":"worker_daemon_not_running","severity":"high"}}
+{"timestamp":"2025-11-19T06:04:12-0600","type":"routing_alert_created","data":{"alert_id":"routing-1763553852-worker_daemon_not_running","type":"worker_daemon_not_running","severity":"high"}}
+{"timestamp":"2025-11-19T06:05:12-0600","type":"routing_alert_created","data":{"alert_id":"routing-1763553912-worker_daemon_not_running","type":"worker_daemon_not_running","severity":"high"}}
+{"timestamp":"2025-11-19T06:06:13-0600","type":"routing_alert_created","data":{"alert_id":"routing-1763553972-worker_daemon_not_running","type":"worker_daemon_not_running","severity":"high"}}
+{"timestamp":"2025-11-19T06:07:13-0600","type":"routing_alert_created","data":{"alert_id":"routing-1763554033-worker_daemon_not_running","type":"worker_daemon_not_running","severity":"high"}}
+{"timestamp":"2025-11-19T06:08:13-0600","type":"routing_alert_created","data":{"alert_id":"routing-1763554093-worker_daemon_not_running","type":"worker_daemon_not_running","severity":"high"}}
+{"timestamp":"2025-11-19T06:09:13-0600","type":"routing_alert_created","data":{"alert_id":"routing-1763554153-worker_daemon_not_running","type":"worker_daemon_not_running","severity":"high"}}
+{"timestamp":"2025-11-19T06:10:13-0600","type":"routing_alert_created","data":{"alert_id":"routing-1763554213-worker_daemon_not_running","type":"worker_daemon_not_running","severity":"high"}}
+{"timestamp":"2025-11-19T06:11:13-0600","type":"routing_alert_created","data":{"alert_id":"routing-1763554273-worker_daemon_not_running","type":"worker_daemon_not_running","severity":"high"}}
+{"timestamp":"2025-11-19T06:12:13-0600","type":"routing_alert_created","data":{"alert_id":"routing-1763554333-worker_daemon_not_running","type":"worker_daemon_not_running","severity":"high"}}
+{"timestamp":"2025-11-19T06:13:13-0600","type":"routing_alert_created","data":{"alert_id":"routing-1763554393-worker_daemon_not_running","type":"worker_daemon_not_running","severity":"high"}}
+{"timestamp":"2025-11-19T06:14:14-0600","type":"routing_alert_created","data":{"alert_id":"routing-1763554454-worker_daemon_not_running","type":"worker_daemon_not_running","severity":"high"}}
+{"timestamp":"2025-11-19T06:15:14-0600","type":"routing_alert_created","data":{"alert_id":"routing-1763554514-worker_daemon_not_running","type":"worker_daemon_not_running","severity":"high"}}
+{"timestamp":"2025-11-19T06:16:14-0600","type":"routing_alert_created","data":{"alert_id":"routing-1763554574-worker_daemon_not_running","type":"worker_daemon_not_running","severity":"high"}}
+{"timestamp":"2025-11-19T06:17:14-0600","type":"routing_alert_created","data":{"alert_id":"routing-1763554634-worker_daemon_not_running","type":"worker_daemon_not_running","severity":"high"}}
+{"timestamp":"2025-11-19T06:18:14-0600","type":"routing_alert_created","data":{"alert_id":"routing-1763554694-worker_daemon_not_running","type":"worker_daemon_not_running","severity":"high"}}
+{"timestamp":"2025-11-19T06:19:15-0600","type":"routing_alert_created","data":{"alert_id":"routing-1763554754-worker_daemon_not_running","type":"worker_daemon_not_running","severity":"high"}}
+{"timestamp":"2025-11-19T06:20:15-0600","type":"routing_alert_created","data":{"alert_id":"routing-1763554815-worker_daemon_not_running","type":"worker_daemon_not_running","severity":"high"}}
+{"timestamp":"2025-11-19T06:20:51-0600","type":"coordinator_stopped","data":{"pid":65760}}
+{"timestamp":"2025-11-19T06:20:51-0600","type":"coordinator_stopped","data":{"pid":65760}}
+{"timestamp":"2025-11-19T06:21:58-0600","type":"coordinator_started","data":{"pid":51066}}
+{"timestamp":"2025-11-19T06:26:33-0600","type":"integration_validator_started","data":{"pid":61211}}
+{"timestamp":"2025-11-19T06:26:33-0600","type":"routing_alert_created","data":{"alert_id":"routing-1763555193-worker_daemon_not_running","type":"worker_daemon_not_running","severity":"high"}}
+{"timestamp":"2025-11-19T06:27:34-0600","type":"routing_alert_created","data":{"alert_id":"routing-1763555254-worker_daemon_not_running","type":"worker_daemon_not_running","severity":"high"}}
+{"timestamp":"2025-11-19T06:28:34-0600","type":"routing_alert_created","data":{"alert_id":"routing-1763555314-worker_daemon_not_running","type":"worker_daemon_not_running","severity":"high"}}
+{"timestamp":"2025-11-19T06:29:34-0600","type":"routing_alert_created","data":{"alert_id":"routing-1763555374-worker_daemon_not_running","type":"worker_daemon_not_running","severity":"high"}}
+{"timestamp":"2025-11-19T06:30:34-0600","type":"routing_alert_created","data":{"alert_id":"routing-1763555434-worker_daemon_not_running","type":"worker_daemon_not_running","severity":"high"}}
+{"timestamp":"2025-11-19T06:31:34-0600","type":"routing_alert_created","data":{"alert_id":"routing-1763555494-worker_daemon_not_running","type":"worker_daemon_not_running","severity":"high"}}
+{"id":"evt-1763555532342-59840","timestamp":"2025-11-19T12:32:12.342Z","type":"health_alert_deleted","data":{"alert_id":"alert-worker-daemon-down","alert_type":"worker_daemon_failure","severity":"high","message":"Health alert deleted: Worker daemon process not found"},"source":"dashboard"}
+{"timestamp":"2025-11-19T06:32:34-0600","type":"routing_alert_created","data":{"alert_id":"routing-1763555554-worker_daemon_not_running","type":"worker_daemon_not_running","severity":"high"}}
+{"timestamp":"2025-11-19T06:33:34-0600","type":"routing_alert_created","data":{"alert_id":"routing-1763555614-worker_daemon_not_running","type":"worker_daemon_not_running","severity":"high"}}
+{"timestamp":"2025-11-19T06:34:35-0600","type":"routing_alert_created","data":{"alert_id":"routing-1763555674-worker_daemon_not_running","type":"worker_daemon_not_running","severity":"high"}}
+{"timestamp":"2025-11-19T06:35:35-0600","type":"routing_alert_created","data":{"alert_id":"routing-1763555735-worker_daemon_not_running","type":"worker_daemon_not_running","severity":"high"}}
+{"timestamp":"2025-11-19T06:36:35-0600","type":"routing_alert_created","data":{"alert_id":"routing-1763555795-worker_daemon_not_running","type":"worker_daemon_not_running","severity":"high"}}
+{"timestamp":"2025-11-19T06:37:35-0600","type":"routing_alert_created","data":{"alert_id":"routing-1763555855-worker_daemon_not_running","type":"worker_daemon_not_running","severity":"high"}}
+{"timestamp":"2025-11-19T06:38:35-0600","type":"routing_alert_created","data":{"alert_id":"routing-1763555915-worker_daemon_not_running","type":"worker_daemon_not_running","severity":"high"}}
+{"timestamp":"2025-11-19T06:39:35-0600","type":"routing_alert_created","data":{"alert_id":"routing-1763555975-worker_daemon_not_running","type":"worker_daemon_not_running","severity":"high"}}
+{"timestamp":"2025-11-19T06:40:35-0600","type":"routing_alert_created","data":{"alert_id":"routing-1763556035-worker_daemon_not_running","type":"worker_daemon_not_running","severity":"high"}}
+{"timestamp":"2025-11-19T06:41:35-0600","type":"routing_alert_created","data":{"alert_id":"routing-1763556095-worker_daemon_not_running","type":"worker_daemon_not_running","severity":"high"}}
+{"timestamp":"2025-11-19T06:42:36-0600","type":"routing_alert_created","data":{"alert_id":"routing-1763556156-worker_daemon_not_running","type":"worker_daemon_not_running","severity":"high"}}
+{"timestamp":"2025-11-19T06:43:36-0600","type":"routing_alert_created","data":{"alert_id":"routing-1763556216-worker_daemon_not_running","type":"worker_daemon_not_running","severity":"high"}}
+{"timestamp":"2025-11-19T06:44:36-0600","type":"routing_alert_created","data":{"alert_id":"routing-1763556276-worker_daemon_not_running","type":"worker_daemon_not_running","severity":"high"}}
+{"timestamp":"2025-11-19T06:45:36-0600","type":"routing_alert_created","data":{"alert_id":"routing-1763556336-worker_daemon_not_running","type":"worker_daemon_not_running","severity":"high"}}
+{"timestamp":"2025-11-19T06:46:36-0600","type":"routing_alert_created","data":{"alert_id":"routing-1763556396-worker_daemon_not_running","type":"worker_daemon_not_running","severity":"high"}}
+{"timestamp":"2025-11-19T06:47:36-0600","type":"routing_alert_created","data":{"alert_id":"routing-1763556456-worker_daemon_not_running","type":"worker_daemon_not_running","severity":"high"}}
+{"timestamp":"2025-11-19T06:48:36-0600","type":"routing_alert_created","data":{"alert_id":"routing-1763556516-worker_daemon_not_running","type":"worker_daemon_not_running","severity":"high"}}
+{"timestamp":"2025-11-19T06:49:37-0600","type":"routing_alert_created","data":{"alert_id":"routing-1763556577-worker_daemon_not_running","type":"worker_daemon_not_running","severity":"high"}}
+{"timestamp":"2025-11-19T06:50:37-0600","type":"routing_alert_created","data":{"alert_id":"routing-1763556637-worker_daemon_not_running","type":"worker_daemon_not_running","severity":"high"}}
+{"timestamp":"2025-11-19T06:51:37-0600","type":"routing_alert_created","data":{"alert_id":"routing-1763556697-worker_daemon_not_running","type":"worker_daemon_not_running","severity":"high"}}
+{"timestamp":"2025-11-19T06:52:37-0600","type":"routing_alert_created","data":{"alert_id":"routing-1763556757-worker_daemon_not_running","type":"worker_daemon_not_running","severity":"high"}}
+{"timestamp":"2025-11-19T06:53:37-0600","type":"routing_alert_created","data":{"alert_id":"routing-1763556817-worker_daemon_not_running","type":"worker_daemon_not_running","severity":"high"}}
+{"timestamp":"2025-11-19T06:54:37-0600","type":"routing_alert_created","data":{"alert_id":"routing-1763556877-worker_daemon_not_running","type":"worker_daemon_not_running","severity":"high"}}
+{"timestamp":"2025-11-19T06:55:37-0600","type":"routing_alert_created","data":{"alert_id":"routing-1763556937-worker_daemon_not_running","type":"worker_daemon_not_running","severity":"high"}}
+{"timestamp":"2025-11-19T06:56:38-0600","type":"routing_alert_created","data":{"alert_id":"routing-1763556998-worker_daemon_not_running","type":"worker_daemon_not_running","severity":"high"}}
+{"timestamp":"2025-11-19T06:57:38-0600","type":"routing_alert_created","data":{"alert_id":"routing-1763557058-worker_daemon_not_running","type":"worker_daemon_not_running","severity":"high"}}
+{"timestamp":"2025-11-19T06:58:38-0600","type":"routing_alert_created","data":{"alert_id":"routing-1763557118-worker_daemon_not_running","type":"worker_daemon_not_running","severity":"high"}}
+{"timestamp":"2025-11-19T06:59:38-0600","type":"routing_alert_created","data":{"alert_id":"routing-1763557178-worker_daemon_not_running","type":"worker_daemon_not_running","severity":"high"}}
+{
+  "timestamp": "2025-11-19T07:00:03-0600",
+  "type": "pool_size_alert",
+  "data": {
+    "pool_size": 41,
+    "threshold": 15,
+    "severity": "critical"
+  }
+}
+{"timestamp":"2025-11-19T07:00:38-0600","type":"routing_alert_created","data":{"alert_id":"routing-1763557238-worker_daemon_not_running","type":"worker_daemon_not_running","severity":"high"}}
+{"timestamp":"2025-11-19T07:01:38-0600","type":"routing_alert_created","data":{"alert_id":"routing-1763557298-worker_daemon_not_running","type":"worker_daemon_not_running","severity":"high"}}
+{"timestamp":"2025-11-19T07:02:38-0600","type":"routing_alert_created","data":{"alert_id":"routing-1763557358-worker_daemon_not_running","type":"worker_daemon_not_running","severity":"high"}}
+{"timestamp":"2025-11-19T07:03:39-0600","type":"routing_alert_created","data":{"alert_id":"routing-1763557419-worker_daemon_not_running","type":"worker_daemon_not_running","severity":"high"}}
+{"timestamp":"2025-11-19T07:04:39-0600","type":"routing_alert_created","data":{"alert_id":"routing-1763557479-worker_daemon_not_running","type":"worker_daemon_not_running","severity":"high"}}
+{"timestamp":"2025-11-19T07:05:39-0600","type":"routing_alert_created","data":{"alert_id":"routing-1763557539-worker_daemon_not_running","type":"worker_daemon_not_running","severity":"high"}}
+{"timestamp":"2025-11-19T07:06:39-0600","type":"routing_alert_created","data":{"alert_id":"routing-1763557599-worker_daemon_not_running","type":"worker_daemon_not_running","severity":"high"}}
+{"timestamp":"2025-11-19T07:07:39-0600","type":"routing_alert_created","data":{"alert_id":"routing-1763557659-worker_daemon_not_running","type":"worker_daemon_not_running","severity":"high"}}
+{"timestamp":"2025-11-19T07:08:39-0600","type":"routing_alert_created","data":{"alert_id":"routing-1763557719-worker_daemon_not_running","type":"worker_daemon_not_running","severity":"high"}}
+{"timestamp":"2025-11-19T07:09:39-0600","type":"routing_alert_created","data":{"alert_id":"routing-1763557779-worker_daemon_not_running","type":"worker_daemon_not_running","severity":"high"}}
+{"timestamp":"2025-11-19T07:10:40-0600","type":"routing_alert_created","data":{"alert_id":"routing-1763557840-worker_daemon_not_running","type":"worker_daemon_not_running","severity":"high"}}
+{"timestamp":"2025-11-19T07:11:40-0600","type":"routing_alert_created","data":{"alert_id":"routing-1763557900-worker_daemon_not_running","type":"worker_daemon_not_running","severity":"high"}}
+{"timestamp":"2025-11-19T07:12:40-0600","type":"routing_alert_created","data":{"alert_id":"routing-1763557960-worker_daemon_not_running","type":"worker_daemon_not_running","severity":"high"}}
+{"timestamp":"2025-11-19T07:13:40-0600","type":"routing_alert_created","data":{"alert_id":"routing-1763558020-worker_daemon_not_running","type":"worker_daemon_not_running","severity":"high"}}
+{"timestamp":"2025-11-19T07:14:40-0600","type":"routing_alert_created","data":{"alert_id":"routing-1763558080-worker_daemon_not_running","type":"worker_daemon_not_running","severity":"high"}}
+{"timestamp":"2025-11-19T07:15:40-0600","type":"routing_alert_created","data":{"alert_id":"routing-1763558140-worker_daemon_not_running","type":"worker_daemon_not_running","severity":"high"}}
+{"timestamp":"2025-11-19T07:16:40-0600","type":"routing_alert_created","data":{"alert_id":"routing-1763558200-worker_daemon_not_running","type":"worker_daemon_not_running","severity":"high"}}
+{"timestamp":"2025-11-19T07:17:41-0600","type":"routing_alert_created","data":{"alert_id":"routing-1763558261-worker_daemon_not_running","type":"worker_daemon_not_running","severity":"high"}}
+{"timestamp":"2025-11-19T07:18:41-0600","type":"routing_alert_created","data":{"alert_id":"routing-1763558321-worker_daemon_not_running","type":"worker_daemon_not_running","severity":"high"}}
+{"timestamp":"2025-11-19T07:19:41-0600","type":"routing_alert_created","data":{"alert_id":"routing-1763558381-worker_daemon_not_running","type":"worker_daemon_not_running","severity":"high"}}
+{"timestamp":"2025-11-19T07:20:41-0600","type":"routing_alert_created","data":{"alert_id":"routing-1763558441-worker_daemon_not_running","type":"worker_daemon_not_running","severity":"high"}}
+{"timestamp":"2025-11-19T07:21:41-0600","type":"routing_alert_created","data":{"alert_id":"routing-1763558501-worker_daemon_not_running","type":"worker_daemon_not_running","severity":"high"}}
+{"timestamp":"2025-11-19T07:22:41-0600","type":"routing_alert_created","data":{"alert_id":"routing-1763558561-worker_daemon_not_running","type":"worker_daemon_not_running","severity":"high"}}
+{"timestamp":"2025-11-19T07:23:41-0600","type":"routing_alert_created","data":{"alert_id":"routing-1763558621-worker_daemon_not_running","type":"worker_daemon_not_running","severity":"high"}}
+{"timestamp":"2025-11-19T07:24:42-0600","type":"routing_alert_created","data":{"alert_id":"routing-1763558682-worker_daemon_not_running","type":"worker_daemon_not_running","severity":"high"}}
+{"timestamp":"2025-11-19T07:25:42-0600","type":"routing_alert_created","data":{"alert_id":"routing-1763558742-worker_daemon_not_running","type":"worker_daemon_not_running","severity":"high"}}
+{"timestamp":"2025-11-19T07:26:42-0600","type":"routing_alert_created","data":{"alert_id":"routing-1763558802-worker_daemon_not_running","type":"worker_daemon_not_running","severity":"high"}}
+{"id":"evt-1763558837909-34022","timestamp":"2025-11-19T13:27:17.909Z","type":"health_alert_deleted","data":{"alert_id":"alert-worker-daemon-down","alert_type":"worker_daemon_failure","severity":"high","message":"Health alert deleted: Worker daemon process not found"},"source":"dashboard"}
+{"timestamp":"2025-11-19T07:27:42-0600","type":"routing_alert_created","data":{"alert_id":"routing-1763558862-worker_daemon_not_running","type":"worker_daemon_not_running","severity":"high"}}
+{"timestamp":"2025-11-19T07:28:42-0600","type":"routing_alert_created","data":{"alert_id":"routing-1763558922-worker_daemon_not_running","type":"worker_daemon_not_running","severity":"high"}}
