@@ -2182,3 +2182,8 @@
 {"id":"evt-1763545359987-59411","timestamp":"2025-11-19T09:42:39.987Z","type":"health_alert_deleted","data":{"alert_id":"alert-pm-daemon-down","alert_type":"pm_daemon_failure","severity":"high","message":"Health alert deleted: PM Daemon heartbeat stale, PM Agent spawned as backup"},"source":"dashboard"}
 {"id":"evt-1763545363805-59411","timestamp":"2025-11-19T09:42:43.805Z","type":"health_alert_deleted","data":{"alert_id":"alert-worker-daemon-down","alert_type":"worker_daemon_failure","severity":"high","message":"Health alert deleted: Worker daemon process not found"},"source":"dashboard"}
 {"timestamp":"2025-11-19T03:42:52-0600","type":"routing_alert_created","data":{"alert_id":"routing-1763545372-worker_daemon_not_running","type":"worker_daemon_not_running","severity":"high"}}
+{"timestamp":"2025-11-19T03:43:52-0600","type":"routing_alert_created","data":{"alert_id":"routing-1763545432-worker_daemon_not_running","type":"worker_daemon_not_running","severity":"high"}}
+{"timestamp":"2025-11-19T03:44:52-0600","type":"routing_alert_created","data":{"alert_id":"routing-1763545492-worker_daemon_not_running","type":"worker_daemon_not_running","severity":"high"}}
+{"timestamp":"2025-11-19T03:45:52-0600","type":"routing_alert_created","data":{"alert_id":"routing-1763545552-worker_daemon_not_running","type":"worker_daemon_not_running","severity":"high"}}
+{"timestamp":"2025-11-19T03:46:52-0600","type":"routing_alert_created","data":{"alert_id":"routing-1763545612-worker_daemon_not_running","type":"worker_daemon_not_running","severity":"high"}}
+{"timestamp":"2025-11-19T03:47:52-0600","type":"routing_alert_created","data":{"alert_id":"routing-1763545672-worker_daemon_not_running","type":"worker_daemon_not_running","severity":"high"}}
