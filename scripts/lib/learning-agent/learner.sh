@@ -150,7 +150,7 @@ extract_successful_patterns() {
                 strategy: .[0].action.strategy_used,
                 worker_type: .[0].action.worker_type,
                 count: length,
-                avg_score: (map(.overall_score) | add / length),
+                avg_score: (map(.overall_score) | (add / length)),
                 min_score: (map(.overall_score) | min),
                 max_score: (map(.overall_score) | max),
                 examples: map(.example_id)
@@ -197,8 +197,8 @@ extract_failed_patterns() {
                 strategy: .[0].action.strategy_used,
                 worker_type: .[0].action.worker_type,
                 count: length,
-                avg_score: (map(.overall_score) | add / length),
-                failure_rate: (map(select(.outcome.classification == "failure")) | length) / length,
+                avg_score: (map(.overall_score) | (add / length)),
+                failure_rate: ((map(select(.outcome.classification == "failure")) | length) / length),
                 examples: map(.example_id)
             }) |
             map(select(.count >= '"$min_examples"' and (.avg_score < 50 or .failure_rate > 0.3)))
@@ -243,12 +243,12 @@ extract_routing_patterns() {
                 complexity: .[0].context.complexity,
                 preferred_worker_type: (
                     group_by(.action.worker_type) |
-                    map({worker_type: .[0].action.worker_type, avg_score: (map(.overall_score) | add / length)}) |
+                    map({worker_type: .[0].action.worker_type, avg_score: (map(.overall_score) | (add / length))}) |
                     max_by(.avg_score) |
                     .worker_type
                 ),
                 count: length,
-                avg_score: (map(.overall_score) | add / length)
+                avg_score: (map(.overall_score) | (add / length))
             }) |
             map(select(.count >= '"$min_examples"' and .avg_score >= 70))
         ')
@@ -616,8 +616,8 @@ calculate_improvement() {
         if length > 0 then
             {
                 count: length,
-                avg_score: (map(.score) | add / length),
-                success_rate: (map(select(.outcome == "success_high_quality" or .outcome == "success_standard")) | length) / length
+                avg_score: (map(.score) | (add / length)),
+                success_rate: ((map(select(.outcome == "success_high_quality" or .outcome == "success_standard")) | length) / length)
             }
         else
             {count: 0, avg_score: 0, success_rate: 0}
@@ -630,8 +630,8 @@ calculate_improvement() {
         if length > 0 then
             {
                 count: length,
-                avg_score: (map(.score) | add / length),
-                success_rate: (map(select(.outcome == "success_high_quality" or .outcome == "success_standard")) | length) / length
+                avg_score: (map(.score) | (add / length)),
+                success_rate: ((map(select(.outcome == "success_high_quality" or .outcome == "success_standard")) | length) / length)
             }
         else
             {count: 0, avg_score: 0, success_rate: 0}
