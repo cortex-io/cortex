@@ -2595,3 +2595,9 @@
 {"id":"evt-1763560998-52199","timestamp":"2025-11-19T08:03:18-06:00","type":"zombie_cleanup_rate_limited","data":"","source":"automation"}
 {"id":"evt-1763560999-52199","timestamp":"2025-11-19T08:03:19-06:00","type":"worker_presumed_dead","data":"{\"event_type\":\"worker_presumed_dead\",\"worker_id\":\"worker-scan-034\",\"task_id\":\"test-final-permissions\",\"time_since_heartbeat_seconds\":9999,\"health_status\":\"unresponsive\",\"timestamp\":\"2025-11-19T08:03:18-0600\",\"detected_by\":\"heartbeat-monitor\"}","source":"automation"}
 {"id":"evt-1763560999-52199","timestamp":"2025-11-19T08:03:19-06:00","type":"zombie_cleanup_rate_limited","data":"","source":"automation"}
+{"timestamp":"2025-11-19T08:54:47-0600","type":"coordinator_started","data":{"pid":70215}}
+{"timestamp":"2025-11-19T08:54:48-0600","type":"integration_validator_started","data":{"pid":70292}}
+{"timestamp":"2025-11-19T08:54:48-0600","type":"routing_alert_created","data":{"alert_id":"routing-1763564088-worker_daemon_not_running","type":"worker_daemon_not_running","severity":"high"}}
+{"id":"evt-1763564147-71551","timestamp":"2025-11-19T08:55:47-06:00","type":"worker_started","data":"{\"worker_id\":\"sec-worker-E9E9BFEB\",\"task_id\":\"moe-test-ddqd-v5-1763247177-0adcd7ae\",\"worker_type\":\"scan-worker\",\"launched_by\":\"daemon\"}","source":"automation"}
+{"timestamp":"2025-11-19T08:55:47-0600","type":"orchestrator_started","data":{"pid":71750}}
+{"id":"evt-1763564148-71551","timestamp":"2025-11-19T08:55:48-06:00","type":"worker_started","data":"{\"worker_id\":\"worker-scan-034\",\"task_id\":\"test-final-permissions\",\"worker_type\":\"scan-worker\",\"launched_by\":\"daemon\"}","source":"automation"}
