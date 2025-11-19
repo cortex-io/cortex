@@ -439,28 +439,64 @@ update_utility_weights() {
         --argjson success "$success_importance" \
         --argjson lr "$learning_rate" \
         '
-        .weights.quality = (.weights.quality * (1 - $lr)) + ($quality * $lr) |
-        .weights.efficiency = (.weights.efficiency * (1 - $lr)) + ($efficiency * $lr) |
-        .weights.success = (.weights.success * (1 - $lr)) + ($success * $lr) |
-        .updated_at = now | strftime("%Y-%m-%dT%H:%M:%SZ") |
-        .version = (.version + 1)
+        # Handle both old (.weights) and new (.default_weights) structures
+        if .weights then
+            .weights.quality = ((.weights.quality // 0.3) * (1 - $lr)) + ($quality * $lr) |
+            .weights.efficiency = ((.weights.efficiency // 0.2) * (1 - $lr)) + ($efficiency * $lr) |
+            .weights.success = ((.weights.success // 0.5) * (1 - $lr)) + ($success * $lr) |
+            .updated_at = now | strftime("%Y-%m-%dT%H:%M:%SZ") |
+            .version = ((.version // 0) + 1)
+        elif .default_weights then
+            .default_weights.quality = ((.default_weights.quality // 0.35) * (1 - $lr)) + ($quality * $lr) |
+            .default_weights.speed = ((.default_weights.speed // 0.25) * (1 - $lr)) + ($efficiency * $lr) |
+            .default_weights.success_rate = ((.default_weights.success_rate // 0.20) * (1 - $lr)) + ($success * $lr) |
+            .metadata.updated_at = now | strftime("%Y-%m-%dT%H:%M:%SZ")
+        else
+            .weights = {
+                quality: $quality,
+                efficiency: $efficiency,
+                success: $success
+            } |
+            .updated_at = now | strftime("%Y-%m-%dT%H:%M:%SZ") |
+            .version = 1
+        end
         ')
 
     # Normalize weights to sum to 1.0
     local normalized_weights=$(echo "$updated_weights" | jq '
-        .weights as $w |
-        ($w.quality + $w.efficiency + $w.success) as $sum |
-        .weights.quality = ($w.quality / $sum) |
-        .weights.efficiency = ($w.efficiency / $sum) |
-        .weights.success = ($w.success / $sum)
+        if .weights then
+            .weights as $w |
+            (($w.quality // 0) + ($w.efficiency // 0) + ($w.success // 0)) as $sum |
+            if $sum > 0 then
+                .weights.quality = ($w.quality / $sum) |
+                .weights.efficiency = ($w.efficiency / $sum) |
+                .weights.success = ($w.success / $sum)
+            else
+                .
+            end
+        elif .default_weights then
+            .default_weights as $w |
+            (($w.quality // 0) + ($w.speed // 0) + ($w.success_rate // 0) + ($w.cost // 0)) as $sum |
+            if $sum > 0 then
+                .default_weights.quality = ($w.quality / $sum) |
+                .default_weights.speed = ($w.speed / $sum) |
+                .default_weights.success_rate = ($w.success_rate / $sum) |
+                .default_weights.cost = ($w.cost / $sum)
+            else
+                .
+            end
+        else
+            .
+        end
     ')
 
     # Save updated weights
     echo "$normalized_weights" > "$UTILITY_WEIGHTS_FILE"
 
-    local new_quality=$(echo "$normalized_weights" | jq -r '.weights.quality')
-    local new_efficiency=$(echo "$normalized_weights" | jq -r '.weights.efficiency')
-    local new_success=$(echo "$normalized_weights" | jq -r '.weights.success')
+    # Extract weights based on structure
+    local new_quality=$(echo "$normalized_weights" | jq -r '.weights.quality // .default_weights.quality // "N/A"')
+    local new_efficiency=$(echo "$normalized_weights" | jq -r '.weights.efficiency // .default_weights.speed // "N/A"')
+    local new_success=$(echo "$normalized_weights" | jq -r '.weights.success // .default_weights.success_rate // "N/A"')
 
     log_info "[Learner] Updated utility weights: quality=$new_quality, efficiency=$new_efficiency, success=$new_success"
 
