@@ -13,6 +13,7 @@ COMMIT_RELAY_HOME="${COMMIT_RELAY_HOME:-$(cd "$SCRIPT_DIR/.." && pwd)}"
 source "$SCRIPT_DIR/lib/logging.sh"
 source "$SCRIPT_DIR/lib/coordination.sh"
 source "$SCRIPT_DIR/lib/access-check.sh"
+source "$SCRIPT_DIR/lib/goal-planner.sh"
 
 # Color definitions for output formatting
 GREEN="\033[0;32m"
@@ -199,6 +200,40 @@ check_permission "$PRINCIPAL" "worker-specs" "write" || {
     exit 1
 }
 
+# WEEK 3: Goal-Based Worker Planning
+# Plan worker strategy before spawning
+print_info "Planning worker strategy using goal-based reasoning..."
+
+# Build minimal task spec for planning
+TASK_SPEC_FOR_PLANNING=$(cat <<EOF
+{
+  "id": "$TASK_ID",
+  "priority": "$PRIORITY",
+  "description": "Worker task for $TASK_ID",
+  "scope": $SCOPE_JSON,
+  "context": $CONTEXT_JSON
+}
+EOF
+)
+
+# Generate strategy plan
+STRATEGY_PLAN=$(plan_worker_strategy "$TASK_SPEC_FOR_PLANNING" "$WORKER_TYPE" 2>/dev/null || echo '{}')
+
+# Validate strategy plan
+if validate_strategy_plan "$STRATEGY_PLAN" 2>/dev/null; then
+    SELECTED_STRATEGY=$(echo "$STRATEGY_PLAN" | jq -r '.selected_strategy // "direct"')
+    GOAL_TYPE=$(echo "$STRATEGY_PLAN" | jq -r '.goal_type // "general"')
+    COMPLEXITY=$(echo "$STRATEGY_PLAN" | jq -r '.complexity // "medium"')
+    print_success "Strategy selected: $SELECTED_STRATEGY (goal: $GOAL_TYPE, complexity: $COMPLEXITY)"
+else
+    # Fallback to direct strategy if planning fails
+    SELECTED_STRATEGY="direct"
+    GOAL_TYPE="general"
+    COMPLEXITY="medium"
+    STRATEGY_PLAN='{"selected_strategy":"direct","goal_type":"general","complexity":"medium","error":"Planning failed, using defaults"}'
+    print_warning "Goal-based planning failed, using direct strategy as fallback"
+fi
+
 # Pull latest state
 print_info "Pulling latest coordination state..."
 git pull origin main --quiet
@@ -269,6 +304,13 @@ cat > "$WORKER_SPEC_FILE" <<EOF
   "status": "pending",
   "scope": $SCOPE_JSON,
   "context": $CONTEXT_JSON,
+  "goal_based_planning": {
+    "enabled": true,
+    "strategy": "$SELECTED_STRATEGY",
+    "goal_type": "$GOAL_TYPE",
+    "complexity": "$COMPLEXITY",
+    "strategy_plan_location": "coordination/knowledge-base/strategy-plans/${WORKER_ID}-plan.json"
+  },
   "resources": {
     "token_budget": $TOKEN_BUDGET,
     "timeout_minutes": $TIMEOUT_MINUTES,
@@ -299,6 +341,16 @@ if ! jq empty "$WORKER_SPEC_FILE" 2>/dev/null; then
 fi
 
 print_success "Worker specification created"
+
+# Save strategy plan to knowledge base
+if [ "$STRATEGY_PLAN" != "{}" ]; then
+    print_info "Saving strategy plan to knowledge base..."
+    if save_strategy_plan "$STRATEGY_PLAN" "$WORKER_ID" "$TASK_ID" 2>/dev/null; then
+        print_success "Strategy plan saved"
+    else
+        print_warning "Failed to save strategy plan (worker will still function)"
+    fi
+fi
 
 # Update worker-pool.json
 print_info "Updating worker pool..."
@@ -366,6 +418,11 @@ echo -e "${BLUE}Priority:${NC}        $PRIORITY"
 if [ -n "$REPOSITORY" ]; then
     echo -e "${BLUE}Repository:${NC}      $REPOSITORY"
 fi
+echo ""
+echo -e "${YELLOW}Goal-Based Planning (Week 3):${NC}"
+echo -e "${BLUE}Strategy:${NC}        $SELECTED_STRATEGY"
+echo -e "${BLUE}Goal Type:${NC}       $GOAL_TYPE"
+echo -e "${BLUE}Complexity:${NC}      $COMPLEXITY"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo ""
 
