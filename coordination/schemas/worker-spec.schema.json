@@ -174,6 +174,81 @@
     "error": {
       "type": "string",
       "description": "Error message if worker failed"
+    },
+    "heartbeat": {
+      "type": "object",
+      "description": "Worker heartbeat and health monitoring data",
+      "properties": {
+        "last_heartbeat": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Timestamp of last heartbeat"
+        },
+        "heartbeat_sequence": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Monotonically increasing heartbeat counter"
+        },
+        "health": {
+          "type": "object",
+          "properties": {
+            "status": {
+              "type": "string",
+              "enum": ["healthy", "degraded", "unhealthy", "unresponsive"],
+              "description": "Worker health status"
+            },
+            "health_score": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 100,
+              "description": "Overall health score (0-100)"
+            },
+            "cpu_usage_percent": {
+              "type": "number",
+              "minimum": 0,
+              "description": "CPU usage percentage"
+            },
+            "memory_usage_mb": {
+              "type": "number",
+              "minimum": 0,
+              "description": "Memory usage in megabytes"
+            },
+            "tokens_used": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Tokens consumed so far"
+            },
+            "tokens_remaining": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Tokens remaining in budget"
+            },
+            "active_for_seconds": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Time worker has been active in seconds"
+            },
+            "last_activity": {
+              "type": "string",
+              "description": "Description of last worker activity"
+            }
+          },
+          "required": ["status"]
+        },
+        "warnings": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Current health warnings"
+        },
+        "missed_count": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Number of consecutive missed heartbeats"
+        }
+      },
+      "required": ["last_heartbeat", "heartbeat_sequence", "health"]
     }
   }
 }

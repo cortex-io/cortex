@@ -1,6 +1,0 @@
-Task: 
-Worker: dev-worker-72AA4077
-Type: unknown
-Status: Completed
-
-Task Completed

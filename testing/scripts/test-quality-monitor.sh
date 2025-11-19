@@ -1,5 +1,5 @@
 #!/bin/bash
-# scripts/test-quality-monitor.sh
+# testing/scripts/test-quality-monitor.sh
 # Test suite for data quality monitoring
 #
 # Tests:

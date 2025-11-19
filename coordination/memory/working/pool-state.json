@@ -1,17 +1,17 @@
 {
-  "timestamp": "2025-11-16T10:37:36-0600",
+  "timestamp": "2025-11-18T19:11:21-0600",
   "pool_metrics": {
     "queue_size": 0,
-    "active_workers": 35,
+    "active_workers": 41,
     "target_workers": 51,
     "max_capacity": 64,
     "activation_rate": 80,
-    "utilization": 54,
+    "utilization": 64,
     "efficiency": 100
   },
   "moe_analogy": {
     "total_params": "64 workers (like 7B params)",
-    "active_params": "35 workers (like 3.82B params)",
+    "active_params": "41 workers (like 4.48B params)",
     "activation_percentage": "80%"
   }
 }

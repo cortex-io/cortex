@@ -1,5 +1,5 @@
 #!/bin/bash
-# scripts/test-bypass-auditor.sh
+# testing/scripts/test-bypass-auditor.sh
 # Test suite for bypass auditing system
 #
 # Tests:

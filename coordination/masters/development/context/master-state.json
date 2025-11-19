@@ -189,6 +189,72 @@
       "worker_type": "implementation-worker",
       "spawned_at": "2025-11-12T13:41:36-0600",
       "status": "active"
+    },
+    {
+      "worker_id": "dev-worker-96A42233",
+      "worker_type": "fix-worker",
+      "spawned_at": "2025-11-17T13:15:28-0600",
+      "status": "active"
+    },
+    {
+      "worker_id": "dev-worker-0F2382D3",
+      "worker_type": "fix-worker",
+      "spawned_at": "2025-11-17T13:15:28-0600",
+      "status": "active"
+    },
+    {
+      "worker_id": "dev-worker-E3D72788",
+      "worker_type": "fix-worker",
+      "spawned_at": "2025-11-17T13:15:28-0600",
+      "status": "active"
+    },
+    {
+      "worker_id": "dev-worker-85C15DFF",
+      "worker_type": "fix-worker",
+      "spawned_at": "2025-11-17T13:15:28-0600",
+      "status": "active"
+    },
+    {
+      "worker_id": "dev-worker-67F827F3",
+      "worker_type": "implementation-worker",
+      "spawned_at": "2025-11-17T13:15:29-0600",
+      "status": "active"
+    },
+    {
+      "worker_id": "dev-worker-A8AFDF28",
+      "worker_type": "fix-worker",
+      "spawned_at": "2025-11-17T13:15:29-0600",
+      "status": "active"
+    },
+    {
+      "worker_id": "dev-worker-9F063517",
+      "worker_type": "implementation-worker",
+      "spawned_at": "2025-11-17T13:15:29-0600",
+      "status": "active"
+    },
+    {
+      "worker_id": "dev-worker-0EAB1B88",
+      "worker_type": "fix-worker",
+      "spawned_at": "2025-11-17T13:15:29-0600",
+      "status": "active"
+    },
+    {
+      "worker_id": "dev-worker-61A43ADB",
+      "worker_type": "implementation-worker",
+      "spawned_at": "2025-11-17T13:15:30-0600",
+      "status": "active"
+    },
+    {
+      "worker_id": "dev-worker-EBE57D3B",
+      "worker_type": "implementation-worker",
+      "spawned_at": "2025-11-17T13:15:30-0600",
+      "status": "active"
+    },
+    {
+      "worker_id": "dev-worker-7BA08F6F",
+      "worker_type": "fix-worker",
+      "spawned_at": "2025-11-17T13:15:30-0600",
+      "status": "active"
     }
   ],
   "completed_tasks": 4,
@@ -197,6 +263,6 @@
     "success_rate": 1.0,
     "code_quality_score": 1.0
   },
-  "last_run": "2025-11-12T13:41:36-0600",
-  "last_started": "2025-11-12T13:41:35-0600"
+  "last_run": "2025-11-17T13:16:37-0600",
+  "last_started": "2025-11-17T13:16:37-0600"
 }

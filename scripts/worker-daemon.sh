@@ -12,6 +12,7 @@ COMMIT_RELAY_HOME="${COMMIT_RELAY_HOME:-$(cd "$SCRIPT_DIR/.." && pwd)}"
 # Load libraries
 source "$SCRIPT_DIR/lib/logging.sh"
 source "$SCRIPT_DIR/lib/coordination.sh"
+source "$SCRIPT_DIR/lib/heartbeat.sh"
 
 # Daemon configuration
 DAEMON_NAME="commit-relay-worker-daemon"
@@ -183,6 +184,10 @@ while true; do
                    '.status = "running" | .execution.started_at = $started' \
                    "$spec_file" > "${spec_file}.tmp" && \
                    mv "${spec_file}.tmp" "$spec_file"
+
+                # Initialize heartbeat tracking
+                log_daemon "INFO: Initializing heartbeat for $WORKER_ID"
+                init_heartbeat "$WORKER_ID" || log_daemon "WARN: Failed to initialize heartbeat for $WORKER_ID"
 
                 # Broadcast worker started event
                 EVENT_DATA=$(jq -nc \
