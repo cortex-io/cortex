@@ -3,7 +3,7 @@
   "master_name": "Security Master",
   "initialized_at": "2025-11-03T19:09:31Z",
   "session_id": "D3E7AA88-CB9B-44A8-A1DC-8BEE4B0FA048",
-  "status": "idle",
+  "status": "active",
   "expertise": {
     "security_domains": [
       "vulnerability_scanning",
@@ -187,16 +187,52 @@
       "worker_type": "scan-worker",
       "spawned_at": "2025-11-12T13:43:30-0600",
       "status": "active"
+    },
+    {
+      "worker_id": "sec-worker-CA8C6924",
+      "worker_type": "scan-worker",
+      "spawned_at": "2025-11-19T07:45:08-0600",
+      "status": "active"
+    },
+    {
+      "worker_id": "sec-worker-8E10FBA3",
+      "worker_type": "scan-worker",
+      "spawned_at": "2025-11-19T07:45:08-0600",
+      "status": "active"
+    },
+    {
+      "worker_id": "sec-worker-9301A557",
+      "worker_type": "scan-worker",
+      "spawned_at": "2025-11-19T07:45:08-0600",
+      "status": "active"
+    },
+    {
+      "worker_id": "sec-worker-E9E9BFEB",
+      "worker_type": "scan-worker",
+      "spawned_at": "2025-11-19T07:45:09-0600",
+      "status": "active"
+    },
+    {
+      "worker_id": "sec-worker-E28B06CB",
+      "worker_type": "scan-worker",
+      "spawned_at": "2025-11-19T07:45:09-0600",
+      "status": "active"
+    },
+    {
+      "worker_id": "sec-worker-4AB29994",
+      "worker_type": "scan-worker",
+      "spawned_at": "2025-11-19T07:45:09-0600",
+      "status": "active"
     }
   ],
-  "completed_tasks": 0,
+  "completed_tasks": 1,
   "security_metrics": {
-    "vulnerabilities_found": 0,
+    "vulnerabilities_found": 1,
     "vulnerabilities_fixed": 0,
     "critical_count": 0,
     "high_count": 0,
-    "last_scan": null
+    "last_scan": "2025-11-19T13:47:00Z"
   },
-  "last_run": "2025-11-12T13:43:30-0600",
-  "last_started": "2025-11-12T13:43:30-0600"
+  "last_run": "2025-11-19T13:47:00Z",
+  "last_started": "2025-11-19T07:45:08-0600"
 }

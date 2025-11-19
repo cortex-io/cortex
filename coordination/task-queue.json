@@ -299,7 +299,7 @@
       "title": "Build ResuMate: AI-powered resume optimization web app with resume/job description upload, Claude AI analysis, and ATS/LPS compatibility scanning",
       "type": "development",
       "priority": "high",
-      "status": "assigned",
+      "status": "worker_spawned",
       "assigned_to": "development",
       "created_at": "2025-11-17T13:13:51-0600",
       "created_by": "create-task-cli",
@@ -313,7 +313,9 @@
       "assigned_at": "2025-11-17T13:15:57-0600",
       "routing_confidence": "N/A",
       "routing_strategy": "pattern-based",
-      "updated_at": "2025-11-17T13:15:57-06:00"
+      "updated_at": "2025-11-19T07:45:08-06:00",
+      "worker_id": "sec-worker-8E10FBA3",
+      "worker_type": "scan-worker"
     }
   ],
   "updated_at": "2025-11-17T13:13:51-0600"

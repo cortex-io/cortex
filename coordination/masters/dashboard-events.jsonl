@@ -1698,3 +1698,13 @@
     "strategy": "single_expert_low_confidence"
   }
 }
+{
+  "timestamp": "2025-11-19T07:39:50-0600",
+  "type": "moe_routing_decision",
+  "data": {
+    "task_id": "cara-security-1763559589",
+    "expert": "security",
+    "confidence": 0.95,
+    "strategy": "single_expert"
+  }
+}
