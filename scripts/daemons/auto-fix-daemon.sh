@@ -300,7 +300,7 @@ while true; do
     log_daemon "INFO: Starting auto-fix cycle #$CYCLE_COUNT"
 
     # Check if auto-fix is enabled
-    local auto_fix_enabled=$(jq -r '.global_settings.auto_fix_enabled' "$FIX_POLICY_FILE")
+    auto_fix_enabled=$(jq -r '.global_settings.auto_fix_enabled' "$FIX_POLICY_FILE")
 
     if [ "$auto_fix_enabled" != "true" ]; then
         log_daemon "WARN: Auto-fix is disabled, skipping cycle"
