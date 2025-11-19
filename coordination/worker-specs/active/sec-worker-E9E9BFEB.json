@@ -49,16 +49,17 @@
     "started_at": "2025-11-19T08:55:47-0600"
   },
   "heartbeat": {
-    "last_heartbeat": "2025-11-19T08:55:47-0600",
-    "heartbeat_sequence": 0,
+    "last_heartbeat": "2025-11-19T08:59:50-0600",
+    "heartbeat_sequence": 9,
     "health": {
       "status": "healthy",
-      "cpu_usage_percent": 0,
-      "memory_usage_mb": 0,
+      "cpu_usage_percent": 0.3,
+      "memory_usage_mb": 2.10,
       "tokens_used": 0,
       "tokens_remaining": 12000,
-      "active_for_seconds": 0,
-      "last_activity": "initialized"
+      "active_for_seconds": 243,
+      "last_activity": "[2025-11-19T14:55:51Z] LAUNCHER: ============================================",
+      "health_score": 100
     },
     "warnings": [],
     "missed_count": 0

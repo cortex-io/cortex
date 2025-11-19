@@ -37,21 +37,3 @@
 {"task_id":"task-preserve-test-1763499050","timestamp":"2025-11-18T14:50:50-0600","routing_strategy":"mixture_of_experts","decision":{"primary_expert":"development","primary_confidence":0.25,"strategy":"single_expert_low_confidence","parallel_experts":[],"scores":{"development":0.25,"security":0,"inventory":0}}}
 {"task_id":"task-log-test-1763499050","timestamp":"2025-11-18T14:50:50-0600","routing_strategy":"mixture_of_experts","decision":{"primary_expert":"development","primary_confidence":0.25,"strategy":"single_expert_low_confidence","parallel_experts":[],"scores":{"development":0.25,"security":0,"inventory":0}}}
 {"task_id":"cara-security-1763559589","timestamp":"2025-11-19T07:39:49-0600","routing_strategy":"mixture_of_experts","decision":{"primary_expert":"security","primary_confidence":0.95,"strategy":"single_expert","parallel_experts":[],"scores":{"development":0.45,"security":0.95,"inventory":0}}}
-{
-  "task_type": "null",
-  "complexity": "null",
-  "recommended_worker_type": "feature-implementer",
-  "confidence": 92.75,
-  "evidence_count": 4,
-  "learned_at": "2025-11-19T16:30:08Z",
-  "source": "learner"
-}
-{
-  "task_type": "null",
-  "complexity": "null",
-  "recommended_worker_type": "feature-implementer",
-  "confidence": 92.75,
-  "evidence_count": 4,
-  "learned_at": "2025-11-19T16:31:16Z",
-  "source": "learner"
-}
