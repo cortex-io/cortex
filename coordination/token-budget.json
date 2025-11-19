@@ -1,4 +1,13 @@
 {
   "total_budget": 500000,
-  "total_used": 5000
+  "total_used": -263000,
+  "updated_at": "2025-11-19T09:28:08-0600",
+  "reclamation_log": [
+    {
+      "timestamp": "2025-11-19T09:28:08-0600",
+      "tokens_reclaimed": 268000,
+      "reason": "zombie_worker_cleanup",
+      "worker_count": 30
+    }
+  ]
 }
