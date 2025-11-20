@@ -1,15 +1,16 @@
 {
   "total_budget": 500000,
-  "total_used": -7000,
-  "available": 495000,
-  "updated_at": "2025-11-19T09:28:08-0600",
+  "allocated": 0,
+  "in_use": 0,
+  "available": 500000,
+  "updated_at": "2025-11-20T15:00:00-0600",
+  "allocations": {},
   "reclamation_log": [
     {
-      "timestamp": "2025-11-19T09:28:08-0600",
-      "tokens_reclaimed": 268000,
-      "reason": "zombie_worker_cleanup",
-      "worker_count": 30,
-      "note": "Reset after zombie cleanup - was showing -263000 due to over-reclamation"
+      "timestamp": "2025-11-20T15:00:00-0600",
+      "tokens_reclaimed": 7000,
+      "reason": "system_reset",
+      "note": "Reset to clean state - fixed negative balance issue"
     }
   ]
 }
