@@ -99,10 +99,17 @@
     "commit-relay-system": "system",
     "default-user": "user",
     "coordinator-master": "system",
+    "coordinator": "system",
     "development-master": "system",
+    "development": "system",
     "security-master": "system",
+    "security": "system",
     "inventory-master": "system",
-    "cicd-master": "system"
+    "inventory": "system",
+    "cicd-master": "system",
+    "cicd": "system",
+    "worker-restart-daemon": "system",
+    "daemon-supervisor": "system"
   },
   "updated_at": "2025-11-19T14:02:21.389Z"
 }
