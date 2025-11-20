@@ -299,14 +299,14 @@ while true; do
                 continue
             fi
 
-            local status=$(jq -r '.status' "$queue_file" 2>/dev/null || echo "")
+            status=$(jq -r '.status' "$queue_file" 2>/dev/null || echo "")
 
             # Only process pending entries
             if [ "$status" != "pending" ]; then
                 continue
             fi
 
-            local scheduled_at=$(jq -r '.scheduled_at' "$queue_file" 2>/dev/null || echo "")
+            scheduled_at=$(jq -r '.scheduled_at' "$queue_file" 2>/dev/null || echo "")
 
             if [ -z "$scheduled_at" ]; then
                 log_daemon "WARN: Invalid queue entry (no scheduled_at): $(basename "$queue_file")"
