@@ -3687,6 +3687,190 @@ app.get('/api/moe/learning', async (req, res) => {
 });
 
 /**
+ * GET /api/learning-monitor/status
+ * Get learning task monitor daemon status and active tasks
+ */
+app.get('/api/learning-monitor/status', async (req, res) => {
+  try {
+    const fsSync = require('fs');
+    const { execSync } = require('child_process');
+
+    // Check if daemon is running
+    const pidFile = path.join(COMMIT_RELAY_HOME, 'coordination', 'pids', 'learning-monitor.pid');
+    let isRunning = false;
+    let pid = null;
+
+    if (fsSync.existsSync(pidFile)) {
+      pid = fsSync.readFileSync(pidFile, 'utf-8').trim();
+      try {
+        process.kill(parseInt(pid), 0);
+        isRunning = true;
+      } catch (e) {
+        isRunning = false;
+      }
+    }
+
+    // Get metrics
+    const metricsFile = path.join(COMMIT_RELAY_HOME, 'coordination', 'metrics', 'learning-monitor-metrics.json');
+    let metrics = {
+      total_checks: 0,
+      total_completed: 0,
+      total_killed: 0
+    };
+
+    if (fsSync.existsSync(metricsFile)) {
+      metrics = JSON.parse(fsSync.readFileSync(metricsFile, 'utf-8'));
+    }
+
+    // Find active learning tasks
+    const activeTasks = [];
+    const handsoffsPattern = path.join(COMMIT_RELAY_HOME, 'coordination', 'masters', '*', 'handoffs', 'task-moe-learning-*.json');
+
+    try {
+      const handoffFiles = execSync(`ls ${handsoffsPattern} 2>/dev/null || true`, { encoding: 'utf-8' }).trim().split('\n').filter(f => f);
+
+      for (const file of handoffFiles) {
+        if (fsSync.existsSync(file)) {
+          const task = JSON.parse(fsSync.readFileSync(file, 'utf-8'));
+          const taskId = task.task_id || task.handoff_id;
+
+          // Count deliverables
+          const delivDir = path.join(COMMIT_RELAY_HOME, 'coordination', 'moe-learning', 'deliverables', taskId);
+          let deliverableCount = 0;
+          if (fsSync.existsSync(delivDir)) {
+            deliverableCount = fsSync.readdirSync(delivDir).length;
+          }
+
+          activeTasks.push({
+            id: taskId,
+            status: task.status,
+            created_at: task.created_at,
+            assigned_to: task.assigned_to,
+            deliverables: deliverableCount
+          });
+        }
+      }
+    } catch (e) {
+      // No handoffs found
+    }
+
+    res.json({
+      daemon: {
+        running: isRunning,
+        pid: isRunning ? parseInt(pid) : null
+      },
+      metrics,
+      active_tasks: activeTasks,
+      config: {
+        check_interval_seconds: parseInt(process.env.LEARNING_MONITOR_INTERVAL || '30'),
+        stall_threshold_minutes: parseInt(process.env.LEARNING_STALL_THRESHOLD || '15')
+      }
+    });
+  } catch (error) {
+    console.error('Error getting learning monitor status:', error);
+    res.status(500).json({ error: 'Failed to get learning monitor status' });
+  }
+});
+
+/**
+ * GET /api/learning-monitor/events
+ * Get recent learning monitor events
+ */
+app.get('/api/learning-monitor/events', async (req, res) => {
+  try {
+    const fsSync = require('fs');
+    const eventsFile = path.join(COMMIT_RELAY_HOME, 'coordination', 'events', 'learning-events.jsonl');
+    const limit = parseInt(req.query.limit) || 50;
+
+    if (!fsSync.existsSync(eventsFile)) {
+      return res.json({ events: [] });
+    }
+
+    const content = fsSync.readFileSync(eventsFile, 'utf-8');
+    const lines = content.trim().split('\n').filter(l => l);
+    const events = lines.slice(-limit).map(line => {
+      try {
+        return JSON.parse(line);
+      } catch (e) {
+        return null;
+      }
+    }).filter(e => e).reverse();
+
+    res.json({ events });
+  } catch (error) {
+    console.error('Error getting learning events:', error);
+    res.status(500).json({ error: 'Failed to get learning events' });
+  }
+});
+
+/**
+ * POST /api/learning-monitor/control
+ * Start or stop the learning monitor daemon
+ */
+app.post('/api/learning-monitor/control', async (req, res) => {
+  try {
+    const { action } = req.body;
+    const { execSync } = require('child_process');
+    const fsSync = require('fs');
+
+    const daemonScript = path.join(COMMIT_RELAY_HOME, 'scripts', 'learning-task-monitor-daemon.sh');
+    const pidFile = path.join(COMMIT_RELAY_HOME, 'coordination', 'pids', 'learning-monitor.pid');
+    const logFile = path.join(COMMIT_RELAY_HOME, 'agents', 'logs', 'system', 'learning-task-monitor.log');
+
+    if (action === 'start') {
+      // Check if already running
+      if (fsSync.existsSync(pidFile)) {
+        const pid = fsSync.readFileSync(pidFile, 'utf-8').trim();
+        try {
+          process.kill(parseInt(pid), 0);
+          return res.json({ success: false, message: 'Daemon already running', pid: parseInt(pid) });
+        } catch (e) {
+          // PID file exists but process not running, clean up
+          fsSync.unlinkSync(pidFile);
+        }
+      }
+
+      // Start daemon
+      execSync(`nohup ${daemonScript} >> ${logFile} 2>&1 &`, {
+        shell: '/bin/bash',
+        cwd: COMMIT_RELAY_HOME
+      });
+
+      // Wait for PID file
+      await new Promise(resolve => setTimeout(resolve, 1000));
+
+      let pid = null;
+      if (fsSync.existsSync(pidFile)) {
+        pid = parseInt(fsSync.readFileSync(pidFile, 'utf-8').trim());
+      }
+
+      res.json({ success: true, message: 'Daemon started', pid });
+
+    } else if (action === 'stop') {
+      if (!fsSync.existsSync(pidFile)) {
+        return res.json({ success: false, message: 'Daemon not running' });
+      }
+
+      const pid = fsSync.readFileSync(pidFile, 'utf-8').trim();
+      try {
+        process.kill(parseInt(pid), 'SIGTERM');
+        fsSync.unlinkSync(pidFile);
+        res.json({ success: true, message: 'Daemon stopped', pid: parseInt(pid) });
+      } catch (e) {
+        fsSync.unlinkSync(pidFile);
+        res.json({ success: true, message: 'Daemon was not running, cleaned up PID file' });
+      }
+
+    } else {
+      res.status(400).json({ error: 'Invalid action. Use "start" or "stop"' });
+    }
+  } catch (error) {
+    console.error('Error controlling learning monitor:', error);
+    res.status(500).json({ error: 'Failed to control learning monitor' });
+  }
+});
+
+/**
  * GET /api/moe/accuracy
  * Calculate routing accuracy from routing decisions
  */
