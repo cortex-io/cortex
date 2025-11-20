@@ -4534,6 +4534,231 @@ app.post('/api/users/:id/login', async (req, res) => {
 });
 
 // ============================================================================
+// Phase 7: Enhanced Dashboard & Observability APIs
+// ============================================================================
+
+// Historical Analytics
+app.get('/api/dashboard/analytics/summary', async (req, res) => {
+  try {
+    const { execSync } = require('child_process');
+    const result = execSync(`${COMMIT_RELAY_HOME}/scripts/dashboard-analytics summary`, {
+      encoding: 'utf-8',
+      timeout: 10000
+    });
+    res.json(JSON.parse(result));
+  } catch (error) {
+    res.json({
+      worker_success: [],
+      throughput: { tasks_completed: 0, workers_spawned: 0 },
+      degradations: [],
+      patterns_identified: 0
+    });
+  }
+});
+
+app.get('/api/dashboard/analytics/trends', async (req, res) => {
+  try {
+    const days = req.query.days || 7;
+    const { execSync } = require('child_process');
+    const result = execSync(`${COMMIT_RELAY_HOME}/scripts/dashboard-analytics trends ${days}`, {
+      encoding: 'utf-8',
+      timeout: 10000
+    });
+    res.json(JSON.parse(result));
+  } catch (error) {
+    res.json({ error: 'Failed to get trends', worker_success: [], token_trends: [] });
+  }
+});
+
+// Visualizations
+app.get('/api/dashboard/visualizations/all', async (req, res) => {
+  try {
+    const hours = req.query.hours || 24;
+    const { execSync } = require('child_process');
+    const result = execSync(`${COMMIT_RELAY_HOME}/scripts/dashboard-viz all ${hours}`, {
+      encoding: 'utf-8',
+      timeout: 10000
+    });
+    res.json(JSON.parse(result));
+  } catch (error) {
+    res.json({
+      gantt: [],
+      heatmap: [],
+      health: { overall_status: 'unknown' },
+      distribution: []
+    });
+  }
+});
+
+app.get('/api/dashboard/visualizations/health', async (req, res) => {
+  try {
+    const { execSync } = require('child_process');
+    const result = execSync(`${COMMIT_RELAY_HOME}/scripts/dashboard-viz health`, {
+      encoding: 'utf-8',
+      timeout: 10000
+    });
+    res.json(JSON.parse(result));
+  } catch (error) {
+    res.json({
+      overall_status: 'unknown',
+      metrics: { active_workers: 0, success_rate: 0 }
+    });
+  }
+});
+
+// Alerts
+app.get('/api/dashboard/alerts/active', async (req, res) => {
+  try {
+    const { execSync } = require('child_process');
+    const result = execSync(`${COMMIT_RELAY_HOME}/scripts/dashboard-alerts list`, {
+      encoding: 'utf-8',
+      timeout: 10000
+    });
+    res.json(JSON.parse(result));
+  } catch (error) {
+    res.json([]);
+  }
+});
+
+app.get('/api/dashboard/alerts/stats', async (req, res) => {
+  try {
+    const { execSync } = require('child_process');
+    const result = execSync(`${COMMIT_RELAY_HOME}/scripts/dashboard-alerts stats`, {
+      encoding: 'utf-8',
+      timeout: 10000
+    });
+    res.json(JSON.parse(result));
+  } catch (error) {
+    res.json({ active_alerts: 0, by_severity: {} });
+  }
+});
+
+app.post('/api/dashboard/alerts/check', async (req, res) => {
+  try {
+    const { execSync } = require('child_process');
+    const result = execSync(`${COMMIT_RELAY_HOME}/scripts/dashboard-alerts check`, {
+      encoding: 'utf-8',
+      timeout: 10000
+    });
+    res.json(JSON.parse(result));
+  } catch (error) {
+    res.json([]);
+  }
+});
+
+// ============================================================================
+// Phase 8: Advanced Optimization APIs
+// ============================================================================
+
+// Scheduler
+app.get('/api/optimizer/scheduler/stats', async (req, res) => {
+  try {
+    const { execSync } = require('child_process');
+    const result = execSync(`${COMMIT_RELAY_HOME}/scripts/optimizer-scheduler stats`, {
+      encoding: 'utf-8',
+      timeout: 10000
+    });
+    res.json(JSON.parse(result));
+  } catch (error) {
+    res.json({ queued: 0, assigned: 0, completed: 0 });
+  }
+});
+
+app.get('/api/optimizer/scheduler/balance', async (req, res) => {
+  try {
+    const { execSync } = require('child_process');
+    const result = execSync(`${COMMIT_RELAY_HOME}/scripts/optimizer-scheduler balance`, {
+      encoding: 'utf-8',
+      timeout: 10000
+    });
+    res.json(JSON.parse(result));
+  } catch (error) {
+    res.json({ load_distribution: [], recommended_master: 'coordinator' });
+  }
+});
+
+// Token Optimizer
+app.get('/api/optimizer/tokens/stats', async (req, res) => {
+  try {
+    const { execSync } = require('child_process');
+    const result = execSync(`${COMMIT_RELAY_HOME}/scripts/optimizer-tokens stats`, {
+      encoding: 'utf-8',
+      timeout: 10000
+    });
+    res.json(JSON.parse(result));
+  } catch (error) {
+    res.json({ allocation: {}, efficiency: {}, forecast: {} });
+  }
+});
+
+app.get('/api/optimizer/tokens/forecast', async (req, res) => {
+  try {
+    const { execSync } = require('child_process');
+    const result = execSync(`${COMMIT_RELAY_HOME}/scripts/optimizer-tokens forecast`, {
+      encoding: 'utf-8',
+      timeout: 10000
+    });
+    res.json(JSON.parse(result));
+  } catch (error) {
+    res.json({ exhaustion_risk: 'unknown', hours_until_exhaustion: 0 });
+  }
+});
+
+// Worker Pool
+app.get('/api/optimizer/pool/stats', async (req, res) => {
+  try {
+    const { execSync } = require('child_process');
+    const result = execSync(`${COMMIT_RELAY_HOME}/scripts/optimizer-pool stats`, {
+      encoding: 'utf-8',
+      timeout: 10000
+    });
+    res.json(JSON.parse(result));
+  } catch (error) {
+    res.json({ status: { warm: 0, active: 0, cold: 0 }, efficiency: {} });
+  }
+});
+
+// Profiler
+app.get('/api/optimizer/profile/stats', async (req, res) => {
+  try {
+    const { execSync } = require('child_process');
+    const result = execSync(`${COMMIT_RELAY_HOME}/scripts/optimizer-profile stats`, {
+      encoding: 'utf-8',
+      timeout: 10000
+    });
+    res.json(JSON.parse(result));
+  } catch (error) {
+    res.json({ benchmark_count: 0, bottlenecks: [], recommendations: 0 });
+  }
+});
+
+app.get('/api/optimizer/profile/bottlenecks', async (req, res) => {
+  try {
+    const { execSync } = require('child_process');
+    const result = execSync(`${COMMIT_RELAY_HOME}/scripts/optimizer-profile bottlenecks`, {
+      encoding: 'utf-8',
+      timeout: 10000
+    });
+    res.json(JSON.parse(result));
+  } catch (error) {
+    res.json([]);
+  }
+});
+
+app.get('/api/optimizer/profile/recommendations', async (req, res) => {
+  try {
+    const { execSync } = require('child_process');
+    const result = execSync(`${COMMIT_RELAY_HOME}/scripts/optimizer-profile tune`, {
+      encoding: 'utf-8',
+      timeout: 10000
+    });
+    res.json(JSON.parse(result));
+  } catch (error) {
+    res.json({ recommendations: [] });
+  }
+});
+
+// ============================================================================
 // WebSocket Server for Real-time Updates
 // ============================================================================
 
