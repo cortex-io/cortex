@@ -1,9 +1,9 @@
 {
   "pm_daemon": {
     "pid": 69338,
-    "last_loop": "2025-11-19T10:34:02-0600",
-    "loops_completed": 34,
-    "uptime_seconds": 5959,
+    "last_loop": "2025-11-20T08:53:00-0600",
+    "loops_completed": 57,
+    "uptime_seconds": 86297,
     "started_at": "2025-11-19T08:54:44-0600",
     "note": "Reset to clean state after power outage"
   },
@@ -16,9 +16,9 @@
       "started_at": "2025-11-16T10:22:19-0600",
       "last_checkin": null,
       "checkin_count": 0,
-      "health_state": "healthy",
+      "health_state": "stalled",
       "progress_pct": 0,
-      "warnings_sent": 0,
+      "warnings_sent": 2,
       "interventions": [],
       "legacy_worker": false
     },
@@ -637,16 +637,72 @@
       "warnings_sent": 0,
       "interventions": [],
       "legacy_worker": false
+    },
+    "worker-analysis-035": {
+      "worker_id": "worker-analysis-035",
+      "task_id": "task-moe-learning-1763643080848",
+      "worker_type": "analysis-worker",
+      "registered_at": "2025-11-20T08:34:58-0600",
+      "started_at": "2025-11-20T06:54:31-0600",
+      "last_checkin": null,
+      "checkin_count": 0,
+      "health_state": "stalled",
+      "progress_pct": 0,
+      "warnings_sent": 2,
+      "interventions": [],
+      "legacy_worker": false
+    },
+    "worker-scan-002": {
+      "worker_id": "worker-scan-002",
+      "task_id": "task-64915432",
+      "worker_type": "scan-worker",
+      "registered_at": "2025-11-20T08:34:58-0600",
+      "started_at": "2025-11-20T07:32:25-0600",
+      "last_checkin": null,
+      "checkin_count": 0,
+      "health_state": "stalled",
+      "progress_pct": 0,
+      "warnings_sent": 2,
+      "interventions": [],
+      "legacy_worker": false
+    },
+    "worker-scan-035": {
+      "worker_id": "worker-scan-035",
+      "task_id": "moe-test-ddqd-v5-1763247177-d2866cf8",
+      "worker_type": "scan-worker",
+      "registered_at": "2025-11-20T08:40:59-0600",
+      "started_at": "2025-11-20T08:39:09-0600",
+      "last_checkin": null,
+      "checkin_count": 0,
+      "health_state": "healthy",
+      "progress_pct": 0,
+      "warnings_sent": 0,
+      "interventions": [],
+      "legacy_worker": false
+    },
+    "worker-scan-036": {
+      "worker_id": "worker-scan-036",
+      "task_id": "task-64915432",
+      "worker_type": "scan-worker",
+      "registered_at": "2025-11-20T08:40:59-0600",
+      "started_at": "2025-11-20T08:40:44-0600",
+      "last_checkin": null,
+      "checkin_count": 0,
+      "health_state": "healthy",
+      "progress_pct": 0,
+      "warnings_sent": 0,
+      "interventions": [],
+      "legacy_worker": false
     }
   },
   "metrics": {
-    "active_workers": 1,
-    "completed_workers": 17,
-    "failed_workers": 84,
-    "total_workers": 137,
+    "active_workers": 0,
+    "completed_workers": 18,
+    "failed_workers": 87,
+    "total_workers": 145,
     "success_rate": 12.4,
-    "completed_today": 1,
-    "failed_today": 30,
-    "success_rate_today": 3.2
+    "completed_today": 2,
+    "failed_today": 34,
+    "success_rate_today": 5.5
   }
 }

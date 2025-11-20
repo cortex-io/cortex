@@ -3,7 +3,7 @@
   "task_id": "task-moe-learning-1763235765769",
   "assigned_to": "development",
   "created_at": "2025-11-15T13:42:50-0600",
-  "status": "processed",
+  "status": "killed",
   "task": {
     "id": "task-moe-learning-1763235765769",
     "title": "MoE Learning System: Master commit-relay Architecture and Operations",
@@ -356,5 +356,7 @@
     }
   },
   "processed_at": "2025-11-16T10:33:16-0600",
-  "worker_id": "worker-worker-1763310795-2796"
+  "worker_id": "worker-worker-1763310795-2796",
+  "killed_at": "2025-11-20T14:39:21Z",
+  "kill_reason": "No activity for 6896 minutes (threshold: 15m)"
 }

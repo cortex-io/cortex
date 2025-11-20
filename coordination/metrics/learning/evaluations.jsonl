@@ -1,0 +1,30 @@
+{
+  "timestamp": "2025-11-19T16:21:00Z",
+  "metric": "worker_evaluation",
+  "score": 92,
+  "outcome": "success_high_quality"
+}
+{
+  "timestamp": "2025-11-19T16:22:38Z",
+  "metric": "worker_evaluation",
+  "score": 98,
+  "outcome": "success_high_quality"
+}
+{
+  "timestamp": "2025-11-19T16:22:52Z",
+  "metric": "worker_evaluation",
+  "score": 17,
+  "outcome": "failure"
+}
+{
+  "timestamp": "2025-11-19T16:22:53Z",
+  "metric": "worker_evaluation",
+  "score": 92,
+  "outcome": "success_high_quality"
+}
+{
+  "timestamp": "2025-11-19T16:22:53Z",
+  "metric": "worker_evaluation",
+  "score": 89,
+  "outcome": "success_high_quality"
+}

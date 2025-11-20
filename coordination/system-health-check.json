@@ -1,7 +1,7 @@
 {
-    "timestamp": "2025-11-19T14:55:49Z",
-    "worker_id": "sec-worker-E9E9BFEB",
-    "task_id": "moe-test-ddqd-v5-1763247177-0adcd7ae",
+    "timestamp": "2025-11-20T14:40:44Z",
+    "worker_id": "worker-scan-036",
+    "task_id": "task-64915432",
     "services_checked": true,
     "launcher_version": "v2.1-fixed"
 }
