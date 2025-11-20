@@ -1,0 +1,104 @@
+#!/usr/bin/env bash
+#
+# Dashboard Analytics CLI
+# Part of Phase 7.2: Historical Analytics
+#
+
+set -euo pipefail
+
+readonly SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "$SCRIPT_DIR/lib/dashboard/historical-analytics.sh"
+
+main() {
+    local command="${1:-help}"
+
+    case "$command" in
+        workers)
+            local days="${2:-7}"
+            analyze_worker_success "$days" | jq .
+            ;;
+
+        tokens)
+            local days="${2:-7}"
+            analyze_token_trends "$days" | jq .
+            ;;
+
+        throughput)
+            local hours="${2:-24}"
+            analyze_throughput "$hours" | jq .
+            ;;
+
+        degradation)
+            local threshold="${2:-20}"
+            detect_degradation "$threshold" | jq .
+            ;;
+
+        patterns)
+            local days="${2:-7}"
+            identify_patterns "$days" | jq .
+            ;;
+
+        trends)
+            local days="${2:-7}"
+            generate_trend_report "$days" | jq .
+            ;;
+
+        snapshots)
+            local count="${2:-10}"
+            local type="${3:-hourly}"
+            get_snapshots "$count" "$type" | jq .
+            ;;
+
+        compare)
+            local p1_start="${2:?Period 1 start required}"
+            local p1_end="${3:?Period 1 end required}"
+            local p2_start="${4:?Period 2 start required}"
+            local p2_end="${5:?Period 2 end required}"
+            compare_periods "$p1_start" "$p1_end" "$p2_start" "$p2_end" | jq .
+            ;;
+
+        summary)
+            get_analytics_summary | jq .
+            ;;
+
+        help|--help|-h)
+            cat <<EOF
+Dashboard Analytics CLI - Historical analysis and trends
+
+Usage: $0 <command> [options]
+
+Commands:
+  workers [days]                Analyze worker success rates
+  tokens [days]                 Analyze token usage trends
+  throughput [hours]            Analyze system throughput
+  degradation [threshold]       Detect performance degradation
+  patterns [days]               Identify usage patterns
+  trends [days]                 Generate trend report
+  snapshots [count] [type]      Get historical snapshots
+  compare <p1-start> <p1-end> <p2-start> <p2-end>
+                                Compare two periods
+  summary                       Get analytics summary
+
+Examples:
+  $0 workers 7
+  $0 tokens 30
+  $0 throughput 24
+  $0 degradation 15
+  $0 patterns 14
+  $0 trends 7
+  $0 snapshots 20 daily
+  $0 summary
+
+EOF
+            ;;
+
+        *)
+            echo "Unknown command: $command"
+            exit 1
+            ;;
+    esac
+}
+
+if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
+    main "$@"
+fi
