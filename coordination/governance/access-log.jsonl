@@ -5177,3 +5177,6 @@
 {"event_id":"af355805-612b-478d-91a6-a40d9b16f036","timestamp":"2025-11-19T14:57:34.267Z","actor":"security-master","permission":"governance:read","namespace":"governance","permitted":true,"reason":null}
 {"event_id":"8e86db52-b699-46e0-a32d-9173dc68a0ea","timestamp":"2025-11-19T14:57:34.331Z","actor":"default-user","permission":"dashboard:read","namespace":"dashboard","permitted":true,"reason":null}
 {"event_id":"b1ca52b2-23d6-4784-8bd4-2e7e14ad2700","timestamp":"2025-11-19T14:57:50.503Z","actor":"unknown-actor","permission":"tasks:read","namespace":null,"permitted":false,"reason":"no_role_assigned"}
+{"event_id":"c0bc43d8-9eab-4246-82d6-5fce1a15b448","timestamp":"2025-11-20T14:38:59.497Z","actor":"security","permission":"worker-specs:write","namespace":"worker-specs","permitted":true,"reason":null}
+{"event_id":"f3c673e5-d5f3-4a1f-a918-1c2e9032934f","timestamp":"2025-11-20T14:40:36.548Z","actor":"security","permission":"worker-specs:write","namespace":"worker-specs","permitted":true,"reason":null}
+{"event_id":"bec3c6b6-32fc-4a1b-9a2f-e80cc4e65289","timestamp":"2025-11-20T14:50:12.377Z","actor":"null","permission":"worker-specs:write","namespace":"worker-specs","permitted":false,"reason":"no_role_assigned"}

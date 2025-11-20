@@ -56,3 +56,18 @@
 
 
 
+
+{"event_type":"zombie_process_terminated","worker_id":"sec-worker-E9E9BFEB","timestamp":"2025-11-20T08:39:00-0600","data":{}}
+
+{"event_type":"zombie_process_terminated","worker_id":"worker-analysis-035","timestamp":"2025-11-20T08:39:00-0600","data":{}}
+{"event_type":"zombie_cleanup_completed","worker_id":"sec-worker-E9E9BFEB","timestamp":"2025-11-20T08:39:00-0600","data":{}}
+
+{"event_type":"zombie_cleanup_completed","worker_id":"worker-analysis-035","timestamp":"2025-11-20T08:39:00-0600","data":{}}
+{"event_type":"zombie_process_terminated","worker_id":"worker-implementation-001","timestamp":"2025-11-20T08:39:00-0600","data":{}}
+
+{"event_type":"zombie_process_terminated","worker_id":"worker-scan-002","timestamp":"2025-11-20T08:39:00-0600","data":{}}
+{"event_type":"zombie_cleanup_completed","worker_id":"worker-implementation-001","timestamp":"2025-11-20T08:39:00-0600","data":{}}
+{"event_type":"zombie_cleanup_completed","worker_id":"worker-scan-002","timestamp":"2025-11-20T08:39:00-0600","data":{}}
+
+{"event_type":"zombie_process_terminated","worker_id":"worker-scan-036","timestamp":"2025-11-20T08:49:32-0600","data":{}}
+{"event_type":"zombie_cleanup_completed","worker_id":"worker-scan-036","timestamp":"2025-11-20T08:49:33-0600","data":{}}
