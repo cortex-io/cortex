@@ -159,6 +159,38 @@ TASK_CONTEXT_PLACEHOLDER
 4. **Logging**: Write detailed logs to your worker directory
 5. **Completion**: Update final status and create completion report
 
+## Heartbeat & Progress Reporting (CRITICAL)
+
+You MUST send periodic heartbeats to prevent being marked as a zombie worker:
+
+1. **At task start**: Report that you've begun work
+2. **Every 2-3 minutes**: Send a progress update showing what you're working on
+3. **At major milestones**: Report completion of significant steps
+4. **At task end**: Report final completion
+
+### How to Send Heartbeats
+
+Use one of these methods to report progress:
+
+**Option 1 - Write to heartbeat file (Preferred):**
+```bash
+echo '{"timestamp": "'$(date -u +%Y-%m-%dT%H:%M:%SZ)'", "status": "working", "progress": "Analyzing codebase structure", "worker_id": "WORKER_ID_PLACEHOLDER"}' > /Users/ryandahlberg/Projects/commit-relay/agents/workers/WORKER_ID_PLACEHOLDER/heartbeat.json
+```
+
+**Option 2 - Use dashboard API:**
+```bash
+curl -s -X POST http://localhost:3000/api/workers/WORKER_ID_PLACEHOLDER/heartbeat \
+  -H "Content-Type: application/json" \
+  -d '{"status": "working", "progress": "Current activity description"}'
+```
+
+### Progress Messages Should Include:
+- What step you're currently on (e.g., "Step 2/5: Implementing feature")
+- Brief description of current activity
+- Percentage complete if applicable
+
+**IMPORTANT**: Workers that don't send heartbeats for 15+ minutes will be automatically killed as zombies!
+
 ## Available Tools and Resources
 
 - Full access to the commit-relay repository
