@@ -3714,8 +3714,9 @@ function dashboard() {
                     category: 'Events & Logs',
                     method: 'GET',
                     path: '/api/logs/stream',
-                    description: 'Stream logs in real-time (SSE)',
-                    requiresParams: false
+                    description: 'Stream logs in real-time (SSE) - streaming endpoint',
+                    requiresParams: true,  // Mark as requiring params to skip in bulk testing (SSE never completes)
+                    isStreaming: true
                 },
                 {
                     category: 'Events & Logs',
@@ -4052,10 +4053,15 @@ function dashboard() {
                     }
                 }
 
+                // Create abort controller for timeout
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+
                 // Build request options
                 const options = {
                     method: endpoint.method,
-                    headers: { 'Content-Type': 'application/json' }
+                    headers: { 'Content-Type': 'application/json' },
+                    signal: controller.signal
                 };
 
                 // Add body for POST/DELETE
@@ -4065,6 +4071,7 @@ function dashboard() {
 
                 // Make request
                 const response = await fetch(url, options);
+                clearTimeout(timeoutId);
                 const responseTime = Date.now() - startTime;
 
                 let responseData;
@@ -4094,10 +4101,16 @@ function dashboard() {
             } catch (error) {
                 const responseTime = Date.now() - startTime;
 
+                // Provide better error message for timeouts
+                let errorMessage = error.message;
+                if (error.name === 'AbortError') {
+                    errorMessage = 'Request timed out after 10 seconds';
+                }
+
                 this.apiExplorer.testResults[endpointKey] = {
                     status: 'error',
                     response: null,
-                    error: error.message,
+                    error: errorMessage,
                     responseTime,
                     timestamp: new Date().toISOString()
                 };
