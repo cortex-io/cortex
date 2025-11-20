@@ -3436,6 +3436,569 @@ function dashboard() {
                     description: 'Restart dashboard server',
                     requiresParams: true,
                     bodyParams: [{ name: 'action', description: 'Action to perform', example: 'restart', enum: ['restart'] }]
+                },
+
+                // Governance
+                {
+                    category: 'Governance',
+                    method: 'GET',
+                    path: '/api/governance/dashboard',
+                    description: 'Get governance dashboard overview',
+                    requiresParams: false
+                },
+                {
+                    category: 'Governance',
+                    method: 'GET',
+                    path: '/api/governance/compliance-report',
+                    description: 'Get full compliance report',
+                    requiresParams: false
+                },
+                {
+                    category: 'Governance',
+                    method: 'GET',
+                    path: '/api/governance/compliance-check/:framework',
+                    description: 'Check compliance for specific framework',
+                    requiresParams: true,
+                    pathParams: [{ name: 'framework', description: 'Framework name', example: 'SOC2' }]
+                },
+                {
+                    category: 'Governance',
+                    method: 'GET',
+                    path: '/api/governance/metrics',
+                    description: 'Get governance metrics',
+                    requiresParams: false
+                },
+                {
+                    category: 'Governance',
+                    method: 'GET',
+                    path: '/api/governance/trends',
+                    description: 'Get governance trends over time',
+                    requiresParams: false
+                },
+
+                // Activity & Events
+                {
+                    category: 'Events & Logs',
+                    method: 'GET',
+                    path: '/api/activity-feed',
+                    description: 'Get activity feed with filtering',
+                    requiresParams: false,
+                    queryParams: [
+                        { name: 'type', description: 'Event type filter', optional: true },
+                        { name: 'limit', description: 'Max events to return', optional: true }
+                    ]
+                },
+                {
+                    category: 'Git Operations',
+                    method: 'GET',
+                    path: '/api/git-status',
+                    description: 'Get current git repository status',
+                    requiresParams: false
+                },
+
+                // MoE Intelligence
+                {
+                    category: 'MoE Intelligence',
+                    method: 'GET',
+                    path: '/api/moe-intelligence',
+                    description: 'Get MoE intelligence overview',
+                    requiresParams: false
+                },
+                {
+                    category: 'MoE Intelligence',
+                    method: 'GET',
+                    path: '/api/moe/routing',
+                    description: 'Get MoE routing statistics',
+                    requiresParams: false
+                },
+                {
+                    category: 'MoE Intelligence',
+                    method: 'GET',
+                    path: '/api/moe/pool',
+                    description: 'Get MoE worker pool status',
+                    requiresParams: false
+                },
+                {
+                    category: 'MoE Intelligence',
+                    method: 'GET',
+                    path: '/api/moe/learning',
+                    description: 'Get MoE learning status and metrics',
+                    requiresParams: false
+                },
+                {
+                    category: 'MoE Intelligence',
+                    method: 'GET',
+                    path: '/api/moe/accuracy',
+                    description: 'Get MoE routing accuracy metrics',
+                    requiresParams: false
+                },
+                {
+                    category: 'MoE Intelligence',
+                    method: 'GET',
+                    path: '/api/moe/confidence-distribution',
+                    description: 'Get confidence score distribution',
+                    requiresParams: false
+                },
+                {
+                    category: 'MoE Intelligence',
+                    method: 'GET',
+                    path: '/api/moe/pool-utilization',
+                    description: 'Get worker pool utilization metrics',
+                    requiresParams: false
+                },
+                {
+                    category: 'MoE Intelligence',
+                    method: 'POST',
+                    path: '/api/moe/learning/activate',
+                    description: 'Activate MoE deep learning task',
+                    requiresParams: false
+                },
+                {
+                    category: 'MoE Intelligence',
+                    method: 'GET',
+                    path: '/api/moe/learning/deliverables',
+                    description: 'Get learning task deliverables',
+                    requiresParams: false
+                },
+                {
+                    category: 'MoE Intelligence',
+                    method: 'GET',
+                    path: '/api/moe/learning/deliverables/:filename',
+                    description: 'Get specific deliverable file',
+                    requiresParams: true,
+                    pathParams: [{ name: 'filename', description: 'Deliverable filename', example: 'architecture-report.md' }]
+                },
+
+                // Additional Daemons
+                {
+                    category: 'Daemon Status',
+                    method: 'GET',
+                    path: '/api/daemons/all',
+                    description: 'Get status of all daemons',
+                    requiresParams: false
+                },
+                {
+                    category: 'Daemon Status',
+                    method: 'GET',
+                    path: '/api/health-daemon/status',
+                    description: 'Get health monitoring daemon status',
+                    requiresParams: false
+                },
+                {
+                    category: 'Daemon Status',
+                    method: 'GET',
+                    path: '/api/metrics-daemon/status',
+                    description: 'Get metrics snapshot daemon status',
+                    requiresParams: false
+                },
+                {
+                    category: 'Daemon Status',
+                    method: 'GET',
+                    path: '/api/coordinator-daemon/status',
+                    description: 'Get coordinator daemon status',
+                    requiresParams: false
+                },
+                {
+                    category: 'Daemon Status',
+                    method: 'GET',
+                    path: '/api/integration-validator/status',
+                    description: 'Get integration validator status',
+                    requiresParams: false
+                },
+                {
+                    category: 'Daemon Controls',
+                    method: 'POST',
+                    path: '/api/health-daemon/control',
+                    description: 'Control health monitoring daemon',
+                    requiresParams: true,
+                    bodyParams: [{ name: 'action', description: 'Action to perform', example: 'start', enum: ['start', 'stop'] }]
+                },
+                {
+                    category: 'Daemon Controls',
+                    method: 'POST',
+                    path: '/api/metrics-daemon/control',
+                    description: 'Control metrics snapshot daemon',
+                    requiresParams: true,
+                    bodyParams: [{ name: 'action', description: 'Action to perform', example: 'start', enum: ['start', 'stop'] }]
+                },
+                {
+                    category: 'Daemon Controls',
+                    method: 'POST',
+                    path: '/api/coordinator-daemon/control',
+                    description: 'Control coordinator daemon',
+                    requiresParams: true,
+                    bodyParams: [{ name: 'action', description: 'Action to perform', example: 'start', enum: ['start', 'stop'] }]
+                },
+                {
+                    category: 'Daemon Controls',
+                    method: 'POST',
+                    path: '/api/integration-validator/control',
+                    description: 'Control integration validator',
+                    requiresParams: true,
+                    bodyParams: [{ name: 'action', description: 'Action to perform', example: 'start', enum: ['start', 'stop'] }]
+                },
+                {
+                    category: 'Daemon Controls',
+                    method: 'POST',
+                    path: '/api/health-monitor/start',
+                    description: 'Start health monitoring',
+                    requiresParams: false
+                },
+                {
+                    category: 'Daemon Controls',
+                    method: 'POST',
+                    path: '/api/health-monitor/stop',
+                    description: 'Stop health monitoring',
+                    requiresParams: false
+                },
+                {
+                    category: 'Daemon Controls',
+                    method: 'POST',
+                    path: '/api/metrics-snapshot/start',
+                    description: 'Start metrics snapshot collection',
+                    requiresParams: false
+                },
+                {
+                    category: 'Daemon Controls',
+                    method: 'POST',
+                    path: '/api/metrics-snapshot/stop',
+                    description: 'Stop metrics snapshot collection',
+                    requiresParams: false
+                },
+
+                // Health Alerts Extended
+                {
+                    category: 'Health Alerts',
+                    method: 'POST',
+                    path: '/api/health-alerts/:id/repair',
+                    description: 'Auto-repair issue for alert',
+                    requiresParams: true,
+                    pathParams: [{ name: 'id', description: 'Alert ID', example: 'alert-001' }]
+                },
+
+                // Event Log Management
+                {
+                    category: 'Events & Logs',
+                    method: 'GET',
+                    path: '/api/event-log/info',
+                    description: 'Get event log file information',
+                    requiresParams: false
+                },
+                {
+                    category: 'Events & Logs',
+                    method: 'POST',
+                    path: '/api/event-log/purge',
+                    description: 'Purge old event log entries',
+                    requiresParams: false
+                },
+
+                // Terminal Settings
+                {
+                    category: 'Settings',
+                    method: 'GET',
+                    path: '/api/terminal-settings',
+                    description: 'Get terminal display settings',
+                    requiresParams: false
+                },
+                {
+                    category: 'Settings',
+                    method: 'POST',
+                    path: '/api/terminal-settings',
+                    description: 'Update terminal display settings',
+                    requiresParams: true,
+                    bodyParams: [{ name: 'settings', description: 'Terminal settings object', example: '{"theme": "dark"}' }]
+                },
+
+                // Logs Streaming
+                {
+                    category: 'Events & Logs',
+                    method: 'GET',
+                    path: '/api/logs/stream',
+                    description: 'Stream logs in real-time (SSE)',
+                    requiresParams: false
+                },
+                {
+                    category: 'Events & Logs',
+                    method: 'GET',
+                    path: '/api/logs/available',
+                    description: 'Get list of available log files',
+                    requiresParams: false
+                },
+                {
+                    category: 'Events & Logs',
+                    method: 'GET',
+                    path: '/api/logs/tail',
+                    description: 'Get tail of log file',
+                    requiresParams: false,
+                    queryParams: [
+                        { name: 'file', description: 'Log file name', optional: true },
+                        { name: 'lines', description: 'Number of lines', optional: true }
+                    ]
+                },
+
+                // User Management
+                {
+                    category: 'User Management',
+                    method: 'GET',
+                    path: '/api/users',
+                    description: 'Get all users',
+                    requiresParams: false
+                },
+                {
+                    category: 'User Management',
+                    method: 'GET',
+                    path: '/api/users/stats',
+                    description: 'Get user statistics',
+                    requiresParams: false
+                },
+                {
+                    category: 'User Management',
+                    method: 'GET',
+                    path: '/api/users/:id',
+                    description: 'Get specific user by ID',
+                    requiresParams: true,
+                    pathParams: [{ name: 'id', description: 'User ID', example: 'user-001' }]
+                },
+                {
+                    category: 'User Management',
+                    method: 'POST',
+                    path: '/api/users',
+                    description: 'Create new user',
+                    requiresParams: true,
+                    bodyParams: [
+                        { name: 'username', description: 'Username', example: 'newuser' },
+                        { name: 'email', description: 'Email address', example: 'user@example.com' }
+                    ]
+                },
+                {
+                    category: 'User Management',
+                    method: 'PUT',
+                    path: '/api/users/:id',
+                    description: 'Update user',
+                    requiresParams: true,
+                    pathParams: [{ name: 'id', description: 'User ID', example: 'user-001' }],
+                    bodyParams: [{ name: 'updates', description: 'Fields to update', example: '{"email": "new@example.com"}' }]
+                },
+                {
+                    category: 'User Management',
+                    method: 'DELETE',
+                    path: '/api/users/:id',
+                    description: 'Delete user',
+                    requiresParams: true,
+                    pathParams: [{ name: 'id', description: 'User ID', example: 'user-001' }]
+                },
+                {
+                    category: 'User Management',
+                    method: 'POST',
+                    path: '/api/users/bulk',
+                    description: 'Bulk create users',
+                    requiresParams: true,
+                    bodyParams: [{ name: 'users', description: 'Array of user objects', example: '[{"username": "user1"}]' }]
+                },
+                {
+                    category: 'User Management',
+                    method: 'POST',
+                    path: '/api/users/:id/login',
+                    description: 'Record user login',
+                    requiresParams: true,
+                    pathParams: [{ name: 'id', description: 'User ID', example: 'user-001' }]
+                },
+
+                // DDQD Testing
+                {
+                    category: 'DDQD Testing',
+                    method: 'POST',
+                    path: '/api/ddqd/run',
+                    description: 'Run DDQD stress test',
+                    requiresParams: true,
+                    bodyParams: [
+                        { name: 'duration', description: 'Test duration in seconds', example: '60' },
+                        { name: 'intensity', description: 'Test intensity level', example: 'medium' }
+                    ]
+                },
+                {
+                    category: 'DDQD Testing',
+                    method: 'GET',
+                    path: '/api/ddqd/status/:testId',
+                    description: 'Get status of DDQD test',
+                    requiresParams: true,
+                    pathParams: [{ name: 'testId', description: 'Test ID', example: 'test-001' }]
+                },
+                {
+                    category: 'DDQD Testing',
+                    method: 'POST',
+                    path: '/api/ddqd/stop/:testId',
+                    description: 'Stop running DDQD test',
+                    requiresParams: true,
+                    pathParams: [{ name: 'testId', description: 'Test ID', example: 'test-001' }]
+                },
+                {
+                    category: 'DDQD Testing',
+                    method: 'GET',
+                    path: '/api/ddqd/active',
+                    description: 'Get all active DDQD tests',
+                    requiresParams: false
+                },
+                {
+                    category: 'DDQD Testing',
+                    method: 'GET',
+                    path: '/api/ddqd/history',
+                    description: 'Get DDQD test history',
+                    requiresParams: false
+                },
+                {
+                    category: 'DDQD Testing',
+                    method: 'POST',
+                    path: '/api/ddqd/schedule',
+                    description: 'Schedule DDQD test',
+                    requiresParams: true,
+                    bodyParams: [
+                        { name: 'schedule', description: 'Cron schedule', example: '0 0 * * *' },
+                        { name: 'config', description: 'Test configuration', example: '{"duration": 60}' }
+                    ]
+                },
+                {
+                    category: 'DDQD Testing',
+                    method: 'GET',
+                    path: '/api/ddqd/schedule',
+                    description: 'Get scheduled DDQD tests',
+                    requiresParams: false
+                },
+
+                // Phase 7: Dashboard Analytics
+                {
+                    category: 'Analytics & Visualization',
+                    method: 'GET',
+                    path: '/api/dashboard/analytics/summary',
+                    description: 'Get analytics summary',
+                    requiresParams: false
+                },
+                {
+                    category: 'Analytics & Visualization',
+                    method: 'GET',
+                    path: '/api/dashboard/analytics/trends',
+                    description: 'Get analytics trends',
+                    requiresParams: false,
+                    queryParams: [{ name: 'days', description: 'Number of days', optional: true }]
+                },
+                {
+                    category: 'Analytics & Visualization',
+                    method: 'GET',
+                    path: '/api/dashboard/visualizations/all',
+                    description: 'Get all visualization data',
+                    requiresParams: false
+                },
+                {
+                    category: 'Analytics & Visualization',
+                    method: 'GET',
+                    path: '/api/dashboard/visualizations/health',
+                    description: 'Get health visualization data',
+                    requiresParams: false
+                },
+                {
+                    category: 'Analytics & Visualization',
+                    method: 'GET',
+                    path: '/api/dashboard/alerts/active',
+                    description: 'Get active dashboard alerts',
+                    requiresParams: false
+                },
+                {
+                    category: 'Analytics & Visualization',
+                    method: 'GET',
+                    path: '/api/dashboard/alerts/stats',
+                    description: 'Get alert statistics',
+                    requiresParams: false
+                },
+                {
+                    category: 'Analytics & Visualization',
+                    method: 'POST',
+                    path: '/api/dashboard/alerts/check',
+                    description: 'Check alert rules',
+                    requiresParams: false
+                },
+
+                // Phase 8: Optimizer
+                {
+                    category: 'Optimizer',
+                    method: 'GET',
+                    path: '/api/optimizer/scheduler/stats',
+                    description: 'Get scheduler statistics',
+                    requiresParams: false
+                },
+                {
+                    category: 'Optimizer',
+                    method: 'GET',
+                    path: '/api/optimizer/scheduler/balance',
+                    description: 'Get load balance status',
+                    requiresParams: false
+                },
+                {
+                    category: 'Optimizer',
+                    method: 'GET',
+                    path: '/api/optimizer/tokens/stats',
+                    description: 'Get token optimizer statistics',
+                    requiresParams: false
+                },
+                {
+                    category: 'Optimizer',
+                    method: 'GET',
+                    path: '/api/optimizer/tokens/forecast',
+                    description: 'Get token usage forecast',
+                    requiresParams: false
+                },
+                {
+                    category: 'Optimizer',
+                    method: 'GET',
+                    path: '/api/optimizer/pool/stats',
+                    description: 'Get worker pool statistics',
+                    requiresParams: false
+                },
+                {
+                    category: 'Optimizer',
+                    method: 'GET',
+                    path: '/api/optimizer/profile/stats',
+                    description: 'Get profiler statistics',
+                    requiresParams: false
+                },
+                {
+                    category: 'Optimizer',
+                    method: 'GET',
+                    path: '/api/optimizer/profile/bottlenecks',
+                    description: 'Detect performance bottlenecks',
+                    requiresParams: false
+                },
+                {
+                    category: 'Optimizer',
+                    method: 'GET',
+                    path: '/api/optimizer/profile/recommendations',
+                    description: 'Get tuning recommendations',
+                    requiresParams: false
+                },
+
+                // Internal Reporting
+                {
+                    category: 'Internal',
+                    method: 'POST',
+                    path: '/api/pm/state',
+                    description: 'Update PM daemon state',
+                    requiresParams: true,
+                    bodyParams: [{ name: 'state', description: 'State object', example: '{"status": "active"}' }]
+                },
+                {
+                    category: 'Internal',
+                    method: 'POST',
+                    path: '/api/health/report',
+                    description: 'Submit health report',
+                    requiresParams: true,
+                    bodyParams: [{ name: 'report', description: 'Health report data', example: '{"status": "healthy"}' }]
+                },
+                {
+                    category: 'Internal',
+                    method: 'POST',
+                    path: '/api/metrics/report',
+                    description: 'Submit metrics report',
+                    requiresParams: true,
+                    bodyParams: [{ name: 'metrics', description: 'Metrics data', example: '{"cpu": 50}' }]
                 }
             ];
 
