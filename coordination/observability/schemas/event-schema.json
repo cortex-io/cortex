@@ -1,0 +1,167 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Commit-Relay Observability Event Schema",
+  "description": "Unified event schema for all observability events in commit-relay",
+  "type": "object",
+  "required": ["event_id", "timestamp", "event_type", "category", "source"],
+  "properties": {
+    "event_id": {
+      "type": "string",
+      "description": "Unique identifier for this event",
+      "pattern": "^evt-[a-z0-9-]+$"
+    },
+    "timestamp": {
+      "type": "string",
+      "description": "ISO 8601 timestamp with timezone",
+      "format": "date-time"
+    },
+    "event_type": {
+      "type": "string",
+      "description": "Specific type of event",
+      "enum": [
+        "task_created",
+        "task_routed",
+        "task_assigned",
+        "task_started",
+        "task_completed",
+        "task_failed",
+        "task_cancelled",
+        "worker_spawned",
+        "worker_started",
+        "worker_heartbeat",
+        "worker_completed",
+        "worker_failed",
+        "worker_timeout",
+        "worker_killed",
+        "master_assigned",
+        "master_decision",
+        "master_error",
+        "system_start",
+        "system_stop",
+        "system_health_check",
+        "system_alert",
+        "error_occurred",
+        "error_resolved",
+        "learning_pattern_detected",
+        "learning_model_updated",
+        "route_decision",
+        "route_confidence_low"
+      ]
+    },
+    "category": {
+      "type": "string",
+      "description": "High-level event category",
+      "enum": ["task", "worker", "master", "system", "error", "learning", "routing"]
+    },
+    "source": {
+      "type": "string",
+      "description": "Component that emitted this event"
+    },
+    "trace_id": {
+      "type": "string",
+      "description": "Distributed trace ID for correlating related events",
+      "pattern": "^trace-[a-z0-9-]+$"
+    },
+    "span_id": {
+      "type": "string",
+      "description": "Span ID within the trace",
+      "pattern": "^span-[a-z0-9-]+$"
+    },
+    "parent_span_id": {
+      "type": "string",
+      "description": "Parent span ID for hierarchical tracing",
+      "pattern": "^span-[a-z0-9-]+$"
+    },
+    "severity": {
+      "type": "string",
+      "description": "Event severity level",
+      "enum": ["debug", "info", "warn", "error", "critical"],
+      "default": "info"
+    },
+    "data": {
+      "type": "object",
+      "description": "Event-specific data payload",
+      "additionalProperties": true
+    },
+    "metadata": {
+      "type": "object",
+      "description": "Additional metadata for enrichment",
+      "properties": {
+        "task_id": {
+          "type": "string"
+        },
+        "worker_id": {
+          "type": "string"
+        },
+        "master_id": {
+          "type": "string"
+        },
+        "user_id": {
+          "type": "string"
+        },
+        "session_id": {
+          "type": "string"
+        },
+        "environment": {
+          "type": "string",
+          "enum": ["development", "staging", "production"]
+        },
+        "version": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": true
+    },
+    "tags": {
+      "type": "array",
+      "description": "Searchable tags for filtering and grouping",
+      "items": {
+        "type": "string"
+      }
+    },
+    "metrics": {
+      "type": "object",
+      "description": "Numerical metrics associated with this event",
+      "properties": {
+        "duration_ms": {
+          "type": "number",
+          "minimum": 0
+        },
+        "token_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "memory_bytes": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "confidence": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        }
+      },
+      "additionalProperties": true
+    },
+    "context": {
+      "type": "object",
+      "description": "Execution context information",
+      "properties": {
+        "hostname": {
+          "type": "string"
+        },
+        "pid": {
+          "type": "integer"
+        },
+        "thread_id": {
+          "type": "string"
+        },
+        "correlation_id": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": false
+}
