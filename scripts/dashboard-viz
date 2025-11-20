@@ -1,0 +1,85 @@
+#!/usr/bin/env bash
+#
+# Dashboard Visualizations CLI
+# Part of Phase 7.3: Advanced Visualizations
+#
+
+set -euo pipefail
+
+readonly SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "$SCRIPT_DIR/lib/dashboard/visualizations.sh"
+
+main() {
+    local command="${1:-help}"
+
+    case "$command" in
+        gantt)
+            local hours="${2:-24}"
+            generate_gantt_data "$hours" | jq .
+            ;;
+
+        heatmap)
+            local days="${2:-7}"
+            generate_heatmap_data "$days" | jq .
+            ;;
+
+        flow)
+            generate_flow_data | jq .
+            ;;
+
+        resources)
+            local hours="${2:-24}"
+            local interval="${3:-60}"
+            generate_resource_data "$hours" "$interval" | jq .
+            ;;
+
+        health)
+            generate_health_dashboard | jq .
+            ;;
+
+        distribution)
+            generate_distribution_data | jq .
+            ;;
+
+        all)
+            local hours="${2:-24}"
+            get_all_visualizations "$hours" | jq .
+            ;;
+
+        help|--help|-h)
+            cat <<EOF
+Dashboard Visualizations CLI - Chart and graph data
+
+Usage: $0 <command> [options]
+
+Commands:
+  gantt [hours]                 Worker timeline (Gantt-style)
+  heatmap [days]                Master activity heatmap
+  flow                          Coordination flow diagram
+  resources [hours] [interval]  Resource utilization graphs
+  health                        System health dashboard
+  distribution                  Worker type distribution
+  all [hours]                   All visualization data
+
+Examples:
+  $0 gantt 48
+  $0 heatmap 14
+  $0 flow
+  $0 resources 24 30
+  $0 health
+  $0 distribution
+  $0 all 24
+
+EOF
+            ;;
+
+        *)
+            echo "Unknown command: $command"
+            exit 1
+            ;;
+    esac
+}
+
+if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
+    main "$@"
+fi
