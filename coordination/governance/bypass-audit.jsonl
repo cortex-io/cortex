@@ -1,0 +1,84 @@
+{
+  "bypass_id": "bypass-1763416829-79036",
+  "timestamp": "2025-11-17T22:00:29Z",
+  "bypass_type": "validation",
+  "principal": "director",
+  "reason": "Testing bypass logging",
+  "approved_by": "test_suite",
+  "duration_minutes": 30,
+  "risk_level": "medium",
+  "status": "approved",
+  "scope": {
+    "operation": "unknown",
+    "component": "unknown"
+  }
+}
+{
+  "bypass_id": "denied-1763416830-79036",
+  "timestamp": "2025-11-17T22:00:30Z",
+  "bypass_type": "governance",
+  "principal": "developer",
+  "reason": "Should be denied",
+  "status": "denied",
+  "denial_reason": "insufficient_authorization"
+}
+{
+  "bypass_id": "bypass-1763416830-79036",
+  "timestamp": "2025-11-17T22:00:30Z",
+  "bypass_type": "validation",
+  "principal": "director",
+  "reason": "Test activation",
+  "approved_by": "test",
+  "duration_minutes": 60,
+  "risk_level": "medium",
+  "status": "approved",
+  "scope": {
+    "operation": "unknown",
+    "component": "unknown"
+  }
+}
+{
+  "bypass_id": "bypass-1763416830-79036",
+  "timestamp": "2025-11-17T22:00:30Z",
+  "bypass_type": "validation",
+  "principal": "director",
+  "reason": "Test expiration",
+  "approved_by": "test",
+  "duration_minutes": 0,
+  "risk_level": "medium",
+  "status": "approved",
+  "scope": {
+    "operation": "unknown",
+    "component": "unknown"
+  }
+}
+{
+  "bypass_id": "bypass-1763416830-79036",
+  "timestamp": "2025-11-17T22:00:30Z",
+  "bypass_type": "validation",
+  "principal": "director",
+  "reason": "Test early end",
+  "approved_by": "test",
+  "duration_minutes": 60,
+  "risk_level": "medium",
+  "status": "approved",
+  "scope": {
+    "operation": "unknown",
+    "component": "unknown"
+  }
+}
+{
+  "bypass_id": "bypass-1763416830-79036",
+  "timestamp": "2025-11-17T22:00:30Z",
+  "event": "bypass_ended",
+  "principal": "director"
+}
+{
+  "bypass_id": "denied-1763416830-79036",
+  "timestamp": "2025-11-17T22:00:30Z",
+  "bypass_type": "governance",
+  "principal": "system",
+  "reason": "GOVERNANCE_BYPASS=true environment variable",
+  "status": "denied",
+  "denial_reason": "insufficient_authorization"
+}

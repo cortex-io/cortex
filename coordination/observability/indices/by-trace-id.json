@@ -1,0 +1,16 @@
+[
+  {
+    "trace_id": "trace-1763411626-DB79BB64",
+    "event_count": 5,
+    "first_event": "2025-11-17T20:33:46Z",
+    "last_event": "2025-11-17T20:33:50Z",
+    "components": [
+      "test-script"
+    ],
+    "statuses": [
+      "info",
+      "success"
+    ],
+    "has_errors": false
+  }
+]

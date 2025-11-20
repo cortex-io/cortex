@@ -55,3 +55,12 @@
   "learned_at": "2025-11-19T16:31:16Z",
   "source": "learner"
 }
+{
+  "task_type": "null",
+  "complexity": "null",
+  "recommended_worker_type": "feature-implementer",
+  "confidence": 92.75,
+  "evidence_count": 4,
+  "learned_at": "2025-11-20T14:49:29Z",
+  "source": "learner"
+}
