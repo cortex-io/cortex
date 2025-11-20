@@ -3569,6 +3569,31 @@ function dashboard() {
                     pathParams: [{ name: 'filename', description: 'Deliverable filename', example: 'architecture-report.md' }]
                 },
 
+                // Learning Monitor
+                {
+                    category: 'Learning Monitor',
+                    method: 'GET',
+                    path: '/api/learning-monitor/status',
+                    description: 'Get learning monitor daemon status and active tasks',
+                    requiresParams: false
+                },
+                {
+                    category: 'Learning Monitor',
+                    method: 'GET',
+                    path: '/api/learning-monitor/events',
+                    description: 'Get recent learning monitor events',
+                    requiresParams: false,
+                    queryParams: [{ name: 'limit', description: 'Max events to return', optional: true }]
+                },
+                {
+                    category: 'Learning Monitor',
+                    method: 'POST',
+                    path: '/api/learning-monitor/control',
+                    description: 'Start or stop learning monitor daemon',
+                    requiresParams: true,
+                    bodyParams: [{ name: 'action', description: 'Action to perform', example: 'start', enum: ['start', 'stop'] }]
+                },
+
                 // Additional Daemons
                 {
                     category: 'Daemon Status',
