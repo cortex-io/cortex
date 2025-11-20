@@ -266,6 +266,10 @@
                 <span :class="currentView === 'health-alerts' ? 'font-medium' : ''">Health Alerts</span>
                 <span x-show="healthAlerts.filter(a => a.status !== 'resolved').length > 0" class="ml-auto px-2 py-0.5 rounded-full bg-red-500 text-white text-xs font-semibold" x-text="healthAlerts.filter(a => a.status !== 'resolved').length"></span>
             </button>
+            <button @click="switchView('optimizer')" class="w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors" :class="currentView === 'optimizer' ? 'bg-primary-50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-300' : 'hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300'">
+                <i data-lucide="zap" class="w-5 h-5"></i>
+                <span :class="currentView === 'optimizer' ? 'font-medium' : ''">Optimizer</span>
+            </button>
             <button @click="switchView('admin')" class="w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors" :class="currentView === 'admin' ? 'bg-primary-50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-300' : 'hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300'">
                 <i data-lucide="settings" class="w-5 h-5"></i>
                 <span :class="currentView === 'admin' ? 'font-medium' : ''">Admin</span>
@@ -3566,6 +3570,206 @@
                         <button @click="closeDeliverableView()" class="px-4 py-2 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors">
                             Close
                         </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Optimizer View (Phase 7-8) -->
+            <div x-show="currentView === 'optimizer'" x-transition x-data="{
+                optimizerData: {
+                    analytics: {},
+                    alerts: [],
+                    scheduler: {},
+                    tokens: {},
+                    pool: {},
+                    profile: {}
+                },
+                loading: true,
+                async loadOptimizerData() {
+                    this.loading = true;
+                    try {
+                        const [analytics, alerts, scheduler, tokens, pool, profile] = await Promise.all([
+                            fetch('/api/dashboard/analytics/summary').then(r => r.json()),
+                            fetch('/api/dashboard/alerts/active').then(r => r.json()),
+                            fetch('/api/optimizer/scheduler/stats').then(r => r.json()),
+                            fetch('/api/optimizer/tokens/forecast').then(r => r.json()),
+                            fetch('/api/optimizer/pool/stats').then(r => r.json()),
+                            fetch('/api/optimizer/profile/stats').then(r => r.json())
+                        ]);
+                        this.optimizerData = { analytics, alerts, scheduler, tokens, pool, profile };
+                    } catch (e) {
+                        console.error('Error loading optimizer data:', e);
+                    }
+                    this.loading = false;
+                }
+            }" x-init="loadOptimizerData()">
+                <div class="space-y-6">
+                    <!-- Header -->
+                    <div class="flex items-center justify-between">
+                        <h3 class="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                            <i data-lucide="zap" class="w-6 h-6 text-yellow-500"></i>
+                            System Optimizer
+                        </h3>
+                        <button @click="loadOptimizerData()" class="px-4 py-2 bg-primary-500 text-white rounded-lg hover:bg-primary-600 flex items-center gap-2">
+                            <i data-lucide="refresh-cw" class="w-4 h-4" :class="loading ? 'animate-spin' : ''"></i>
+                            Refresh
+                        </button>
+                    </div>
+
+                    <!-- Quick Stats -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                        <div class="bg-white dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700">
+                            <div class="flex items-center justify-between">
+                                <span class="text-gray-500 dark:text-gray-400 text-sm">Active Alerts</span>
+                                <i data-lucide="alert-triangle" class="w-5 h-5 text-yellow-500"></i>
+                            </div>
+                            <p class="text-2xl font-bold text-gray-900 dark:text-white" x-text="optimizerData.alerts?.length || 0"></p>
+                        </div>
+                        <div class="bg-white dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700">
+                            <div class="flex items-center justify-between">
+                                <span class="text-gray-500 dark:text-gray-400 text-sm">Queued Tasks</span>
+                                <i data-lucide="list-todo" class="w-5 h-5 text-blue-500"></i>
+                            </div>
+                            <p class="text-2xl font-bold text-gray-900 dark:text-white" x-text="optimizerData.scheduler?.queued || 0"></p>
+                        </div>
+                        <div class="bg-white dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700">
+                            <div class="flex items-center justify-between">
+                                <span class="text-gray-500 dark:text-gray-400 text-sm">Token Risk</span>
+                                <i data-lucide="coins" class="w-5 h-5 text-green-500"></i>
+                            </div>
+                            <p class="text-2xl font-bold text-gray-900 dark:text-white" x-text="optimizerData.tokens?.exhaustion_risk || 'N/A'"></p>
+                        </div>
+                        <div class="bg-white dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700">
+                            <div class="flex items-center justify-between">
+                                <span class="text-gray-500 dark:text-gray-400 text-sm">Warm Workers</span>
+                                <i data-lucide="flame" class="w-5 h-5 text-orange-500"></i>
+                            </div>
+                            <p class="text-2xl font-bold text-gray-900 dark:text-white" x-text="optimizerData.pool?.status?.warm || 0"></p>
+                        </div>
+                    </div>
+
+                    <!-- Main Content Grid -->
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <!-- Analytics Panel -->
+                        <div class="bg-white dark:bg-gray-800 rounded-lg p-6 border border-gray-200 dark:border-gray-700">
+                            <h4 class="font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+                                <i data-lucide="bar-chart-3" class="w-5 h-5 text-primary-500"></i>
+                                Historical Analytics
+                            </h4>
+                            <div class="space-y-3">
+                                <div class="flex justify-between items-center">
+                                    <span class="text-gray-600 dark:text-gray-400">Worker Success Types</span>
+                                    <span class="font-medium text-gray-900 dark:text-white" x-text="optimizerData.analytics?.worker_success?.length || 0"></span>
+                                </div>
+                                <div class="flex justify-between items-center">
+                                    <span class="text-gray-600 dark:text-gray-400">Patterns Identified</span>
+                                    <span class="font-medium text-gray-900 dark:text-white" x-text="optimizerData.analytics?.patterns_identified || 0"></span>
+                                </div>
+                                <div class="flex justify-between items-center">
+                                    <span class="text-gray-600 dark:text-gray-400">Degradations</span>
+                                    <span class="font-medium text-gray-900 dark:text-white" x-text="optimizerData.analytics?.degradations?.length || 0"></span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Token Forecast Panel -->
+                        <div class="bg-white dark:bg-gray-800 rounded-lg p-6 border border-gray-200 dark:border-gray-700">
+                            <h4 class="font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+                                <i data-lucide="trending-up" class="w-5 h-5 text-green-500"></i>
+                                Token Forecast
+                            </h4>
+                            <div class="space-y-3">
+                                <div class="flex justify-between items-center">
+                                    <span class="text-gray-600 dark:text-gray-400">Remaining</span>
+                                    <span class="font-medium text-gray-900 dark:text-white" x-text="(optimizerData.tokens?.remaining || 0).toLocaleString()"></span>
+                                </div>
+                                <div class="flex justify-between items-center">
+                                    <span class="text-gray-600 dark:text-gray-400">Hours Until Exhaustion</span>
+                                    <span class="font-medium text-gray-900 dark:text-white" x-text="optimizerData.tokens?.hours_until_exhaustion || 'N/A'"></span>
+                                </div>
+                                <div class="flex justify-between items-center">
+                                    <span class="text-gray-600 dark:text-gray-400">Risk Level</span>
+                                    <span class="font-medium" :class="{
+                                        'text-red-500': optimizerData.tokens?.exhaustion_risk === 'critical',
+                                        'text-yellow-500': optimizerData.tokens?.exhaustion_risk === 'high',
+                                        'text-green-500': optimizerData.tokens?.exhaustion_risk === 'low'
+                                    }" x-text="optimizerData.tokens?.exhaustion_risk || 'unknown'"></span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Worker Pool Panel -->
+                        <div class="bg-white dark:bg-gray-800 rounded-lg p-6 border border-gray-200 dark:border-gray-700">
+                            <h4 class="font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+                                <i data-lucide="users" class="w-5 h-5 text-blue-500"></i>
+                                Worker Pool
+                            </h4>
+                            <div class="space-y-3">
+                                <div class="flex justify-between items-center">
+                                    <span class="text-gray-600 dark:text-gray-400">Warm</span>
+                                    <span class="font-medium text-orange-500" x-text="optimizerData.pool?.status?.warm || 0"></span>
+                                </div>
+                                <div class="flex justify-between items-center">
+                                    <span class="text-gray-600 dark:text-gray-400">Active</span>
+                                    <span class="font-medium text-green-500" x-text="optimizerData.pool?.status?.active || 0"></span>
+                                </div>
+                                <div class="flex justify-between items-center">
+                                    <span class="text-gray-600 dark:text-gray-400">Cold</span>
+                                    <span class="font-medium text-gray-500" x-text="optimizerData.pool?.status?.cold || 0"></span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Profiler Panel -->
+                        <div class="bg-white dark:bg-gray-800 rounded-lg p-6 border border-gray-200 dark:border-gray-700">
+                            <h4 class="font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+                                <i data-lucide="gauge" class="w-5 h-5 text-purple-500"></i>
+                                Performance Profiler
+                            </h4>
+                            <div class="space-y-3">
+                                <div class="flex justify-between items-center">
+                                    <span class="text-gray-600 dark:text-gray-400">Benchmarks Run</span>
+                                    <span class="font-medium text-gray-900 dark:text-white" x-text="optimizerData.profile?.benchmark_count || 0"></span>
+                                </div>
+                                <div class="flex justify-between items-center">
+                                    <span class="text-gray-600 dark:text-gray-400">Bottlenecks</span>
+                                    <span class="font-medium text-red-500" x-text="optimizerData.profile?.bottlenecks?.length || 0"></span>
+                                </div>
+                                <div class="flex justify-between items-center">
+                                    <span class="text-gray-600 dark:text-gray-400">Recommendations</span>
+                                    <span class="font-medium text-primary-500" x-text="optimizerData.profile?.recommendations || 0"></span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Active Alerts -->
+                    <div class="bg-white dark:bg-gray-800 rounded-lg p-6 border border-gray-200 dark:border-gray-700">
+                        <h4 class="font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+                            <i data-lucide="bell" class="w-5 h-5 text-red-500"></i>
+                            Active Alerts
+                        </h4>
+                        <div x-show="optimizerData.alerts?.length === 0" class="text-gray-500 dark:text-gray-400 text-center py-4">
+                            No active alerts
+                        </div>
+                        <div x-show="optimizerData.alerts?.length > 0" class="space-y-2">
+                            <template x-for="alert in (optimizerData.alerts || []).slice(0, 5)" :key="alert.alert_id">
+                                <div class="flex items-center justify-between p-3 rounded-lg" :class="{
+                                    'bg-red-50 dark:bg-red-900/20': alert.severity === 'critical',
+                                    'bg-yellow-50 dark:bg-yellow-900/20': alert.severity === 'warning',
+                                    'bg-blue-50 dark:bg-blue-900/20': alert.severity === 'info'
+                                }">
+                                    <div class="flex items-center gap-3">
+                                        <span class="px-2 py-1 rounded text-xs font-medium" :class="{
+                                            'bg-red-500 text-white': alert.severity === 'critical',
+                                            'bg-yellow-500 text-white': alert.severity === 'warning',
+                                            'bg-blue-500 text-white': alert.severity === 'info'
+                                        }" x-text="alert.severity"></span>
+                                        <span class="text-gray-700 dark:text-gray-300" x-text="alert.message"></span>
+                                    </div>
+                                </div>
+                            </template>
+                        </div>
                     </div>
                 </div>
             </div>
