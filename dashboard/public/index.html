@@ -2586,6 +2586,43 @@
                                     </button>
                                 </div>
                             </div>
+
+                            <!-- Learning Monitor Daemon Card -->
+                            <div class="border-2 rounded-xl p-6" :class="learningMonitor?.status === 'running' ? 'border-cyan-300 dark:border-cyan-700 bg-cyan-50 dark:bg-cyan-900/20' : 'border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700/50'">
+                                <div class="flex items-center justify-between mb-4">
+                                    <div class="flex items-center space-x-3">
+                                        <i data-lucide="graduation-cap" class="w-6 h-6" :class="learningMonitor?.status === 'running' ? 'text-cyan-600 dark:text-cyan-400' : 'text-gray-600 dark:text-gray-400'"></i>
+                                        <h4 class="text-lg font-semibold text-gray-900 dark:text-white">Learning Monitor</h4>
+                                    </div>
+                                    <span class="px-3 py-1 rounded-full text-sm font-medium" :class="learningMonitor?.status === 'running' ? 'bg-cyan-100 dark:bg-cyan-900 text-cyan-700 dark:text-cyan-300' : 'bg-red-100 dark:bg-red-900 text-red-700 dark:text-red-300'" x-text="learningMonitor?.status === 'running' ? 'Running' : 'Stopped'"></span>
+                                </div>
+
+                                <div class="space-y-2 mb-6">
+                                    <div class="flex justify-between text-sm">
+                                        <span class="text-gray-600 dark:text-gray-400">PID:</span>
+                                        <span class="font-medium text-gray-900 dark:text-white" x-text="learningMonitor?.pid || 'N/A'"></span>
+                                    </div>
+                                    <div class="flex justify-between text-sm">
+                                        <span class="text-gray-600 dark:text-gray-400">Active Tasks:</span>
+                                        <span class="font-medium text-gray-900 dark:text-white" x-text="learningMonitor?.active_tasks || 0"></span>
+                                    </div>
+                                    <div class="flex justify-between text-sm">
+                                        <span class="text-gray-600 dark:text-gray-400">Tasks Killed:</span>
+                                        <span class="font-medium text-gray-900 dark:text-white" x-text="learningMonitor?.metrics?.total_killed || 0"></span>
+                                    </div>
+                                </div>
+
+                                <div class="flex space-x-2">
+                                    <button @click="controlLearningMonitor('start')" :disabled="learningMonitor?.status === 'running'" class="flex-1 px-4 py-2 rounded-lg font-medium transition-colors bg-green-600 text-white hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed">
+                                        <i data-lucide="play" class="w-4 h-4 inline-block mr-2"></i>
+                                        Start
+                                    </button>
+                                    <button @click="controlLearningMonitor('stop')" :disabled="learningMonitor?.status !== 'running'" class="flex-1 px-4 py-2 rounded-lg font-medium transition-colors bg-red-600 text-white hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed">
+                                        <i data-lucide="square" class="w-4 h-4 inline-block mr-2"></i>
+                                        Stop
+                                    </button>
+                                </div>
+                            </div>
                         </div>
 
                         <div class="mt-8 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
@@ -2594,7 +2631,7 @@
                                 <div class="text-sm text-blue-900 dark:text-blue-100">
                                     <p class="font-semibold mb-1">About Daemon Controls</p>
                                     <p class="text-blue-700 dark:text-blue-200">
-                                        Control all system daemons: Worker Daemon (spawns workers), PM Daemon (monitors worker health), Health Monitor (heartbeat monitoring), Metrics Snapshot (collects historical metrics), Coordinator Daemon (routes tasks from queue to masters), Integration Validator (validates routing pipelines), Pattern Detection (analyzes failure patterns), Worker Restart (auto-recovery with exponential backoff), and Auto-Fix (automatic remediation). Phase 4 self-healing daemons enable autonomous failure recovery. Changes take effect immediately.
+                                        Control all system daemons: Worker Daemon (spawns workers), PM Daemon (monitors worker health), Health Monitor (heartbeat monitoring), Metrics Snapshot (collects historical metrics), Coordinator Daemon (routes tasks from queue to masters), Integration Validator (validates routing pipelines), Pattern Detection (analyzes failure patterns), Worker Restart (auto-recovery with exponential backoff), Auto-Fix (automatic remediation), and Learning Monitor (monitors MoE learning tasks, auto-kills stalled tasks). Changes take effect immediately.
                                     </p>
                                 </div>
                             </div>

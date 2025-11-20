@@ -60,6 +60,10 @@ function dashboard() {
         metricsDaemon: null,
         coordinatorDaemon: null,
         integrationValidatorDaemon: null,
+        learningMonitor: null,
+        patternDaemon: null,
+        restartDaemon: null,
+        autofixDaemon: null,
         terminalSettings: {
             terminal_windows_enabled: true,
             headless_mode: false,
@@ -615,6 +619,24 @@ function dashboard() {
                 const integrationValidatorRes = await fetch('/api/integration-validator/status');
                 this.integrationValidatorDaemon = await integrationValidatorRes.json();
                 console.log('Integration Validator status loaded');
+
+                // Fetch Learning Monitor status
+                console.log('Fetching Learning Monitor status...');
+                try {
+                    const learningMonitorRes = await fetch('/api/learning-monitor/status');
+                    const learningData = await learningMonitorRes.json();
+                    this.learningMonitor = {
+                        status: learningData.daemon?.running ? 'running' : 'stopped',
+                        pid: learningData.daemon?.pid,
+                        metrics: learningData.metrics,
+                        active_tasks: learningData.active_tasks?.length || 0,
+                        config: learningData.config
+                    };
+                    console.log('Learning Monitor status loaded');
+                } catch (e) {
+                    console.log('Learning Monitor not available');
+                    this.learningMonitor = { status: 'stopped' };
+                }
 
                 // Fetch tasks
                 console.log('Fetching tasks...');
@@ -2607,6 +2629,44 @@ function dashboard() {
                 }
             } catch (error) {
                 console.error(`Error controlling integration validator:`, error);
+                alert(`Error: ${error.message}`);
+            }
+        },
+
+        async controlLearningMonitor(action) {
+            try {
+                const response = await fetch('/api/learning-monitor/control', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ action })
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    console.log(`Learning monitor ${action} successful:`, result.message);
+                    // Refresh status after a moment
+                    setTimeout(async () => {
+                        try {
+                            const res = await fetch('/api/learning-monitor/status');
+                            const data = await res.json();
+                            this.learningMonitor = {
+                                status: data.daemon?.running ? 'running' : 'stopped',
+                                pid: data.daemon?.pid,
+                                metrics: data.metrics,
+                                active_tasks: data.active_tasks?.length || 0,
+                                config: data.config
+                            };
+                        } catch (e) {
+                            console.error('Error refreshing learning monitor status:', e);
+                        }
+                    }, 1000);
+                } else {
+                    console.error(`Learning monitor ${action} failed:`, result.message);
+                    alert(`Failed to ${action} learning monitor: ${result.message}`);
+                }
+            } catch (error) {
+                console.error(`Error controlling learning monitor:`, error);
                 alert(`Error: ${error.message}`);
             }
         },
