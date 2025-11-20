@@ -64,6 +64,9 @@ function dashboard() {
         patternDaemon: null,
         restartDaemon: null,
         autofixDaemon: null,
+        heartbeatDaemon: null,
+        daemonSupervisor: null,
+        zombieCleanup: null,
         terminalSettings: {
             terminal_windows_enabled: true,
             headless_mode: false,
@@ -584,59 +587,10 @@ function dashboard() {
                 this.updateMetrics(metrics);
                 console.log('Metrics loaded:', metrics);
 
-                // Fetch daemon status
-                console.log('Fetching daemon status...');
-                const daemonRes = await fetch('/api/daemon/status');
-                this.daemon = await daemonRes.json();
-                console.log('Daemon status loaded');
-
-                // Fetch PM daemon status
-                console.log('Fetching PM daemon status...');
-                const pmDaemonRes = await fetch('/api/pm-daemon/status');
-                this.pmDaemon = await pmDaemonRes.json();
-                console.log('PM daemon status loaded');
-
-                // Fetch Health daemon status
-                console.log('Fetching Health daemon status...');
-                const healthDaemonRes = await fetch('/api/health-daemon/status');
-                this.healthDaemon = await healthDaemonRes.json();
-                console.log('Health daemon status loaded');
-
-                // Fetch Metrics daemon status
-                console.log('Fetching Metrics daemon status...');
-                const metricsDaemonRes = await fetch('/api/metrics-daemon/status');
-                this.metricsDaemon = await metricsDaemonRes.json();
-                console.log('Metrics daemon status loaded');
-
-                // Fetch Coordinator daemon status
-                console.log('Fetching Coordinator daemon status...');
-                const coordinatorDaemonRes = await fetch('/api/coordinator-daemon/status');
-                this.coordinatorDaemon = await coordinatorDaemonRes.json();
-                console.log('Coordinator daemon status loaded');
-
-                // Fetch Integration Validator status
-                console.log('Fetching Integration Validator status...');
-                const integrationValidatorRes = await fetch('/api/integration-validator/status');
-                this.integrationValidatorDaemon = await integrationValidatorRes.json();
-                console.log('Integration Validator status loaded');
-
-                // Fetch Learning Monitor status
-                console.log('Fetching Learning Monitor status...');
-                try {
-                    const learningMonitorRes = await fetch('/api/learning-monitor/status');
-                    const learningData = await learningMonitorRes.json();
-                    this.learningMonitor = {
-                        status: learningData.daemon?.running ? 'running' : 'stopped',
-                        pid: learningData.daemon?.pid,
-                        metrics: learningData.metrics,
-                        active_tasks: learningData.active_tasks?.length || 0,
-                        config: learningData.config
-                    };
-                    console.log('Learning Monitor status loaded');
-                } catch (e) {
-                    console.log('Learning Monitor not available');
-                    this.learningMonitor = { status: 'stopped' };
-                }
+                // Fetch all daemon statuses at once
+                console.log('Fetching all daemon statuses...');
+                await this.fetchAllDaemonStatuses();
+                console.log('All daemon statuses loaded');
 
                 // Fetch tasks
                 console.log('Fetching tasks...');
@@ -773,6 +727,42 @@ function dashboard() {
             }
         },
 
+        // Fetch all daemon statuses from /api/daemons/all
+        async fetchAllDaemonStatuses() {
+            try {
+                const res = await fetch('/api/daemons/all');
+                const data = await res.json();
+                const daemons = data.daemons || {};
+
+                // Map daemon statuses to data properties
+                this.daemon = daemons['worker-daemon'] || { status: 'stopped' };
+                this.pmDaemon = daemons['pm-daemon'] || { status: 'stopped' };
+                this.healthDaemon = daemons['health-monitor'] || { status: 'stopped' };
+                this.metricsDaemon = daemons['metrics-snapshot'] || { status: 'stopped' };
+                this.coordinatorDaemon = daemons['coordinator-daemon'] || { status: 'stopped' };
+                this.integrationValidatorDaemon = daemons['integration-validator'] || { status: 'stopped' };
+                this.heartbeatDaemon = daemons['heartbeat-monitor'] || { status: 'stopped' };
+                this.restartDaemon = daemons['worker-restart'] || { status: 'stopped' };
+                this.patternDaemon = daemons['failure-pattern'] || { status: 'stopped' };
+                this.autofixDaemon = daemons['auto-fix'] || { status: 'stopped' };
+                this.daemonSupervisor = daemons['daemon-supervisor'] || { status: 'stopped' };
+                this.zombieCleanup = daemons['zombie-cleanup'] || { status: 'stopped' };
+
+                // Learning monitor needs special handling for its additional data
+                const learningStatus = daemons['learning-monitor'] || { status: 'stopped' };
+                this.learningMonitor = {
+                    status: learningStatus.status,
+                    pid: learningStatus.pid,
+                    uptime: learningStatus.uptime,
+                    memory: learningStatus.memory,
+                    active_tasks: 0,
+                    metrics: { total_killed: 0 }
+                };
+            } catch (error) {
+                console.error('Error fetching daemon statuses:', error);
+            }
+        },
+
         // Check data freshness periodically
         checkDataFreshness() {
             if (!this.lastUpdateTimestamp) {
@@ -844,76 +834,10 @@ function dashboard() {
                 }
             }, 5000);
 
-            // Note: Daemon status now pushed via WebSocket, no polling needed when connected
-            // Fallback: Poll daemon status only if WebSocket is disconnected
+            // Fallback: Poll all daemon statuses only if WebSocket is disconnected
             setInterval(async () => {
                 if (!this.ws || this.ws.readyState !== WebSocket.OPEN) {
-                    try {
-                        const res = await fetch('/api/daemon/status');
-                        this.daemon = await res.json();
-                    } catch (error) {
-                        console.error('Error polling daemon status:', error);
-                    }
-                }
-            }, 10000);
-
-            // Fallback: Poll PM daemon status only if WebSocket is disconnected
-            setInterval(async () => {
-                if (!this.ws || this.ws.readyState !== WebSocket.OPEN) {
-                    try {
-                        const res = await fetch('/api/pm-daemon/status');
-                        this.pmDaemon = await res.json();
-                    } catch (error) {
-                        console.error('Error polling PM daemon status:', error);
-                    }
-                }
-            }, 10000);
-
-            // Fallback: Poll Health daemon status only if WebSocket is disconnected
-            setInterval(async () => {
-                if (!this.ws || this.ws.readyState !== WebSocket.OPEN) {
-                    try {
-                        const res = await fetch('/api/health-daemon/status');
-                        this.healthDaemon = await res.json();
-                    } catch (error) {
-                        console.error('Error polling Health daemon status:', error);
-                    }
-                }
-            }, 10000);
-
-            // Fallback: Poll Metrics daemon status only if WebSocket is disconnected
-            setInterval(async () => {
-                if (!this.ws || this.ws.readyState !== WebSocket.OPEN) {
-                    try {
-                        const res = await fetch('/api/metrics-daemon/status');
-                        this.metricsDaemon = await res.json();
-                    } catch (error) {
-                        console.error('Error polling Metrics daemon status:', error);
-                    }
-                }
-            }, 10000);
-
-            // Fallback: Poll Coordinator daemon status only if WebSocket is disconnected
-            setInterval(async () => {
-                if (!this.ws || this.ws.readyState !== WebSocket.OPEN) {
-                    try {
-                        const res = await fetch('/api/coordinator-daemon/status');
-                        this.coordinatorDaemon = await res.json();
-                    } catch (error) {
-                        console.error('Error polling Coordinator daemon status:', error);
-                    }
-                }
-            }, 10000);
-
-            // Fallback: Poll Integration Validator status only if WebSocket is disconnected
-            setInterval(async () => {
-                if (!this.ws || this.ws.readyState !== WebSocket.OPEN) {
-                    try {
-                        const res = await fetch('/api/integration-validator/status');
-                        this.integrationValidatorDaemon = await res.json();
-                    } catch (error) {
-                        console.error('Error polling Integration Validator status:', error);
-                    }
+                    await this.fetchAllDaemonStatuses();
                 }
             }, 10000);
 
@@ -2667,6 +2591,75 @@ function dashboard() {
                 }
             } catch (error) {
                 console.error(`Error controlling learning monitor:`, error);
+                alert(`Error: ${error.message}`);
+            }
+        },
+
+        async controlHeartbeatDaemon(action) {
+            try {
+                const response = await fetch(`/api/heartbeat-monitor/${action}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+
+                const result = await response.json();
+
+                if (result.status === 'started' || result.status === 'stopped' || result.status === 'already_running') {
+                    console.log(`Heartbeat monitor ${action} successful:`, result.message);
+                    // Refresh all daemon statuses
+                    setTimeout(() => this.fetchAllDaemonStatuses(), 1000);
+                } else {
+                    console.error(`Heartbeat monitor ${action} failed:`, result.message || result.error);
+                    alert(`Failed to ${action} heartbeat monitor: ${result.message || result.error}`);
+                }
+            } catch (error) {
+                console.error(`Error controlling heartbeat monitor:`, error);
+                alert(`Error: ${error.message}`);
+            }
+        },
+
+        async controlDaemonSupervisor(action) {
+            try {
+                const response = await fetch(`/api/daemon-supervisor/${action}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+
+                const result = await response.json();
+
+                if (result.status === 'started' || result.status === 'stopped' || result.status === 'already_running') {
+                    console.log(`Daemon supervisor ${action} successful:`, result.message);
+                    // Refresh all daemon statuses
+                    setTimeout(() => this.fetchAllDaemonStatuses(), 1000);
+                } else {
+                    console.error(`Daemon supervisor ${action} failed:`, result.message || result.error);
+                    alert(`Failed to ${action} daemon supervisor: ${result.message || result.error}`);
+                }
+            } catch (error) {
+                console.error(`Error controlling daemon supervisor:`, error);
+                alert(`Error: ${error.message}`);
+            }
+        },
+
+        async controlZombieCleanup(action) {
+            try {
+                const response = await fetch(`/api/zombie-cleanup/${action}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+
+                const result = await response.json();
+
+                if (result.status === 'started' || result.status === 'stopped' || result.status === 'already_running') {
+                    console.log(`Zombie cleanup ${action} successful:`, result.message);
+                    // Refresh all daemon statuses
+                    setTimeout(() => this.fetchAllDaemonStatuses(), 1000);
+                } else {
+                    console.error(`Zombie cleanup ${action} failed:`, result.message || result.error);
+                    alert(`Failed to ${action} zombie cleanup: ${result.message || result.error}`);
+                }
+            } catch (error) {
+                console.error(`Error controlling zombie cleanup:`, error);
                 alert(`Error: ${error.message}`);
             }
         },
