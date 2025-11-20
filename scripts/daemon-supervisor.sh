@@ -1,137 +1,164 @@
 #!/bin/bash
 # scripts/daemon-supervisor.sh
-# Permanent daemon supervisor - monitors and auto-restarts critical daemons
-# Runs as a daemon itself and ensures all required services stay running
+# Monitors critical daemons and automatically restarts them if they stop
+# Ensures commit-relay system remains operational
+
+set -euo pipefail
 
 # Get script directory
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 COMMIT_RELAY_HOME="${COMMIT_RELAY_HOME:-$(cd "$SCRIPT_DIR/.." && pwd)}"
 
 # Configuration
-SUPERVISOR_LOG="$COMMIT_RELAY_HOME/logs/daemons/daemon-supervisor.log"
-CHECK_INTERVAL=30  # seconds between checks
-PID_FILE="/tmp/commit-relay-daemon-supervisor.pid"
+DAEMON_NAME="daemon-supervisor"
+CHECK_INTERVAL="${DAEMON_SUPERVISOR_INTERVAL:-60}"  # Check every 60 seconds
+LOG_FILE="${COMMIT_RELAY_HOME}/agents/logs/system/daemon-supervisor.log"
+PID_FILE="/tmp/${DAEMON_NAME}.pid"
+EVENTS_FILE="${COMMIT_RELAY_HOME}/coordination/events/daemon-supervisor-events.jsonl"
 
-# Ensure logs directory exists
-mkdir -p "$COMMIT_RELAY_HOME/logs/daemons"
-
-# Define critical daemons to supervise (name:script pairs)
-# Special syntax for dashboard: "name:node:path/to/server.js"
-DAEMON_LIST=(
-    "pm-daemon:pm-daemon.sh"
-    "health-monitor:health-monitor-daemon.sh"
-    "metrics-snapshot:metrics-snapshot-daemon.sh"
-    "coordinator:coordinator-daemon.sh"
-    "integration-validator:integration-validator-daemon.sh"
+# Critical daemons to monitor (name:script pairs)
+CRITICAL_DAEMONS=(
     "worker-daemon:worker-daemon.sh"
-    "dashboard:node:dashboard/server/index.js"
+    "coordinator-daemon:coordinator-daemon.sh"
+    "pm-daemon:pm-daemon.sh"
+    "heartbeat-monitor:daemons/heartbeat-monitor-daemon.sh"
 )
 
-# Function to log messages
-log_msg() {
-    echo "[$(date '+%Y-%m-%d %H:%M:%S')] $1"
+# Optional daemons (will be restarted but not logged as critical)
+OPTIONAL_DAEMONS=(
+    "health-monitor:health-monitor-daemon.sh"
+    "metrics-snapshot:metrics-snapshot-daemon.sh"
+    "failure-pattern:daemons/failure-pattern-daemon.sh"
+    "auto-fix:daemons/auto-fix-daemon.sh"
+)
+
+# Ensure directories exist
+mkdir -p "$(dirname "$LOG_FILE")"
+mkdir -p "$(dirname "$EVENTS_FILE")"
+
+# Redirect output to log file
+exec >> "$LOG_FILE" 2>&1
+
+log() {
+    echo "[$(date +%Y-%m-%dT%H:%M:%S%z)] $1"
 }
 
-# Function to check if daemon is running
-is_daemon_running() {
-    local script_name="$1"
-    pgrep -f "$script_name" > /dev/null 2>&1
+emit_event() {
+    local event_type="$1"
+    local data="$2"
+    echo "{\"timestamp\": \"$(date -u +%Y-%m-%dT%H:%M:%SZ)\", \"event\": \"$event_type\", \"data\": $data}" >> "$EVENTS_FILE"
 }
 
-# Function to start a daemon
-start_daemon() {
-    local daemon_name="$1"
-    local script_spec="$2"
-    local log_file="$COMMIT_RELAY_HOME/logs/daemons/${daemon_name}.log"
-
-    log_msg "[SUPERVISOR] Starting $daemon_name..."
-
-    # Check if this is a Node.js daemon (format: "node:path/to/file.js")
-    if [[ "$script_spec" == node:* ]]; then
-        local node_script="${script_spec#node:}"
-        cd "$COMMIT_RELAY_HOME"
-        nohup node "$node_script" >> "$log_file" 2>&1 &
-        local pid=$!
+# Check if daemon is already running
+if [ -f "$PID_FILE" ]; then
+    OLD_PID=$(cat "$PID_FILE")
+    if ps -p "$OLD_PID" > /dev/null 2>&1; then
+        log "ERROR: Daemon supervisor already running with PID $OLD_PID"
+        exit 1
     else
-        # Regular bash script daemon
-        nohup "$SCRIPT_DIR/$script_spec" >> "$log_file" 2>&1 &
-        local pid=$!
+        log "WARN: Removing stale PID file for PID $OLD_PID"
+        rm -f "$PID_FILE"
     fi
+fi
 
-    # Wait a moment and verify it started
-    sleep 2
-    if ps -p $pid > /dev/null 2>&1; then
-        log_msg "[SUPERVISOR] $daemon_name started successfully (PID: $pid)"
-        return 0
-    else
-        log_msg "[SUPERVISOR] $daemon_name failed to start"
-        return 1
-    fi
-}
+# Write our PID
+echo $$ > "$PID_FILE"
 
-# Function to supervise all daemons
-supervise_daemons() {
-    for daemon_entry in "${DAEMON_LIST[@]}"; do
-        local daemon_name="${daemon_entry%%:*}"
-        local script_spec="${daemon_entry#*:}"
+# Cleanup on exit
+trap 'rm -f "$PID_FILE"; log "INFO: Daemon supervisor stopping (PID $$)"' EXIT INT TERM
 
-        # Extract actual script name for process check
-        local check_name
-        if [[ "$script_spec" == node:* ]]; then
-            check_name="${script_spec#node:}"
-        else
-            check_name="$script_spec"
-        fi
+log "INFO: Daemon supervisor starting (PID $$)"
+log "INFO: Check interval: ${CHECK_INTERVAL}s"
+log "INFO: Monitoring ${#CRITICAL_DAEMONS[@]} critical daemons"
 
-        if ! is_daemon_running "$check_name"; then
-            log_msg "[SUPERVISOR] $daemon_name is not running! Attempting restart..."
-            start_daemon "$daemon_name" "$script_spec"
+# Track restart counts
+declare -A restart_counts 2>/dev/null || true
+
+# Main monitoring loop
+while true; do
+    cd "$COMMIT_RELAY_HOME"
+
+    # Check critical daemons
+    for daemon_pair in "${CRITICAL_DAEMONS[@]}"; do
+        IFS=':' read -r daemon_name script_name <<< "$daemon_pair"
+        script_path="$SCRIPT_DIR/$script_name"
+
+        if ! pgrep -f "$script_name" > /dev/null 2>&1; then
+            log "CRITICAL: $daemon_name is not running!"
+
+            # Check if script exists
+            if [ ! -f "$script_path" ]; then
+                log "ERROR: Script not found: $script_path"
+                emit_event "daemon_missing_script" "{\"daemon\": \"$daemon_name\", \"script\": \"$script_path\"}"
+                continue
+            fi
+
+            # Attempt restart
+            log "INFO: Attempting to restart $daemon_name..."
+            nohup "$script_path" >> "$COMMIT_RELAY_HOME/agents/logs/system/${daemon_name}.log" 2>&1 &
+
+            sleep 3
+
+            # Verify restart
+            if pgrep -f "$script_name" > /dev/null 2>&1; then
+                log "SUCCESS: $daemon_name restarted successfully"
+                emit_event "daemon_restarted" "{\"daemon\": \"$daemon_name\", \"critical\": true}"
+
+                # Broadcast to dashboard
+                curl -s -X POST "http://localhost:3000/api/events" \
+                    -H "Content-Type: application/json" \
+                    -d "{\"type\": \"daemon_restarted\", \"data\": {\"daemon\": \"$daemon_name\", \"critical\": true}}" \
+                    2>/dev/null || true
+            else
+                log "ERROR: Failed to restart $daemon_name"
+                emit_event "daemon_restart_failed" "{\"daemon\": \"$daemon_name\", \"critical\": true}"
+
+                # Send alert
+                curl -s -X POST "http://localhost:3000/api/events" \
+                    -H "Content-Type: application/json" \
+                    -d "{\"type\": \"daemon_restart_failed\", \"data\": {\"daemon\": \"$daemon_name\", \"critical\": true}, \"severity\": \"critical\"}" \
+                    2>/dev/null || true
+            fi
         fi
     done
-}
 
-# Function to handle signals
-cleanup() {
-    log_msg "[SUPERVISOR] Supervisor shutting down..."
-    rm -f "$PID_FILE"
-    exit 0
-}
+    # Check optional daemons (less critical, still restart)
+    for daemon_pair in "${OPTIONAL_DAEMONS[@]}"; do
+        IFS=':' read -r daemon_name script_name <<< "$daemon_pair"
+        script_path="$SCRIPT_DIR/$script_name"
 
-# Set up signal handlers
-trap cleanup SIGTERM SIGINT
+        if ! pgrep -f "$script_name" > /dev/null 2>&1; then
+            # Silently restart optional daemons
+            if [ -f "$script_path" ]; then
+                nohup "$script_path" >> "$COMMIT_RELAY_HOME/agents/logs/system/${daemon_name}.log" 2>&1 &
+                sleep 2
 
-# Main supervisor loop
-main() {
-    # Check if supervisor is already running
-    if [ -f "$PID_FILE" ]; then
-        old_pid=$(cat "$PID_FILE")
-        if ps -p "$old_pid" > /dev/null 2>&1; then
-            log_msg "[SUPERVISOR] Supervisor already running with PID $old_pid"
-            exit 1
+                if pgrep -f "$script_name" > /dev/null 2>&1; then
+                    log "INFO: Restarted optional daemon $daemon_name"
+                    emit_event "daemon_restarted" "{\"daemon\": \"$daemon_name\", \"critical\": false}"
+                fi
+            fi
+        fi
+    done
+
+    # Report overall health every 5 minutes
+    if [ $(($(date +%s) % 300)) -lt $CHECK_INTERVAL ]; then
+        running_critical=0
+        total_critical=${#CRITICAL_DAEMONS[@]}
+
+        for daemon_pair in "${CRITICAL_DAEMONS[@]}"; do
+            IFS=':' read -r _ script_name <<< "$daemon_pair"
+            if pgrep -f "$script_name" > /dev/null 2>&1; then
+                ((running_critical++))
+            fi
+        done
+
+        if [ $running_critical -eq $total_critical ]; then
+            log "INFO: All $total_critical critical daemons running"
         else
-            log_msg "[SUPERVISOR] Stale PID file found, removing..."
-            rm -f "$PID_FILE"
+            log "WARN: Only $running_critical/$total_critical critical daemons running"
         fi
     fi
 
-    # Write our PID
-    echo $$ > "$PID_FILE"
-
-    log_msg "========================================"
-    log_msg "Daemon Supervisor Started"
-    log_msg "========================================"
-    log_msg "[SUPERVISOR] PID: $$"
-    log_msg "[SUPERVISOR] Check interval: ${CHECK_INTERVAL}s"
-    log_msg "[SUPERVISOR] Monitoring ${#DAEMON_LIST[@]} critical daemons"
-    log_msg "[SUPERVISOR] Log: $SUPERVISOR_LOG"
-
-    # Supervisor loop
-    while true; do
-        supervise_daemons
-        sleep $CHECK_INTERVAL
-    done
-}
-
-# Run supervisor
-cd "$COMMIT_RELAY_HOME"
-main >> "$SUPERVISOR_LOG" 2>&1
+    sleep "$CHECK_INTERVAL"
+done
