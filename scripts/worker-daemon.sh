@@ -103,9 +103,118 @@ check_pool_capacity() {
     return 0
 }
 
+# Check for completed workers and finalize their lifecycle
+check_completed_workers() {
+    local ACTIVE_SPECS_DIR="$COMMIT_RELAY_HOME/coordination/worker-specs/active"
+    local COMPLETED_DIR="$COMMIT_RELAY_HOME/coordination/worker-specs/completed"
+    local FAILED_DIR="$COMMIT_RELAY_HOME/coordination/worker-specs/failed"
+    local WORKERS_DIR="$COMMIT_RELAY_HOME/agents/workers"
+
+    mkdir -p "$COMPLETED_DIR" "$FAILED_DIR"
+
+    if [ ! -d "$ACTIVE_SPECS_DIR" ]; then
+        return 0
+    fi
+
+    for spec_file in "$ACTIVE_SPECS_DIR"/*.json; do
+        if [ ! -f "$spec_file" ]; then
+            continue
+        fi
+
+        local worker_id=$(jq -r '.worker_id' "$spec_file" 2>/dev/null || echo "")
+        local worker_status=$(jq -r '.status' "$spec_file" 2>/dev/null || echo "")
+
+        if [ -z "$worker_id" ] || [ "$worker_id" = "null" ]; then
+            continue
+        fi
+
+        # Skip pending workers
+        if [ "$worker_status" = "pending" ]; then
+            continue
+        fi
+
+        # Check for status.json in worker directory
+        local status_file="$WORKERS_DIR/$worker_id/status.json"
+        if [ ! -f "$status_file" ]; then
+            continue
+        fi
+
+        local final_status=$(jq -r '.status' "$status_file" 2>/dev/null || echo "")
+
+        if [ "$final_status" = "completed" ]; then
+            log_daemon "INFO: Worker $worker_id completed successfully"
+
+            # Update spec with completion info
+            local completed_at=$(jq -r '.timestamp' "$status_file" 2>/dev/null || date -u +%Y-%m-%dT%H:%M:%SZ)
+            jq --arg status "completed" --arg completed "$completed_at" \
+               '.status = $status | .execution.completed_at = $completed' \
+               "$spec_file" > "${spec_file}.tmp" && mv "${spec_file}.tmp" "$spec_file"
+
+            # Move to completed directory
+            mv "$spec_file" "$COMPLETED_DIR/"
+            log_daemon "INFO: Moved $worker_id spec to completed"
+
+            # Update task queue status
+            local task_id=$(jq -r '.task_id' "$COMPLETED_DIR/$(basename "$spec_file")" 2>/dev/null || echo "")
+            if [ -n "$task_id" ] && [ "$task_id" != "null" ]; then
+                local task_queue="$COMMIT_RELAY_HOME/coordination/task-queue.json"
+                if [ -f "$task_queue" ]; then
+                    jq --arg tid "$task_id" \
+                       '(.tasks[] | select(.id == $tid)).status = "completed"' \
+                       "$task_queue" > /tmp/task-queue-update.tmp && \
+                       mv /tmp/task-queue-update.tmp "$task_queue"
+                    log_daemon "INFO: Updated task $task_id status to completed"
+                fi
+            fi
+
+            # Emit completion event
+            broadcast_dashboard_event "worker_completed" \
+                "{\"worker_id\": \"$worker_id\", \"task_id\": \"$task_id\", \"status\": \"completed\"}" \
+                2>/dev/null || true
+
+        elif [ "$final_status" = "failed" ]; then
+            log_daemon "WARN: Worker $worker_id failed"
+
+            # Get error info
+            local error=$(jq -r '.error // "unknown"' "$status_file" 2>/dev/null || echo "unknown")
+            local exit_code=$(jq -r '.exit_code // 1' "$status_file" 2>/dev/null || echo "1")
+
+            # Update spec with failure info
+            jq --arg status "failed" --arg error "$error" --argjson code "$exit_code" \
+               '.status = $status | .execution.error = $error | .execution.exit_code = $code | .execution.completed_at = (now | todate)' \
+               "$spec_file" > "${spec_file}.tmp" && mv "${spec_file}.tmp" "$spec_file"
+
+            # Move to failed directory
+            mv "$spec_file" "$FAILED_DIR/"
+            log_daemon "INFO: Moved $worker_id spec to failed"
+
+            # Update task queue status
+            local task_id=$(jq -r '.task_id' "$FAILED_DIR/$(basename "$spec_file")" 2>/dev/null || echo "")
+            if [ -n "$task_id" ] && [ "$task_id" != "null" ]; then
+                local task_queue="$COMMIT_RELAY_HOME/coordination/task-queue.json"
+                if [ -f "$task_queue" ]; then
+                    jq --arg tid "$task_id" \
+                       '(.tasks[] | select(.id == $tid)).status = "failed"' \
+                       "$task_queue" > /tmp/task-queue-update.tmp && \
+                       mv /tmp/task-queue-update.tmp "$task_queue"
+                    log_daemon "INFO: Updated task $task_id status to failed"
+                fi
+            fi
+
+            # Emit failure event
+            broadcast_dashboard_event "worker_failed" \
+                "{\"worker_id\": \"$worker_id\", \"task_id\": \"$task_id\", \"error\": \"$error\"}" \
+                2>/dev/null || true
+        fi
+    done
+}
+
 # Main daemon loop
 while true; do
     cd "$COMMIT_RELAY_HOME"
+
+    # Check for completed workers first
+    check_completed_workers
 
     # MoE: Check pool capacity before processing workers
     if ! check_pool_capacity; then

@@ -98,7 +98,11 @@
   "role_assignments": {
     "commit-relay-system": "system",
     "default-user": "user",
-    "security-master": "system"
+    "coordinator-master": "system",
+    "development-master": "system",
+    "security-master": "system",
+    "inventory-master": "system",
+    "cicd-master": "system"
   },
   "updated_at": "2025-11-19T14:02:21.389Z"
 }
