@@ -1854,6 +1854,9 @@ app.get('/api/daemons/all',
       'worker-restart': checkDaemon('worker-restart', 'worker-restart-daemon.sh'),
       'failure-pattern': checkDaemon('failure-pattern', 'failure-pattern-daemon.sh'),
       'auto-fix': checkDaemon('auto-fix', 'auto-fix-daemon.sh'),
+      'learning-monitor': checkDaemon('learning-monitor', 'learning-task-monitor-daemon.sh'),
+      'daemon-supervisor': checkDaemon('daemon-supervisor', 'daemon-supervisor.sh'),
+      'zombie-cleanup': checkDaemon('zombie-cleanup', 'zombie-killer-daemon.sh'),
       'dashboard': {
         status: 'running',
         pid: process.pid,
@@ -1889,10 +1892,14 @@ app.post('/api/health-monitor/start', async (req, res) => {
   try {
     const scriptPath = path.join(__dirname, '../../scripts/health-monitor-daemon.sh');
 
-    // Check if already running
-    const isRunning = await safeExec(`pgrep -f "health-monitor-daemon.sh"`);
-    if (isRunning.stdout.trim()) {
-      return res.json({ status: 'already_running', message: 'Health monitor is already running' });
+    // Check if already running (pgrep returns 1 when no match, which throws)
+    try {
+      const isRunning = await safeExec('pgrep', ['-f', 'health-monitor-daemon.sh']);
+      if (isRunning.stdout.trim()) {
+        return res.json({ status: 'already_running', message: 'Health monitor is already running' });
+      }
+    } catch (e) {
+      // pgrep returns exit code 1 when no processes match - this is expected
     }
 
     // Start the daemon
@@ -1917,7 +1924,7 @@ app.post('/api/health-monitor/start', async (req, res) => {
  */
 app.post('/api/health-monitor/stop', async (req, res) => {
   try {
-    await safeExec(`pkill -f "health-monitor-daemon.sh"`);
+    await safeExec('pkill', ['-f', 'health-monitor-daemon.sh']);
     res.json({ status: 'stopped', message: 'Health monitor daemon stopped' });
   } catch (error) {
     res.json({ status: 'not_running', message: 'Health monitor was not running' });
@@ -1932,10 +1939,14 @@ app.post('/api/metrics-snapshot/start', async (req, res) => {
   try {
     const scriptPath = path.join(__dirname, '../../scripts/metrics-snapshot-daemon.sh');
 
-    // Check if already running
-    const isRunning = await safeExec(`pgrep -f "metrics-snapshot-daemon.sh"`);
-    if (isRunning.stdout.trim()) {
-      return res.json({ status: 'already_running', message: 'Metrics snapshot is already running' });
+    // Check if already running (pgrep returns 1 when no match, which throws)
+    try {
+      const isRunning = await safeExec('pgrep', ['-f', 'metrics-snapshot-daemon.sh']);
+      if (isRunning.stdout.trim()) {
+        return res.json({ status: 'already_running', message: 'Metrics snapshot is already running' });
+      }
+    } catch (e) {
+      // pgrep returns exit code 1 when no processes match - this is expected
     }
 
     // Start the daemon
@@ -1960,10 +1971,198 @@ app.post('/api/metrics-snapshot/start', async (req, res) => {
  */
 app.post('/api/metrics-snapshot/stop', async (req, res) => {
   try {
-    await safeExec(`pkill -f "metrics-snapshot-daemon.sh"`);
+    await safeExec('pkill', ['-f', 'metrics-snapshot-daemon.sh']);
     res.json({ status: 'stopped', message: 'Metrics snapshot daemon stopped' });
   } catch (error) {
     res.json({ status: 'not_running', message: 'Metrics snapshot was not running' });
+  }
+});
+
+/**
+ * POST /api/heartbeat-monitor/start
+ * Start heartbeat monitor daemon
+ */
+app.post('/api/heartbeat-monitor/start', async (req, res) => {
+  try {
+    const scriptPath = path.join(__dirname, '../../scripts/daemons/heartbeat-monitor-daemon.sh');
+
+    // Check if already running (pgrep returns 1 when no match, which throws)
+    try {
+      const isRunning = await safeExec('pgrep', ['-f', 'heartbeat-monitor-daemon.sh']);
+      if (isRunning.stdout.trim()) {
+        return res.json({ status: 'already_running', message: 'Heartbeat monitor is already running' });
+      }
+    } catch (e) {
+      // pgrep returns exit code 1 when no processes match - this is expected
+    }
+
+    // Start the daemon
+    const { spawn } = require('child_process');
+    spawn('bash', [scriptPath], {
+      detached: true,
+      stdio: 'ignore'
+    }).unref();
+
+    setTimeout(() => {
+      res.json({ status: 'started', message: 'Heartbeat monitor daemon started successfully' });
+    }, 1000);
+  } catch (error) {
+    console.error('Error starting heartbeat monitor:', error);
+    res.status(500).json({ error: 'Failed to start heartbeat monitor' });
+  }
+});
+
+/**
+ * POST /api/heartbeat-monitor/stop
+ * Stop heartbeat monitor daemon
+ */
+app.post('/api/heartbeat-monitor/stop', async (req, res) => {
+  try {
+    await safeExec('pkill', ['-f', 'heartbeat-monitor-daemon.sh']);
+    res.json({ status: 'stopped', message: 'Heartbeat monitor daemon stopped' });
+  } catch (error) {
+    res.json({ status: 'not_running', message: 'Heartbeat monitor was not running' });
+  }
+});
+
+/**
+ * POST /api/learning-monitor/start
+ * Start learning task monitor daemon
+ */
+app.post('/api/learning-monitor/start', async (req, res) => {
+  try {
+    const scriptPath = path.join(__dirname, '../../scripts/daemons/learning-task-monitor-daemon.sh');
+
+    // Check if already running (pgrep returns 1 when no match, which throws)
+    try {
+      const isRunning = await safeExec('pgrep', ['-f', 'learning-task-monitor-daemon.sh']);
+      if (isRunning.stdout.trim()) {
+        return res.json({ status: 'already_running', message: 'Learning monitor is already running' });
+      }
+    } catch (e) {
+      // pgrep returns exit code 1 when no processes match - this is expected
+    }
+
+    // Start the daemon
+    const { spawn } = require('child_process');
+    spawn('bash', [scriptPath], {
+      detached: true,
+      stdio: 'ignore'
+    }).unref();
+
+    setTimeout(() => {
+      res.json({ status: 'started', message: 'Learning monitor daemon started successfully' });
+    }, 1000);
+  } catch (error) {
+    console.error('Error starting learning monitor:', error);
+    res.status(500).json({ error: 'Failed to start learning monitor' });
+  }
+});
+
+/**
+ * POST /api/learning-monitor/stop
+ * Stop learning task monitor daemon
+ */
+app.post('/api/learning-monitor/stop', async (req, res) => {
+  try {
+    await safeExec('pkill', ['-f', 'learning-task-monitor-daemon.sh']);
+    res.json({ status: 'stopped', message: 'Learning monitor daemon stopped' });
+  } catch (error) {
+    res.json({ status: 'not_running', message: 'Learning monitor was not running' });
+  }
+});
+
+/**
+ * POST /api/daemon-supervisor/start
+ * Start daemon supervisor
+ */
+app.post('/api/daemon-supervisor/start', async (req, res) => {
+  try {
+    const scriptPath = path.join(__dirname, '../../scripts/daemon-supervisor.sh');
+
+    // Check if already running (pgrep returns 1 when no match, which throws)
+    try {
+      const isRunning = await safeExec('pgrep', ['-f', 'daemon-supervisor.sh']);
+      if (isRunning.stdout.trim()) {
+        return res.json({ status: 'already_running', message: 'Daemon supervisor is already running' });
+      }
+    } catch (e) {
+      // pgrep returns exit code 1 when no processes match - this is expected
+    }
+
+    // Start the daemon
+    const { spawn } = require('child_process');
+    spawn('bash', [scriptPath], {
+      detached: true,
+      stdio: 'ignore'
+    }).unref();
+
+    setTimeout(() => {
+      res.json({ status: 'started', message: 'Daemon supervisor started successfully' });
+    }, 1000);
+  } catch (error) {
+    console.error('Error starting daemon supervisor:', error);
+    res.status(500).json({ error: 'Failed to start daemon supervisor' });
+  }
+});
+
+/**
+ * POST /api/daemon-supervisor/stop
+ * Stop daemon supervisor
+ */
+app.post('/api/daemon-supervisor/stop', async (req, res) => {
+  try {
+    await safeExec('pkill', ['-f', 'daemon-supervisor.sh']);
+    res.json({ status: 'stopped', message: 'Daemon supervisor stopped' });
+  } catch (error) {
+    res.json({ status: 'not_running', message: 'Daemon supervisor was not running' });
+  }
+});
+
+/**
+ * POST /api/zombie-cleanup/start
+ * Start zombie cleanup daemon
+ */
+app.post('/api/zombie-cleanup/start', async (req, res) => {
+  try {
+    const scriptPath = path.join(__dirname, '../../scripts/zombie-killer-daemon.sh');
+
+    // Check if already running (pgrep returns 1 when no match, which throws)
+    try {
+      const isRunning = await safeExec('pgrep', ['-f', 'zombie-killer-daemon.sh']);
+      if (isRunning.stdout.trim()) {
+        return res.json({ status: 'already_running', message: 'Zombie cleanup is already running' });
+      }
+    } catch (e) {
+      // pgrep returns exit code 1 when no processes match - this is expected
+    }
+
+    // Start the daemon
+    const { spawn } = require('child_process');
+    spawn('bash', [scriptPath], {
+      detached: true,
+      stdio: 'ignore'
+    }).unref();
+
+    setTimeout(() => {
+      res.json({ status: 'started', message: 'Zombie cleanup daemon started successfully' });
+    }, 1000);
+  } catch (error) {
+    console.error('Error starting zombie cleanup:', error);
+    res.status(500).json({ error: 'Failed to start zombie cleanup' });
+  }
+});
+
+/**
+ * POST /api/zombie-cleanup/stop
+ * Stop zombie cleanup daemon
+ */
+app.post('/api/zombie-cleanup/stop', async (req, res) => {
+  try {
+    await safeExec('pkill', ['-f', 'zombie-killer-daemon.sh']);
+    res.json({ status: 'stopped', message: 'Zombie cleanup daemon stopped' });
+  } catch (error) {
+    res.json({ status: 'not_running', message: 'Zombie cleanup was not running' });
   }
 });
 
