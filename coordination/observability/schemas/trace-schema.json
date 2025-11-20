@@ -1,0 +1,157 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Commit-Relay Distributed Trace Schema",
+  "description": "Schema for distributed tracing spans and traces",
+  "definitions": {
+    "span": {
+      "type": "object",
+      "required": ["span_id", "trace_id", "name", "start_time", "duration_ms", "status"],
+      "properties": {
+        "span_id": {
+          "type": "string",
+          "description": "Unique span identifier",
+          "pattern": "^span-[a-z0-9]+$"
+        },
+        "trace_id": {
+          "type": "string",
+          "description": "Trace this span belongs to",
+          "pattern": "^trace-[0-9]+-[a-z0-9]+$"
+        },
+        "parent_span_id": {
+          "type": ["string", "null"],
+          "description": "Parent span ID (null for root spans)",
+          "pattern": "^span-[a-z0-9]+$"
+        },
+        "name": {
+          "type": "string",
+          "description": "Human-readable span name",
+          "examples": ["task_execution", "worker_spawn", "code_generation", "routing_decision"]
+        },
+        "start_time": {
+          "type": "integer",
+          "description": "Span start time in milliseconds since epoch"
+        },
+        "end_time": {
+          "type": "integer",
+          "description": "Span end time in milliseconds since epoch"
+        },
+        "duration_ms": {
+          "type": "number",
+          "description": "Span duration in milliseconds",
+          "minimum": 0
+        },
+        "status": {
+          "type": "string",
+          "enum": ["ok", "error", "timeout", "cancelled"],
+          "description": "Span completion status"
+        },
+        "kind": {
+          "type": "string",
+          "enum": ["internal", "server", "client", "producer", "consumer"],
+          "description": "Span kind following OpenTelemetry conventions"
+        },
+        "attributes": {
+          "type": "object",
+          "description": "Span attributes and tags",
+          "properties": {
+            "task_id": {"type": "string"},
+            "worker_id": {"type": "string"},
+            "master_id": {"type": "string"},
+            "component": {"type": "string"},
+            "operation": {"type": "string"},
+            "error_message": {"type": "string"},
+            "error_code": {"type": "string"}
+          },
+          "additionalProperties": true
+        },
+        "events": {
+          "type": "array",
+          "description": "Timestamped events within span",
+          "items": {
+            "type": "object",
+            "required": ["timestamp", "name"],
+            "properties": {
+              "timestamp": {"type": "integer"},
+              "name": {"type": "string"},
+              "attributes": {"type": "object"}
+            }
+          }
+        },
+        "links": {
+          "type": "array",
+          "description": "Links to related spans",
+          "items": {
+            "type": "object",
+            "required": ["trace_id", "span_id"],
+            "properties": {
+              "trace_id": {"type": "string"},
+              "span_id": {"type": "string"},
+              "attributes": {"type": "object"}
+            }
+          }
+        }
+      }
+    },
+    "trace": {
+      "type": "object",
+      "required": ["trace_id", "root_span_id", "start_time", "status"],
+      "properties": {
+        "trace_id": {
+          "type": "string",
+          "description": "Unique trace identifier"
+        },
+        "root_span_id": {
+          "type": "string",
+          "description": "ID of the root span"
+        },
+        "start_time": {
+          "type": "integer",
+          "description": "Trace start time (root span start)"
+        },
+        "end_time": {
+          "type": "integer",
+          "description": "Trace end time (last span end)"
+        },
+        "duration_ms": {
+          "type": "number",
+          "description": "Total trace duration"
+        },
+        "status": {
+          "type": "string",
+          "enum": ["active", "completed", "error", "timeout"],
+          "description": "Overall trace status"
+        },
+        "span_count": {
+          "type": "integer",
+          "description": "Number of spans in trace",
+          "minimum": 1
+        },
+        "error_count": {
+          "type": "integer",
+          "description": "Number of error spans",
+          "minimum": 0
+        },
+        "attributes": {
+          "type": "object",
+          "description": "Trace-level attributes",
+          "properties": {
+            "task_id": {"type": "string"},
+            "task_type": {"type": "string"},
+            "priority": {"type": "string"},
+            "user_id": {"type": "string"}
+          },
+          "additionalProperties": true
+        },
+        "spans": {
+          "type": "array",
+          "description": "All spans in this trace",
+          "items": {"$ref": "#/definitions/span"}
+        }
+      }
+    }
+  },
+  "oneOf": [
+    {"$ref": "#/definitions/span"},
+    {"$ref": "#/definitions/trace"}
+  ]
+}
