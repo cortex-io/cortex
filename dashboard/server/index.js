@@ -62,6 +62,10 @@ const usersRouter = require('./routes/users');
 const app = express();
 const PORT = process.env.DASHBOARD_PORT || 3000;
 
+// Server start time for detecting restarts
+const SERVER_START_TIME = Date.now();
+const SERVER_START_ISO = new Date(SERVER_START_TIME).toISOString();
+
 // Security: Helmet for security headers
 app.use(helmet({
   contentSecurityPolicy: false, // Allow inline scripts for dashboard
@@ -648,13 +652,15 @@ function calculateMetrics(data, successRatePeriod = 'all_time') {
 
 /**
  * GET /api/health
- * Health check endpoint
+ * Health check endpoint - includes server start time for restart detection
  */
 app.get('/api/health', (req, res) => {
   res.json({
     status: 'healthy',
     uptime: process.uptime(),
-    timestamp: new Date().toISOString()
+    timestamp: new Date().toISOString(),
+    server_start_time: SERVER_START_TIME,
+    server_start_iso: SERVER_START_ISO
   });
 });
 
@@ -1858,6 +1864,7 @@ app.get('/api/daemons/all',
       'learning-monitor': checkDaemon('learning-monitor', 'learning-task-monitor-daemon.sh'),
       'daemon-supervisor': checkDaemon('daemon-supervisor', 'daemon-supervisor.sh'),
       'zombie-cleanup': checkDaemon('zombie-cleanup', 'zombie-killer-daemon.sh'),
+      'handoff-processor': checkDaemon('handoff-processor', 'handoff-processor-daemon.sh'),
       'dashboard': {
         status: 'running',
         pid: process.pid,
@@ -2164,6 +2171,53 @@ app.post('/api/zombie-cleanup/stop', async (req, res) => {
     res.json({ status: 'stopped', message: 'Zombie cleanup daemon stopped' });
   } catch (error) {
     res.json({ status: 'not_running', message: 'Zombie cleanup was not running' });
+  }
+});
+
+/**
+ * POST /api/handoff-processor/start
+ * Start handoff processor daemon (CRITICAL for task execution)
+ */
+app.post('/api/handoff-processor/start', async (req, res) => {
+  try {
+    const scriptPath = path.join(__dirname, '../../scripts/handoff-processor-daemon.sh');
+
+    // Check if already running (pgrep returns 1 when no match, which throws)
+    try {
+      const isRunning = await safeExec('pgrep', ['-f', 'handoff-processor-daemon.sh']);
+      if (isRunning.stdout.trim()) {
+        return res.json({ status: 'already_running', message: 'Handoff processor is already running' });
+      }
+    } catch (e) {
+      // pgrep returns exit code 1 when no processes match - this is expected
+    }
+
+    // Start the daemon
+    const { spawn } = require('child_process');
+    spawn('bash', [scriptPath], {
+      detached: true,
+      stdio: 'ignore'
+    }).unref();
+
+    setTimeout(() => {
+      res.json({ status: 'started', message: 'Handoff processor daemon started successfully' });
+    }, 1000);
+  } catch (error) {
+    console.error('Error starting handoff processor:', error);
+    res.status(500).json({ error: 'Failed to start handoff processor' });
+  }
+});
+
+/**
+ * POST /api/handoff-processor/stop
+ * Stop handoff processor daemon
+ */
+app.post('/api/handoff-processor/stop', async (req, res) => {
+  try {
+    await safeExec('pkill', ['-f', 'handoff-processor-daemon.sh']);
+    res.json({ status: 'stopped', message: 'Handoff processor daemon stopped' });
+  } catch (error) {
+    res.json({ status: 'not_running', message: 'Handoff processor was not running' });
   }
 });
 
@@ -2883,6 +2937,72 @@ app.post('/api/event-log/purge', (req, res) => {
 });
 
 /**
+ * POST /api/moe/clear-routing-decisions
+ * Clear routing decisions by backing up and resetting the file
+ */
+app.post('/api/moe/clear-routing-decisions', (req, res) => {
+  try {
+    const fsSync = require('fs');
+    const routingDecisionsPath = path.join(COMMIT_RELAY_HOME, 'coordination', 'masters', 'coordinator', 'knowledge-base', 'routing-decisions.jsonl');
+    const backupDir = path.join(COMMIT_RELAY_HOME, 'coordination', 'masters', 'coordinator', 'knowledge-base', 'backups');
+
+    // Create backup directory if it doesn't exist
+    if (!fsSync.existsSync(backupDir)) {
+      fsSync.mkdirSync(backupDir, { recursive: true });
+    }
+
+    // Count decisions before clearing
+    let decisionCount = 0;
+    if (fsSync.existsSync(routingDecisionsPath)) {
+      const content = fsSync.readFileSync(routingDecisionsPath, 'utf-8');
+      const lines = content.trim().split('\n').filter(line => line);
+      decisionCount = lines.length;
+    }
+
+    // Create backup file with timestamp
+    const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+    const backupFile = path.join(backupDir, `routing-decisions-${timestamp}.jsonl`);
+
+    // Copy current file to backup
+    if (fsSync.existsSync(routingDecisionsPath) && decisionCount > 0) {
+      fsSync.copyFileSync(routingDecisionsPath, backupFile);
+    }
+
+    // Create new empty routing decisions file
+    fsSync.writeFileSync(routingDecisionsPath, '', 'utf-8');
+
+    // Also reset moe-metrics.json if it exists (but not stress-test metrics)
+    const moeMetricsPath = path.join(COMMIT_RELAY_HOME, 'coordination', 'masters', 'coordinator', 'knowledge-base', 'moe-metrics.json');
+    if (fsSync.existsSync(moeMetricsPath)) {
+      const metricsBackup = path.join(backupDir, `moe-metrics-${timestamp}.json`);
+      fsSync.copyFileSync(moeMetricsPath, metricsBackup);
+      // Reset to empty metrics object
+      const emptyMetrics = {
+        total_decisions: 0,
+        avg_confidence: 0,
+        decisions_by_master: {},
+        last_reset: new Date().toISOString()
+      };
+      fsSync.writeFileSync(moeMetricsPath, JSON.stringify(emptyMetrics, null, 2), 'utf-8');
+    }
+
+    res.json({
+      success: true,
+      message: 'Routing decisions cleared successfully',
+      cleared_count: decisionCount,
+      backup_file: backupFile
+    });
+  } catch (error) {
+    console.error('Error clearing routing decisions:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to clear routing decisions',
+      error: error.message
+    });
+  }
+});
+
+/**
  * GET /api/terminal-settings
  * Get current terminal window settings
  */
@@ -3520,6 +3640,31 @@ app.post('/api/moe/learning/activate', async (req, res) => {
   const fsSync = require('fs');
 
   try {
+    // SAFEGUARD: Check if critical daemons are running before creating tasks
+    let handoffProcessorRunning = false;
+    let workerDaemonRunning = false;
+    try {
+      execSync('pgrep -f "handoff-processor-daemon.sh"', { stdio: 'pipe' });
+      handoffProcessorRunning = true;
+    } catch (e) {}
+    try {
+      execSync('pgrep -f "worker-daemon.sh"', { stdio: 'pipe' });
+      workerDaemonRunning = true;
+    } catch (e) {}
+
+    if (!handoffProcessorRunning || !workerDaemonRunning) {
+      const missingDaemons = [];
+      if (!handoffProcessorRunning) missingDaemons.push('handoff-processor');
+      if (!workerDaemonRunning) missingDaemons.push('worker-daemon');
+
+      return res.status(503).json({
+        success: false,
+        message: `Cannot activate task: Critical daemons not running (${missingDaemons.join(', ')}). Tasks will get stuck without these daemons. Please start them first.`,
+        missing_daemons: missingDaemons,
+        suggestion: 'Start the daemon supervisor to auto-start critical daemons'
+      });
+    }
+
     const taskFile = path.join(COMMIT_RELAY_HOME, 'coordination', 'tasks', 'task-moe-learning-mastery.json');
     const taskQueueFile = path.join(COMMIT_RELAY_HOME, 'coordination', 'task-queue.json');
 

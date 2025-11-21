@@ -387,10 +387,14 @@ print_info "Allocating token budget..."
 
 TMP_FILE=$(mktemp)
 jq --arg master "$MASTER_AGENT" \
+   --arg worker "$WORKER_ID" \
    --argjson tokens "$TOKEN_BUDGET" \
-   '.worker_pool.allocated_to_workers += $tokens |
-    .worker_pool.available -= $tokens |
-    .updated_at = "'$CREATED_AT'"' \
+   --arg ts "$CREATED_AT" \
+   '.allocated = ((.allocated // 0) + $tokens) |
+    .in_use = ((.in_use // 0) + $tokens) |
+    .available = ((.available // 0) - $tokens) |
+    .allocations[$worker] = {master: $master, tokens: $tokens, allocated_at: $ts} |
+    .updated_at = $ts' \
    coordination/token-budget.json > "$TMP_FILE"
 
 mv "$TMP_FILE" coordination/token-budget.json
