@@ -11,6 +11,7 @@ COMMIT_RELAY_HOME="${COMMIT_RELAY_HOME:-$(cd "$SCRIPT_DIR/.." && pwd)}"
 # Load libraries
 source "$SCRIPT_DIR/lib/logging.sh"
 source "$SCRIPT_DIR/lib/coordination.sh"
+source "$SCRIPT_DIR/lib/worker-reflection.sh" 2>/dev/null || true
 
 # Check for worker ID argument
 if [ $# -lt 1 ]; then
@@ -94,3 +95,67 @@ log_info ""
 # Launch Claude CLI in interactive mode with prompt
 # Workers need full tool access, not print mode
 claude "$(cat "$COMMIT_RELAY_HOME/$PROMPT_TEMPLATE")"
+
+# Phase 3 Enhancement #17: Worker self-correction via reflection
+# After worker completes, perform validation before marking complete
+log_section "Worker Reflection Phase"
+
+# Check if worker-reflection is available
+if type perform_reflection &>/dev/null; then
+    log_info "Performing self-correction validation..."
+
+    # Get output location from worker spec if available
+    OUTPUT_LOCATION=$(jq -r '.results.output_location // ""' "$WORKER_SPEC_PATH" 2>/dev/null || echo "")
+
+    # Perform reflection
+    REFLECTION_RESULT=$(perform_reflection "$WORKER_ID" "$TASK_ID" "$OUTPUT_LOCATION" 2>/dev/null || echo '{"passed": true}')
+
+    # Check if reflection passed
+    REFLECTION_PASSED=$(echo "$REFLECTION_RESULT" | jq -r '.passed // true')
+    RECOMMENDATION=$(echo "$REFLECTION_RESULT" | jq -r '.recommendation // "complete"')
+
+    if [ "$REFLECTION_PASSED" = "true" ]; then
+        log_success "Reflection validation passed"
+
+        # Update worker spec with reflection results
+        if [ -n "$REFLECTION_RESULT" ] && [ "$REFLECTION_RESULT" != '{"passed": true}' ]; then
+            jq --argjson reflection "$REFLECTION_RESULT" \
+               '.reflection = $reflection' \
+               "$WORKER_SPEC_PATH" > "${WORKER_SPEC_PATH}.tmp" && \
+               mv "${WORKER_SPEC_PATH}.tmp" "$WORKER_SPEC_PATH"
+            log_info "Reflection results saved to worker spec"
+        fi
+    else
+        log_warn "Reflection validation found issues"
+        log_warn "Recommendation: $RECOMMENDATION"
+
+        # Log correction suggestions
+        SUGGESTIONS=$(echo "$REFLECTION_RESULT" | jq -r '.correction_suggestions.suggestions[]' 2>/dev/null || echo "")
+        if [ -n "$SUGGESTIONS" ]; then
+            log_info "Suggested corrections:"
+            echo "$SUGGESTIONS" | while read -r suggestion; do
+                log_info "  - $suggestion"
+            done
+        fi
+
+        # Save reflection results even on failure
+        jq --argjson reflection "$REFLECTION_RESULT" \
+           '.reflection = $reflection | .results.status = "needs_correction"' \
+           "$WORKER_SPEC_PATH" > "${WORKER_SPEC_PATH}.tmp" && \
+           mv "${WORKER_SPEC_PATH}.tmp" "$WORKER_SPEC_PATH"
+
+        # Emit event for monitoring
+        EVENT_DATA=$(jq -nc \
+            --arg worker "$WORKER_ID" \
+            --arg task "$TASK_ID" \
+            --arg recommendation "$RECOMMENDATION" \
+            '{worker_id: $worker, task_id: $task, recommendation: $recommendation}')
+        broadcast_dashboard_event "worker_needs_correction" "$EVENT_DATA"
+    fi
+else
+    log_info "Worker reflection library not available, skipping validation"
+fi
+
+log_section "Worker Session Complete"
+log_info "Worker $WORKER_ID has finished execution"
+log_info "Check worker spec for results: $WORKER_SPEC_PATH"

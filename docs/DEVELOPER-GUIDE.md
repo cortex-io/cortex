@@ -1,103 +1,83 @@
 # Commit-Relay Developer Guide
 
-A comprehensive guide for developers working with and extending the Commit-Relay system.
+Comprehensive guide to understanding, developing, and operating the commit-relay autonomous automation system.
 
 ---
 
-## Overview
+## Table of Contents
 
-Commit-Relay is an autonomous AI agent coordination system that manages multiple Claude-powered workers to accomplish complex software development tasks. The system uses a Mixture of Experts (MoE) architecture to route tasks to specialized workers based on their capabilities.
-
-### Key Features
-
-- **Autonomous Task Execution**: Workers operate independently with minimal human intervention
-- **Self-Healing**: Automatic detection and recovery from failures
-- **Token Budget Management**: Intelligent allocation of API tokens across workers
-- **Pattern Detection**: Learn from failures and apply automatic fixes
-- **Real-Time Monitoring**: Live dashboards for system observability
+1. [Architecture Overview](#architecture-overview)
+2. [Key Concepts](#key-concepts)
+3. [Development Workflow](#development-workflow)
+4. [Creating Workers](#creating-workers)
+5. [Task Management](#task-management)
+6. [MoE Routing System](#moe-routing-system)
+7. [Daemon Operations](#daemon-operations)
+8. [Testing and Debugging](#testing-and-debugging)
+9. [Best Practices](#best-practices)
 
 ---
 
-## Architecture
+## Architecture Overview
 
-### System Overview
+### System Components
 
 ```
-+------------------+     +------------------+     +------------------+
-|   Task Queue     | --> |  MoE Router      | --> |  Worker Pool     |
-+------------------+     +------------------+     +------------------+
-        |                        |                        |
-        v                        v                        v
-+------------------+     +------------------+     +------------------+
-|  Coordinator     |     |  Pattern DB      |     |  Token Budget    |
-|    Daemon        |     |                  |     |                  |
-+------------------+     +------------------+     +------------------+
+                    +-------------------+
+                    |   User/Operator   |
+                    +--------+----------+
+                             |
+                    +--------v----------+
+                    | Coordinator Master|
+                    +--------+----------+
+                             |
+              +--------------+--------------+
+              |              |              |
+     +--------v----+  +------v-----+  +-----v------+
+     | Development |  |  Security  |  | Inventory  |
+     |   Master    |  |   Master   |  |   Master   |
+     +------+------+  +-----+------+  +-----+------+
+            |               |               |
+     +------v------+ +------v------+ +------v------+
+     |   Workers   | |   Workers   | |   Workers   |
+     +-------------+ +-------------+ +-------------+
 ```
-
-### Core Components
-
-#### 1. Coordinator Daemon
-- Orchestrates task distribution
-- Manages worker lifecycle
-- Coordinates master-worker communication
-
-**Location**: `scripts/coordinator-daemon.sh`
-
-#### 2. Worker Daemon
-- Spawns and monitors Claude workers
-- Manages PID files and logs
-- Handles worker cleanup
-
-**Location**: `scripts/worker-daemon.sh`
-
-#### 3. MoE Router
-- Routes tasks to appropriate worker types
-- Uses learned patterns for optimization
-- Supports circuit breaker patterns
-
-**Configuration**: `coordination/moe/router-config.json`
-
-#### 4. Token Budget Manager
-- Tracks token allocation across workers
-- Prevents budget exhaustion
-- Supports priority-based allocation
-
-**State**: `coordination/token-budget.json`
 
 ### Directory Structure
 
 ```
 commit-relay/
-|-- agents/
-|   |-- logs/                  # Worker and system logs
-|   |   |-- system/            # Daemon logs
-|   |   +-- workers/           # Per-worker logs
-|   +-- prompts/               # Agent prompt templates
-|
-|-- coordination/
-|   |-- config/                # System configuration
-|   |-- events/                # Event streams
-|   |-- masters/               # Master agent state
-|   |-- metrics/               # Performance metrics
-|   |-- moe/                   # MoE router state
-|   |-- patterns/              # Learned patterns
-|   |-- tasks/                 # Task definitions
-|   |-- worker-specs/          # Worker specifications
-|   |   |-- active/            # Running workers
-|   |   |-- completed/         # Finished workers
-|   |   +-- zombie/            # Failed workers
-|   +-- task-queue.json        # Task queue state
-|
-|-- scripts/
-|   |-- daemons/               # Background daemons
-|   |-- dashboards/            # Monitoring dashboards
-|   |-- lib/                   # Shared libraries
-|   +-- wizards/               # Interactive tools
-|
-+-- docs/
-    |-- runbooks/              # Operational runbooks
-    +-- *.md                   # Documentation
+├── coordination/                    # Central coordination state
+│   ├── task-queue.json             # Pending tasks
+│   ├── token-budget.json           # Token budget management
+│   ├── pm-state.json               # PM daemon state
+│   ├── worker-specs/               # Worker specifications
+│   │   ├── active/                 # Currently running workers
+│   │   ├── completed/              # Successfully completed
+│   │   └── failed/                 # Failed workers
+│   ├── masters/                    # Master agent state
+│   │   ├── coordinator/
+│   │   ├── development/
+│   │   ├── security/
+│   │   └── inventory/
+│   └── history/                    # Historical snapshots
+├── agents/
+│   ├── prompts/                    # Agent prompt templates
+│   └── logs/                       # Agent execution logs
+├── scripts/                        # Operational scripts
+│   └── dashboards/                 # Terminal dashboards
+└── docs/                           # Documentation
+    └── runbooks/                   # Operational runbooks
 ```
+
+### Data Flow
+
+1. **Task Creation**: Tasks enter via `scripts/create-task.sh` or API
+2. **MoE Routing**: Tasks routed to appropriate worker type
+3. **Worker Spawn**: Worker created with spec and token budget
+4. **Execution**: Worker executes task autonomously
+5. **Check-ins**: Worker reports progress to PM daemon
+6. **Completion**: Results recorded, tokens reconciled
 
 ---
 
@@ -105,251 +85,383 @@ commit-relay/
 
 ### Workers
 
-Workers are autonomous Claude agents that execute specific tasks. Each worker:
+Workers are autonomous Claude instances that execute specific tasks.
 
-- Has a unique ID (e.g., `worker-implementation-001`)
-- Belongs to a worker type (e.g., `implementation-worker`)
-- Has a token budget allocation
-- Maintains heartbeat status
-- Produces structured output
+**Worker Types**:
+- `implementation-worker`: Code implementation and features
+- `scan-worker`: Security scanning and analysis
+- `analysis-worker`: Code review and documentation
+- `documentation-worker`: Documentation generation
+- `fix-worker`: Bug fixes and patches
 
-#### Worker Types
+**Worker Lifecycle**:
+1. `pending` - Created but not started
+2. `running` - Actively executing
+3. `completed` - Successfully finished
+4. `failed` - Encountered error
+5. `zombie` - Stalled without check-ins
 
-| Type | Purpose | Default Budget |
-|------|---------|----------------|
-| `scan-worker` | Security scanning | 70,000 tokens |
-| `fix-worker` | Apply code fixes | 70,000 tokens |
-| `analysis-worker` | Code analysis | 50,000 tokens |
-| `implementation-worker` | Feature development | 100,000 tokens |
-| `test-worker` | Test creation | 70,000 tokens |
-| `review-worker` | Code review | 50,000 tokens |
-| `documentation-worker` | Write documentation | 70,000 tokens |
+### Token Budget
 
-#### Worker Lifecycle
-
-1. **Pending**: Task assigned, waiting to spawn
-2. **Running**: Actively processing task
-3. **Idle**: Spawned but no active task
-4. **Completed**: Task finished successfully
-5. **Failed**: Task failed, moved to zombie
-6. **Zombie**: Marked for cleanup
-
-### Tasks
-
-Tasks are units of work assigned to workers.
+Token budget controls resource allocation across workers.
 
 ```json
 {
-  "task_id": "task-001",
-  "description": "Implement user authentication",
-  "priority": "high",
-  "assigned_worker": "worker-implementation-001",
-  "status": "in_progress",
-  "created_at": "2025-11-21T10:00:00Z"
+  "total_budget": 200000,
+  "usage_metrics": {
+    "total_tokens_used_today": 45000
+  },
+  "workers": {
+    "worker-impl-001": {
+      "allocated": 100000,
+      "used": 45000
+    }
+  }
 }
 ```
 
-### Heartbeats
+### MoE (Mixture of Experts) Routing
 
-Workers emit heartbeats to indicate health:
+The MoE system routes tasks to the most appropriate worker type based on:
+- Task description keywords
+- Historical success patterns
+- Worker type capabilities
 
-```json
-{
-  "worker_id": "worker-implementation-001",
-  "timestamp": "2025-11-21T10:05:00Z",
-  "health_score": 85,
-  "tokens_used": 25000,
-  "progress": 50
-}
-```
+Routing rules are defined in:
+`coordination/masters/coordinator/knowledge-base/routing-rules.json`
 
-### Patterns
+### Daemons
 
-The system learns from failures and stores patterns:
+Background processes that maintain system health:
 
-```json
-{
-  "pattern_id": "pattern-001",
-  "type": "timeout",
-  "confidence": 0.85,
-  "root_cause": "Task too complex for allocated budget",
-  "suggested_fix": "Increase token allocation",
-  "occurrences": 5
-}
-```
-
----
-
-## Getting Started
-
-### Prerequisites
-
-- macOS or Linux
-- Bash 4.0+
-- Node.js 18+ (for some utilities)
-- jq (JSON processor)
-- Claude CLI configured with API key
-
-### Installation
-
-1. Clone the repository:
-```bash
-git clone https://github.com/ry-ops/commit-relay.git
-cd commit-relay
-```
-
-2. Set environment variable:
-```bash
-export COMMIT_RELAY_HOME=$(pwd)
-```
-
-3. Initialize the system:
-```bash
-./scripts/start-commit-relay.sh
-```
-
-4. Verify installation:
-```bash
-./scripts/dashboards/system-live.sh
-```
-
-### Quick Start
-
-1. **Start daemons**:
-```bash
-./scripts/wizards/daemon-control.sh
-```
-
-2. **Create a worker**:
-```bash
-./scripts/wizards/create-worker.sh
-```
-
-3. **Monitor system**:
-```bash
-./scripts/dashboards/system-live.sh
-```
+| Daemon | Purpose | Interval |
+|--------|---------|----------|
+| pm-daemon | Monitor workers, track health | 3 min |
+| coordinator-daemon | Route tasks, manage queue | 1 min |
+| heartbeat-monitor | Monitor daemon health | 5 min |
+| zombie-killer | Detect and clean zombies | 5 min |
+| metrics-snapshot | Historical snapshots | 5 min |
+| governance-monitor | PII/compliance scanning | 10 min |
 
 ---
 
 ## Development Workflow
 
-### Creating a New Worker Type
+### Setting Up
 
-1. Define the worker type in `coordination/config/worker-types.json`:
+```bash
+# Clone repository
+git clone https://github.com/ry-ops/commit-relay.git
+cd commit-relay
+
+# Set environment
+export COMMIT_RELAY_HOME=$(pwd)
+
+# Initialize system
+./scripts/start-commit-relay.sh
+```
+
+### Creating a Task
+
+```bash
+# Create a simple task
+./scripts/create-task.sh \
+    --description "Implement user authentication" \
+    --priority high \
+    --worker-type implementation-worker
+
+# Create task with custom budget
+./scripts/create-task.sh \
+    --description "Security scan of api module" \
+    --priority critical \
+    --worker-type scan-worker \
+    --token-budget 50000 \
+    --time-limit 30
+```
+
+### Monitoring Progress
+
+```bash
+# Watch worker status
+watch -n 5 ./scripts/worker-status.sh
+
+# View daemon status
+./scripts/dashboards/daemon-monitor.sh --status
+
+# Live metrics
+./scripts/dashboards/metrics-dashboard.sh
+```
+
+### Debugging
+
+```bash
+# Check PM daemon logs
+tail -f $COMMIT_RELAY_HOME/agents/logs/system/pm-daemon.log
+
+# Debug MoE routing
+./scripts/debug-moe-router.sh "your task description"
+
+# View worker spec
+jq . $COMMIT_RELAY_HOME/coordination/worker-specs/active/worker-impl-001.json
+```
+
+---
+
+## Creating Workers
+
+### Worker Specification
+
+Workers are defined by JSON specifications:
 
 ```json
 {
-  "worker_type": "my-custom-worker",
-  "description": "Custom worker for specific task",
-  "default_budget": 50000,
-  "default_duration": 20,
-  "skills": ["skill1", "skill2"]
+  "worker_id": "worker-implementation-001",
+  "worker_type": "implementation-worker",
+  "task_id": "task-abc123",
+  "status": "pending",
+  "task": {
+    "description": "Implement feature X",
+    "requirements": ["Create API endpoint", "Add tests"],
+    "context": {
+      "files": ["src/api.ts", "src/routes.ts"]
+    }
+  },
+  "resources": {
+    "token_allocation": 100000,
+    "time_limit_minutes": 60
+  },
+  "execution": {
+    "started_at": null,
+    "completed_at": null
+  }
 }
 ```
 
-2. Create a prompt template in `agents/prompts/`:
+### Programmatic Worker Creation
 
 ```bash
-cat > agents/prompts/my-custom-worker.md << 'EOF'
-# Custom Worker
+# Using the spawn script
+./scripts/spawn-worker.sh \
+    --type implementation-worker \
+    --task-id "task-12345" \
+    --description "Implement new feature" \
+    --token-budget 100000 \
+    --time-limit 60
+```
 
-You are a custom worker specialized in...
+### Custom Worker Types
+
+To create a new worker type:
+
+1. **Define the prompt template**:
+```bash
+cat > agents/prompts/custom-worker-prompt.md << 'EOF'
+# Custom Worker Agent
+
+You are a specialized worker for [purpose].
+
+## Capabilities
+- Capability 1
+- Capability 2
 
 ## Instructions
-...
-
-## Output Format
-...
+1. Read the task specification
+2. Execute the task
+3. Report completion
 EOF
 ```
 
-3. Register with MoE router in `coordination/moe/router-config.json`.
-
-### Adding a New Daemon
-
-1. Create daemon script in `scripts/daemons/`:
-
-```bash
-#!/bin/bash
-# scripts/daemons/my-daemon.sh
-
-set -euo pipefail
-
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-COMMIT_RELAY_HOME="${COMMIT_RELAY_HOME:-$(cd "$SCRIPT_DIR/../.." && pwd)}"
-
-# PID file
-PID_FILE="/tmp/commit-relay-my-daemon.pid"
-LOG_FILE="$COMMIT_RELAY_HOME/agents/logs/system/my-daemon.log"
-
-# Write PID
-echo $$ > "$PID_FILE"
-
-# Main loop
-while true; do
-    # Your daemon logic here
-    echo "$(date -u +%Y-%m-%dT%H:%M:%SZ) Daemon cycle" >> "$LOG_FILE"
-
-    sleep 60
-done
+2. **Register in worker-types.json**:
+```json
+{
+  "custom-worker": {
+    "default_budget": 50000,
+    "default_duration": 30,
+    "capabilities": ["custom_capability"],
+    "prompt_template": "agents/prompts/custom-worker-prompt.md"
+  }
+}
 ```
 
-2. Add to daemon registry in `scripts/dashboards/daemon-monitor.sh`.
-
-3. Make executable:
-```bash
-chmod +x scripts/daemons/my-daemon.sh
+3. **Add routing rules**:
+```json
+{
+  "pattern": "custom|special",
+  "worker_type": "custom-worker",
+  "confidence": 0.9
+}
 ```
 
-### Working with Events
+### Worker Check-ins
 
-Emit events to the dashboard:
+Workers should report progress periodically:
 
 ```bash
-# Using emit-event.sh
-./scripts/emit-event.sh \
-  --type "custom_event" \
-  --message "Something happened" \
-  --severity "info"
-
-# Direct JSONL append
-cat >> coordination/dashboard-events.jsonl << EOF
-{"timestamp":"$(date -u +%Y-%m-%dT%H:%M:%SZ)","event_type":"custom_event","message":"Details"}
-EOF
+# Worker check-in script
+./scripts/worker-checkin.sh \
+    --worker-id "worker-impl-001" \
+    --status "in_progress" \
+    --progress 50 \
+    --message "Completed API endpoint"
 ```
 
-### Extending the MoE Router
+Check-in data:
+```json
+{
+  "worker_id": "worker-impl-001",
+  "timestamp": "2025-11-21T10:00:00Z",
+  "status": "in_progress",
+  "progress_pct": 50,
+  "message": "Completed API endpoint"
+}
+```
 
-1. Add routing rules to `coordination/moe/router-config.json`:
+---
+
+## Task Management
+
+### Task Structure
+
+```json
+{
+  "task_id": "task-abc123",
+  "description": "Implement user authentication",
+  "priority": "high",
+  "status": "pending",
+  "created_at": "2025-11-21T10:00:00Z",
+  "worker_type": "implementation-worker",
+  "metadata": {
+    "source": "user",
+    "tags": ["auth", "security"]
+  }
+}
+```
+
+### Task Priorities
+
+| Priority | Description | SLA |
+|----------|-------------|-----|
+| critical | System breaking | Immediate |
+| high | Important feature | < 1 hour |
+| medium | Normal work | < 4 hours |
+| low | Nice to have | < 24 hours |
+
+### Task Queue Operations
+
+```bash
+# List pending tasks
+jq '.tasks[] | select(.status == "pending")' \
+    $COMMIT_RELAY_HOME/coordination/task-queue.json
+
+# Count tasks by status
+jq '.tasks | group_by(.status) | map({status: .[0].status, count: length})' \
+    $COMMIT_RELAY_HOME/coordination/task-queue.json
+
+# Find task by ID
+jq '.tasks[] | select(.task_id == "task-abc123")' \
+    $COMMIT_RELAY_HOME/coordination/task-queue.json
+```
+
+---
+
+## MoE Routing System
+
+### Routing Configuration
 
 ```json
 {
   "rules": [
     {
-      "pattern": "security.*scan",
+      "pattern": "implement|create|build|add",
+      "worker_type": "implementation-worker",
+      "confidence": 0.9
+    },
+    {
+      "pattern": "scan|security|vulnerability",
       "worker_type": "scan-worker",
-      "priority": "high"
+      "confidence": 0.95
+    },
+    {
+      "pattern": "document|readme|guide",
+      "worker_type": "documentation-worker",
+      "confidence": 0.9
     }
   ]
 }
 ```
 
-2. Update routing decision log:
+### Testing Routing
 
 ```bash
-cat >> coordination/masters/coordinator/knowledge-base/routing-decisions.jsonl << EOF
-{"task_type":"security","worker_type":"scan-worker","confidence":0.95,"timestamp":"$(date -u +%Y-%m-%dT%H:%M:%SZ)"}
-EOF
+# Test routing decision
+./scripts/debug-moe-router.sh "implement user authentication"
+
+# Expected output:
+# Task: implement user authentication
+# Matched: implementation-worker (confidence: 0.95)
+# Alternative: analysis-worker (confidence: 0.3)
+```
+
+### Routing Metrics
+
+```bash
+# View routing health
+cat $COMMIT_RELAY_HOME/coordination/routing-health.json | jq .
+
+# Check for null routes
+jq '.null_routes' $COMMIT_RELAY_HOME/coordination/routing-health.json
 ```
 
 ---
 
-## Testing
+## Daemon Operations
 
-### Unit Testing Scripts
+### Starting Daemons
 
-Run specific test scripts:
+```bash
+# Start all daemons
+./scripts/dashboards/daemon-monitor.sh --start-all
+
+# Start specific daemon
+./scripts/pm-daemon.sh &
+./scripts/coordinator-daemon.sh &
+```
+
+### Stopping Daemons
+
+```bash
+# Stop all daemons
+./scripts/dashboards/daemon-monitor.sh --stop-all
+
+# Stop specific daemon
+kill $(cat /tmp/pm-daemon.pid)
+```
+
+### Daemon Health Checks
+
+```bash
+# Check PM daemon
+./scripts/health-check-pm-daemon.sh
+
+# View daemon status
+./scripts/dashboards/daemon-monitor.sh --status
+```
+
+### Daemon Logs
+
+```bash
+# PM daemon logs
+tail -f $COMMIT_RELAY_HOME/agents/logs/system/pm-daemon.log
+
+# Coordinator daemon logs
+tail -f $COMMIT_RELAY_HOME/agents/logs/system/coordinator-daemon.log
+```
+
+---
+
+## Testing and Debugging
+
+### Running Tests
 
 ```bash
 # Test core foundation
@@ -357,128 +469,67 @@ Run specific test scripts:
 
 # Test autonomous execution
 ./scripts/test-autonomous-execution.sh
+
+# Load test workers
+./scripts/load-test-workers.sh --count 10
 ```
 
-### Load Testing
-
-Stress test the system:
+### Debugging MoE
 
 ```bash
-# Run stress test
-./scripts/stress-test-ddqd.sh --workers 10 --tasks 50
+# Enable debug logging
+export MOE_DEBUG=1
 
-# Monitor during test
-./scripts/dashboards/system-live.sh
+# Debug routing decision
+./scripts/debug-moe-router.sh "your task description"
+
+# View routing decisions log
+tail -100 $COMMIT_RELAY_HOME/coordination/masters/coordinator/knowledge-base/routing-decisions.jsonl
 ```
 
-### Integration Testing
+### Debugging Workers
 
 ```bash
-# Validate worker spawn
-./scripts/demo-validated-worker-spawn.sh
+# View worker spec
+cat $COMMIT_RELAY_HOME/coordination/worker-specs/active/worker-impl-001.json | jq .
 
-# Test full workflow
-./scripts/demo-full-workflow.sh
+# Check worker logs
+ls -la $COMMIT_RELAY_HOME/agents/logs/
+
+# View PM monitoring state
+jq '.monitored_workers["worker-impl-001"]' \
+    $COMMIT_RELAY_HOME/coordination/pm-state.json
 ```
-
-### Manual Testing
-
-1. Create a test task:
-```bash
-./scripts/create-task.sh \
-  --description "Test task" \
-  --priority "low" \
-  --type "analysis"
-```
-
-2. Monitor worker:
-```bash
-tail -f agents/logs/workers/$(date +%Y-%m-%d)/worker-*/worker.log
-```
-
-3. Verify completion:
-```bash
-cat coordination/task-queue.json | jq '.tasks[] | select(.task_id == "task-001")'
-```
-
----
-
-## Troubleshooting
 
 ### Common Issues
 
-#### Workers Not Spawning
-
-**Symptoms**: Task queued but no worker created
-
-**Diagnosis**:
+**Worker stuck in "running" state**:
 ```bash
-# Check token budget
-cat coordination/token-budget.json | jq '.available'
-
-# Check daemon status
-ps aux | grep worker-daemon
-
-# Check logs
-tail -f agents/logs/system/worker-daemon.log
-```
-
-**Resolution**:
-1. Ensure sufficient token budget
-2. Restart worker daemon
-3. Check for zombie workers consuming budget
-
-#### Daemon Failures
-
-**Symptoms**: System not processing tasks
-
-**Diagnosis**:
-```bash
-# Check all daemons
-./scripts/dashboards/daemon-monitor.sh --status
-
-# Look for errors
-grep -i error agents/logs/system/*.log
-```
-
-**Resolution**:
-1. Restart failed daemons
-2. Check PID files in `/tmp/commit-relay-*.pid`
-3. Clear stale PID files
-
-#### Token Budget Exhaustion
-
-**Symptoms**: Error "insufficient budget"
-
-**Resolution**:
-```bash
-# Cleanup zombie workers
+# Check for zombie
 ./scripts/cleanup-zombie-workers.sh
 
-# Check budget
-cat coordination/token-budget.json | jq .
-
-# Manual reset (emergency)
-# Edit coordination/token-budget.json
+# Force complete worker
+jq '.status = "failed" | .error = "Manual termination"' \
+    worker-spec.json > worker-spec.json.tmp && \
+    mv worker-spec.json.tmp worker-spec.json
 ```
 
-### Debug Mode
-
-Enable verbose logging:
-
+**MoE routing to null**:
 ```bash
-export DEBUG=1
-./scripts/worker-daemon.sh
+# Check routing rules
+cat $COMMIT_RELAY_HOME/coordination/masters/coordinator/knowledge-base/routing-rules.json | jq .
+
+# Add default rule if missing
 ```
 
-### Log Locations
+**Token budget exhausted**:
+```bash
+# Check budget
+cat $COMMIT_RELAY_HOME/coordination/token-budget.json | jq .
 
-| Component | Log Location |
-|-----------|--------------|
-| System daemons | `agents/logs/system/` |
-| Workers | `agents/logs/workers/<date>/worker-<id>/` |
-| Events | `coordination/dashboard-events.jsonl` |
-| Health alerts | `coordination/health-alerts.json` |
+# Reset daily budget
+./scripts/system-maintenance.sh --reset-token-budget
+```
 
 ---
 
@@ -486,168 +537,51 @@ export DEBUG=1
 
 ### Worker Design
 
-1. **Keep workers focused**: One worker type per specialized task
-2. **Set appropriate budgets**: Match token allocation to task complexity
-3. **Use heartbeats**: Emit regular heartbeats for health monitoring
-4. **Handle failures gracefully**: Always clean up resources
+1. **Single Responsibility**: Each worker should do one thing well
+2. **Idempotent Operations**: Workers should be safely restartable
+3. **Regular Check-ins**: Report progress every 5-10 minutes
+4. **Clean Exits**: Always report completion/failure status
+5. **Budget Awareness**: Monitor token usage and stay within limits
 
-### Task Management
+### Task Design
 
-1. **Use priorities wisely**: Reserve "critical" for emergencies
-2. **Break down complex tasks**: Smaller tasks are more reliable
-3. **Include context**: Provide sufficient information in task description
-4. **Set timeouts**: Prevent runaway workers
+1. **Clear Descriptions**: Be specific about what needs to be done
+2. **Appropriate Priority**: Use priorities correctly
+3. **Reasonable Budgets**: Allocate enough tokens for the task
+4. **Context Provision**: Include relevant files and context
 
-### System Operations
+### Monitoring
 
-1. **Monitor regularly**: Use dashboards during active development
-2. **Cleanup zombies**: Run cleanup after test sessions
-3. **Rotate logs**: Prevent disk space issues
-4. **Backup state**: Keep copies of critical state files
+1. **Watch Dashboards**: Regularly check daemon-monitor and metrics
+2. **Review Logs**: Check daemon logs for issues
+3. **Track Success Rate**: Monitor completion rates
+4. **Clean Up Zombies**: Regular zombie detection
 
-### Code Style
+### Development
 
-1. **Use shellcheck**: Validate all bash scripts
-2. **Quote variables**: Prevent word splitting issues
-3. **Check exit codes**: Handle errors appropriately
-4. **Document scripts**: Include usage information
-
----
-
-## API Reference
-
-### Script APIs
-
-#### spawn-worker.sh
-
-```bash
-./scripts/spawn-worker.sh \
-  --type <worker-type> \
-  --task-id <task-id> \
-  --master <master-name> \
-  --priority <priority> \
-  --repo <owner/repo>
-```
-
-#### emit-event.sh
-
-```bash
-./scripts/emit-event.sh \
-  --type <event-type> \
-  --message <message> \
-  --severity <info|warning|critical>
-```
-
-#### cleanup-zombie-workers.sh
-
-```bash
-./scripts/cleanup-zombie-workers.sh [worker-id]
-```
-
-### JSON Schemas
-
-#### Worker Spec
-
-```json
-{
-  "worker_id": "string",
-  "worker_type": "string",
-  "status": "pending|running|idle|completed|failed|zombie",
-  "task_id": "string",
-  "priority": "low|medium|high|critical",
-  "token_budget": {
-    "allocated": "number",
-    "used": "number"
-  },
-  "heartbeat": {
-    "last_seen": "ISO 8601 timestamp",
-    "health_score": "number 0-100"
-  },
-  "created_at": "ISO 8601 timestamp"
-}
-```
-
-#### Task
-
-```json
-{
-  "task_id": "string",
-  "description": "string",
-  "status": "queued|in_progress|completed|failed",
-  "priority": "low|medium|high|critical",
-  "assigned_worker": "string",
-  "created_at": "ISO 8601 timestamp",
-  "completed_at": "ISO 8601 timestamp"
-}
-```
+1. **Test Locally**: Test routing and worker creation locally
+2. **Use Debug Scripts**: Leverage debug-moe-router.sh
+3. **Read Runbooks**: Follow runbooks for common operations
+4. **Document Changes**: Update docs when adding features
 
 ---
 
-## Contributing
+## Related Documentation
 
-### Development Setup
-
-1. Fork the repository
-2. Create feature branch: `git checkout -b feature/my-feature`
-3. Make changes with tests
-4. Run validation: `./scripts/test-core-foundation.sh`
-5. Submit pull request
-
-### Code Review Checklist
-
-- [ ] Scripts pass shellcheck
-- [ ] Documentation updated
-- [ ] Tests added/updated
-- [ ] No hardcoded paths
-- [ ] Error handling complete
-
----
-
-## Resources
-
-### Documentation
-
-- [Quick Start Guide](./QUICK-START.md)
-- [Cheatsheet](./CHEATSHEET.md)
-- [MoE Architecture](./MOE-ARCHITECTURE.md)
+- [MOE Architecture](./MOE-ARCHITECTURE.md)
 - [Worker Lifecycle](./WORKER-LIFECYCLE.md)
+- [Daemon Monitoring](./DAEMON-MONITORING.md)
+- [Quick Start](./QUICK-START.md)
+- [Cheatsheet](./CHEATSHEET.md)
 
-### Runbooks
+## Runbooks
 
 - [Worker Failure](./runbooks/worker-failure.md)
 - [Daemon Failure](./runbooks/daemon-failure.md)
+- [Token Budget Exhaustion](./runbooks/token-budget-exhaustion.md)
 - [Daily Operations](./runbooks/daily-operations.md)
 - [Emergency Recovery](./runbooks/emergency-recovery.md)
-
-### Tools
-
-- `./scripts/dashboards/system-live.sh` - System overview
-- `./scripts/dashboards/daemon-monitor.sh` - Daemon management
-- `./scripts/dashboards/metrics-dashboard.sh` - Metrics visualization
-- `./scripts/wizards/daemon-control.sh` - Interactive daemon control
-- `./scripts/wizards/create-worker.sh` - Worker creation wizard
-
----
-
-## Changelog
-
-### v4.0.0 (2025-11-21)
-- MoE routing optimization with 100% confidence
-- Single-expert routing for efficiency
-- Phase 3 Developer Experience features
-
-### v3.0.0 (2025-11-15)
-- Self-healing system with pattern detection
-- Auto-fix daemon
-- Heartbeat monitoring
-
-### v2.0.0 (2025-11-01)
-- Master-worker architecture
-- Token budget management
-- Observability stack
 
 ---
 
 **Last Updated**: 2025-11-21
-
-**Maintained by**: Commit-Relay Team
