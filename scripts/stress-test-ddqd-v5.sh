@@ -504,15 +504,10 @@ collect_metrics() {
     local elapsed=$((current_time - TEST_START_TIME))
     local token_pct=$(check_tokens 2>/dev/null || echo "0")
 
-    # Count workers
+    # Count workers (use real-time file counts for accuracy)
     local active_workers=$(find "$COORDINATION_DIR/worker-specs/active" -name "*.json" 2>/dev/null | wc -l | tr -d ' ')
-    local completed_workers=0
-    local failed_workers=0
-
-    if [ -f "$COORDINATION_DIR/worker-pool.json" ]; then
-        completed_workers=$(jq -r '.completed_workers | length' "$COORDINATION_DIR/worker-pool.json" 2>/dev/null || echo 0)
-        failed_workers=$(jq -r '.failed_workers | length' "$COORDINATION_DIR/worker-pool.json" 2>/dev/null || echo 0)
-    fi
+    local completed_workers=$(find "$COORDINATION_DIR/worker-specs/completed" -name "*.json" 2>/dev/null | wc -l | tr -d ' ')
+    local failed_workers=$(find "$COORDINATION_DIR/worker-specs/failed" -name "*.json" 2>/dev/null | wc -l | tr -d ' ')
 
     # Count tasks
     local pending_tasks=$(find "$COORDINATION_DIR/tasks/pending" -name "*.json" 2>/dev/null | wc -l | tr -d ' ')
@@ -600,12 +595,13 @@ Completed: $(date '+%Y-%m-%d %H:%M:%S')
 
 EOF
 
-    # Final metrics - Workers
-    if [ -f "$COORDINATION_DIR/worker-pool.json" ]; then
-        local total_workers=$(jq -r '(.active_workers | length) + (.completed_workers | length) + (.failed_workers | length)' "$COORDINATION_DIR/worker-pool.json" 2>/dev/null || echo 0)
-        local completed=$(jq -r '.completed_workers | length' "$COORDINATION_DIR/worker-pool.json" 2>/dev/null || echo 0)
-        local failed=$(jq -r '.failed_workers | length' "$COORDINATION_DIR/worker-pool.json" 2>/dev/null || echo 0)
+    # Final metrics - Workers (use real-time file counts for accuracy)
+    local active_count=$(find "$COORDINATION_DIR/worker-specs/active" -name "*.json" 2>/dev/null | wc -l | tr -d ' ')
+    local completed=$(find "$COORDINATION_DIR/worker-specs/completed" -name "*.json" 2>/dev/null | wc -l | tr -d ' ')
+    local failed=$(find "$COORDINATION_DIR/worker-specs/failed" -name "*.json" 2>/dev/null | wc -l | tr -d ' ')
+    local total_workers=$((active_count + completed + failed))
 
+    if [ "$total_workers" -gt 0 ]; then
         cat >> "$report_file" <<EOF
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   FINAL METRICS - WORKERS
@@ -614,8 +610,20 @@ EOF
 Total Workers Spawned: $total_workers
 Workers Completed: $completed
 Workers Failed: $failed
+EOF
+
+        # Add success rate if we have completed or failed workers
+        if [ "$((completed + failed))" -gt 0 ]; then
+            local success_rate=$(awk "BEGIN {printf \"%.1f\", ($completed / ($completed + $failed)) * 100}")
+            cat >> "$report_file" <<EOF
+Worker Success Rate: ${success_rate}%
 
 EOF
+        else
+            cat >> "$report_file" <<EOF
+
+EOF
+        fi
     fi
 
     if [ -f "$COORDINATION_DIR/token-budget.json" ]; then
