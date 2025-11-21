@@ -33,6 +33,23 @@ readonly TRACE_METRICS_DIR="${TRACE_METRICS_DIR:-coordination/observability/metr
 
 mkdir -p "$TRACE_DATA_DIR" "$TRACE_EVENTS_DIR" "$TRACE_METRICS_DIR"
 
+# Standard span types for domain-specific tracing
+readonly SPAN_TYPE_WORKER_EXECUTION="worker_execution"
+readonly SPAN_TYPE_TASK_PROCESSING="task_processing"
+readonly SPAN_TYPE_MASTER_HANDOFF="master_handoff"
+readonly SPAN_TYPE_RAG_RETRIEVAL="rag_retrieval"
+readonly SPAN_TYPE_MOE_ROUTING="moe_routing"
+readonly SPAN_TYPE_VALIDATION="validation"
+readonly SPAN_TYPE_GOVERNANCE_CHECK="governance_check"
+readonly SPAN_TYPE_HANDOFF="handoff"
+readonly SPAN_TYPE_LEARNING_CYCLE="learning_cycle"
+readonly SPAN_TYPE_EMBEDDING_GENERATION="embedding_generation"
+readonly SPAN_TYPE_VECTOR_SEARCH="vector_search"
+readonly SPAN_TYPE_DAEMON_OPERATION="daemon_operation"
+readonly SPAN_TYPE_API_REQUEST="api_request"
+readonly SPAN_TYPE_GIT_OPERATION="git_operation"
+readonly SPAN_TYPE_REASONING="reasoning"
+
 #
 # start_span - Begin a new span
 #
@@ -334,6 +351,172 @@ trace_master_handoff() {
     }" "producer"
 }
 
+#
+# Chain-of-Thought Reasoning Traces
+#
+
+# Directory for reasoning traces
+readonly REASONING_TRACES_DIR="${REASONING_TRACES_DIR:-coordination/observability/reasoning-traces}"
+mkdir -p "$REASONING_TRACES_DIR" 2>/dev/null || true
+
+#
+# start_reasoning_trace - Begin a chain-of-thought reasoning trace
+#
+# Args:
+#   $1 - task_id: Task being reasoned about
+#   $2 - context: Initial context for reasoning
+#
+# Returns:
+#   Reasoning trace ID
+#
+start_reasoning_trace() {
+    local task_id="$1"
+    local context="${2:-}"
+
+    local reasoning_id="reason-$(date +%s)-$$-$RANDOM"
+    local timestamp=$(date -Iseconds 2>/dev/null || date +"%Y-%m-%dT%H:%M:%S%z")
+
+    # Create reasoning trace file
+    local trace_file="$REASONING_TRACES_DIR/${reasoning_id}.jsonl"
+
+    # Record initial context
+    jq -nc \
+        --arg id "$reasoning_id" \
+        --arg task_id "$task_id" \
+        --arg timestamp "$timestamp" \
+        --arg trace_id "${TRACE_ID:-}" \
+        --arg context "$context" \
+        '{
+            reasoning_id: $id,
+            task_id: $task_id,
+            trace_id: $trace_id,
+            started_at: $timestamp,
+            type: "start",
+            context: $context,
+            steps: []
+        }' > "$trace_file"
+
+    # Export for use in subsequent calls
+    export REASONING_ID="$reasoning_id"
+    export REASONING_FILE="$trace_file"
+
+    echo "$reasoning_id"
+}
+
+#
+# add_reasoning_step - Add a reasoning step to the current trace
+#
+# Args:
+#   $1 - step_type: Type of reasoning (observation, hypothesis, analysis, conclusion, decision)
+#   $2 - content: The reasoning content
+#   $3 - confidence: Confidence level (0-100, optional)
+#
+add_reasoning_step() {
+    local step_type="$1"
+    local content="$2"
+    local confidence="${3:-}"
+
+    if [[ -z "${REASONING_FILE:-}" ]] || [[ ! -f "$REASONING_FILE" ]]; then
+        return 1
+    fi
+
+    local timestamp=$(date -Iseconds 2>/dev/null || date +"%Y-%m-%dT%H:%M:%S%z")
+    local step_id="step-$RANDOM"
+
+    # Create step JSON
+    local step_json
+    if [[ -n "$confidence" ]]; then
+        step_json=$(jq -nc \
+            --arg id "$step_id" \
+            --arg type "$step_type" \
+            --arg content "$content" \
+            --arg timestamp "$timestamp" \
+            --argjson confidence "$confidence" \
+            '{
+                step_id: $id,
+                type: $type,
+                content: $content,
+                confidence: $confidence,
+                timestamp: $timestamp
+            }')
+    else
+        step_json=$(jq -nc \
+            --arg id "$step_id" \
+            --arg type "$step_type" \
+            --arg content "$content" \
+            --arg timestamp "$timestamp" \
+            '{
+                step_id: $id,
+                type: $type,
+                content: $content,
+                timestamp: $timestamp
+            }')
+    fi
+
+    # Append to trace file
+    echo "$step_json" >> "$REASONING_FILE"
+
+    # Also add as span event if in a trace
+    if [[ -n "${SPAN_ID:-}" ]]; then
+        add_span_event "reasoning_step" "$step_json"
+    fi
+}
+
+#
+# end_reasoning_trace - End the current reasoning trace
+#
+# Args:
+#   $1 - outcome: Final outcome (success, partial, failed)
+#   $2 - conclusion: Final conclusion
+#
+end_reasoning_trace() {
+    local outcome="${1:-success}"
+    local conclusion="${2:-}"
+
+    if [[ -z "${REASONING_FILE:-}" ]] || [[ ! -f "$REASONING_FILE" ]]; then
+        return 1
+    fi
+
+    local timestamp=$(date -Iseconds 2>/dev/null || date +"%Y-%m-%dT%H:%M:%S%z")
+
+    # Add end marker
+    jq -nc \
+        --arg timestamp "$timestamp" \
+        --arg outcome "$outcome" \
+        --arg conclusion "$conclusion" \
+        '{
+            type: "end",
+            ended_at: $timestamp,
+            outcome: $outcome,
+            conclusion: $conclusion
+        }' >> "$REASONING_FILE"
+
+    # Clear exports
+    unset REASONING_ID
+    unset REASONING_FILE
+}
+
+#
+# get_reasoning_trace - Get the full reasoning trace as JSON
+#
+# Args:
+#   $1 - reasoning_id: ID of the reasoning trace
+#
+# Returns:
+#   JSON array of reasoning steps
+#
+get_reasoning_trace() {
+    local reasoning_id="$1"
+    local trace_file="$REASONING_TRACES_DIR/${reasoning_id}.jsonl"
+
+    if [[ ! -f "$trace_file" ]]; then
+        echo "[]"
+        return 1
+    fi
+
+    jq -s '.' "$trace_file"
+}
+
 # Export functions
 export -f start_span
 export -f end_span
@@ -350,3 +533,7 @@ export -f emit_trace_metric
 export -f trace_worker_execution
 export -f trace_task_processing
 export -f trace_master_handoff
+export -f start_reasoning_trace
+export -f add_reasoning_step
+export -f end_reasoning_trace
+export -f get_reasoning_trace

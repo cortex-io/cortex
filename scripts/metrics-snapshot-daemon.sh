@@ -71,6 +71,38 @@ cleanup() {
 
 trap cleanup SIGTERM SIGINT EXIT
 
+# Calculate percentile from sorted array
+# Usage: calculate_percentile "1 2 3 4 5" 90
+calculate_percentile() {
+    local values_str="$1"
+    local percentile="$2"
+
+    # Convert to array and sort
+    local -a values=($values_str)
+    local count=${#values[@]}
+
+    if [ $count -eq 0 ]; then
+        echo "0"
+        return
+    fi
+
+    # Sort numerically
+    IFS=$'\n' sorted=($(sort -n <<<"${values[*]}")); unset IFS
+
+    # Calculate index for percentile
+    local index=$(echo "scale=0; ($count * $percentile / 100)" | bc)
+
+    # Clamp to valid range
+    if [ $index -ge $count ]; then
+        index=$((count - 1))
+    fi
+    if [ $index -lt 0 ]; then
+        index=0
+    fi
+
+    echo "${sorted[$index]}"
+}
+
 # Calculate metrics from coordination files
 collect_metrics() {
     local timestamp="$1"
@@ -83,6 +115,10 @@ collect_metrics() {
     local zombies_killed=0
     local avg_duration=0
     local avg_tokens=0
+    local duration_p50=0
+    local duration_p90=0
+    local duration_p95=0
+    local duration_p99=0
 
     if [ -f "$WORKER_POOL" ]; then
         active_workers=$(jq -r '.active_workers | length' "$WORKER_POOL" 2>/dev/null || echo 0)
@@ -91,6 +127,15 @@ collect_metrics() {
         zombies_killed=$(jq -r '[.failed_workers[] | select(.killed_by == "zombie-killer-daemon")] | length' "$WORKER_POOL" 2>/dev/null || echo 0)
         avg_duration=$(jq -r '.stats.avg_duration_minutes // 0' "$WORKER_POOL" 2>/dev/null || echo 0)
         avg_tokens=$(jq -r '.stats.avg_tokens_used // 0' "$WORKER_POOL" 2>/dev/null || echo 0)
+
+        # Calculate duration percentiles from completed workers
+        local durations=$(jq -r '[.completed_workers[].duration_minutes // 0] | .[]' "$WORKER_POOL" 2>/dev/null | tr '\n' ' ')
+        if [ -n "$durations" ]; then
+            duration_p50=$(calculate_percentile "$durations" 50)
+            duration_p90=$(calculate_percentile "$durations" 90)
+            duration_p95=$(calculate_percentile "$durations" 95)
+            duration_p99=$(calculate_percentile "$durations" 99)
+        fi
     fi
 
     # Read token budget data
@@ -187,7 +232,13 @@ collect_metrics() {
     "zombies_killed": $zombies_killed,
     "success_rate": $success_rate,
     "avg_duration_minutes": $avg_duration,
-    "avg_tokens_used": $avg_tokens
+    "avg_tokens_used": $avg_tokens,
+    "duration_percentiles": {
+      "p50": $duration_p50,
+      "p90": $duration_p90,
+      "p95": $duration_p95,
+      "p99": $duration_p99
+    }
   },
   "tokens": {
     "total_budget": $total_budget,
