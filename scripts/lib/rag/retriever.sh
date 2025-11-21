@@ -364,6 +364,213 @@ calculate_similarity() {
     echo "scale=4; $intersection / $union" | bc
 }
 
+#------------------------------------------------------------------------------
+# Enhancement #19: Semantic Search using Vector Similarity
+#------------------------------------------------------------------------------
+
+# Path to vector store JavaScript module
+readonly VECTOR_STORE_JS="$COMMIT_RELAY_HOME/lib/rag/vector-store.js"
+
+# Check if vector search is available
+is_vector_search_available() {
+    if [ ! -f "$VECTOR_STORE_JS" ]; then
+        return 1
+    fi
+
+    # Check if node is available
+    if ! command -v node &> /dev/null; then
+        return 1
+    fi
+
+    # Check if vector DB index exists
+    local index_file="$COMMIT_RELAY_HOME/coordination/vector-db/index.json"
+    if [ ! -f "$index_file" ]; then
+        return 1
+    fi
+
+    return 0
+}
+
+# Semantic search using vector similarity (Enhancement #19)
+search_semantic() {
+    local query="$1"
+    local max_results="${2:-5}"
+    local collection="${3:-all}"
+    local min_similarity="${4:-0.6}"
+
+    # Check if vector search is available
+    if ! is_vector_search_available; then
+        log_warn "[RAG] Vector search unavailable, falling back to keyword search"
+        search_documents "$query" "$max_results"
+        return $?
+    fi
+
+    log_info "[RAG] Performing semantic search for: $query"
+
+    # Call vector store through Node.js
+    local result
+    result=$(node -e "
+        const VectorStore = require('$VECTOR_STORE_JS');
+        const vectorStore = new VectorStore();
+
+        (async () => {
+            await vectorStore.initialize();
+
+            const options = {
+                limit: $max_results,
+                min_similarity: $min_similarity
+            };
+
+            if ('$collection' !== 'all') {
+                options.collection = '$collection';
+            }
+
+            const results = await vectorStore.search(\`$query\`, options);
+
+            // Format results for bash consumption
+            const formatted = results.map(r => ({
+                id: r.id,
+                collection: r.collection,
+                similarity: r.similarity,
+                content: r.content.substring(0, 200),
+                metadata: r.metadata
+            }));
+
+            console.log(JSON.stringify(formatted));
+        })();
+    " 2>/dev/null)
+
+    if [ -z "$result" ] || [ "$result" = "[]" ]; then
+        log_info "[RAG] No semantic matches found, falling back to keyword search"
+        search_documents "$query" "$max_results"
+        return $?
+    fi
+
+    echo "$result"
+}
+
+# Hybrid search: combine semantic and keyword results
+search_hybrid() {
+    local query="$1"
+    local max_results="${2:-10}"
+
+    log_info "[RAG] Performing hybrid search for: $query"
+
+    local semantic_results="[]"
+    local keyword_results="[]"
+
+    # Get semantic results (if available)
+    if is_vector_search_available; then
+        semantic_results=$(search_semantic "$query" "$max_results" "all" "0.5" 2>/dev/null || echo "[]")
+    fi
+
+    # Get keyword results
+    keyword_results=$(search_documents "$query" "$max_results" 2>/dev/null || echo "[]")
+
+    # Combine and deduplicate results
+    # Semantic results get higher weight (1.5x)
+    local combined=$(echo "$semantic_results" | jq -c '.[] | . + {source: "semantic", weight: 1.5}' 2>/dev/null || true)
+    combined="$combined"$'\n'$(echo "$keyword_results" | jq -c '.[] | . + {source: "keyword", weight: 1.0}' 2>/dev/null || true)
+
+    # Merge, deduplicate, and sort by weighted score
+    echo "$combined" | jq -s '
+        # Combine all results
+        . |
+
+        # Calculate weighted score
+        map(
+            if .similarity then
+                . + {final_score: (.similarity * .weight)}
+            elif .score then
+                . + {final_score: ((.score / 100) * .weight)}
+            else
+                . + {final_score: .weight}
+            end
+        ) |
+
+        # Sort by final score descending
+        sort_by(-.final_score) |
+
+        # Limit results
+        .[:'"$max_results"']
+    ' 2>/dev/null || echo "$keyword_results"
+}
+
+# Search with automatic fallback
+search_smart() {
+    local query="$1"
+    local max_results="${2:-5}"
+
+    # Try semantic search first
+    if is_vector_search_available; then
+        local semantic=$(search_semantic "$query" "$max_results" "all" "0.65")
+        local count=$(echo "$semantic" | jq 'length' 2>/dev/null || echo "0")
+
+        if [ "$count" -gt 0 ]; then
+            log_info "[RAG] Using semantic search results ($count matches)"
+            echo "$semantic"
+            return 0
+        fi
+    fi
+
+    # Fall back to keyword search
+    log_info "[RAG] Using keyword search fallback"
+    search_documents "$query" "$max_results"
+}
+
+# Compute query embedding (wrapper for Node.js vector store)
+compute_query_embedding() {
+    local query="$1"
+
+    if ! is_vector_search_available; then
+        echo '{"error": "Vector search not available"}'
+        return 1
+    fi
+
+    # Generate embedding using vector store
+    node -e "
+        const VectorStore = require('$VECTOR_STORE_JS');
+        const vectorStore = new VectorStore();
+
+        (async () => {
+            await vectorStore.initialize();
+            const embedding = await vectorStore._generateEmbedding(\`$query\`);
+            console.log(JSON.stringify({
+                query: \`$query\`,
+                dimension: embedding.length,
+                embedding: embedding.slice(0, 10).concat(['...truncated...']),
+                generated_at: new Date().toISOString()
+            }));
+        })();
+    " 2>/dev/null
+}
+
+# Get similarity between two queries
+compute_query_similarity() {
+    local query1="$1"
+    local query2="$2"
+
+    if ! is_vector_search_available; then
+        # Fall back to Jaccard similarity
+        calculate_similarity "$query1" "$query2"
+        return
+    fi
+
+    # Use cosine similarity from vector store
+    node -e "
+        const VectorStore = require('$VECTOR_STORE_JS');
+        const vectorStore = new VectorStore();
+
+        (async () => {
+            await vectorStore.initialize();
+            const emb1 = await vectorStore._generateEmbedding(\`$query1\`);
+            const emb2 = await vectorStore._generateEmbedding(\`$query2\`);
+            const similarity = vectorStore._cosineSimilarity(emb1, emb2);
+            console.log(similarity.toFixed(4));
+        })();
+    " 2>/dev/null
+}
+
 # Find similar documents
 find_similar_documents() {
     local doc_id="$1"
@@ -418,6 +625,14 @@ export -f build_context
 export -f calculate_similarity
 export -f find_similar_documents
 
+# Enhancement #19: Semantic search exports
+export -f is_vector_search_available
+export -f search_semantic
+export -f search_hybrid
+export -f search_smart
+export -f compute_query_embedding
+export -f compute_query_similarity
+
 #------------------------------------------------------------------------------
 # CLI Interface
 #------------------------------------------------------------------------------
@@ -443,17 +658,52 @@ if [ "${BASH_SOURCE[0]}" = "${0}" ]; then
         similar)
             find_similar_documents "$2" "${3:-5}"
             ;;
+        # Enhancement #19: Semantic search commands
+        semantic)
+            search_semantic "$2" "${3:-5}" "${4:-all}" "${5:-0.6}"
+            ;;
+        hybrid)
+            search_hybrid "$2" "${3:-10}"
+            ;;
+        smart)
+            search_smart "$2" "${3:-5}"
+            ;;
+        embedding)
+            compute_query_embedding "$2"
+            ;;
+        similarity)
+            compute_query_similarity "$2" "$3"
+            ;;
+        check-vector)
+            if is_vector_search_available; then
+                echo "Vector search is available"
+                echo "Vector store: $VECTOR_STORE_JS"
+                exit 0
+            else
+                echo "Vector search is NOT available"
+                echo "Missing: $VECTOR_STORE_JS or vector DB index"
+                exit 1
+            fi
+            ;;
         help|*)
             echo "RAG Retriever"
             echo ""
             echo "Usage: retriever.sh <command> [args]"
             echo ""
             echo "Commands:"
-            echo "  search <query> [max]        Search documents by keywords"
-            echo "  filter <json> [max]         Filter by metadata"
-            echo "  chunks <query> [max]        Retrieve relevant chunks"
-            echo "  context <query> [tokens]    Build context from chunks"
-            echo "  similar <doc_id> [max]      Find similar documents"
+            echo "  search <query> [max]              Search documents by keywords"
+            echo "  filter <json> [max]               Filter by metadata"
+            echo "  chunks <query> [max]              Retrieve relevant chunks"
+            echo "  context <query> [tokens]          Build context from chunks"
+            echo "  similar <doc_id> [max]            Find similar documents"
+            echo ""
+            echo "Semantic Search (Enhancement #19):"
+            echo "  semantic <query> [max] [coll] [min]  Vector similarity search"
+            echo "  hybrid <query> [max]                 Combine semantic + keyword"
+            echo "  smart <query> [max]                  Auto-fallback search"
+            echo "  embedding <query>                    Compute query embedding"
+            echo "  similarity <query1> <query2>         Compute similarity score"
+            echo "  check-vector                         Check vector search availability"
             ;;
     esac
 fi

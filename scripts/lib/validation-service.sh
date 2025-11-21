@@ -397,6 +397,168 @@ validate_task_spec() {
 }
 
 # ==============================================================================
+# Compliance Validation
+# ==============================================================================
+
+# Governance rules file
+GOVERNANCE_RULES_FILE="${GOVERNANCE_RULES_FILE:-$COMMIT_RELAY_HOME/coordination/policies/governance-rules.json}"
+
+# Validate compliance with governance rules
+validate_compliance() {
+  local worker_spec_path="$1"
+
+  if [ "$VALIDATION_ENABLED" != "true" ]; then
+    return 0
+  fi
+
+  log_debug "validate_compliance: Checking governance rules for $worker_spec_path"
+
+  local errors=0
+  local warnings=0
+
+  # Read worker spec
+  local spec_content
+  spec_content=$(cat "$worker_spec_path" 2>/dev/null)
+
+  if [ -z "$spec_content" ]; then
+    log_error "validate_compliance: Cannot read worker spec"
+    return 1
+  fi
+
+  local worker_type=$(echo "$spec_content" | jq -r '.worker_type // "unknown"')
+  local worker_id=$(echo "$spec_content" | jq -r '.worker_id // "unknown"')
+  local task_type=$(echo "$spec_content" | jq -r '.task.type // "unknown"')
+
+  # Rule 1: Check resource limits
+  local token_budget=$(echo "$spec_content" | jq -r '.resources.token_budget // 0')
+  local max_tokens=200000  # Default max
+
+  if [ -f "$GOVERNANCE_RULES_FILE" ]; then
+    max_tokens=$(jq -r ".resource_limits.max_tokens_per_worker // 200000" "$GOVERNANCE_RULES_FILE")
+  fi
+
+  if [ "$token_budget" -gt "$max_tokens" ]; then
+    log_error "validate_compliance: Token budget ($token_budget) exceeds maximum ($max_tokens)"
+    ((errors++))
+  fi
+
+  # Rule 2: Check time limits
+  local time_limit=$(echo "$spec_content" | jq -r '.resources.time_limit_minutes // 0')
+  local max_time=120  # Default 2 hours
+
+  if [ -f "$GOVERNANCE_RULES_FILE" ]; then
+    max_time=$(jq -r ".resource_limits.max_time_minutes // 120" "$GOVERNANCE_RULES_FILE")
+  fi
+
+  if [ "$time_limit" -gt "$max_time" ]; then
+    log_error "validate_compliance: Time limit ($time_limit min) exceeds maximum ($max_time min)"
+    ((errors++))
+  fi
+
+  # Rule 3: Check restricted operations
+  local task_operations=$(echo "$spec_content" | jq -r '.task.operations // [] | .[]' 2>/dev/null)
+
+  if [ -f "$GOVERNANCE_RULES_FILE" ]; then
+    local restricted_ops=$(jq -r '.restricted_operations // [] | .[]' "$GOVERNANCE_RULES_FILE")
+
+    for op in $task_operations; do
+      if echo "$restricted_ops" | grep -q "^${op}$"; then
+        log_error "validate_compliance: Operation '$op' is restricted by governance policy"
+        ((errors++))
+      fi
+    done
+  fi
+
+  # Rule 4: Check sensitive data access
+  local data_access=$(echo "$spec_content" | jq -r '.permissions.data_access // [] | .[]' 2>/dev/null)
+
+  for data_type in $data_access; do
+    case "$data_type" in
+      pii|credentials|secrets|financial)
+        # Check if worker type is authorized for sensitive data
+        local authorized="false"
+        if [ -f "$GOVERNANCE_RULES_FILE" ]; then
+          authorized=$(jq -r --arg wt "$worker_type" --arg dt "$data_type" \
+            '.sensitive_data_access[$dt] // [] | any(. == $wt)' "$GOVERNANCE_RULES_FILE")
+        fi
+
+        if [ "$authorized" != "true" ]; then
+          log_error "validate_compliance: Worker type '$worker_type' not authorized for '$data_type' access"
+          ((errors++))
+        fi
+        ;;
+    esac
+  done
+
+  # Rule 5: Check audit requirements
+  local requires_audit="false"
+  if [ -f "$GOVERNANCE_RULES_FILE" ]; then
+    requires_audit=$(jq -r --arg tt "$task_type" \
+      '.audit_required_task_types // [] | any(. == $tt)' "$GOVERNANCE_RULES_FILE")
+  fi
+
+  if [ "$requires_audit" == "true" ]; then
+    local has_audit_trail=$(echo "$spec_content" | jq -r '.audit.enabled // false')
+    if [ "$has_audit_trail" != "true" ]; then
+      log_warn "validate_compliance: Task type '$task_type' requires audit trail, but not enabled"
+      ((warnings++))
+    fi
+  fi
+
+  # Rule 6: Check approval requirements
+  local requires_approval="false"
+  if [ -f "$COMMIT_RELAY_HOME/coordination/policies/approval-required.json" ]; then
+    requires_approval=$(jq -r --arg wt "$worker_type" --arg tt "$task_type" \
+      '.operations[] | select(.worker_types | any(. == $wt) or .task_types | any(. == $tt)) | .name' \
+      "$COMMIT_RELAY_HOME/coordination/policies/approval-required.json" 2>/dev/null | head -1)
+  fi
+
+  if [ -n "$requires_approval" ]; then
+    local approval_id=$(echo "$spec_content" | jq -r '.approval.approval_id // empty')
+    if [ -z "$approval_id" ]; then
+      log_error "validate_compliance: Operation requires approval but no approval_id provided"
+      ((errors++))
+    else
+      # Verify approval exists and is valid
+      local approval_file="$COMMIT_RELAY_HOME/coordination/approvals/approved/${approval_id}.json"
+      if [ ! -f "$approval_file" ]; then
+        log_error "validate_compliance: Approval $approval_id not found or not approved"
+        ((errors++))
+      fi
+    fi
+  fi
+
+  # Rule 7: Check concurrent worker limits
+  if [ -f "$GOVERNANCE_RULES_FILE" ]; then
+    local max_concurrent=$(jq -r --arg wt "$worker_type" \
+      '.concurrent_limits[$wt] // .concurrent_limits.default // 10' "$GOVERNANCE_RULES_FILE")
+
+    local current_count=$(find "$COMMIT_RELAY_HOME/coordination/worker-specs/active" \
+      -name "worker-${worker_type}-*.json" 2>/dev/null | wc -l | tr -d ' ')
+
+    if [ "$current_count" -ge "$max_concurrent" ]; then
+      log_error "validate_compliance: Concurrent worker limit reached for '$worker_type' (max: $max_concurrent)"
+      ((errors++))
+    fi
+  fi
+
+  # Log compliance check result
+  if [ $errors -gt 0 ]; then
+    log_error "validate_compliance: Failed with $errors errors and $warnings warnings"
+    trace_event "compliance.failed" "error" "{\"worker_id\":\"$worker_id\",\"errors\":$errors,\"warnings\":$warnings}"
+    return 1
+  fi
+
+  if [ $warnings -gt 0 ]; then
+    log_warn "validate_compliance: Passed with $warnings warnings"
+  fi
+
+  log_info "✅ Compliance validation passed for $worker_id"
+  trace_event "compliance.passed" "success" "{\"worker_id\":\"$worker_id\",\"warnings\":$warnings}"
+  return 0
+}
+
+# ==============================================================================
 # Pre-Flight Checks
 # ==============================================================================
 
@@ -457,6 +619,12 @@ pre_flight_checks() {
     fi
   fi
 
+  # Check 5: Compliance validation (NEW)
+  if ! validate_compliance "$worker_spec_path"; then
+    log_error "Pre-flight check failed: Compliance validation failed"
+    ((errors++))
+  fi
+
   if [ $errors -gt 0 ]; then
     log_error "❌ Pre-flight checks failed with $errors errors"
     return 1
@@ -479,6 +647,7 @@ export -f validate_value_constraints 2>/dev/null || true
 export -f safe_write_json 2>/dev/null || true
 export -f validate_worker_spec 2>/dev/null || true
 export -f validate_task_spec 2>/dev/null || true
+export -f validate_compliance 2>/dev/null || true
 export -f pre_flight_checks 2>/dev/null || true
 
 log_debug "Validation service loaded successfully"

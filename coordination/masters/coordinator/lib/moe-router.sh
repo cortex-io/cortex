@@ -12,6 +12,10 @@ ROUTING_LOG="$KB_DIR/routing-decisions.jsonl"
 ROUTING_LOG_BACKUP="$SCRIPT_DIR/../logs/routing-decisions.jsonl"
 COMMIT_RELAY_HOME="${COMMIT_RELAY_HOME:-$(cd "$SCRIPT_DIR/../../../.." && pwd)}"
 
+# Learned patterns for adaptive routing (Phase 2 Enhancement #16)
+LEARNED_PATTERNS="$COMMIT_RELAY_HOME/coordination/knowledge-base/learned-patterns/patterns-latest.json"
+LEARNED_WEIGHTS_ENABLED="${LEARNED_WEIGHTS_ENABLED:-true}"
+
 # Governance bypass mode (for bootstrapping governance system itself)
 GOVERNANCE_BYPASS="${GOVERNANCE_BYPASS:-false}"
 
@@ -32,6 +36,155 @@ mkdir -p "$(dirname "$ROUTING_LOG")"
 SINGLE_EXPERT_THRESHOLD=$(jq -r '.thresholds.single_expert' "$ROUTING_PATTERNS")
 MULTI_EXPERT_THRESHOLD=$(jq -r '.thresholds.multi_expert' "$ROUTING_PATTERNS")
 MINIMUM_ACTIVATION=$(jq -r '.thresholds.minimum_activation' "$ROUTING_PATTERNS")
+
+##############################################################################
+# load_learned_weights: Load learned keyword weights from patterns
+# Enhancement #16: MoE routing with learned preferences
+# Returns: Sets global LEARNED_KEYWORD_WEIGHTS associative array
+##############################################################################
+declare -A LEARNED_KEYWORD_WEIGHTS
+declare -A LEARNED_EXPERT_PREFERENCES
+
+load_learned_weights() {
+    # Initialize empty arrays
+    LEARNED_KEYWORD_WEIGHTS=()
+    LEARNED_EXPERT_PREFERENCES=()
+
+    # Check if learned patterns exist
+    if [ ! -f "$LEARNED_PATTERNS" ]; then
+        return 0
+    fi
+
+    # Load routing patterns with preferred worker types
+    local routing_count=$(jq -r '.routing_patterns | length' "$LEARNED_PATTERNS" 2>/dev/null || echo "0")
+
+    if [ "$routing_count" -gt 0 ]; then
+        # Extract worker type preferences and scores
+        while IFS='|' read -r worker_type count avg_score; do
+            if [ -n "$worker_type" ] && [ "$worker_type" != "null" ]; then
+                # Map worker types to experts
+                local expert=""
+                case "$worker_type" in
+                    feature-implementer|bug-fixer|refactorer|optimizer)
+                        expert="development"
+                        ;;
+                    security-scanner|vulnerability-fixer)
+                        expert="security"
+                        ;;
+                    cataloger|documenter)
+                        expert="inventory"
+                        ;;
+                    builder|deployer|tester)
+                        expert="cicd"
+                        ;;
+                esac
+
+                if [ -n "$expert" ]; then
+                    # Store preference with weight based on success rate
+                    local weight=$(echo "scale=2; $avg_score / 100 * $count" | bc 2>/dev/null || echo "1")
+                    LEARNED_EXPERT_PREFERENCES["$expert"]="${LEARNED_EXPERT_PREFERENCES[$expert]:-0}"
+                    LEARNED_EXPERT_PREFERENCES["$expert"]=$(echo "${LEARNED_EXPERT_PREFERENCES[$expert]} + $weight" | bc 2>/dev/null || echo "$weight")
+                fi
+            fi
+        done < <(jq -r '.routing_patterns[] | "\(.preferred_worker_type)|\(.count)|\(.avg_score)"' "$LEARNED_PATTERNS" 2>/dev/null)
+    fi
+
+    # Load successful patterns for keyword weighting
+    local success_count=$(jq -r '.successful_patterns | length' "$LEARNED_PATTERNS" 2>/dev/null || echo "0")
+
+    if [ "$success_count" -gt 0 ]; then
+        # Extract keywords from successful patterns
+        while IFS='|' read -r pattern_id keywords; do
+            if [ -n "$keywords" ] && [ "$keywords" != "null" ]; then
+                for kw in $keywords; do
+                    kw_lower=$(echo "$kw" | tr '[:upper:]' '[:lower:]')
+                    LEARNED_KEYWORD_WEIGHTS["$kw_lower"]="${LEARNED_KEYWORD_WEIGHTS[$kw_lower]:-0}"
+                    LEARNED_KEYWORD_WEIGHTS["$kw_lower"]=$((${LEARNED_KEYWORD_WEIGHTS[$kw_lower]} + 5))
+                done
+            fi
+        done < <(jq -r '.successful_patterns[]? | "\(.pattern_id)|\(.keywords // [] | join(" "))"' "$LEARNED_PATTERNS" 2>/dev/null)
+    fi
+
+    # Load failed patterns as negative weights
+    local fail_count=$(jq -r '.failed_patterns | length' "$LEARNED_PATTERNS" 2>/dev/null || echo "0")
+
+    if [ "$fail_count" -gt 0 ]; then
+        while IFS='|' read -r pattern_id keywords; do
+            if [ -n "$keywords" ] && [ "$keywords" != "null" ]; then
+                for kw in $keywords; do
+                    kw_lower=$(echo "$kw" | tr '[:upper:]' '[:lower:]')
+                    LEARNED_KEYWORD_WEIGHTS["$kw_lower"]="${LEARNED_KEYWORD_WEIGHTS[$kw_lower]:-0}"
+                    LEARNED_KEYWORD_WEIGHTS["$kw_lower"]=$((${LEARNED_KEYWORD_WEIGHTS[$kw_lower]} - 3))
+                done
+            fi
+        done < <(jq -r '.failed_patterns[]? | "\(.pattern_id)|\(.keywords // [] | join(" "))"' "$LEARNED_PATTERNS" 2>/dev/null)
+    fi
+}
+
+##############################################################################
+# apply_learned_boost: Apply learned weights to expert score
+# Args:
+#   $1: expert_name
+#   $2: base_score
+#   $3: task_description
+# Returns: Adjusted score
+##############################################################################
+apply_learned_boost() {
+    local expert="$1"
+    local base_score="$2"
+    local task_description="$3"
+
+    # If learning is disabled, return base score
+    if [ "$LEARNED_WEIGHTS_ENABLED" != "true" ]; then
+        echo "$base_score"
+        return
+    fi
+
+    local adjusted_score=$base_score
+    local task_lower=$(echo "$task_description" | tr '[:upper:]' '[:lower:]')
+
+    # Apply expert preference boost
+    local expert_pref="${LEARNED_EXPERT_PREFERENCES[$expert]:-0}"
+    if [ "$expert_pref" != "0" ]; then
+        # Add preference boost (capped at 10 points)
+        local pref_boost=$(echo "scale=0; $expert_pref * 2" | bc 2>/dev/null || echo "0")
+        if [ "$pref_boost" -gt 10 ]; then
+            pref_boost=10
+        fi
+        adjusted_score=$((adjusted_score + pref_boost))
+    fi
+
+    # Apply keyword-specific boosts from learned patterns
+    local keyword_boost=0
+    for word in $task_lower; do
+        local weight="${LEARNED_KEYWORD_WEIGHTS[$word]:-0}"
+        if [ "$weight" != "0" ]; then
+            keyword_boost=$((keyword_boost + weight))
+        fi
+    done
+
+    # Cap keyword boost at +/-15 points
+    if [ $keyword_boost -gt 15 ]; then
+        keyword_boost=15
+    elif [ $keyword_boost -lt -15 ]; then
+        keyword_boost=-15
+    fi
+
+    adjusted_score=$((adjusted_score + keyword_boost))
+
+    # Clamp to 0-100
+    if [ $adjusted_score -lt 0 ]; then
+        adjusted_score=0
+    fi
+    if [ $adjusted_score -gt 100 ]; then
+        adjusted_score=100
+    fi
+
+    echo $adjusted_score
+}
+
+# Load learned weights at startup
+load_learned_weights
 
 ##############################################################################
 # calculate_expert_score: Score a task description against an expert's patterns
@@ -260,6 +413,13 @@ route_task_moe() {
         inv_score=$((inv_score > type_confidence ? inv_score : type_confidence))
     fi
 
+    # Enhancement #16: Apply learned preference weights
+    if [ "$LEARNED_WEIGHTS_ENABLED" = "true" ]; then
+        dev_score=$(apply_learned_boost "development" "$dev_score" "$task_description")
+        sec_score=$(apply_learned_boost "security" "$sec_score" "$task_description")
+        inv_score=$(apply_learned_boost "inventory" "$inv_score" "$task_description")
+    fi
+
     # Convert to decimal for jq (0.0 - 1.0 scale)
     local dev_conf=$(echo "scale=2; $dev_score / 100" | bc)
     local sec_conf=$(echo "scale=2; $sec_score / 100" | bc)
@@ -424,6 +584,77 @@ get_activated_experts() {
     fi
 
     echo "$experts"
+}
+
+##############################################################################
+# record_routing_feedback: Record routing outcome for learning feedback loop
+# Enhancement #16: Connect learning to router
+# Args:
+#   $1: task_id
+#   $2: routed_expert
+#   $3: outcome (success|failure)
+#   $4: score (0-100)
+#   $5: keywords matched (comma-separated)
+##############################################################################
+record_routing_feedback() {
+    local task_id="$1"
+    local routed_expert="$2"
+    local outcome="$3"
+    local score="${4:-0}"
+    local keywords="${5:-}"
+
+    local feedback_dir="$COMMIT_RELAY_HOME/coordination/knowledge-base/feedback-reports"
+    mkdir -p "$feedback_dir"
+
+    local timestamp=$(date +"%Y-%m-%dT%H:%M:%S%z")
+    local feedback_file="$feedback_dir/routing-feedback-$(date +%Y%m%d).jsonl"
+
+    # Record feedback for learning system
+    local feedback_json=$(jq -n \
+        --arg task_id "$task_id" \
+        --arg expert "$routed_expert" \
+        --arg outcome "$outcome" \
+        --argjson score "$score" \
+        --arg keywords "$keywords" \
+        --arg ts "$timestamp" \
+        '{
+            task_id: $task_id,
+            expert: $expert,
+            outcome: $outcome,
+            score: $score,
+            keywords: ($keywords | split(",")),
+            timestamp: $ts,
+            feedback_type: "routing_outcome"
+        }')
+
+    echo "$feedback_json" >> "$feedback_file"
+
+    # Emit event for learning system
+    local events_file="$SCRIPT_DIR/../../dashboard-events.jsonl"
+    if [ -w "$(dirname "$events_file")" ] || [ -w "$events_file" ]; then
+        local event_json=$(jq -n \
+            --arg timestamp "$timestamp" \
+            --arg task_id "$task_id" \
+            --arg expert "$routed_expert" \
+            --arg outcome "$outcome" \
+            '{
+                timestamp: $timestamp,
+                type: "routing_feedback",
+                data: {
+                    task_id: $task_id,
+                    expert: $expert,
+                    outcome: $outcome
+                }
+            }')
+        echo "$event_json" >> "$events_file" 2>/dev/null || true
+    fi
+}
+
+##############################################################################
+# reload_learned_weights: Reload learned weights (call after learning updates)
+##############################################################################
+reload_learned_weights() {
+    load_learned_weights
 }
 
 ##############################################################################

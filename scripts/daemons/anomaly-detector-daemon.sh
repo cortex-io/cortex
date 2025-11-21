@@ -14,6 +14,7 @@ readonly PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 # Source required libraries
 source "$PROJECT_ROOT/scripts/lib/observability/anomaly-detector.sh"
 source "$PROJECT_ROOT/scripts/lib/observability/metrics-collector.sh" 2>/dev/null || true
+source "$PROJECT_ROOT/scripts/lib/observability/alerting.sh" 2>/dev/null || true
 
 # Configuration
 readonly DAEMON_NAME="anomaly-detector"
@@ -34,6 +35,21 @@ readonly MONITORED_METRICS=(
     "error_rate"
     "task_throughput"
     "worker_utilization"
+)
+
+# Behavioral monitoring configuration
+readonly BEHAVIORAL_BASELINE_DIR="${BEHAVIORAL_BASELINE_DIR:-coordination/security/behavioral-baselines}"
+readonly BEHAVIORAL_ALERTS_DIR="${BEHAVIORAL_ALERTS_DIR:-coordination/security/behavioral-alerts}"
+readonly BEHAVIORAL_HISTORY_FILE="${BEHAVIORAL_HISTORY_FILE:-coordination/security/behavioral-history.jsonl}"
+
+# Behavioral metrics to track
+readonly BEHAVIORAL_METRICS=(
+    "command_patterns"
+    "file_access_patterns"
+    "api_call_frequency"
+    "resource_usage_patterns"
+    "authentication_attempts"
+    "data_transfer_volume"
 )
 
 #
@@ -71,6 +87,9 @@ initialize() {
     # Create log directory
     mkdir -p "$(dirname "$LOG_FILE")"
 
+    # Create behavioral monitoring directories
+    mkdir -p "$BEHAVIORAL_BASELINE_DIR" "$BEHAVIORAL_ALERTS_DIR"
+
     # Check if already running
     if check_running; then
         log "ERROR" "Daemon already running (PID: $(cat "$PID_FILE"))"
@@ -87,7 +106,288 @@ initialize() {
         calculate_baseline "$metric" 7 2>&1 | grep -v "^{" || true
     done
 
+    # Initialize behavioral baselines
+    log "INFO" "Initializing behavioral baselines..."
+    initialize_behavioral_baselines
+
     log "INFO" "Initialization complete"
+}
+
+#
+# Initialize behavioral baselines for threat detection
+#
+initialize_behavioral_baselines() {
+    local timestamp=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+
+    for metric in "${BEHAVIORAL_METRICS[@]}"; do
+        local baseline_file="$BEHAVIORAL_BASELINE_DIR/${metric}.json"
+
+        if [[ ! -f "$baseline_file" ]]; then
+            # Create initial baseline
+            jq -n \
+                --arg metric "$metric" \
+                --arg timestamp "$timestamp" \
+                '{
+                    metric: $metric,
+                    created_at: $timestamp,
+                    updated_at: $timestamp,
+                    sample_count: 0,
+                    mean: 0,
+                    stddev: 0,
+                    min: 0,
+                    max: 0,
+                    p95: 0,
+                    pattern_histogram: {},
+                    time_series: []
+                }' > "$baseline_file"
+
+            log "INFO" "  Created behavioral baseline for: $metric"
+        fi
+    done
+}
+
+#
+# Collect behavioral metrics from system activity
+#
+collect_behavioral_metrics() {
+    local timestamp=$(date +%s)
+    local timestamp_iso=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+
+    # Command patterns - analyze recent bash history from worker logs
+    local cmd_count=0
+    local unique_cmds=0
+    if [[ -d "agents/logs" ]]; then
+        cmd_count=$(find agents/logs -name "*.log" -mmin -5 -exec grep -h "Executing:" {} \; 2>/dev/null | wc -l | tr -d ' ')
+        unique_cmds=$(find agents/logs -name "*.log" -mmin -5 -exec grep -h "Executing:" {} \; 2>/dev/null | sort -u | wc -l | tr -d ' ')
+    fi
+
+    # File access patterns - count recent file operations
+    local file_reads=0
+    local file_writes=0
+    if [[ -d "coordination" ]]; then
+        file_reads=$(find coordination -name "*.json" -mmin -5 2>/dev/null | wc -l | tr -d ' ')
+        file_writes=$(find coordination -name "*.json" -mmin -1 2>/dev/null | wc -l | tr -d ' ')
+    fi
+
+    # API call frequency - estimate from event logs
+    local api_calls=0
+    if [[ -f "coordination/dashboard-events.jsonl" ]]; then
+        api_calls=$(tail -100 coordination/dashboard-events.jsonl 2>/dev/null | wc -l | tr -d ' ')
+    fi
+
+    # Resource usage patterns
+    local cpu_usage=0
+    local mem_usage=0
+    if command -v top >/dev/null 2>&1; then
+        cpu_usage=$(ps -A -o %cpu | awk '{s+=$1} END {print s}' 2>/dev/null || echo "0")
+        mem_usage=$(ps -A -o %mem | awk '{s+=$1} END {print s}' 2>/dev/null || echo "0")
+    fi
+
+    # Store metrics
+    local metrics_json=$(jq -n \
+        --arg ts "$timestamp_iso" \
+        --arg cmd_count "$cmd_count" \
+        --arg unique_cmds "$unique_cmds" \
+        --arg file_reads "$file_reads" \
+        --arg file_writes "$file_writes" \
+        --arg api_calls "$api_calls" \
+        --arg cpu_usage "$cpu_usage" \
+        --arg mem_usage "$mem_usage" \
+        '{
+            timestamp: $ts,
+            command_patterns: {
+                total_commands: ($cmd_count | tonumber),
+                unique_commands: ($unique_cmds | tonumber)
+            },
+            file_access_patterns: {
+                reads: ($file_reads | tonumber),
+                writes: ($file_writes | tonumber)
+            },
+            api_call_frequency: ($api_calls | tonumber),
+            resource_usage_patterns: {
+                cpu_percent: ($cpu_usage | tonumber),
+                memory_percent: ($mem_usage | tonumber)
+            }
+        }')
+
+    echo "$metrics_json" >> "$BEHAVIORAL_HISTORY_FILE"
+    echo "$metrics_json"
+}
+
+#
+# Update behavioral baselines with new data
+#
+update_behavioral_baselines() {
+    log "INFO" "Updating behavioral baselines..."
+
+    # Read recent history (last 24 hours)
+    if [[ ! -f "$BEHAVIORAL_HISTORY_FILE" ]]; then
+        return 0
+    fi
+
+    local history=$(tail -1440 "$BEHAVIORAL_HISTORY_FILE" 2>/dev/null)
+
+    if [[ -z "$history" ]]; then
+        return 0
+    fi
+
+    # Update command patterns baseline
+    local cmd_stats=$(echo "$history" | jq -s '
+        {
+            sample_count: length,
+            mean: (map(.command_patterns.total_commands) | add / length),
+            stddev: (
+                (map(.command_patterns.total_commands) | add / length) as $mean |
+                map(.command_patterns.total_commands | . - $mean | . * .) | add / length | sqrt
+            ),
+            min: (map(.command_patterns.total_commands) | min),
+            max: (map(.command_patterns.total_commands) | max),
+            p95: (map(.command_patterns.total_commands) | sort | .[length * 95 / 100 | floor] // 0)
+        }')
+
+    local timestamp=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+    local baseline_file="$BEHAVIORAL_BASELINE_DIR/command_patterns.json"
+
+    if [[ -f "$baseline_file" ]]; then
+        jq --argjson stats "$cmd_stats" \
+           --arg updated "$timestamp" \
+           '. + $stats + {updated_at: $updated}' \
+           "$baseline_file" > "${baseline_file}.tmp" && \
+        mv "${baseline_file}.tmp" "$baseline_file"
+    fi
+
+    log "INFO" "Behavioral baselines updated"
+}
+
+#
+# Detect behavioral anomalies using statistical methods
+#
+detect_behavioral_anomalies() {
+    local current_metrics="$1"
+    local anomalies_detected=0
+
+    # Check command patterns
+    local cmd_count=$(echo "$current_metrics" | jq -r '.command_patterns.total_commands')
+    local baseline_file="$BEHAVIORAL_BASELINE_DIR/command_patterns.json"
+
+    if [[ -f "$baseline_file" ]]; then
+        local mean=$(jq -r '.mean // 0' "$baseline_file")
+        local stddev=$(jq -r '.stddev // 1' "$baseline_file")
+
+        if [[ "$stddev" != "0" && -n "$stddev" ]]; then
+            local deviation=$(echo "scale=4; ($cmd_count - $mean) / $stddev" | bc 2>/dev/null || echo "0")
+            local abs_deviation=$(echo "$deviation" | tr -d '-')
+
+            # Check for >3 sigma deviation
+            if [[ $(echo "$abs_deviation > 3" | bc -l 2>/dev/null) -eq 1 ]]; then
+                record_behavioral_anomaly "command_pattern_deviation" "$cmd_count" "$mean" "$deviation" "Command frequency deviated significantly from baseline"
+                anomalies_detected=$((anomalies_detected + 1))
+            fi
+        fi
+    fi
+
+    # Check file access patterns
+    local file_writes=$(echo "$current_metrics" | jq -r '.file_access_patterns.writes')
+    local file_reads=$(echo "$current_metrics" | jq -r '.file_access_patterns.reads')
+
+    # Detect unusual write-to-read ratio (potential data exfiltration indicator)
+    if [[ "$file_reads" -gt 0 ]]; then
+        local write_ratio=$(echo "scale=4; $file_writes / $file_reads" | bc 2>/dev/null || echo "0")
+
+        # Alert if write ratio > 0.5 (unusual amount of writing)
+        if [[ $(echo "$write_ratio > 0.5" | bc -l 2>/dev/null) -eq 1 ]]; then
+            record_behavioral_anomaly "unusual_write_pattern" "$write_ratio" "0.1" "0" "Unusually high write-to-read ratio detected"
+            anomalies_detected=$((anomalies_detected + 1))
+        fi
+    fi
+
+    # Check resource usage patterns
+    local cpu_usage=$(echo "$current_metrics" | jq -r '.resource_usage_patterns.cpu_percent')
+
+    # Alert on high CPU usage (>90%)
+    if [[ $(echo "$cpu_usage > 90" | bc -l 2>/dev/null) -eq 1 ]]; then
+        record_behavioral_anomaly "high_cpu_usage" "$cpu_usage" "50" "0" "CPU usage exceeds 90%"
+        anomalies_detected=$((anomalies_detected + 1))
+    fi
+
+    echo "$anomalies_detected"
+}
+
+#
+# Record a behavioral anomaly
+#
+record_behavioral_anomaly() {
+    local anomaly_type="$1"
+    local current_value="$2"
+    local baseline_value="$3"
+    local deviation="$4"
+    local description="$5"
+
+    local anomaly_id="behavioral-$(date +%s%N | cut -b1-13)-$(openssl rand -hex 4)"
+    local timestamp=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+
+    # Determine severity based on deviation
+    local severity="medium"
+    local abs_dev=$(echo "$deviation" | tr -d '-')
+    if [[ $(echo "$abs_dev > 5" | bc -l 2>/dev/null) -eq 1 ]]; then
+        severity="critical"
+    elif [[ $(echo "$abs_dev > 4" | bc -l 2>/dev/null) -eq 1 ]]; then
+        severity="high"
+    fi
+
+    local alert_file="$BEHAVIORAL_ALERTS_DIR/${anomaly_id}.json"
+
+    jq -n \
+        --arg id "$anomaly_id" \
+        --arg ts "$timestamp" \
+        --arg type "$anomaly_type" \
+        --arg severity "$severity" \
+        --arg current "$current_value" \
+        --arg baseline "$baseline_value" \
+        --arg deviation "$deviation" \
+        --arg desc "$description" \
+        '{
+            anomaly_id: $id,
+            timestamp: $ts,
+            type: "behavioral_anomaly",
+            subtype: $type,
+            severity: $severity,
+            status: "active",
+            current_value: ($current | tonumber),
+            baseline_value: ($baseline | tonumber),
+            deviation: ($deviation | tonumber),
+            description: $desc,
+            suggested_actions: [
+                "Review recent worker activity logs",
+                "Check for unauthorized access attempts",
+                "Verify system resource allocation",
+                "Investigate potential security incidents"
+            ]
+        }' > "$alert_file"
+
+    log "WARN" "BEHAVIORAL ANOMALY: [$severity] $anomaly_type - $description"
+
+    # Emit system event for high/critical severity
+    if [[ "$severity" == "critical" || "$severity" == "high" ]]; then
+        emit_system_event "behavioral_anomaly_detected" \
+            "{\"anomaly_id\":\"$anomaly_id\",\"type\":\"$anomaly_type\",\"severity\":\"$severity\"}" \
+            "error" 2>/dev/null || true
+    fi
+}
+
+#
+# Monitor behavioral patterns
+#
+monitor_behavioral_patterns() {
+    # Collect current behavioral metrics
+    local current_metrics=$(collect_behavioral_metrics)
+
+    # Detect anomalies
+    local anomalies=$(detect_behavioral_anomalies "$current_metrics")
+
+    if [[ "$anomalies" -gt 0 ]]; then
+        log "WARN" "Detected $anomalies behavioral anomalies"
+    fi
 }
 
 #
@@ -99,6 +399,9 @@ update_baselines() {
     for metric in "${MONITORED_METRICS[@]}"; do
         calculate_baseline "$metric" 7 >/dev/null 2>&1 || true
     done
+
+    # Also update behavioral baselines
+    update_behavioral_baselines || true
 
     log "INFO" "Baselines updated"
 }
@@ -138,6 +441,15 @@ monitor_metric() {
                     "{\"anomaly_id\":\"$anomaly_id\",\"type\":\"$anomaly_type\",\"severity\":\"$severity\",\"metric\":\"$metric_name\"}" \
                     "error" 2>/dev/null || true
             fi
+
+            # Process alerts based on anomaly
+            if declare -f process_anomaly_for_alerts >/dev/null 2>&1; then
+                local anomaly_data=$(cat "$anomaly_file")
+                local alerts_created=$(process_anomaly_for_alerts "$anomaly_data" 2>/dev/null || echo "0")
+                if [[ "$alerts_created" -gt 0 ]]; then
+                    log "INFO" "Created $alerts_created alert(s) for anomaly $anomaly_id"
+                fi
+            fi
         fi
     fi
 }
@@ -149,6 +461,9 @@ monitor_all_metrics() {
     for metric in "${MONITORED_METRICS[@]}"; do
         monitor_metric "$metric" || true
     done
+
+    # Also monitor behavioral patterns
+    monitor_behavioral_patterns || true
 }
 
 #
