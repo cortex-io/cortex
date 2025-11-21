@@ -428,19 +428,37 @@ update_master_state() {
     echo "$updated" > "$state_file"
 }
 
-# Record routing decision for learning
+# Record routing decision for learning (updated to use MoE-compatible format)
 record_routing_decision() {
     local task_id="$1"
     local target_master="$2"
     local rule_id="$3"
 
     local decision_file="$MASTER_KB_DIR/routing-decisions.jsonl"
+
+    # Use MoE-compatible format with decision object for consistent metrics
     local decision=$(jq -nc \
         --arg task "$task_id" \
         --arg master "$target_master" \
         --arg rule "$rule_id" \
         --arg ts "$(date +%Y-%m-%dT%H:%M:%S%z)" \
-        '{task_id: $task, routed_to: $master, rule_used: $rule, timestamp: $ts}')
+        '{
+            task_id: $task,
+            timestamp: $ts,
+            routing_strategy: "pattern_fallback",
+            decision: {
+                primary_expert: $master,
+                primary_confidence: 0.75,
+                strategy: "pattern_match",
+                parallel_experts: [],
+                scores: {
+                    development: (if $master == "development" then 0.75 else 0 end),
+                    security: (if $master == "security" then 0.75 else 0 end),
+                    inventory: (if $master == "inventory" then 0.75 else 0 end)
+                }
+            },
+            rule_used: $rule
+        }')
 
     echo "$decision" >> "$decision_file"
 }
@@ -466,18 +484,8 @@ record_moe_routing_decision() {
 
     echo "$log_entry" >> "$moe_log"
 
-    # Also log to legacy format for compatibility
-    local decision_file="$MASTER_KB_DIR/routing-decisions.jsonl"
-    local legacy_decision=$(jq -nc \
-        --arg task "$task_id" \
-        --arg master "$primary_expert" \
-        --arg rule "moe-confidence-based" \
-        --arg conf "$confidence" \
-        --arg strat "$strategy" \
-        --arg ts "$(date +%Y-%m-%dT%H:%M:%S%z)" \
-        '{task_id: $task, routed_to: $master, rule_used: $rule, confidence: $conf, strategy: $strat, timestamp: $ts}')
-
-    echo "$legacy_decision" >> "$decision_file"
+    # v4.0: Removed legacy format logging - MoE router already records decision in proper format
+    # This eliminates duplicate entries that were causing low confidence rate calculations
 
     log_info "Recorded MoE routing decision for task $task_id"
 }

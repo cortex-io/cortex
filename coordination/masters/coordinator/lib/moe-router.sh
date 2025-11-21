@@ -215,7 +215,24 @@ route_task_moe() {
     local strategy=""
     local parallel_experts=()
 
+    # v4.0 Enhancement: Calculate margin between primary and secondary experts
+    local second_highest=0
+    for expert_conf in "${activated_experts[@]}"; do
+        local conf="${expert_conf#*:}"
+        if [ "$conf" != "$primary_confidence" ] && (( $(echo "$conf > $second_highest" | bc -l) )); then
+            second_highest=$conf
+        fi
+    done
+    local margin=$(echo "scale=2; $primary_confidence - $second_highest" | bc)
+
+    # v4.0 Enhancement: Route to single expert if:
+    # 1. Primary confidence >= threshold, OR
+    # 2. Primary has significant margin (>=0.20) over others, OR
+    # 3. Only one expert activated
     if (( $(echo "$primary_confidence >= $SINGLE_EXPERT_THRESHOLD" | bc -l) )); then
+        strategy="single_expert"
+    elif (( $(echo "$margin >= 0.20" | bc -l) )); then
+        # Primary has strong lead over others - route to single expert
         strategy="single_expert"
     elif [ ${#activated_experts[@]} -gt 1 ]; then
         strategy="multi_expert_parallel"
