@@ -64,15 +64,29 @@ log() {
 
     echo -e "${color}[$timestamp] $level:${reset} $message" >&2
 
-    # Structured JSONL log
+    # Structured JSONL log with trace correlation
     local log_file="$LOG_DIR/$(date +%Y-%m-%d).jsonl"
-    local json_message=$(jq -n \
+    local json_message
+
+    # Build base JSON
+    json_message=$(jq -n \
         --arg ts "$timestamp" \
         --arg lvl "$level" \
         --arg msg "$message" \
         --arg ctx "$context" \
         --arg pid "$pid" \
         '{timestamp: $ts, level: $lvl, message: $msg, context: $ctx, pid: $pid}')
+
+    # Add trace correlation if available
+    if [[ -n "${TRACE_ID:-}" ]]; then
+        json_message=$(echo "$json_message" | jq --arg tid "$TRACE_ID" '. + {trace_id: $tid}')
+    fi
+    if [[ -n "${SPAN_ID:-}" ]]; then
+        json_message=$(echo "$json_message" | jq --arg sid "$SPAN_ID" '. + {span_id: $sid}')
+    fi
+    if [[ -n "${PARENT_SPAN_ID:-}" ]]; then
+        json_message=$(echo "$json_message" | jq --arg psid "$PARENT_SPAN_ID" '. + {parent_span_id: $psid}')
+    fi
 
     echo "$json_message" >> "$log_file"
 

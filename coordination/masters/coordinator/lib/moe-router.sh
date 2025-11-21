@@ -106,6 +106,90 @@ calculate_expert_score() {
 }
 
 ##############################################################################
+# get_matched_keywords: Get list of keywords that matched for an expert
+# Args:
+#   $1: task_description
+#   $2: expert_name
+# Returns: comma-separated list of matched keywords
+##############################################################################
+get_matched_keywords() {
+    local task_description="$1"
+    local expert="$2"
+    local task_lower=$(echo "$task_description" | tr '[:upper:]' '[:lower:]')
+    local matched=()
+
+    # Check activation keywords
+    while IFS= read -r keyword; do
+        if echo "$task_lower" | grep -qi "$keyword"; then
+            matched+=("$keyword")
+        fi
+    done < <(jq -r ".experts.$expert.activation_keywords[]" "$ROUTING_PATTERNS")
+
+    # Check confidence boosters
+    while IFS= read -r booster; do
+        if echo "$task_lower" | grep -qi "$booster"; then
+            matched+=("$booster")
+        fi
+    done < <(jq -r ".experts.$expert.confidence_boosters[]" "$ROUTING_PATTERNS")
+
+    # Return comma-separated list (limit to first 5)
+    local result=""
+    local count=0
+    for kw in "${matched[@]}"; do
+        if [ $count -ge 5 ]; then
+            break
+        fi
+        if [ -n "$result" ]; then
+            result="$result, $kw"
+        else
+            result="$kw"
+        fi
+        ((count++))
+    done
+
+    echo "$result"
+}
+
+##############################################################################
+# generate_routing_explanation: Generate human-readable explanation
+# Args:
+#   $1: task_description
+#   $2: primary_expert
+#   $3: primary_confidence (decimal 0-1)
+#   $4: strategy
+#   $5: type_routed (optional, "true" if type-based routing)
+# Returns: Human-readable explanation string
+##############################################################################
+generate_routing_explanation() {
+    local task_description="$1"
+    local primary_expert="$2"
+    local primary_confidence="$3"
+    local strategy="$4"
+    local type_routed="${5:-false}"
+
+    local confidence_pct=$(echo "scale=0; $primary_confidence * 100" | bc)
+    local matched_keywords=$(get_matched_keywords "$task_description" "$primary_expert")
+
+    local explanation=""
+
+    if [ "$type_routed" = "true" ]; then
+        explanation="Routed to $primary_expert (${confidence_pct}% confidence) via task type classification."
+    elif [ -n "$matched_keywords" ]; then
+        explanation="Routed to $primary_expert (${confidence_pct}% confidence) based on keywords: $matched_keywords."
+    else
+        explanation="Routed to $primary_expert (${confidence_pct}% confidence) as best available match."
+    fi
+
+    if [ "$strategy" = "multi_expert_parallel" ]; then
+        explanation="$explanation Multiple experts activated for parallel processing."
+    elif [ "$strategy" = "single_expert_low_confidence" ]; then
+        explanation="$explanation Low confidence routing - consider manual review."
+    fi
+
+    echo "$explanation"
+}
+
+##############################################################################
 # route_task_moe: Perform MoE-style routing with sparse activation
 # Args:
 #   $1: task_id
@@ -253,6 +337,13 @@ route_task_moe() {
         parallel_json="$(printf '%s\n' "${parallel_experts[@]}" | jq -R . | jq -s .)"
     fi
 
+    # Generate human-readable explanation
+    local type_routed="false"
+    if [ -n "$type_routed_expert" ] && [ "$type_routed_expert" = "$primary_expert" ]; then
+        type_routed="true"
+    fi
+    local explanation=$(generate_routing_explanation "$task_description" "$primary_expert" "$primary_confidence" "$strategy" "$type_routed")
+
     local routing_decision=$(jq -n \
         --arg task_id "$task_id" \
         --arg timestamp "$timestamp" \
@@ -263,6 +354,7 @@ route_task_moe() {
         --argjson sec_conf "$sec_conf" \
         --argjson inv_conf "$inv_conf" \
         --argjson parallel "$parallel_json" \
+        --arg explanation "$explanation" \
         '{
             task_id: $task_id,
             timestamp: $timestamp,
@@ -276,7 +368,8 @@ route_task_moe() {
                     development: $dev_conf,
                     security: $sec_conf,
                     inventory: $inv_conf
-                }
+                },
+                explanation: $explanation
             }
         }')
 
