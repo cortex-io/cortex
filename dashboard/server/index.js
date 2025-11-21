@@ -59,6 +59,7 @@ const { ComplianceEngine, MetricsCollector } = require('../../lib/governance/com
 // API Routes
 const usersRouter = require('./routes/users');
 const tracesRouter = require('./routes/traces');
+const complianceRouter = require('./routes/compliance');
 
 const app = express();
 const PORT = process.env.DASHBOARD_PORT || 3000;
@@ -111,6 +112,7 @@ app.use('/api', authMiddleware);
 // Mount API routers
 app.use('/api/users', usersRouter);
 app.use('/api/traces', tracesRouter);
+app.use('/api/compliance', complianceRouter);
 
 // Paths to coordination files
 const COMMIT_RELAY_HOME = process.env.COMMIT_RELAY_HOME || path.join(__dirname, '../..');
@@ -1867,6 +1869,8 @@ app.get('/api/daemons/all',
       'daemon-supervisor': checkDaemon('daemon-supervisor', 'daemon-supervisor.sh'),
       'zombie-cleanup': checkDaemon('zombie-cleanup', 'zombie-killer-daemon.sh'),
       'handoff-processor': checkDaemon('handoff-processor', 'handoff-processor-daemon.sh'),
+      'threat-intel': checkDaemon('threat-intel', 'threat-intel-daemon.sh'),
+      'backup': checkDaemon('backup', 'backup-daemon.sh'),
       'dashboard': {
         status: 'running',
         pid: process.pid,
@@ -2220,6 +2224,100 @@ app.post('/api/handoff-processor/stop', async (req, res) => {
     res.json({ status: 'stopped', message: 'Handoff processor daemon stopped' });
   } catch (error) {
     res.json({ status: 'not_running', message: 'Handoff processor was not running' });
+  }
+});
+
+/**
+ * POST /api/threat-intel/start
+ * Start threat intel daemon
+ */
+app.post('/api/threat-intel/start', async (req, res) => {
+  try {
+    const scriptPath = path.join(__dirname, '../../scripts/daemons/threat-intel-daemon.sh');
+
+    // Check if already running
+    try {
+      const isRunning = await safeExec('pgrep', ['-f', 'threat-intel-daemon.sh']);
+      if (isRunning.stdout.trim()) {
+        return res.json({ status: 'already_running', message: 'Threat intel daemon is already running' });
+      }
+    } catch (e) {
+      // pgrep returns exit code 1 when no processes match - this is expected
+    }
+
+    // Start the daemon
+    const { spawn } = require('child_process');
+    spawn('bash', [scriptPath], {
+      detached: true,
+      stdio: 'ignore'
+    }).unref();
+
+    setTimeout(() => {
+      res.json({ status: 'started', message: 'Threat intel daemon started successfully' });
+    }, 1000);
+  } catch (error) {
+    console.error('Error starting threat intel daemon:', error);
+    res.status(500).json({ error: 'Failed to start threat intel daemon' });
+  }
+});
+
+/**
+ * POST /api/threat-intel/stop
+ * Stop threat intel daemon
+ */
+app.post('/api/threat-intel/stop', async (req, res) => {
+  try {
+    await safeExec('pkill', ['-f', 'threat-intel-daemon.sh']);
+    res.json({ status: 'stopped', message: 'Threat intel daemon stopped' });
+  } catch (error) {
+    res.json({ status: 'not_running', message: 'Threat intel daemon was not running' });
+  }
+});
+
+/**
+ * POST /api/backup/start
+ * Start backup daemon
+ */
+app.post('/api/backup/start', async (req, res) => {
+  try {
+    const scriptPath = path.join(__dirname, '../../scripts/daemons/backup-daemon.sh');
+
+    // Check if already running
+    try {
+      const isRunning = await safeExec('pgrep', ['-f', 'backup-daemon.sh']);
+      if (isRunning.stdout.trim()) {
+        return res.json({ status: 'already_running', message: 'Backup daemon is already running' });
+      }
+    } catch (e) {
+      // pgrep returns exit code 1 when no processes match - this is expected
+    }
+
+    // Start the daemon
+    const { spawn } = require('child_process');
+    spawn('bash', [scriptPath], {
+      detached: true,
+      stdio: 'ignore'
+    }).unref();
+
+    setTimeout(() => {
+      res.json({ status: 'started', message: 'Backup daemon started successfully' });
+    }, 1000);
+  } catch (error) {
+    console.error('Error starting backup daemon:', error);
+    res.status(500).json({ error: 'Failed to start backup daemon' });
+  }
+});
+
+/**
+ * POST /api/backup/stop
+ * Stop backup daemon
+ */
+app.post('/api/backup/stop', async (req, res) => {
+  try {
+    await safeExec('pkill', ['-f', 'backup-daemon.sh']);
+    res.json({ status: 'stopped', message: 'Backup daemon stopped' });
+  } catch (error) {
+    res.json({ status: 'not_running', message: 'Backup daemon was not running' });
   }
 });
 
