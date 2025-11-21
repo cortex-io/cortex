@@ -3,21 +3,14 @@
   "worker_type": "implementation-worker",
   "created_by": "development-master",
   "execution_manager": null,
-  "created_at": "2025-11-20T07:25:21-0600",
-  "task_id": "task-moe-learning-1763645105819",
-  "status": "failed",
+  "created_at": "2025-11-20T20:20:01-0600",
+  "task_id": "moe-test-ddqd-v5-1763691538-695fc9c3",
+  "status": "running",
   "scope": {},
   "context": {
-    "targeted_deliverables": [
-      "task-patterns.json",
-      "routing-intelligence.json",
-      "agent-capabilities.json",
-      "security-patterns.json",
-      "development-standards.json",
-      "operational-insights.json",
-      "moe-learning-mastery-report.md"
-    ],
-    "instructions": "COMPREHENSIVE UPDATE: You MUST update ALL 7 deliverables with current system state. Analyze recent commits, current metrics, worker success rates, routing patterns, and system improvements from Nov 8-20. Each deliverable should reflect the latest fixes including: completion detector, heartbeat prompts, daemon supervisor, and expanded routing keywords."
+    "parent_task": "moe-test-ddqd-v5-1763691538-695fc9c3",
+    "priority": "medium",
+    "deadline": null
   },
   "goal_based_planning": {
     "enabled": true,
@@ -34,13 +27,11 @@
   "deliverables": [],
   "prompt_template": "agents/prompts/workers/implementation-worker.md",
   "execution": {
-    "started_at": "2025-11-20T07:25:45-0600",
-    "completed_at": "2025-11-20T08:38:58-0600",
+    "started_at": "2025-11-20T20:20:22-0600",
+    "completed_at": null,
     "tokens_used": 0,
     "duration_minutes": 0,
-    "session_id": null,
-    "error": "Zombie worker detected - running for 4393s with no completion",
-    "killed_by": "zombie-killer-daemon"
+    "session_id": null
   },
   "results": {
     "status": null,
@@ -49,10 +40,10 @@
     "artifacts": []
   },
   "heartbeat": {
-    "last_heartbeat": "2025-11-20T07:25:45-0600",
+    "last_heartbeat": "2025-11-20T20:20:22-0600",
     "heartbeat_sequence": 0,
     "health": {
-      "status": "healthy",
+      "status": "unresponsive",
       "cpu_usage_percent": 0,
       "memory_usage_mb": 0,
       "tokens_used": 0,
@@ -61,6 +52,8 @@
       "last_activity": "initialized"
     },
     "warnings": [],
-    "missed_count": 0
-  }
+    "missed_count": 4
+  },
+  "zombie_detected_at": "2025-11-21T16:58:55Z",
+  "zombie_reason": ""
 }

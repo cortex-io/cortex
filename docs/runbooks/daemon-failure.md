@@ -1,331 +1,327 @@
 # Runbook: Daemon Failure
 
-Diagnosis and resolution for stopped or unhealthy daemons.
+Diagnosis and resolution for daemon stopped or unhealthy conditions.
+
+---
+
+## Overview
+
+This runbook covers daemon failure scenarios including:
+- Daemon process stopped unexpectedly
+- Daemon running but not functioning correctly
+- Stale PID files
+- Configuration issues preventing startup
 
 ---
 
 ## Symptoms
 
+### Daemon Stopped
+- PID file missing or contains invalid PID
+- No process running
+- No updates to state files
 - Tasks not being processed
-- Workers not spawning
-- Metrics not updating
-- Dashboard shows daemons as stopped/dead
-- PID files exist but process not running
-- System appears unresponsive
+
+### Daemon Unhealthy
+- PID file exists and process running
+- But no activity in logs
+- State file timestamps not updating
+- No new events being generated
+
+### Startup Failures
+- Daemon exits immediately after start
+- Error messages in logs
+- "Already running" errors with stale PID
 
 ---
 
-## Root Causes
+## Diagnostic Commands
 
-1. **Process Crash**: Daemon encountered fatal error
-2. **Signal Termination**: Daemon killed by system or user
-3. **Resource Exhaustion**: Out of memory, file descriptors
-4. **Disk Full**: Cannot write logs or state
-5. **Permission Issues**: Cannot access required files
-6. **Script Errors**: Bug in daemon code
-7. **Dependency Failure**: Required service unavailable
-
----
-
-## Diagnosis Steps
-
-### 1. Check Daemon Status
+### 1. Check All Daemon Status
 
 ```bash
 # Quick status check
 ./scripts/dashboards/daemon-monitor.sh --status
 
-# Or manual check
-for pidfile in /tmp/commit-relay-*.pid; do
-    if [[ -f "$pidfile" ]]; then
-        NAME=$(basename "$pidfile" .pid | sed 's/commit-relay-//')
-        PID=$(cat "$pidfile")
-        if ps -p $PID > /dev/null 2>&1; then
-            echo "$NAME: RUNNING (PID: $PID)"
+# Detailed check
+for pid_file in /tmp/pm-daemon.pid /tmp/coordinator-daemon.pid /tmp/heartbeat-monitor.pid /tmp/zombie-killer.pid /tmp/metrics-snapshot-daemon.pid /tmp/governance-monitor.pid; do
+    daemon=$(basename "$pid_file" .pid)
+    if [ -f "$pid_file" ]; then
+        pid=$(cat "$pid_file")
+        if ps -p "$pid" > /dev/null 2>&1; then
+            echo "$daemon: RUNNING (PID $pid)"
         else
-            echo "$NAME: DEAD (stale PID file)"
+            echo "$daemon: STALE PID FILE"
         fi
+    else
+        echo "$daemon: STOPPED"
     fi
 done
 ```
 
-### 2. Check System Resources
+### 2. Check Specific Daemon
 
 ```bash
-# Check disk space
-df -h $COMMIT_RELAY_HOME
+# PM Daemon
+DAEMON_NAME="pm-daemon"
+PID_FILE="/tmp/${DAEMON_NAME}.pid"
+LOG_FILE="$COMMIT_RELAY_HOME/agents/logs/system/${DAEMON_NAME}.log"
 
-# Check memory
-vm_stat | head -10
+# Check PID
+if [ -f "$PID_FILE" ]; then
+    pid=$(cat "$PID_FILE")
+    ps -p "$pid" -o pid,ppid,etime,comm
+fi
 
-# Check open files
-lsof | wc -l
+# Check recent logs
+tail -50 "$LOG_FILE"
 
-# Check processes
-ps aux | grep commit-relay | wc -l
+# Check state file freshness
+ls -la $COMMIT_RELAY_HOME/coordination/pm-state.json
+stat -f "%Sm" $COMMIT_RELAY_HOME/coordination/pm-state.json
 ```
 
-### 3. Examine Daemon Logs
+### 3. Check for Errors
 
 ```bash
-# List all daemon logs
-ls -la $COMMIT_RELAY_HOME/agents/logs/system/
+# Search for errors in PM daemon log
+grep -i "error\|fatal\|exception" \
+    $COMMIT_RELAY_HOME/agents/logs/system/pm-daemon.log | tail -20
 
-# Check specific daemon log
-DAEMON="worker"  # Change as needed
-tail -100 $COMMIT_RELAY_HOME/agents/logs/system/$DAEMON-daemon.log
-
-# Search for errors
-grep -i "error\|fatal\|exception" $COMMIT_RELAY_HOME/agents/logs/system/$DAEMON-daemon.log | tail -20
+# Check if daemon exited abnormally
+grep -i "stopped\|exit\|crash" \
+    $COMMIT_RELAY_HOME/agents/logs/system/pm-daemon.log | tail -10
 ```
 
-### 4. Check Recent Events
+### 4. Verify State File Freshness
 
 ```bash
-# Look for daemon-related events
-grep -i "daemon" $COMMIT_RELAY_HOME/coordination/dashboard-events.jsonl | tail -20 | jq .
+# Check PM state last update
+jq -r '.pm_daemon.last_loop' $COMMIT_RELAY_HOME/coordination/pm-state.json
 
-# Check health alerts
-cat $COMMIT_RELAY_HOME/coordination/health-alerts.json | jq '.alerts[-10:]'
-```
-
-### 5. Verify Dependencies
-
-```bash
-# Check jq is available
-which jq || echo "jq not found!"
-
-# Check file permissions
-ls -la $COMMIT_RELAY_HOME/coordination/
-ls -la /tmp/commit-relay-*.pid
-
-# Check required directories exist
-for dir in coordination/worker-specs/active coordination/tasks agents/logs/system; do
-    [[ -d "$COMMIT_RELAY_HOME/$dir" ]] || echo "Missing: $dir"
-done
+# Calculate minutes since last update
+LAST_LOOP=$(jq -r '.pm_daemon.last_loop' $COMMIT_RELAY_HOME/coordination/pm-state.json)
+NOW=$(date +%s)
+THEN=$(date -j -f "%Y-%m-%dT%H:%M:%S%z" "$LAST_LOOP" +%s 2>/dev/null || echo 0)
+AGE_MIN=$(((NOW - THEN) / 60))
+echo "PM daemon last active: $AGE_MIN minutes ago"
 ```
 
 ---
 
 ## Resolution Steps
 
-### Immediate Actions
-
-#### 1. Restart Single Daemon
+### A. Restart Stopped Daemon
 
 ```bash
-# Stop daemon
-DAEMON="worker"
-./scripts/dashboards/daemon-monitor.sh --stop $DAEMON
+# Remove stale PID file
+rm -f /tmp/pm-daemon.pid
 
 # Start daemon
-./scripts/dashboards/daemon-monitor.sh --start $DAEMON
+./scripts/pm-daemon.sh &
 
-# Or directly:
-PID_FILE="/tmp/commit-relay-${DAEMON}.pid"
-if [[ -f "$PID_FILE" ]]; then
-    kill $(cat "$PID_FILE") 2>/dev/null || true
-    rm -f "$PID_FILE"
+# Verify startup
+sleep 5
+./scripts/dashboards/daemon-monitor.sh --status
+```
+
+### B. Fix Stale PID File
+
+```bash
+# Check if process is actually dead
+PID_FILE="/tmp/pm-daemon.pid"
+if [ -f "$PID_FILE" ]; then
+    pid=$(cat "$PID_FILE")
+    if ! ps -p "$pid" > /dev/null 2>&1; then
+        echo "Removing stale PID file"
+        rm -f "$PID_FILE"
+    fi
 fi
 
-# Start fresh
-case $DAEMON in
-    worker) ./scripts/worker-daemon.sh & ;;
-    pm) ./scripts/pm-daemon.sh & ;;
-    heartbeat) ./scripts/daemons/heartbeat-monitor-daemon.sh & ;;
-    coordinator) ./scripts/coordinator-daemon.sh & ;;
-esac
+# Start daemon
+./scripts/pm-daemon.sh &
 ```
 
-#### 2. Restart All Daemons
+### C. Diagnose Startup Failure
 
 ```bash
-# Stop all
-pkill -f "commit-relay.*daemon" || true
-rm -f /tmp/commit-relay-*.pid
+# Run daemon in foreground to see errors
+bash -x ./scripts/pm-daemon.sh 2>&1 | head -100
 
-# Wait for cleanup
-sleep 2
+# Check for permission issues
+ls -la $COMMIT_RELAY_HOME/coordination/pm-state.json
+ls -la $COMMIT_RELAY_HOME/agents/logs/system/
 
-# Start all
-./scripts/start-commit-relay.sh
-```
+# Check for disk space
+df -h $COMMIT_RELAY_HOME
 
-#### 3. Clear Stale PID Files
-
-```bash
-# Find and remove stale PID files
-for pidfile in /tmp/commit-relay-*.pid; do
-    if [[ -f "$pidfile" ]]; then
-        PID=$(cat "$pidfile")
-        if ! ps -p $PID > /dev/null 2>&1; then
-            echo "Removing stale: $pidfile"
-            rm -f "$pidfile"
-        fi
+# Validate required files
+for file in coordination/pm-state.json coordination/task-queue.json; do
+    if [ ! -f "$COMMIT_RELAY_HOME/$file" ]; then
+        echo "MISSING: $file"
     fi
 done
 ```
 
-#### 4. Fix Disk Space Issues
+### D. Reset Daemon State
+
+If daemon state is corrupted:
 
 ```bash
-# Check large files
-du -sh $COMMIT_RELAY_HOME/agents/logs/* | sort -h
+# Backup current state
+cp $COMMIT_RELAY_HOME/coordination/pm-state.json \
+   $COMMIT_RELAY_HOME/coordination/pm-state.json.backup
 
-# Rotate logs
-./scripts/rotate-dashboard-events.sh
+# Stop daemon
+pkill -f "pm-daemon" || true
+rm -f /tmp/pm-daemon.pid
 
-# Clean old worker logs (older than 7 days)
-find $COMMIT_RELAY_HOME/agents/logs/workers -type f -mtime +7 -delete
+# Re-initialize state
+rm -f $COMMIT_RELAY_HOME/coordination/pm-state.json
 
-# Clean old snapshots
-tail -1000 $COMMIT_RELAY_HOME/coordination/metrics-snapshots.jsonl > /tmp/snapshots.jsonl
-mv /tmp/snapshots.jsonl $COMMIT_RELAY_HOME/coordination/metrics-snapshots.jsonl
+# Start daemon (will re-initialize)
+./scripts/pm-daemon.sh &
 ```
 
-#### 5. Fix Permission Issues
+### E. Restart All Daemons
 
 ```bash
-# Ensure write permissions
-chmod -R u+w $COMMIT_RELAY_HOME/coordination/
-chmod -R u+w $COMMIT_RELAY_HOME/agents/logs/
+# Stop all daemons
+./scripts/dashboards/daemon-monitor.sh --stop-all
 
-# Fix PID file permissions
-chmod 644 /tmp/commit-relay-*.pid 2>/dev/null || true
-```
+# Wait for cleanup
+sleep 5
 
-### Individual Daemon Recovery
+# Remove any stale PIDs
+rm -f /tmp/pm-daemon.pid /tmp/coordinator-daemon.pid \
+      /tmp/heartbeat-monitor.pid /tmp/zombie-killer.pid \
+      /tmp/metrics-snapshot-daemon.pid /tmp/governance-monitor.pid
 
-#### Worker Daemon
-
-```bash
-# Check worker-daemon specific issues
-grep "spawn\|failed" $COMMIT_RELAY_HOME/agents/logs/system/worker-daemon.log | tail -20
-
-# Restart
-kill $(cat /tmp/commit-relay-worker.pid) 2>/dev/null || true
-rm -f /tmp/commit-relay-worker.pid
-./scripts/worker-daemon.sh &
+# Start all daemons
+./scripts/dashboards/daemon-monitor.sh --start-all
 
 # Verify
-sleep 2
-ps aux | grep worker-daemon
+./scripts/dashboards/daemon-monitor.sh --status
 ```
 
-#### Coordinator Daemon
+### F. Fix Configuration Issues
 
 ```bash
-# Check coordinator issues
-grep "route\|task" $COMMIT_RELAY_HOME/agents/logs/system/coordinator-daemon.log | tail -20
+# Validate daemon config
+jq empty $COMMIT_RELAY_HOME/coordination/config/daemon-config.json || \
+    echo "Invalid daemon config"
 
-# Reset coordinator state if needed
-rm -f $COMMIT_RELAY_HOME/coordination/orchestrator/state/current.json
+# Check environment
+echo "COMMIT_RELAY_HOME: $COMMIT_RELAY_HOME"
+ls -la $COMMIT_RELAY_HOME/scripts/pm-daemon.sh
 
-# Restart
-kill $(cat /tmp/commit-relay-coordinator.pid) 2>/dev/null || true
+# Check permissions
+chmod +x $COMMIT_RELAY_HOME/scripts/*.sh
+```
+
+---
+
+## Daemon-Specific Recovery
+
+### PM Daemon
+
+```bash
+# Stop
+pkill -f "pm-daemon" || true
+rm -f /tmp/pm-daemon.pid
+
+# Clear PM monitoring state (optional, keeps workers but resets monitoring)
+jq '.monitored_workers = {}' \
+    $COMMIT_RELAY_HOME/coordination/pm-state.json > \
+    $COMMIT_RELAY_HOME/coordination/pm-state.json.tmp && \
+    mv $COMMIT_RELAY_HOME/coordination/pm-state.json.tmp \
+       $COMMIT_RELAY_HOME/coordination/pm-state.json
+
+# Start
+./scripts/pm-daemon.sh &
+```
+
+### Coordinator Daemon
+
+```bash
+# Stop
+pkill -f "coordinator-daemon" || true
+rm -f /tmp/coordinator-daemon.pid
+
+# Clear coordinator state
+rm -f $COMMIT_RELAY_HOME/coordination/coordinator-state.json
+
+# Start
 ./scripts/coordinator-daemon.sh &
 ```
 
-#### Heartbeat Monitor Daemon
+### Zombie Killer Daemon
 
 ```bash
-# Check heartbeat issues
-grep "timeout\|zombie" $COMMIT_RELAY_HOME/agents/logs/system/heartbeat-monitor-daemon.log | tail -20
+# Stop
+pkill -f "zombie-killer" || true
+rm -f /tmp/zombie-killer.pid
 
-# Restart
-kill $(cat /tmp/commit-relay-heartbeat.pid) 2>/dev/null || true
-./scripts/daemons/heartbeat-monitor-daemon.sh &
-```
-
-#### Auto-Fix Daemon
-
-```bash
-# Check auto-fix issues
-grep "fix\|pattern" $COMMIT_RELAY_HOME/agents/logs/system/auto-fix-daemon.log | tail -20
-
-# Restart
-kill $(cat /tmp/commit-relay-auto-fix.pid) 2>/dev/null || true
-./scripts/daemons/auto-fix-daemon.sh &
+# Start
+./scripts/zombie-killer-daemon.sh &
 ```
 
 ---
 
 ## Prevention
 
-### Enable Daemon Supervision
+### 1. Monitor Daemon Health
 
-```bash
-# Use daemon supervisor (if available)
-./scripts/daemon-supervisor.sh &
-```
-
-### Set Up Log Rotation
+Set up regular health checks:
 
 ```bash
 # Add to crontab
-# Rotate logs daily
-0 0 * * * $COMMIT_RELAY_HOME/scripts/rotate-dashboard-events.sh
-
-# Clean old logs weekly
-0 0 * * 0 find $COMMIT_RELAY_HOME/agents/logs -type f -mtime +14 -delete
+*/5 * * * * $COMMIT_RELAY_HOME/scripts/health-check-pm-daemon.sh >> /tmp/health-check.log 2>&1
 ```
 
-### Monitor Disk Space
+### 2. Configure Heartbeat Monitor
 
-Add disk space monitoring to health checks:
+Ensure heartbeat-monitor daemon is running to detect daemon failures:
 
 ```bash
-# Check available space
-AVAILABLE=$(df -k $COMMIT_RELAY_HOME | tail -1 | awk '{print $4}')
-if (( AVAILABLE < 1000000 )); then  # Less than 1GB
-    echo "Warning: Low disk space"
-fi
+./scripts/health-monitor-daemon.sh &
 ```
 
-### Resource Limits
+### 3. Log Rotation
 
-Set appropriate limits for daemons:
+Prevent log files from consuming disk space:
 
 ```bash
-# In daemon scripts, add:
-ulimit -n 1024  # File descriptors
-ulimit -m 512000  # Memory (KB)
+# Rotate PM daemon logs
+./scripts/system-maintenance.sh --rotate-logs
+```
+
+### 4. State File Validation
+
+Validate state files after recovery:
+
+```bash
+# Validate all JSON state files
+for file in $COMMIT_RELAY_HOME/coordination/*.json; do
+    if ! jq empty "$file" 2>/dev/null; then
+        echo "INVALID: $file"
+    fi
+done
 ```
 
 ---
 
-## Verification
+## Quick Reference
 
-After recovery, verify system health:
-
-```bash
-# 1. Check all daemons running
-./scripts/dashboards/daemon-monitor.sh --status
-
-# 2. Verify system processing
-./scripts/dashboards/system-live.sh
-
-# 3. Create test task
-./scripts/create-task.sh --description "Health check task" --priority low
-
-# 4. Monitor for a few minutes
-watch -n 10 'cat $COMMIT_RELAY_HOME/coordination/task-queue.json | jq ".tasks[-1]"'
-
-# 5. Check no new errors
-grep -i error $COMMIT_RELAY_HOME/agents/logs/system/*.log | grep "$(date +%Y-%m-%d)"
-```
-
----
-
-## Escalation
-
-If daemons continue to fail:
-
-1. Check system logs: `sudo dmesg | tail -50`
-2. Review complete logs: `less $COMMIT_RELAY_HOME/agents/logs/system/*.log`
-3. Check for OOM kills: `grep -i "killed process" /var/log/system.log`
-4. Verify environment variables: `env | grep COMMIT_RELAY`
-5. Consult [Emergency Recovery](./emergency-recovery.md) runbook
+| Issue | Command |
+|-------|---------|
+| Check all daemons | `./scripts/dashboards/daemon-monitor.sh --status` |
+| Start all daemons | `./scripts/dashboards/daemon-monitor.sh --start-all` |
+| Stop all daemons | `./scripts/dashboards/daemon-monitor.sh --stop-all` |
+| Remove stale PIDs | `rm -f /tmp/*-daemon.pid /tmp/zombie-killer.pid /tmp/heartbeat-monitor.pid` |
+| View PM logs | `tail -f $COMMIT_RELAY_HOME/agents/logs/system/pm-daemon.log` |
+| Check PM last loop | `jq '.pm_daemon.last_loop' coordination/pm-state.json` |
+| Reset PM state | Remove pm-state.json and restart daemon |
 
 ---
 
@@ -334,6 +330,7 @@ If daemons continue to fail:
 - [Daily Operations](./daily-operations.md)
 - [Daemon Management](./daemon-management.md)
 - [Emergency Recovery](./emergency-recovery.md)
+- [Self-Healing System](./self-healing-system.md)
 
 ---
 

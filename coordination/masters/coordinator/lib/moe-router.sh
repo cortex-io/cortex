@@ -16,6 +16,10 @@ COMMIT_RELAY_HOME="${COMMIT_RELAY_HOME:-$(cd "$SCRIPT_DIR/../../../.." && pwd)}"
 LEARNED_PATTERNS="$COMMIT_RELAY_HOME/coordination/knowledge-base/learned-patterns/patterns-latest.json"
 LEARNED_WEIGHTS_ENABLED="${LEARNED_WEIGHTS_ENABLED:-true}"
 
+# Phase 3 Enhancement #16: Model versions directory for utility weights
+MODEL_VERSIONS_DIR="$COMMIT_RELAY_HOME/coordination/knowledge-base/model-versions"
+UTILITY_WEIGHTS_ENABLED="${UTILITY_WEIGHTS_ENABLED:-true}"
+
 # Governance bypass mode (for bootstrapping governance system itself)
 GOVERNANCE_BYPASS="${GOVERNANCE_BYPASS:-false}"
 
@@ -44,6 +48,130 @@ MINIMUM_ACTIVATION=$(jq -r '.thresholds.minimum_activation' "$ROUTING_PATTERNS")
 ##############################################################################
 declare -A LEARNED_KEYWORD_WEIGHTS
 declare -A LEARNED_EXPERT_PREFERENCES
+declare -A UTILITY_WEIGHTS
+
+##############################################################################
+# load_utility_weights: Load utility weights from model versions
+# Phase 3 Enhancement #16: Load versioned utility weights for expert scoring
+# Returns: Sets global UTILITY_WEIGHTS associative array
+##############################################################################
+load_utility_weights() {
+    UTILITY_WEIGHTS=()
+
+    if [ "$UTILITY_WEIGHTS_ENABLED" != "true" ]; then
+        return 0
+    fi
+
+    # Find the latest utility weights file
+    local latest_weights=""
+    if [ -d "$MODEL_VERSIONS_DIR" ]; then
+        latest_weights=$(ls -t "$MODEL_VERSIONS_DIR"/utility-weights-*.json 2>/dev/null | head -1)
+    fi
+
+    if [ -z "$latest_weights" ] || [ ! -f "$latest_weights" ]; then
+        return 0
+    fi
+
+    # Load expert utility weights
+    local expert_weights
+    expert_weights=$(jq -r '.expert_weights // {}' "$latest_weights" 2>/dev/null)
+
+    if [ -n "$expert_weights" ] && [ "$expert_weights" != "{}" ]; then
+        # Parse expert weights: {"development": 1.2, "security": 1.1, "inventory": 1.0}
+        while IFS='=' read -r expert weight; do
+            if [ -n "$expert" ] && [ -n "$weight" ]; then
+                UTILITY_WEIGHTS["$expert"]="$weight"
+            fi
+        done < <(echo "$expert_weights" | jq -r 'to_entries[] | "\(.key)=\(.value)"' 2>/dev/null)
+    fi
+
+    # Load keyword utility weights for scoring adjustments
+    local keyword_weights
+    keyword_weights=$(jq -r '.keyword_weights // {}' "$latest_weights" 2>/dev/null)
+
+    if [ -n "$keyword_weights" ] && [ "$keyword_weights" != "{}" ]; then
+        while IFS='=' read -r keyword weight; do
+            if [ -n "$keyword" ] && [ -n "$weight" ]; then
+                UTILITY_WEIGHTS["kw_$keyword"]="$weight"
+            fi
+        done < <(echo "$keyword_weights" | jq -r 'to_entries[] | "\(.key)=\(.value)"' 2>/dev/null)
+    fi
+
+    # Load confidence calibration factors
+    local calibration
+    calibration=$(jq -r '.confidence_calibration // {}' "$latest_weights" 2>/dev/null)
+
+    if [ -n "$calibration" ] && [ "$calibration" != "{}" ]; then
+        while IFS='=' read -r expert factor; do
+            if [ -n "$expert" ] && [ -n "$factor" ]; then
+                UTILITY_WEIGHTS["cal_$expert"]="$factor"
+            fi
+        done < <(echo "$calibration" | jq -r 'to_entries[] | "\(.key)=\(.value)"' 2>/dev/null)
+    fi
+}
+
+##############################################################################
+# apply_utility_weights: Apply utility weights to expert score
+# Phase 3 Enhancement #16: Adjust scores based on learned utility weights
+# Args:
+#   $1: expert_name
+#   $2: base_score
+#   $3: task_description
+# Returns: Adjusted score with utility weights applied
+##############################################################################
+apply_utility_weights() {
+    local expert="$1"
+    local base_score="$2"
+    local task_description="$3"
+
+    if [ "$UTILITY_WEIGHTS_ENABLED" != "true" ]; then
+        echo "$base_score"
+        return
+    fi
+
+    local adjusted_score=$base_score
+    local task_lower=$(echo "$task_description" | tr '[:upper:]' '[:lower:]')
+
+    # Apply expert-level utility weight (multiplicative)
+    local expert_weight="${UTILITY_WEIGHTS[$expert]:-1.0}"
+    if [ "$expert_weight" != "1.0" ]; then
+        adjusted_score=$(echo "scale=0; $adjusted_score * $expert_weight" | bc 2>/dev/null || echo "$adjusted_score")
+    fi
+
+    # Apply keyword-specific utility weights
+    local keyword_adjustment=0
+    for word in $task_lower; do
+        local kw_weight="${UTILITY_WEIGHTS[kw_$word]:-0}"
+        if [ "$kw_weight" != "0" ]; then
+            keyword_adjustment=$(echo "scale=2; $keyword_adjustment + $kw_weight" | bc 2>/dev/null || echo "0")
+        fi
+    done
+
+    # Apply keyword adjustment (capped at +/- 10)
+    if [ "$(echo "$keyword_adjustment > 10" | bc -l 2>/dev/null || echo 0)" -eq 1 ]; then
+        keyword_adjustment=10
+    elif [ "$(echo "$keyword_adjustment < -10" | bc -l 2>/dev/null || echo 0)" -eq 1 ]; then
+        keyword_adjustment=-10
+    fi
+    adjusted_score=$(echo "scale=0; $adjusted_score + $keyword_adjustment" | bc 2>/dev/null || echo "$adjusted_score")
+
+    # Apply confidence calibration factor
+    local cal_factor="${UTILITY_WEIGHTS[cal_$expert]:-1.0}"
+    if [ "$cal_factor" != "1.0" ]; then
+        adjusted_score=$(echo "scale=0; $adjusted_score * $cal_factor" | bc 2>/dev/null || echo "$adjusted_score")
+    fi
+
+    # Clamp to 0-100
+    adjusted_score=$(printf "%.0f" "$adjusted_score" 2>/dev/null || echo "$adjusted_score")
+    if [ "$adjusted_score" -lt 0 ] 2>/dev/null; then
+        adjusted_score=0
+    fi
+    if [ "$adjusted_score" -gt 100 ] 2>/dev/null; then
+        adjusted_score=100
+    fi
+
+    echo "$adjusted_score"
+}
 
 load_learned_weights() {
     # Initialize empty arrays
@@ -183,8 +311,9 @@ apply_learned_boost() {
     echo $adjusted_score
 }
 
-# Load learned weights at startup
+# Load learned weights and utility weights at startup
 load_learned_weights
+load_utility_weights
 
 ##############################################################################
 # calculate_expert_score: Score a task description against an expert's patterns
@@ -418,6 +547,13 @@ route_task_moe() {
         dev_score=$(apply_learned_boost "development" "$dev_score" "$task_description")
         sec_score=$(apply_learned_boost "security" "$sec_score" "$task_description")
         inv_score=$(apply_learned_boost "inventory" "$inv_score" "$task_description")
+    fi
+
+    # Phase 3 Enhancement #16: Apply utility weights from model versions
+    if [ "$UTILITY_WEIGHTS_ENABLED" = "true" ]; then
+        dev_score=$(apply_utility_weights "development" "$dev_score" "$task_description")
+        sec_score=$(apply_utility_weights "security" "$sec_score" "$task_description")
+        inv_score=$(apply_utility_weights "inventory" "$inv_score" "$task_description")
     fi
 
     # Convert to decimal for jq (0.0 - 1.0 scale)
@@ -655,6 +791,14 @@ record_routing_feedback() {
 ##############################################################################
 reload_learned_weights() {
     load_learned_weights
+    load_utility_weights
+}
+
+##############################################################################
+# reload_utility_weights: Reload utility weights from model versions
+##############################################################################
+reload_utility_weights() {
+    load_utility_weights
 }
 
 ##############################################################################
