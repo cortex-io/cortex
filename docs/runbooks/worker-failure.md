@@ -1,249 +1,274 @@
 # Runbook: Worker Failure
 
-Diagnosis and resolution for stuck, zombie, or crashed workers.
+Diagnosis and resolution for stuck, zombie, and crashed workers.
+
+---
+
+## Overview
+
+This runbook covers worker failure scenarios including workers that:
+- Stop responding (stalled/stuck)
+- Become zombies (process dead but status shows running)
+- Crash during execution
+- Fail to complete tasks
 
 ---
 
 ## Symptoms
 
-- Tasks stuck in "in_progress" state
-- Workers not emitting heartbeats
-- Worker logs show errors or stop updating
-- Token budget not being released
-- Dashboard shows zombie workers
+### Stalled Worker
+- Worker status shows "running" for extended period
+- No check-ins received for > 15 minutes
+- Progress percentage unchanged
+- No log activity
+
+### Zombie Worker
+- Worker spec shows "running" status
+- No corresponding process found
+- PM daemon reports "zombie_detected" event
+- Worker in `health_state: "stalled"` in pm-state.json
+
+### Crashed Worker
+- Sudden process termination
+- Incomplete task output
+- Error in agent logs
+- Status may show "running" but process is dead
 
 ---
 
-## Root Causes
+## Diagnostic Commands
 
-1. **Token Budget Exhaustion**: Worker ran out of allocated tokens
-2. **Timeout**: Task took longer than allowed duration
-3. **API Errors**: Claude API returned errors
-4. **Invalid Task**: Task specification was malformed
-5. **Resource Exhaustion**: System ran out of memory/disk
-6. **Network Issues**: Connection to API lost
-7. **Script Errors**: Bug in worker script
-
----
-
-## Diagnosis Steps
-
-### 1. Identify Failed Worker
+### 1. Check Worker Status
 
 ```bash
-# List zombie workers
-ls -la $COMMIT_RELAY_HOME/coordination/worker-specs/zombie/
-
-# List active workers with old timestamps
-find $COMMIT_RELAY_HOME/coordination/worker-specs/active/ -name "worker-*.json" -mmin +60
-
-# Check health scores
-for spec in $COMMIT_RELAY_HOME/coordination/worker-specs/active/worker-*.json; do
-    worker_id=$(jq -r '.worker_id' "$spec")
-    health=$(jq -r '.heartbeat.health_score // 0' "$spec")
-    echo "$worker_id: $health"
-done | sort -t: -k2 -n
-```
-
-### 2. Check Worker Status
-
-```bash
-# Get worker details
+# View worker spec
 WORKER_ID="worker-implementation-001"
-cat $COMMIT_RELAY_HOME/coordination/worker-specs/active/$WORKER_ID.json | jq .
+cat $COMMIT_RELAY_HOME/coordination/worker-specs/active/${WORKER_ID}.json | jq .
 
-# Check if process is running
-PID=$(jq -r '.pid // empty' $COMMIT_RELAY_HOME/coordination/worker-specs/active/$WORKER_ID.json)
-if [[ -n "$PID" ]]; then
-    ps -p $PID || echo "Process not running"
-fi
+# Check PM daemon monitoring state
+jq ".monitored_workers[\"$WORKER_ID\"]" \
+    $COMMIT_RELAY_HOME/coordination/pm-state.json
 ```
 
-### 3. Examine Worker Logs
+### 2. Check for Process
 
 ```bash
-# Find worker logs
-LOG_DIR=$(find $COMMIT_RELAY_HOME/agents/logs/workers -type d -name "$WORKER_ID" 2>/dev/null)
+# Find worker process
+WORKER_ID="worker-implementation-001"
+ps aux | grep -i "$WORKER_ID" | grep -v grep
 
-# Check recent log entries
-tail -100 "$LOG_DIR/worker.log"
-
-# Search for errors
-grep -i "error\|exception\|failed" "$LOG_DIR/worker.log"
-
-# Check token usage
-grep -i "token" "$LOG_DIR/worker.log" | tail -20
+# Find all Claude processes
+ps aux | grep -i "claude" | grep -v grep
 ```
 
-### 4. Check Heartbeat Status
+### 3. Check Last Activity
 
 ```bash
-# Check last heartbeat
-jq '.heartbeat' $COMMIT_RELAY_HOME/coordination/worker-specs/active/$WORKER_ID.json
-
-# Look for heartbeat events
-grep "$WORKER_ID" $COMMIT_RELAY_HOME/coordination/events/heartbeat-events.jsonl | tail -10 | jq .
+# View recent PM activity for worker
+WORKER_ID="worker-implementation-001"
+grep "$WORKER_ID" $COMMIT_RELAY_HOME/coordination/pm-activity.jsonl | tail -10 | jq .
 ```
 
-### 5. Check Pattern Detection
+### 4. Check Worker Logs
 
 ```bash
-# See if failure pattern was detected
-grep "$WORKER_ID" $COMMIT_RELAY_HOME/coordination/patterns/failure-patterns.jsonl | jq .
+# View worker-specific logs (if available)
+WORKER_ID="worker-implementation-001"
+ls -la $COMMIT_RELAY_HOME/agents/logs/ | grep "$WORKER_ID"
 
-# Check auto-fix attempts
-grep "$WORKER_ID" $COMMIT_RELAY_HOME/coordination/metrics/auto-fix-history.jsonl | jq .
+# View general system logs
+tail -100 $COMMIT_RELAY_HOME/agents/logs/system/pm-daemon.log | grep "$WORKER_ID"
+```
+
+### 5. Identify Zombie Workers
+
+```bash
+# Count zombies in active directory
+find $COMMIT_RELAY_HOME/coordination/worker-specs/active -name "*.json" \
+    -exec sh -c '
+        status=$(jq -r ".status" "$1")
+        if [ "$status" = "running" ]; then
+            worker_id=$(jq -r ".worker_id" "$1")
+            if ! ps aux | grep -q "$worker_id"; then
+                echo "ZOMBIE: $worker_id"
+            fi
+        fi
+    ' _ {} \;
+
+# List all stalled workers in PM state
+jq '.monitored_workers | to_entries[] | select(.value.health_state == "stalled") | .key' \
+    $COMMIT_RELAY_HOME/coordination/pm-state.json
 ```
 
 ---
 
 ## Resolution Steps
 
-### Immediate Actions
+### A. Restart Stalled Worker
 
-#### 1. Terminate Stuck Worker
+```bash
+WORKER_ID="worker-implementation-001"
+SPEC_FILE="$COMMIT_RELAY_HOME/coordination/worker-specs/active/${WORKER_ID}.json"
+
+# 1. Kill existing process if any
+pid=$(ps aux | grep "$WORKER_ID" | grep -v grep | awk '{print $2}')
+if [ -n "$pid" ]; then
+    kill "$pid" 2>/dev/null
+fi
+
+# 2. Reset worker state
+jq '.status = "pending" | .execution.started_at = null' \
+    "$SPEC_FILE" > "${SPEC_FILE}.tmp" && \
+    mv "${SPEC_FILE}.tmp" "$SPEC_FILE"
+
+# 3. Re-spawn worker
+./scripts/start-worker.sh --spec "$SPEC_FILE"
+```
+
+### B. Clean Up Zombie Worker
 
 ```bash
 WORKER_ID="worker-implementation-001"
 
-# Get PID and kill if running
-PID=$(jq -r '.pid // empty' $COMMIT_RELAY_HOME/coordination/worker-specs/active/$WORKER_ID.json)
-if [[ -n "$PID" ]]; then
-    kill $PID 2>/dev/null || true
-    kill -9 $PID 2>/dev/null || true
-fi
+# 1. Move to failed directory
+mv "$COMMIT_RELAY_HOME/coordination/worker-specs/active/${WORKER_ID}.json" \
+   "$COMMIT_RELAY_HOME/coordination/worker-specs/failed/"
 
-# Move to zombie directory
-mv $COMMIT_RELAY_HOME/coordination/worker-specs/active/$WORKER_ID.json \
-   $COMMIT_RELAY_HOME/coordination/worker-specs/zombie/
+# 2. Update status in failed spec
+FAILED_SPEC="$COMMIT_RELAY_HOME/coordination/worker-specs/failed/${WORKER_ID}.json"
+jq '.status = "failed" | .error = "Zombie worker - no process found"' \
+    "$FAILED_SPEC" > "${FAILED_SPEC}.tmp" && \
+    mv "${FAILED_SPEC}.tmp" "$FAILED_SPEC"
+
+# 3. Remove from PM monitoring
+jq "del(.monitored_workers[\"$WORKER_ID\"])" \
+    $COMMIT_RELAY_HOME/coordination/pm-state.json > \
+    $COMMIT_RELAY_HOME/coordination/pm-state.json.tmp && \
+    mv $COMMIT_RELAY_HOME/coordination/pm-state.json.tmp \
+       $COMMIT_RELAY_HOME/coordination/pm-state.json
+
+# 4. Log the cleanup
+./scripts/emit-event.sh --type "worker_zombie_cleaned" \
+    --worker-id "$WORKER_ID" \
+    --message "Zombie worker cleaned up manually"
 ```
 
-#### 2. Use Cleanup Script
+### C. Mass Zombie Cleanup
 
 ```bash
-# Cleanup specific worker
-./scripts/cleanup-zombie-workers.sh $WORKER_ID
-
-# Cleanup all zombies
+# Run zombie cleanup script
 ./scripts/cleanup-zombie-workers.sh
+
+# Or use archive script
+./scripts/archive-failed-workers.sh
 ```
 
-#### 3. Release Token Budget
+### D. Force Fail Worker
+
+When a worker needs to be terminated and marked as failed:
 
 ```bash
-# Check current budget
-cat $COMMIT_RELAY_HOME/coordination/token-budget.json | jq .
+WORKER_ID="worker-implementation-001"
+SPEC_FILE="$COMMIT_RELAY_HOME/coordination/worker-specs/active/${WORKER_ID}.json"
 
-# Recalculate budget (manual)
-USED=0
-for spec in $COMMIT_RELAY_HOME/coordination/worker-specs/active/worker-*.json; do
-    [[ -f "$spec" ]] && USED=$((USED + $(jq -r '.token_budget.allocated // 0' "$spec")))
-done
+# 1. Kill process
+pkill -f "$WORKER_ID" || true
 
-TOTAL=$(jq -r '.total' $COMMIT_RELAY_HOME/coordination/token-budget.json)
-AVAILABLE=$((TOTAL - USED))
+# 2. Update spec with failure
+jq '.status = "failed" | 
+    .error = "Manual termination" | 
+    .execution.completed_at = "'$(date -u +%Y-%m-%dT%H:%M:%SZ)'"' \
+    "$SPEC_FILE" > "${SPEC_FILE}.tmp" && \
+    mv "${SPEC_FILE}.tmp" "$SPEC_FILE"
 
-# Update budget (careful!)
-jq ".used = $USED | .available = $AVAILABLE" \
-   $COMMIT_RELAY_HOME/coordination/token-budget.json > /tmp/budget.json && \
-mv /tmp/budget.json $COMMIT_RELAY_HOME/coordination/token-budget.json
+# 3. Move to failed directory
+mv "$SPEC_FILE" "$COMMIT_RELAY_HOME/coordination/worker-specs/failed/"
 ```
 
-#### 4. Retry Task
+### E. Recover Task from Failed Worker
 
 ```bash
-# Get task ID from worker
-TASK_ID=$(jq -r '.task_id' $COMMIT_RELAY_HOME/coordination/worker-specs/zombie/$WORKER_ID.json)
+WORKER_ID="worker-implementation-001"
+FAILED_SPEC="$COMMIT_RELAY_HOME/coordination/worker-specs/failed/${WORKER_ID}.json"
 
-# Reset task to queued
-jq "(.tasks[] | select(.task_id == \"$TASK_ID\") | .status) = \"queued\" |
-    (.tasks[] | select(.task_id == \"$TASK_ID\") | .assigned_worker) = null" \
-   $COMMIT_RELAY_HOME/coordination/task-queue.json > /tmp/queue.json && \
-mv /tmp/queue.json $COMMIT_RELAY_HOME/coordination/task-queue.json
-```
+# Extract task information
+TASK_ID=$(jq -r '.task_id' "$FAILED_SPEC")
+DESCRIPTION=$(jq -r '.task.description' "$FAILED_SPEC")
+WORKER_TYPE=$(jq -r '.worker_type' "$FAILED_SPEC")
 
-### Long-term Fixes
-
-#### For Token Exhaustion
-
-```bash
-# Increase worker budget in config
-jq '.worker_types["implementation-worker"].default_budget = 150000' \
-   $COMMIT_RELAY_HOME/coordination/config/worker-types.json > /tmp/types.json && \
-mv /tmp/types.json $COMMIT_RELAY_HOME/coordination/config/worker-types.json
-```
-
-#### For Timeout Issues
-
-```bash
-# Increase timeout for worker type
-jq '.worker_types["implementation-worker"].default_duration = 60' \
-   $COMMIT_RELAY_HOME/coordination/config/worker-types.json > /tmp/types.json && \
-mv /tmp/types.json $COMMIT_RELAY_HOME/coordination/config/worker-types.json
-```
-
-#### For Recurring Failures
-
-```bash
-# Check patterns for this worker type
-grep "implementation-worker" $COMMIT_RELAY_HOME/coordination/patterns/failure-patterns.jsonl | \
-    jq -s 'group_by(.root_cause) | map({cause: .[0].root_cause, count: length})'
-
-# Update routing to avoid problematic configurations
-# Edit coordination/moe/router-config.json
+# Re-create task
+./scripts/create-task.sh \
+    --description "$DESCRIPTION" \
+    --priority high \
+    --worker-type "$WORKER_TYPE" \
+    --metadata "{\"retry_of\": \"$TASK_ID\"}"
 ```
 
 ---
 
 ## Prevention
 
-### Enable Proactive Monitoring
+### 1. Configure Appropriate Timeouts
+
+Ensure workers have reasonable time limits:
 
 ```bash
-# Ensure heartbeat monitor is running
-ps aux | grep heartbeat-monitor-daemon || \
-    ./scripts/daemons/heartbeat-monitor-daemon.sh &
-
-# Ensure auto-fix daemon is running
-ps aux | grep auto-fix-daemon || \
-    ./scripts/daemons/auto-fix-daemon.sh &
+# Check default time limits
+cat $COMMIT_RELAY_HOME/coordination/config/worker-types.json | jq .
 ```
 
-### Set Appropriate Budgets
+### 2. Enable Regular Check-ins
 
-- Analysis tasks: 50,000 tokens
-- Implementation tasks: 100,000-150,000 tokens
-- Complex tasks: 200,000 tokens
+Workers should check in every 5-10 minutes. Verify PM daemon is monitoring:
 
-### Configure Timeouts
+```bash
+# Check PM daemon is running
+./scripts/health-check-pm-daemon.sh
 
-- Simple tasks: 15 minutes
-- Standard tasks: 30 minutes
-- Complex tasks: 60 minutes
+# Verify check-in detection
+jq '.configuration' $COMMIT_RELAY_HOME/coordination/pm-state.json
+```
 
-### Use Task Decomposition
+### 3. Monitor Worker Health
 
-Break large tasks into smaller, focused subtasks that fit within budget constraints.
+Run daemon-monitor regularly:
+
+```bash
+./scripts/dashboards/daemon-monitor.sh --status
+```
+
+### 4. Set Up Alerting
+
+Configure health alerts for zombie threshold:
+
+```bash
+# Check alert configuration
+jq '.alerts[] | select(.type == "zombie_threshold")' \
+    $COMMIT_RELAY_HOME/coordination/health-alerts.json
+```
 
 ---
 
-## Escalation
+## Quick Reference
 
-If the issue persists after following these steps:
-
-1. Check system-wide health: `./scripts/dashboards/system-live.sh`
-2. Review all daemon logs: `grep -r "error" $COMMIT_RELAY_HOME/agents/logs/system/`
-3. Check Claude API status
-4. Review recent changes to configuration
-5. Consult [Emergency Recovery](./emergency-recovery.md) runbook
+| Issue | Command |
+|-------|---------|
+| Find worker spec | `jq . coordination/worker-specs/active/WORKER_ID.json` |
+| Check worker process | `ps aux \| grep WORKER_ID` |
+| List all zombies | `./scripts/cleanup-zombie-workers.sh --dry-run` |
+| Clean up zombies | `./scripts/cleanup-zombie-workers.sh` |
+| View stalled workers | `jq '.monitored_workers \| to_entries[] \| select(.value.health_state == "stalled")' coordination/pm-state.json` |
+| Force fail worker | Move to failed/ and update status |
+| Restart worker | Reset state and re-spawn |
 
 ---
 
 ## Related Runbooks
 
-- [Token Budget Exhaustion](./token-budget-exhaustion.md)
 - [Self-Healing System](./self-healing-system.md)
-- [Daily Operations](./daily-operations.md)
+- [Daemon Failure](./daemon-failure.md)
+- [Worker Lifecycle](./worker-lifecycle.md)
+- [Emergency Recovery](./emergency-recovery.md)
 
 ---
 

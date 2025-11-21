@@ -1,327 +1,277 @@
 # Runbook: Token Budget Exhaustion
 
-Diagnosis and resolution when token budget is exceeded and workers cannot spawn.
+Diagnosis and resolution for budget exceeded issues.
+
+---
+
+## Overview
+
+This runbook covers token budget issues including:
+- Daily budget exceeded
+- Individual worker budget exceeded
+- Allocation failures
+- Budget calculation errors
 
 ---
 
 ## Symptoms
 
-- New workers fail to spawn with "insufficient budget" error
-- Task queue grows but tasks not being processed
-- Dashboard shows 100% token usage
-- Worker daemon logs show budget allocation failures
-- Available tokens at 0 or negative
+### Budget Exhausted
+- New tasks not being assigned workers
+- Workers reporting "insufficient budget" errors
+- Dashboard showing 100% budget usage
+- Error messages in coordinator logs
+
+### Worker Budget Exceeded
+- Worker stuck waiting for budget
+- Worker terminated due to budget limit
+- Partial task completion
 
 ---
 
-## Root Causes
-
-1. **Zombie Workers**: Failed workers still holding allocated tokens
-2. **Long-Running Tasks**: Workers consuming more than expected
-3. **Concurrent Workers**: Too many workers running simultaneously
-4. **Budget Misconfiguration**: Total budget set too low
-5. **Token Leak**: Bug not releasing tokens on completion
-6. **Large Tasks**: Individual tasks requiring too many tokens
-
----
-
-## Diagnosis Steps
+## Diagnostic Commands
 
 ### 1. Check Current Budget Status
 
 ```bash
-# View budget
+# View token budget
 cat $COMMIT_RELAY_HOME/coordination/token-budget.json | jq .
 
-# Expected output:
-# {
-#   "total": 500000,
-#   "used": 485000,
-#   "available": 15000
-# }
+# Quick summary
+jq '{
+    total: .total_budget,
+    used: .usage_metrics.total_tokens_used_today,
+    available: (.total_budget - .usage_metrics.total_tokens_used_today),
+    usage_pct: ((.usage_metrics.total_tokens_used_today * 100) / .total_budget)
+}' $COMMIT_RELAY_HOME/coordination/token-budget.json
 ```
 
-### 2. Analyze Token Allocation
+### 2. Check Worker Allocations
 
 ```bash
-# Sum of allocated tokens in active workers
-ACTIVE_ALLOCATED=0
-for spec in $COMMIT_RELAY_HOME/coordination/worker-specs/active/worker-*.json; do
-    if [[ -f "$spec" ]]; then
-        ALLOCATED=$(jq -r '.token_budget.allocated // 0' "$spec")
-        ACTIVE_ALLOCATED=$((ACTIVE_ALLOCATED + ALLOCATED))
-    fi
-done
-echo "Active workers allocated: $ACTIVE_ALLOCATED"
+# List all worker allocations
+jq '.workers | to_entries[] | {
+    worker: .key,
+    allocated: .value.allocated,
+    used: .value.used,
+    remaining: (.value.allocated - .value.used)
+}' $COMMIT_RELAY_HOME/coordination/token-budget.json
 
-# Sum of zombie workers
-ZOMBIE_ALLOCATED=0
-for spec in $COMMIT_RELAY_HOME/coordination/worker-specs/zombie/worker-*.json; do
-    if [[ -f "$spec" ]]; then
-        ALLOCATED=$(jq -r '.token_budget.allocated // 0' "$spec")
-        ZOMBIE_ALLOCATED=$((ZOMBIE_ALLOCATED + ALLOCATED))
-    fi
-done
-echo "Zombie workers allocated: $ZOMBIE_ALLOCATED"
-
-# Compare with reported usage
-REPORTED=$(jq -r '.used' $COMMIT_RELAY_HOME/coordination/token-budget.json)
-echo "Reported used: $REPORTED"
-echo "Discrepancy: $((REPORTED - ACTIVE_ALLOCATED))"
+# Find workers over budget
+jq '.workers | to_entries[] | select(.value.used > .value.allocated) | .key' \
+    $COMMIT_RELAY_HOME/coordination/token-budget.json
 ```
 
-### 3. List Largest Token Consumers
+### 3. Check Recent Usage Trends
 
 ```bash
-# Sort workers by token allocation
-for spec in $COMMIT_RELAY_HOME/coordination/worker-specs/active/worker-*.json; do
-    if [[ -f "$spec" ]]; then
-        ID=$(jq -r '.worker_id' "$spec")
-        ALLOCATED=$(jq -r '.token_budget.allocated // 0' "$spec")
-        USED=$(jq -r '.token_budget.used // 0' "$spec")
-        echo "$ALLOCATED|$USED|$ID"
-    fi
-done | sort -t'|' -k1 -rn | head -10 | \
-while IFS='|' read -r alloc used id; do
-    printf "%-30s Allocated: %8d  Used: %8d\n" "$id" "$alloc" "$used"
+# View hourly snapshots for token usage trend
+for snapshot in $(ls -t $COMMIT_RELAY_HOME/coordination/history/hourly/*.json | head -12); do
+    ts=$(jq -r '.timestamp' "$snapshot")
+    used=$(jq -r '.tokens.total_used // 0' "$snapshot")
+    echo "$ts: $used tokens"
 done
 ```
 
-### 4. Check for Stuck Workers
+### 4. Find Budget-Related Errors
 
 ```bash
-# Workers older than 1 hour
-find $COMMIT_RELAY_HOME/coordination/worker-specs/active -name "worker-*.json" -mmin +60 \
-    -exec jq -r '[.worker_id, .token_budget.allocated] | @tsv' {} \;
-```
+# Check for budget errors in logs
+grep -i "budget\|allocation\|tokens" \
+    $COMMIT_RELAY_HOME/agents/logs/system/pm-daemon.log | tail -20
 
-### 5. Review Historical Usage
-
-```bash
-# Token budget over time
-tail -20 $COMMIT_RELAY_HOME/coordination/metrics-snapshots.jsonl | \
-    jq -r '[.timestamp, .token_budget.used, .token_budget.available] | @tsv' | \
-    column -t
+# Check coordinator logs
+grep -i "insufficient\|exceeded\|budget" \
+    $COMMIT_RELAY_HOME/agents/logs/system/coordinator-daemon.log | tail -20
 ```
 
 ---
 
 ## Resolution Steps
 
-### Immediate Actions
+### A. Reset Daily Budget
 
-#### 1. Cleanup Zombie Workers
+If the daily budget needs to be reset:
 
 ```bash
-# Run cleanup script
-./scripts/cleanup-zombie-workers.sh
+# View current budget
+cat $COMMIT_RELAY_HOME/coordination/token-budget.json | jq .
 
-# Verify zombies cleaned
-ls $COMMIT_RELAY_HOME/coordination/worker-specs/zombie/ | wc -l
+# Reset daily usage counter
+jq '.usage_metrics.total_tokens_used_today = 0 |
+    .usage_metrics.reset_at = "'$(date -u +%Y-%m-%dT%H:%M:%SZ)'"' \
+    $COMMIT_RELAY_HOME/coordination/token-budget.json > \
+    $COMMIT_RELAY_HOME/coordination/token-budget.json.tmp && \
+    mv $COMMIT_RELAY_HOME/coordination/token-budget.json.tmp \
+       $COMMIT_RELAY_HOME/coordination/token-budget.json
+
+# Log the reset
+./scripts/emit-event.sh --type "budget_reset" \
+    --severity "info" \
+    --message "Daily token budget reset manually"
 ```
 
-#### 2. Terminate Long-Running Workers
+### B. Increase Total Budget
 
 ```bash
-# Find workers running > 60 minutes
-for spec in $COMMIT_RELAY_HOME/coordination/worker-specs/active/worker-*.json; do
-    if [[ -f "$spec" ]]; then
-        CREATED=$(jq -r '.created_at // ""' "$spec")
-        if [[ -n "$CREATED" ]]; then
-            CREATED_TS=$(date -j -f "%Y-%m-%dT%H:%M:%S" "${CREATED%%.*}" +%s 2>/dev/null || echo 0)
-            NOW_TS=$(date +%s)
-            AGE_MIN=$(( (NOW_TS - CREATED_TS) / 60 ))
-            if (( AGE_MIN > 60 )); then
-                ID=$(jq -r '.worker_id' "$spec")
-                echo "Old worker: $ID (${AGE_MIN}min)"
-            fi
-        fi
-    fi
-done
+# Increase budget to 500000
+jq '.total_budget = 500000' \
+    $COMMIT_RELAY_HOME/coordination/token-budget.json > \
+    $COMMIT_RELAY_HOME/coordination/token-budget.json.tmp && \
+    mv $COMMIT_RELAY_HOME/coordination/token-budget.json.tmp \
+       $COMMIT_RELAY_HOME/coordination/token-budget.json
 
-# Terminate specific worker
+echo "Budget increased to 500000 tokens"
+```
+
+### C. Clean Up Completed Worker Allocations
+
+```bash
+# Remove allocations for completed/failed workers
+BUDGET_FILE="$COMMIT_RELAY_HOME/coordination/token-budget.json"
+
+# Get list of active workers
+active_workers=$(ls $COMMIT_RELAY_HOME/coordination/worker-specs/active/*.json 2>/dev/null | \
+    xargs -I {} jq -r '.worker_id' {} | sort | uniq)
+
+# Filter budget to only keep active workers
+jq --argjson active "$(echo "$active_workers" | jq -R . | jq -s .)" \
+    '.workers = (.workers | to_entries | map(select(.key as $k | $active | index($k))) | from_entries)' \
+    "$BUDGET_FILE" > "${BUDGET_FILE}.tmp" && \
+    mv "${BUDGET_FILE}.tmp" "$BUDGET_FILE"
+
+echo "Cleaned up completed worker allocations"
+```
+
+### D. Recalculate Budget Usage
+
+```bash
+# Recalculate total usage from worker allocations
+jq '.usage_metrics.total_tokens_used_today = ([.workers[].used] | add // 0)' \
+    $COMMIT_RELAY_HOME/coordination/token-budget.json > \
+    $COMMIT_RELAY_HOME/coordination/token-budget.json.tmp && \
+    mv $COMMIT_RELAY_HOME/coordination/token-budget.json.tmp \
+       $COMMIT_RELAY_HOME/coordination/token-budget.json
+```
+
+### E. Reallocate Budget to Stuck Worker
+
+```bash
 WORKER_ID="worker-implementation-001"
-PID=$(jq -r '.pid // empty' $COMMIT_RELAY_HOME/coordination/worker-specs/active/$WORKER_ID.json)
-[[ -n "$PID" ]] && kill $PID 2>/dev/null
-mv $COMMIT_RELAY_HOME/coordination/worker-specs/active/$WORKER_ID.json \
-   $COMMIT_RELAY_HOME/coordination/worker-specs/zombie/
+
+# Increase worker allocation
+jq --arg wid "$WORKER_ID" \
+    '.workers[$wid].allocated = 150000' \
+    $COMMIT_RELAY_HOME/coordination/token-budget.json > \
+    $COMMIT_RELAY_HOME/coordination/token-budget.json.tmp && \
+    mv $COMMIT_RELAY_HOME/coordination/token-budget.json.tmp \
+       $COMMIT_RELAY_HOME/coordination/token-budget.json
 ```
 
-#### 3. Recalculate Budget
+### F. Emergency Budget Override
+
+For critical situations when budget cannot wait:
 
 ```bash
-# Calculate actual usage
-USED=0
-for spec in $COMMIT_RELAY_HOME/coordination/worker-specs/active/worker-*.json; do
-    if [[ -f "$spec" ]]; then
-        ALLOCATED=$(jq -r '.token_budget.allocated // 0' "$spec")
-        USED=$((USED + ALLOCATED))
-    fi
-done
-
-# Get total
-TOTAL=$(jq -r '.total' $COMMIT_RELAY_HOME/coordination/token-budget.json)
-AVAILABLE=$((TOTAL - USED))
-
-# Update budget file
-cat > $COMMIT_RELAY_HOME/coordination/token-budget.json << EOF
+# Create emergency budget override
+cat > $COMMIT_RELAY_HOME/coordination/token-budget.json << 'EOF'
 {
-  "total": $TOTAL,
-  "used": $USED,
-  "available": $AVAILABLE,
-  "last_updated": "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+  "total_budget": 500000,
+  "usage_metrics": {
+    "total_tokens_used_today": 0,
+    "reset_at": "2025-11-21T00:00:00Z"
+  },
+  "workers": {},
+  "emergency_override": true,
+  "override_timestamp": "2025-11-21T12:00:00Z"
 }
 EOF
 
-echo "Budget recalculated: Used=$USED, Available=$AVAILABLE"
-```
-
-#### 4. Emergency Budget Reset
-
-**Use with caution - may cause accounting issues**
-
-```bash
-# Only if no workers are actually running
-ps aux | grep -c "worker"
-
-# Reset to full budget
-TOTAL=500000
-cat > $COMMIT_RELAY_HOME/coordination/token-budget.json << EOF
-{
-  "total": $TOTAL,
-  "used": 0,
-  "available": $TOTAL,
-  "last_updated": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
-  "note": "Emergency reset"
-}
-EOF
-```
-
-### Long-term Solutions
-
-#### 1. Increase Total Budget
-
-```bash
-# Increase budget to 1M tokens
-NEW_TOTAL=1000000
-CURRENT_USED=$(jq -r '.used' $COMMIT_RELAY_HOME/coordination/token-budget.json)
-NEW_AVAILABLE=$((NEW_TOTAL - CURRENT_USED))
-
-jq ".total = $NEW_TOTAL | .available = $NEW_AVAILABLE" \
-   $COMMIT_RELAY_HOME/coordination/token-budget.json > /tmp/budget.json && \
-mv /tmp/budget.json $COMMIT_RELAY_HOME/coordination/token-budget.json
-```
-
-#### 2. Reduce Default Worker Budgets
-
-```bash
-# Review and adjust worker type budgets
-cat $COMMIT_RELAY_HOME/coordination/config/worker-types.json | jq .
-
-# Update a specific type
-jq '.worker_types["implementation-worker"].default_budget = 80000' \
-   $COMMIT_RELAY_HOME/coordination/config/worker-types.json > /tmp/types.json && \
-mv /tmp/types.json $COMMIT_RELAY_HOME/coordination/config/worker-types.json
-```
-
-#### 3. Limit Concurrent Workers
-
-```bash
-# Set max concurrent workers
-jq '.max_concurrent_workers = 5' \
-   $COMMIT_RELAY_HOME/coordination/config/system.json > /tmp/config.json && \
-mv /tmp/config.json $COMMIT_RELAY_HOME/coordination/config/system.json
-```
-
-#### 4. Enable Token Recovery
-
-Ensure workers release tokens on completion:
-
-```bash
-# Check worker completion hook
-cat $COMMIT_RELAY_HOME/scripts/task-completion-hook.sh | grep -A5 "token"
+# Update timestamp
+jq --arg ts "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+    '.override_timestamp = $ts | .usage_metrics.reset_at = $ts' \
+    $COMMIT_RELAY_HOME/coordination/token-budget.json > \
+    $COMMIT_RELAY_HOME/coordination/token-budget.json.tmp && \
+    mv $COMMIT_RELAY_HOME/coordination/token-budget.json.tmp \
+       $COMMIT_RELAY_HOME/coordination/token-budget.json
 ```
 
 ---
 
 ## Prevention
 
-### Monitor Token Usage
+### 1. Set Appropriate Worker Budgets
+
+Configure default budgets based on task complexity:
+
+```json
+{
+  "implementation-worker": {"default_budget": 100000},
+  "scan-worker": {"default_budget": 50000},
+  "analysis-worker": {"default_budget": 30000},
+  "documentation-worker": {"default_budget": 40000}
+}
+```
+
+### 2. Monitor Budget Usage
+
+Check budget regularly:
 
 ```bash
-# Add to daily checks
-AVAILABLE=$(jq -r '.available' $COMMIT_RELAY_HOME/coordination/token-budget.json)
-TOTAL=$(jq -r '.total' $COMMIT_RELAY_HOME/coordination/token-budget.json)
-PCT=$((100 - (AVAILABLE * 100 / TOTAL)))
+# Add to daily operations
+jq '{
+    total: .total_budget,
+    used: .usage_metrics.total_tokens_used_today,
+    pct: ((.usage_metrics.total_tokens_used_today * 100) / .total_budget)
+}' $COMMIT_RELAY_HOME/coordination/token-budget.json
+```
 
-if (( PCT > 80 )); then
-    echo "WARNING: Token budget at ${PCT}%"
+### 3. Set Up Budget Alerts
+
+Configure alerts when budget exceeds thresholds:
+
+```bash
+# Check for 75% usage
+USAGE_PCT=$(jq '((.usage_metrics.total_tokens_used_today * 100) / .total_budget)' \
+    $COMMIT_RELAY_HOME/coordination/token-budget.json)
+
+if (( $(echo "$USAGE_PCT > 75" | bc -l) )); then
+    ./scripts/emit-event.sh --type "budget_warning" \
+        --severity "warning" \
+        --message "Token budget at ${USAGE_PCT}%"
 fi
 ```
 
-### Set Budget Alerts
+### 4. Automatic Daily Reset
 
-Configure alerts when budget exceeds threshold:
-
-```bash
-# In metrics snapshot daemon, add:
-if (( available < 50000 )); then
-    ./scripts/emit-event.sh --type "token_budget_low" --severity "warning" \
-        --message "Available tokens: $available"
-fi
-```
-
-### Regular Cleanup Schedule
+Configure automatic reset at midnight:
 
 ```bash
-# Add to crontab - cleanup every hour
-0 * * * * $COMMIT_RELAY_HOME/scripts/cleanup-zombie-workers.sh >> /tmp/cleanup.log 2>&1
-```
-
-### Task Decomposition
-
-Break large tasks into smaller pieces that fit within budget constraints.
-
----
-
-## Verification
-
-After applying fixes:
-
-```bash
-# 1. Verify budget is healthy
-cat $COMMIT_RELAY_HOME/coordination/token-budget.json | jq .
-
-# 2. Confirm available > 0
-AVAILABLE=$(jq -r '.available' $COMMIT_RELAY_HOME/coordination/token-budget.json)
-(( AVAILABLE > 50000 )) && echo "Budget healthy: $AVAILABLE available"
-
-# 3. Test worker spawn
-./scripts/wizards/create-worker.sh
-
-# 4. Monitor for a few minutes
-watch -n 5 'cat $COMMIT_RELAY_HOME/coordination/token-budget.json | jq .'
+# Add to crontab
+0 0 * * * $COMMIT_RELAY_HOME/scripts/system-maintenance.sh --reset-token-budget
 ```
 
 ---
 
-## Escalation
+## Quick Reference
 
-If budget issues persist:
-
-1. Review all active workers for anomalies
-2. Check for token leaks in worker scripts
-3. Analyze historical metrics for patterns
-4. Consider temporary increase in total budget
-5. Review task complexity and decomposition
+| Issue | Command |
+|-------|---------|
+| View current budget | `jq . coordination/token-budget.json` |
+| Check usage percentage | `jq '(.usage_metrics.total_tokens_used_today * 100) / .total_budget' coordination/token-budget.json` |
+| Reset daily usage | Set `.usage_metrics.total_tokens_used_today = 0` |
+| Increase total budget | Set `.total_budget = NEW_VALUE` |
+| Clean up allocations | Remove non-active workers from `.workers` |
+| View worker usage | `jq '.workers' coordination/token-budget.json` |
 
 ---
 
 ## Related Runbooks
 
-- [Worker Failure](./worker-failure.md)
-- [Daily Operations](./daily-operations.md)
 - [Performance Troubleshooting](./performance-troubleshooting.md)
+- [Daily Operations](./daily-operations.md)
+- [Worker Lifecycle](./worker-lifecycle.md)
+- [Emergency Recovery](./emergency-recovery.md)
 
 ---
 

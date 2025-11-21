@@ -1,544 +1,313 @@
 #!/bin/bash
 # scripts/dashboards/metrics-dashboard.sh
-# ASCII charts for token budget, worker count, completion rate
-# Part of Phase 3: Developer Experience
+# ASCII charts for token budget, worker count, completion rate with real-time updates
+# Part of commit-relay Phase 4 Developer Experience
 
 set -euo pipefail
 
-# Get script directory
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 COMMIT_RELAY_HOME="${COMMIT_RELAY_HOME:-$(cd "$SCRIPT_DIR/../.." && pwd)}"
 
-# ANSI color codes
+# Colors
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
 CYAN='\033[0;36m'
-MAGENTA='\033[0;35m'
-BOLD='\033[1m'
-DIM='\033[2m'
-NC='\033[0m'
+WHITE='\033[1;37m'
+NC='\033[0m' # No Color
 
-# Refresh interval (seconds)
-REFRESH_INTERVAL=5
+# Refresh interval in seconds
+REFRESH_INTERVAL="${REFRESH_INTERVAL:-5}"
 
-# History size for sparklines
-HISTORY_SIZE=20
+# Draw ASCII bar chart
+draw_bar() {
+    local value="$1"
+    local max="$2"
+    local width="${3:-40}"
+    local color="$4"
 
-# Initialize history arrays
-declare -a TOKEN_HISTORY
-declare -a WORKER_HISTORY
-declare -a TASK_HISTORY
-declare -a COMPLETION_HISTORY
+    if [ "$max" -eq 0 ]; then
+        max=1
+    fi
 
-# Get terminal size
-get_terminal_size() {
-    TERM_COLS=$(tput cols)
-    TERM_ROWS=$(tput lines)
-}
-
-# Clear screen
-clear_screen() {
-    tput clear
-}
-
-# Move cursor
-move_cursor() {
-    tput cup "$1" "$2"
-}
-
-# Generate sparkline from array
-generate_sparkline() {
-    local -n arr=$1
-    local max_val=1
-    local min_val=0
-
-    # Find max value
-    for val in "${arr[@]}"; do
-        if (( val > max_val )); then
-            max_val=$val
-        fi
-    done
-
-    # Sparkline characters (8 levels)
-    local chars=(" " "▁" "▂" "▃" "▄" "▅" "▆" "▇" "█")
-
-    local sparkline=""
-    for val in "${arr[@]}"; do
-        local level
-        if (( max_val > 0 )); then
-            level=$(( (val * 8) / max_val ))
-        else
-            level=0
-        fi
-        sparkline+="${chars[$level]}"
-    done
-
-    echo "$sparkline"
-}
-
-# Draw progress bar
-draw_progress_bar() {
-    local percentage="$1"
-    local width="${2:-20}"
-
-    local filled=$((percentage * width / 100))
+    local filled=$((value * width / max))
     local empty=$((width - filled))
 
-    local bar=""
+    printf "${color}"
     for ((i=0; i<filled; i++)); do
-        bar+="█"
+        printf "#"
     done
+    printf "${NC}"
     for ((i=0; i<empty; i++)); do
-        bar+="░"
+        printf "-"
     done
-
-    # Color based on percentage
-    if (( percentage >= 80 )); then
-        echo -e "${RED}${bar}${NC}"
-    elif (( percentage >= 60 )); then
-        echo -e "${YELLOW}${bar}${NC}"
-    else
-        echo -e "${GREEN}${bar}${NC}"
-    fi
 }
 
-# Get token budget
-get_token_budget() {
-    local budget_file="$COMMIT_RELAY_HOME/coordination/token-budget.json"
+# Draw sparkline from historical data
+draw_sparkline() {
+    local data="$1"
+    local blocks=("_" "." ":" "=" "#" "@")
 
-    if [[ ! -f "$budget_file" ]]; then
-        echo "0|100000|0"
-        return
-    fi
+    # Convert data to array
+    IFS=',' read -ra values <<< "$data"
 
-    local used total percentage
-
-    used=$(jq -r '.used // 0' "$budget_file" 2>/dev/null || echo "0")
-    total=$(jq -r '.total // 100000' "$budget_file" 2>/dev/null || echo "100000")
-
-    if (( total > 0 )); then
-        percentage=$(( (used * 100) / total ))
-    else
-        percentage=0
-    fi
-
-    echo "$used|$total|$percentage"
-}
-
-# Get worker counts
-get_worker_counts() {
-    local worker_specs="$COMMIT_RELAY_HOME/coordination/worker-specs/active"
-
-    if [[ ! -d "$worker_specs" ]]; then
-        echo "0|0|0|0"
-        return
-    fi
-
-    local total=0 running=0 idle=0 failed=0
-
-    for spec in "$worker_specs"/worker-*.json; do
-        [[ ! -f "$spec" ]] && continue
-        ((total++))
-
-        local status
-        status=$(jq -r '.status // "unknown"' "$spec" 2>/dev/null || echo "unknown")
-
-        case "$status" in
-            running) ((running++)) ;;
-            idle) ((idle++)) ;;
-            failed|zombie) ((failed++)) ;;
-        esac
-    done
-
-    echo "$total|$running|$idle|$failed"
-}
-
-# Get task counts
-get_task_counts() {
-    local queue_file="$COMMIT_RELAY_HOME/coordination/task-queue.json"
-
-    if [[ ! -f "$queue_file" ]]; then
-        echo "0|0|0|0"
-        return
-    fi
-
-    local queued in_progress completed failed
-
-    queued=$(jq '[.tasks[] | select(.status == "queued")] | length' "$queue_file" 2>/dev/null || echo "0")
-    in_progress=$(jq '[.tasks[] | select(.status == "in_progress")] | length' "$queue_file" 2>/dev/null || echo "0")
-    completed=$(jq '[.tasks[] | select(.status == "completed")] | length' "$queue_file" 2>/dev/null || echo "0")
-    failed=$(jq '[.tasks[] | select(.status == "failed")] | length' "$queue_file" 2>/dev/null || echo "0")
-
-    echo "$queued|$in_progress|$completed|$failed"
-}
-
-# Calculate completion rate
-calculate_completion_rate() {
-    local completed="$1"
-    local total="$2"
-
-    if (( total > 0 )); then
-        echo $(( (completed * 100) / total ))
-    else
-        echo "0"
-    fi
-}
-
-# Get daemon health
-get_daemon_health() {
-    local pid_files=(
-        "/tmp/commit-relay-worker.pid"
-        "/tmp/commit-relay-pm.pid"
-        "/tmp/commit-relay-heartbeat.pid"
-        "/tmp/commit-relay-metrics.pid"
-        "/tmp/commit-relay-coordinator.pid"
-    )
-
-    local running=0
-    local total=${#pid_files[@]}
-
-    for pidfile in "${pid_files[@]}"; do
-        if [[ -f "$pidfile" ]]; then
-            local pid
-            pid=$(cat "$pidfile" 2>/dev/null || echo "")
-            if [[ -n "$pid" ]] && ps -p "$pid" > /dev/null 2>&1; then
-                ((running++))
-            fi
+    local max=1
+    for val in "${values[@]}"; do
+        if [ "$val" -gt "$max" ]; then
+            max="$val"
         fi
     done
 
-    echo "$running|$total"
-}
-
-# Get pattern detection metrics
-get_pattern_metrics() {
-    local pattern_db="$COMMIT_RELAY_HOME/coordination/patterns/failure-patterns.jsonl"
-    local metrics_file="$COMMIT_RELAY_HOME/coordination/metrics/failure-pattern-metrics.json"
-
-    local total_patterns=0 high_conf=0 auto_fixed=0
-
-    if [[ -f "$pattern_db" ]]; then
-        total_patterns=$(wc -l < "$pattern_db" | xargs)
-        high_conf=$(grep -c '"confidence":0\.[89]' "$pattern_db" 2>/dev/null || echo "0")
-    fi
-
-    if [[ -f "$metrics_file" ]]; then
-        auto_fixed=$(jq -r '.auto_fixes_applied // 0' "$metrics_file" 2>/dev/null || echo "0")
-    fi
-
-    echo "$total_patterns|$high_conf|$auto_fixed"
-}
-
-# Get metrics from snapshots
-get_historical_metrics() {
-    local snapshots_file="$COMMIT_RELAY_HOME/coordination/metrics-snapshots.jsonl"
-
-    if [[ ! -f "$snapshots_file" ]]; then
-        return
-    fi
-
-    # Get last N snapshots
-    tail -n "$HISTORY_SIZE" "$snapshots_file" 2>/dev/null | while IFS= read -r line; do
-        local tokens workers tasks
-        tokens=$(echo "$line" | jq -r '.token_budget.used // 0' 2>/dev/null || echo "0")
-        workers=$(echo "$line" | jq -r '.workers.active // 0' 2>/dev/null || echo "0")
-        tasks=$(echo "$line" | jq -r '.tasks.completed // 0' 2>/dev/null || echo "0")
-
-        echo "$tokens|$workers|$tasks"
+    for val in "${values[@]}"; do
+        local idx=$((val * 5 / max))
+        if [ "$idx" -gt 5 ]; then idx=5; fi
+        printf "%s" "${blocks[$idx]}"
     done
 }
 
-# Update history arrays
-update_history() {
-    # Get current values
-    IFS='|' read -r used total pct <<< "$(get_token_budget)"
-    IFS='|' read -r w_total w_running w_idle w_failed <<< "$(get_worker_counts)"
-    IFS='|' read -r t_queued t_progress t_completed t_failed <<< "$(get_task_counts)"
-
-    # Add to history
-    TOKEN_HISTORY+=("$pct")
-    WORKER_HISTORY+=("$w_total")
-    TASK_HISTORY+=("$t_completed")
-
-    # Calculate completion rate
-    local total_tasks=$((t_queued + t_progress + t_completed + t_failed))
-    local rate=$(calculate_completion_rate "$t_completed" "$total_tasks")
-    COMPLETION_HISTORY+=("$rate")
-
-    # Trim history to max size
-    if (( ${#TOKEN_HISTORY[@]} > HISTORY_SIZE )); then
-        TOKEN_HISTORY=("${TOKEN_HISTORY[@]:1}")
-    fi
-    if (( ${#WORKER_HISTORY[@]} > HISTORY_SIZE )); then
-        WORKER_HISTORY=("${WORKER_HISTORY[@]:1}")
-    fi
-    if (( ${#TASK_HISTORY[@]} > HISTORY_SIZE )); then
-        TASK_HISTORY=("${TASK_HISTORY[@]:1}")
-    fi
-    if (( ${#COMPLETION_HISTORY[@]} > HISTORY_SIZE )); then
-        COMPLETION_HISTORY=("${COMPLETION_HISTORY[@]:1}")
-    fi
+draw_header() {
+    clear
+    echo -e "${CYAN}=========================================================================${NC}"
+    echo -e "${WHITE}                    COMMIT-RELAY METRICS DASHBOARD${NC}"
+    echo -e "${CYAN}=========================================================================${NC}"
+    echo -e "${BLUE}Time: $(date '+%Y-%m-%d %H:%M:%S')    Refresh: ${REFRESH_INTERVAL}s${NC}"
+    echo ""
 }
 
-# Render dashboard
-render_dashboard() {
-    clear_screen
-    get_terminal_size
+draw_token_budget() {
+    local token_file="$COMMIT_RELAY_HOME/coordination/token-budget.json"
 
-    # Update history
-    update_history
+    echo -e "${WHITE}TOKEN BUDGET${NC}"
+    echo -e "${CYAN}--------------------------------------------------------------------------${NC}"
 
-    local current_time
-    current_time=$(date '+%Y-%m-%d %H:%M:%S')
+    if [ -f "$token_file" ]; then
+        local total=$(jq -r '.total_budget // 200000' "$token_file")
+        local used=$(jq -r '.usage_metrics.total_tokens_used_today // 0' "$token_file")
+        local available=$((total - used))
+        local pct=$((used * 100 / total))
 
-    # Header
-    move_cursor 0 0
-    echo -e "${BOLD}${CYAN}+===============================================================================+${NC}"
-    move_cursor 1 0
-    echo -e "${BOLD}${CYAN}|${NC}  ${BOLD}Metrics Dashboard${NC}                                                          ${BOLD}${CYAN}|${NC}"
-    move_cursor 2 0
-    echo -e "${BOLD}${CYAN}+===============================================================================+${NC}"
-    move_cursor 3 0
-    echo -e "${BOLD}${CYAN}|${NC}  ${DIM}$current_time${NC}                                                           ${BOLD}${CYAN}|${NC}"
-    move_cursor 4 0
-    echo -e "${BOLD}${CYAN}+===============================================================================+${NC}"
-
-    # Get current data
-    IFS='|' read -r used total pct <<< "$(get_token_budget)"
-    IFS='|' read -r w_total w_running w_idle w_failed <<< "$(get_worker_counts)"
-    IFS='|' read -r t_queued t_progress t_completed t_failed <<< "$(get_task_counts)"
-    IFS='|' read -r d_running d_total <<< "$(get_daemon_health)"
-    IFS='|' read -r patterns high_conf auto_fixed <<< "$(get_pattern_metrics)"
-
-    # Token Budget Section
-    move_cursor 6 2
-    echo -e "${BOLD}Token Budget${NC}"
-    move_cursor 7 2
-    echo -e "${BLUE}-----------------------------------------------------${NC}"
-
-    move_cursor 8 2
-    printf "Used: %'d / %'d (%d%%)\n" "$used" "$total" "$pct"
-
-    move_cursor 9 2
-    echo -n "Progress: "
-    draw_progress_bar "$pct" 30
-
-    move_cursor 10 2
-    echo -n "History:  "
-    if (( ${#TOKEN_HISTORY[@]} > 0 )); then
-        local sparkline
-        sparkline=$(generate_sparkline TOKEN_HISTORY)
-        echo -e "${CYAN}$sparkline${NC}"
-    else
-        echo -e "${DIM}No history yet${NC}"
-    fi
-
-    # Worker Metrics Section
-    move_cursor 12 2
-    echo -e "${BOLD}Worker Metrics${NC}"
-    move_cursor 13 2
-    echo -e "${BLUE}-----------------------------------------------------${NC}"
-
-    move_cursor 14 2
-    echo -e "Active Workers: ${CYAN}$w_total${NC}"
-
-    move_cursor 15 2
-    echo -e "  ${GREEN}Running:${NC} $w_running  ${YELLOW}Idle:${NC} $w_idle  ${RED}Failed:${NC} $w_failed"
-
-    move_cursor 16 2
-    echo -n "History:  "
-    if (( ${#WORKER_HISTORY[@]} > 0 )); then
-        local sparkline
-        sparkline=$(generate_sparkline WORKER_HISTORY)
-        echo -e "${GREEN}$sparkline${NC}"
-    else
-        echo -e "${DIM}No history yet${NC}"
-    fi
-
-    # Task Metrics Section
-    move_cursor 18 2
-    echo -e "${BOLD}Task Metrics${NC}"
-    move_cursor 19 2
-    echo -e "${BLUE}-----------------------------------------------------${NC}"
-
-    move_cursor 20 2
-    echo -e "Queued: ${YELLOW}$t_queued${NC}  In Progress: ${CYAN}$t_progress${NC}  Completed: ${GREEN}$t_completed${NC}  Failed: ${RED}$t_failed${NC}"
-
-    local total_tasks=$((t_queued + t_progress + t_completed + t_failed))
-    local completion_rate=0
-    if (( total_tasks > 0 )); then
-        completion_rate=$(( (t_completed * 100) / total_tasks ))
-    fi
-
-    move_cursor 21 2
-    echo -e "Completion Rate: ${CYAN}${completion_rate}%${NC}"
-
-    move_cursor 22 2
-    echo -n "Completed: "
-    if (( ${#TASK_HISTORY[@]} > 0 )); then
-        local sparkline
-        sparkline=$(generate_sparkline TASK_HISTORY)
-        echo -e "${MAGENTA}$sparkline${NC}"
-    else
-        echo -e "${DIM}No history yet${NC}"
-    fi
-
-    # System Health Section (right column)
-    move_cursor 6 42
-    echo -e "${BOLD}System Health${NC}"
-    move_cursor 7 42
-    echo -e "${BLUE}-----------------------------------${NC}"
-
-    move_cursor 8 42
-    if (( d_running == d_total )); then
-        echo -e "Daemons:  ${GREEN}$d_running/$d_total${NC} healthy"
-    else
-        echo -e "Daemons:  ${RED}$d_running/$d_total${NC} running"
-    fi
-
-    move_cursor 9 42
-    echo -e "Patterns: ${MAGENTA}$patterns${NC} detected"
-
-    move_cursor 10 42
-    echo -e "High-Conf: ${CYAN}$high_conf${NC}"
-
-    move_cursor 11 42
-    echo -e "Auto-Fixed: ${GREEN}$auto_fixed${NC}"
-
-    # Quick Stats (right column)
-    move_cursor 13 42
-    echo -e "${BOLD}Quick Stats${NC}"
-    move_cursor 14 42
-    echo -e "${BLUE}-----------------------------------${NC}"
-
-    # Calculate some derived metrics
-    local available=$((total - used))
-    local worker_efficiency=0
-    if (( w_total > 0 )); then
-        worker_efficiency=$(( (w_running * 100) / w_total ))
-    fi
-
-    move_cursor 15 42
-    printf "Available Tokens: ${GREEN}%'d${NC}\n" "$available"
-
-    move_cursor 16 42
-    echo -e "Worker Efficiency: ${CYAN}${worker_efficiency}%${NC}"
-
-    move_cursor 17 42
-    echo -e "Total Tasks: ${CYAN}$total_tasks${NC}"
-
-    # Trend indicators
-    move_cursor 19 42
-    echo -e "${BOLD}Trends${NC}"
-    move_cursor 20 42
-    echo -e "${BLUE}-----------------------------------${NC}"
-
-    # Token trend
-    local token_trend="stable"
-    if (( ${#TOKEN_HISTORY[@]} >= 3 )); then
-        local last="${TOKEN_HISTORY[-1]}"
-        local prev="${TOKEN_HISTORY[-3]}"
-        if (( last > prev + 5 )); then
-            token_trend="increasing"
-        elif (( last < prev - 5 )); then
-            token_trend="decreasing"
+        # Determine color based on usage
+        local color="$GREEN"
+        if [ "$pct" -ge 90 ]; then
+            color="$RED"
+        elif [ "$pct" -ge 75 ]; then
+            color="$YELLOW"
         fi
+
+        printf "Total Budget:    %'d tokens\n" "$total"
+        printf "Used Today:      %'d tokens (%d%%)\n" "$used" "$pct"
+        printf "Available:       %'d tokens\n" "$available"
+        echo ""
+        printf "Usage: ["
+        draw_bar "$used" "$total" 50 "$color"
+        printf "] %d%%\n" "$pct"
+    else
+        echo "Token budget file not found"
     fi
+    echo ""
+}
 
-    move_cursor 21 42
-    case "$token_trend" in
-        increasing) echo -e "Token Usage: ${RED}^ Increasing${NC}" ;;
-        decreasing) echo -e "Token Usage: ${GREEN}v Decreasing${NC}" ;;
-        *) echo -e "Token Usage: ${YELLOW}- Stable${NC}" ;;
-    esac
+draw_worker_metrics() {
+    local pm_state="$COMMIT_RELAY_HOME/coordination/pm-state.json"
 
-    # Worker trend
-    local worker_trend="stable"
-    if (( ${#WORKER_HISTORY[@]} >= 3 )); then
-        local last="${WORKER_HISTORY[-1]}"
-        local prev="${WORKER_HISTORY[-3]}"
-        if (( last > prev )); then
-            worker_trend="growing"
-        elif (( last < prev )); then
-            worker_trend="shrinking"
+    echo -e "${WHITE}WORKER METRICS${NC}"
+    echo -e "${CYAN}--------------------------------------------------------------------------${NC}"
+
+    if [ -f "$pm_state" ]; then
+        local active=$(jq -r '.metrics.active_workers // 0' "$pm_state")
+        local completed=$(jq -r '.metrics.completed_workers // 0' "$pm_state")
+        local failed=$(jq -r '.metrics.failed_workers // 0' "$pm_state")
+        local total=$(jq -r '.metrics.total_workers // 0' "$pm_state")
+        local rate=$(jq -r '.metrics.success_rate // 0' "$pm_state")
+
+        printf "%-20s: %d\n" "Active Workers" "$active"
+        printf "%-20s: %d\n" "Completed Workers" "$completed"
+        printf "%-20s: %d\n" "Failed Workers" "$failed"
+        printf "%-20s: %d\n" "Total Workers" "$total"
+        echo ""
+
+        # Worker distribution bar
+        if [ "$total" -gt 0 ]; then
+            local completed_bar=$((completed * 40 / total))
+            local failed_bar=$((failed * 40 / total))
+            local active_bar=$((active * 40 / total))
+            local other_bar=$((40 - completed_bar - failed_bar - active_bar))
+
+            printf "Distribution: ["
+            printf "${GREEN}"
+            for ((i=0; i<completed_bar; i++)); do printf "="; done
+            printf "${RED}"
+            for ((i=0; i<failed_bar; i++)); do printf "x"; done
+            printf "${YELLOW}"
+            for ((i=0; i<active_bar; i++)); do printf "@"; done
+            printf "${NC}"
+            for ((i=0; i<other_bar; i++)); do printf "-"; done
+            printf "]\n"
+            echo -e "Legend: ${GREEN}=completed${NC} ${RED}xfailed${NC} ${YELLOW}@active${NC}"
         fi
+    else
+        echo "PM state file not found"
     fi
-
-    move_cursor 22 42
-    case "$worker_trend" in
-        growing) echo -e "Worker Pool: ${GREEN}^ Growing${NC}" ;;
-        shrinking) echo -e "Worker Pool: ${YELLOW}v Shrinking${NC}" ;;
-        *) echo -e "Worker Pool: ${CYAN}- Stable${NC}" ;;
-    esac
-
-    # Footer
-    local footer_row=$((TERM_ROWS - 3))
-    move_cursor $footer_row 0
-    echo -e "${BLUE}================================================================================${NC}"
-
-    move_cursor $((footer_row + 1)) 0
-    echo -e "${DIM}Press ${BOLD}Ctrl+C${NC}${DIM} to exit | Auto-refreshing every ${REFRESH_INTERVAL}s | History: ${#TOKEN_HISTORY[@]}/$HISTORY_SIZE samples${NC}"
-
-    # Move cursor to bottom
-    move_cursor $((TERM_ROWS - 1)) 0
+    echo ""
 }
 
-# Signal handler for clean exit
-cleanup() {
-    clear_screen
-    move_cursor 0 0
-    tput cnorm  # Show cursor
-    echo "Metrics dashboard stopped."
-    exit 0
+draw_completion_rate() {
+    local pm_state="$COMMIT_RELAY_HOME/coordination/pm-state.json"
+
+    echo -e "${WHITE}COMPLETION RATE${NC}"
+    echo -e "${CYAN}--------------------------------------------------------------------------${NC}"
+
+    if [ -f "$pm_state" ]; then
+        local rate=$(jq -r '.metrics.success_rate // 0' "$pm_state")
+        local rate_today=$(jq -r '.metrics.success_rate_today // 0' "$pm_state")
+        local completed_today=$(jq -r '.metrics.completed_today // 0' "$pm_state")
+        local failed_today=$(jq -r '.metrics.failed_today // 0' "$pm_state")
+
+        # Determine color based on rate
+        local color="$GREEN"
+        if [ "${rate%.*}" -lt 50 ]; then
+            color="$RED"
+        elif [ "${rate%.*}" -lt 75 ]; then
+            color="$YELLOW"
+        fi
+
+        printf "All-Time Rate:   %.1f%%\n" "$rate"
+        printf "Today's Rate:    %.1f%%\n" "$rate_today"
+        printf "Completed Today: %d\n" "$completed_today"
+        printf "Failed Today:    %d\n" "$failed_today"
+        echo ""
+
+        # Rate gauge
+        local rate_int=${rate%.*}
+        printf "All-Time: ["
+        draw_bar "$rate_int" 100 50 "$color"
+        printf "] %.1f%%\n" "$rate"
+    else
+        echo "PM state file not found"
+    fi
+    echo ""
 }
 
-trap cleanup SIGINT SIGTERM
+draw_task_queue() {
+    local task_queue="$COMMIT_RELAY_HOME/coordination/task-queue.json"
+
+    echo -e "${WHITE}TASK QUEUE${NC}"
+    echo -e "${CYAN}--------------------------------------------------------------------------${NC}"
+
+    if [ -f "$task_queue" ]; then
+        local pending=$(jq -r '[.tasks[] | select(.status == "pending")] | length' "$task_queue" 2>/dev/null || echo 0)
+        local in_progress=$(jq -r '[.tasks[] | select(.status == "in_progress" or .status == "assigned")] | length' "$task_queue" 2>/dev/null || echo 0)
+        local completed=$(jq -r '[.tasks[] | select(.status == "completed")] | length' "$task_queue" 2>/dev/null || echo 0)
+
+        printf "%-20s: %d\n" "Pending" "$pending"
+        printf "%-20s: %d\n" "In Progress" "$in_progress"
+        printf "%-20s: %d\n" "Completed" "$completed"
+    else
+        echo "Task queue file not found"
+    fi
+    echo ""
+}
+
+draw_historical_trend() {
+    local history_dir="$COMMIT_RELAY_HOME/coordination/history/hourly"
+
+    echo -e "${WHITE}HISTORICAL TREND (Last 12 Snapshots)${NC}"
+    echo -e "${CYAN}--------------------------------------------------------------------------${NC}"
+
+    if [ -d "$history_dir" ]; then
+        # Get last 12 hourly snapshots
+        local snapshots=$(ls -t "$history_dir"/*.json 2>/dev/null | head -12)
+
+        if [ -n "$snapshots" ]; then
+            # Extract worker counts for sparkline
+            local completed_data=""
+            local active_data=""
+
+            for snapshot in $snapshots; do
+                local completed=$(jq -r '.workers.completed // 0' "$snapshot" 2>/dev/null || echo 0)
+                local active=$(jq -r '.workers.active // 0' "$snapshot" 2>/dev/null || echo 0)
+
+                if [ -z "$completed_data" ]; then
+                    completed_data="$completed"
+                    active_data="$active"
+                else
+                    completed_data="$completed,$completed_data"
+                    active_data="$active,$active_data"
+                fi
+            done
+
+            printf "Completed: "
+            draw_sparkline "$completed_data"
+            echo " (trend)"
+
+            printf "Active:    "
+            draw_sparkline "$active_data"
+            echo " (trend)"
+        else
+            echo "No historical data available"
+        fi
+    else
+        echo "History directory not found"
+    fi
+    echo ""
+}
+
+draw_moe_routing() {
+    local routing_health="$COMMIT_RELAY_HOME/coordination/routing-health.json"
+
+    echo -e "${WHITE}MOE ROUTING${NC}"
+    echo -e "${CYAN}--------------------------------------------------------------------------${NC}"
+
+    if [ -f "$routing_health" ]; then
+        local total_decisions=$(jq -r '.total_decisions // 0' "$routing_health")
+        local avg_confidence=$(jq -r '.average_confidence // 0' "$routing_health")
+        local null_routes=$(jq -r '.null_routes // 0' "$routing_health")
+
+        printf "%-20s: %d\n" "Total Decisions" "$total_decisions"
+        printf "%-20s: %.2f\n" "Avg Confidence" "$avg_confidence"
+        printf "%-20s: %d\n" "Null Routes" "$null_routes"
+
+        # Confidence bar
+        local conf_int=$(printf "%.0f" "$avg_confidence" 2>/dev/null || echo 0)
+        local conf_pct=$((conf_int * 100))
+        local color="$GREEN"
+        if [ "$conf_pct" -lt 50 ]; then color="$RED"
+        elif [ "$conf_pct" -lt 80 ]; then color="$YELLOW"; fi
+
+        printf "Confidence: ["
+        draw_bar "$conf_pct" 100 30 "$color"
+        printf "] %.0f%%\n" "$conf_pct"
+    else
+        echo "Routing health file not found"
+    fi
+    echo ""
+}
+
+draw_footer() {
+    echo -e "${CYAN}--------------------------------------------------------------------------${NC}"
+    echo "  [q] Quit    [r] Refresh now    [+/-] Adjust interval"
+    echo -e "${CYAN}--------------------------------------------------------------------------${NC}"
+}
 
 # Main loop
-main() {
-    # Parse arguments
-    while [[ $# -gt 0 ]]; do
-        case "$1" in
-            --interval)
-                REFRESH_INTERVAL="$2"
-                shift 2
-                ;;
-            --history)
-                HISTORY_SIZE="$2"
-                shift 2
-                ;;
-            --help|-h)
-                echo "Usage: $0 [OPTIONS]"
-                echo ""
-                echo "Options:"
-                echo "  --interval <seconds>  Set refresh interval (default: 5)"
-                echo "  --history <count>     Set history size for sparklines (default: 20)"
-                echo "  --help                Show this help"
-                exit 0
-                ;;
-            *)
-                echo "Unknown option: $1"
-                exit 1
-                ;;
+while true; do
+    draw_header
+    draw_token_budget
+    draw_worker_metrics
+    draw_completion_rate
+    draw_task_queue
+    draw_historical_trend
+    draw_moe_routing
+    draw_footer
+
+    # Non-blocking read with timeout
+    if read -t "$REFRESH_INTERVAL" -n 1 cmd; then
+        case "$cmd" in
+            q|Q) clear; exit 0 ;;
+            r|R) continue ;;
+            +) REFRESH_INTERVAL=$((REFRESH_INTERVAL + 1)) ;;
+            -) if [ "$REFRESH_INTERVAL" -gt 1 ]; then REFRESH_INTERVAL=$((REFRESH_INTERVAL - 1)); fi ;;
         esac
-    done
-
-    # Initialize history arrays
-    TOKEN_HISTORY=()
-    WORKER_HISTORY=()
-    TASK_HISTORY=()
-    COMPLETION_HISTORY=()
-
-    # Hide cursor
-    tput civis
-
-    while true; do
-        render_dashboard
-        sleep "$REFRESH_INTERVAL"
-    done
-}
-
-# Run dashboard
-main "$@"
+    fi
+done
