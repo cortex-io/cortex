@@ -48,6 +48,9 @@ function dashboard() {
             tasks: { data: null, timestamp: 0, ttl: 3000 }
         },
 
+        // Server restart detection
+        knownServerStartTime: null,
+
         // Data
         metrics: {
             workers: { active: 0, completed: 0, failed: 0, successRate: 0, avgDuration: 0 },
@@ -364,6 +367,10 @@ function dashboard() {
                 // Fetch initial data
                 console.log('Fetching initial data...');
                 await this.fetchInitialData();
+
+                // Capture initial server start time for restart detection
+                console.log('Recording server start time...');
+                await this.checkServerRestart();
                 // Load terminal settings
                 console.log('Loading terminal settings...');
                 await this.loadTerminalSettings();
@@ -879,6 +886,51 @@ function dashboard() {
                     console.error('Error polling git operations:', error);
                 }
             }, 10000);
+
+            // Check for server restart every 15 seconds
+            setInterval(async () => {
+                await this.checkServerRestart();
+            }, 15000);
+        },
+
+        // Check if server has restarted and force data refresh
+        async checkServerRestart() {
+            try {
+                const res = await fetch('/api/health');
+                const health = await res.json();
+
+                if (health.server_start_time) {
+                    if (this.knownServerStartTime === null) {
+                        // First time - just store the start time
+                        this.knownServerStartTime = health.server_start_time;
+                        console.log('📡 Server start time recorded:', health.server_start_iso);
+                    } else if (health.server_start_time !== this.knownServerStartTime) {
+                        // Server has restarted!
+                        console.log('🔄 Server restart detected! Refreshing all data...');
+                        this.knownServerStartTime = health.server_start_time;
+
+                        // Clear all caches
+                        this.cache.metrics.timestamp = 0;
+                        this.cache.workers.timestamp = 0;
+                        this.cache.tasks.timestamp = 0;
+
+                        // Force full data refresh
+                        await this.fetchInitialData();
+                        await this.fetchAllDaemonStatuses();
+
+                        // Reconnect WebSocket if needed
+                        if (this.ws && this.ws.readyState !== WebSocket.OPEN) {
+                            this.connectWebSocket();
+                        }
+
+                        // Show notification
+                        this.showNotification('Server restarted - data refreshed', 'info');
+                    }
+                }
+            } catch (error) {
+                // Server might be restarting, will check again next interval
+                console.warn('Server health check failed:', error.message);
+            }
         },
 
         // Charts
@@ -3297,6 +3349,33 @@ function dashboard() {
             } catch (error) {
                 console.error('Error purging event log:', error);
                 alert(`Error purging event log: ${error.message}`);
+            }
+        },
+
+        // Clear MoE routing decisions
+        async clearRoutingDecisions() {
+            if (!confirm('Are you sure you want to clear all routing decisions? This will backup the current decisions and reset the file. Use this when stale decisions affect DDQD test accuracy.')) {
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/moe/clear-routing-decisions', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    alert(`Routing decisions cleared successfully. ${result.cleared_count} decisions backed up to:\n${result.backup_file}`);
+                    // Refresh MoE-related data
+                    await this.fetchInitialData();
+                } else {
+                    alert(`Failed to clear routing decisions: ${result.message}`);
+                }
+            } catch (error) {
+                console.error('Error clearing routing decisions:', error);
+                alert(`Error clearing routing decisions: ${error.message}`);
             }
         },
 

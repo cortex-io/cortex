@@ -2955,6 +2955,58 @@
                         </div>
                     </div>
 
+                    <!-- MoE Data Management -->
+                    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-8 border border-gray-200 dark:border-gray-700">
+                        <div class="flex items-center space-x-3 mb-6">
+                            <i data-lucide="brain" class="w-8 h-8 text-rose-500"></i>
+                            <h3 class="text-2xl font-bold text-gray-900 dark:text-white">MoE Data Management</h3>
+                        </div>
+                        <p class="text-gray-600 dark:text-gray-400 mb-8">
+                            Manage MoE routing decisions and cached metrics data.
+                        </p>
+
+                        <div class="border-2 border-rose-300 dark:border-rose-700 bg-rose-50 dark:bg-rose-900/20 rounded-xl p-6">
+                            <div class="flex items-center justify-between mb-6">
+                                <div class="flex items-center space-x-3">
+                                    <i data-lucide="route" class="w-6 h-6 text-rose-600 dark:text-rose-400"></i>
+                                    <h4 class="text-lg font-semibold text-gray-900 dark:text-white">routing-decisions.jsonl</h4>
+                                </div>
+                                <span class="px-3 py-1 rounded-full text-sm font-medium bg-rose-100 dark:bg-rose-900 text-rose-700 dark:text-rose-300">
+                                    Active
+                                </span>
+                            </div>
+
+                            <div class="flex items-center justify-between p-4 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg mb-6">
+                                <div class="flex items-start space-x-3">
+                                    <i data-lucide="alert-triangle" class="w-5 h-5 text-amber-600 dark:text-amber-400 flex-shrink-0 mt-0.5"></i>
+                                    <div class="text-sm text-amber-900 dark:text-amber-100">
+                                        <p class="font-semibold mb-1">Warning: Clear Operation</p>
+                                        <p class="text-amber-700 dark:text-amber-200">
+                                            Clearing will backup all routing decisions to a timestamped file and reset the decisions file. This also resets cached MoE metrics. Use when stale decisions affect routing accuracy in DDQD tests.
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <button @click="clearRoutingDecisions()" class="w-full px-6 py-3 rounded-lg font-medium transition-colors bg-red-600 text-white hover:bg-red-700 flex items-center justify-center space-x-2">
+                                <i data-lucide="trash-2" class="w-5 h-5"></i>
+                                <span>Clear Routing Decisions</span>
+                            </button>
+                        </div>
+
+                        <div class="mt-6 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+                            <div class="flex items-start space-x-3">
+                                <i data-lucide="info" class="w-5 h-5 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5"></i>
+                                <div class="text-sm text-blue-900 dark:text-blue-100">
+                                    <p class="font-semibold mb-1">About MoE Routing Decisions</p>
+                                    <p class="text-blue-700 dark:text-blue-200">
+                                        Routing decisions track how tasks are routed to different master types by the MoE system. Over time, stale decisions can affect the accuracy metrics shown in DDQD tests. Clearing creates a backup in coordination/masters/coordinator/knowledge-base/backups/ before resetting.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
                     <!-- Git & Server Management -->
                     <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-8 border border-gray-200 dark:border-gray-700">
                         <div class="flex items-center space-x-3 mb-6">
