@@ -35,7 +35,11 @@
         "catalog:discover",
         "catalog:register",
         "catalog:read",
-        "catalog:write"
+        "catalog:write",
+        "routing-patterns:read",
+        "routing-patterns:write",
+        "knowledge-base:read",
+        "knowledge-base:write"
       ],
       "namespaces": [
         "*"
