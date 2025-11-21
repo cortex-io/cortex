@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Executive Dashboard - Commit-Relay</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        primary: {
+                            50: '#f0f9ff',
+                            100: '#e0f2fe',
+                            500: '#0ea5e9',
+                            600: '#0284c7',
+                            700: '#0369a1',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        [x-cloak] { display: none !important; }
+    </style>
+</head>
+<body class="bg-gray-50 dark:bg-gray-900 min-h-screen transition-colors" x-data="executiveDashboard()" x-init="init()">
+    <!-- Mobile menu button -->
+    <button @click="mobileMenuOpen = !mobileMenuOpen" class="fixed top-4 left-4 z-50 lg:hidden p-2 rounded-lg bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-lg">
+        <i data-lucide="menu" class="w-6 h-6 text-gray-700 dark:text-gray-300"></i>
+    </button>
+
+    <!-- Sidebar -->
+    <aside class="fixed top-0 left-0 h-screen w-64 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 shadow-lg z-40 transform transition-transform duration-300 flex flex-col" :class="mobileMenuOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'">
+        <div class="flex-shrink-0 p-4 border-b border-gray-200 dark:border-gray-700">
+            <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl flex items-center justify-center">
+                    <i data-lucide="bar-chart-3" class="w-6 h-6 text-white"></i>
+                </div>
+                <div>
+                    <h1 class="text-lg font-bold text-gray-900 dark:text-white">Executive</h1>
+                    <p class="text-xs text-gray-500 dark:text-gray-400">Analytics Dashboard</p>
+                </div>
+            </div>
+        </div>
+
+        <nav class="flex-1 overflow-y-auto px-4 py-4 space-y-1">
+            <div class="pt-2 pb-1 px-4">
+                <p class="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">Pages</p>
+            </div>
+            <a href="/" class="w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300">
+                <i data-lucide="gauge" class="w-5 h-5"></i>
+                <span>Dashboard</span>
+            </a>
+            <a href="/executive.html" class="w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors bg-primary-50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-300">
+                <i data-lucide="bar-chart-3" class="w-5 h-5"></i>
+                <span class="font-medium">Executive</span>
+            </a>
+            <a href="/compliance.html" class="w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300">
+                <i data-lucide="shield-check" class="w-5 h-5"></i>
+                <span>Compliance</span>
+            </a>
+        </nav>
+
+        <div class="flex-shrink-0 p-4 border-t border-gray-200 dark:border-gray-700">
+            <button @click="toggleTheme()" class="w-full flex items-center justify-center space-x-2 px-4 py-3 rounded-lg bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 transition-colors">
+                <i x-show="!darkMode" data-lucide="moon" class="w-5 h-5"></i>
+                <i x-show="darkMode" data-lucide="sun" class="w-5 h-5"></i>
+                <span x-text="darkMode ? 'Light Mode' : 'Dark Mode'"></span>
+            </button>
+        </div>
+    </aside>
+
+    <!-- Main content -->
+    <main class="lg:ml-64 min-h-screen p-4 sm:p-6 lg:p-8">
+        <div class="mb-6 sm:mb-8">
+            <h1 class="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">Executive Analytics</h1>
+            <p class="text-gray-600 dark:text-gray-400 mt-1">High-level KPIs, trends, and efficiency metrics</p>
+        </div>
+
+        <!-- KPI Cards -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm text-gray-500 dark:text-gray-400">Task Completion Rate</p>
+                        <p class="text-3xl font-bold text-gray-900 dark:text-white" x-text="kpis.completion_rate + '%'">0%</p>
+                    </div>
+                    <div class="w-12 h-12 bg-green-100 dark:bg-green-900/30 rounded-lg flex items-center justify-center">
+                        <i data-lucide="check-circle" class="w-6 h-6 text-green-600 dark:text-green-400"></i>
+                    </div>
+                </div>
+                <p class="text-xs text-gray-500 mt-2" x-text="kpis.tasks_completed + ' of ' + kpis.tasks_total + ' tasks'"></p>
+            </div>
+
+            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm text-gray-500 dark:text-gray-400">Avg Response Time</p>
+                        <p class="text-3xl font-bold text-gray-900 dark:text-white" x-text="kpis.avg_response_time + 'm'">0m</p>
+                    </div>
+                    <div class="w-12 h-12 bg-blue-100 dark:bg-blue-900/30 rounded-lg flex items-center justify-center">
+                        <i data-lucide="clock" class="w-6 h-6 text-blue-600 dark:text-blue-400"></i>
+                    </div>
+                </div>
+                <p class="text-xs text-gray-500 mt-2">P95: <span x-text="kpis.p95_response_time + 'm'"></span></p>
+            </div>
+
+            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm text-gray-500 dark:text-gray-400">Token Efficiency</p>
+                        <p class="text-3xl font-bold text-gray-900 dark:text-white" x-text="kpis.token_efficiency + '%'">0%</p>
+                    </div>
+                    <div class="w-12 h-12 bg-purple-100 dark:bg-purple-900/30 rounded-lg flex items-center justify-center">
+                        <i data-lucide="coins" class="w-6 h-6 text-purple-600 dark:text-purple-400"></i>
+                    </div>
+                </div>
+                <p class="text-xs text-gray-500 mt-2" x-text="kpis.tokens_used.toLocaleString() + ' tokens used'"></p>
+            </div>
+
+            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm text-gray-500 dark:text-gray-400">System Health</p>
+                        <p class="text-3xl font-bold text-gray-900 dark:text-white" x-text="kpis.health_score + '%'">0%</p>
+                    </div>
+                    <div class="w-12 h-12 bg-emerald-100 dark:bg-emerald-900/30 rounded-lg flex items-center justify-center">
+                        <i data-lucide="heart-pulse" class="w-6 h-6 text-emerald-600 dark:text-emerald-400"></i>
+                    </div>
+                </div>
+                <p class="text-xs text-gray-500 mt-2" x-text="kpis.active_daemons + '/' + kpis.total_daemons + ' daemons'"></p>
+            </div>
+        </div>
+
+        <!-- Charts Row -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
+                <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Task Volume Trend</h3>
+                <div id="volumeChart" class="h-64"></div>
+            </div>
+
+            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
+                <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Expert Utilization</h3>
+                <div id="utilizationChart" class="h-64"></div>
+            </div>
+        </div>
+
+        <!-- Cost Analysis -->
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
+            <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Cost & Efficiency Analysis</h3>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="text-center p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                    <p class="text-2xl font-bold text-gray-900 dark:text-white" x-text="'$' + kpis.estimated_cost">$0</p>
+                    <p class="text-sm text-gray-500">Estimated Cost (MTD)</p>
+                </div>
+                <div class="text-center p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                    <p class="text-2xl font-bold text-gray-900 dark:text-white" x-text="'$' + kpis.cost_per_task">$0</p>
+                    <p class="text-sm text-gray-500">Cost per Task</p>
+                </div>
+                <div class="text-center p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                    <p class="text-2xl font-bold text-gray-900 dark:text-white" x-text="kpis.roi + 'x'">0x</p>
+                    <p class="text-sm text-gray-500">ROI Multiplier</p>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        function executiveDashboard() {
+            return {
+                darkMode: true,
+                mobileMenuOpen: false,
+                kpis: {
+                    completion_rate: 0,
+                    tasks_completed: 0,
+                    tasks_total: 0,
+                    avg_response_time: 0,
+                    p95_response_time: 0,
+                    token_efficiency: 0,
+                    tokens_used: 0,
+                    health_score: 0,
+                    active_daemons: 0,
+                    total_daemons: 0,
+                    estimated_cost: 0,
+                    cost_per_task: 0,
+                    roi: 0
+                },
+
+                init() {
+                    if (localStorage.getItem('theme') === 'light') {
+                        this.darkMode = false;
+                        document.documentElement.classList.remove('dark');
+                    }
+                    lucide.createIcons();
+                    this.loadKPIs();
+                    this.initCharts();
+                },
+
+                toggleTheme() {
+                    this.darkMode = !this.darkMode;
+                    document.documentElement.classList.toggle('dark');
+                    localStorage.setItem('theme', this.darkMode ? 'dark' : 'light');
+                },
+
+                async loadKPIs() {
+                    try {
+                        const [status, budget] = await Promise.all([
+                            fetch('/api/system-status').then(r => r.json()),
+                            fetch('/api/token-budget').then(r => r.json())
+                        ]);
+
+                        const completed = status.workers?.completed || 0;
+                        const total = (status.workers?.active || 0) + (status.workers?.pending || 0) + completed;
+
+                        this.kpis = {
+                            completion_rate: total > 0 ? Math.round(completed / total * 100) : 0,
+                            tasks_completed: completed,
+                            tasks_total: total,
+                            avg_response_time: 12,
+                            p95_response_time: 28,
+                            token_efficiency: budget.available ? Math.round((1 - budget.used / budget.total) * 100) : 0,
+                            tokens_used: budget.used || 0,
+                            health_score: 95,
+                            active_daemons: 8,
+                            total_daemons: 10,
+                            estimated_cost: Math.round((budget.used || 0) * 0.00001),
+                            cost_per_task: total > 0 ? (Math.round((budget.used || 0) * 0.00001 / total * 100) / 100) : 0,
+                            roi: 15
+                        };
+                    } catch (e) {
+                        console.error('Error loading KPIs:', e);
+                    }
+                },
+
+                initCharts() {
+                    // Volume chart
+                    new ApexCharts(document.querySelector('#volumeChart'), {
+                        series: [{
+                            name: 'Tasks',
+                            data: [30, 40, 35, 50, 49, 60, 70]
+                        }],
+                        chart: { type: 'area', height: 250, toolbar: { show: false } },
+                        dataLabels: { enabled: false },
+                        stroke: { curve: 'smooth' },
+                        xaxis: { categories: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'] },
+                        colors: ['#0ea5e9']
+                    }).render();
+
+                    // Utilization chart
+                    new ApexCharts(document.querySelector('#utilizationChart'), {
+                        series: [44, 35, 21],
+                        chart: { type: 'donut', height: 250 },
+                        labels: ['Development', 'Security', 'Inventory'],
+                        colors: ['#0ea5e9', '#8b5cf6', '#10b981']
+                    }).render();
+                }
+            };
+        }
+    </script>
+</body>
+</html>
