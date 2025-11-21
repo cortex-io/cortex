@@ -81,6 +81,135 @@ DEFAULT_TIMEOUT_MINUTES=30
 DEFAULT_MAX_RETRIES=1
 DEFAULT_SCOPE="{}"
 DEFAULT_CONTEXT="{}"
+DEFAULT_CHECKPOINT_CRITERIA="[]"
+
+# ============================================================================
+# Checkpoint Criteria Management (Phase 3 - Item 23)
+# ============================================================================
+
+# Add checkpoint criteria to task specifications
+# Enables goal decomposition with verification between steps
+build_checkpoint_criteria() {
+    local step_name="$1"
+    local verification_type="$2"
+    local success_condition="$3"
+    local timeout_seconds="${4:-300}"
+    local required="${5:-true}"
+
+    jq -nc \
+        --arg step "$step_name" \
+        --arg type "$verification_type" \
+        --arg condition "$success_condition" \
+        --argjson timeout "$timeout_seconds" \
+        --arg required "$required" \
+        '{
+            step: $step,
+            verification_type: $type,
+            success_condition: $condition,
+            timeout_seconds: $timeout,
+            required: ($required == "true"),
+            validated_at: null,
+            validation_result: null
+        }'
+}
+
+# Validate checkpoint between steps
+validate_checkpoint() {
+    local spec_file="$1"
+    local step_name="$2"
+
+    if [ ! -f "$spec_file" ]; then
+        echo "ERROR: Spec file not found: $spec_file" >&2
+        return 1
+    fi
+
+    local checkpoint=$(jq --arg step "$step_name" '.checkpoint_criteria[] | select(.step == $step)' "$spec_file")
+
+    if [ -z "$checkpoint" ] || [ "$checkpoint" = "null" ]; then
+        echo "ERROR: Checkpoint not found for step: $step_name" >&2
+        return 1
+    fi
+
+    local verification_type=$(echo "$checkpoint" | jq -r '.verification_type')
+    local success_condition=$(echo "$checkpoint" | jq -r '.success_condition')
+    local validation_result="false"
+    local validation_message=""
+
+    case "$verification_type" in
+        "file_exists")
+            if [ -f "$success_condition" ]; then
+                validation_result="true"
+                validation_message="File exists: $success_condition"
+            else
+                validation_message="File not found: $success_condition"
+            fi
+            ;;
+        "command_success")
+            if eval "$success_condition" >/dev/null 2>&1; then
+                validation_result="true"
+                validation_message="Command succeeded"
+            else
+                validation_message="Command failed: $success_condition"
+            fi
+            ;;
+        "json_field")
+            local field_path=$(echo "$success_condition" | cut -d'=' -f1)
+            local expected_value=$(echo "$success_condition" | cut -d'=' -f2)
+            local actual_value=$(jq -r "$field_path" "$spec_file" 2>/dev/null)
+            if [ "$actual_value" = "$expected_value" ]; then
+                validation_result="true"
+                validation_message="Field matches: $field_path = $expected_value"
+            else
+                validation_message="Field mismatch: $field_path (expected: $expected_value, got: $actual_value)"
+            fi
+            ;;
+        "custom")
+            # Custom validation - success_condition is a script path
+            if [ -x "$success_condition" ] && "$success_condition"; then
+                validation_result="true"
+                validation_message="Custom validation passed"
+            else
+                validation_message="Custom validation failed"
+            fi
+            ;;
+        *)
+            validation_message="Unknown verification type: $verification_type"
+            ;;
+    esac
+
+    # Update the spec file with validation result
+    local temp_file="${spec_file}.tmp.$$"
+    jq --arg step "$step_name" \
+       --arg result "$validation_result" \
+       --arg message "$validation_message" \
+       --arg timestamp "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+       '(.checkpoint_criteria[] | select(.step == $step)) |= . + {
+           validated_at: $timestamp,
+           validation_result: ($result == "true"),
+           validation_message: $message
+       }' "$spec_file" > "$temp_file"
+    mv "$temp_file" "$spec_file"
+
+    if [ "$validation_result" = "true" ]; then
+        echo "PASS: $validation_message"
+        return 0
+    else
+        echo "FAIL: $validation_message" >&2
+        return 1
+    fi
+}
+
+# Get all checkpoints for a spec
+get_checkpoints() {
+    local spec_file="$1"
+
+    if [ ! -f "$spec_file" ]; then
+        echo "[]"
+        return
+    fi
+
+    jq -c '.checkpoint_criteria // []' "$spec_file"
+}
 
 # Get configuration for worker type
 get_worker_type_config() {
@@ -164,6 +293,7 @@ build_worker_spec() {
     local timeout_minutes=""
     local max_retries="$DEFAULT_MAX_RETRIES"
     local output_file=""
+    local checkpoint_criteria="$DEFAULT_CHECKPOINT_CRITERIA"
 
     # Parse arguments
     while [[ $# -gt 0 ]]; do
@@ -210,6 +340,10 @@ build_worker_spec() {
                 ;;
             --output)
                 output_file="$2"
+                shift 2
+                ;;
+            --checkpoint-criteria)
+                checkpoint_criteria="$2"
                 shift 2
                 ;;
             *)
@@ -262,6 +396,12 @@ build_worker_spec() {
         return 1
     fi
 
+    # Validate checkpoint_criteria is valid JSON array
+    if ! echo "$checkpoint_criteria" | jq empty 2>/dev/null; then
+        echo "ERROR: --checkpoint-criteria is not valid JSON" >&2
+        return 1
+    fi
+
     # Build the worker spec JSON
     local created_at=$(date -u +%Y-%m-%dT%H:%M:%SZ)
 
@@ -295,7 +435,8 @@ build_worker_spec() {
     "output_location": null,
     "summary": null,
     "artifacts": []
-  }
+  },
+  "checkpoint_criteria": $checkpoint_criteria
 }
 EOF
 )
