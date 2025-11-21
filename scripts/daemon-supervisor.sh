@@ -22,6 +22,7 @@ CRITICAL_DAEMONS=(
     "coordinator-daemon:coordinator-daemon.sh"
     "pm-daemon:pm-daemon.sh"
     "heartbeat-monitor:daemons/heartbeat-monitor-daemon.sh"
+    "handoff-processor:handoff-processor-daemon.sh"
 )
 
 # Optional daemons (will be restarted but not logged as critical)
