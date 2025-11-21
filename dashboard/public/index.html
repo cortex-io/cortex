@@ -278,6 +278,27 @@
                 <i data-lucide="info" class="w-5 h-5"></i>
                 <span :class="currentView === 'about' ? 'font-medium' : ''">About</span>
             </button>
+
+            <!-- External Pages Section -->
+            <div class="pt-4 pb-1 px-4">
+                <p class="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">Pages</p>
+            </div>
+            <a href="/admin.html" class="w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300">
+                <i data-lucide="sliders" class="w-5 h-5"></i>
+                <span>Daemon Controls</span>
+            </a>
+            <a href="/compliance.html" class="w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300">
+                <i data-lucide="shield-check" class="w-5 h-5"></i>
+                <span>Compliance</span>
+            </a>
+            <a href="/traces.html" class="w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300">
+                <i data-lucide="git-commit" class="w-5 h-5"></i>
+                <span>Trace Viewer</span>
+            </a>
+            <a href="/moe-views.html" class="w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300">
+                <i data-lucide="network" class="w-5 h-5"></i>
+                <span>MoE Views</span>
+            </a>
         </nav>
 
         <!-- Theme toggle - Fixed at bottom -->
