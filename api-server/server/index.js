@@ -2517,6 +2517,147 @@ app.post('/api/backup/stop', async (req, res) => {
 });
 
 /**
+ * POST /api/worker-restart/start
+ * Start worker-restart daemon
+ */
+app.post('/api/worker-restart/start', async (req, res) => {
+  try {
+    const scriptPath = path.join(__dirname, '../../scripts/daemons/worker-restart-daemon.sh');
+
+    // Check if already running
+    try {
+      const isRunning = await safeExec('pgrep', ['-f', 'worker-restart-daemon.sh']);
+      if (isRunning.stdout.trim()) {
+        return res.json({ status: 'already_running', message: 'Worker-restart daemon is already running' });
+      }
+    } catch (e) {
+      // pgrep returns exit code 1 when no processes match - this is expected
+    }
+
+    // Start the daemon
+    const { spawn } = require('child_process');
+    spawn('bash', [scriptPath], {
+      detached: true,
+      stdio: 'ignore'
+    }).unref();
+
+    setTimeout(() => {
+      res.json({ status: 'started', message: 'Worker-restart daemon started successfully' });
+    }, 1000);
+  } catch (error) {
+    console.error('Error starting worker-restart daemon:', error);
+    res.status(500).json({ error: 'Failed to start worker-restart daemon' });
+  }
+});
+
+/**
+ * POST /api/worker-restart/stop
+ * Stop worker-restart daemon
+ */
+app.post('/api/worker-restart/stop', async (req, res) => {
+  try {
+    await safeExec('pkill', ['-f', 'worker-restart-daemon.sh']);
+    res.json({ status: 'stopped', message: 'Worker-restart daemon stopped' });
+  } catch (error) {
+    res.json({ status: 'not_running', message: 'Worker-restart daemon was not running' });
+  }
+});
+
+/**
+ * POST /api/auto-fix/start
+ * Start auto-fix daemon
+ */
+app.post('/api/auto-fix/start', async (req, res) => {
+  try {
+    const scriptPath = path.join(__dirname, '../../scripts/daemons/auto-fix-daemon.sh');
+
+    // Check if already running
+    try {
+      const isRunning = await safeExec('pgrep', ['-f', 'auto-fix-daemon.sh']);
+      if (isRunning.stdout.trim()) {
+        return res.json({ status: 'already_running', message: 'Auto-fix daemon is already running' });
+      }
+    } catch (e) {
+      // pgrep returns exit code 1 when no processes match - this is expected
+    }
+
+    // Start the daemon
+    const { spawn } = require('child_process');
+    spawn('bash', [scriptPath], {
+      detached: true,
+      stdio: 'ignore'
+    }).unref();
+
+    setTimeout(() => {
+      res.json({ status: 'started', message: 'Auto-fix daemon started successfully' });
+    }, 1000);
+  } catch (error) {
+    console.error('Error starting auto-fix daemon:', error);
+    res.status(500).json({ error: 'Failed to start auto-fix daemon' });
+  }
+});
+
+/**
+ * POST /api/auto-fix/stop
+ * Stop auto-fix daemon
+ */
+app.post('/api/auto-fix/stop', async (req, res) => {
+  try {
+    await safeExec('pkill', ['-f', 'auto-fix-daemon.sh']);
+    res.json({ status: 'stopped', message: 'Auto-fix daemon stopped' });
+  } catch (error) {
+    res.json({ status: 'not_running', message: 'Auto-fix daemon was not running' });
+  }
+});
+
+/**
+ * POST /api/failure-pattern/start
+ * Start failure-pattern daemon
+ */
+app.post('/api/failure-pattern/start', async (req, res) => {
+  try {
+    const scriptPath = path.join(__dirname, '../../scripts/daemons/failure-pattern-daemon.sh');
+
+    // Check if already running
+    try {
+      const isRunning = await safeExec('pgrep', ['-f', 'failure-pattern-daemon.sh']);
+      if (isRunning.stdout.trim()) {
+        return res.json({ status: 'already_running', message: 'Failure-pattern daemon is already running' });
+      }
+    } catch (e) {
+      // pgrep returns exit code 1 when no processes match - this is expected
+    }
+
+    // Start the daemon
+    const { spawn } = require('child_process');
+    spawn('bash', [scriptPath], {
+      detached: true,
+      stdio: 'ignore'
+    }).unref();
+
+    setTimeout(() => {
+      res.json({ status: 'started', message: 'Failure-pattern daemon started successfully' });
+    }, 1000);
+  } catch (error) {
+    console.error('Error starting failure-pattern daemon:', error);
+    res.status(500).json({ error: 'Failed to start failure-pattern daemon' });
+  }
+});
+
+/**
+ * POST /api/failure-pattern/stop
+ * Stop failure-pattern daemon
+ */
+app.post('/api/failure-pattern/stop', async (req, res) => {
+  try {
+    await safeExec('pkill', ['-f', 'failure-pattern-daemon.sh']);
+    res.json({ status: 'stopped', message: 'Failure-pattern daemon stopped' });
+  } catch (error) {
+    res.json({ status: 'not_running', message: 'Failure-pattern daemon was not running' });
+  }
+});
+
+/**
  * GET /api/pm-daemon/status
  * Get PM daemon status from pm-state.json
  */
