@@ -779,16 +779,24 @@ app.get('/api/metrics/history', async (req, res) => {
         return res.status(400).json({ error: 'Invalid range. Use 24h, 7d, or 30d' });
     }
 
-    // Read all snapshot files
-    const snapshots = [];
-    for (const file of files) {
+    // Read all snapshot files in parallel for better performance
+    const snapshotPromises = files.map(async (file) => {
       try {
         const content = await fs.readFile(file, 'utf-8');
-        const snapshot = JSON.parse(content);
-        snapshots.push(snapshot);
+        return JSON.parse(content);
       } catch (error) {
         console.error(`Error reading snapshot ${file}:`, error.message);
+        return null;
       }
+    });
+
+    let snapshots = (await Promise.all(snapshotPromises)).filter(s => s !== null);
+
+    // Sample data points for better chart performance (max 100 points)
+    const maxPoints = 100;
+    if (snapshots.length > maxPoints) {
+      const step = Math.ceil(snapshots.length / maxPoints);
+      snapshots = snapshots.filter((_, index) => index % step === 0);
     }
 
     // If no historical data, return current metrics as single data point
@@ -1264,7 +1272,16 @@ app.get('/api/events', async (req, res) => {
         const lines = content.trim().split('\n').filter(line => line);
         events = lines.map(line => {
           try {
-            return normalizeEvent(JSON.parse(line));
+            const parsed = JSON.parse(line);
+            // Skip empty objects or objects without required fields
+            if (!parsed || Object.keys(parsed).length === 0) {
+              return null;
+            }
+            // Must have at least timestamp or type to be a valid event
+            if (!parsed.timestamp && !parsed.type) {
+              return null;
+            }
+            return normalizeEvent(parsed);
           } catch (e) {
             console.error('Error parsing event line:', e.message);
             return null;
@@ -1687,7 +1704,7 @@ app.get('/api/moe-intelligence',
   getLimiter,
   async (req, res) => {
   try {
-    const timeRange = req.query.range || '24h'; // 1h, 6h, 24h, 7d, 30d
+    const timeRange = req.query.range || '30d'; // 1h, 6h, 24h, 7d, 30d - default to 30d to show historical data
 
     // Read routing decisions
     const decisionsFile = path.join(__dirname, '../../coordination/masters/coordinator/knowledge-base/routing-decisions.jsonl');
@@ -1702,7 +1719,34 @@ app.get('/api/moe-intelligence',
         .filter(line => line)
         .map(line => {
           try {
-            return JSON.parse(line);
+            const parsed = JSON.parse(line);
+            // Normalize both old and new formats
+            if (parsed.decision) {
+              // New MoE format with decision object
+              return {
+                task_id: parsed.task_id,
+                timestamp: parsed.timestamp,
+                routed_to: parsed.decision.primary_expert,
+                confidence: parsed.decision.primary_confidence,
+                strategy: parsed.decision.strategy,
+                rule_used: parsed.routing_strategy || 'mixture_of_experts',
+                scores: parsed.decision.scores
+              };
+            } else if (parsed.routed_to && parsed.timestamp) {
+              // Old format with routed_to
+              return {
+                task_id: parsed.task_id,
+                timestamp: parsed.timestamp,
+                routed_to: parsed.routed_to,
+                confidence: parsed.confidence || 0.5,
+                strategy: parsed.strategy || 'single_expert',
+                rule_used: parsed.rule_used || 'rule_based'
+              };
+            } else if (parsed.learned_at) {
+              // Learner pattern format - skip these for routing decisions
+              return null;
+            }
+            return null;
           } catch (e) {
             // Skip malformed JSON lines
             return null;
@@ -1719,9 +1763,10 @@ app.get('/api/moe-intelligence',
       '24h': 86400000,
       '7d': 604800000,
       '30d': 2592000000
-    }[timeRange] || 86400000;
+    }[timeRange] || 2592000000;
 
     const filteredDecisions = routingDecisions.filter(d => {
+      if (!d.timestamp) return false;
       const timestamp = new Date(d.timestamp).getTime();
       return (now - timestamp) <= rangeMs;
     });
@@ -1743,7 +1788,7 @@ app.get('/api/moe-intelligence',
     };
 
     filteredDecisions.forEach(d => {
-      const conf = parseFloat(d.confidence) * 100;
+      const conf = parseFloat(d.confidence || 0) * 100;
       if (conf <= 25) confidenceBuckets['0-25']++;
       else if (conf <= 50) confidenceBuckets['26-50']++;
       else if (conf <= 75) confidenceBuckets['51-75']++;
@@ -1754,19 +1799,22 @@ app.get('/api/moe-intelligence',
     // Calculate success rates by master type
     const masterStats = {};
     filteredDecisions.forEach(d => {
-      if (!masterStats[d.routed_to]) {
-        masterStats[d.routed_to] = {
+      const expert = d.routed_to;
+      if (!expert) return;
+      if (!masterStats[expert]) {
+        masterStats[expert] = {
           total: 0,
           highConfidence: 0,
           strategies: {}
         };
       }
-      masterStats[d.routed_to].total++;
-      if (parseFloat(d.confidence) > 0.8) {
-        masterStats[d.routed_to].highConfidence++;
+      masterStats[expert].total++;
+      if (parseFloat(d.confidence || 0) > 0.8) {
+        masterStats[expert].highConfidence++;
       }
-      masterStats[d.routed_to].strategies[d.strategy] =
-        (masterStats[d.routed_to].strategies[d.strategy] || 0) + 1;
+      const strategy = d.strategy || 'unknown';
+      masterStats[expert].strategies[strategy] =
+        (masterStats[expert].strategies[strategy] || 0) + 1;
     });
 
     // Read task patterns if available
@@ -1789,18 +1837,30 @@ app.get('/api/moe-intelligence',
         totalDecisions: filteredDecisions.length,
         timeRange,
         avgConfidence: filteredDecisions.length > 0
-          ? (filteredDecisions.reduce((sum, d) => sum + parseFloat(d.confidence), 0) / filteredDecisions.length).toFixed(3)
+          ? (filteredDecisions.reduce((sum, d) => sum + parseFloat(d.confidence || 0), 0) / filteredDecisions.length).toFixed(3)
           : 0,
         mostUsedMaster: Object.entries(masterStats)
           .sort((a, b) => b[1].total - a[1].total)[0]?.[0] || 'none',
-        uniqueStrategies: [...new Set(filteredDecisions.map(d => d.strategy))]
+        uniqueStrategies: [...new Set(filteredDecisions.map(d => d.strategy).filter(s => s))]
       },
       routingFlow,
       confidenceDistribution: confidenceBuckets,
       masterStatistics: masterStats,
       hourlyHeatMap: hourlyActivity,
       taskPatterns: taskPatterns?.patterns || null,
-      recentDecisions: filteredDecisions.slice(-10).reverse() // Last 10 decisions
+      recentDecisions: filteredDecisions.slice(-10).reverse().map(d => ({
+        task_id: d.task_id,
+        timestamp: d.timestamp,
+        routed_to: d.routed_to,
+        confidence: d.confidence,
+        strategy: d.strategy,
+        decision: {
+          primary_expert: d.routed_to,
+          primary_confidence: d.confidence,
+          strategy: d.strategy
+        },
+        scores: d.scores
+      }))
     });
 
   } catch (error) {
@@ -4457,24 +4517,48 @@ app.post('/api/learning-monitor/control', async (req, res) => {
 app.get('/api/moe/accuracy', async (req, res) => {
   try {
     const fsSync = require('fs');
-    const { exec } = require('child_process');
-    const { promisify } = require('util');
-    const execAsync = promisify(exec);
 
-    const routingLogPath = path.join(COMMIT_RELAY_HOME, 'coordination', 'masters', 'coordinator', 'logs', 'routing-decisions.jsonl');
+    const routingLogPath = path.join(COMMIT_RELAY_HOME, 'coordination', 'masters', 'coordinator', 'knowledge-base', 'routing-decisions.jsonl');
 
     if (!fsSync.existsSync(routingLogPath)) {
       return res.json({
         accuracy: 0,
         total_decisions: 0,
         correct_routes: 0,
-        last_24h: { accuracy: 0, decisions: 0 }
+        last_24h: { accuracy: 0, decisions: 0 },
+        accuracy_over_time: []
       });
     }
 
     // Parse routing decisions
-    const { stdout } = await execAsync(`jq -s '.' "${routingLogPath}"`);
-    const allDecisions = JSON.parse(stdout);
+    const content = fsSync.readFileSync(routingLogPath, 'utf-8');
+    const allDecisions = content
+      .trim()
+      .split('\n')
+      .filter(line => line)
+      .map(line => {
+        try {
+          const parsed = JSON.parse(line);
+          // Normalize both formats
+          if (parsed.decision) {
+            return {
+              timestamp: parsed.timestamp,
+              confidence: parsed.decision.primary_confidence,
+              expert: parsed.decision.primary_expert
+            };
+          } else if (parsed.routed_to && parsed.timestamp) {
+            return {
+              timestamp: parsed.timestamp,
+              confidence: parsed.confidence || 0.5,
+              expert: parsed.routed_to
+            };
+          }
+          return null;
+        } catch {
+          return null;
+        }
+      })
+      .filter(d => d !== null);
 
     // Calculate overall accuracy (last 100 decisions)
     const recentDecisions = allDecisions.slice(-100);
@@ -4488,13 +4572,29 @@ app.get('/api/moe/accuracy', async (req, res) => {
     });
 
     // Calculate confidence-based accuracy (high confidence = correct routing)
-    const highConfidenceCount = recentDecisions.filter(d =>
-      d.decision?.primary_confidence >= 0.7
-    ).length;
+    const highConfidenceCount = recentDecisions.filter(d => d.confidence >= 0.7).length;
 
     const accuracy = totalDecisions > 0 ? (highConfidenceCount / totalDecisions) * 100 : 0;
     const accuracy24h = last24h.length > 0 ?
-      (last24h.filter(d => d.decision?.primary_confidence >= 0.7).length / last24h.length) * 100 : 0;
+      (last24h.filter(d => d.confidence >= 0.7).length / last24h.length) * 100 : 0;
+
+    // Generate accuracy over time data for visualization
+    const accuracyOverTime = [];
+    const groupedByDay = {};
+    recentDecisions.forEach(d => {
+      const day = new Date(d.timestamp).toLocaleDateString('en-US', { weekday: 'short' });
+      if (!groupedByDay[day]) {
+        groupedByDay[day] = { total: 0, highConf: 0 };
+      }
+      groupedByDay[day].total++;
+      if (d.confidence >= 0.7) groupedByDay[day].highConf++;
+    });
+    Object.entries(groupedByDay).forEach(([time, data]) => {
+      accuracyOverTime.push({
+        time,
+        accuracy: data.total > 0 ? (data.highConf / data.total) * 100 : 0
+      });
+    });
 
     res.json({
       accuracy: accuracy.toFixed(2),
@@ -4505,7 +4605,8 @@ app.get('/api/moe/accuracy', async (req, res) => {
         decisions: last24h.length
       },
       avg_confidence: recentDecisions.length > 0 ?
-        (recentDecisions.reduce((sum, d) => sum + (d.decision?.primary_confidence || 0), 0) / recentDecisions.length).toFixed(2) : 0
+        (recentDecisions.reduce((sum, d) => sum + (d.confidence || 0), 0) / recentDecisions.length).toFixed(2) : 0,
+      accuracy_over_time: accuracyOverTime
     });
   } catch (error) {
     console.error('Error calculating MoE accuracy:', error);
@@ -4520,70 +4621,72 @@ app.get('/api/moe/accuracy', async (req, res) => {
 app.get('/api/moe/confidence-distribution', async (req, res) => {
   try {
     const fsSync = require('fs');
-    const { exec } = require('child_process');
-    const { promisify } = require('util');
-    const execAsync = promisify(exec);
 
-    const routingLogPath = path.join(COMMIT_RELAY_HOME, 'coordination', 'masters', 'coordinator', 'logs', 'routing-decisions.jsonl');
+    const routingLogPath = path.join(COMMIT_RELAY_HOME, 'coordination', 'masters', 'coordinator', 'knowledge-base', 'routing-decisions.jsonl');
 
     if (!fsSync.existsSync(routingLogPath)) {
       return res.json({
-        distribution: { low: 0, medium: 0, high: 0, excellent: 0 },
+        distribution: [],
         ranges: [
-          { label: 'Low (0-0.5)', count: 0, percentage: 0 },
-          { label: 'Medium (0.5-0.7)', count: 0, percentage: 0 },
-          { label: 'High (0.7-0.9)', count: 0, percentage: 0 },
-          { label: 'Excellent (0.9-1.0)', count: 0, percentage: 0 }
+          { range: '0-25%', count: 0 },
+          { range: '26-50%', count: 0 },
+          { range: '51-75%', count: 0 },
+          { range: '76-90%', count: 0 },
+          { range: '91-100%', count: 0 }
         ]
       });
     }
 
     // Parse routing decisions
-    const { stdout } = await execAsync(`jq -s '.' "${routingLogPath}"`);
-    const allDecisions = JSON.parse(stdout);
+    const content = fsSync.readFileSync(routingLogPath, 'utf-8');
+    const allDecisions = content
+      .trim()
+      .split('\n')
+      .filter(line => line)
+      .map(line => {
+        try {
+          const parsed = JSON.parse(line);
+          if (parsed.decision) {
+            return parsed.decision.primary_confidence;
+          } else if (parsed.confidence !== undefined) {
+            return parsed.confidence;
+          }
+          return null;
+        } catch {
+          return null;
+        }
+      })
+      .filter(d => d !== null);
+
     const recentDecisions = allDecisions.slice(-100);
 
-    // Categorize by confidence score
-    const distribution = {
-      low: 0,      // 0 - 0.5
-      medium: 0,   // 0.5 - 0.7
-      high: 0,     // 0.7 - 0.9
-      excellent: 0 // 0.9 - 1.0
+    // Categorize by confidence score into buckets for bar chart
+    const buckets = {
+      '0-25': 0,
+      '26-50': 0,
+      '51-75': 0,
+      '76-90': 0,
+      '91-100': 0
     };
 
-    recentDecisions.forEach(d => {
-      const conf = d.decision?.primary_confidence ?? 0;
-      if (conf < 0.5) distribution.low++;
-      else if (conf < 0.7) distribution.medium++;
-      else if (conf < 0.9) distribution.high++;
-      else distribution.excellent++;
+    recentDecisions.forEach(conf => {
+      const pct = conf * 100;
+      if (pct <= 25) buckets['0-25']++;
+      else if (pct <= 50) buckets['26-50']++;
+      else if (pct <= 75) buckets['51-75']++;
+      else if (pct <= 90) buckets['76-90']++;
+      else buckets['91-100']++;
     });
 
-    const total = recentDecisions.length;
-    const ranges = [
-      {
-        label: 'Low (0-0.5)',
-        count: distribution.low,
-        percentage: total > 0 ? ((distribution.low / total) * 100).toFixed(1) : 0
-      },
-      {
-        label: 'Medium (0.5-0.7)',
-        count: distribution.medium,
-        percentage: total > 0 ? ((distribution.medium / total) * 100).toFixed(1) : 0
-      },
-      {
-        label: 'High (0.7-0.9)',
-        count: distribution.high,
-        percentage: total > 0 ? ((distribution.high / total) * 100).toFixed(1) : 0
-      },
-      {
-        label: 'Excellent (0.9-1.0)',
-        count: distribution.excellent,
-        percentage: total > 0 ? ((distribution.excellent / total) * 100).toFixed(1) : 0
-      }
+    const distribution = [
+      { range: '0-25%', count: buckets['0-25'] },
+      { range: '26-50%', count: buckets['26-50'] },
+      { range: '51-75%', count: buckets['51-75'] },
+      { range: '76-90%', count: buckets['76-90'] },
+      { range: '91-100%', count: buckets['91-100'] }
     ];
 
-    res.json({ distribution, ranges, total });
+    res.json({ distribution, total: recentDecisions.length });
   } catch (error) {
     console.error('Error calculating confidence distribution:', error);
     res.status(500).json({ error: 'Failed to calculate distribution', details: error.message });
@@ -4598,7 +4701,45 @@ app.get('/api/moe/pool-utilization', async (req, res) => {
   try {
     const fsSync = require('fs');
 
-    // Read worker pool
+    // Read routing decisions to calculate expert utilization
+    const routingLogPath = path.join(COMMIT_RELAY_HOME, 'coordination', 'masters', 'coordinator', 'knowledge-base', 'routing-decisions.jsonl');
+
+    let expertCounts = {
+      development: 0,
+      security: 0,
+      inventory: 0,
+      cicd: 0
+    };
+
+    if (fsSync.existsSync(routingLogPath)) {
+      const content = fsSync.readFileSync(routingLogPath, 'utf-8');
+      const decisions = content
+        .trim()
+        .split('\n')
+        .filter(line => line)
+        .map(line => {
+          try {
+            const parsed = JSON.parse(line);
+            if (parsed.decision) {
+              return parsed.decision.primary_expert;
+            } else if (parsed.routed_to) {
+              return parsed.routed_to;
+            }
+            return null;
+          } catch {
+            return null;
+          }
+        })
+        .filter(d => d !== null);
+
+      decisions.forEach(expert => {
+        if (expertCounts.hasOwnProperty(expert)) {
+          expertCounts[expert]++;
+        }
+      });
+    }
+
+    // Read worker pool for current state
     const workerPoolPath = path.join(COMMIT_RELAY_HOME, 'coordination', 'worker-pool.json');
     let poolData = { active_workers: [] };
 
@@ -4606,8 +4747,8 @@ app.get('/api/moe/pool-utilization', async (req, res) => {
       poolData = JSON.parse(fsSync.readFileSync(workerPoolPath, 'utf-8'));
     }
 
-    // Count workers by master
-    const utilization = {
+    // Count current workers by master
+    const currentUtilization = {
       development: 0,
       security: 0,
       inventory: 0,
@@ -4617,16 +4758,26 @@ app.get('/api/moe/pool-utilization', async (req, res) => {
 
     poolData.active_workers.forEach(worker => {
       const spawnedBy = worker.spawned_by || 'unknown';
-      if (utilization.hasOwnProperty(spawnedBy)) {
-        utilization[spawnedBy]++;
+      if (currentUtilization.hasOwnProperty(spawnedBy)) {
+        currentUtilization[spawnedBy]++;
       }
-      utilization.total++;
+      currentUtilization.total++;
     });
+
+    // Calculate utilization percentages for pie chart
+    const totalRouted = Object.values(expertCounts).reduce((sum, c) => sum + c, 0);
+    const utilization = Object.entries(expertCounts)
+      .filter(([_, count]) => count > 0)
+      .map(([expert, count]) => ({
+        expert,
+        usage: totalRouted > 0 ? Math.round((count / totalRouted) * 100) : 0,
+        count
+      }));
 
     // Calculate sparse activation percentage
     const maxCapacity = 64;
-    const sparseActivation = utilization.total > 0 ?
-      ((utilization.total / maxCapacity) * 100).toFixed(1) : 0;
+    const sparseActivation = currentUtilization.total > 0 ?
+      ((currentUtilization.total / maxCapacity) * 100).toFixed(1) : 0;
 
     // Read worker spec files for detailed status
     const workerSpecsDir = path.join(COMMIT_RELAY_HOME, 'coordination', 'worker-specs', 'active');
