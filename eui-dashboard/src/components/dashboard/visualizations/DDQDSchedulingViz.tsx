@@ -26,6 +26,7 @@ import {
   EuiStat,
   EuiDatePicker,
   Criteria,
+  EuiBasicTableColumn,
 } from '@elastic/eui'
 import moment from 'moment'
 import {
@@ -154,7 +155,7 @@ const DDQDSchedulingViz = () => {
     }
   }
 
-  const columns = [
+  const columns: EuiBasicTableColumn<TestHistory>[] = [
     {
       field: 'id',
       name: 'Test ID',
@@ -304,7 +305,6 @@ const DDQDSchedulingViz = () => {
           items={sortedHistory.slice(pageIndex * pageSize, (pageIndex + 1) * pageSize)}
           columns={columns}
           itemId="id"
-          hasActions={true}
           sorting={{
             sort: { field: sortField, direction: sortDirection },
           }}

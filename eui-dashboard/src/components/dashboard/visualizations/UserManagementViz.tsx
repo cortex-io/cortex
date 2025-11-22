@@ -34,6 +34,7 @@ import {
   EuiTableSelectionType,
   EuiButtonEmpty,
   Criteria,
+  EuiBasicTableColumn,
 } from '@elastic/eui'
 import {
   getUsers,
@@ -230,7 +231,7 @@ const UserManagementViz = () => {
   }
 
   // Table columns
-  const columns = [
+  const columns: EuiBasicTableColumn<User>[] = [
     {
       field: 'username',
       name: 'Username',
@@ -434,9 +435,7 @@ const UserManagementViz = () => {
           items={sortedUsers.slice(pageIndex * pageSize, (pageIndex + 1) * pageSize)}
           columns={columns}
           selection={selection}
-          isSelectable={true}
           itemId="id"
-          hasActions={true}
           sorting={{
             sort: {
               field: sortField,

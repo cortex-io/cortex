@@ -3,6 +3,9 @@ import { appendIconComponentCache } from '@elastic/eui/es/components/icon/icon'
 import DashboardContainer from './components/dashboard/DashboardContainer'
 import { useTheme } from './hooks/useTheme'
 
+// Import print-friendly styles
+import './styles/print.css'
+
 // Import icons used in the dashboard
 import { icon as EuiIconDashboard } from '@elastic/eui/es/components/icon/assets/app_dashboard'
 import { icon as EuiIconCompute } from '@elastic/eui/es/components/icon/assets/compute'

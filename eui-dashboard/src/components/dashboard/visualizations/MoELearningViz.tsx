@@ -32,7 +32,7 @@ const MoELearningViz = () => {
   const routingInsights = useMemo(() => {
     if (!data?.routingIntelligence) return []
     const intel = data.routingIntelligence
-    const insights = []
+    const insights: Array<{ agent: string; expertise: string[]; confidence: Record<string, number> }> = []
 
     if (intel.agentRouting) {
       Object.entries(intel.agentRouting).forEach(([agent, info]: [string, any]) => {
