@@ -203,7 +203,7 @@ const MoEAdvancedAnalyticsViz = () => {
               cx="50%"
               cy="50%"
               outerRadius={80}
-              label={({ expert, usage }) => `${expert}: ${usage}%`}
+              label={(props) => props.name && props.value ? `${props.name}: ${props.value}%` : ''}
             >
               {utilizationData.map((entry, index) => (
                 <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />

@@ -1,0 +1,250 @@
+/**
+ * Print-friendly stylesheet for EUI Dashboard
+ * Optimizes the dashboard for printing and PDF export
+ */
+
+@media print {
+  /* Reset page settings */
+  @page {
+    margin: 1cm;
+    size: A4 portrait;
+  }
+
+  /* Hide non-essential elements for printing */
+  .euiHeader,
+  .euiHeaderSection,
+  nav,
+  .euiSuperDatePicker,
+  .euiSearchBar,
+  .euiButton:not(.print-include),
+  .euiButtonIcon,
+  .euiButtonEmpty,
+  .euiSwitch,
+  .euiPopover,
+  .euiToolTip,
+  .euiFlyout,
+  .euiModal,
+  .euiToast,
+  .euiLoadingSpinner,
+  [aria-live="polite"],
+  .euiScreenReaderOnly,
+  .no-print {
+    display: none !important;
+  }
+
+  /* Show print-only elements */
+  .print-only {
+    display: block !important;
+  }
+
+  /* Body and container adjustments */
+  body {
+    background: white !important;
+    color: black !important;
+    font-size: 12pt;
+    line-height: 1.4;
+  }
+
+  .euiPage,
+  .euiPageBody {
+    padding: 0 !important;
+    margin: 0 !important;
+    background: white !important;
+  }
+
+  /* Panel adjustments */
+  .euiPanel {
+    box-shadow: none !important;
+    border: 1px solid #d3dae6 !important;
+    break-inside: avoid;
+    page-break-inside: avoid;
+    margin-bottom: 1cm !important;
+    padding: 0.5cm !important;
+    background: white !important;
+  }
+
+  /* Table adjustments */
+  .euiBasicTable {
+    width: 100% !important;
+    font-size: 10pt;
+  }
+
+  .euiTable {
+    border-collapse: collapse;
+  }
+
+  .euiTableHeaderCell,
+  .euiTableRowCell {
+    padding: 0.3cm !important;
+    border: 1px solid #d3dae6 !important;
+  }
+
+  .euiTableRow:nth-child(even) {
+    background-color: #f5f7fa !important;
+  }
+
+  /* Pagination - hide in print */
+  .euiPagination {
+    display: none !important;
+  }
+
+  /* Typography */
+  .euiTitle {
+    color: black !important;
+    margin-bottom: 0.5cm !important;
+  }
+
+  .euiText,
+  .euiTextColor {
+    color: black !important;
+  }
+
+  /* Stat/Metric cards */
+  .euiStat {
+    text-align: left !important;
+  }
+
+  .euiStat__title {
+    font-size: 18pt !important;
+    color: black !important;
+  }
+
+  .euiStat__description {
+    font-size: 10pt !important;
+    color: #69707d !important;
+  }
+
+  /* Badge adjustments for grayscale printing */
+  .euiBadge {
+    background-color: transparent !important;
+    border: 1px solid currentColor !important;
+    color: black !important;
+  }
+
+  .euiBadge--success {
+    border-color: #00bfb3 !important;
+  }
+
+  .euiBadge--warning {
+    border-color: #fec514 !important;
+  }
+
+  .euiBadge--danger {
+    border-color: #bd271e !important;
+  }
+
+  /* Health indicators */
+  .euiHealth::before {
+    border: 2px solid currentColor !important;
+    background: transparent !important;
+  }
+
+  /* FlexGroup adjustments */
+  .euiFlexGroup {
+    flex-wrap: wrap !important;
+  }
+
+  .euiFlexItem {
+    flex-basis: 48% !important;
+    margin: 0.25cm !important;
+  }
+
+  /* Charts - optimize for black & white */
+  .echChart {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  /* Ensure chart containers have proper dimensions */
+  [role="img"] {
+    max-width: 100% !important;
+    height: auto !important;
+  }
+
+  /* Chart text visibility */
+  .echChartContent text {
+    fill: black !important;
+  }
+
+  /* Icons */
+  .euiIcon {
+    filter: grayscale(100%) !important;
+  }
+
+  /* Links */
+  a {
+    color: black !important;
+    text-decoration: underline !important;
+  }
+
+  /* Show URLs for links */
+  a[href]::after {
+    content: " (" attr(href) ")";
+    font-size: 8pt;
+    color: #69707d;
+  }
+
+  /* Internal links - don't show URL */
+  a[href^="#"]::after,
+  a[href^="javascript"]::after {
+    content: "";
+  }
+
+  /* Page breaks */
+  h1, h2, h3 {
+    page-break-after: avoid;
+  }
+
+  .page-break {
+    page-break-before: always;
+  }
+
+  .avoid-break {
+    page-break-inside: avoid;
+  }
+
+  /* Print header/footer */
+  .print-header {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    text-align: center;
+    font-size: 10pt;
+    color: #69707d;
+    padding-bottom: 0.5cm;
+    border-bottom: 1px solid #d3dae6;
+  }
+
+  .print-footer {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    text-align: center;
+    font-size: 8pt;
+    color: #69707d;
+    padding-top: 0.5cm;
+    border-top: 1px solid #d3dae6;
+  }
+
+  /* Ensure content doesn't overlap header/footer */
+  .print-content {
+    margin-top: 1.5cm;
+    margin-bottom: 1.5cm;
+  }
+
+  /* Responsive grid - single column for print */
+  @media (max-width: 600px) {
+    .euiFlexItem {
+      flex-basis: 100% !important;
+    }
+  }
+}
+
+/* Print preview styles (optional - shown when printing) */
+@media screen and (max-width: 0) {
+  .print-preview {
+    display: block;
+  }
+}

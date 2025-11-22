@@ -24,6 +24,7 @@ import {
   EuiTab,
   EuiCode,
   Criteria,
+  EuiBasicTableColumn,
 } from '@elastic/eui'
 import {
   getAgentstudioAgents,
@@ -153,7 +154,7 @@ const AgentstudioViz = () => {
   })
 
   // Agent table columns
-  const agentColumns = [
+  const agentColumns: EuiBasicTableColumn<Agent>[] = [
     {
       field: 'name',
       name: 'Name',
@@ -310,7 +311,6 @@ const AgentstudioViz = () => {
             items={sortedAgents.slice(pageIndex * pageSize, (pageIndex + 1) * pageSize)}
             columns={agentColumns}
             itemId="id"
-            hasActions={true}
             sorting={{
               sort: {
                 field: sortField,

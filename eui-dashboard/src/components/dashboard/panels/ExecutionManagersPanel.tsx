@@ -19,6 +19,7 @@ import {
   EuiDescriptionList,
   EuiToolTip,
   Criteria,
+  EuiBasicTableColumn,
 } from '@elastic/eui'
 import { getExecutionManagers } from '../../../services/dashboardApi'
 
@@ -89,7 +90,7 @@ const ExecutionManagersPanel = () => {
     }
   }
 
-  const columns = [
+  const columns: EuiBasicTableColumn<ExecutionManager>[] = [
     {
       field: 'id',
       name: 'EM ID',
@@ -206,7 +207,6 @@ const ExecutionManagersPanel = () => {
           items={sortedManagers.slice(pageIndex * pageSize, (pageIndex + 1) * pageSize)}
           columns={columns}
           itemId="id"
-          hasActions={true}
           sorting={{
             sort: { field: sortField, direction: sortDirection },
           }}
