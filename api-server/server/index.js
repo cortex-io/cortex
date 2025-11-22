@@ -1700,7 +1700,15 @@ app.get('/api/moe-intelligence',
         .trim()
         .split('\n')
         .filter(line => line)
-        .map(line => JSON.parse(line));
+        .map(line => {
+          try {
+            return JSON.parse(line);
+          } catch (e) {
+            // Skip malformed JSON lines
+            return null;
+          }
+        })
+        .filter(item => item !== null);
     }
 
     // Filter by time range
@@ -4481,12 +4489,12 @@ app.get('/api/moe/accuracy', async (req, res) => {
 
     // Calculate confidence-based accuracy (high confidence = correct routing)
     const highConfidenceCount = recentDecisions.filter(d =>
-      d.decision.primary_confidence >= 0.7
+      d.decision?.primary_confidence >= 0.7
     ).length;
 
     const accuracy = totalDecisions > 0 ? (highConfidenceCount / totalDecisions) * 100 : 0;
     const accuracy24h = last24h.length > 0 ?
-      (last24h.filter(d => d.decision.primary_confidence >= 0.7).length / last24h.length) * 100 : 0;
+      (last24h.filter(d => d.decision?.primary_confidence >= 0.7).length / last24h.length) * 100 : 0;
 
     res.json({
       accuracy: accuracy.toFixed(2),
@@ -4497,7 +4505,7 @@ app.get('/api/moe/accuracy', async (req, res) => {
         decisions: last24h.length
       },
       avg_confidence: recentDecisions.length > 0 ?
-        (recentDecisions.reduce((sum, d) => sum + d.decision.primary_confidence, 0) / recentDecisions.length).toFixed(2) : 0
+        (recentDecisions.reduce((sum, d) => sum + (d.decision?.primary_confidence || 0), 0) / recentDecisions.length).toFixed(2) : 0
     });
   } catch (error) {
     console.error('Error calculating MoE accuracy:', error);
@@ -4544,7 +4552,7 @@ app.get('/api/moe/confidence-distribution', async (req, res) => {
     };
 
     recentDecisions.forEach(d => {
-      const conf = d.decision.primary_confidence;
+      const conf = d.decision?.primary_confidence ?? 0;
       if (conf < 0.5) distribution.low++;
       else if (conf < 0.7) distribution.medium++;
       else if (conf < 0.9) distribution.high++;

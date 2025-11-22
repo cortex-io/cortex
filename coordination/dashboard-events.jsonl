@@ -25725,3 +25725,6 @@
 {"timestamp":"2025-11-21T12:14:29-0600","type":"integration_validator_stopped","data":{"pid":70292}}
 {"timestamp":"2025-11-21T12:14:29-0600","type":"integration_validator_stopped","data":{"pid":70292}}
 {"id":"evt-1763748878-17389","timestamp":"2025-11-21T12:14:38-06:00","type":"worker_failed","data":"{\"worker_id\": \"worker-scan-018\", \"task_id\": \"moe-test-ddqd-v5-1763692592-dedf78fd\", \"error\": \"unknown\"}","source":"automation"}
+{"timestamp":"2025-11-22T06:03:10-0600","type":"integration_validator_started","data":{"pid":52691}}
+{"timestamp":"2025-11-22T06:03:13-0600","type":"handoff_processor_started","data":{"pid":54307}}
+{"timestamp":"2025-11-22T06:13:11-0600","type":"integration_validator_stopped","data":{"pid":52691}}
