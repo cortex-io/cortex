@@ -1802,6 +1802,133 @@ app.get('/api/moe-intelligence',
 });
 
 /**
+ * GET /api/moe-learning
+ * Get MoE learning state, routing intelligence, and learning metrics
+ */
+app.get('/api/moe-learning',
+  getLimiter,
+  async (req, res) => {
+  try {
+    const learningStateFile = path.join(__dirname, '../../coordination/moe-learning/learning-state.json');
+    const routingIntelFile = path.join(__dirname, '../../coordination/memory/long-term/routing-intelligence.json');
+    const taskPatternsFile = path.join(__dirname, '../../coordination/memory/long-term/task-patterns.json');
+    const learningMetricsFile = path.join(__dirname, '../../coordination/metrics/learning-monitor-metrics.json');
+    const learningEventsFile = path.join(__dirname, '../../coordination/events/learning-events.jsonl');
+
+    // Read learning state
+    let learningState = null;
+    if (fsSync.existsSync(learningStateFile)) {
+      learningState = JSON.parse(fsSync.readFileSync(learningStateFile, 'utf-8'));
+    }
+
+    // Read routing intelligence
+    let routingIntelligence = null;
+    if (fsSync.existsSync(routingIntelFile)) {
+      routingIntelligence = JSON.parse(fsSync.readFileSync(routingIntelFile, 'utf-8'));
+    }
+
+    // Read task patterns
+    let taskPatterns = null;
+    if (fsSync.existsSync(taskPatternsFile)) {
+      taskPatterns = JSON.parse(fsSync.readFileSync(taskPatternsFile, 'utf-8'));
+    }
+
+    // Read learning metrics
+    let learningMetrics = null;
+    if (fsSync.existsSync(learningMetricsFile)) {
+      learningMetrics = JSON.parse(fsSync.readFileSync(learningMetricsFile, 'utf-8'));
+    }
+
+    // Read recent learning events
+    let recentEvents = [];
+    if (fsSync.existsSync(learningEventsFile)) {
+      const content = fsSync.readFileSync(learningEventsFile, 'utf-8');
+      recentEvents = content
+        .trim()
+        .split('\n')
+        .filter(line => line)
+        .slice(-20)
+        .map(line => {
+          try {
+            return JSON.parse(line);
+          } catch {
+            return null;
+          }
+        })
+        .filter(e => e)
+        .reverse();
+    }
+
+    res.json({
+      learningState,
+      routingIntelligence: routingIntelligence ? {
+        version: routingIntelligence.version,
+        lastUpdated: routingIntelligence.created_at,
+        agentRouting: routingIntelligence.agent_routing_intelligence,
+        workflowIntelligence: routingIntelligence.workflow_intelligence,
+        operationalPatterns: routingIntelligence.operational_patterns,
+        confidenceCalibration: routingIntelligence.confidence_calibration,
+        recommendations: routingIntelligence.recommendations
+      } : null,
+      taskPatterns: taskPatterns?.patterns || null,
+      learningMetrics,
+      recentEvents
+    });
+
+  } catch (error) {
+    console.error('Error reading MoE learning data:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+/**
+ * GET /api/ddqd-testing
+ * Get DDQD test history and current test status
+ */
+app.get('/api/ddqd-testing',
+  getLimiter,
+  async (req, res) => {
+  try {
+    const ddqdHistoryFile = path.join(__dirname, '../../coordination/ddqd-history.json');
+    const activeTestsFile = path.join(__dirname, '../../coordination/ddqd-active-tests.json');
+
+    // Read DDQD history
+    let ddqdHistory = { tests: [] };
+    if (fsSync.existsSync(ddqdHistoryFile)) {
+      ddqdHistory = JSON.parse(fsSync.readFileSync(ddqdHistoryFile, 'utf-8'));
+    }
+
+    // Read active tests if any
+    let activeTests = [];
+    if (fsSync.existsSync(activeTestsFile)) {
+      activeTests = JSON.parse(fsSync.readFileSync(activeTestsFile, 'utf-8'));
+    }
+
+    // Calculate summary statistics
+    const tests = ddqdHistory.tests || [];
+    const completedTests = tests.filter(t => t.status === 'completed');
+    const avgAccuracy = completedTests.length > 0
+      ? completedTests.reduce((sum, t) => sum + (t.routingAccuracy || 0), 0) / completedTests.length
+      : 0;
+
+    res.json({
+      summary: {
+        totalTests: tests.length,
+        completedTests: completedTests.length,
+        avgRoutingAccuracy: avgAccuracy.toFixed(2),
+        latestTest: tests[tests.length - 1] || null
+      },
+      tests: tests.slice(-20).reverse(), // Last 20 tests
+      activeTests
+    });
+
+  } catch (error) {
+    console.error('Error reading DDQD testing data:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+/**
  * GET /api/daemon/status
  * Get worker daemon status (for backward compatibility)
  */

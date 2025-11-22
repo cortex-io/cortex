@@ -1,0 +1,377 @@
+import { useState, useEffect } from 'react'
+import {
+  EuiPage,
+  EuiPageBody,
+  EuiPageHeader,
+  EuiPageHeaderSection,
+  EuiTitle,
+  EuiFlexGroup,
+  EuiFlexItem,
+  EuiSuperDatePicker,
+  EuiButton,
+  EuiButtonIcon,
+  EuiSpacer,
+  EuiPanel,
+  EuiStat,
+  EuiIcon,
+  EuiLoadingSpinner,
+  EuiCallOut,
+  EuiTabs,
+  EuiTab,
+  EuiToolTip,
+  OnTimeChangeProps,
+  OnRefreshProps,
+} from '@elastic/eui'
+import { DashboardMetrics } from '../../types/dashboard.types'
+import { exportToJSON } from '../../utils/exportData'
+
+// Panels
+import TimeSeriesPanel from './panels/TimeSeriesPanel'
+import TaskTablePanel from './panels/TaskTablePanel'
+import DaemonStatusPanel from './panels/DaemonStatusPanel'
+import HealthAlertsPanel from './panels/HealthAlertsPanel'
+
+// Visualizations
+import MoERoutingViz from './visualizations/MoERoutingViz'
+import AgentStatusCards from './visualizations/AgentStatusCards'
+import EventFeed from './visualizations/EventFeed'
+import MoELearningViz from './visualizations/MoELearningViz'
+import DDQDTestingViz from './visualizations/DDQDTestingViz'
+import WorkerPoolViz from './visualizations/WorkerPoolViz'
+import ComplianceDashboardViz from './visualizations/ComplianceDashboardViz'
+import AdminControlsViz from './visualizations/AdminControlsViz'
+import AnalyticsDashboardViz from './visualizations/AnalyticsDashboardViz'
+
+type TabId = 'overview' | 'workers' | 'tasks' | 'routing' | 'compliance' | 'analytics' | 'admin' | 'system'
+
+interface DashboardContainerProps {
+  theme: 'light' | 'dark'
+  onToggleTheme: () => void
+}
+
+const DashboardContainer = ({ theme, onToggleTheme }: DashboardContainerProps) => {
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const [metrics, setMetrics] = useState<DashboardMetrics | null>(null)
+  const [start, setStart] = useState('now-24h')
+  const [end, setEnd] = useState('now')
+  const [isRefreshing, setIsRefreshing] = useState(false)
+  const [selectedTab, setSelectedTab] = useState<TabId>('overview')
+
+  const fetchMetrics = async () => {
+    try {
+      setIsRefreshing(true)
+      const response = await fetch('/api/metrics')
+      if (!response.ok) throw new Error('Failed to fetch metrics')
+      const data = await response.json()
+      setMetrics(data)
+      setError(null)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Unknown error')
+    } finally {
+      setIsLoading(false)
+      setIsRefreshing(false)
+    }
+  }
+
+  useEffect(() => {
+    fetchMetrics()
+    const interval = setInterval(fetchMetrics, 30000)
+    return () => clearInterval(interval)
+  }, [])
+
+  const onTimeChange = ({ start, end }: OnTimeChangeProps) => {
+    setStart(start)
+    setEnd(end)
+    fetchMetrics()
+  }
+
+  const onRefresh = ({ start, end }: OnRefreshProps) => {
+    setStart(start)
+    setEnd(end)
+    fetchMetrics()
+  }
+
+  const tabs = [
+    { id: 'overview', name: 'Overview', icon: 'dashboardApp' },
+    { id: 'workers', name: 'Workers', icon: 'compute' },
+    { id: 'tasks', name: 'Tasks', icon: 'list' },
+    { id: 'routing', name: 'MoE Routing', icon: 'branch' },
+    { id: 'compliance', name: 'Compliance', icon: 'checkInCircleFilled' },
+    { id: 'analytics', name: 'Analytics', icon: 'stats' },
+    { id: 'admin', name: 'Admin', icon: 'gear' },
+    { id: 'system', name: 'System', icon: 'visGauge' },
+  ]
+
+  if (isLoading) {
+    return (
+      <EuiPage paddingSize="l">
+        <EuiPageBody>
+          <EuiFlexGroup justifyContent="center" alignItems="center" style={{ minHeight: '400px' }}>
+            <EuiFlexItem grow={false}>
+              <EuiLoadingSpinner size="xl" />
+            </EuiFlexItem>
+          </EuiFlexGroup>
+        </EuiPageBody>
+      </EuiPage>
+    )
+  }
+
+  return (
+    <EuiPage paddingSize="l">
+      <EuiPageBody>
+        {/* Header */}
+        <EuiPageHeader>
+          <EuiPageHeaderSection>
+            <EuiTitle size="l">
+              <h1>
+                <EuiIcon type="dashboardApp" size="xl" style={{ marginRight: '12px' }} />
+                Commit-Relay Dashboard
+              </h1>
+            </EuiTitle>
+          </EuiPageHeaderSection>
+          <EuiPageHeaderSection>
+            <EuiFlexGroup alignItems="center" gutterSize="s">
+              <EuiFlexItem grow={false}>
+                <EuiSuperDatePicker
+                  start={start}
+                  end={end}
+                  onTimeChange={onTimeChange}
+                  onRefresh={onRefresh}
+                  isPaused={false}
+                  refreshInterval={30000}
+                  isLoading={isRefreshing}
+                />
+              </EuiFlexItem>
+              <EuiFlexItem grow={false}>
+                <EuiToolTip content="Export metrics as JSON">
+                  <EuiButtonIcon
+                    iconType="exportAction"
+                    aria-label="Export data"
+                    onClick={() => metrics && exportToJSON(metrics, 'dashboard-metrics')}
+                  />
+                </EuiToolTip>
+              </EuiFlexItem>
+              <EuiFlexItem grow={false}>
+                <EuiToolTip content={`Switch to ${theme === 'light' ? 'dark' : 'light'} mode`}>
+                  <EuiButtonIcon
+                    iconType={theme === 'light' ? 'moon' : 'sun'}
+                    aria-label="Toggle theme"
+                    onClick={onToggleTheme}
+                  />
+                </EuiToolTip>
+              </EuiFlexItem>
+            </EuiFlexGroup>
+          </EuiPageHeaderSection>
+        </EuiPageHeader>
+
+        <EuiSpacer size="m" />
+
+        {/* Tabs */}
+        <EuiTabs>
+          {tabs.map((tab) => (
+            <EuiTab
+              key={tab.id}
+              isSelected={selectedTab === tab.id}
+              onClick={() => setSelectedTab(tab.id as TabId)}
+              prepend={<EuiIcon type={tab.icon} />}
+            >
+              {tab.name}
+            </EuiTab>
+          ))}
+        </EuiTabs>
+
+        <EuiSpacer size="l" />
+
+        {error && (
+          <>
+            <EuiCallOut title="Error loading data" color="danger" iconType="alert">
+              <p>{error}</p>
+            </EuiCallOut>
+            <EuiSpacer size="l" />
+          </>
+        )}
+
+        {/* Overview Tab */}
+        {selectedTab === 'overview' && (
+          <>
+            {/* Key Metrics Row */}
+            <EuiFlexGroup gutterSize="l">
+              <EuiFlexItem>
+                <EuiPanel hasBorder>
+                  <EuiStat
+                    title={metrics?.workers.active || 0}
+                    description="Active Workers"
+                    titleColor="primary"
+                    textAlign="center"
+                  >
+                    <EuiIcon type="compute" color="primary" />
+                  </EuiStat>
+                </EuiPanel>
+              </EuiFlexItem>
+              <EuiFlexItem>
+                <EuiPanel hasBorder>
+                  <EuiStat
+                    title={metrics?.workers.completed || 0}
+                    description="Completed"
+                    titleColor="success"
+                    textAlign="center"
+                  >
+                    <EuiIcon type="checkInCircleFilled" color="success" />
+                  </EuiStat>
+                </EuiPanel>
+              </EuiFlexItem>
+              <EuiFlexItem>
+                <EuiPanel hasBorder>
+                  <EuiStat
+                    title={metrics?.workers.failed || 0}
+                    description="Failed"
+                    titleColor="danger"
+                    textAlign="center"
+                  >
+                    <EuiIcon type="crossInCircle" color="danger" />
+                  </EuiStat>
+                </EuiPanel>
+              </EuiFlexItem>
+              <EuiFlexItem>
+                <EuiPanel hasBorder>
+                  <EuiStat
+                    title={`${metrics?.workers.successRate?.toFixed(1) || 0}%`}
+                    description="Success Rate"
+                    titleColor="accent"
+                    textAlign="center"
+                  >
+                    <EuiIcon type="visGauge" color="accent" />
+                  </EuiStat>
+                </EuiPanel>
+              </EuiFlexItem>
+            </EuiFlexGroup>
+
+            <EuiSpacer size="l" />
+
+            {/* Time Series & Events */}
+            <EuiFlexGroup gutterSize="l">
+              <EuiFlexItem grow={2}>
+                <TimeSeriesPanel title="System Activity" range="24h" />
+              </EuiFlexItem>
+              <EuiFlexItem grow={1}>
+                <EventFeed />
+              </EuiFlexItem>
+            </EuiFlexGroup>
+
+            <EuiSpacer size="l" />
+
+            {/* Token Budget & Tasks */}
+            <EuiFlexGroup gutterSize="l">
+              <EuiFlexItem>
+                <EuiPanel hasBorder>
+                  <EuiStat
+                    title={metrics?.tokens.total?.toLocaleString() || 0}
+                    description="Total Budget"
+                    titleColor="subdued"
+                    textAlign="center"
+                  />
+                </EuiPanel>
+              </EuiFlexItem>
+              <EuiFlexItem>
+                <EuiPanel hasBorder>
+                  <EuiStat
+                    title={metrics?.tokens.used?.toLocaleString() || 0}
+                    description="Tokens Used"
+                    titleColor="primary"
+                    textAlign="center"
+                  />
+                </EuiPanel>
+              </EuiFlexItem>
+              <EuiFlexItem>
+                <EuiPanel hasBorder>
+                  <EuiStat
+                    title={metrics?.tasks.pending || 0}
+                    description="Pending Tasks"
+                    titleColor="warning"
+                    textAlign="center"
+                  />
+                </EuiPanel>
+              </EuiFlexItem>
+              <EuiFlexItem>
+                <EuiPanel hasBorder>
+                  <EuiStat
+                    title={metrics?.tasks.total || 0}
+                    description="Total Tasks"
+                    titleColor="subdued"
+                    textAlign="center"
+                  />
+                </EuiPanel>
+              </EuiFlexItem>
+            </EuiFlexGroup>
+          </>
+        )}
+
+        {/* Workers Tab */}
+        {selectedTab === 'workers' && (
+          <>
+            <EuiFlexGroup gutterSize="l">
+              <EuiFlexItem grow={2}>
+                <WorkerPoolViz />
+              </EuiFlexItem>
+              <EuiFlexItem grow={1}>
+                <AgentStatusCards />
+              </EuiFlexItem>
+            </EuiFlexGroup>
+          </>
+        )}
+
+        {/* Tasks Tab */}
+        {selectedTab === 'tasks' && (
+          <TaskTablePanel />
+        )}
+
+        {/* MoE Routing Tab */}
+        {selectedTab === 'routing' && (
+          <EuiFlexGroup gutterSize="l">
+            {/* Left Column - Routing */}
+            <EuiFlexItem grow={2}>
+              <MoERoutingViz />
+            </EuiFlexItem>
+
+            {/* Right Column - DDQD and Learning */}
+            <EuiFlexItem grow={1}>
+              <DDQDTestingViz />
+              <EuiSpacer size="l" />
+              <MoELearningViz />
+            </EuiFlexItem>
+          </EuiFlexGroup>
+        )}
+
+        {/* Compliance Tab */}
+        {selectedTab === 'compliance' && (
+          <ComplianceDashboardViz />
+        )}
+
+        {/* Analytics Tab */}
+        {selectedTab === 'analytics' && (
+          <AnalyticsDashboardViz />
+        )}
+
+        {/* Admin Tab */}
+        {selectedTab === 'admin' && (
+          <AdminControlsViz />
+        )}
+
+        {/* System Tab */}
+        {selectedTab === 'system' && (
+          <EuiFlexGroup gutterSize="l">
+            <EuiFlexItem>
+              <DaemonStatusPanel />
+            </EuiFlexItem>
+            <EuiFlexItem>
+              <HealthAlertsPanel />
+            </EuiFlexItem>
+          </EuiFlexGroup>
+        )}
+      </EuiPageBody>
+    </EuiPage>
+  )
+}
+
+export default DashboardContainer
