@@ -89,12 +89,12 @@ const StreamsManagementPanel = () => {
       field: 'message_count',
       name: 'Messages',
       sortable: true,
-      render: (count: number) => count.toLocaleString(),
+      render: (count: number) => (count ?? 0).toLocaleString(),
     },
     {
       field: 'throughput',
       name: 'Throughput',
-      render: (throughput: number) => `${throughput}/s`,
+      render: (throughput: number) => `${throughput ?? 0}/s`,
     },
     {
       field: 'last_message',
