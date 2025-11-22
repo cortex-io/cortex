@@ -5,6 +5,8 @@ import { useTheme } from './hooks/useTheme'
 
 // Import print-friendly styles
 import './styles/print.css'
+// Import responsive scaling styles
+import './styles/responsive.css'
 
 // Import icons used in the dashboard
 import { icon as EuiIconDashboard } from '@elastic/eui/es/components/icon/assets/app_dashboard'
@@ -39,6 +41,20 @@ import { icon as EuiIconUsers } from '@elastic/eui/es/components/icon/assets/use
 import { icon as EuiIconStats } from '@elastic/eui/es/components/icon/assets/stats'
 import { icon as EuiIconClock } from '@elastic/eui/es/components/icon/assets/clock'
 import { icon as EuiIconCrossPlain } from '@elastic/eui/es/components/icon/assets/cross'
+import { icon as EuiIconCluster } from '@elastic/eui/es/components/icon/assets/cluster'
+import { icon as EuiIconMerge } from '@elastic/eui/es/components/icon/assets/merge'
+import { icon as EuiIconStop } from '@elastic/eui/es/components/icon/assets/stop'
+import { icon as EuiIconPencil } from '@elastic/eui/es/components/icon/assets/pencil'
+import { icon as EuiIconPlus } from '@elastic/eui/es/components/icon/assets/plus'
+import { icon as EuiIconMinus } from '@elastic/eui/es/components/icon/assets/minus'
+import { icon as EuiIconCopy } from '@elastic/eui/es/components/icon/assets/copy'
+import { icon as EuiIconDocument } from '@elastic/eui/es/components/icon/assets/document'
+import { icon as EuiIconEmpty } from '@elastic/eui/es/components/icon/assets/empty'
+import { icon as EuiIconPopout } from '@elastic/eui/es/components/icon/assets/popout'
+import { icon as EuiIconMinimize } from '@elastic/eui/es/components/icon/assets/minimize'
+import { icon as EuiIconMenu } from '@elastic/eui/es/components/icon/assets/menu'
+import { icon as EuiIconIInCircle } from '@elastic/eui/es/components/icon/assets/help'
+import { icon as EuiIconFullScreen } from '@elastic/eui/es/components/icon/assets/full_screen'
 
 // Cache icons for EUI
 appendIconComponentCache({
@@ -74,6 +90,20 @@ appendIconComponentCache({
   stats: EuiIconStats,
   clock: EuiIconClock,
   cross: EuiIconCrossPlain,
+  cluster: EuiIconCluster,
+  merge: EuiIconMerge,
+  stop: EuiIconStop,
+  pencil: EuiIconPencil,
+  plus: EuiIconPlus,
+  minus: EuiIconMinus,
+  copy: EuiIconCopy,
+  document: EuiIconDocument,
+  empty: EuiIconEmpty,
+  popout: EuiIconPopout,
+  minimize: EuiIconMinimize,
+  menu: EuiIconMenu,
+  iInCircle: EuiIconIInCircle,
+  fullScreen: EuiIconFullScreen,
 })
 
 function App() {

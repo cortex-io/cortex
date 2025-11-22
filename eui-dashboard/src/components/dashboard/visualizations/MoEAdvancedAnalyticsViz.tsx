@@ -13,8 +13,6 @@ import {
 import {
   LineChart,
   Line,
-  BarChart,
-  Bar,
   XAxis,
   YAxis,
   CartesianGrid,
@@ -26,7 +24,6 @@ import {
 } from 'recharts'
 import {
   getMoEAccuracy,
-  getMoEConfidenceDistribution,
   getMoEPoolUtilization,
 } from '../../../services/dashboardApi'
 
@@ -34,7 +31,6 @@ const COLORS = ['#54B399', '#6092C0', '#D36086', '#9170B8', '#CA8EAE']
 
 const MoEAdvancedAnalyticsViz = () => {
   const [accuracyData, setAccuracyData] = useState<any[]>([])
-  const [confidenceData, setConfidenceData] = useState<any[]>([])
   const [utilizationData, setUtilizationData] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -43,15 +39,21 @@ const MoEAdvancedAnalyticsViz = () => {
     const fetchData = async () => {
       setLoading(true)
       try {
-        const [accuracyResult, confidenceResult, utilizationResult] = await Promise.all([
+        const [accuracyResult, utilizationResult] = await Promise.all([
           getMoEAccuracy(),
-          getMoEConfidenceDistribution(),
           getMoEPoolUtilization(),
         ])
 
-        if (accuracyResult.data) setAccuracyData(accuracyResult.data.accuracy_over_time || [])
-        if (confidenceResult.data) setConfidenceData(confidenceResult.data.distribution || [])
-        if (utilizationResult.data) setUtilizationData(utilizationResult.data.utilization || [])
+        if (accuracyResult.data) {
+          setAccuracyData(accuracyResult.data.accuracy_over_time || [])
+        }
+        if (utilizationResult.data) {
+          // Handle direct array or nested utilization
+          const utilData = Array.isArray(utilizationResult.data)
+            ? utilizationResult.data
+            : utilizationResult.data.utilization || []
+          setUtilizationData(utilData)
+        }
 
         setError(null)
       } catch (err) {
@@ -125,68 +127,36 @@ const MoEAdvancedAnalyticsViz = () => {
 
       <EuiSpacer size="l" />
 
-      {/* Charts Row */}
-      <EuiFlexGroup gutterSize="l">
-        {/* Accuracy Over Time */}
-        <EuiFlexItem>
-          <EuiTitle size="xs"><h4>Accuracy Over Time</h4></EuiTitle>
-          <EuiSpacer size="s" />
-          {accuracyData.length > 0 ? (
-            <ResponsiveContainer width="100%" height={200}>
-              <LineChart data={accuracyData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#333" />
-                <XAxis dataKey="time" tick={{ fontSize: 10 }} stroke="#666" />
-                <YAxis domain={[0, 100]} tick={{ fontSize: 10 }} stroke="#666" />
-                <Tooltip
-                  contentStyle={{
-                    backgroundColor: '#1a1a1a',
-                    border: '1px solid #333',
-                    borderRadius: 4,
-                  }}
-                />
-                <Line
-                  type="monotone"
-                  dataKey="accuracy"
-                  stroke="#54B399"
-                  strokeWidth={2}
-                  dot={{ r: 3 }}
-                />
-              </LineChart>
-            </ResponsiveContainer>
-          ) : (
-            <EuiText color="subdued" textAlign="center">
-              <p>No accuracy data available</p>
-            </EuiText>
-          )}
-        </EuiFlexItem>
-
-        {/* Confidence Distribution */}
-        <EuiFlexItem>
-          <EuiTitle size="xs"><h4>Confidence Distribution</h4></EuiTitle>
-          <EuiSpacer size="s" />
-          {confidenceData.length > 0 ? (
-            <ResponsiveContainer width="100%" height={200}>
-              <BarChart data={confidenceData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#333" />
-                <XAxis dataKey="range" tick={{ fontSize: 10 }} stroke="#666" />
-                <YAxis tick={{ fontSize: 10 }} stroke="#666" />
-                <Tooltip
-                  contentStyle={{
-                    backgroundColor: '#1a1a1a',
-                    border: '1px solid #333',
-                    borderRadius: 4,
-                  }}
-                />
-                <Bar dataKey="count" fill="#6092C0" />
-              </BarChart>
-            </ResponsiveContainer>
-          ) : (
-            <EuiText color="subdued" textAlign="center">
-              <p>No confidence data available</p>
-            </EuiText>
-          )}
-        </EuiFlexItem>
-      </EuiFlexGroup>
+      {/* Accuracy Over Time */}
+      <EuiTitle size="xs"><h4>Accuracy Over Time</h4></EuiTitle>
+      <EuiSpacer size="s" />
+      {accuracyData.length > 0 ? (
+        <ResponsiveContainer width="100%" height={200}>
+          <LineChart data={accuracyData}>
+            <CartesianGrid strokeDasharray="3 3" stroke="#333" />
+            <XAxis dataKey="time" tick={{ fontSize: 10 }} stroke="#666" />
+            <YAxis domain={[0, 100]} tick={{ fontSize: 10 }} stroke="#666" />
+            <Tooltip
+              contentStyle={{
+                backgroundColor: '#1a1a1a',
+                border: '1px solid #333',
+                borderRadius: 4,
+              }}
+            />
+            <Line
+              type="monotone"
+              dataKey="accuracy"
+              stroke="#54B399"
+              strokeWidth={2}
+              dot={{ r: 3 }}
+            />
+          </LineChart>
+        </ResponsiveContainer>
+      ) : (
+        <EuiText color="subdued" textAlign="center">
+          <p>No accuracy data available</p>
+        </EuiText>
+      )}
 
       <EuiSpacer size="l" />
 

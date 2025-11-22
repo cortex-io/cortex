@@ -61,7 +61,7 @@ const ComplianceDashboardViz = () => {
         <EuiTitle size="s"><h3>Governance Health</h3></EuiTitle>
         <EuiSpacer size="m" />
 
-        <EuiFlexGroup alignItems="center">
+        <EuiFlexGroup alignItems="center" gutterSize="xl">
           <EuiFlexItem grow={false} style={{ minWidth: 150 }}>
             <EuiStat
               title={`${healthScore.toFixed(1)}%`}
@@ -69,46 +69,44 @@ const ComplianceDashboardViz = () => {
               titleColor={healthScore >= 90 ? 'success' : healthScore >= 70 ? 'warning' : 'danger'}
               textAlign="center"
             />
-            <EuiProgress
-              value={healthScore}
-              max={100}
-              color={healthScore >= 90 ? 'success' : healthScore >= 70 ? 'warning' : 'danger'}
-              size="l"
-            />
           </EuiFlexItem>
 
           <EuiFlexItem>
-            <EuiFlexGroup wrap>
-              <EuiFlexItem grow={false} style={{ minWidth: 120 }}>
+            <EuiFlexGroup gutterSize="xl">
+              <EuiFlexItem>
                 <EuiStat
                   title={kpiSummary.compliance || '0%'}
                   description="Compliance"
                   titleColor="primary"
                   titleSize="s"
+                  textAlign="center"
                 />
               </EuiFlexItem>
-              <EuiFlexItem grow={false} style={{ minWidth: 120 }}>
+              <EuiFlexItem>
                 <EuiStat
                   title={kpiSummary.security || '0'}
                   description="Security"
                   titleColor="success"
                   titleSize="s"
+                  textAlign="center"
                 />
               </EuiFlexItem>
-              <EuiFlexItem grow={false} style={{ minWidth: 120 }}>
+              <EuiFlexItem>
                 <EuiStat
                   title={kpiSummary.quality || '0%'}
                   description="Quality"
                   titleColor="accent"
                   titleSize="s"
+                  textAlign="center"
                 />
               </EuiFlexItem>
-              <EuiFlexItem grow={false} style={{ minWidth: 120 }}>
+              <EuiFlexItem>
                 <EuiStat
                   title={kpiSummary.availability || '0%'}
                   description="Availability"
                   titleColor="subdued"
                   titleSize="s"
+                  textAlign="center"
                 />
               </EuiFlexItem>
             </EuiFlexGroup>
@@ -247,57 +245,41 @@ const ComplianceDashboardViz = () => {
             <EuiTitle size="s"><h3>Governance Trends</h3></EuiTitle>
             <EuiSpacer size="m" />
 
-            <EuiFlexGroup wrap>
-              <EuiFlexItem style={{ minWidth: 200 }}>
-                <EuiFlexGroup justifyContent="spaceBetween" alignItems="center">
-                  <EuiFlexItem grow={false}>
-                    <EuiText size="s"><strong>Health</strong></EuiText>
-                  </EuiFlexItem>
-                  <EuiFlexItem grow={false}>
-                    <EuiHealth color={trendSummary.governance_health?.direction === 'improving' ? 'success' : trendSummary.governance_health?.direction === 'declining' ? 'danger' : 'warning'}>
-                      {trendSummary.governance_health?.direction || 'stable'} ({trendSummary.governance_health?.change_pct > 0 ? '+' : ''}{trendSummary.governance_health?.change_pct || 0}%)
-                    </EuiHealth>
-                  </EuiFlexItem>
-                </EuiFlexGroup>
+            <EuiFlexGroup gutterSize="xl">
+              <EuiFlexItem>
+                <EuiStat
+                  title={`${trendSummary.governance_health?.change_pct > 0 ? '+' : ''}${trendSummary.governance_health?.change_pct || 0}%`}
+                  description="Health"
+                  titleColor={trendSummary.governance_health?.direction === 'improving' ? 'success' : trendSummary.governance_health?.direction === 'declining' ? 'danger' : 'warning'}
+                  textAlign="center"
+                />
               </EuiFlexItem>
 
-              <EuiFlexItem style={{ minWidth: 200 }}>
-                <EuiFlexGroup justifyContent="spaceBetween" alignItems="center">
-                  <EuiFlexItem grow={false}>
-                    <EuiText size="s"><strong>Compliance</strong></EuiText>
-                  </EuiFlexItem>
-                  <EuiFlexItem grow={false}>
-                    <EuiHealth color={trendSummary.compliance_rate?.direction === 'improving' ? 'success' : trendSummary.compliance_rate?.direction === 'declining' ? 'danger' : 'warning'}>
-                      {trendSummary.compliance_rate?.direction || 'stable'} ({trendSummary.compliance_rate?.change_pct > 0 ? '+' : ''}{trendSummary.compliance_rate?.change_pct || 0}%)
-                    </EuiHealth>
-                  </EuiFlexItem>
-                </EuiFlexGroup>
+              <EuiFlexItem>
+                <EuiStat
+                  title={`${trendSummary.compliance_rate?.change_pct > 0 ? '+' : ''}${trendSummary.compliance_rate?.change_pct || 0}%`}
+                  description="Compliance"
+                  titleColor={trendSummary.compliance_rate?.direction === 'improving' ? 'success' : trendSummary.compliance_rate?.direction === 'declining' ? 'danger' : 'warning'}
+                  textAlign="center"
+                />
               </EuiFlexItem>
 
-              <EuiFlexItem style={{ minWidth: 200 }}>
-                <EuiFlexGroup justifyContent="spaceBetween" alignItems="center">
-                  <EuiFlexItem grow={false}>
-                    <EuiText size="s"><strong>Security</strong></EuiText>
-                  </EuiFlexItem>
-                  <EuiFlexItem grow={false}>
-                    <EuiHealth color={trendSummary.security_score?.direction === 'improving' ? 'success' : trendSummary.security_score?.direction === 'declining' ? 'danger' : 'warning'}>
-                      {trendSummary.security_score?.direction || 'stable'} ({trendSummary.security_score?.change_pct > 0 ? '+' : ''}{trendSummary.security_score?.change_pct || 0}%)
-                    </EuiHealth>
-                  </EuiFlexItem>
-                </EuiFlexGroup>
+              <EuiFlexItem>
+                <EuiStat
+                  title={`${trendSummary.security_score?.change_pct > 0 ? '+' : ''}${trendSummary.security_score?.change_pct || 0}%`}
+                  description="Security"
+                  titleColor={trendSummary.security_score?.direction === 'improving' ? 'success' : trendSummary.security_score?.direction === 'declining' ? 'danger' : 'warning'}
+                  textAlign="center"
+                />
               </EuiFlexItem>
 
-              <EuiFlexItem style={{ minWidth: 200 }}>
-                <EuiFlexGroup justifyContent="spaceBetween" alignItems="center">
-                  <EuiFlexItem grow={false}>
-                    <EuiText size="s"><strong>Quality</strong></EuiText>
-                  </EuiFlexItem>
-                  <EuiFlexItem grow={false}>
-                    <EuiHealth color={trendSummary.quality_score?.direction === 'improving' ? 'success' : trendSummary.quality_score?.direction === 'declining' ? 'danger' : 'warning'}>
-                      {trendSummary.quality_score?.direction || 'stable'} ({trendSummary.quality_score?.change_pct > 0 ? '+' : ''}{trendSummary.quality_score?.change_pct || 0}%)
-                    </EuiHealth>
-                  </EuiFlexItem>
-                </EuiFlexGroup>
+              <EuiFlexItem>
+                <EuiStat
+                  title={`${trendSummary.quality_score?.change_pct > 0 ? '+' : ''}${trendSummary.quality_score?.change_pct || 0}%`}
+                  description="Quality"
+                  titleColor={trendSummary.quality_score?.direction === 'improving' ? 'success' : trendSummary.quality_score?.direction === 'declining' ? 'danger' : 'warning'}
+                  textAlign="center"
+                />
               </EuiFlexItem>
             </EuiFlexGroup>
           </EuiPanel>
@@ -308,7 +290,7 @@ const ComplianceDashboardViz = () => {
 
       {/* Recommendations */}
       {recommendations.length > 0 && (
-        <EuiPanel hasBorder style={{ maxHeight: 300, overflow: 'auto' }}>
+        <EuiPanel hasBorder>
           <EuiTitle size="s"><h3>Recommendations</h3></EuiTitle>
           <EuiSpacer size="m" />
 

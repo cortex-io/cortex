@@ -8,7 +8,6 @@ import {
   EuiFlexGroup,
   EuiFlexItem,
   EuiSuperDatePicker,
-  EuiButton,
   EuiButtonIcon,
   EuiSpacer,
   EuiPanel,
@@ -16,9 +15,9 @@ import {
   EuiIcon,
   EuiLoadingSpinner,
   EuiCallOut,
-  EuiTabs,
-  EuiTab,
   EuiToolTip,
+  EuiText,
+  EuiLink,
   OnTimeChangeProps,
   OnRefreshProps,
 } from '@elastic/eui'
@@ -68,6 +67,46 @@ const DashboardContainer = ({ theme, onToggleTheme }: DashboardContainerProps) =
   const [end, setEnd] = useState('now')
   const [isRefreshing, setIsRefreshing] = useState(false)
   const [selectedTab, setSelectedTab] = useState<TabId>('overview')
+  const [isNavOpen, setIsNavOpen] = useState(true)
+
+  const navGroups = [
+    {
+      title: 'Monitoring',
+      items: [
+        { id: 'overview', label: 'Overview' },
+        { id: 'executive', label: 'Executive' },
+      ]
+    },
+    {
+      title: 'Operations',
+      items: [
+        { id: 'workers', label: 'Workers' },
+        { id: 'tasks', label: 'Tasks' },
+      ]
+    },
+    {
+      title: 'Intelligence',
+      items: [
+        { id: 'routing', label: 'MoE Routing' },
+        { id: 'analytics', label: 'Analytics' },
+      ]
+    },
+    {
+      title: 'Tools',
+      items: [
+        { id: 'agentstudio', label: 'Agent Studio' },
+        { id: 'logs', label: 'Logs' },
+      ]
+    },
+    {
+      title: 'Administration',
+      items: [
+        { id: 'compliance', label: 'Compliance' },
+        { id: 'admin', label: 'Admin' },
+        { id: 'system', label: 'System' },
+      ]
+    },
+  ]
 
   const fetchMetrics = async () => {
     try {
@@ -103,19 +142,14 @@ const DashboardContainer = ({ theme, onToggleTheme }: DashboardContainerProps) =
     fetchMetrics()
   }
 
-  const tabs = [
-    { id: 'overview', name: 'Overview', icon: 'dashboardApp' },
-    { id: 'executive', name: 'Executive', icon: 'users' },
-    { id: 'workers', name: 'Workers', icon: 'compute' },
-    { id: 'tasks', name: 'Tasks', icon: 'list' },
-    { id: 'routing', name: 'MoE Routing', icon: 'branch' },
-    { id: 'compliance', name: 'Compliance', icon: 'checkInCircleFilled' },
-    { id: 'analytics', name: 'Analytics', icon: 'stats' },
-    { id: 'agentstudio', name: 'Agentstudio', icon: 'users' },
-    { id: 'logs', name: 'Logs', icon: 'list' },
-    { id: 'admin', name: 'Admin', icon: 'gear' },
-    { id: 'system', name: 'System', icon: 'visGauge' },
-  ]
+  // Get current tab label for header
+  const getCurrentTabLabel = () => {
+    for (const group of navGroups) {
+      const item = group.items.find(i => i.id === selectedTab)
+      if (item) return item.label
+    }
+    return 'Dashboard'
+  }
 
   if (isLoading) {
     return (
@@ -133,69 +167,134 @@ const DashboardContainer = ({ theme, onToggleTheme }: DashboardContainerProps) =
 
   return (
     <EuiPage paddingSize="l">
-      <EuiPageBody>
-        {/* Header */}
-        <EuiPageHeader>
-          <EuiPageHeaderSection>
-            <EuiTitle size="l">
-              <h1>
-                <EuiIcon type="dashboardApp" size="xl" style={{ marginRight: '12px' }} />
-                Commit-Relay Dashboard
-              </h1>
-            </EuiTitle>
-          </EuiPageHeaderSection>
-          <EuiPageHeaderSection>
-            <EuiFlexGroup alignItems="center" gutterSize="s">
-              <EuiFlexItem grow={false}>
-                <EuiSuperDatePicker
-                  start={start}
-                  end={end}
-                  onTimeChange={onTimeChange}
-                  onRefresh={onRefresh}
-                  isPaused={false}
-                  refreshInterval={30000}
-                  isLoading={isRefreshing}
-                />
-              </EuiFlexItem>
-              <EuiFlexItem grow={false}>
-                <EuiToolTip content="Export metrics as JSON">
-                  <EuiButtonIcon
-                    iconType="exportAction"
-                    aria-label="Export data"
-                    onClick={() => metrics && exportToJSON(metrics, 'dashboard-metrics')}
-                  />
-                </EuiToolTip>
-              </EuiFlexItem>
-              <EuiFlexItem grow={false}>
-                <EuiToolTip content={`Switch to ${theme === 'light' ? 'dark' : 'light'} mode`}>
-                  <EuiButtonIcon
-                    iconType={theme === 'light' ? 'moon' : 'sun'}
-                    aria-label="Toggle theme"
-                    onClick={onToggleTheme}
-                  />
-                </EuiToolTip>
-              </EuiFlexItem>
-            </EuiFlexGroup>
-          </EuiPageHeaderSection>
-        </EuiPageHeader>
+      {/* Slide-out Side Navigation */}
+      {isNavOpen && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          width: 260,
+          height: '100vh',
+          zIndex: 1000,
+          overflowY: 'auto',
+          backgroundColor: 'var(--euiColorEmptyShade)',
+          borderRight: '1px solid var(--euiColorLightShade)',
+          padding: 16,
+        }}>
+          <EuiFlexGroup alignItems="center" justifyContent="spaceBetween" responsive={false}>
+            <EuiFlexItem grow={false}>
+              <EuiFlexGroup alignItems="center" gutterSize="s" responsive={false}>
+                <EuiFlexItem grow={false}>
+                  <EuiIcon type="dashboardApp" size="l" color="primary" />
+                </EuiFlexItem>
+                <EuiFlexItem>
+                  <EuiTitle size="xs"><h2>Commit-Relay</h2></EuiTitle>
+                </EuiFlexItem>
+              </EuiFlexGroup>
+            </EuiFlexItem>
+            <EuiFlexItem grow={false}>
+              <EuiButtonIcon
+                iconType="cross"
+                aria-label="Close navigation"
+                onClick={() => setIsNavOpen(false)}
+              />
+            </EuiFlexItem>
+          </EuiFlexGroup>
 
-        <EuiSpacer size="m" />
+          <EuiSpacer size="m" />
 
-        {/* Tabs */}
-        <EuiTabs>
-          {tabs.map((tab) => (
-            <EuiTab
-              key={tab.id}
-              isSelected={selectedTab === tab.id}
-              onClick={() => setSelectedTab(tab.id as TabId)}
-              prepend={<EuiIcon type={tab.icon} />}
-            >
-              {tab.name}
-            </EuiTab>
+          {navGroups.map((group) => (
+            <div key={group.title} style={{ marginBottom: 16 }}>
+              <EuiText size="xs" color="subdued">
+                <strong>{group.title}</strong>
+              </EuiText>
+              <EuiSpacer size="xs" />
+              {group.items.map((item) => (
+                <div key={item.id} style={{ marginBottom: 4 }}>
+                  <EuiLink
+                    onClick={() => {
+                      setSelectedTab(item.id as TabId)
+                      if (window.innerWidth < 992) {
+                        setIsNavOpen(false)
+                      }
+                    }}
+                    color={selectedTab === item.id ? 'primary' : 'text'}
+                    style={{
+                      display: 'block',
+                      padding: '6px 8px',
+                      borderRadius: 4,
+                      backgroundColor: selectedTab === item.id ? 'rgba(0, 119, 204, 0.1)' : 'transparent',
+                      fontWeight: selectedTab === item.id ? 600 : 400,
+                    }}
+                  >
+                    {item.label}
+                  </EuiLink>
+                </div>
+              ))}
+            </div>
           ))}
-        </EuiTabs>
+        </div>
+      )}
 
-        <EuiSpacer size="l" />
+      {/* Main Content */}
+      <div style={{ marginLeft: isNavOpen ? 260 : 0, transition: 'margin-left 0.3s ease', width: '100%' }}>
+        <EuiPageBody>
+          {/* Header */}
+          <EuiPageHeader>
+            <EuiPageHeaderSection>
+              <EuiFlexGroup alignItems="center" gutterSize="m" responsive={false}>
+                <EuiFlexItem grow={false}>
+                  <EuiButtonIcon
+                    iconType="list"
+                    aria-label="Toggle navigation"
+                    onClick={() => setIsNavOpen(!isNavOpen)}
+                    display="base"
+                    size="m"
+                  />
+                </EuiFlexItem>
+                <EuiFlexItem grow={false}>
+                  <EuiTitle size="l">
+                    <h1>{getCurrentTabLabel()}</h1>
+                  </EuiTitle>
+                </EuiFlexItem>
+              </EuiFlexGroup>
+            </EuiPageHeaderSection>
+            <EuiPageHeaderSection>
+              <EuiFlexGroup alignItems="center" gutterSize="s">
+                <EuiFlexItem grow={false}>
+                  <EuiSuperDatePicker
+                    start={start}
+                    end={end}
+                    onTimeChange={onTimeChange}
+                    onRefresh={onRefresh}
+                    isPaused={false}
+                    refreshInterval={30000}
+                    isLoading={isRefreshing}
+                  />
+                </EuiFlexItem>
+                <EuiFlexItem grow={false}>
+                  <EuiToolTip content="Export metrics as JSON">
+                    <EuiButtonIcon
+                      iconType="exportAction"
+                      aria-label="Export data"
+                      onClick={() => metrics && exportToJSON(metrics, 'dashboard-metrics')}
+                    />
+                  </EuiToolTip>
+                </EuiFlexItem>
+                <EuiFlexItem grow={false}>
+                  <EuiToolTip content={`Switch to ${theme === 'light' ? 'dark' : 'light'} mode`}>
+                    <EuiButtonIcon
+                      iconType={theme === 'light' ? 'moon' : 'sun'}
+                      aria-label="Toggle theme"
+                      onClick={onToggleTheme}
+                    />
+                  </EuiToolTip>
+                </EuiFlexItem>
+              </EuiFlexGroup>
+            </EuiPageHeaderSection>
+          </EuiPageHeader>
+
+          <EuiSpacer size="l" />
 
         {error && (
           <>
@@ -269,55 +368,10 @@ const DashboardContainer = ({ theme, onToggleTheme }: DashboardContainerProps) =
                 <TimeSeriesPanel title="System Activity" range="24h" />
               </EuiFlexItem>
               <EuiFlexItem grow={1}>
-                <EventFeed />
+                <EventFeed start={start} end={end} />
               </EuiFlexItem>
             </EuiFlexGroup>
 
-            <EuiSpacer size="l" />
-
-            {/* Token Budget & Tasks */}
-            <EuiFlexGroup gutterSize="l">
-              <EuiFlexItem>
-                <EuiPanel hasBorder>
-                  <EuiStat
-                    title={metrics?.tokens.total?.toLocaleString() || 0}
-                    description="Total Budget"
-                    titleColor="subdued"
-                    textAlign="center"
-                  />
-                </EuiPanel>
-              </EuiFlexItem>
-              <EuiFlexItem>
-                <EuiPanel hasBorder>
-                  <EuiStat
-                    title={metrics?.tokens.used?.toLocaleString() || 0}
-                    description="Tokens Used"
-                    titleColor="primary"
-                    textAlign="center"
-                  />
-                </EuiPanel>
-              </EuiFlexItem>
-              <EuiFlexItem>
-                <EuiPanel hasBorder>
-                  <EuiStat
-                    title={metrics?.tasks.pending || 0}
-                    description="Pending Tasks"
-                    titleColor="warning"
-                    textAlign="center"
-                  />
-                </EuiPanel>
-              </EuiFlexItem>
-              <EuiFlexItem>
-                <EuiPanel hasBorder>
-                  <EuiStat
-                    title={metrics?.tasks.total || 0}
-                    description="Total Tasks"
-                    titleColor="subdued"
-                    textAlign="center"
-                  />
-                </EuiPanel>
-              </EuiFlexItem>
-            </EuiFlexGroup>
           </>
         )}
 
@@ -420,7 +474,8 @@ const DashboardContainer = ({ theme, onToggleTheme }: DashboardContainerProps) =
             <StreamsManagementPanel />
           </>
         )}
-      </EuiPageBody>
+        </EuiPageBody>
+      </div>
     </EuiPage>
   )
 }

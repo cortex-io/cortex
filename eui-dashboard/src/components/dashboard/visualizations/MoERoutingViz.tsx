@@ -11,6 +11,7 @@ import {
   EuiLoadingSpinner,
   EuiHealth,
   EuiStat,
+  useEuiTheme,
 } from '@elastic/eui'
 import {
   PieChart,
@@ -29,6 +30,7 @@ import { useMoEIntelligence } from '../../../hooks/useDashboardData'
 const COLORS = ['#006BB4', '#00BFB3', '#F5A700', '#BD271E', '#98A2B3']
 
 const MoERoutingViz = () => {
+  const { euiTheme } = useEuiTheme()
   const { data, loading, error } = useMoEIntelligence()
 
   const routingData = useMemo(() => {
@@ -128,27 +130,34 @@ const MoERoutingViz = () => {
         <EuiFlexGroup>
           <EuiFlexItem>
             <EuiText size="s"><strong>Expert Distribution</strong></EuiText>
-            <ResponsiveContainer width="100%" height={180}>
-              <PieChart>
-                <Pie
-                  data={routingData}
-                  dataKey="value"
-                  nameKey="name"
-                  cx="50%"
-                  cy="50%"
-                  outerRadius={60}
-                  label={({ name, percent }) =>
-                    `${name} ${((percent || 0) * 100).toFixed(0)}%`
-                  }
-                  labelLine={false}
-                >
-                  {routingData.map((_, index) => (
-                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                  ))}
-                </Pie>
-                <Tooltip />
-              </PieChart>
-            </ResponsiveContainer>
+            {routingData.length === 0 ? (
+              <EuiText color="subdued" textAlign="center" style={{ paddingTop: 60 }}>
+                <p>No routing data available</p>
+              </EuiText>
+            ) : (
+              <ResponsiveContainer width="100%" height={180}>
+                <PieChart>
+                  <Pie
+                    data={routingData}
+                    dataKey="value"
+                    nameKey="name"
+                    cx="50%"
+                    cy="50%"
+                    outerRadius={55}
+                    innerRadius={25}
+                    label={({ name, percent }) =>
+                      `${name} ${((percent || 0) * 100).toFixed(0)}%`
+                    }
+                    labelLine={true}
+                  >
+                    {routingData.map((_, index) => (
+                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                    ))}
+                  </Pie>
+                  <Tooltip />
+                </PieChart>
+              </ResponsiveContainer>
+            )}
           </EuiFlexItem>
 
           <EuiFlexItem>
@@ -203,15 +212,28 @@ const MoERoutingViz = () => {
       <EuiSpacer size="l" />
 
       {/* Recent Decisions */}
-      <EuiPanel hasBorder style={{ maxHeight: 300, overflow: 'auto' }}>
-        <EuiTitle size="s"><h3>Recent Routing Decisions</h3></EuiTitle>
-        <EuiSpacer size="m" />
+      <EuiPanel hasBorder style={{ maxHeight: 300, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+        <div style={{
+          position: 'sticky',
+          top: 0,
+          background: euiTheme.colors.emptyShade,
+          zIndex: 1,
+          paddingBottom: 8
+        }}>
+          <EuiTitle size="s"><h3>Recent Routing Decisions</h3></EuiTitle>
+        </div>
+        <div style={{ overflow: 'auto', flex: 1 }}>
 
         {recentDecisions.length === 0 ? (
           <EuiText color="subdued"><p>No recent decisions</p></EuiText>
         ) : (
           recentDecisions.map((decision: any, index: number) => (
-            <div key={index} style={{ marginBottom: 8, padding: 8, background: '#f5f7fa', borderRadius: 4 }}>
+            <div key={index} style={{
+              marginBottom: 8,
+              padding: 8,
+              background: euiTheme.colors.lightestShade,
+              borderRadius: 4
+            }}>
               <EuiFlexGroup justifyContent="spaceBetween" alignItems="center">
                 <EuiFlexItem grow={false}>
                   <EuiBadge color="primary">
@@ -243,6 +265,7 @@ const MoERoutingViz = () => {
             </div>
           ))
         )}
+        </div>
       </EuiPanel>
     </>
   )

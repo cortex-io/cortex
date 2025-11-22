@@ -32,14 +32,16 @@ const MoELearningViz = () => {
   const routingInsights = useMemo(() => {
     if (!data?.routingIntelligence) return []
     const intel = data.routingIntelligence
-    const insights: Array<{ agent: string; expertise: string[]; confidence: Record<string, number> }> = []
+    const insights: Array<{ agent: string; specialization: string; expertise: string[]; confidence: Record<string, number>; techStack: any }> = []
 
     if (intel.agentRouting) {
       Object.entries(intel.agentRouting).forEach(([agent, info]: [string, any]) => {
         insights.push({
-          agent,
-          expertise: info.primary_expertise || [],
-          confidence: info.confidence_factors || {},
+          agent: agent.replace('_master', '').replace('_', ' '),
+          specialization: info.specialization || '',
+          expertise: info.optimal_task_patterns || info.primary_expertise || [],
+          confidence: info.routing_confidence_boosters || info.confidence_factors || {},
+          techStack: info.technology_stack || {},
         })
       })
     }
@@ -85,15 +87,31 @@ const MoELearningViz = () => {
               <div key={index} style={{ marginBottom: 8, padding: 8, borderRadius: 4, border: '1px solid #D3DAE6' }}>
                 <EuiFlexGroup justifyContent="spaceBetween" alignItems="center">
                   <EuiFlexItem grow={false}>
-                    <EuiBadge color="hollow">{event.event_type || event.type}</EuiBadge>
+                    <EuiBadge color={
+                      (event.event || event.event_type || '').includes('killed') ? 'danger' :
+                      (event.event || event.event_type || '').includes('completed') ? 'success' :
+                      'hollow'
+                    }>
+                      {event.event || event.event_type || event.type || 'Event'}
+                    </EuiBadge>
                   </EuiFlexItem>
                   <EuiFlexItem grow={false}>
                     <EuiText size="xs" color="subdued">
-                      {event.timestamp ? new Date(event.timestamp).toLocaleTimeString() : '-'}
+                      {event.timestamp ? new Date(event.timestamp).toLocaleString() : '-'}
                     </EuiText>
                   </EuiFlexItem>
                 </EuiFlexGroup>
-                {event.message && (
+                {event.task_id && (
+                  <EuiText size="xs" style={{ marginTop: 4 }}>
+                    <strong>Task:</strong> {event.task_id}
+                  </EuiText>
+                )}
+                {event.details && (
+                  <EuiText size="xs" color="subdued" style={{ marginTop: 4 }}>
+                    {event.details.reason || event.details.message || JSON.stringify(event.details).substring(0, 100)}
+                  </EuiText>
+                )}
+                {event.message && !event.details && (
                   <EuiText size="xs" color="subdued" style={{ marginTop: 4 }}>
                     {event.message.substring(0, 100)}
                   </EuiText>
@@ -114,39 +132,55 @@ const MoELearningViz = () => {
           <EuiText color="subdued"><p>No routing intelligence available</p></EuiText>
         ) : (
           routingInsights.map((insight, index) => (
-            <EuiAccordion
-              key={insight.agent}
-              id={`agent-${index}`}
-              buttonContent={
-                <EuiFlexGroup alignItems="center" gutterSize="s">
-                  <EuiFlexItem grow={false}>
-                    <EuiBadge color="primary">{insight.agent}</EuiBadge>
-                  </EuiFlexItem>
-                  <EuiFlexItem grow={false}>
-                    <EuiText size="xs" color="subdued">
-                      {insight.expertise.slice(0, 3).join(', ')}
-                    </EuiText>
-                  </EuiFlexItem>
-                </EuiFlexGroup>
-              }
-              paddingSize="m"
-            >
+            <div key={insight.agent} style={{ marginBottom: index < routingInsights.length - 1 ? 8 : 0 }}>
+              <EuiAccordion
+                id={`agent-${index}`}
+                arrowDisplay="left"
+                buttonContent={
+                  <EuiFlexGroup alignItems="center" gutterSize="s">
+                    <EuiFlexItem grow={false}>
+                      <EuiBadge color="primary">{insight.agent}</EuiBadge>
+                    </EuiFlexItem>
+                    <EuiFlexItem>
+                      <EuiText size="xs" color="subdued">
+                        {insight.specialization.substring(0, 60)}...
+                      </EuiText>
+                    </EuiFlexItem>
+                  </EuiFlexGroup>
+                }
+                paddingSize="m"
+              >
               <EuiDescriptionList
                 type="column"
                 listItems={[
                   {
-                    title: 'Primary Expertise',
-                    description: insight.expertise.join(', ') || 'None specified',
+                    title: 'Specialization',
+                    description: insight.specialization || 'None specified',
                   },
                   {
-                    title: 'Confidence Factors',
-                    description: Object.entries(insight.confidence)
-                      .map(([k, v]) => `${k}: ${v}`)
-                      .join(', ') || 'None',
+                    title: 'Task Patterns',
+                    description: Array.isArray(insight.expertise)
+                      ? insight.expertise.slice(0, 3).join(' | ')
+                      : 'None specified',
+                  },
+                  {
+                    title: 'Confidence Boosters',
+                    description: Array.isArray(insight.confidence)
+                      ? insight.confidence.slice(0, 3).join(' | ')
+                      : typeof insight.confidence === 'object'
+                        ? Object.entries(insight.confidence).slice(0, 3).map(([k, v]) => `${k}: ${v}`).join(', ')
+                        : 'None',
+                  },
+                  {
+                    title: 'Tech Stack',
+                    description: insight.techStack && Object.keys(insight.techStack).length > 0
+                      ? Object.entries(insight.techStack).map(([k, v]) => `${k}: ${Array.isArray(v) ? v.slice(0, 2).join(', ') : v}`).slice(0, 2).join(' | ')
+                      : 'None',
                   },
                 ]}
               />
-            </EuiAccordion>
+              </EuiAccordion>
+            </div>
           ))
         )}
       </EuiPanel>

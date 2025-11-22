@@ -1,0 +1,16 @@
+{
+  "id": "ddqd-1763732356-task-132db415",
+  "type": "multi-master",
+  "title": "DDQD Test: Complex Multi-Master Task",
+  "description": "Implement security scanning with inventory cataloging and CI/CD pipeline updates",
+  "priority": 1,
+  "requires_orchestration": true,
+  "subtasks": [
+    {"type": "security-scan", "assigned_to": "security-master"},
+    {"type": "inventory-update", "assigned_to": "inventory-master"},
+    {"type": "ci-pipeline", "assigned_to": "cicd-master"}
+  ],
+  "created_at": "2025-11-21T07:52:03-0600",
+  "stress_test": true,
+  "test_id": "ddqd-1763732356"
+}

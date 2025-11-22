@@ -181,38 +181,20 @@ const ExecutiveSummaryViz = () => {
         </>
       )}
 
-      {/* System Health Score - Hero */}
-      <EuiPanel hasBorder paddingSize="l">
-        <EuiFlexGroup alignItems="center" justifyContent="center">
-          <EuiFlexItem grow={false} style={{ textAlign: 'center' }}>
-            <EuiTitle size="s"><h3>System Health</h3></EuiTitle>
-            <EuiSpacer size="m" />
-            <div style={{ position: 'relative', display: 'inline-block' }}>
-              <EuiProgress
-                value={kpis?.systemHealth || 0}
-                max={100}
-                color={getHealthColor(kpis?.systemHealth || 0)}
-                size="l"
-                style={{ width: 200 }}
-              />
-              <EuiSpacer size="s" />
-              <EuiText size="m">
-                <strong style={{ fontSize: 48 }}>{kpis?.systemHealth?.toFixed(0) || 0}</strong>
-                <span style={{ fontSize: 24 }}>/100</span>
-              </EuiText>
-              <EuiSpacer size="xs" />
-              <EuiBadge color={getHealthColor(kpis?.systemHealth || 0)}>
-                {getHealthLabel(kpis?.systemHealth || 0)}
-              </EuiBadge>
-            </div>
-          </EuiFlexItem>
-        </EuiFlexGroup>
-      </EuiPanel>
-
-      <EuiSpacer size="l" />
-
       {/* Key KPIs */}
       <EuiFlexGroup gutterSize="l">
+        <EuiFlexItem>
+          <EuiPanel hasBorder>
+            <EuiStat
+              title={`${kpis?.systemHealth?.toFixed(0) || 0}%`}
+              description="System Health"
+              titleColor={getHealthColor(kpis?.systemHealth || 0)}
+              titleSize="m"
+            >
+              <EuiIcon type="heart" color={getHealthColor(kpis?.systemHealth || 0)} />
+            </EuiStat>
+          </EuiPanel>
+        </EuiFlexItem>
         <EuiFlexItem>
           <EuiPanel hasBorder>
             <EuiStat

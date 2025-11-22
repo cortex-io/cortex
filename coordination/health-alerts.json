@@ -46,6 +46,17 @@
       "worker_id": null,
       "investigation_notes": [],
       "zombie_workers": "worker-documentation-005,worker-documentation-006,worker-documentation-008,worker-documentation-009,worker-documentation-013,worker-documentation-014,worker-documentation-019,worker-documentation-053,worker-documentation-054,worker-documentation-060,worker-documentation-061,worker-implementation-001,worker-implementation-002,worker-implementation-010,worker-implementation-011,worker-implementation-016,worker-implementation-017,worker-implementation-037,worker-implementation-038,worker-implementation-039,worker-implementation-040,worker-implementation-041,worker-implementation-042,worker-implementation-043,worker-implementation-044,worker-implementation-045,worker-implementation-046,worker-implementation-047,worker-implementation-048,worker-implementation-049,worker-implementation-050,worker-implementation-055,worker-implementation-056,worker-scan-003,worker-scan-004,worker-scan-007,worker-scan-012,worker-scan-015,worker-scan-018,worker-scan-051,worker-scan-052,worker-scan-057,worker-scan-058,worker-scan-059"
+    },
+    {
+      "id": "alert-dashboard-down",
+      "type": "dashboard_failure",
+      "severity": "medium",
+      "status": "active",
+      "message": "Dashboard server not responding on port 3000",
+      "created_at": "2025-11-22T10:41:28-0600",
+      "sla_minutes": 60,
+      "worker_id": null,
+      "investigation_notes": []
     }
   ]
 }

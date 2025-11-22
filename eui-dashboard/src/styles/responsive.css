@@ -1,0 +1,179 @@
+/* Responsive scaling for dashboard elements */
+
+/* Base font size scales with viewport */
+:root {
+  /* Use clamp to set min, preferred, and max font sizes */
+  --responsive-base: clamp(12px, 1vw, 16px);
+  --responsive-small: clamp(10px, 0.8vw, 14px);
+  --responsive-large: clamp(16px, 1.5vw, 24px);
+  --responsive-xlarge: clamp(20px, 2vw, 32px);
+}
+
+/* Scale EUI stat titles based on viewport */
+.euiStat .euiTitle {
+  font-size: clamp(20px, 2.5vw, 36px) !important;
+}
+
+/* Scale panel padding for larger screens */
+@media (min-width: 2560px) {
+  .euiPanel {
+    padding: 24px !important;
+  }
+
+  .euiSpacer--l {
+    height: 32px !important;
+  }
+
+  .euiSpacer--m {
+    height: 20px !important;
+  }
+}
+
+/* 4K displays (3840px+) */
+@media (min-width: 3840px) {
+  .euiPanel {
+    padding: 32px !important;
+  }
+
+  .euiStat .euiTitle {
+    font-size: 48px !important;
+  }
+
+  .euiTitle--large {
+    font-size: 36px !important;
+  }
+
+  .euiTitle--small {
+    font-size: 24px !important;
+  }
+
+  .euiText {
+    font-size: 18px !important;
+  }
+
+  .euiSpacer--l {
+    height: 48px !important;
+  }
+
+  .euiSpacer--m {
+    height: 32px !important;
+  }
+
+  /* Larger chart heights for 4K */
+  .recharts-responsive-container {
+    min-height: 300px !important;
+  }
+}
+
+/* Smaller screens (tablets and below) */
+@media (max-width: 992px) {
+  .euiStat .euiTitle {
+    font-size: 18px !important;
+  }
+
+  .euiTitle--large {
+    font-size: 20px !important;
+  }
+
+  .euiTitle--small {
+    font-size: 14px !important;
+  }
+
+  .euiPanel {
+    padding: 12px !important;
+  }
+
+  /* Stack flex groups on mobile */
+  .euiFlexGroup--responsive {
+    flex-wrap: wrap;
+  }
+
+  .euiFlexItem {
+    min-width: 100% !important;
+  }
+}
+
+/* Small mobile screens */
+@media (max-width: 576px) {
+  .euiStat .euiTitle {
+    font-size: 16px !important;
+  }
+
+  .euiTitle--large {
+    font-size: 18px !important;
+  }
+
+  .euiPanel {
+    padding: 8px !important;
+  }
+
+  /* Reduce chart heights on mobile */
+  .recharts-responsive-container {
+    min-height: 150px !important;
+  }
+}
+
+/* Ensure badges and health indicators scale */
+@media (min-width: 2560px) {
+  .euiBadge {
+    font-size: 14px !important;
+    padding: 6px 12px !important;
+  }
+
+  .euiHealth {
+    font-size: 16px !important;
+  }
+
+  .euiButton {
+    font-size: 16px !important;
+    padding: 12px 24px !important;
+  }
+}
+
+/* Scale table content for larger screens */
+@media (min-width: 2560px) {
+  .euiTable {
+    font-size: 16px !important;
+  }
+
+  .euiTableCellContent {
+    padding: 12px 16px !important;
+  }
+}
+
+/* Scale code blocks */
+@media (min-width: 2560px) {
+  .euiCodeBlock {
+    font-size: 16px !important;
+  }
+}
+
+@media (min-width: 3840px) {
+  .euiCodeBlock {
+    font-size: 18px !important;
+  }
+}
+
+/* Progress bars scale */
+@media (min-width: 2560px) {
+  .euiProgress {
+    height: 8px !important;
+  }
+}
+
+/* Form elements scale for large screens */
+@media (min-width: 2560px) {
+  .euiFieldSearch,
+  .euiFieldText,
+  .euiSelect {
+    font-size: 16px !important;
+    padding: 12px 16px !important;
+  }
+}
+
+/* Ensure navigation scales */
+@media (min-width: 3840px) {
+  .euiLink {
+    font-size: 18px !important;
+  }
+}
