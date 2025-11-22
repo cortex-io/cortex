@@ -58,7 +58,7 @@ const DAEMONS: DaemonInfo[] = [
   // Integration Daemons
   { name: 'Handoff Processor', apiName: 'handoff-processor', statusKey: 'handoff-processor', description: 'Task handoffs', useStartStop: true },
   { name: 'Integration Validator', apiName: 'integration-validator', statusKey: 'integration-validator', description: 'Integration checks' },
-  { name: 'MoE Learning', apiName: 'moe-learning', statusKey: 'moe-learning', description: 'MoE learning system', useStartStop: true },
+  { name: 'MoE Learning', apiName: 'learning-monitor', statusKey: 'moe-learning', description: 'MoE learning system', useStartStop: true },
 
   // Security & Backup
   { name: 'Threat Intel', apiName: 'threat-intel', statusKey: 'threat-intel', description: 'Security monitoring', useStartStop: true },
