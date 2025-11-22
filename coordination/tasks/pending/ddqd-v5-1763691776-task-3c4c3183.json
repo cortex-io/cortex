@@ -1,0 +1,11 @@
+{
+  "id": "ddqd-v5-1763691776-task-3c4c3183",
+  "type": "inventory",
+  "title": "DDQD v5 Test: Repository Cataloging",
+  "description": "Catalog repository metadata and dependencies",
+  "priority": 2,
+  "assigned_to": "inventory-master",
+  "created_at": "2025-11-20T20:23:31-0600",
+  "stress_test": true,
+  "test_id": "ddqd-v5-1763691776"
+}
