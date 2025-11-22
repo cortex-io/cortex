@@ -58,7 +58,7 @@ const DAEMONS: DaemonInfo[] = [
   // Integration Daemons
   { name: 'Handoff Processor', apiName: 'handoff-processor', statusKey: 'handoff-processor', description: 'Task handoffs', useStartStop: true },
   { name: 'Integration Validator', apiName: 'integration-validator', statusKey: 'integration-validator', description: 'Integration checks' },
-  { name: 'MoE Learning', apiName: 'learning-monitor', statusKey: 'moe-learning', description: 'MoE learning system', useStartStop: true },
+  { name: 'MoE Learning', apiName: 'moe-learning', statusKey: 'moe-learning', description: 'MoE learning system', useStartStop: true },
 
   // Security & Backup
   { name: 'Threat Intel', apiName: 'threat-intel', statusKey: 'threat-intel', description: 'Security monitoring', useStartStop: true },
@@ -474,6 +474,27 @@ const AdminControlsViz = () => {
             <EuiSpacer size="m" />
 
             <EuiFlexGroup direction="column" gutterSize="s">
+              {/* MoE Learning Status */}
+              <EuiFlexItem>
+                <EuiFlexGroup alignItems="center" gutterSize="s">
+                  <EuiFlexItem grow={false}>
+                    <EuiHealth color={getDaemonStatus('moe-learning')?.status === 'running' ? 'success' : 'subdued'}>
+                      MoE Learning
+                    </EuiHealth>
+                  </EuiFlexItem>
+                  <EuiFlexItem grow={false}>
+                    <EuiBadge color={getDaemonStatus('moe-learning')?.status === 'running' ? 'success' : 'default'}>
+                      {getDaemonStatus('moe-learning')?.status === 'running' ? 'Running' : 'Stopped'}
+                    </EuiBadge>
+                  </EuiFlexItem>
+                  {getDaemonStatus('moe-learning')?.pid && (
+                    <EuiFlexItem grow={false}>
+                      <EuiBadge color="hollow">PID {getDaemonStatus('moe-learning')?.pid}</EuiBadge>
+                    </EuiFlexItem>
+                  )}
+                </EuiFlexGroup>
+              </EuiFlexItem>
+
               <EuiFlexItem>
                 <EuiFlexGroup alignItems="center" gutterSize="s">
                   <EuiFlexItem grow={false}>
@@ -498,8 +519,18 @@ const AdminControlsViz = () => {
 
               <EuiSpacer size="m" />
 
+              {/* DDQD Testing Status */}
               <EuiFlexItem>
-                <EuiTitle size="xs"><h4>DDQD Testing</h4></EuiTitle>
+                <EuiFlexGroup alignItems="center" gutterSize="s">
+                  <EuiFlexItem grow={false}>
+                    <EuiTitle size="xs"><h4>DDQD Testing</h4></EuiTitle>
+                  </EuiFlexItem>
+                  <EuiFlexItem grow={false}>
+                    <EuiBadge color={activeTests.length > 0 ? 'success' : 'default'}>
+                      {activeTests.length > 0 ? `${activeTests.length} Active` : 'Idle'}
+                    </EuiBadge>
+                  </EuiFlexItem>
+                </EuiFlexGroup>
                 <EuiSpacer size="s" />
                 <EuiFlexGroup alignItems="center" gutterSize="s">
                   <EuiFlexItem grow={false}>

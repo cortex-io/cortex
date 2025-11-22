@@ -2658,6 +2658,53 @@ app.post('/api/failure-pattern/stop', async (req, res) => {
 });
 
 /**
+ * POST /api/moe-learning/start
+ * Start MoE learning daemon
+ */
+app.post('/api/moe-learning/start', async (req, res) => {
+  try {
+    const scriptPath = path.join(__dirname, '../../scripts/daemons/moe-learning-daemon.sh');
+
+    // Check if already running
+    try {
+      const isRunning = await safeExec('pgrep', ['-f', 'moe-learning-daemon.sh']);
+      if (isRunning.stdout.trim()) {
+        return res.json({ status: 'already_running', message: 'MoE learning daemon is already running' });
+      }
+    } catch (e) {
+      // pgrep returns exit code 1 when no processes match - this is expected
+    }
+
+    // Start the daemon
+    const { spawn } = require('child_process');
+    spawn('bash', [scriptPath], {
+      detached: true,
+      stdio: 'ignore'
+    }).unref();
+
+    setTimeout(() => {
+      res.json({ status: 'started', message: 'MoE learning daemon started successfully' });
+    }, 1000);
+  } catch (error) {
+    console.error('Error starting MoE learning daemon:', error);
+    res.status(500).json({ error: 'Failed to start MoE learning daemon' });
+  }
+});
+
+/**
+ * POST /api/moe-learning/stop
+ * Stop MoE learning daemon
+ */
+app.post('/api/moe-learning/stop', async (req, res) => {
+  try {
+    await safeExec('pkill', ['-f', 'moe-learning-daemon.sh']);
+    res.json({ status: 'stopped', message: 'MoE learning daemon stopped' });
+  } catch (error) {
+    res.json({ status: 'not_running', message: 'MoE learning daemon was not running' });
+  }
+});
+
+/**
  * GET /api/pm-daemon/status
  * Get PM daemon status from pm-state.json
  */
