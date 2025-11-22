@@ -394,3 +394,168 @@ export const updateTerminalSettings = async (settings: {
 // Git Info
 export const getGitInfo = () =>
   fetchApi<any>('/git-info')
+
+// Log Streaming
+export const getAvailableLogs = () =>
+  fetchApi<any>('/logs/available')
+
+export const getLogTail = (source: string, lines: number = 100) =>
+  fetchApi<any>(`/logs/tail?source=${encodeURIComponent(source)}&lines=${lines}`)
+
+// Optimizer endpoints
+export const getOptimizerSchedulerStats = () =>
+  fetchApi<any>('/optimizer/scheduler/stats')
+
+export const getOptimizerSchedulerBalance = () =>
+  fetchApi<any>('/optimizer/scheduler/balance')
+
+export const getOptimizerTokenStats = () =>
+  fetchApi<any>('/optimizer/tokens/stats')
+
+export const getOptimizerTokenForecast = () =>
+  fetchApi<any>('/optimizer/tokens/forecast')
+
+export const getOptimizerPoolStats = () =>
+  fetchApi<any>('/optimizer/pool/stats')
+
+export const getOptimizerProfileStats = () =>
+  fetchApi<any>('/optimizer/profile/stats')
+
+export const getOptimizerBottlenecks = () =>
+  fetchApi<any>('/optimizer/profile/bottlenecks')
+
+export const getOptimizerRecommendations = () =>
+  fetchApi<any>('/optimizer/profile/recommendations')
+
+// User Management
+export const getUsers = () =>
+  fetchApi<any>('/users')
+
+export const getUser = (id: string) =>
+  fetchApi<any>(`/users/${id}`)
+
+export const createUser = async (userData: any): Promise<ApiResponse<any>> => {
+  try {
+    const response = await fetch(`${API_BASE}/users`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(userData)
+    })
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`)
+    }
+    const data = await response.json()
+    return { data, error: null }
+  } catch (err) {
+    return {
+      data: null,
+      error: err instanceof Error ? err.message : 'Unknown error'
+    }
+  }
+}
+
+export const updateUser = async (id: string, userData: any): Promise<ApiResponse<any>> => {
+  try {
+    const response = await fetch(`${API_BASE}/users/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(userData)
+    })
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`)
+    }
+    const data = await response.json()
+    return { data, error: null }
+  } catch (err) {
+    return {
+      data: null,
+      error: err instanceof Error ? err.message : 'Unknown error'
+    }
+  }
+}
+
+export const deleteUser = async (id: string): Promise<ApiResponse<any>> => {
+  try {
+    const response = await fetch(`${API_BASE}/users/${id}`, {
+      method: 'DELETE'
+    })
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`)
+    }
+    const data = await response.json()
+    return { data, error: null }
+  } catch (err) {
+    return {
+      data: null,
+      error: err instanceof Error ? err.message : 'Unknown error'
+    }
+  }
+}
+
+export const getUserStats = () =>
+  fetchApi<any>('/users/stats')
+
+// Agentstudio
+export const getAgentstudioAgents = () =>
+  fetchApi<any>('/agentstudio/agents')
+
+export const getAgentstudioAgent = (id: string) =>
+  fetchApi<any>(`/agentstudio/agents/${id}`)
+
+export const getAgentstudioRegistrySummary = () =>
+  fetchApi<any>('/agentstudio/registry/summary')
+
+export const getAgentstudioTemplates = () =>
+  fetchApi<any>('/agentstudio/templates')
+
+// Advanced MoE
+export const getMoEAccuracy = () =>
+  fetchApi<any>('/moe/accuracy')
+
+export const getMoEConfidenceDistribution = () =>
+  fetchApi<any>('/moe/confidence-distribution')
+
+export const getMoEPoolUtilization = () =>
+  fetchApi<any>('/moe/pool-utilization')
+
+// DDQD History and Scheduling
+export const getDDQDHistory = () =>
+  fetchApi<any>('/ddqd/history')
+
+export const getDDQDSchedule = () =>
+  fetchApi<any>('/ddqd/schedule')
+
+export const scheduleDDQDTest = async (config: any): Promise<ApiResponse<any>> => {
+  try {
+    const response = await fetch(`${API_BASE}/ddqd/schedule`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(config)
+    })
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`)
+    }
+    const data = await response.json()
+    return { data, error: null }
+  } catch (err) {
+    return {
+      data: null,
+      error: err instanceof Error ? err.message : 'Unknown error'
+    }
+  }
+}
+
+// Streams
+export const getStreams = () =>
+  fetchApi<any>('/streams')
+
+// Coordination Raw
+export const getCoordinationRaw = () =>
+  fetchApi<any>('/coordination/raw')
+
+// Dashboard Analytics
+export const getDashboardAnalyticsSummary = () =>
+  fetchApi<any>('/dashboard/analytics/summary')
+
+export const getDashboardAnalyticsTrends = () =>
+  fetchApi<any>('/dashboard/analytics/trends')

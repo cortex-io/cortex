@@ -315,29 +315,27 @@ const ComplianceDashboardViz = () => {
           {recommendations.map((rec: any, index: number) => (
             <div key={rec.id || index} style={{ marginBottom: 8 }}>
               <EuiCallOut
-                title={
-                  <EuiFlexGroup alignItems="center" gutterSize="s">
-                    <EuiFlexItem grow={false}>
-                      <EuiBadge color={rec.priority === 'high' ? 'danger' : rec.priority === 'medium' ? 'warning' : 'primary'}>
-                        {rec.priority}
-                      </EuiBadge>
-                    </EuiFlexItem>
-                    <EuiFlexItem grow={false}>
-                      <EuiBadge color="hollow">{rec.category}</EuiBadge>
-                    </EuiFlexItem>
-                    {rec.status === 'completed' && (
-                      <EuiFlexItem grow={false}>
-                        <EuiHealth color="success">completed</EuiHealth>
-                      </EuiFlexItem>
-                    )}
-                  </EuiFlexGroup>
-                }
+                title={rec.recommendation}
                 color={rec.status === 'completed' ? 'success' : 'primary'}
                 size="s"
               >
-                <EuiText size="xs">
-                  <p><strong>{rec.recommendation}</strong></p>
-                  <p style={{ color: '#69707D' }}>{rec.estimated_impact}</p>
+                <EuiFlexGroup alignItems="center" gutterSize="s" style={{ marginBottom: 8 }}>
+                  <EuiFlexItem grow={false}>
+                    <EuiBadge color={rec.priority === 'high' ? 'danger' : rec.priority === 'medium' ? 'warning' : 'primary'}>
+                      {rec.priority}
+                    </EuiBadge>
+                  </EuiFlexItem>
+                  <EuiFlexItem grow={false}>
+                    <EuiBadge color="hollow">{rec.category}</EuiBadge>
+                  </EuiFlexItem>
+                  {rec.status === 'completed' && (
+                    <EuiFlexItem grow={false}>
+                      <EuiHealth color="success">completed</EuiHealth>
+                    </EuiFlexItem>
+                  )}
+                </EuiFlexGroup>
+                <EuiText size="xs" color="subdued">
+                  {rec.estimated_impact}
                 </EuiText>
               </EuiCallOut>
             </div>

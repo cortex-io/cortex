@@ -30,6 +30,9 @@ import TimeSeriesPanel from './panels/TimeSeriesPanel'
 import TaskTablePanel from './panels/TaskTablePanel'
 import DaemonStatusPanel from './panels/DaemonStatusPanel'
 import HealthAlertsPanel from './panels/HealthAlertsPanel'
+import LogStreamingPanel from './panels/LogStreamingPanel'
+import ExecutionManagersPanel from './panels/ExecutionManagersPanel'
+import StreamsManagementPanel from './panels/StreamsManagementPanel'
 
 // Visualizations
 import MoERoutingViz from './visualizations/MoERoutingViz'
@@ -41,8 +44,16 @@ import WorkerPoolViz from './visualizations/WorkerPoolViz'
 import ComplianceDashboardViz from './visualizations/ComplianceDashboardViz'
 import AdminControlsViz from './visualizations/AdminControlsViz'
 import AnalyticsDashboardViz from './visualizations/AnalyticsDashboardViz'
+import UserManagementViz from './visualizations/UserManagementViz'
+import OptimizerDashboardViz from './visualizations/OptimizerDashboardViz'
+import ExecutiveSummaryViz from './visualizations/ExecutiveSummaryViz'
+import AgentstudioViz from './visualizations/AgentstudioViz'
+import MoEAdvancedAnalyticsViz from './visualizations/MoEAdvancedAnalyticsViz'
+import DDQDSchedulingViz from './visualizations/DDQDSchedulingViz'
+import CoordinationViewerViz from './visualizations/CoordinationViewerViz'
+import ApiExplorerViz from './visualizations/ApiExplorerViz'
 
-type TabId = 'overview' | 'workers' | 'tasks' | 'routing' | 'compliance' | 'analytics' | 'admin' | 'system'
+type TabId = 'overview' | 'executive' | 'workers' | 'tasks' | 'routing' | 'compliance' | 'analytics' | 'agentstudio' | 'logs' | 'admin' | 'system'
 
 interface DashboardContainerProps {
   theme: 'light' | 'dark'
@@ -94,11 +105,14 @@ const DashboardContainer = ({ theme, onToggleTheme }: DashboardContainerProps) =
 
   const tabs = [
     { id: 'overview', name: 'Overview', icon: 'dashboardApp' },
+    { id: 'executive', name: 'Executive', icon: 'users' },
     { id: 'workers', name: 'Workers', icon: 'compute' },
     { id: 'tasks', name: 'Tasks', icon: 'list' },
     { id: 'routing', name: 'MoE Routing', icon: 'branch' },
     { id: 'compliance', name: 'Compliance', icon: 'checkInCircleFilled' },
     { id: 'analytics', name: 'Analytics', icon: 'stats' },
+    { id: 'agentstudio', name: 'Agentstudio', icon: 'users' },
+    { id: 'logs', name: 'Logs', icon: 'list' },
     { id: 'admin', name: 'Admin', icon: 'gear' },
     { id: 'system', name: 'System', icon: 'visGauge' },
   ]
@@ -307,6 +321,11 @@ const DashboardContainer = ({ theme, onToggleTheme }: DashboardContainerProps) =
           </>
         )}
 
+        {/* Executive Tab */}
+        {selectedTab === 'executive' && (
+          <ExecutiveSummaryViz />
+        )}
+
         {/* Workers Tab */}
         {selectedTab === 'workers' && (
           <>
@@ -318,6 +337,8 @@ const DashboardContainer = ({ theme, onToggleTheme }: DashboardContainerProps) =
                 <AgentStatusCards />
               </EuiFlexItem>
             </EuiFlexGroup>
+            <EuiSpacer size="l" />
+            <ExecutionManagersPanel />
           </>
         )}
 
@@ -328,19 +349,23 @@ const DashboardContainer = ({ theme, onToggleTheme }: DashboardContainerProps) =
 
         {/* MoE Routing Tab */}
         {selectedTab === 'routing' && (
-          <EuiFlexGroup gutterSize="l">
-            {/* Left Column - Routing */}
-            <EuiFlexItem grow={2}>
-              <MoERoutingViz />
-            </EuiFlexItem>
+          <>
+            <EuiFlexGroup gutterSize="l">
+              {/* Left Column - Routing */}
+              <EuiFlexItem grow={2}>
+                <MoERoutingViz />
+              </EuiFlexItem>
 
-            {/* Right Column - DDQD and Learning */}
-            <EuiFlexItem grow={1}>
-              <DDQDTestingViz />
-              <EuiSpacer size="l" />
-              <MoELearningViz />
-            </EuiFlexItem>
-          </EuiFlexGroup>
+              {/* Right Column - DDQD and Learning */}
+              <EuiFlexItem grow={1}>
+                <DDQDSchedulingViz />
+                <EuiSpacer size="l" />
+                <MoELearningViz />
+              </EuiFlexItem>
+            </EuiFlexGroup>
+            <EuiSpacer size="l" />
+            <MoEAdvancedAnalyticsViz />
+          </>
         )}
 
         {/* Compliance Tab */}
@@ -350,24 +375,50 @@ const DashboardContainer = ({ theme, onToggleTheme }: DashboardContainerProps) =
 
         {/* Analytics Tab */}
         {selectedTab === 'analytics' && (
-          <AnalyticsDashboardViz />
+          <>
+            <AnalyticsDashboardViz />
+            <EuiSpacer size="l" />
+            <OptimizerDashboardViz />
+          </>
+        )}
+
+        {/* Agentstudio Tab */}
+        {selectedTab === 'agentstudio' && (
+          <AgentstudioViz />
+        )}
+
+        {/* Logs Tab */}
+        {selectedTab === 'logs' && (
+          <LogStreamingPanel />
         )}
 
         {/* Admin Tab */}
         {selectedTab === 'admin' && (
-          <AdminControlsViz />
+          <>
+            <ApiExplorerViz />
+            <EuiSpacer size="l" />
+            <UserManagementViz />
+            <EuiSpacer size="l" />
+            <AdminControlsViz />
+            <EuiSpacer size="l" />
+            <CoordinationViewerViz />
+          </>
         )}
 
         {/* System Tab */}
         {selectedTab === 'system' && (
-          <EuiFlexGroup gutterSize="l">
-            <EuiFlexItem>
-              <DaemonStatusPanel />
-            </EuiFlexItem>
-            <EuiFlexItem>
-              <HealthAlertsPanel />
-            </EuiFlexItem>
-          </EuiFlexGroup>
+          <>
+            <EuiFlexGroup gutterSize="l">
+              <EuiFlexItem>
+                <DaemonStatusPanel />
+              </EuiFlexItem>
+              <EuiFlexItem>
+                <HealthAlertsPanel />
+              </EuiFlexItem>
+            </EuiFlexGroup>
+            <EuiSpacer size="l" />
+            <StreamsManagementPanel />
+          </>
         )}
       </EuiPageBody>
     </EuiPage>
