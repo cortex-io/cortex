@@ -81,7 +81,7 @@ const AgentStatusCards = () => {
           <EuiCard
             title={failedWorkers.length}
             description="Failed"
-            icon={<EuiIcon type="crossInACircleFilled" color="danger" size="l" />}
+            icon={<EuiIcon type="crossInCircle" color="danger" size="l" />}
             paddingSize="s"
           />
         </EuiFlexItem>

@@ -1,9 +1,9 @@
 {
   "pm_daemon": {
     "pid": 49702,
-    "last_loop": "2025-11-22T07:39:22-0600",
-    "loops_completed": 33,
-    "uptime_seconds": 5775,
+    "last_loop": "2025-11-22T10:42:53-0600",
+    "loops_completed": 195,
+    "uptime_seconds": 34952,
     "started_at": "2025-11-22T06:03:07-0600",
     "note": "Reset to clean state after power outage"
   },
@@ -1215,12 +1215,12 @@
   },
   "metrics": {
     "active_workers": 0,
-    "completed_workers": 18,
-    "failed_workers": 0,
-    "total_workers": 58,
-    "success_rate": 31,
-    "completed_today": 18,
+    "completed_workers": 58,
+    "failed_workers": 6,
+    "total_workers": 104,
+    "success_rate": 55.7,
+    "completed_today": 41,
     "failed_today": 0,
-    "success_rate_today": 100
+    "success_rate_today": 100.0
   }
 }
