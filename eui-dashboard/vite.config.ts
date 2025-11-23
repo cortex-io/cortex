@@ -14,16 +14,27 @@ export default defineConfig({
   },
   build: {
     outDir: 'dist',
-    sourcemap: true
+    sourcemap: true,
+    commonjsOptions: {
+      include: [/node_modules/],
+      transformMixedEsModules: true
+    }
   },
   optimizeDeps: {
     include: [
       '@elastic/eui',
       '@emotion/react',
       '@emotion/cache',
-      'dagre',
       '@dagrejs/dagre',
       '@dagrejs/graphlib'
-    ]
+    ],
+    esbuildOptions: {
+      target: 'esnext'
+    }
+  },
+  resolve: {
+    alias: {
+      '@dagrejs/graphlib': '@dagrejs/graphlib/dist/graphlib.min.js'
+    }
   }
 })
