@@ -51,8 +51,9 @@ import MoEAdvancedAnalyticsViz from './visualizations/MoEAdvancedAnalyticsViz'
 import DDQDSchedulingViz from './visualizations/DDQDSchedulingViz'
 import CoordinationViewerViz from './visualizations/CoordinationViewerViz'
 import ApiExplorerViz from './visualizations/ApiExplorerViz'
+import LLMCostDashboard from './visualizations/LLMCostDashboard'
 
-type TabId = 'overview' | 'executive' | 'workers' | 'tasks' | 'routing' | 'compliance' | 'analytics' | 'agentstudio' | 'logs' | 'admin' | 'system'
+type TabId = 'overview' | 'executive' | 'workers' | 'tasks' | 'routing' | 'compliance' | 'analytics' | 'costs' | 'agentstudio' | 'logs' | 'admin' | 'system'
 
 interface DashboardContainerProps {
   theme: 'light' | 'dark'
@@ -89,6 +90,7 @@ const DashboardContainer = ({ theme, onToggleTheme }: DashboardContainerProps) =
       items: [
         { id: 'routing', label: 'MoE Routing' },
         { id: 'analytics', label: 'Analytics' },
+        { id: 'costs', label: 'LLM Costs' },
       ]
     },
     {
@@ -434,6 +436,11 @@ const DashboardContainer = ({ theme, onToggleTheme }: DashboardContainerProps) =
             <EuiSpacer size="l" />
             <OptimizerDashboardViz />
           </>
+        )}
+
+        {/* LLM Costs Tab */}
+        {selectedTab === 'costs' && (
+          <LLMCostDashboard />
         )}
 
         {/* Agentstudio Tab */}

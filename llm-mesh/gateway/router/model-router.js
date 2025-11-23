@@ -12,6 +12,11 @@
 
 const path = require('path');
 
+// Import new model selection components
+const { selectModel, logSelectionDecision } = require('./model-selector');
+const { scoreComplexity } = require('./complexity-scorer');
+const { detectSensitivity } = require('./sensitivity-detector');
+
 /**
  * @typedef {Object} RoutingDecision
  * @property {string} provider - Selected provider name
@@ -30,6 +35,12 @@ const path = require('path');
  * @property {boolean} [requiresEmbedding] - Whether embedding is required
  * @property {number} [contextLength] - Expected context length
  * @property {string[]} [capabilities] - Required capabilities
+ * @property {Object} [task] - Task object for intelligent selection
+ * @property {string} [task.description] - Task description
+ * @property {string} [task.type] - Task type
+ * @property {string} [task.code] - Associated code
+ * @property {number} [maxCostPer1kTokens] - Maximum cost per 1000 tokens
+ * @property {boolean} [preferLocal] - Prefer local models for privacy
  */
 
 /**
@@ -89,6 +100,13 @@ class ModelRouter {
         return decision;
       }
 
+      // Use intelligent task-based selection if task object is provided
+      if (options.task) {
+        const decision = await this.routeByTaskAnalysis(options);
+        this.recordRouting(decision, options, Date.now() - startTime);
+        return decision;
+      }
+
       // Route based on task type
       const taskType = options.taskType || this.inferTaskType(options);
       const decision = await this.routeByTaskType(taskType, options);
@@ -99,6 +117,69 @@ class ModelRouter {
       this.log('error', 'Routing failed', { error: error.message, options });
       throw error;
     }
+  }
+
+  /**
+   * Route using intelligent task analysis
+   * @private
+   * @param {RoutingOptions} options - Routing options
+   * @returns {Promise<RoutingDecision>}
+   */
+  async routeByTaskAnalysis(options) {
+    const task = options.task;
+
+    // Use the model selector for intelligent routing
+    const selectionOptions = {
+      maxCostPer1kTokens: options.maxCost || options.maxCostPer1kTokens,
+      preferLocal: options.preferLocal,
+      preferredProvider: options.preferredProvider,
+      excludeModels: options.excludeModels,
+      maxResponseTimeMs: options.maxResponseTimeMs
+    };
+
+    const selection = selectModel(task, selectionOptions);
+
+    // Log the selection decision for analytics
+    logSelectionDecision(selection, task);
+
+    // Check if provider is available
+    const providerInstance = this.providers[selection.provider];
+    if (providerInstance) {
+      const isAvailable = await providerInstance.isAvailable();
+      if (!isAvailable) {
+        this.log('warn', 'Selected provider unavailable, using fallback', {
+          provider: selection.provider,
+          model: selection.model
+        });
+        return this.routeWithFallback(options);
+      }
+    }
+
+    return {
+      provider: selection.provider,
+      model: selection.model,
+      reason: selection.reasoning,
+      fallbacks: this.getFallbacks(selection.provider, selection.model),
+      analysis: selection.analysis
+    };
+  }
+
+  /**
+   * Get complexity score for a task
+   * @param {Object} task - Task object
+   * @returns {Object} Complexity scoring result
+   */
+  getComplexityScore(task) {
+    return scoreComplexity(task);
+  }
+
+  /**
+   * Get sensitivity detection for a task
+   * @param {Object} task - Task object
+   * @returns {Object} Sensitivity detection result
+   */
+  getSensitivityLevel(task) {
+    return detectSensitivity(task);
   }
 
   /**
