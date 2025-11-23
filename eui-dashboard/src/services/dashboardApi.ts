@@ -559,3 +559,33 @@ export const getDashboardAnalyticsSummary = () =>
 
 export const getDashboardAnalyticsTrends = () =>
   fetchApi<any>('/dashboard/analytics/trends')
+
+// LLM Cost Analytics
+export const getLLMCostsSummary = (start?: string, end?: string) => {
+  const params = new URLSearchParams()
+  if (start) params.append('start', start)
+  if (end) params.append('end', end)
+  const query = params.toString()
+  return fetchApi<any>(`/llm-costs/summary${query ? `?${query}` : ''}`)
+}
+
+export const getLLMCostsTrend = (start?: string, end?: string) => {
+  const params = new URLSearchParams()
+  if (start) params.append('start', start)
+  if (end) params.append('end', end)
+  const query = params.toString()
+  return fetchApi<any>(`/llm-costs/trend${query ? `?${query}` : ''}`)
+}
+
+export const getLLMCostsBreakdown = (start?: string, end?: string, master?: string, model?: string) => {
+  const params = new URLSearchParams()
+  if (start) params.append('start', start)
+  if (end) params.append('end', end)
+  if (master) params.append('master', master)
+  if (model) params.append('model', model)
+  const query = params.toString()
+  return fetchApi<any>(`/llm-costs/breakdown${query ? `?${query}` : ''}`)
+}
+
+export const getLLMCostsBudget = () =>
+  fetchApi<any>('/llm-costs/budget')

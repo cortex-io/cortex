@@ -60,6 +60,8 @@ const { ComplianceEngine, MetricsCollector } = require('../../lib/governance/com
 const usersRouter = require('./routes/users');
 const tracesRouter = require('./routes/traces');
 const complianceRouter = require('./routes/compliance');
+const llmCostsRouter = require('./routes/llm-costs');
+const workflowsRouter = require('./routes/workflows');
 
 const app = express();
 const PORT = process.env.DASHBOARD_PORT || 3000;
@@ -113,6 +115,8 @@ app.use('/api', authMiddleware);
 app.use('/api/users', usersRouter);
 app.use('/api/traces', tracesRouter);
 app.use('/api/compliance', complianceRouter);
+app.use('/api/llm-costs', llmCostsRouter);
+app.use('/api/v1/workflows', workflowsRouter);
 
 // Paths to coordination files
 const COMMIT_RELAY_HOME = process.env.COMMIT_RELAY_HOME || path.join(__dirname, '../..');
