@@ -230,7 +230,7 @@
         },
         "condition": {
           "type": "string",
-          "description": "Condition expression for step execution"
+          "description": "Condition expression for step execution. Uses {{ }} syntax for variable interpolation. Supports operators: ==, !=, >, <, >=, <=, in, not in, and, or, not. Examples: '{{ steps.tests.outputs.passed == true }}', '{{ steps.scan.outputs.severity in [\"high\", \"critical\"] }}', '{{ inputs.deploy_env == \"production\" and steps.tests.outputs.passed == true }}'"
         },
         "continue_on_failure": {
           "type": "boolean",

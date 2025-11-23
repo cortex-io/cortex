@@ -58,7 +58,10 @@ import WorkflowsPage from './workflows/WorkflowsPage'
 import DecisionHistory from './decisions/DecisionHistory'
 import DecisionStats from './decisions/DecisionStats'
 
-type TabId = 'overview' | 'executive' | 'workers' | 'tasks' | 'workflows' | 'routing' | 'decisions' | 'compliance' | 'analytics' | 'costs' | 'agentstudio' | 'logs' | 'admin' | 'system'
+// Prompt components
+import PromptRegistry from './prompts/PromptRegistry'
+
+type TabId = 'overview' | 'executive' | 'workers' | 'tasks' | 'workflows' | 'routing' | 'decisions' | 'prompts' | 'compliance' | 'analytics' | 'costs' | 'agentstudio' | 'logs' | 'admin' | 'system'
 
 interface DashboardContainerProps {
   theme: 'light' | 'dark'
@@ -96,6 +99,7 @@ const DashboardContainer = ({ theme, onToggleTheme }: DashboardContainerProps) =
       items: [
         { id: 'routing', label: 'MoE Routing' },
         { id: 'decisions', label: 'Decisions' },
+        { id: 'prompts', label: 'Prompts' },
         { id: 'analytics', label: 'Analytics' },
         { id: 'costs', label: 'LLM Costs' },
       ]
@@ -443,6 +447,11 @@ const DashboardContainer = ({ theme, onToggleTheme }: DashboardContainerProps) =
             <EuiSpacer size="l" />
             <DecisionHistory />
           </>
+        )}
+
+        {/* Prompts Tab */}
+        {selectedTab === 'prompts' && (
+          <PromptRegistry />
         )}
 
         {/* Compliance Tab */}

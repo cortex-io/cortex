@@ -157,14 +157,37 @@ steps:
       path: "$result.report_path"
       format: "$result.format"
 
-  # Step 5: Notify stakeholders
+  # Step 5: Notify on critical/high findings
+  - id: notify_critical
+    name: Send Critical Alert
+    description: Send urgent notification for critical or high severity findings
+    action: http_request
+    depends_on:
+      - generate_report
+    condition: "{{ steps.dependency_scan.outputs.critical_count > 0 or steps.code_scan.outputs.critical_count > 0 }}"
+    inputs:
+      url: "{{ env.NOTIFICATION_WEBHOOK }}"
+      method: POST
+      headers:
+        Content-Type: application/json
+      body:
+        channel: security-critical
+        message: |
+          CRITICAL Security Alert
+          Repository: {{ inputs.repository_url }}
+          Critical Issues: {{ steps.dependency_scan.outputs.critical_count + steps.code_scan.outputs.critical_count }}
+          Report: {{ steps.generate_report.outputs.path }}
+        severity: critical
+        priority: urgent
+
+  # Step 6: Notify on any findings
   - id: notify_results
     name: Send Notifications
     description: Notify relevant teams of audit results
     action: http_request
     depends_on:
       - generate_report
-    condition: "{{ steps.aggregate_results.outputs.total_vulnerabilities }} > 0"
+    condition: "{{ steps.aggregate_results.outputs.total_vulnerabilities > 0 and steps.dependency_scan.outputs.critical_count == 0 and steps.code_scan.outputs.critical_count == 0 }}"
     inputs:
       url: "{{ env.NOTIFICATION_WEBHOOK }}"
       method: POST
@@ -176,15 +199,17 @@ steps:
           Security Audit Complete
           Repository: {{ inputs.repository_url }}
           Vulnerabilities Found: {{ steps.aggregate_results.outputs.total_vulnerabilities }}
+          High Issues: {{ steps.dependency_scan.outputs.high_count + steps.code_scan.outputs.high_count }}
           Report: {{ steps.generate_report.outputs.path }}
-        severity: "{{ steps.dependency_scan.outputs.critical_count > 0 ? 'critical' : 'high' }}"
+        severity: high
 
-  # Step 6: Cleanup temporary files
+  # Step 7: Cleanup temporary files
   - id: cleanup
     name: Cleanup Temporary Files
     description: Remove temporary clone and working files
     action: bash
     depends_on:
+      - notify_critical
       - notify_results
     continue_on_failure: true
     inputs:
