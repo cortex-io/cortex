@@ -44,7 +44,7 @@ These daemons run continuously and should maintain regular heartbeats:
 #### 5. Dashboard Server
 - **Purpose**: Real-time monitoring and admin interface
 - **Heartbeat Source**: Port 3000 listening check
-- **Monitoring Strategy**: Check if port 3000 is responding
+- **Monitoring Strategy**: Check if port 5001 is responding
 
 ### On-Demand Services
 
@@ -203,7 +203,7 @@ The Health Monitor Daemon itself should be monitored:
 │  │  Check Continuous Daemons (5min threshold)│  │
 │  │  • PM Daemon (process + pm-state.json)    │  │
 │  │  • Worker Daemon (process check)          │  │
-│  │  • Dashboard (port 3000 check)            │  │
+│  │  • Dashboard (port 5001 check)            │  │
 │  └──────────────────────────────────────────┘  │
 │                                                   │
 │  ┌──────────────────────────────────────────┐  │

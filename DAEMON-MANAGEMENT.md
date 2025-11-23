@@ -121,7 +121,7 @@ ps aux | grep -E "(pm-daemon|health-monitor|metrics-snapshot|coordinator|integra
 
 **Via Dashboard API:**
 ```bash
-curl http://localhost:3000/api/daemons/all | jq
+curl http://localhost:5001/api/daemons/all | jq
 ```
 
 ## Files Modified
@@ -161,7 +161,7 @@ sleep 35  # Wait for supervisor to detect and restart
 ps aux | grep health-monitor-daemon | grep -v grep
 
 # 4. Check dashboard shows all services running
-curl -s http://localhost:3000/api/daemons/all | jq '.daemons | to_entries[] | select(.value.status == "running") | .key'
+curl -s http://localhost:5001/api/daemons/all | jq '.daemons | to_entries[] | select(.value.status == "running") | .key'
 ```
 
 ## Monitoring and Alerts
@@ -196,7 +196,7 @@ grep "failed to start" logs/daemons/daemon-supervisor.log
 ### Dashboard Shows Wrong Status
 1. Restart dashboard server
 2. Verify dashboard checking correct process names in `dashboard/server/index.js`
-3. Check API directly: `curl localhost:3000/api/daemons/all`
+3. Check API directly: `curl localhost:5001/api/daemons/all`
 
 ## Maintenance
 
