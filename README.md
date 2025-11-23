@@ -29,6 +29,21 @@ Each master agent focuses on a domain like development, security, or inventory m
 - 🏗️ **Agentstudio Platform**: Agent registry, templates, versions, performance tracking, marketplace
 - 🧠 **Advanced Autonomy**: Self-optimization, prediction, self-healing, emergent behaviors
 
+**🆕 Open Source AI Architecture** (Latest):
+- 🔌 **LLM Gateway**: Multi-provider support (Anthropic, OpenAI, Ollama) with automatic failover
+- 🧠 **Smart Model Selection**: Complexity scoring, sensitivity detection, cost-aware routing
+- 🔍 **Hybrid Search**: BM25 keyword + semantic search with RRF fusion
+- 📊 **Production Vector Stores**: Weaviate, Qdrant, or file-based with migration tools
+- 🔄 **Circuit Breaker**: Provider health monitoring, automatic failover chains
+- 💰 **Cost Analytics**: Token tracking, budget enforcement, spend dashboards
+- ⚙️ **Declarative Workflows**: YAML-based DAG definitions with parallel execution
+- 📈 **Quality Review Loops**: LLM-powered self-review with confidence thresholds
+- 📋 **Repository Connectors**: Auto-ingest from GitHub, Confluence, Slack
+- 🎯 **Decision Browser**: Complete routing audit trail with reasoning
+- 📝 **Prompt Registry**: Version control, A/B testing, performance metrics
+- ⏱️ **SLA Management**: Timeout monitoring with escalation policies
+- 🚦 **Backpressure**: Queue management with per-master rate limiting
+
 **🆕 MoE Routing v4.0 - Optimized Expert Selection**:
 - 🎯 **100% Routing Confidence**: Up from 59% with 350+ activation keywords
 - ⚡ **100% Single-Expert Efficiency**: Margin-based routing eliminates unnecessary parallelism
@@ -535,6 +550,37 @@ The diagram illustrates commit-relay's complete orchestration system with color-
 - **Scalability Checks** (2): Load balancing, rate limiting
 - **Hardening Score**: 0-100 composite score
 - **Production Readiness**: Automated assessment with recommendations
+
+#### Open Source AI Infrastructure
+
+**LLM Gateway** (`llm-mesh/gateway/`):
+- **Multi-Provider Support**: Anthropic, OpenAI, Ollama (local), vLLM
+- **Model Router**: Task-based selection using complexity and sensitivity scoring
+- **Circuit Breaker**: Automatic failover with health monitoring (opossum)
+- **Token Tracking**: Budget enforcement at task/session/daily levels
+- **Cost Analytics**: Real-time cost calculation and trend tracking
+
+**RAG System** (`lib/rag/`):
+- **Vector Stores**: Weaviate, Qdrant, or file-based with seamless switching
+- **Embeddings**: OpenAI text-embedding-3-small, Ollama nomic-embed-text, mock
+- **Hybrid Search**: BM25 keyword + semantic with RRF fusion (alpha configurable)
+- **Connectors**: GitHub, Confluence, Slack with scheduled ingestion
+- **Parsers**: PDF, Markdown with intelligent chunking (overlap support)
+- **Freshness**: TTL-based re-indexing for stale content
+
+**Orchestration** (`lib/orchestration/`):
+- **Workflow Engine**: Declarative YAML/JSON DAG definitions
+- **Condition Evaluator**: Safe expression evaluation for conditional steps
+- **Review Loops**: LLM-powered quality review with confidence thresholds
+- **SLA Monitor**: Timeout tracking with warning/critical/breach alerts
+- **Queue Manager**: Priority ordering with backpressure protection
+- **Rate Limiter**: Token bucket algorithm with per-master limits
+
+**Dashboard Components** (`eui-dashboard/`):
+- **LLM Cost Dashboard**: Spend trends, model breakdown, budget alerts
+- **Workflow Visualization**: DAG renderer with ReactFlow + Dagre
+- **Decision Browser**: Routing history with full reasoning audit
+- **Prompt Registry**: Version management and performance metrics
 
 ---
 
