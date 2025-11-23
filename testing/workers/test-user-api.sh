@@ -3,7 +3,7 @@
 # User Management API Test Script
 # Tests all CRUD operations for the new user management endpoints
 
-API_BASE="http://localhost:3000/api"
+API_BASE="http://localhost:5001/api"
 RESULTS_DIR="./test-results"
 
 # Colors for output

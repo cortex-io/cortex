@@ -35,7 +35,7 @@ log_info ""
 
 # Launch Dashboard Server
 log_section "Starting Dashboard Server"
-DASHBOARD_PORT="${DASHBOARD_PORT:-3000}"
+DASHBOARD_PORT="${DASHBOARD_PORT:-5001}"
 if lsof -i :$DASHBOARD_PORT > /dev/null 2>&1; then
     log_info "Dashboard server already running on port $DASHBOARD_PORT"
 else
@@ -167,7 +167,7 @@ if [ "$PENDING_COUNT" -eq 0 ]; then
     log_section "System Status"
     log_info "Commit-Relay is ready"
     log_info "Dashboard agent is monitoring coordination state"
-    log_info "Dashboard UI: http://localhost:${DASHBOARD_PORT:-3000}/"
+    log_info "Dashboard UI: http://localhost:${DASHBOARD_PORT:-5001}/"
     log_info ""
     log_info "To create tasks, use: scripts/create-task.sh"
     log_info "To run master agents, use: scripts/run-*-master.sh"

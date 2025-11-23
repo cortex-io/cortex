@@ -11,7 +11,7 @@ test_endpoint() {
     local endpoint="$1"
     local description="$2"
 
-    response=$(curl -s -w "\n%{http_code}" "http://localhost:3000$endpoint" 2>&1)
+    response=$(curl -s -w "\n%{http_code}" "http://localhost:5001$endpoint" 2>&1)
     status_code=$(echo "$response" | tail -n1)
     body=$(echo "$response" | head -n-1)
 

@@ -9,7 +9,7 @@ class WebSocketService {
   private maxReconnectAttempts = 5
   private reconnectDelay = 3000
 
-  connect(url: string = 'ws://localhost:3000') {
+  connect(url: string = 'ws://localhost:5001') {
     if (this.ws?.readyState === WebSocket.OPEN) return
 
     try {

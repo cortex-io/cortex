@@ -290,7 +290,7 @@ const ApiExplorerViz = () => {
   }
 
   const generateCode = (endpoint: Endpoint, lang: string) => {
-    const url = `http://localhost:3000${endpoint.path}`
+    const url = `http://localhost:5001${endpoint.path}`
 
     switch (lang) {
       case 'python':

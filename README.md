@@ -1068,7 +1068,7 @@ cd dashboard
 npm install
 npm start
 
-# Access at http://localhost:3000
+# Access at http://localhost:5001
 # Or use the helper script:
 ./scripts/dashboard-prompt.sh start
 ```
