@@ -44,6 +44,16 @@ Each master agent focuses on a domain like development, security, or inventory m
 - ⏱️ **SLA Management**: Timeout monitoring with escalation policies
 - 🚦 **Backpressure**: Queue management with per-master rate limiting
 
+**🆕 Security Dashboard Enhancement** (Latest):
+- 🛡️ **Security Dashboard UI**: Portfolio-wide vulnerability monitoring with health grid
+- 📊 **VulnerabilityTable**: Sortable, filterable list with CVE links and severity badges
+- 🔍 **Enhanced Scanning**: SAST patterns, secret detection (29 patterns), license compliance
+- 🤖 **Scan Automation**: Scheduled daemon with policy-based triggers
+- 🔧 **Auto-Remediation**: Dependency updates, secret rotation, config fixes
+- ✅ **Approval Workflow**: Pending fix review with bulk approve/reject
+- 📝 **PR Generation**: Automated security fix PRs with CVE details
+- 📈 **Risk Scoring**: Portfolio-wide risk calculation with trend analysis
+
 **🆕 MoE Routing v4.0 - Optimized Expert Selection**:
 - 🎯 **100% Routing Confidence**: Up from 59% with 350+ activation keywords
 - ⚡ **100% Single-Expert Efficiency**: Margin-based routing eliminates unnecessary parallelism
