@@ -8,6 +8,9 @@
 const tokenCounter = require('./token-counter');
 const costTracker = require('./cost-tracker');
 const budgetManager = require('./budget-manager');
+const circuitBreaker = require('./circuit-breaker');
+const failover = require('./failover');
+const healthCheck = require('./health-check');
 
 module.exports = {
   // Token counting
@@ -38,8 +41,27 @@ module.exports = {
   cleanupOldUsage: budgetManager.cleanupOldUsage,
   budgetMiddleware: budgetManager.budgetMiddleware,
 
+  // Circuit breaker
+  CircuitBreakerManager: circuitBreaker.CircuitBreakerManager,
+  circuitBreakerManager: circuitBreaker.circuitBreakerManager,
+  createProviderBreaker: circuitBreaker.createProviderBreaker,
+  circuitBreakerMiddleware: circuitBreaker.circuitBreakerMiddleware,
+
+  // Failover
+  FailoverChain: failover.FailoverChain,
+  failoverMiddleware: failover.failoverMiddleware,
+
+  // Health check
+  HealthCheckManager: healthCheck.HealthCheckManager,
+  healthCheckManager: healthCheck.healthCheckManager,
+  healthCheck: healthCheck.healthCheck,
+  healthCheckMiddleware: healthCheck.healthCheckMiddleware,
+
   // Full module exports
   tokenCounter,
   costTracker,
-  budgetManager
+  budgetManager,
+  circuitBreaker,
+  failover,
+  healthCheck
 };

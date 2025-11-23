@@ -62,6 +62,8 @@ const tracesRouter = require('./routes/traces');
 const complianceRouter = require('./routes/compliance');
 const llmCostsRouter = require('./routes/llm-costs');
 const workflowsRouter = require('./routes/workflows');
+const decisionsRouter = require('./routes/decisions');
+const llmHealthRouter = require('./routes/llm-health');
 
 const app = express();
 const PORT = process.env.DASHBOARD_PORT || 3000;
@@ -117,6 +119,8 @@ app.use('/api/traces', tracesRouter);
 app.use('/api/compliance', complianceRouter);
 app.use('/api/llm-costs', llmCostsRouter);
 app.use('/api/v1/workflows', workflowsRouter);
+app.use('/api/decisions', decisionsRouter);
+app.use('/api/v1/llm', llmHealthRouter);
 
 // Paths to coordination files
 const COMMIT_RELAY_HOME = process.env.COMMIT_RELAY_HOME || path.join(__dirname, '../..');

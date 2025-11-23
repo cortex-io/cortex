@@ -52,8 +52,13 @@ import DDQDSchedulingViz from './visualizations/DDQDSchedulingViz'
 import CoordinationViewerViz from './visualizations/CoordinationViewerViz'
 import ApiExplorerViz from './visualizations/ApiExplorerViz'
 import LLMCostDashboard from './visualizations/LLMCostDashboard'
+import WorkflowsPage from './workflows/WorkflowsPage'
 
-type TabId = 'overview' | 'executive' | 'workers' | 'tasks' | 'routing' | 'compliance' | 'analytics' | 'costs' | 'agentstudio' | 'logs' | 'admin' | 'system'
+// Decision components
+import DecisionHistory from './decisions/DecisionHistory'
+import DecisionStats from './decisions/DecisionStats'
+
+type TabId = 'overview' | 'executive' | 'workers' | 'tasks' | 'workflows' | 'routing' | 'decisions' | 'compliance' | 'analytics' | 'costs' | 'agentstudio' | 'logs' | 'admin' | 'system'
 
 interface DashboardContainerProps {
   theme: 'light' | 'dark'
@@ -83,12 +88,14 @@ const DashboardContainer = ({ theme, onToggleTheme }: DashboardContainerProps) =
       items: [
         { id: 'workers', label: 'Workers' },
         { id: 'tasks', label: 'Tasks' },
+        { id: 'workflows', label: 'Workflows' },
       ]
     },
     {
       title: 'Intelligence',
       items: [
         { id: 'routing', label: 'MoE Routing' },
+        { id: 'decisions', label: 'Decisions' },
         { id: 'analytics', label: 'Analytics' },
         { id: 'costs', label: 'LLM Costs' },
       ]
@@ -403,6 +410,11 @@ const DashboardContainer = ({ theme, onToggleTheme }: DashboardContainerProps) =
           <TaskTablePanel />
         )}
 
+        {/* Workflows Tab */}
+        {selectedTab === 'workflows' && (
+          <WorkflowsPage />
+        )}
+
         {/* MoE Routing Tab */}
         {selectedTab === 'routing' && (
           <>
@@ -421,6 +433,15 @@ const DashboardContainer = ({ theme, onToggleTheme }: DashboardContainerProps) =
             </EuiFlexGroup>
             <EuiSpacer size="l" />
             <MoEAdvancedAnalyticsViz />
+          </>
+        )}
+
+        {/* Decisions Tab */}
+        {selectedTab === 'decisions' && (
+          <>
+            <DecisionStats />
+            <EuiSpacer size="l" />
+            <DecisionHistory />
           </>
         )}
 

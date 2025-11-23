@@ -589,3 +589,63 @@ export const getLLMCostsBreakdown = (start?: string, end?: string, master?: stri
 
 export const getLLMCostsBudget = () =>
   fetchApi<any>('/llm-costs/budget')
+
+// Workflow endpoints
+export const getWorkflows = () =>
+  fetchApi<any>('/workflows')
+
+export const getWorkflow = (name: string) =>
+  fetchApi<any>(`/workflows/${encodeURIComponent(name)}`)
+
+export const getWorkflowExecution = (id: string) =>
+  fetchApi<any>(`/workflows/executions/${id}`)
+
+export const getWorkflowExecutions = (workflowName?: string, limit: number = 50) => {
+  const params = new URLSearchParams()
+  if (workflowName) params.append('workflow', workflowName)
+  params.append('limit', limit.toString())
+  const query = params.toString()
+  return fetchApi<any>(`/workflows/executions${query ? `?${query}` : ''}`)
+}
+
+export const triggerWorkflow = async (
+  workflowName: string,
+  context?: Record<string, any>
+): Promise<ApiResponse<any>> => {
+  try {
+    const response = await fetch(`${API_BASE}/workflows/${encodeURIComponent(workflowName)}/trigger`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ context })
+    })
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`)
+    }
+    const data = await response.json()
+    return { data, error: null }
+  } catch (err) {
+    return {
+      data: null,
+      error: err instanceof Error ? err.message : 'Unknown error'
+    }
+  }
+}
+
+export const cancelWorkflowExecution = async (executionId: string): Promise<ApiResponse<any>> => {
+  try {
+    const response = await fetch(`${API_BASE}/workflows/executions/${executionId}/cancel`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' }
+    })
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`)
+    }
+    const data = await response.json()
+    return { data, error: null }
+  } catch (err) {
+    return {
+      data: null,
+      error: err instanceof Error ? err.message : 'Unknown error'
+    }
+  }
+}
