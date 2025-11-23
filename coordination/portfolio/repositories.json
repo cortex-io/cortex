@@ -1,0 +1,30 @@
+{
+  "repositories": [
+    {
+      "id": "ry-ops-commit-relay-1763927340317",
+      "url": "https://github.com/ry-ops/commit-relay",
+      "owner": "ry-ops",
+      "name": "commit-relay",
+      "branch": "main",
+      "auto_scan": true,
+      "added_at": "2025-11-23T19:49:00.317Z",
+      "last_scan": null,
+      "status": "scanning",
+      "vulnerability_counts": {
+        "critical": 0,
+        "high": 0,
+        "medium": 0,
+        "low": 0,
+        "total": 0
+      },
+      "current_task_id": "security-scan-1763927340345-nspcx4qi"
+    }
+  ],
+  "settings": {
+    "auto_scan_interval_hours": 24,
+    "clone_depth": 1,
+    "scan_on_add": true,
+    "default_branch": "main"
+  },
+  "updated_at": "2025-11-23T19:49:00.317Z"
+}

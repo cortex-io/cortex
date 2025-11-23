@@ -14,7 +14,24 @@ import ReactFlow, {
 } from 'reactflow'
 // import dagre from '@dagrejs/dagre'
 // TODO: dagre has CommonJS compatibility issues with Vite - temporarily disabled
-const dagre = { graphlib: { Graph: class { setDefaultEdgeLabel() {} setGraph() {} setNode() {} setEdge() {} nodes() { return [] } node() { return { x: 0, y: 0 } } } } }
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const dagre: any = {
+  graphlib: {
+    Graph: class {
+      private nodes_: Map<string, { width: number; height: number }> = new Map()
+      setDefaultEdgeLabel(_fn: () => object) {}
+      setGraph(_opts: object) {}
+      setNode(id: string, data: { width: number; height: number }) { this.nodes_.set(id, data) }
+      setEdge(_source: string, _target: string) {}
+      nodes() { return Array.from(this.nodes_.keys()) }
+      node(id: string) {
+        const idx = Array.from(this.nodes_.keys()).indexOf(id)
+        return { x: (idx % 3) * 250 + 125, y: Math.floor(idx / 3) * 150 + 75 }
+      }
+    }
+  },
+  layout(_graph: unknown) {} // No-op layout function
+}
 import 'reactflow/dist/style.css'
 import {
   EuiPanel,
