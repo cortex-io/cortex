@@ -33,6 +33,8 @@ const REMEDIATIONS_PATH = path.join(COORDINATION_DIR, 'metrics/security-remediat
 const SPAWN_WORKER_SCRIPT = path.join(COMMIT_RELAY_HOME, 'scripts/spawn-worker.sh');
 const SECURITY_PR_GENERATOR_SCRIPT = path.join(COMMIT_RELAY_HOME, 'scripts/security-pr-generator.sh');
 const EVENTS_PATH = path.join(COORDINATION_DIR, 'events/security-events.jsonl');
+const PORTFOLIO_PATH = path.join(COORDINATION_DIR, 'portfolio/repositories.json');
+const REPOS_CLONE_DIR = path.join(COMMIT_RELAY_HOME, 'repos');
 
 /**
  * Helper: Read JSON file safely
@@ -123,17 +125,25 @@ router.get('/portfolio/summary', async (req, res) => {
     // Fallback: aggregate from scan worker results
     const workerDirs = await getScanWorkerDirs();
     const aggregated = {
-      total_repositories: 0,
+      total_repositories: workerDirs.length,
+      repositories_scanned: 0,
       total_vulnerabilities: 0,
-      by_severity: {
+      vulnerability_counts: {
         critical: 0,
         high: 0,
         medium: 0,
         low: 0,
-        informational: 0
+        total: 0
       },
       compliance_score_avg: 0,
       last_scan_time: null,
+      trend: {
+        direction: 'stable',
+        value: 0,
+        percentage: 0
+      },
+      scan_coverage_percentage: 0,
+      avg_time_to_fix: 0,
       risk_distribution: {
         high: 0,
         medium: 0,
@@ -149,14 +159,13 @@ router.get('/portfolio/summary', async (req, res) => {
       const report = await readJsonFile(reportPath);
 
       if (report && report.executive_summary) {
-        aggregated.total_repositories++;
+        aggregated.repositories_scanned++;
 
         const exec = report.executive_summary;
-        aggregated.by_severity.critical += exec.critical_vulnerabilities || 0;
-        aggregated.by_severity.high += exec.high_vulnerabilities || 0;
-        aggregated.by_severity.medium += exec.medium_vulnerabilities || 0;
-        aggregated.by_severity.low += exec.low_vulnerabilities || 0;
-        aggregated.by_severity.informational += exec.informational || 0;
+        aggregated.vulnerability_counts.critical += exec.critical_vulnerabilities || 0;
+        aggregated.vulnerability_counts.high += exec.high_vulnerabilities || 0;
+        aggregated.vulnerability_counts.medium += exec.medium_vulnerabilities || 0;
+        aggregated.vulnerability_counts.low += exec.low_vulnerabilities || 0;
 
         if (exec.compliance_score) {
           complianceScores.push(exec.compliance_score);
@@ -179,11 +188,19 @@ router.get('/portfolio/summary', async (req, res) => {
     }
 
     // Calculate totals and averages
-    aggregated.total_vulnerabilities =
-      aggregated.by_severity.critical +
-      aggregated.by_severity.high +
-      aggregated.by_severity.medium +
-      aggregated.by_severity.low;
+    aggregated.vulnerability_counts.total =
+      aggregated.vulnerability_counts.critical +
+      aggregated.vulnerability_counts.high +
+      aggregated.vulnerability_counts.medium +
+      aggregated.vulnerability_counts.low;
+
+    aggregated.total_vulnerabilities = aggregated.vulnerability_counts.total;
+
+    // Calculate scan coverage
+    if (aggregated.total_repositories > 0) {
+      aggregated.scan_coverage_percentage =
+        Math.round((aggregated.repositories_scanned / aggregated.total_repositories) * 100);
+    }
 
     if (complianceScores.length > 0) {
       aggregated.compliance_score_avg =
@@ -202,6 +219,308 @@ router.get('/portfolio/summary', async (req, res) => {
     res.status(500).json({
       success: false,
       error: 'Failed to get portfolio summary',
+      message: error.message,
+      timestamp: new Date().toISOString()
+    });
+  }
+});
+
+/**
+ * GET /api/v1/security/portfolio/repos
+ * List all GitHub repositories in the portfolio
+ */
+router.get('/portfolio/repos', async (req, res) => {
+  try {
+    let portfolio = await readJsonFile(PORTFOLIO_PATH);
+    if (!portfolio) {
+      portfolio = { repositories: [], settings: {} };
+    }
+
+    res.json({
+      success: true,
+      data: {
+        repositories: portfolio.repositories,
+        settings: portfolio.settings,
+        total: portfolio.repositories.length
+      },
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    console.error('Error getting portfolio repos:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to get portfolio repos',
+      message: error.message,
+      timestamp: new Date().toISOString()
+    });
+  }
+});
+
+/**
+ * POST /api/v1/security/portfolio/repos
+ * Add a GitHub repository to the portfolio
+ */
+router.post('/portfolio/repos', async (req, res) => {
+  try {
+    const { url, name, branch = 'main', auto_scan = true } = req.body;
+
+    if (!url) {
+      return res.status(400).json({
+        success: false,
+        error: 'Missing required field',
+        message: 'url is required',
+        timestamp: new Date().toISOString()
+      });
+    }
+
+    // Parse GitHub URL
+    const githubMatch = url.match(/github\.com[\/:]([^\/]+)\/([^\/\.]+)/);
+    if (!githubMatch) {
+      return res.status(400).json({
+        success: false,
+        error: 'Invalid URL',
+        message: 'URL must be a valid GitHub repository URL',
+        timestamp: new Date().toISOString()
+      });
+    }
+
+    const owner = githubMatch[1];
+    const repoName = name || githubMatch[2];
+
+    // Read current portfolio
+    let portfolio = await readJsonFile(PORTFOLIO_PATH);
+    if (!portfolio) {
+      portfolio = { repositories: [], settings: {}, updated_at: null };
+    }
+
+    // Check if already exists
+    const existingIndex = portfolio.repositories.findIndex(r => r.url === url);
+    if (existingIndex >= 0) {
+      return res.status(409).json({
+        success: false,
+        error: 'Repository already exists',
+        message: `Repository ${url} is already in the portfolio`,
+        timestamp: new Date().toISOString()
+      });
+    }
+
+    // Create repo entry
+    const repoEntry = {
+      id: `${owner}-${repoName}-${Date.now()}`,
+      url,
+      owner,
+      name: repoName,
+      branch,
+      auto_scan,
+      added_at: new Date().toISOString(),
+      last_scan: null,
+      status: 'pending',
+      vulnerability_counts: {
+        critical: 0,
+        high: 0,
+        medium: 0,
+        low: 0,
+        total: 0
+      }
+    };
+
+    portfolio.repositories.push(repoEntry);
+    portfolio.updated_at = new Date().toISOString();
+
+    // Save portfolio
+    await fs.writeFile(PORTFOLIO_PATH, JSON.stringify(portfolio, null, 2));
+
+    // Optionally trigger initial scan
+    if (auto_scan && portfolio.settings?.scan_on_add !== false) {
+      const taskId = generateTaskId();
+
+      try {
+        // Ensure repos directory exists
+        await fs.mkdir(REPOS_CLONE_DIR, { recursive: true });
+
+        // Clone the repository
+        const clonePath = path.join(REPOS_CLONE_DIR, repoEntry.id);
+        await execFileAsync('git', ['clone', '--depth', '1', '--branch', branch, url, clonePath], {
+          timeout: 60000
+        });
+
+        // Spawn scan worker
+        await execFileAsync(SPAWN_WORKER_SCRIPT, [
+          '--type', 'scan-worker',
+          '--task-id', taskId,
+          '--master', 'security-master',
+          '--priority', 'normal'
+        ], {
+          env: {
+            ...process.env,
+            GOVERNANCE_BYPASS: 'true',
+            SCAN_TARGET: clonePath,
+            REPO_ID: repoEntry.id
+          },
+          timeout: 30000
+        });
+
+        repoEntry.status = 'scanning';
+        repoEntry.current_task_id = taskId;
+        await fs.writeFile(PORTFOLIO_PATH, JSON.stringify(portfolio, null, 2));
+      } catch (err) {
+        console.warn('Could not initiate scan:', err.message);
+        repoEntry.status = 'clone_failed';
+        repoEntry.error = err.message;
+        await fs.writeFile(PORTFOLIO_PATH, JSON.stringify(portfolio, null, 2));
+      }
+    }
+
+    res.status(201).json({
+      success: true,
+      data: repoEntry,
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    console.error('Error adding repo to portfolio:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to add repository',
+      message: error.message,
+      timestamp: new Date().toISOString()
+    });
+  }
+});
+
+/**
+ * DELETE /api/v1/security/portfolio/repos/:id
+ * Remove a repository from the portfolio
+ */
+router.delete('/portfolio/repos/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    let portfolio = await readJsonFile(PORTFOLIO_PATH);
+    if (!portfolio) {
+      return res.status(404).json({
+        success: false,
+        error: 'Repository not found',
+        timestamp: new Date().toISOString()
+      });
+    }
+
+    const index = portfolio.repositories.findIndex(r => r.id === id);
+    if (index < 0) {
+      return res.status(404).json({
+        success: false,
+        error: 'Repository not found',
+        message: `No repository with id ${id}`,
+        timestamp: new Date().toISOString()
+      });
+    }
+
+    const removed = portfolio.repositories.splice(index, 1)[0];
+    portfolio.updated_at = new Date().toISOString();
+
+    await fs.writeFile(PORTFOLIO_PATH, JSON.stringify(portfolio, null, 2));
+
+    // Clean up cloned repo
+    const clonePath = path.join(REPOS_CLONE_DIR, id);
+    try {
+      await fs.rm(clonePath, { recursive: true, force: true });
+    } catch (err) {
+      // Ignore if doesn't exist
+    }
+
+    res.json({
+      success: true,
+      data: { removed },
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    console.error('Error removing repo from portfolio:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to remove repository',
+      message: error.message,
+      timestamp: new Date().toISOString()
+    });
+  }
+});
+
+/**
+ * POST /api/v1/security/portfolio/repos/:id/scan
+ * Trigger a scan for a specific repository
+ */
+router.post('/portfolio/repos/:id/scan', async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    let portfolio = await readJsonFile(PORTFOLIO_PATH);
+    if (!portfolio) {
+      return res.status(404).json({
+        success: false,
+        error: 'Repository not found',
+        timestamp: new Date().toISOString()
+      });
+    }
+
+    const repo = portfolio.repositories.find(r => r.id === id);
+    if (!repo) {
+      return res.status(404).json({
+        success: false,
+        error: 'Repository not found',
+        message: `No repository with id ${id}`,
+        timestamp: new Date().toISOString()
+      });
+    }
+
+    const taskId = generateTaskId();
+    const clonePath = path.join(REPOS_CLONE_DIR, id);
+
+    // Update or clone repo
+    try {
+      await fs.access(clonePath);
+      // Pull latest
+      await execFileAsync('git', ['-C', clonePath, 'pull', '--ff-only'], { timeout: 60000 });
+    } catch {
+      // Clone fresh
+      await fs.mkdir(REPOS_CLONE_DIR, { recursive: true });
+      await execFileAsync('git', ['clone', '--depth', '1', '--branch', repo.branch, repo.url, clonePath], {
+        timeout: 60000
+      });
+    }
+
+    // Spawn scan worker
+    await execFileAsync(SPAWN_WORKER_SCRIPT, [
+      '--type', 'scan-worker',
+      '--task-id', taskId,
+      '--master', 'security-master',
+      '--priority', 'high'
+    ], {
+      env: {
+        ...process.env,
+        GOVERNANCE_BYPASS: 'true',
+        SCAN_TARGET: clonePath,
+        REPO_ID: id
+      },
+      timeout: 30000
+    });
+
+    repo.status = 'scanning';
+    repo.current_task_id = taskId;
+    portfolio.updated_at = new Date().toISOString();
+    await fs.writeFile(PORTFOLIO_PATH, JSON.stringify(portfolio, null, 2));
+
+    res.status(202).json({
+      success: true,
+      data: {
+        task_id: taskId,
+        repository: repo.name,
+        status: 'scanning'
+      },
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    console.error('Error scanning repository:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to scan repository',
       message: error.message,
       timestamp: new Date().toISOString()
     });
@@ -607,6 +926,75 @@ router.post('/scan', async (req, res) => {
     res.status(500).json({
       success: false,
       error: 'Failed to initiate security scan',
+      message: error.message,
+      timestamp: new Date().toISOString()
+    });
+  }
+});
+
+/**
+ * POST /api/v1/security/scan/all
+ * Triggers security scan for all repositories (currently scans commit-relay)
+ */
+router.post('/scan/all', async (req, res) => {
+  try {
+    // Generate task ID
+    const taskId = generateTaskId();
+
+    // For now, scan the commit-relay repository itself
+    const repositoryPath = COMMIT_RELAY_HOME;
+
+    // Spawn a scan worker
+    try {
+      await execFileAsync(SPAWN_WORKER_SCRIPT, [
+        '--type', 'scan-worker',
+        '--task-id', taskId,
+        '--master', 'security-master',
+        '--priority', 'high'
+      ], {
+        env: {
+          ...process.env,
+          GOVERNANCE_BYPASS: 'true',
+          SCAN_TARGET: repositoryPath
+        },
+        timeout: 30000
+      });
+    } catch (err) {
+      console.warn('Could not spawn scan worker:', err.message);
+    }
+
+    // Log scan initiation to history
+    const historyEntry = {
+      task_id: taskId,
+      scan_type: 'full',
+      repository_url: repositoryPath,
+      status: 'initiated',
+      initiated_at: new Date().toISOString()
+    };
+
+    try {
+      await fs.appendFile(
+        SCAN_HISTORY_PATH,
+        JSON.stringify(historyEntry) + '\n'
+      );
+    } catch (err) {
+      console.warn('Could not write to scan history:', err.message);
+    }
+
+    res.status(202).json({
+      success: true,
+      data: {
+        task_id: taskId,
+        status: 'initiated',
+        message: 'Security scan initiated for all repositories'
+      },
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    console.error('Error initiating scan all:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to initiate scan',
       message: error.message,
       timestamp: new Date().toISOString()
     });

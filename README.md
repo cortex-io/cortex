@@ -44,7 +44,14 @@ Each master agent focuses on a domain like development, security, or inventory m
 - ⏱️ **SLA Management**: Timeout monitoring with escalation policies
 - 🚦 **Backpressure**: Queue management with per-master rate limiting
 
-**🆕 Security Dashboard Enhancement** (Latest):
+**🆕 EUI Dashboard & Repository Management** (Latest):
+- 🎨 **Elastic UI Dashboard**: Modern React-based dashboard using Elastic EUI components
+- 📦 **GitHub Repository Management**: Add, remove, and scan GitHub repositories remotely
+- 🔍 **Portfolio Security Scanning**: Automatic cloning and security scanning of added repos
+- 📊 **Real-time Status**: Live vulnerability counts and scan status for all repositories
+- 🛡️ **Inline Forms**: Quick repository addition with branch and auto-scan options
+
+**🆕 Security Dashboard Enhancement**:
 - 🛡️ **Security Dashboard UI**: Portfolio-wide vulnerability monitoring with health grid
 - 📊 **VulnerabilityTable**: Sortable, filterable list with CVE links and severity badges
 - 🔍 **Enhanced Scanning**: SAST patterns, secret detection (29 patterns), license compliance
