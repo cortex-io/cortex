@@ -173,28 +173,30 @@ const DecisionStats = () => {
                 <p>No routing data available</p>
               </EuiText>
             ) : (
-              <ResponsiveContainer width="100%" height={200}>
-                <PieChart>
-                  <Pie
-                    data={masterChartData}
-                    dataKey="value"
-                    nameKey="name"
-                    cx="50%"
-                    cy="50%"
-                    outerRadius={70}
-                    innerRadius={35}
-                    label={({ name, percent }) =>
-                      `${name} ${((percent || 0) * 100).toFixed(0)}%`
-                    }
-                    labelLine={true}
-                  >
-                    {masterChartData.map((_, index) => (
-                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                    ))}
-                  </Pie>
-                  <Tooltip />
-                </PieChart>
-              </ResponsiveContainer>
+              <div style={{ height: 200 }}>
+                <ResponsiveContainer width="100%" height={200}>
+                  <PieChart>
+                    <Pie
+                      data={masterChartData}
+                      dataKey="value"
+                      nameKey="name"
+                      cx="50%"
+                      cy="50%"
+                      outerRadius={70}
+                      innerRadius={35}
+                      label={({ name, percent }) =>
+                        `${name} ${((percent || 0) * 100).toFixed(0)}%`
+                      }
+                      labelLine={true}
+                    >
+                      {masterChartData.map((_, index) => (
+                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                      ))}
+                    </Pie>
+                    <Tooltip />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
             )}
           </EuiPanel>
         </EuiFlexItem>
@@ -204,19 +206,21 @@ const DecisionStats = () => {
           <EuiPanel hasBorder>
             <EuiTitle size="s"><h3>Confidence Distribution</h3></EuiTitle>
             <EuiSpacer size="m" />
-            <ResponsiveContainer width="100%" height={200}>
-              <BarChart data={confidenceChartData}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="label" fontSize={10} />
-                <YAxis fontSize={10} />
-                <Tooltip />
-                <Bar dataKey="count" name="Decisions">
-                  {confidenceChartData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.color} />
-                  ))}
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
+            <div style={{ height: 200 }}>
+              <ResponsiveContainer width="100%" height={200}>
+                <BarChart data={confidenceChartData}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="label" fontSize={10} />
+                  <YAxis fontSize={10} />
+                  <Tooltip />
+                  <Bar dataKey="count" name="Decisions">
+                    {confidenceChartData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.color} />
+                    ))}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
           </EuiPanel>
         </EuiFlexItem>
       </EuiFlexGroup>
