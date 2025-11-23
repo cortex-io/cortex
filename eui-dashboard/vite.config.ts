@@ -1,10 +1,9 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
-import commonjs from 'vite-plugin-commonjs'
 import path from 'path'
 
 export default defineConfig({
-  plugins: [react(), commonjs()],
+  plugins: [react()],
   server: {
     port: 5002,
     proxy: {
@@ -26,11 +25,12 @@ export default defineConfig({
     include: [
       '@elastic/eui',
       '@emotion/react',
-      '@emotion/cache',
+      '@emotion/cache'
+    ],
+    exclude: [
       '@dagrejs/dagre',
       '@dagrejs/graphlib'
     ],
-    force: true,
     esbuildOptions: {
       target: 'esnext',
       define: {
