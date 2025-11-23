@@ -17,6 +17,13 @@ export default defineConfig({
     sourcemap: true
   },
   optimizeDeps: {
-    include: ['@elastic/eui', '@emotion/react', '@emotion/cache']
+    include: [
+      '@elastic/eui',
+      '@emotion/react',
+      '@emotion/cache',
+      'dagre',
+      '@dagrejs/dagre',
+      '@dagrejs/graphlib'
+    ]
   }
 })
