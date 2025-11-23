@@ -14,6 +14,9 @@ const AnthropicProvider = require('./providers/anthropic');
 const OpenAIProvider = require('./providers/openai');
 const OllamaProvider = require('./providers/ollama');
 const ModelRouter = require('./router/model-router');
+const { circuitBreakerManager, createProviderBreaker } = require('./middleware/circuit-breaker');
+const { FailoverChain } = require('./middleware/failover');
+const { healthCheckManager } = require('./middleware/health-check');
 
 /**
  * @typedef {Object} GatewayConfig
@@ -51,7 +54,12 @@ class LLMGateway {
     this.providers = {};
     this.middleware = config.middleware || [];
     this.router = null;
+    this.failoverChain = null;
     this.initialized = false;
+
+    // Circuit breaker configuration
+    this.circuitBreakerEnabled = config.circuitBreaker?.enabled !== false;
+    this.healthCheckEnabled = config.healthCheck?.enabled !== false;
 
     // Metrics
     this.metrics = {
@@ -118,9 +126,46 @@ class LLMGateway {
       routingConfig: this.config.routing
     });
 
+    // Initialize circuit breakers for each provider
+    if (this.circuitBreakerEnabled) {
+      for (const [name, provider] of Object.entries(this.providers)) {
+        const breakerOptions = this.config.circuitBreaker?.providers?.[name] || {};
+        createProviderBreaker(
+          name,
+          provider.complete.bind(provider),
+          breakerOptions
+        );
+        this.log('info', `Circuit breaker initialized for ${name}`);
+      }
+    }
+
+    // Initialize failover chain
+    const providerPriority = this.config.failover?.priority ||
+      Object.keys(this.providers);
+
+    this.failoverChain = new FailoverChain({
+      providers: this.providers,
+      priority: providerPriority,
+      maxRetries: this.config.failover?.maxRetries || 1,
+      retryDelay: this.config.failover?.retryDelay || 1000
+    });
+
+    // Register providers with health check manager
+    if (this.healthCheckEnabled) {
+      for (const [name, provider] of Object.entries(this.providers)) {
+        const healthCheckOptions = this.config.healthCheck?.providers?.[name] || {};
+        healthCheckManager.registerProvider(name, provider, healthCheckOptions);
+      }
+      // Start health monitoring
+      healthCheckManager.start();
+      this.log('info', 'Health monitoring started');
+    }
+
     this.initialized = true;
     this.log('info', 'LLM Gateway initialized successfully', {
-      providers: Object.keys(this.providers)
+      providers: Object.keys(this.providers),
+      circuitBreakerEnabled: this.circuitBreakerEnabled,
+      healthCheckEnabled: this.healthCheckEnabled
     });
   }
 
@@ -157,38 +202,54 @@ class LLMGateway {
       };
 
       const routingDecision = await this.router.route(routingOptions);
-      const provider = this.providers[routingDecision.provider];
 
       this.log('debug', 'Request routed', routingDecision);
 
-      // Execute request with fallback support
       let response;
-      let lastError;
 
-      const attempts = [routingDecision, ...routingDecision.fallbacks];
+      // Use failover chain if circuit breakers are enabled
+      if (this.circuitBreakerEnabled && this.failoverChain) {
+        // Execute through failover chain with circuit breaker protection
+        response = await this.failoverChain.execute(
+          processedRequest.messages,
+          {
+            ...processedRequest.options,
+            model: routingDecision.model,
+            provider: routingDecision.provider
+          }
+        );
+      } else {
+        // Original fallback logic without circuit breakers
+        let lastError;
+        const attempts = [routingDecision, ...routingDecision.fallbacks];
 
-      for (const attempt of attempts) {
-        const attemptProvider = this.providers[attempt.provider];
-        if (!attemptProvider) continue;
+        for (const attempt of attempts) {
+          const attemptProvider = this.providers[attempt.provider];
+          if (!attemptProvider) continue;
 
-        try {
-          response = await attemptProvider.complete(
-            processedRequest.messages,
-            { ...processedRequest.options, model: attempt.model }
-          );
-          break;
-        } catch (error) {
-          lastError = error;
-          this.log('warn', 'Provider failed, trying fallback', {
-            provider: attempt.provider,
-            error: error.message
-          });
+          try {
+            response = await attemptProvider.complete(
+              processedRequest.messages,
+              { ...processedRequest.options, model: attempt.model }
+            );
+            break;
+          } catch (error) {
+            lastError = error;
+            this.log('warn', 'Provider failed, trying fallback', {
+              provider: attempt.provider,
+              error: error.message
+            });
+          }
+        }
+
+        if (!response) {
+          throw lastError || new Error('All providers failed');
         }
       }
 
-      if (!response) {
-        throw lastError || new Error('All providers failed');
-      }
+      // Get the actual provider used for cost calculation
+      const actualProvider = response.provider || routingDecision.provider;
+      const provider = this.providers[actualProvider];
 
       // Calculate cost
       const pricing = provider.getCostPerToken(response.model);
@@ -441,9 +502,54 @@ class LLMGateway {
    */
   async shutdown() {
     this.log('info', 'Shutting down LLM Gateway');
+
+    // Stop health monitoring
+    if (this.healthCheckEnabled) {
+      healthCheckManager.stop();
+    }
+
+    // Shutdown circuit breakers
+    if (this.circuitBreakerEnabled) {
+      circuitBreakerManager.shutdown();
+    }
+
     this.initialized = false;
     this.providers = {};
     this.router = null;
+    this.failoverChain = null;
+  }
+
+  /**
+   * Get circuit breaker states for all providers
+   * @returns {Object}
+   */
+  getCircuitStates() {
+    if (!this.circuitBreakerEnabled) {
+      return { enabled: false };
+    }
+    return circuitBreakerManager.getAllStates();
+  }
+
+  /**
+   * Get health check status for all providers
+   * @returns {Object}
+   */
+  getHealthStatus() {
+    if (!this.healthCheckEnabled) {
+      return { enabled: false };
+    }
+    return healthCheckManager.getAllStatus();
+  }
+
+  /**
+   * Get failover chain metrics
+   * @returns {Object}
+   */
+  getFailoverMetrics() {
+    if (!this.failoverChain) {
+      return { enabled: false };
+    }
+    return this.failoverChain.getMetrics();
   }
 }
 
@@ -463,5 +569,10 @@ module.exports = {
   AnthropicProvider,
   OpenAIProvider,
   OllamaProvider,
-  ModelRouter
+  ModelRouter,
+  // Circuit breaker components
+  circuitBreakerManager,
+  createProviderBreaker,
+  FailoverChain,
+  healthCheckManager
 };

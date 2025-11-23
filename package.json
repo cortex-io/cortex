@@ -21,6 +21,7 @@
     "@anthropic-ai/sdk": "^0.32.1",
     "ajv": "^8.17.1",
     "ajv-formats": "^3.0.1",
+    "minisearch": "^7.1.0",
     "openai": "^4.73.0",
     "postman-cli": "^1.24.2",
     "tiktoken": "^1.0.17"
