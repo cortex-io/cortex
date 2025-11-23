@@ -6,7 +6,7 @@ echo "API Explorer Feature Test"
 echo "========================================"
 echo ""
 
-BASE_URL="http://localhost:3000"
+BASE_URL="http://localhost:5001"
 PASS_COUNT=0
 FAIL_COUNT=0
 
