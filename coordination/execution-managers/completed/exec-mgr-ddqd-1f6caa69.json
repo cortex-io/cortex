@@ -13,7 +13,7 @@
   "stress_test": true,
   "zombie_type": "em_timeout",
   "test_id": "ddqd-1763732356",
-  "failed_at": "2025-11-23T08:54:28-0600",
-  "error": "Execution Manager became zombie - running for 181316s with no completion",
+  "failed_at": "2025-11-23T09:24:29-0600",
+  "error": "Execution Manager became zombie - running for 183117s with no completion",
   "killed_by": "zombie-killer-daemon"
 }

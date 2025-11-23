@@ -16,7 +16,7 @@ This guide explains how to connect the EUI Dashboard to data sources and configu
 
 ## Overview
 
-The EUI Dashboard fetches data from a REST API server. By default, it expects the API to be available at the same origin (e.g., `http://localhost:3000`).
+The EUI Dashboard fetches data from a REST API server. By default, it expects the API to be available at the same origin (e.g., `http://localhost:5001`).
 
 ### Architecture
 
