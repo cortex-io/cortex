@@ -45,6 +45,8 @@ OPTIONS:
     -p, --priority PRIORITY   Priority: critical|high|medium|low (default: medium)
     -s, --scope JSON          JSON scope object (optional)
     -c, --context JSON        JSON context object (optional)
+    --review-enabled BOOL     Enable quality review loops (default: from policy)
+    --review-cycles NUM       Number of review cycles (default: from policy)
     -h, --help                Show this help message
 
 EXAMPLES:
@@ -85,6 +87,8 @@ PRIORITY="medium"
 SCOPE_JSON=""
 CONTEXT_JSON=""
 EXECUTION_MANAGER=""
+REVIEW_ENABLED=""
+REVIEW_CYCLES=""
 
 while [[ $# -gt 0 ]]; do
     case $1 in
@@ -127,6 +131,14 @@ while [[ $# -gt 0 ]]; do
             ;;
         -c|--context)
             CONTEXT_JSON="$2"
+            shift 2
+            ;;
+        --review-enabled)
+            REVIEW_ENABLED="$2"
+            shift 2
+            ;;
+        --review-cycles)
+            REVIEW_CYCLES="$2"
             shift 2
             ;;
         -h|--help)
@@ -293,6 +305,41 @@ else
   EM_FIELD="null"
 fi
 
+# Load review configuration from policy if not specified
+REVIEW_POLICY_FILE="$COMMIT_RELAY_HOME/coordination/config/review-policy.json"
+if [ -f "$REVIEW_POLICY_FILE" ]; then
+    # Get defaults from policy
+    POLICY_ENABLED=$(jq -r '.enabled // true' "$REVIEW_POLICY_FILE")
+    POLICY_DEFAULT_CYCLES=$(jq -r '.global_settings.default_cycles // 1' "$REVIEW_POLICY_FILE")
+
+    # Check for task-type-specific overrides
+    TASK_OVERRIDE_ENABLED=$(jq -r --arg type "$WORKER_TYPE" '.task_overrides[$type].enabled // null' "$REVIEW_POLICY_FILE")
+    TASK_OVERRIDE_CYCLES=$(jq -r --arg type "$WORKER_TYPE" '.task_overrides[$type].min_cycles // null' "$REVIEW_POLICY_FILE")
+
+    # Apply hierarchy: CLI args > task override > policy default
+    if [ -z "$REVIEW_ENABLED" ]; then
+        if [ "$TASK_OVERRIDE_ENABLED" != "null" ]; then
+            REVIEW_ENABLED="$TASK_OVERRIDE_ENABLED"
+        else
+            REVIEW_ENABLED="$POLICY_ENABLED"
+        fi
+    fi
+
+    if [ -z "$REVIEW_CYCLES" ]; then
+        if [ "$TASK_OVERRIDE_CYCLES" != "null" ]; then
+            REVIEW_CYCLES="$TASK_OVERRIDE_CYCLES"
+        else
+            REVIEW_CYCLES="$POLICY_DEFAULT_CYCLES"
+        fi
+    fi
+else
+    # Default values if no policy file
+    [ -z "$REVIEW_ENABLED" ] && REVIEW_ENABLED="true"
+    [ -z "$REVIEW_CYCLES" ] && REVIEW_CYCLES="1"
+fi
+
+print_info "Review configuration: enabled=$REVIEW_ENABLED, cycles=$REVIEW_CYCLES"
+
 cat > "$WORKER_SPEC_FILE" <<EOF
 {
   "worker_id": "$WORKER_ID",
@@ -330,6 +377,12 @@ cat > "$WORKER_SPEC_FILE" <<EOF
     "output_location": null,
     "summary": null,
     "artifacts": []
+  },
+  "review": {
+    "enabled": $REVIEW_ENABLED,
+    "min_cycles": $REVIEW_CYCLES,
+    "auto_approve_threshold": 0.95,
+    "history": []
   }
 }
 EOF
@@ -427,8 +480,17 @@ echo -e "${YELLOW}Goal-Based Planning (Week 3):${NC}"
 echo -e "${BLUE}Strategy:${NC}        $SELECTED_STRATEGY"
 echo -e "${BLUE}Goal Type:${NC}       $GOAL_TYPE"
 echo -e "${BLUE}Complexity:${NC}      $COMPLEXITY"
+echo ""
+echo -e "${YELLOW}Quality Review Loops:${NC}"
+echo -e "${BLUE}Enabled:${NC}         $REVIEW_ENABLED"
+echo -e "${BLUE}Min Cycles:${NC}      $REVIEW_CYCLES"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo ""
+
+# Export review environment variables for worker process
+export REVIEW_ENABLED="$REVIEW_ENABLED"
+export REVIEW_CYCLES="$REVIEW_CYCLES"
+export REVIEW_POLICY_PATH="$REVIEW_POLICY_FILE"
 
 # Display next steps
 print_info "Next Steps:"

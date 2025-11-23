@@ -9,6 +9,10 @@ GATEWAY_HOME="$SCRIPT_DIR"
 LLM_MESH_HOME="$(dirname "$GATEWAY_HOME")"
 CONFIG_LOADER="$LLM_MESH_HOME/config/load-env.sh"
 MODEL_ROUTER="$GATEWAY_HOME/model-router/select-model.sh"
+COST_TRACKER="$GATEWAY_HOME/middleware/cost-tracking.sh"
+
+# Make cost tracker executable
+[ -f "$COST_TRACKER" ] && chmod +x "$COST_TRACKER"
 
 # Load environment
 source "$CONFIG_LOADER" load 2>/dev/null || true
@@ -77,8 +81,25 @@ call_anthropic() {
     local input_tokens=$(echo "$response" | jq -r '.usage.input_tokens')
     local output_tokens=$(echo "$response" | jq -r '.usage.output_tokens')
 
-    # Calculate cost
-    local cost=$(bash "$MODEL_ROUTER" estimate "$model" "api-call" "$input_tokens" "$output_tokens")
+    # Calculate cost using cost tracker
+    local cost=0
+    if [ -f "$COST_TRACKER" ]; then
+        cost=$(bash "$COST_TRACKER" cost "$model" "$input_tokens" "$output_tokens")
+    else
+        cost=$(bash "$MODEL_ROUTER" estimate "$model" "api-call" "$input_tokens" "$output_tokens")
+    fi
+
+    # Log cost to tracking system
+    if [ -f "$COST_TRACKER" ]; then
+        bash "$COST_TRACKER" log \
+            "${TASK_ID:-anonymous}" \
+            "${TASK_TYPE:-api-call}" \
+            "$model" \
+            "$input_tokens" \
+            "$output_tokens" \
+            "$latency" \
+            "true" >/dev/null 2>&1 || true
+    fi
 
     # Return structured response
     jq -n \
@@ -166,8 +187,25 @@ call_openai() {
     local input_tokens=$(echo "$response" | jq -r '.usage.prompt_tokens')
     local output_tokens=$(echo "$response" | jq -r '.usage.completion_tokens')
 
-    # Calculate cost
-    local cost=$(bash "$MODEL_ROUTER" estimate "$model" "api-call" "$input_tokens" "$output_tokens")
+    # Calculate cost using cost tracker
+    local cost=0
+    if [ -f "$COST_TRACKER" ]; then
+        cost=$(bash "$COST_TRACKER" cost "$model" "$input_tokens" "$output_tokens")
+    else
+        cost=$(bash "$MODEL_ROUTER" estimate "$model" "api-call" "$input_tokens" "$output_tokens")
+    fi
+
+    # Log cost to tracking system
+    if [ -f "$COST_TRACKER" ]; then
+        bash "$COST_TRACKER" log \
+            "${TASK_ID:-anonymous}" \
+            "${TASK_TYPE:-api-call}" \
+            "$model" \
+            "$input_tokens" \
+            "$output_tokens" \
+            "$latency" \
+            "true" >/dev/null 2>&1 || true
+    fi
 
     # Return structured response
     jq -n \
@@ -253,11 +291,40 @@ call_llm() {
     local max_tokens="${3:-4096}"
     local temperature="${4:-0.7}"
     local quality_req="${5:-balanced}"
+    local task_id="${TASK_ID:-task-$(date +%s)}"
+
+    # Export for nested calls
+    export TASK_ID="$task_id"
+    export TASK_TYPE="$task_type"
 
     # Select optimal model
     local selected_model=$(bash "$MODEL_ROUTER" select "$task_type" "999" "$quality_req")
 
     echo "Selected model: $selected_model for task type: $task_type" >&2
+
+    # Estimate tokens and check budget
+    if [ -f "$COST_TRACKER" ]; then
+        local estimated_tokens=$(bash "$COST_TRACKER" estimate "$prompt" "$selected_model")
+        local budget_check=$(bash "$COST_TRACKER" check "$task_id" "$estimated_tokens")
+
+        if [[ "$budget_check" != "true" ]]; then
+            echo "Budget check failed: $budget_check" >&2
+            jq -n \
+                --arg model "$selected_model" \
+                --arg error "Budget exceeded: $budget_check" \
+                '{
+                    provider: "none",
+                    model: $model,
+                    content: "",
+                    usage: {input_tokens: 0, output_tokens: 0, total_tokens: 0},
+                    cost: 0,
+                    latency_ms: 0,
+                    success: false,
+                    error: $error
+                }'
+            return 1
+        fi
+    fi
 
     # Determine provider
     local provider=$(jq -r \
@@ -287,8 +354,14 @@ call_llm() {
     local quality_score=0.8  # Default, should be evaluated
     local cost=$(echo "$response" | jq -r '.cost')
     local latency=$(echo "$response" | jq -r '.latency_ms')
+    local total_tokens=$(echo "$response" | jq -r '.usage.total_tokens')
 
     bash "$MODEL_ROUTER" record "$selected_model" "$task_type" "$quality_score" "$cost" "$latency"
+
+    # Record usage against budgets
+    if [ -f "$COST_TRACKER" ]; then
+        bash "$COST_TRACKER" record "$task_id" "$total_tokens" "$cost" >/dev/null 2>&1 || true
+    fi
 
     # Return response
     echo "$response"
