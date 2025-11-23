@@ -3,10 +3,11 @@
  *
  * Provides REST endpoints for managing and executing workflows:
  * - GET /api/v1/workflows - List all workflows
+ * - GET /api/v1/workflows/executions - List all executions across workflows
+ * - GET /api/v1/workflows/executions/:id - Get execution details
  * - GET /api/v1/workflows/:name - Get workflow definition
  * - POST /api/v1/workflows/:name/execute - Trigger execution
- * - GET /api/v1/workflows/:name/executions - List executions
- * - GET /api/v1/workflows/executions/:id - Get execution details
+ * - GET /api/v1/workflows/:name/executions - List executions for a workflow
  */
 
 const express = require('express');
@@ -55,6 +56,184 @@ router.get('/', async (req, res) => {
     res.status(500).json({
       success: false,
       error: 'Failed to list workflows',
+      message: error.message
+    });
+  }
+});
+
+/**
+ * GET /api/v1/workflows/executions
+ * List all workflow executions across all workflows
+ */
+router.get('/executions', async (req, res) => {
+  try {
+    const { workflow_name, limit = 50, offset = 0, status } = req.query;
+
+    const result = await workflowEngine.listAllExecutions({
+      workflow_name,
+      limit: parseInt(limit, 10),
+      offset: parseInt(offset, 10),
+      status
+    });
+
+    res.json({
+      success: true,
+      data: {
+        executions: result.executions,
+        total: result.total
+      }
+    });
+  } catch (error) {
+    console.error('Error listing all executions:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to list executions',
+      message: error.message
+    });
+  }
+});
+
+/**
+ * GET /api/v1/workflows/executions/:id
+ * Get execution details by ID
+ */
+router.get('/executions/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const execution = await workflowEngine.getExecution(id);
+
+    if (!execution) {
+      return res.status(404).json({
+        success: false,
+        error: 'Execution not found',
+        message: `Execution '${id}' does not exist`
+      });
+    }
+
+    // Extract workflow name from execution ID if not present
+    if (!execution.workflow_name) {
+      const parts = execution.id.split('-');
+      execution.workflow_name = parts.length > 2 ? parts[1] : 'unknown';
+    }
+
+    res.json({
+      success: true,
+      data: {
+        execution: {
+          id: execution.id,
+          workflow_name: execution.workflow_name,
+          status: execution.status,
+          steps: execution.steps || [],
+          started_at: execution.started_at,
+          completed_at: execution.completed_at,
+          duration_ms: execution.completed_at
+            ? new Date(execution.completed_at) - new Date(execution.started_at)
+            : null,
+          trigger: execution.trigger || 'manual'
+        }
+      }
+    });
+  } catch (error) {
+    console.error(`Error getting execution ${req.params.id}:`, error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to get execution',
+      message: error.message
+    });
+  }
+});
+
+/**
+ * DELETE /api/v1/workflows/executions/:id
+ * Cancel a running execution (if supported)
+ */
+router.delete('/executions/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const execution = await workflowEngine.getExecution(id);
+
+    if (!execution) {
+      return res.status(404).json({
+        success: false,
+        error: 'Execution not found',
+        message: `Execution '${id}' does not exist`
+      });
+    }
+
+    if (execution.status !== 'running') {
+      return res.status(400).json({
+        success: false,
+        error: 'Cannot cancel',
+        message: `Execution is not running (status: ${execution.status})`
+      });
+    }
+
+    // Mark as cancelled (actual cancellation would require more infrastructure)
+    execution.status = 'cancelled';
+    execution.cancelled_at = new Date().toISOString();
+
+    res.json({
+      success: true,
+      data: {
+        execution_id: id,
+        status: 'cancelled',
+        message: 'Execution cancellation requested'
+      }
+    });
+  } catch (error) {
+    console.error(`Error cancelling execution ${req.params.id}:`, error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to cancel execution',
+      message: error.message
+    });
+  }
+});
+
+/**
+ * GET /api/v1/workflows/stats
+ * Get workflow execution statistics
+ */
+router.get('/stats', async (req, res) => {
+  try {
+    const workflows = workflowEngine.listWorkflows();
+    const stats = {
+      total_workflows: workflows.length,
+      workflows: {}
+    };
+
+    for (const workflow of workflows) {
+      const executions = await workflowEngine.listExecutions(workflow.name, { limit: 100 });
+
+      const completed = executions.executions.filter(e => e.status === 'completed');
+      const failed = executions.executions.filter(e => e.status === 'failed');
+
+      const avgDuration = completed.length > 0
+        ? completed.reduce((sum, e) => sum + (e.duration_ms || 0), 0) / completed.length
+        : 0;
+
+      stats.workflows[workflow.name] = {
+        total_executions: executions.total,
+        completed: completed.length,
+        failed: failed.length,
+        success_rate: executions.total > 0
+          ? ((completed.length / executions.total) * 100).toFixed(1) + '%'
+          : 'N/A',
+        avg_duration_ms: Math.round(avgDuration)
+      };
+    }
+
+    res.json({
+      success: true,
+      data: stats
+    });
+  } catch (error) {
+    console.error('Error getting workflow stats:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to get statistics',
       message: error.message
     });
   }
@@ -249,40 +428,6 @@ router.get('/:name/executions', async (req, res) => {
 });
 
 /**
- * GET /api/v1/workflows/executions/:id
- * Get execution details by ID
- */
-router.get('/executions/:id', async (req, res) => {
-  try {
-    const { id } = req.params;
-
-    const execution = await workflowEngine.getExecution(id);
-
-    if (!execution) {
-      return res.status(404).json({
-        success: false,
-        error: 'Execution not found',
-        message: `Execution '${id}' does not exist`
-      });
-    }
-
-    res.json({
-      success: true,
-      data: {
-        execution
-      }
-    });
-  } catch (error) {
-    console.error(`Error getting execution ${req.params.id}:`, error);
-    res.status(500).json({
-      success: false,
-      error: 'Failed to get execution',
-      message: error.message
-    });
-  }
-});
-
-/**
  * POST /api/v1/workflows/:name/validate
  * Validate a workflow definition
  */
@@ -331,101 +476,6 @@ router.post('/:name/validate', async (req, res) => {
     res.status(400).json({
       success: false,
       error: 'Workflow validation failed',
-      message: error.message
-    });
-  }
-});
-
-/**
- * DELETE /api/v1/workflows/executions/:id
- * Cancel a running execution (if supported)
- */
-router.delete('/executions/:id', async (req, res) => {
-  try {
-    const { id } = req.params;
-
-    const execution = await workflowEngine.getExecution(id);
-
-    if (!execution) {
-      return res.status(404).json({
-        success: false,
-        error: 'Execution not found',
-        message: `Execution '${id}' does not exist`
-      });
-    }
-
-    if (execution.status !== 'running') {
-      return res.status(400).json({
-        success: false,
-        error: 'Cannot cancel',
-        message: `Execution is not running (status: ${execution.status})`
-      });
-    }
-
-    // Mark as cancelled (actual cancellation would require more infrastructure)
-    execution.status = 'cancelled';
-    execution.cancelled_at = new Date().toISOString();
-
-    res.json({
-      success: true,
-      data: {
-        execution_id: id,
-        status: 'cancelled',
-        message: 'Execution cancellation requested'
-      }
-    });
-  } catch (error) {
-    console.error(`Error cancelling execution ${req.params.id}:`, error);
-    res.status(500).json({
-      success: false,
-      error: 'Failed to cancel execution',
-      message: error.message
-    });
-  }
-});
-
-/**
- * GET /api/v1/workflows/stats
- * Get workflow execution statistics
- */
-router.get('/stats', async (req, res) => {
-  try {
-    const workflows = workflowEngine.listWorkflows();
-    const stats = {
-      total_workflows: workflows.length,
-      workflows: {}
-    };
-
-    for (const workflow of workflows) {
-      const executions = await workflowEngine.listExecutions(workflow.name, { limit: 100 });
-
-      const completed = executions.executions.filter(e => e.status === 'completed');
-      const failed = executions.executions.filter(e => e.status === 'failed');
-
-      const avgDuration = completed.length > 0
-        ? completed.reduce((sum, e) => sum + (e.duration_ms || 0), 0) / completed.length
-        : 0;
-
-      stats.workflows[workflow.name] = {
-        total_executions: executions.total,
-        completed: completed.length,
-        failed: failed.length,
-        success_rate: executions.total > 0
-          ? ((completed.length / executions.total) * 100).toFixed(1) + '%'
-          : 'N/A',
-        avg_duration_ms: Math.round(avgDuration)
-      };
-    }
-
-    res.json({
-      success: true,
-      data: stats
-    });
-  } catch (error) {
-    console.error('Error getting workflow stats:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Failed to get statistics',
       message: error.message
     });
   }

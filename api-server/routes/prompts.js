@@ -9,8 +9,20 @@ const router = express.Router();
 const fs = require('fs').promises;
 const path = require('path');
 
-// Path to the prompts registry
-const REGISTRY_PATH = path.join(__dirname, '../../llm-mesh/prompts/registry.json');
+// Paths to the prompts registry
+// Primary: coordination/prompts for centralized storage
+// Fallback: llm-mesh/prompts for legacy support
+const COORD_DIR = process.env.COMMIT_RELAY_HOME
+  ? path.join(process.env.COMMIT_RELAY_HOME, 'coordination')
+  : path.join(__dirname, '../../coordination');
+
+const PRIMARY_REGISTRY_PATH = path.join(COORD_DIR, 'prompts/registry.json');
+const FALLBACK_REGISTRY_PATH = path.join(__dirname, '../../llm-mesh/prompts/registry.json');
+
+// Use primary path if it exists, otherwise fallback
+const REGISTRY_PATH = require('fs').existsSync(PRIMARY_REGISTRY_PATH)
+  ? PRIMARY_REGISTRY_PATH
+  : FALLBACK_REGISTRY_PATH;
 
 /**
  * Load the prompts registry from disk
