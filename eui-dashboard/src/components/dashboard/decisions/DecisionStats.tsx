@@ -88,8 +88,16 @@ const DecisionStats = () => {
     )
   }
 
-  const summary = data?.summary || {}
-  const recentActivity = data?.recent_activity || {}
+  const summary = data?.summary || {} as {
+    total_decisions?: number
+    avg_confidence?: number
+    high_confidence_rate?: number
+  }
+  const recentActivity = data?.recent_activity || {} as {
+    last_hour?: number
+    last_day?: number
+    last_week?: number
+  }
 
   return (
     <>

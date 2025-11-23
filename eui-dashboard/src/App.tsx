@@ -1,7 +1,40 @@
+import React from 'react'
 import { EuiProvider, EuiThemeColorMode } from '@elastic/eui'
 import { appendIconComponentCache } from '@elastic/eui/es/components/icon/icon'
 import DashboardContainer from './components/dashboard/DashboardContainer'
 import { useTheme } from './hooks/useTheme'
+
+// Error Boundary to catch rendering errors
+class ErrorBoundary extends React.Component<
+  { children: React.ReactNode },
+  { hasError: boolean; error: Error | null }
+> {
+  constructor(props: { children: React.ReactNode }) {
+    super(props)
+    this.state = { hasError: false, error: null }
+  }
+
+  static getDerivedStateFromError(error: Error) {
+    return { hasError: true, error }
+  }
+
+  componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
+    console.error('ErrorBoundary caught error:', error, errorInfo)
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div style={{ padding: 20, color: 'red' }}>
+          <h1>Something went wrong</h1>
+          <pre>{this.state.error?.message}</pre>
+          <pre>{this.state.error?.stack}</pre>
+        </div>
+      )
+    }
+    return this.props.children
+  }
+}
 
 // Import print-friendly styles
 import './styles/print.css'
@@ -55,6 +88,7 @@ import { icon as EuiIconMinimize } from '@elastic/eui/es/components/icon/assets/
 import { icon as EuiIconMenu } from '@elastic/eui/es/components/icon/assets/menu'
 import { icon as EuiIconIInCircle } from '@elastic/eui/es/components/icon/assets/help'
 import { icon as EuiIconFullScreen } from '@elastic/eui/es/components/icon/assets/full_screen'
+import { icon as EuiIconError } from '@elastic/eui/es/components/icon/assets/error'
 
 // Cache icons for EUI
 appendIconComponentCache({
@@ -103,16 +137,20 @@ appendIconComponentCache({
   minimize: EuiIconMinimize,
   menu: EuiIconMenu,
   iInCircle: EuiIconIInCircle,
+  help: EuiIconIInCircle,
   fullScreen: EuiIconFullScreen,
+  error: EuiIconError,
 })
 
 function App() {
   const { theme, toggleTheme } = useTheme()
 
   return (
-    <EuiProvider colorMode={theme as EuiThemeColorMode}>
-      <DashboardContainer theme={theme} onToggleTheme={toggleTheme} />
-    </EuiProvider>
+    <ErrorBoundary>
+      <EuiProvider colorMode={theme as EuiThemeColorMode}>
+        <DashboardContainer theme={theme} onToggleTheme={toggleTheme} />
+      </EuiProvider>
+    </ErrorBoundary>
   )
 }
 

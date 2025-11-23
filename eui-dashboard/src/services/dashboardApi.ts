@@ -592,20 +592,20 @@ export const getLLMCostsBudget = () =>
 
 // Workflow endpoints
 export const getWorkflows = () =>
-  fetchApi<any>('/workflows')
+  fetchApi<any>('/v1/workflows')
 
 export const getWorkflow = (name: string) =>
-  fetchApi<any>(`/workflows/${encodeURIComponent(name)}`)
+  fetchApi<any>(`/v1/workflows/${encodeURIComponent(name)}`)
 
 export const getWorkflowExecution = (id: string) =>
-  fetchApi<any>(`/workflows/executions/${id}`)
+  fetchApi<any>(`/v1/workflows/executions/${id}`)
 
 export const getWorkflowExecutions = (workflowName?: string, limit: number = 50) => {
   const params = new URLSearchParams()
   if (workflowName) params.append('workflow', workflowName)
   params.append('limit', limit.toString())
   const query = params.toString()
-  return fetchApi<any>(`/workflows/executions${query ? `?${query}` : ''}`)
+  return fetchApi<any>(`/v1/workflows/executions${query ? `?${query}` : ''}`)
 }
 
 export const triggerWorkflow = async (
@@ -613,7 +613,7 @@ export const triggerWorkflow = async (
   context?: Record<string, any>
 ): Promise<ApiResponse<any>> => {
   try {
-    const response = await fetch(`${API_BASE}/workflows/${encodeURIComponent(workflowName)}/trigger`, {
+    const response = await fetch(`${API_BASE}/v1/workflows/${encodeURIComponent(workflowName)}/trigger`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ context })
@@ -633,7 +633,7 @@ export const triggerWorkflow = async (
 
 export const cancelWorkflowExecution = async (executionId: string): Promise<ApiResponse<any>> => {
   try {
-    const response = await fetch(`${API_BASE}/workflows/executions/${executionId}/cancel`, {
+    const response = await fetch(`${API_BASE}/v1/workflows/executions/${executionId}/cancel`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' }
     })
