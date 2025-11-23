@@ -71,7 +71,7 @@ for service_pair in "${CRITICAL_SERVICES[@]}"; do
 done
 
 # Step 2: Check dashboard health
-if curl -s http://localhost:3000/api/health > /dev/null 2>&1; then
+if curl -s http://localhost:5001/api/health > /dev/null 2>&1; then
     log "✅ Dashboard server is responsive"
 else
     log "⚠️ Dashboard not responding, starting..."
@@ -133,12 +133,12 @@ You are an AI worker (ID: WORKER_ID_PLACEHOLDER) executing task TASK_ID_PLACEHOL
 ## Service Management Awareness
 
 Before executing tasks, you should be aware that the following services are available:
-- Dashboard API: http://localhost:3000/api/ (health, metrics, events, tasks, etc.)
+- Dashboard API: http://localhost:5001/api/ (health, metrics, events, tasks, etc.)
 - Worker coordination files in: /Users/ryandahlberg/Projects/commit-relay/coordination/
 - System health status in: /Users/ryandahlberg/Projects/commit-relay/coordination/system-health.json
 
 If you encounter service issues during execution:
-1. Check service health: curl http://localhost:3000/api/health
+1. Check service health: curl http://localhost:5001/api/health
 2. Report issues to: /Users/ryandahlberg/Projects/commit-relay/coordination/health-alerts.json
 3. You can attempt to restart services using: /Users/ryandahlberg/Projects/commit-relay/scripts/ensure-services.sh
 
@@ -179,7 +179,7 @@ echo '{"timestamp": "'$(date -u +%Y-%m-%dT%H:%M:%SZ)'", "status": "working", "pr
 
 **Option 2 - Use dashboard API:**
 ```bash
-curl -s -X POST http://localhost:3000/api/workers/WORKER_ID_PLACEHOLDER/heartbeat \
+curl -s -X POST http://localhost:5001/api/workers/WORKER_ID_PLACEHOLDER/heartbeat \
   -H "Content-Type: application/json" \
   -d '{"status": "working", "progress": "Current activity description"}'
 ```
