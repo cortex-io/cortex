@@ -12,6 +12,10 @@ ROUTING_LOG="$KB_DIR/routing-decisions.jsonl"
 ROUTING_LOG_BACKUP="$SCRIPT_DIR/../logs/routing-decisions.jsonl"
 COMMIT_RELAY_HOME="${COMMIT_RELAY_HOME:-$(cd "$SCRIPT_DIR/../../../.." && pwd)}"
 
+# Model selection configuration
+MODEL_TIERS_CONFIG="$COMMIT_RELAY_HOME/llm-mesh/gateway/router/model-tiers.json"
+MODEL_SELECTION_LOG="$COMMIT_RELAY_HOME/coordination/metrics/model-selection.jsonl"
+
 # Learned patterns for adaptive routing (Phase 2 Enhancement #16)
 LEARNED_PATTERNS="$COMMIT_RELAY_HOME/coordination/knowledge-base/learned-patterns/patterns-latest.json"
 LEARNED_WEIGHTS_ENABLED="${LEARNED_WEIGHTS_ENABLED:-true}"
@@ -314,6 +318,203 @@ apply_learned_boost() {
 # Load learned weights and utility weights at startup
 load_learned_weights
 load_utility_weights
+
+##############################################################################
+# get_model_recommendation: Get LLM model recommendation based on task
+# Args:
+#   $1: task_description
+#   $2: complexity_score (optional, 1-10)
+#   $3: sensitivity_level (optional, none|low|medium|high)
+# Returns: JSON with model recommendation
+##############################################################################
+get_model_recommendation() {
+    local task_description="$1"
+    local complexity_score="${2:-5}"
+    local sensitivity_level="${3:-none}"
+
+    # Determine tier based on complexity
+    local tier="balanced"
+    if [ "$complexity_score" -ge 8 ]; then
+        tier="powerful"
+    elif [ "$complexity_score" -le 4 ]; then
+        tier="fast"
+    fi
+
+    # Override for high sensitivity
+    if [ "$sensitivity_level" = "high" ]; then
+        tier="local"
+    elif [ "$sensitivity_level" = "medium" ] && [ "$tier" = "fast" ]; then
+        tier="balanced"
+    fi
+
+    # Get recommended model from tier
+    local model=""
+    local provider=""
+
+    if [ -f "$MODEL_TIERS_CONFIG" ]; then
+        model=$(jq -r ".tiers.${tier}.models[0].id // \"\"" "$MODEL_TIERS_CONFIG" 2>/dev/null)
+        provider=$(jq -r ".tiers.${tier}.models[0].provider // \"\"" "$MODEL_TIERS_CONFIG" 2>/dev/null)
+    fi
+
+    # Fallback defaults
+    if [ -z "$model" ]; then
+        case "$tier" in
+            fast)
+                model="claude-haiku"
+                provider="anthropic"
+                ;;
+            balanced)
+                model="claude-sonnet-4"
+                provider="anthropic"
+                ;;
+            powerful)
+                model="claude-opus-4"
+                provider="anthropic"
+                ;;
+            local)
+                model="llama2-70b"
+                provider="ollama"
+                ;;
+        esac
+    fi
+
+    # Generate reasoning
+    local reasoning="Selected ${model} from ${tier} tier"
+    if [ "$sensitivity_level" = "high" ]; then
+        reasoning="${reasoning} (forced local for high sensitivity)"
+    elif [ "$complexity_score" -ge 8 ]; then
+        reasoning="${reasoning} (high complexity score: ${complexity_score})"
+    elif [ "$complexity_score" -le 4 ]; then
+        reasoning="${reasoning} (low complexity score: ${complexity_score})"
+    fi
+
+    jq -n \
+        --arg model "$model" \
+        --arg provider "$provider" \
+        --arg tier "$tier" \
+        --argjson complexity "$complexity_score" \
+        --arg sensitivity "$sensitivity_level" \
+        --arg reasoning "$reasoning" \
+        '{
+            model: $model,
+            provider: $provider,
+            tier: $tier,
+            complexity_score: $complexity,
+            sensitivity_level: $sensitivity,
+            reasoning: $reasoning
+        }'
+}
+
+##############################################################################
+# score_task_complexity: Score task complexity for model selection
+# Args:
+#   $1: task_description
+# Returns: complexity score (1-10)
+##############################################################################
+score_task_complexity() {
+    local task_description="$1"
+    local task_lower=$(echo "$task_description" | tr '[:upper:]' '[:lower:]')
+
+    local score=5  # Base score
+
+    # High complexity indicators
+    local high_keywords="security vulnerability exploit cve audit architecture performance optimization distributed migration refactor compliance encryption"
+    for kw in $high_keywords; do
+        if echo "$task_lower" | grep -qi "$kw"; then
+            score=$((score + 1))
+        fi
+    done
+
+    # Low complexity indicators
+    local low_keywords="simple basic quick minor typo format style comment"
+    for kw in $low_keywords; do
+        if echo "$task_lower" | grep -qi "$kw"; then
+            score=$((score - 1))
+        fi
+    done
+
+    # Clamp to 1-10
+    if [ $score -lt 1 ]; then
+        score=1
+    fi
+    if [ $score -gt 10 ]; then
+        score=10
+    fi
+
+    echo $score
+}
+
+##############################################################################
+# detect_task_sensitivity: Detect sensitivity level of task
+# Args:
+#   $1: task_description
+# Returns: sensitivity level (none|low|medium|high)
+##############################################################################
+detect_task_sensitivity() {
+    local task_description="$1"
+    local task_lower=$(echo "$task_description" | tr '[:upper:]' '[:lower:]')
+
+    local level="none"
+
+    # High sensitivity patterns
+    if echo "$task_lower" | grep -qiE "password|credential|secret|private.key|api.key|token|ssn|credit.card"; then
+        level="high"
+    # Medium sensitivity patterns
+    elif echo "$task_lower" | grep -qiE "internal|staging|user.data|customer|employee"; then
+        level="medium"
+    # Low sensitivity patterns
+    elif echo "$task_lower" | grep -qiE "email|phone|address|config"; then
+        level="low"
+    fi
+
+    echo "$level"
+}
+
+##############################################################################
+# log_model_selection: Log model selection decision
+# Args:
+#   $1: task_id
+#   $2: model
+#   $3: provider
+#   $4: tier
+#   $5: complexity_score
+#   $6: sensitivity_level
+#   $7: reasoning
+##############################################################################
+log_model_selection() {
+    local task_id="$1"
+    local model="$2"
+    local provider="$3"
+    local tier="$4"
+    local complexity_score="$5"
+    local sensitivity_level="$6"
+    local reasoning="$7"
+    local timestamp=$(date +"%Y-%m-%dT%H:%M:%S%z")
+
+    mkdir -p "$(dirname "$MODEL_SELECTION_LOG")"
+
+    local log_entry=$(jq -n \
+        --arg timestamp "$timestamp" \
+        --arg task_id "$task_id" \
+        --arg model "$model" \
+        --arg provider "$provider" \
+        --arg tier "$tier" \
+        --argjson complexity "$complexity_score" \
+        --arg sensitivity "$sensitivity_level" \
+        --arg reasoning "$reasoning" \
+        '{
+            timestamp: $timestamp,
+            task_id: $task_id,
+            model: $model,
+            provider: $provider,
+            tier: $tier,
+            complexity_score: $complexity,
+            sensitivity_level: $sensitivity,
+            reasoning: $reasoning
+        }')
+
+    echo "$log_entry" >> "$MODEL_SELECTION_LOG"
+}
 
 ##############################################################################
 # calculate_expert_score: Score a task description against an expert's patterns
@@ -640,6 +841,11 @@ route_task_moe() {
     fi
     local explanation=$(generate_routing_explanation "$task_description" "$primary_expert" "$primary_confidence" "$strategy" "$type_routed")
 
+    # Generate model recommendation based on task analysis
+    local complexity=$(score_task_complexity "$task_description")
+    local sensitivity=$(detect_task_sensitivity "$task_description")
+    local model_rec=$(get_model_recommendation "$task_description" "$complexity" "$sensitivity")
+
     local routing_decision=$(jq -n \
         --arg task_id "$task_id" \
         --arg timestamp "$timestamp" \
@@ -651,6 +857,7 @@ route_task_moe() {
         --argjson inv_conf "$inv_conf" \
         --argjson parallel "$parallel_json" \
         --arg explanation "$explanation" \
+        --argjson model_recommendation "$model_rec" \
         '{
             task_id: $task_id,
             timestamp: $timestamp,
@@ -665,9 +872,17 @@ route_task_moe() {
                     security: $sec_conf,
                     inventory: $inv_conf
                 },
-                explanation: $explanation
+                explanation: $explanation,
+                model_recommendation: $model_recommendation
             }
         }')
+
+    # Log model selection decision
+    local rec_model=$(echo "$model_rec" | jq -r '.model')
+    local rec_provider=$(echo "$model_rec" | jq -r '.provider')
+    local rec_tier=$(echo "$model_rec" | jq -r '.tier')
+    local rec_reasoning=$(echo "$model_rec" | jq -r '.reasoning')
+    log_model_selection "$task_id" "$rec_model" "$rec_provider" "$rec_tier" "$complexity" "$sensitivity" "$rec_reasoning"
 
     # Log routing decision (with immediate flush)
     # v5.1: Output compact single-line JSON (proper JSONL format)
