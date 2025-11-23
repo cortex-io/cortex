@@ -1,6 +1,6 @@
 {
-  "version": "1.0.0",
-  "last_updated": "2025-11-18T00:00:00-0600",
+  "version": "1.1.0",
+  "last_updated": "2025-11-23T00:00:00-0600",
   "fixes": [
     {
       "fix_id": "fix_increase_memory_for_oom",
@@ -439,6 +439,389 @@
       "rollback": {
         "type": "none",
         "reason": "Manual approval required, validation monitored"
+      }
+    },
+    {
+      "fix_id": "security_dependency_update",
+      "category": "security",
+      "name": "Update Vulnerable Dependency",
+      "description": "Update vulnerable dependency to patched version",
+      "applies_to_patterns": [
+        "security:outdated_dependency",
+        "security:vulnerable_dependency_version"
+      ],
+      "prerequisites": {
+        "min_pattern_confidence": 0.90,
+        "min_pattern_occurrences": 1,
+        "requires_dependency_scan": true,
+        "patch_available": true
+      },
+      "safety": {
+        "safety_score": 0.70,
+        "requires_approval": true,
+        "requires_review": true,
+        "rollback_supported": true,
+        "reversible": true,
+        "risk_level": "high"
+      },
+      "actions": [
+        {
+          "type": "update_dependency",
+          "operation": "upgrade_to_patched",
+          "verify_compatibility": true
+        },
+        {
+          "type": "run_tests",
+          "test_suite": "integration"
+        },
+        {
+          "type": "emit_event",
+          "event_type": "security_dependency_updated"
+        }
+      ],
+      "validation": {
+        "monitoring_period_hours": 48,
+        "success_criteria": [
+          {
+            "type": "vulnerability_scan_pass",
+            "severity_threshold": "high"
+          },
+          {
+            "type": "test_suite_pass",
+            "min_pass_rate": 1.0
+          },
+          {
+            "type": "no_regression_detected",
+            "measurement_window_hours": 48
+          }
+        ]
+      },
+      "rollback": {
+        "type": "restore_previous_version",
+        "conditions": [
+          {
+            "type": "test_failure",
+            "action": "immediate"
+          },
+          {
+            "type": "compatibility_issue",
+            "action": "immediate"
+          }
+        ]
+      },
+      "metadata": {
+        "priority": "high",
+        "handler_type": "update_dependency",
+        "security_category": "dependency_management"
+      }
+    },
+    {
+      "fix_id": "security_secret_rotation",
+      "category": "security",
+      "name": "Rotate Exposed Secret",
+      "description": "Rotate exposed credentials and update references",
+      "applies_to_patterns": [
+        "security:exposed_secret",
+        "security:credential_leak",
+        "security:api_key_exposed"
+      ],
+      "prerequisites": {
+        "min_pattern_confidence": 0.95,
+        "min_pattern_occurrences": 1,
+        "requires_secret_manager": true,
+        "immediate_action": true
+      },
+      "safety": {
+        "safety_score": 0.60,
+        "requires_approval": false,
+        "auto_approve": false,
+        "escalate_to": "security-master",
+        "rollback_supported": false,
+        "reversible": false,
+        "risk_level": "critical"
+      },
+      "actions": [
+        {
+          "type": "rotate_secret",
+          "invalidate_old": true,
+          "update_references": true
+        },
+        {
+          "type": "audit_access_logs",
+          "timeframe_hours": 72
+        },
+        {
+          "type": "notify_security_team",
+          "urgency": "critical"
+        },
+        {
+          "type": "emit_event",
+          "event_type": "security_secret_rotated"
+        }
+      ],
+      "validation": {
+        "monitoring_period_hours": 24,
+        "success_criteria": [
+          {
+            "type": "old_secret_invalidated",
+            "verified": true
+          },
+          {
+            "type": "new_secret_active",
+            "all_references_updated": true
+          },
+          {
+            "type": "no_authentication_failures",
+            "measurement_window_hours": 24
+          }
+        ]
+      },
+      "rollback": {
+        "type": "none",
+        "reason": "Secret rotation is non-reversible for security reasons"
+      },
+      "metadata": {
+        "priority": "critical",
+        "handler_type": "rotate_secret",
+        "security_category": "credential_management",
+        "escalation_required": true
+      }
+    },
+    {
+      "fix_id": "security_package_replace",
+      "category": "security",
+      "name": "Replace Vulnerable Package",
+      "description": "Replace vulnerable package with secure alternative",
+      "applies_to_patterns": [
+        "security:vulnerable_package",
+        "security:unmaintained_dependency",
+        "security:known_exploit"
+      ],
+      "prerequisites": {
+        "min_pattern_confidence": 0.85,
+        "min_pattern_occurrences": 1,
+        "alternative_available": true,
+        "requires_compatibility_check": true
+      },
+      "safety": {
+        "safety_score": 0.65,
+        "requires_approval": true,
+        "requires_review": true,
+        "rollback_supported": true,
+        "reversible": true,
+        "risk_level": "high"
+      },
+      "actions": [
+        {
+          "type": "replace_package",
+          "find_alternative": true,
+          "migrate_api_calls": true
+        },
+        {
+          "type": "run_tests",
+          "test_suite": "full"
+        },
+        {
+          "type": "update_documentation",
+          "sections": ["dependencies", "migration"]
+        },
+        {
+          "type": "emit_event",
+          "event_type": "security_package_replaced"
+        }
+      ],
+      "validation": {
+        "monitoring_period_hours": 72,
+        "success_criteria": [
+          {
+            "type": "vulnerability_scan_pass",
+            "severity_threshold": "medium"
+          },
+          {
+            "type": "test_suite_pass",
+            "min_pass_rate": 1.0
+          },
+          {
+            "type": "functionality_preserved",
+            "measurement_window_hours": 72
+          }
+        ]
+      },
+      "rollback": {
+        "type": "restore_previous_package",
+        "conditions": [
+          {
+            "type": "test_failure",
+            "action": "immediate"
+          },
+          {
+            "type": "functionality_regression",
+            "action": "immediate"
+          }
+        ]
+      },
+      "metadata": {
+        "priority": "high",
+        "handler_type": "replace_package",
+        "security_category": "dependency_management"
+      }
+    },
+    {
+      "fix_id": "security_config_fix",
+      "category": "security",
+      "name": "Fix Insecure Configuration",
+      "description": "Fix insecure configuration settings",
+      "applies_to_patterns": [
+        "security:insecure_config",
+        "security:weak_encryption",
+        "security:permissive_cors",
+        "security:debug_enabled_production"
+      ],
+      "prerequisites": {
+        "min_pattern_confidence": 0.80,
+        "min_pattern_occurrences": 1,
+        "secure_default_available": true
+      },
+      "safety": {
+        "safety_score": 0.85,
+        "requires_approval": false,
+        "auto_approve": true,
+        "auto_approve_conditions": {
+          "severity_below": "critical",
+          "non_breaking_change": true
+        },
+        "rollback_supported": true,
+        "reversible": true,
+        "risk_level": "medium"
+      },
+      "actions": [
+        {
+          "type": "update_config",
+          "apply_secure_defaults": true,
+          "preserve_custom_settings": true
+        },
+        {
+          "type": "validate_config",
+          "security_scan": true
+        },
+        {
+          "type": "emit_event",
+          "event_type": "security_config_fixed"
+        }
+      ],
+      "validation": {
+        "monitoring_period_hours": 24,
+        "success_criteria": [
+          {
+            "type": "security_scan_pass",
+            "severity_threshold": "medium"
+          },
+          {
+            "type": "service_health_check",
+            "min_pass_rate": 1.0
+          },
+          {
+            "type": "no_functionality_impact",
+            "measurement_window_hours": 24
+          }
+        ]
+      },
+      "rollback": {
+        "type": "restore_previous_config",
+        "conditions": [
+          {
+            "type": "service_disruption",
+            "action": "immediate"
+          },
+          {
+            "type": "validation_failure",
+            "action": "immediate"
+          }
+        ]
+      },
+      "metadata": {
+        "priority": "medium",
+        "handler_type": "update_config",
+        "security_category": "configuration_hardening"
+      }
+    },
+    {
+      "fix_id": "security_license_update",
+      "category": "security",
+      "name": "Update Package License",
+      "description": "Replace package with appropriately licensed alternative",
+      "applies_to_patterns": [
+        "security:license_violation",
+        "security:incompatible_license",
+        "security:copyleft_contamination"
+      ],
+      "prerequisites": {
+        "min_pattern_confidence": 0.90,
+        "min_pattern_occurrences": 1,
+        "compliant_alternative_available": true,
+        "requires_legal_review": false
+      },
+      "safety": {
+        "safety_score": 0.75,
+        "requires_approval": true,
+        "requires_review": true,
+        "rollback_supported": true,
+        "reversible": true,
+        "risk_level": "medium"
+      },
+      "actions": [
+        {
+          "type": "update_license",
+          "find_compliant_alternative": true,
+          "preserve_functionality": true
+        },
+        {
+          "type": "update_license_manifest",
+          "regenerate": true
+        },
+        {
+          "type": "run_tests",
+          "test_suite": "integration"
+        },
+        {
+          "type": "emit_event",
+          "event_type": "security_license_updated"
+        }
+      ],
+      "validation": {
+        "monitoring_period_hours": 48,
+        "success_criteria": [
+          {
+            "type": "license_scan_pass",
+            "all_compliant": true
+          },
+          {
+            "type": "test_suite_pass",
+            "min_pass_rate": 1.0
+          },
+          {
+            "type": "functionality_preserved",
+            "measurement_window_hours": 48
+          }
+        ]
+      },
+      "rollback": {
+        "type": "restore_previous_package",
+        "conditions": [
+          {
+            "type": "test_failure",
+            "action": "immediate"
+          },
+          {
+            "type": "functionality_regression",
+            "action": "immediate"
+          }
+        ]
+      },
+      "metadata": {
+        "priority": "medium",
+        "handler_type": "update_license",
+        "security_category": "license_compliance"
       }
     }
   ]
