@@ -1,8 +1,10 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
+import commonjs from 'vite-plugin-commonjs'
+import path from 'path'
 
 export default defineConfig({
-  plugins: [react()],
+  plugins: [react(), commonjs()],
   server: {
     port: 5002,
     proxy: {
@@ -28,13 +30,17 @@ export default defineConfig({
       '@dagrejs/dagre',
       '@dagrejs/graphlib'
     ],
+    force: true,
     esbuildOptions: {
-      target: 'esnext'
+      target: 'esnext',
+      define: {
+        global: 'globalThis'
+      }
     }
   },
   resolve: {
     alias: {
-      '@dagrejs/graphlib': '@dagrejs/graphlib/dist/graphlib.min.js'
+      '@dagrejs/graphlib': path.resolve(__dirname, 'node_modules/@dagrejs/graphlib/dist/graphlib.min.js')
     }
   }
 })
