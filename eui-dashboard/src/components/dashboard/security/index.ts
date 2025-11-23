@@ -7,3 +7,4 @@
 export { default as SecurityDashboard } from './SecurityDashboard'
 export { default as VulnerabilityTable } from './VulnerabilityTable'
 export { default as RepositorySecurityCard } from './RepositorySecurityCard'
+export { default as RemediationPanel } from './RemediationPanel'

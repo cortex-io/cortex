@@ -29,7 +29,10 @@ const COORDINATION_DIR = path.join(COMMIT_RELAY_HOME, 'coordination');
 const AGENTS_DIR = path.join(COMMIT_RELAY_HOME, 'agents/workers');
 const VULNERABILITY_SUMMARY_PATH = path.join(COORDINATION_DIR, 'metrics/vulnerability-summary.json');
 const SCAN_HISTORY_PATH = path.join(COORDINATION_DIR, 'metrics/security-scan-history.jsonl');
+const REMEDIATIONS_PATH = path.join(COORDINATION_DIR, 'metrics/security-remediations.jsonl');
 const SPAWN_WORKER_SCRIPT = path.join(COMMIT_RELAY_HOME, 'scripts/spawn-worker.sh');
+const SECURITY_PR_GENERATOR_SCRIPT = path.join(COMMIT_RELAY_HOME, 'scripts/security-pr-generator.sh');
+const EVENTS_PATH = path.join(COORDINATION_DIR, 'events/security-events.jsonl');
 
 /**
  * Helper: Read JSON file safely
@@ -848,6 +851,685 @@ router.get('/trends', async (req, res) => {
     res.status(500).json({
       success: false,
       error: 'Failed to get security trends',
+      message: error.message,
+      timestamp: new Date().toISOString()
+    });
+  }
+});
+
+/**
+ * Helper: Write JSONL entry to file
+ * @param {string} filePath - Path to JSONL file
+ * @param {Object} entry - Entry to append
+ */
+async function writeJsonlEntry(filePath, entry) {
+  const dir = path.dirname(filePath);
+  await fs.mkdir(dir, { recursive: true });
+  await fs.appendFile(filePath, JSON.stringify(entry) + '\n');
+}
+
+/**
+ * Helper: Update entry in JSONL file by ID
+ * @param {string} filePath - Path to JSONL file
+ * @param {string} id - ID of entry to update
+ * @param {Object} updates - Fields to update
+ * @returns {Promise<Object|null>} Updated entry or null if not found
+ */
+async function updateJsonlEntry(filePath, id, updates) {
+  const entries = await readJsonlFile(filePath);
+  let updatedEntry = null;
+
+  const updatedEntries = entries.map(entry => {
+    if (entry.id === id) {
+      updatedEntry = { ...entry, ...updates };
+      return updatedEntry;
+    }
+    return entry;
+  });
+
+  if (updatedEntry) {
+    const content = updatedEntries.map(e => JSON.stringify(e)).join('\n') + '\n';
+    await fs.writeFile(filePath, content);
+  }
+
+  return updatedEntry;
+}
+
+/**
+ * Helper: Log security event
+ * @param {string} eventType - Type of event
+ * @param {Object} data - Event data
+ */
+async function logSecurityEvent(eventType, data) {
+  const event = {
+    id: `evt-${Date.now()}-${Math.random().toString(36).substring(2, 8)}`,
+    type: eventType,
+    timestamp: new Date().toISOString(),
+    ...data
+  };
+
+  try {
+    await writeJsonlEntry(EVENTS_PATH, event);
+  } catch (error) {
+    console.warn('Could not log security event:', error.message);
+  }
+}
+
+/**
+ * GET /api/v1/security/remediations
+ * List remediation records with filtering and pagination
+ */
+router.get('/remediations', async (req, res) => {
+  try {
+    const {
+      status,
+      repository,
+      limit = 50,
+      offset = 0
+    } = req.query;
+
+    const limitNum = parseInt(limit);
+    const offsetNum = parseInt(offset);
+
+    let remediations = await readJsonlFile(REMEDIATIONS_PATH);
+
+    // Apply filters
+    if (status) {
+      const statuses = status.toLowerCase().split(',');
+      remediations = remediations.filter(r =>
+        statuses.includes((r.status || 'pending').toLowerCase())
+      );
+    }
+
+    if (repository) {
+      remediations = remediations.filter(r =>
+        r.repository && r.repository.toLowerCase().includes(repository.toLowerCase())
+      );
+    }
+
+    // Sort by created_at (most recent first)
+    remediations.sort((a, b) => {
+      const dateA = new Date(a.created_at || 0);
+      const dateB = new Date(b.created_at || 0);
+      return dateB - dateA;
+    });
+
+    // Apply pagination
+    const total = remediations.length;
+    const paginated = remediations.slice(offsetNum, offsetNum + limitNum);
+
+    // Summary statistics
+    const summary = {
+      total,
+      by_status: {
+        pending: remediations.filter(r => r.status === 'pending').length,
+        approved: remediations.filter(r => r.status === 'approved').length,
+        rejected: remediations.filter(r => r.status === 'rejected').length,
+        completed: remediations.filter(r => r.status === 'completed').length
+      },
+      by_fix_type: {}
+    };
+
+    // Group by fix type
+    for (const rem of remediations) {
+      const fixType = rem.fix_type || 'unknown';
+      summary.by_fix_type[fixType] = (summary.by_fix_type[fixType] || 0) + 1;
+    }
+
+    res.json({
+      success: true,
+      data: {
+        remediations: paginated,
+        pagination: {
+          total,
+          limit: limitNum,
+          offset: offsetNum,
+          has_more: offsetNum + limitNum < total
+        },
+        summary
+      },
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    console.error('Error getting remediations:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to get remediations',
+      message: error.message,
+      timestamp: new Date().toISOString()
+    });
+  }
+});
+
+/**
+ * GET /api/v1/security/remediations/:id
+ * Get single remediation with full details
+ */
+router.get('/remediations/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const remediations = await readJsonlFile(REMEDIATIONS_PATH);
+    const remediation = remediations.find(r => r.id === id);
+
+    if (!remediation) {
+      return res.status(404).json({
+        success: false,
+        error: 'Remediation not found',
+        message: `No remediation found with ID '${id}'`,
+        timestamp: new Date().toISOString()
+      });
+    }
+
+    res.json({
+      success: true,
+      data: remediation,
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    console.error('Error getting remediation:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to get remediation',
+      message: error.message,
+      timestamp: new Date().toISOString()
+    });
+  }
+});
+
+/**
+ * POST /api/v1/security/remediations/:id/approve
+ * Approve and trigger remediation fix
+ */
+router.post('/remediations/:id/approve', async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const remediations = await readJsonlFile(REMEDIATIONS_PATH);
+    const remediation = remediations.find(r => r.id === id);
+
+    if (!remediation) {
+      return res.status(404).json({
+        success: false,
+        error: 'Remediation not found',
+        message: `No remediation found with ID '${id}'`,
+        timestamp: new Date().toISOString()
+      });
+    }
+
+    if (remediation.status === 'approved' || remediation.status === 'completed') {
+      return res.status(400).json({
+        success: false,
+        error: 'Invalid state transition',
+        message: `Remediation is already ${remediation.status}`,
+        timestamp: new Date().toISOString()
+      });
+    }
+
+    // Update status to approved
+    const updatedRemediation = await updateJsonlEntry(REMEDIATIONS_PATH, id, {
+      status: 'approved',
+      approved_at: new Date().toISOString(),
+      approved_by: req.body.approved_by || 'api'
+    });
+
+    // Log approval event
+    await logSecurityEvent('remediation_approved', {
+      remediation_id: id,
+      vulnerability_id: remediation.vulnerability_id,
+      fix_type: remediation.fix_type,
+      repository: remediation.repository
+    });
+
+    // Trigger the fix using security-pr-generator.sh or auto-fix
+    let fixResult = null;
+    try {
+      const { stdout, stderr } = await execFileAsync(
+        SECURITY_PR_GENERATOR_SCRIPT,
+        [id],
+        {
+          cwd: COMMIT_RELAY_HOME,
+          timeout: 120000,
+          env: {
+            ...process.env,
+            COMMIT_RELAY_HOME,
+            REMEDIATION_ID: id
+          }
+        }
+      );
+
+      fixResult = {
+        success: true,
+        stdout: stdout.trim(),
+        stderr: stderr.trim()
+      };
+
+      // Update status to completed if fix succeeded
+      await updateJsonlEntry(REMEDIATIONS_PATH, id, {
+        status: 'completed',
+        completed_at: new Date().toISOString(),
+        fix_result: fixResult
+      });
+
+      await logSecurityEvent('remediation_completed', {
+        remediation_id: id,
+        fix_result: fixResult
+      });
+    } catch (fixError) {
+      console.warn('Fix execution warning:', fixError.message);
+      fixResult = {
+        success: false,
+        error: fixError.message,
+        note: 'Remediation approved but fix execution failed'
+      };
+
+      // Update with error
+      await updateJsonlEntry(REMEDIATIONS_PATH, id, {
+        fix_result: fixResult,
+        fix_error: fixError.message
+      });
+
+      await logSecurityEvent('remediation_fix_failed', {
+        remediation_id: id,
+        error: fixError.message
+      });
+    }
+
+    res.json({
+      success: true,
+      data: {
+        id,
+        status: fixResult && fixResult.success ? 'completed' : 'approved',
+        approved_at: updatedRemediation.approved_at,
+        fix_result: fixResult,
+        message: fixResult && fixResult.success
+          ? 'Remediation approved and fix applied successfully'
+          : 'Remediation approved but fix execution needs attention'
+      },
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    console.error('Error approving remediation:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to approve remediation',
+      message: error.message,
+      timestamp: new Date().toISOString()
+    });
+  }
+});
+
+/**
+ * POST /api/v1/security/remediations/:id/reject
+ * Reject remediation with reason
+ */
+router.post('/remediations/:id/reject', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { reason } = req.body;
+
+    if (!reason) {
+      return res.status(400).json({
+        success: false,
+        error: 'Missing required field',
+        message: 'reason is required for rejection',
+        timestamp: new Date().toISOString()
+      });
+    }
+
+    const remediations = await readJsonlFile(REMEDIATIONS_PATH);
+    const remediation = remediations.find(r => r.id === id);
+
+    if (!remediation) {
+      return res.status(404).json({
+        success: false,
+        error: 'Remediation not found',
+        message: `No remediation found with ID '${id}'`,
+        timestamp: new Date().toISOString()
+      });
+    }
+
+    if (remediation.status === 'rejected') {
+      return res.status(400).json({
+        success: false,
+        error: 'Invalid state transition',
+        message: 'Remediation is already rejected',
+        timestamp: new Date().toISOString()
+      });
+    }
+
+    // Update status to rejected
+    const updatedRemediation = await updateJsonlEntry(REMEDIATIONS_PATH, id, {
+      status: 'rejected',
+      rejected_at: new Date().toISOString(),
+      rejection_reason: reason,
+      rejected_by: req.body.rejected_by || 'api'
+    });
+
+    // Log rejection event
+    await logSecurityEvent('remediation_rejected', {
+      remediation_id: id,
+      vulnerability_id: remediation.vulnerability_id,
+      reason,
+      repository: remediation.repository
+    });
+
+    res.json({
+      success: true,
+      data: {
+        id,
+        status: 'rejected',
+        rejected_at: updatedRemediation.rejected_at,
+        rejection_reason: reason,
+        message: 'Remediation rejected successfully'
+      },
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    console.error('Error rejecting remediation:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to reject remediation',
+      message: error.message,
+      timestamp: new Date().toISOString()
+    });
+  }
+});
+
+/**
+ * GET /api/v1/security/remediations/:id/pr
+ * Get PR details for a remediation
+ */
+router.get('/remediations/:id/pr', async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const remediations = await readJsonlFile(REMEDIATIONS_PATH);
+    const remediation = remediations.find(r => r.id === id);
+
+    if (!remediation) {
+      return res.status(404).json({
+        success: false,
+        error: 'Remediation not found',
+        message: `No remediation found with ID '${id}'`,
+        timestamp: new Date().toISOString()
+      });
+    }
+
+    if (!remediation.pr_url) {
+      return res.status(404).json({
+        success: false,
+        error: 'No PR found',
+        message: `No pull request has been created for remediation '${id}'`,
+        timestamp: new Date().toISOString()
+      });
+    }
+
+    // Extract owner/repo/pr_number from PR URL
+    const prUrlMatch = remediation.pr_url.match(/github\.com\/([^/]+)\/([^/]+)\/pull\/(\d+)/);
+
+    let prDetails = {
+      url: remediation.pr_url,
+      status: remediation.pr_status || 'unknown',
+      created_at: remediation.pr_created_at,
+      merged_at: remediation.pr_merged_at
+    };
+
+    // Try to fetch additional PR details from GitHub if possible
+    if (prUrlMatch) {
+      const [, owner, repo, prNumber] = prUrlMatch;
+
+      try {
+        const { stdout } = await execFileAsync(
+          'gh',
+          ['pr', 'view', prNumber, '--repo', `${owner}/${repo}`, '--json',
+           'state,title,body,reviews,statusCheckRollup,mergeable,additions,deletions,changedFiles'],
+          {
+            cwd: COMMIT_RELAY_HOME,
+            timeout: 30000
+          }
+        );
+
+        const ghData = JSON.parse(stdout);
+        prDetails = {
+          ...prDetails,
+          title: ghData.title,
+          body: ghData.body,
+          state: ghData.state,
+          mergeable: ghData.mergeable,
+          additions: ghData.additions,
+          deletions: ghData.deletions,
+          changed_files: ghData.changedFiles,
+          reviews: ghData.reviews,
+          checks: ghData.statusCheckRollup
+        };
+      } catch (ghError) {
+        console.warn('Could not fetch GitHub PR details:', ghError.message);
+        prDetails.github_fetch_error = ghError.message;
+      }
+    }
+
+    res.json({
+      success: true,
+      data: {
+        remediation_id: id,
+        pr: prDetails
+      },
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    console.error('Error getting PR details:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to get PR details',
+      message: error.message,
+      timestamp: new Date().toISOString()
+    });
+  }
+});
+
+/**
+ * POST /api/v1/security/remediations/bulk-approve
+ * Approve multiple remediations
+ */
+router.post('/remediations/bulk-approve', async (req, res) => {
+  try {
+    const { ids } = req.body;
+
+    if (!ids || !Array.isArray(ids) || ids.length === 0) {
+      return res.status(400).json({
+        success: false,
+        error: 'Missing required field',
+        message: 'ids array is required',
+        timestamp: new Date().toISOString()
+      });
+    }
+
+    const remediations = await readJsonlFile(REMEDIATIONS_PATH);
+    const results = [];
+
+    for (const id of ids) {
+      const remediation = remediations.find(r => r.id === id);
+
+      if (!remediation) {
+        results.push({
+          id,
+          success: false,
+          error: 'Remediation not found'
+        });
+        continue;
+      }
+
+      if (remediation.status === 'approved' || remediation.status === 'completed') {
+        results.push({
+          id,
+          success: false,
+          error: `Remediation is already ${remediation.status}`
+        });
+        continue;
+      }
+
+      try {
+        // Update status to approved
+        await updateJsonlEntry(REMEDIATIONS_PATH, id, {
+          status: 'approved',
+          approved_at: new Date().toISOString(),
+          approved_by: req.body.approved_by || 'api-bulk'
+        });
+
+        // Log approval event
+        await logSecurityEvent('remediation_approved', {
+          remediation_id: id,
+          vulnerability_id: remediation.vulnerability_id,
+          fix_type: remediation.fix_type,
+          repository: remediation.repository,
+          bulk_operation: true
+        });
+
+        results.push({
+          id,
+          success: true,
+          status: 'approved'
+        });
+      } catch (updateError) {
+        results.push({
+          id,
+          success: false,
+          error: updateError.message
+        });
+      }
+    }
+
+    const successCount = results.filter(r => r.success).length;
+    const failureCount = results.filter(r => !r.success).length;
+
+    res.json({
+      success: true,
+      data: {
+        results,
+        summary: {
+          total: ids.length,
+          succeeded: successCount,
+          failed: failureCount
+        },
+        message: `Approved ${successCount} of ${ids.length} remediations`
+      },
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    console.error('Error in bulk approve:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to bulk approve remediations',
+      message: error.message,
+      timestamp: new Date().toISOString()
+    });
+  }
+});
+
+/**
+ * POST /api/v1/security/remediations/bulk-reject
+ * Reject multiple remediations
+ */
+router.post('/remediations/bulk-reject', async (req, res) => {
+  try {
+    const { ids, reason } = req.body;
+
+    if (!ids || !Array.isArray(ids) || ids.length === 0) {
+      return res.status(400).json({
+        success: false,
+        error: 'Missing required field',
+        message: 'ids array is required',
+        timestamp: new Date().toISOString()
+      });
+    }
+
+    if (!reason) {
+      return res.status(400).json({
+        success: false,
+        error: 'Missing required field',
+        message: 'reason is required for bulk rejection',
+        timestamp: new Date().toISOString()
+      });
+    }
+
+    const remediations = await readJsonlFile(REMEDIATIONS_PATH);
+    const results = [];
+
+    for (const id of ids) {
+      const remediation = remediations.find(r => r.id === id);
+
+      if (!remediation) {
+        results.push({
+          id,
+          success: false,
+          error: 'Remediation not found'
+        });
+        continue;
+      }
+
+      if (remediation.status === 'rejected') {
+        results.push({
+          id,
+          success: false,
+          error: 'Remediation is already rejected'
+        });
+        continue;
+      }
+
+      try {
+        // Update status to rejected
+        await updateJsonlEntry(REMEDIATIONS_PATH, id, {
+          status: 'rejected',
+          rejected_at: new Date().toISOString(),
+          rejection_reason: reason,
+          rejected_by: req.body.rejected_by || 'api-bulk'
+        });
+
+        // Log rejection event
+        await logSecurityEvent('remediation_rejected', {
+          remediation_id: id,
+          vulnerability_id: remediation.vulnerability_id,
+          reason,
+          repository: remediation.repository,
+          bulk_operation: true
+        });
+
+        results.push({
+          id,
+          success: true,
+          status: 'rejected'
+        });
+      } catch (updateError) {
+        results.push({
+          id,
+          success: false,
+          error: updateError.message
+        });
+      }
+    }
+
+    const successCount = results.filter(r => r.success).length;
+    const failureCount = results.filter(r => !r.success).length;
+
+    res.json({
+      success: true,
+      data: {
+        results,
+        summary: {
+          total: ids.length,
+          succeeded: successCount,
+          failed: failureCount
+        },
+        message: `Rejected ${successCount} of ${ids.length} remediations`
+      },
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    console.error('Error in bulk reject:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to bulk reject remediations',
       message: error.message,
       timestamp: new Date().toISOString()
     });
