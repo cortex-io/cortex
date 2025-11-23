@@ -316,12 +316,3 @@
   "learned_at": "2025-11-23T14:22:51Z",
   "source": "learner"
 }
-{
-  "task_type": "null",
-  "complexity": "null",
-  "recommended_worker_type": "feature-implementer",
-  "confidence": 92.75,
-  "evidence_count": 4,
-  "learned_at": "2025-11-23T15:22:51Z",
-  "source": "learner"
-}

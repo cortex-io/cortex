@@ -168,7 +168,7 @@ echo "Routing decision: $MASTER (confidence: $CONF)" >> coordination/routing-aud
 tail -f coordination/routing-decisions.jsonl
 
 # Add routing decision webhook
-curl -X POST http://localhost:3000/api/routing/webhook \
+curl -X POST http://localhost:5001/api/routing/webhook \
   -d '{"task_id": "...", "master": "development", "confidence": 0.95}'
 ```
 
@@ -485,7 +485,7 @@ POOL_SIZE_CRITICAL=15        # Critical at 15 workers
 - Color-coded status indicators
 - Responsive design for all screen sizes
 
-**Access:** `http://localhost:3000/moe-widgets.html`
+**Access:** `http://localhost:5001/moe-widgets.html`
 
 **Impact:** +100% system observability - real-time MoE intelligence visible to operators and developers
 

@@ -70,7 +70,7 @@ const queueRouter = require('./routes/queue');
 const securityRouter = require('./routes/security');
 
 const app = express();
-const PORT = process.env.DASHBOARD_PORT || 3000;
+const PORT = process.env.DASHBOARD_PORT || 5001;
 
 // Server start time for detecting restarts
 const SERVER_START_TIME = Date.now();
@@ -85,7 +85,7 @@ app.use(helmet({
 // Security: CORS configuration
 const allowedOrigins = process.env.ALLOWED_ORIGINS
   ? process.env.ALLOWED_ORIGINS.split(',').map(origin => origin.trim())
-  : ['http://localhost:3000'];
+  : ['http://localhost:5001'];
 
 app.use(cors({
   origin: (origin, callback) => {
