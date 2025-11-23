@@ -61,7 +61,10 @@ import DecisionStats from './decisions/DecisionStats'
 // Prompt components
 import PromptRegistry from './prompts/PromptRegistry'
 
-type TabId = 'overview' | 'executive' | 'workers' | 'tasks' | 'workflows' | 'routing' | 'decisions' | 'prompts' | 'compliance' | 'analytics' | 'costs' | 'agentstudio' | 'logs' | 'admin' | 'system'
+// Security components
+import SecurityDashboard from './security/SecurityDashboard'
+
+type TabId = 'overview' | 'executive' | 'workers' | 'tasks' | 'workflows' | 'routing' | 'decisions' | 'prompts' | 'compliance' | 'analytics' | 'costs' | 'agentstudio' | 'logs' | 'admin' | 'system' | 'security'
 
 interface DashboardContainerProps {
   theme: 'light' | 'dark'
@@ -92,6 +95,7 @@ const DashboardContainer = ({ theme, onToggleTheme }: DashboardContainerProps) =
         { id: 'workers', label: 'Workers' },
         { id: 'tasks', label: 'Tasks' },
         { id: 'workflows', label: 'Workflows' },
+        { id: 'security', label: 'Security' },
       ]
     },
     {
@@ -417,6 +421,11 @@ const DashboardContainer = ({ theme, onToggleTheme }: DashboardContainerProps) =
         {/* Workflows Tab */}
         {selectedTab === 'workflows' && (
           <WorkflowsPage />
+        )}
+
+        {/* Security Tab */}
+        {selectedTab === 'security' && (
+          <SecurityDashboard />
         )}
 
         {/* MoE Routing Tab */}

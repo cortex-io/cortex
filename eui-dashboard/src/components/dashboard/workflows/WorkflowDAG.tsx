@@ -12,7 +12,9 @@ import ReactFlow, {
   useReactFlow,
   ReactFlowProvider,
 } from 'reactflow'
-import dagre from '@dagrejs/dagre'
+// import dagre from '@dagrejs/dagre'
+// TODO: dagre has CommonJS compatibility issues with Vite - temporarily disabled
+const dagre = { graphlib: { Graph: class { setDefaultEdgeLabel() {} setGraph() {} setNode() {} setEdge() {} nodes() { return [] } node() { return { x: 0, y: 0 } } } } }
 import 'reactflow/dist/style.css'
 import {
   EuiPanel,
