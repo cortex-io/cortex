@@ -119,13 +119,15 @@ for scan_type in "${TYPES[@]}"; do
 
     case "$scan_type" in
         dependencies)
-            # Run actual dependency scans
+            # Run comprehensive dependency scans with multiple tools
             TOTAL_VULNS=0
             SCAN_DETAILS=""
 
+            log_info "=== Multi-Scanner Dependency Analysis ==="
+
             # JavaScript/Node.js - npm audit
             if [ -f "package.json" ]; then
-                log_info "  Scanning JavaScript dependencies (npm audit)..."
+                log_info "  [1/5] npm audit (JavaScript dependencies)..."
                 NPM_RESULT=$(npm audit --json 2>/dev/null || echo '{"error": true}')
                 NPM_VULNS=$(echo "$NPM_RESULT" | jq -r '.metadata.vulnerabilities.total // 0' 2>/dev/null || echo "0")
                 NPM_CRITICAL=$(echo "$NPM_RESULT" | jq -r '.metadata.vulnerabilities.critical // 0' 2>/dev/null || echo "0")
@@ -134,15 +136,13 @@ for scan_type in "${TYPES[@]}"; do
                 NPM_LOW=$(echo "$NPM_RESULT" | jq -r '.metadata.vulnerabilities.low // 0' 2>/dev/null || echo "0")
 
                 TOTAL_VULNS=$((TOTAL_VULNS + NPM_VULNS))
-                SCAN_DETAILS="${SCAN_DETAILS}\n- **npm (package.json)**: $NPM_VULNS vulnerabilities ($NPM_CRITICAL critical, $NPM_HIGH high, $NPM_MEDIUM medium, $NPM_LOW low)"
-                log_info "    Found $NPM_VULNS npm vulnerabilities"
+                SCAN_DETAILS="${SCAN_DETAILS}\n#### npm audit\n- **Vulnerabilities**: $NPM_VULNS ($NPM_CRITICAL critical, $NPM_HIGH high, $NPM_MEDIUM medium, $NPM_LOW low)\n- **Database**: npm Registry\n"
+                log_info "    ✓ npm: $NPM_VULNS vulnerabilities"
             fi
 
-            # Python - pip-audit
+            # Python - pip-audit (OSV/PyPA database)
             if [ -f "python-sdk/requirements.txt" ] || [ -f "requirements.txt" ]; then
-                log_info "  Scanning Python dependencies (pip-audit)..."
-
-                # Find all requirements.txt files
+                log_info "  [2/5] pip-audit (Python - OSV/PyPA database)..."
                 REQUIREMENTS_FILES=$(find . -name "requirements.txt" -not -path "*/node_modules/*" -not -path "*/.venv/*" -not -path "*/venv/*" 2>/dev/null || true)
 
                 if [ -n "$REQUIREMENTS_FILES" ]; then
@@ -154,10 +154,7 @@ for scan_type in "${TYPES[@]}"; do
 
                     while IFS= read -r req_file; do
                         if command -v pip-audit &> /dev/null; then
-                            log_info "    Scanning: $req_file"
                             PIP_RESULT=$(pip-audit -r "$req_file" --format json 2>/dev/null || echo '{"dependencies": []}')
-
-                            # Count vulnerabilities by severity
                             PIP_VULNS=$(echo "$PIP_RESULT" | jq '[.dependencies[]?.vulns[]?] | length' 2>/dev/null || echo "0")
                             PIP_CRIT=$(echo "$PIP_RESULT" | jq '[.dependencies[]?.vulns[]? | select(.severity == "CRITICAL" or .severity == "critical")] | length' 2>/dev/null || echo "0")
                             PIP_HI=$(echo "$PIP_RESULT" | jq '[.dependencies[]?.vulns[]? | select(.severity == "HIGH" or .severity == "high")] | length' 2>/dev/null || echo "0")
@@ -169,61 +166,212 @@ for scan_type in "${TYPES[@]}"; do
                             PIP_HIGH=$((PIP_HIGH + PIP_HI))
                             PIP_MEDIUM=$((PIP_MEDIUM + PIP_MED))
                             PIP_LOW=$((PIP_LOW + PIP_LO))
-                        else
-                            log_warn "    pip-audit not installed, skipping Python scan"
-                            SCAN_DETAILS="${SCAN_DETAILS}\n- **pip-audit**: Not installed (install with: pip install pip-audit)"
                         fi
                     done <<< "$REQUIREMENTS_FILES"
 
                     if command -v pip-audit &> /dev/null; then
                         TOTAL_VULNS=$((TOTAL_VULNS + PIP_TOTAL))
-                        SCAN_DETAILS="${SCAN_DETAILS}\n- **pip-audit (Python)**: $PIP_TOTAL vulnerabilities ($PIP_CRITICAL critical, $PIP_HIGH high, $PIP_MEDIUM medium, $PIP_LOW low)"
-                        log_info "    Found $PIP_TOTAL pip vulnerabilities"
+                        SCAN_DETAILS="${SCAN_DETAILS}\n#### pip-audit\n- **Vulnerabilities**: $PIP_TOTAL ($PIP_CRITICAL critical, $PIP_HIGH high, $PIP_MEDIUM medium, $PIP_LOW low)\n- **Database**: OSV & PyPA Advisory\n"
+                        log_info "    ✓ pip-audit: $PIP_TOTAL vulnerabilities"
                     fi
                 fi
+
+                # Python - Safety (alternative vulnerability database)
+                log_info "  [3/5] safety (Python - Safety DB)..."
+                if command -v safety &> /dev/null; then
+                    SAFETY_TOTAL=0
+                    SAFETY_CRITICAL=0
+                    SAFETY_HIGH=0
+                    SAFETY_MEDIUM=0
+                    SAFETY_LOW=0
+
+                    while IFS= read -r req_file; do
+                        # Safety scan with JSON output
+                        SAFETY_RESULT=$(safety scan --file "$req_file" --output json 2>/dev/null || echo '{"vulnerabilities": []}')
+                        SAFETY_VULNS=$(echo "$SAFETY_RESULT" | jq '[.vulnerabilities[]?] | length' 2>/dev/null || echo "0")
+
+                        # Count by severity from Safety's output
+                        SAFE_CRIT=$(echo "$SAFETY_RESULT" | jq '[.vulnerabilities[]? | select(.severity == "critical")] | length' 2>/dev/null || echo "0")
+                        SAFE_HI=$(echo "$SAFETY_RESULT" | jq '[.vulnerabilities[]? | select(.severity == "high")] | length' 2>/dev/null || echo "0")
+                        SAFE_MED=$(echo "$SAFETY_RESULT" | jq '[.vulnerabilities[]? | select(.severity == "medium")] | length' 2>/dev/null || echo "0")
+                        SAFE_LO=$(echo "$SAFETY_RESULT" | jq '[.vulnerabilities[]? | select(.severity == "low")] | length' 2>/dev/null || echo "0")
+
+                        SAFETY_TOTAL=$((SAFETY_TOTAL + SAFETY_VULNS))
+                        SAFETY_CRITICAL=$((SAFETY_CRITICAL + SAFE_CRIT))
+                        SAFETY_HIGH=$((SAFETY_HIGH + SAFE_HI))
+                        SAFETY_MEDIUM=$((SAFETY_MEDIUM + SAFE_MED))
+                        SAFETY_LOW=$((SAFETY_LOW + SAFE_LO))
+                    done <<< "$REQUIREMENTS_FILES"
+
+                    TOTAL_VULNS=$((TOTAL_VULNS + SAFETY_TOTAL))
+                    SCAN_DETAILS="${SCAN_DETAILS}\n#### safety\n- **Vulnerabilities**: $SAFETY_TOTAL ($SAFETY_CRITICAL critical, $SAFETY_HIGH high, $SAFETY_MEDIUM medium, $SAFETY_LOW low)\n- **Database**: Safety DB (pyup.io)\n"
+                    log_info "    ✓ safety: $SAFETY_TOTAL vulnerabilities"
+                else
+                    log_warn "    safety not installed, skipping"
+                    SCAN_DETAILS="${SCAN_DETAILS}\n#### safety\n- **Status**: Not installed\n"
+                fi
+            fi
+
+            # Snyk - Comprehensive multi-language scanning
+            log_info "  [4/5] snyk (Comprehensive - Proprietary DB)..."
+            if command -v snyk &> /dev/null; then
+                # Check if authenticated
+                SNYK_AUTH=$(snyk auth status 2>&1 || echo "not authenticated")
+                if echo "$SNYK_AUTH" | grep -q "authenticated"; then
+                    # Run Snyk test
+                    SNYK_RESULT=$(snyk test --json 2>/dev/null || echo '{"vulnerabilities": []}')
+                    SNYK_VULNS=$(echo "$SNYK_RESULT" | jq '[.vulnerabilities[]?] | length' 2>/dev/null || echo "0")
+                    SNYK_CRITICAL=$(echo "$SNYK_RESULT" | jq '[.vulnerabilities[]? | select(.severity == "critical")] | length' 2>/dev/null || echo "0")
+                    SNYK_HIGH=$(echo "$SNYK_RESULT" | jq '[.vulnerabilities[]? | select(.severity == "high")] | length' 2>/dev/null || echo "0")
+                    SNYK_MEDIUM=$(echo "$SNYK_RESULT" | jq '[.vulnerabilities[]? | select(.severity == "medium")] | length' 2>/dev/null || echo "0")
+                    SNYK_LOW=$(echo "$SNYK_RESULT" | jq '[.vulnerabilities[]? | select(.severity == "low")] | length' 2>/dev/null || echo "0")
+
+                    TOTAL_VULNS=$((TOTAL_VULNS + SNYK_VULNS))
+                    SCAN_DETAILS="${SCAN_DETAILS}\n#### snyk\n- **Vulnerabilities**: $SNYK_VULNS ($SNYK_CRITICAL critical, $SNYK_HIGH high, $SNYK_MEDIUM medium, $SNYK_LOW low)\n- **Database**: Snyk Vulnerability Database (Proprietary)\n- **Coverage**: Multi-language, comprehensive\n"
+                    log_info "    ✓ snyk: $SNYK_VULNS vulnerabilities"
+                else
+                    log_warn "    Snyk not authenticated - run 'snyk auth' to enable"
+                    SCAN_DETAILS="${SCAN_DETAILS}\n#### snyk\n- **Status**: Not authenticated (run \`snyk auth\` to enable)\n- **Info**: Provides most comprehensive vulnerability detection\n"
+                fi
+            else
+                log_warn "    snyk not installed"
+                SCAN_DETAILS="${SCAN_DETAILS}\n#### snyk\n- **Status**: Not installed\n"
             fi
 
             # Cargo - cargo audit
             if [ -f "Cargo.toml" ]; then
-                log_info "  Checking for Rust dependencies (cargo audit)..."
+                log_info "  [5/5] cargo-audit (Rust dependencies)..."
                 if command -v cargo-audit &> /dev/null; then
                     CARGO_RESULT=$(cargo audit --json 2>/dev/null || echo '{"vulnerabilities": {"count": 0}}')
                     CARGO_VULNS=$(echo "$CARGO_RESULT" | jq -r '.vulnerabilities.count // 0' 2>/dev/null || echo "0")
                     TOTAL_VULNS=$((TOTAL_VULNS + CARGO_VULNS))
-                    SCAN_DETAILS="${SCAN_DETAILS}\n- **cargo-audit (Rust)**: $CARGO_VULNS vulnerabilities"
-                    log_info "    Found $CARGO_VULNS cargo vulnerabilities"
+                    SCAN_DETAILS="${SCAN_DETAILS}\n#### cargo-audit\n- **Vulnerabilities**: $CARGO_VULNS\n- **Database**: RustSec Advisory Database\n"
+                    log_info "    ✓ cargo-audit: $CARGO_VULNS vulnerabilities"
                 else
                     log_warn "    cargo-audit not installed, skipping Rust scan"
                 fi
             fi
 
-            # Write results
+            # Determine overall status
             if [ "$TOTAL_VULNS" -eq 0 ]; then
                 STATUS="✅ PASSED"
+                RECOMMENDATION="No vulnerabilities detected across all scanners."
             elif [ "$TOTAL_VULNS" -lt 10 ]; then
                 STATUS="⚠️  NEEDS ATTENTION"
+                RECOMMENDATION="Low number of vulnerabilities detected. Review and remediate."
             else
                 STATUS="❌ CRITICAL"
+                RECOMMENDATION="Multiple vulnerabilities detected. Immediate remediation required."
             fi
 
             cat >> "$REPORT_FILE" <<EOF
-### Dependency Scan
+### Dependency Vulnerability Scan
 
-- **Status**: $STATUS
-- **Total Vulnerabilities Found**: $TOTAL_VULNS
-- **Details**:
+**Multi-Scanner Approach**: This scan uses multiple vulnerability databases for comprehensive coverage.
+
+- **Overall Status**: $STATUS
+- **Total Vulnerabilities**: $TOTAL_VULNS (aggregated across all scanners)
+- **Recommendation**: $RECOMMENDATION
+
+#### Scanner Results
+
 $(echo -e "$SCAN_DETAILS")
+
+#### Database Coverage Comparison
+
+| Scanner | Database | Strengths |
+|---------|----------|-----------|
+| npm audit | npm Registry | JavaScript ecosystem, official npm vulnerabilities |
+| pip-audit | OSV & PyPA | Open-source, community-driven Python vulnerabilities |
+| safety | Safety DB | Commercial Python database, broader coverage |
+| snyk | Proprietary | Most comprehensive, multi-language, includes code analysis |
+| cargo-audit | RustSec | Rust ecosystem vulnerabilities |
 
 EOF
             ;;
         static-analysis)
-            cat >> "$REPORT_FILE" <<EOF
-### Static Analysis
+            log_info "=== SAST (Static Application Security Testing) ==="
 
-- **Status**: ✅ PASSED
-- **Issues Found**: 0
-- **Files Scanned**: Simulated
-- **Details**: No security issues detected in code
+            SAST_TOTAL=0
+            SAST_DETAILS=""
+
+            # Bandit - Python SAST
+            if command -v bandit &> /dev/null; then
+                log_info "  [1/2] bandit (Python SAST)..."
+
+                # Find Python files
+                PYTHON_FILES=$(find . -name "*.py" -not -path "*/node_modules/*" -not -path "*/.venv/*" -not -path "*/venv/*" -not -path "*/.git/*" 2>/dev/null || true)
+
+                if [ -n "$PYTHON_FILES" ]; then
+                    # Run bandit with JSON output
+                    BANDIT_RESULT=$(bandit -r . -f json --exclude .venv,venv,node_modules,.git 2>/dev/null || echo '{"results": []}')
+                    BANDIT_HIGH=$(echo "$BANDIT_RESULT" | jq '[.results[]? | select(.issue_severity == "HIGH")] | length' 2>/dev/null || echo "0")
+                    BANDIT_MEDIUM=$(echo "$BANDIT_RESULT" | jq '[.results[]? | select(.issue_severity == "MEDIUM")] | length' 2>/dev/null || echo "0")
+                    BANDIT_LOW=$(echo "$BANDIT_RESULT" | jq '[.results[]? | select(.issue_severity == "LOW")] | length' 2>/dev/null || echo "0")
+                    BANDIT_TOTAL=$((BANDIT_HIGH + BANDIT_MEDIUM + BANDIT_LOW))
+
+                    SAST_TOTAL=$((SAST_TOTAL + BANDIT_TOTAL))
+                    SAST_DETAILS="${SAST_DETAILS}\n#### bandit (Python)\n- **Issues Found**: $BANDIT_TOTAL ($BANDIT_HIGH high, $BANDIT_MEDIUM medium, $BANDIT_LOW low)\n- **Scope**: Python security issues, common vulnerabilities\n"
+                    log_info "    ✓ bandit: $BANDIT_TOTAL issues"
+                else
+                    SAST_DETAILS="${SAST_DETAILS}\n#### bandit (Python)\n- **Status**: No Python files found\n"
+                    log_info "    ℹ bandit: No Python files to scan"
+                fi
+            else
+                log_warn "    bandit not installed"
+                SAST_DETAILS="${SAST_DETAILS}\n#### bandit (Python)\n- **Status**: Not installed\n"
+            fi
+
+            # Semgrep - Multi-language SAST
+            if command -v semgrep &> /dev/null; then
+                log_info "  [2/2] semgrep (Multi-language SAST)..."
+
+                # Run semgrep with auto config (uses registry rules)
+                SEMGREP_RESULT=$(semgrep --config=auto --json --quiet 2>/dev/null || echo '{"results": []}')
+                SEMGREP_ERROR=$(echo "$SEMGREP_RESULT" | jq '[.results[]? | select(.extra.severity == "ERROR")] | length' 2>/dev/null || echo "0")
+                SEMGREP_WARNING=$(echo "$SEMGREP_RESULT" | jq '[.results[]? | select(.extra.severity == "WARNING")] | length' 2>/dev/null || echo "0")
+                SEMGREP_INFO=$(echo "$SEMGREP_RESULT" | jq '[.results[]? | select(.extra.severity == "INFO")] | length' 2>/dev/null || echo "0")
+                SEMGREP_TOTAL=$((SEMGREP_ERROR + SEMGREP_WARNING + SEMGREP_INFO))
+
+                SAST_TOTAL=$((SAST_TOTAL + SEMGREP_TOTAL))
+                SAST_DETAILS="${SAST_DETAILS}\n#### semgrep (Multi-language)\n- **Issues Found**: $SEMGREP_TOTAL ($SEMGREP_ERROR error, $SEMGREP_WARNING warning, $SEMGREP_INFO info)\n- **Scope**: JavaScript, TypeScript, Python, Go, Java, and more\n- **Rules**: Semgrep Registry (community + security rules)\n "
+                log_info "    ✓ semgrep: $SEMGREP_TOTAL issues"
+            else
+                log_warn "    semgrep not installed"
+                SAST_DETAILS="${SAST_DETAILS}\n#### semgrep (Multi-language)\n- **Status**: Not installed\n "
+            fi
+
+            # Determine SAST status
+            if [ "$SAST_TOTAL" -eq 0 ]; then
+                SAST_STATUS="✅ PASSED"
+                SAST_RECOMMENDATION="No security issues detected in code analysis."
+            elif [ "$SAST_TOTAL" -lt 20 ]; then
+                SAST_STATUS="⚠️  NEEDS ATTENTION"
+                SAST_RECOMMENDATION="Some security issues detected. Review and address findings."
+            else
+                SAST_STATUS="❌ CRITICAL"
+                SAST_RECOMMENDATION="Multiple security issues detected. Comprehensive code review required."
+            fi
+
+            cat >> "$REPORT_FILE" <<EOF
+### Static Application Security Testing (SAST)
+
+**Purpose**: Analyzes source code for security vulnerabilities, coding errors, and best practice violations.
+
+- **Overall Status**: $SAST_STATUS
+- **Total Issues**: $SAST_TOTAL
+- **Recommendation**: $SAST_RECOMMENDATION
+
+#### SAST Tool Results
+
+$(echo -e "$SAST_DETAILS")
+
+#### SAST Tool Comparison
+
+| Tool | Languages | Focus |
+|------|-----------|-------|
+| bandit | Python | Python-specific security issues (injections, crypto, etc.) |
+| semgrep | Multi-language | Pattern-based security rules across many languages |
 
 EOF
             ;;
