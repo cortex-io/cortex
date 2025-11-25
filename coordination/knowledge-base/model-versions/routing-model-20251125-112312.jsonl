@@ -766,12 +766,3 @@
   "learned_at": "2025-11-25T16:23:12Z",
   "source": "learner"
 }
-{
-  "task_type": "null",
-  "complexity": "null",
-  "recommended_worker_type": "feature-implementer",
-  "confidence": 92.75,
-  "evidence_count": 4,
-  "learned_at": "2025-11-25T17:23:12Z",
-  "source": "learner"
-}
