@@ -119,13 +119,100 @@ for scan_type in "${TYPES[@]}"; do
 
     case "$scan_type" in
         dependencies)
+            # Run actual dependency scans
+            TOTAL_VULNS=0
+            SCAN_DETAILS=""
+
+            # JavaScript/Node.js - npm audit
+            if [ -f "package.json" ]; then
+                log_info "  Scanning JavaScript dependencies (npm audit)..."
+                NPM_RESULT=$(npm audit --json 2>/dev/null || echo '{"error": true}')
+                NPM_VULNS=$(echo "$NPM_RESULT" | jq -r '.metadata.vulnerabilities.total // 0' 2>/dev/null || echo "0")
+                NPM_CRITICAL=$(echo "$NPM_RESULT" | jq -r '.metadata.vulnerabilities.critical // 0' 2>/dev/null || echo "0")
+                NPM_HIGH=$(echo "$NPM_RESULT" | jq -r '.metadata.vulnerabilities.high // 0' 2>/dev/null || echo "0")
+                NPM_MEDIUM=$(echo "$NPM_RESULT" | jq -r '.metadata.vulnerabilities.moderate // 0' 2>/dev/null || echo "0")
+                NPM_LOW=$(echo "$NPM_RESULT" | jq -r '.metadata.vulnerabilities.low // 0' 2>/dev/null || echo "0")
+
+                TOTAL_VULNS=$((TOTAL_VULNS + NPM_VULNS))
+                SCAN_DETAILS="${SCAN_DETAILS}\n- **npm (package.json)**: $NPM_VULNS vulnerabilities ($NPM_CRITICAL critical, $NPM_HIGH high, $NPM_MEDIUM medium, $NPM_LOW low)"
+                log_info "    Found $NPM_VULNS npm vulnerabilities"
+            fi
+
+            # Python - pip-audit
+            if [ -f "python-sdk/requirements.txt" ] || [ -f "requirements.txt" ]; then
+                log_info "  Scanning Python dependencies (pip-audit)..."
+
+                # Find all requirements.txt files
+                REQUIREMENTS_FILES=$(find . -name "requirements.txt" -not -path "*/node_modules/*" -not -path "*/.venv/*" -not -path "*/venv/*" 2>/dev/null || true)
+
+                if [ -n "$REQUIREMENTS_FILES" ]; then
+                    PIP_TOTAL=0
+                    PIP_CRITICAL=0
+                    PIP_HIGH=0
+                    PIP_MEDIUM=0
+                    PIP_LOW=0
+
+                    while IFS= read -r req_file; do
+                        if command -v pip-audit &> /dev/null; then
+                            log_info "    Scanning: $req_file"
+                            PIP_RESULT=$(pip-audit -r "$req_file" --format json 2>/dev/null || echo '{"dependencies": []}')
+
+                            # Count vulnerabilities by severity
+                            PIP_VULNS=$(echo "$PIP_RESULT" | jq '[.dependencies[]?.vulns[]?] | length' 2>/dev/null || echo "0")
+                            PIP_CRIT=$(echo "$PIP_RESULT" | jq '[.dependencies[]?.vulns[]? | select(.severity == "CRITICAL" or .severity == "critical")] | length' 2>/dev/null || echo "0")
+                            PIP_HI=$(echo "$PIP_RESULT" | jq '[.dependencies[]?.vulns[]? | select(.severity == "HIGH" or .severity == "high")] | length' 2>/dev/null || echo "0")
+                            PIP_MED=$(echo "$PIP_RESULT" | jq '[.dependencies[]?.vulns[]? | select(.severity == "MEDIUM" or .severity == "medium" or .severity == "MODERATE" or .severity == "moderate")] | length' 2>/dev/null || echo "0")
+                            PIP_LO=$(echo "$PIP_RESULT" | jq '[.dependencies[]?.vulns[]? | select(.severity == "LOW" or .severity == "low")] | length' 2>/dev/null || echo "0")
+
+                            PIP_TOTAL=$((PIP_TOTAL + PIP_VULNS))
+                            PIP_CRITICAL=$((PIP_CRITICAL + PIP_CRIT))
+                            PIP_HIGH=$((PIP_HIGH + PIP_HI))
+                            PIP_MEDIUM=$((PIP_MEDIUM + PIP_MED))
+                            PIP_LOW=$((PIP_LOW + PIP_LO))
+                        else
+                            log_warn "    pip-audit not installed, skipping Python scan"
+                            SCAN_DETAILS="${SCAN_DETAILS}\n- **pip-audit**: Not installed (install with: pip install pip-audit)"
+                        fi
+                    done <<< "$REQUIREMENTS_FILES"
+
+                    if command -v pip-audit &> /dev/null; then
+                        TOTAL_VULNS=$((TOTAL_VULNS + PIP_TOTAL))
+                        SCAN_DETAILS="${SCAN_DETAILS}\n- **pip-audit (Python)**: $PIP_TOTAL vulnerabilities ($PIP_CRITICAL critical, $PIP_HIGH high, $PIP_MEDIUM medium, $PIP_LOW low)"
+                        log_info "    Found $PIP_TOTAL pip vulnerabilities"
+                    fi
+                fi
+            fi
+
+            # Cargo - cargo audit
+            if [ -f "Cargo.toml" ]; then
+                log_info "  Checking for Rust dependencies (cargo audit)..."
+                if command -v cargo-audit &> /dev/null; then
+                    CARGO_RESULT=$(cargo audit --json 2>/dev/null || echo '{"vulnerabilities": {"count": 0}}')
+                    CARGO_VULNS=$(echo "$CARGO_RESULT" | jq -r '.vulnerabilities.count // 0' 2>/dev/null || echo "0")
+                    TOTAL_VULNS=$((TOTAL_VULNS + CARGO_VULNS))
+                    SCAN_DETAILS="${SCAN_DETAILS}\n- **cargo-audit (Rust)**: $CARGO_VULNS vulnerabilities"
+                    log_info "    Found $CARGO_VULNS cargo vulnerabilities"
+                else
+                    log_warn "    cargo-audit not installed, skipping Rust scan"
+                fi
+            fi
+
+            # Write results
+            if [ "$TOTAL_VULNS" -eq 0 ]; then
+                STATUS="✅ PASSED"
+            elif [ "$TOTAL_VULNS" -lt 10 ]; then
+                STATUS="⚠️  NEEDS ATTENTION"
+            else
+                STATUS="❌ CRITICAL"
+            fi
+
             cat >> "$REPORT_FILE" <<EOF
 ### Dependency Scan
 
-- **Status**: ✅ PASSED
-- **Vulnerabilities Found**: 0
-- **Dependencies Scanned**: Simulated
-- **Details**: All dependencies are up to date
+- **Status**: $STATUS
+- **Total Vulnerabilities Found**: $TOTAL_VULNS
+- **Details**:
+$(echo -e "$SCAN_DETAILS")
 
 EOF
             ;;

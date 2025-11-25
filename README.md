@@ -20,12 +20,12 @@ Each master agent focuses on a domain like development, security, or inventory m
 
 **⚡ LATEST - Complete Autonomous Multi-Agent Platform**:
 - 🎯 **100% Complete**: All 44 weeks of development (Q1-Q3) finished
-- 🚀 **6 Master Agents**: Coordinator, Development, Security, Inventory, CI/CD, Dashboard
+- 🚀 **5 Master Agents**: Coordinator, Development, Security, Inventory, CI/CD
 - 👷 **7 Worker Types**: Implementation, Fix, Test, Scan, Security Fix, Documentation, Analysis
 - 🤖 **9 Autonomous Daemons**: Complete lifecycle automation with zero manual intervention
 - 🛡️ **Enterprise Governance**: Unified catalog, compliance automation, AI monitoring, quality validation
 - 📊 **~27,000+ Lines of Code**: Production-hardened, fully tested, comprehensive documentation
-- 🔭 **Full Observability**: Event streaming, metrics, tracing, anomaly detection, dashboards
+- 🔭 **Full Observability**: Event streaming, metrics, tracing, anomaly detection
 - 🏗️ **Agentstudio Platform**: Agent registry, templates, versions, performance tracking, marketplace
 - 🧠 **Advanced Autonomy**: Self-optimization, prediction, self-healing, emergent behaviors
 
@@ -35,7 +35,7 @@ Each master agent focuses on a domain like development, security, or inventory m
 - 🔍 **Hybrid Search**: BM25 keyword + semantic search with RRF fusion
 - 📊 **Production Vector Stores**: Weaviate, Qdrant, or file-based with migration tools
 - 🔄 **Circuit Breaker**: Provider health monitoring, automatic failover chains
-- 💰 **Cost Analytics**: Token tracking, budget enforcement, spend dashboards
+- 💰 **Cost Analytics**: Token tracking, budget enforcement, spend reporting
 - ⚙️ **Declarative Workflows**: YAML-based DAG definitions with parallel execution
 - 📈 **Quality Review Loops**: LLM-powered self-review with confidence thresholds
 - 📋 **Repository Connectors**: Auto-ingest from GitHub, Confluence, Slack
@@ -44,16 +44,7 @@ Each master agent focuses on a domain like development, security, or inventory m
 - ⏱️ **SLA Management**: Timeout monitoring with escalation policies
 - 🚦 **Backpressure**: Queue management with per-master rate limiting
 
-**🆕 EUI Dashboard & Repository Management** (Latest):
-- 🎨 **Elastic UI Dashboard**: Modern React-based dashboard using Elastic EUI components
-- 📦 **GitHub Repository Management**: Add, remove, and scan GitHub repositories remotely
-- 🔍 **Portfolio Security Scanning**: Automatic cloning and security scanning of added repos
-- 📊 **Real-time Status**: Live vulnerability counts and scan status for all repositories
-- 🛡️ **Inline Forms**: Quick repository addition with branch and auto-scan options
-
-**🆕 Security Dashboard Enhancement**:
-- 🛡️ **Security Dashboard UI**: Portfolio-wide vulnerability monitoring with health grid
-- 📊 **VulnerabilityTable**: Sortable, filterable list with CVE links and severity badges
+**🆕 Security Scanning Enhancement**:
 - 🔍 **Enhanced Scanning**: SAST patterns, secret detection (29 patterns), license compliance
 - 🤖 **Scan Automation**: Scheduled daemon with policy-based triggers
 - 🔧 **Auto-Remediation**: Dependency updates, secret rotation, config fixes
@@ -85,7 +76,7 @@ Each master agent focuses on a domain like development, security, or inventory m
 
 **🛡️ Phase 6: Unified Governance Framework** (Complete):
 - 📚 **Unified Data & AI Catalog** (6.1): Asset discovery, lineage tracking, PII detection, quality validation
-  - 8 namespaces: coordinator, development, security, inventory, cicd, dashboard, governance, self-healing
+  - 7 namespaces: coordinator, development, security, inventory, cicd, governance, self-healing
   - Comprehensive metadata and sensitivity classification
   - Full audit trails with 90-day retention
 - 🔐 **Single-Permission Model** (6.2): Consolidated 120+ roles → 2 principal roles (system, user)
@@ -140,8 +131,8 @@ Each master agent focuses on a domain like development, security, or inventory m
 - 💾 **Adaptive Caching**: 70%+ hit rate with intelligent TTL and prefetching
 - 🔄 **Self-Healing**: Automatic recovery with 12+ auto-fix strategies and circuit breaker
 - 📊 **Production-Hardened**: 15+ security, performance, reliability, scalability checks
-- 🤖 **Fully Autonomous**: 9 daemons providing complete automation - zero manual intervention
-- 📡 **Real-Time Monitoring**: Live dashboard with system health, metrics, and event streams
+- 🤖 **Fully Autonomous**: 8 daemons providing complete automation - zero manual intervention
+- 📡 **Real-Time Monitoring**: System health, metrics, and event streams via API
 - 📈 **Portfolio Management**: Automatic repository discovery, cataloging, and health tracking
 
 ---
@@ -150,9 +141,9 @@ Each master agent focuses on a domain like development, security, or inventory m
 
 ### Production-Ready Multi-Agent Architecture
 
-**Current Production Architecture**: Enterprise-grade AI orchestration with 6 master agents, 7 worker types, 9 autonomous daemons, comprehensive governance, and advanced enhancements (RAG, Events, Caching, Hardening).
+**Current Production Architecture**: Enterprise-grade AI orchestration with 5 master agents, 7 worker types, 8 autonomous daemons, comprehensive governance, and advanced enhancements (RAG, Events, Caching, Hardening).
 
-#### Master Agents (6)
+#### Master Agents (5)
 
 **1. Coordinator Master** - Central orchestrator and task router
 - MoE (Mixture of Experts) v4.0 with 100% routing confidence
@@ -185,12 +176,6 @@ Each master agent focuses on a domain like development, security, or inventory m
 - Deployment workflows
 - Release management
 
-**6. Dashboard Agent** - System monitoring and observability (read-only)
-- Real-time metrics collection
-- System health monitoring
-- Event stream tracking
-- Analytics and reporting
-
 #### Worker Types (7)
 
 **1. Implementation Worker** - Feature development and code creation
@@ -201,7 +186,7 @@ Each master agent focuses on a domain like development, security, or inventory m
 **6. Documentation Worker** - Documentation generation and updates
 **7. Analysis Worker** - Code and dependency analysis
 
-#### Autonomous Daemons (9)
+#### Autonomous Daemons (8)
 
 **Core Orchestration**:
 1. **Coordinator Daemon** - Task routing and master coordination
@@ -214,9 +199,6 @@ Each master agent focuses on a domain like development, security, or inventory m
 6. **Worker Restart Daemon** - Intelligent restart policies with exponential backoff
 7. **Failure Pattern Detection Daemon** - ML-based pattern recognition
 8. **Auto-Fix Daemon** - Automated remediation (12+ strategies)
-
-**Monitoring**:
-9. **Dashboard Server** - Real-time monitoring UI with WebSocket updates
 
 #### System Architecture Diagram
 
@@ -231,7 +213,7 @@ graph TB
         L6["Dotted Arrow = Monitoring/Events"]
     end
 
-    subgraph Daemons["🤖 Autonomous Daemons (9)"]
+    subgraph Daemons["🤖 Autonomous Daemons (8)"]
         CD["Coordinator Daemon<br/>Task Routing"]
         WD["Worker Daemon<br/>Lifecycle Management"]
         PM["PM Daemon<br/>Process Monitoring"]
@@ -240,16 +222,14 @@ graph TB
         WR["Worker Restart<br/>Intelligent Restart"]
         FP["Failure Pattern<br/>ML Detection"]
         AF["Auto-Fix<br/>12+ Strategies"]
-        DS["Dashboard Server<br/>Real-time UI"]
     end
 
-    subgraph Masters["🎯 Master Agents (6)"]
+    subgraph Masters["🎯 Master Agents (5)"]
         CM["Coordinator Master<br/>MoE Routing"]
         DM["Development Master<br/>Feature/Bug Work"]
         SM["Security Master<br/>CVE/Vulnerability"]
         IM["Inventory Master<br/>Cataloging"]
         CI["CI/CD Master<br/>Build/Deploy"]
-        DA["Dashboard Agent<br/>Monitoring (RO)"]
     end
 
     subgraph Workers["⚙️ Worker Types (7)"]
@@ -262,15 +242,14 @@ graph TB
         W7["Analysis"]
     end
 
-    subgraph Governance["🛡️ Governance Framework (8 Namespaces)"]
+    subgraph Governance["🛡️ Governance Framework (7 Namespaces)"]
         G1["Coordinator<br/>internal, no-pii"]
         G2["Development<br/>internal, code"]
         G3["Security<br/>confidential"]
         G4["Inventory<br/>internal, metadata"]
         G5["CI/CD<br/>internal, deployment"]
-        G6["Dashboard<br/>internal, observability"]
-        G7["Governance<br/>confidential, audit"]
-        G8["Self-Healing<br/>internal, automation"]
+        G6["Governance<br/>confidential, audit"]
+        G7["Self-Healing<br/>internal, automation"]
     end
 
     subgraph Enhancements["🚀 Enhancement Systems"]
@@ -472,9 +451,8 @@ The diagram illustrates commit-relay's complete orchestration system with color-
 
 **🟢 Monitoring Flow (Green, Dotted)**:
 - All 7 worker types report health via 2-minute heartbeat intervals to Heartbeat Monitor
-- PM Daemon monitors core daemons (Coordinator, Worker, Heartbeat, Dashboard Server) and reports to Dashboard Agent
-- Dashboard Agent monitors all masters and workers, collecting real-time metrics
-- Dashboard Server feeds aggregated data to Dashboard Agent for visualization
+- PM Daemon monitors core daemons (Coordinator, Worker, Heartbeat) and system health
+- Metrics are collected and available via API for real-time monitoring
 
 **🟣 Data Flow (Purple, Dashed)**:
 - Each master uses its dedicated governance namespace (Coordinator→G1, Development→G2, Security→G3, etc.)
@@ -492,7 +470,7 @@ The diagram illustrates commit-relay's complete orchestration system with color-
 **🟠 Event-Driven (Orange, Dashed)**:
 - Event system triggers Worker Daemon for automated worker spawning
 - Events trigger Auto-Fix daemon for reactive remediation
-- Critical events alert Dashboard Agent for real-time notifications
+- Critical events are logged for monitoring and alerting
 
 **Key Highlights:**
 - **G7 (Governance/Audit)**: Central audit trail receiving logs from all masters and coordinator daemon
@@ -502,7 +480,7 @@ The diagram illustrates commit-relay's complete orchestration system with color-
 
 ---
 
-#### Governance Framework (8 Namespaces)
+#### Governance Framework (7 Namespaces)
 
 **1. Coordinator** - Task queue, routing decisions, master state
 - Sensitivity: internal, no-pii
@@ -524,15 +502,11 @@ The diagram illustrates commit-relay's complete orchestration system with color-
 - Sensitivity: internal, deployment
 - Components: build logs, deployment history, release tracking
 
-**6. Dashboard** - Metrics, events, health reports
-- Sensitivity: internal, observability
-- Components: metrics snapshots, event streams, health reports
-
-**7. Governance** - Access logs, PII scans, quality reports, compliance audits
+**6. Governance** - Access logs, PII scans, quality reports, compliance audits
 - Sensitivity: confidential, audit-trail
 - Components: access logs, compliance reports, quality validation, PII detection
 
-**8. Self-Healing** - Failure patterns, auto-fix history, circuit breakers
+**7. Self-Healing** - Failure patterns, auto-fix history, circuit breakers
 - Sensitivity: internal, automation
 - Components: failure patterns, auto-fix logs, restart policies
 
@@ -592,12 +566,6 @@ The diagram illustrates commit-relay's complete orchestration system with color-
 - **SLA Monitor**: Timeout tracking with warning/critical/breach alerts
 - **Queue Manager**: Priority ordering with backpressure protection
 - **Rate Limiter**: Token bucket algorithm with per-master limits
-
-**Dashboard Components** (`eui-dashboard/`):
-- **LLM Cost Dashboard**: Spend trends, model breakdown, budget alerts
-- **Workflow Visualization**: DAG renderer with ReactFlow + Dagre
-- **Decision Browser**: Routing history with full reasoning audit
-- **Prompt Registry**: Version management and performance metrics
 
 ---
 
@@ -681,16 +649,6 @@ Complete operational guides covering:
 - Repository metadata cataloging and health tracking
 - Activity monitoring and stale repo detection
 - Integration with Security and Development masters
-
-### Observer Agents (Monitoring)
-
-**Dashboard Agent** (20k tokens, read-only)
-- Real-time observability across all coordination files
-- Event detection and streaming (12 event types)
-- Analytics generation (worker efficiency, token usage, health)
-- Historical trend tracking with daily snapshots
-- System health monitoring with alert thresholds
-- Integration with Aiana for conversation context
 
 ### Worker Agents (Execution)
 
@@ -956,17 +914,6 @@ commit-relay/
 │   └── history/                      # v4.0 Historical metrics
 │       ├── hourly/                   # 5-minute snapshots (7-day retention)
 │       └── daily/                    # Daily aggregates (permanent)
-├── dashboard/                         # Real-time metrics dashboard
-│   ├── server/
-│   │   └── index.js                  # Express + WebSocket server
-│   ├── public/
-│   │   ├── index.html                # Dashboard UI
-│   │   ├── styles.css                # Styling
-│   │   └── dashboard.js              # Frontend logic
-│   ├── test/
-│   │   └── server.test.js            # API tests
-│   ├── package.json                  # Dependencies
-│   └── README.md                     # Dashboard documentation
 ├── docs/
 │   ├── master-worker-architecture.md # Complete architecture design
 │   ├── master-agent-examples.md      # Real-world workflows
@@ -1065,31 +1012,6 @@ commit-relay/
 
 ### Monitoring
 
-#### Real-Time Dashboard 🎯
-
-**NEW**: Real-time web-based metrics dashboard for visual monitoring!
-
-```bash
-# Start dashboard (auto-prompts when using spawn-worker.sh)
-cd dashboard
-npm install
-npm start
-
-# Access at http://localhost:5001
-# Or use the helper script:
-./scripts/dashboard-prompt.sh start
-```
-
-**Dashboard Features**:
-- 📊 Real-time metrics visualization
-- ⚡ Live worker status tracking
-- 💰 Token budget monitoring
-- 🎯 Task queue progress
-- 📈 Master agent statistics
-- 🔄 Auto-refresh via WebSocket
-
-See [dashboard/README.md](./dashboard/README.md) for full documentation.
-
 #### Command Line Tools
 
 ```bash
@@ -1101,11 +1023,6 @@ See [dashboard/README.md](./dashboard/README.md) for full documentation.
 
 # View token budget
 cat coordination/token-budget.json | jq
-
-# Dashboard control
-./scripts/dashboard-prompt.sh status    # Check if running
-./scripts/dashboard-prompt.sh open      # Open in browser
-./scripts/dashboard-prompt.sh stop      # Stop server
 ```
 
 #### Worker Daemon (Autonomous Operation) 🤖

@@ -433,3 +433,738 @@
   "metric": "daily_learning_complete",
   "value": "0"
 }
+{
+  "timestamp": "2025-11-23T16:22:52Z",
+  "metric": "routing_model_update",
+  "value": "0"
+}
+{
+  "timestamp": "2025-11-23T16:22:52Z",
+  "metric": "utility_weights_update",
+  "value": "1"
+}
+{
+  "timestamp": "2025-11-23T16:22:52Z",
+  "metric": "daily_learning_complete",
+  "value": "0"
+}
+{
+  "timestamp": "2025-11-23T17:22:52Z",
+  "metric": "routing_model_update",
+  "value": "0"
+}
+{
+  "timestamp": "2025-11-23T17:22:52Z",
+  "metric": "utility_weights_update",
+  "value": "1"
+}
+{
+  "timestamp": "2025-11-23T17:22:52Z",
+  "metric": "daily_learning_complete",
+  "value": "0"
+}
+{
+  "timestamp": "2025-11-23T18:22:52Z",
+  "metric": "routing_model_update",
+  "value": "0"
+}
+{
+  "timestamp": "2025-11-23T18:22:52Z",
+  "metric": "utility_weights_update",
+  "value": "1"
+}
+{
+  "timestamp": "2025-11-23T18:22:52Z",
+  "metric": "daily_learning_complete",
+  "value": "0"
+}
+{
+  "timestamp": "2025-11-23T19:22:53Z",
+  "metric": "routing_model_update",
+  "value": "0"
+}
+{
+  "timestamp": "2025-11-23T19:22:53Z",
+  "metric": "utility_weights_update",
+  "value": "1"
+}
+{
+  "timestamp": "2025-11-23T19:22:53Z",
+  "metric": "daily_learning_complete",
+  "value": "1"
+}
+{
+  "timestamp": "2025-11-23T20:22:53Z",
+  "metric": "routing_model_update",
+  "value": "0"
+}
+{
+  "timestamp": "2025-11-23T20:22:53Z",
+  "metric": "utility_weights_update",
+  "value": "1"
+}
+{
+  "timestamp": "2025-11-23T20:22:53Z",
+  "metric": "daily_learning_complete",
+  "value": "0"
+}
+{
+  "timestamp": "2025-11-23T21:22:53Z",
+  "metric": "routing_model_update",
+  "value": "0"
+}
+{
+  "timestamp": "2025-11-23T21:22:53Z",
+  "metric": "utility_weights_update",
+  "value": "1"
+}
+{
+  "timestamp": "2025-11-23T21:22:53Z",
+  "metric": "daily_learning_complete",
+  "value": "0"
+}
+{
+  "timestamp": "2025-11-23T22:22:53Z",
+  "metric": "routing_model_update",
+  "value": "0"
+}
+{
+  "timestamp": "2025-11-23T22:22:53Z",
+  "metric": "utility_weights_update",
+  "value": "1"
+}
+{
+  "timestamp": "2025-11-23T22:22:54Z",
+  "metric": "daily_learning_complete",
+  "value": "0"
+}
+{
+  "timestamp": "2025-11-23T23:22:54Z",
+  "metric": "routing_model_update",
+  "value": "0"
+}
+{
+  "timestamp": "2025-11-23T23:22:54Z",
+  "metric": "utility_weights_update",
+  "value": "1"
+}
+{
+  "timestamp": "2025-11-23T23:22:54Z",
+  "metric": "daily_learning_complete",
+  "value": "1"
+}
+{
+  "timestamp": "2025-11-24T00:22:54Z",
+  "metric": "routing_model_update",
+  "value": "0"
+}
+{
+  "timestamp": "2025-11-24T00:22:54Z",
+  "metric": "utility_weights_update",
+  "value": "1"
+}
+{
+  "timestamp": "2025-11-24T00:22:54Z",
+  "metric": "daily_learning_complete",
+  "value": "0"
+}
+{
+  "timestamp": "2025-11-24T01:22:54Z",
+  "metric": "routing_model_update",
+  "value": "0"
+}
+{
+  "timestamp": "2025-11-24T01:22:54Z",
+  "metric": "utility_weights_update",
+  "value": "1"
+}
+{
+  "timestamp": "2025-11-24T01:22:54Z",
+  "metric": "daily_learning_complete",
+  "value": "0"
+}
+{
+  "timestamp": "2025-11-24T02:22:55Z",
+  "metric": "routing_model_update",
+  "value": "0"
+}
+{
+  "timestamp": "2025-11-24T02:22:55Z",
+  "metric": "utility_weights_update",
+  "value": "1"
+}
+{
+  "timestamp": "2025-11-24T02:22:55Z",
+  "metric": "daily_learning_complete",
+  "value": "1"
+}
+{
+  "timestamp": "2025-11-24T03:22:55Z",
+  "metric": "routing_model_update",
+  "value": "0"
+}
+{
+  "timestamp": "2025-11-24T03:22:55Z",
+  "metric": "utility_weights_update",
+  "value": "1"
+}
+{
+  "timestamp": "2025-11-24T03:22:55Z",
+  "metric": "daily_learning_complete",
+  "value": "0"
+}
+{
+  "timestamp": "2025-11-24T04:22:55Z",
+  "metric": "routing_model_update",
+  "value": "0"
+}
+{
+  "timestamp": "2025-11-24T04:22:55Z",
+  "metric": "utility_weights_update",
+  "value": "1"
+}
+{
+  "timestamp": "2025-11-24T04:22:55Z",
+  "metric": "daily_learning_complete",
+  "value": "0"
+}
+{
+  "timestamp": "2025-11-24T05:22:55Z",
+  "metric": "routing_model_update",
+  "value": "0"
+}
+{
+  "timestamp": "2025-11-24T05:22:56Z",
+  "metric": "utility_weights_update",
+  "value": "1"
+}
+{
+  "timestamp": "2025-11-24T05:22:56Z",
+  "metric": "daily_learning_complete",
+  "value": "1"
+}
+{
+  "timestamp": "2025-11-24T06:22:56Z",
+  "metric": "routing_model_update",
+  "value": "0"
+}
+{
+  "timestamp": "2025-11-24T06:22:56Z",
+  "metric": "utility_weights_update",
+  "value": "1"
+}
+{
+  "timestamp": "2025-11-24T06:22:56Z",
+  "metric": "daily_learning_complete",
+  "value": "0"
+}
+{
+  "timestamp": "2025-11-24T07:22:56Z",
+  "metric": "routing_model_update",
+  "value": "0"
+}
+{
+  "timestamp": "2025-11-24T07:22:56Z",
+  "metric": "utility_weights_update",
+  "value": "1"
+}
+{
+  "timestamp": "2025-11-24T07:22:56Z",
+  "metric": "daily_learning_complete",
+  "value": "0"
+}
+{
+  "timestamp": "2025-11-24T08:22:56Z",
+  "metric": "routing_model_update",
+  "value": "0"
+}
+{
+  "timestamp": "2025-11-24T08:22:56Z",
+  "metric": "utility_weights_update",
+  "value": "1"
+}
+{
+  "timestamp": "2025-11-24T08:22:57Z",
+  "metric": "daily_learning_complete",
+  "value": "0"
+}
+{
+  "timestamp": "2025-11-24T09:22:57Z",
+  "metric": "routing_model_update",
+  "value": "0"
+}
+{
+  "timestamp": "2025-11-24T09:22:57Z",
+  "metric": "utility_weights_update",
+  "value": "1"
+}
+{
+  "timestamp": "2025-11-24T09:22:57Z",
+  "metric": "daily_learning_complete",
+  "value": "0"
+}
+{
+  "timestamp": "2025-11-24T10:22:57Z",
+  "metric": "routing_model_update",
+  "value": "0"
+}
+{
+  "timestamp": "2025-11-24T10:22:57Z",
+  "metric": "utility_weights_update",
+  "value": "1"
+}
+{
+  "timestamp": "2025-11-24T10:22:57Z",
+  "metric": "daily_learning_complete",
+  "value": "0"
+}
+{
+  "timestamp": "2025-11-24T11:22:57Z",
+  "metric": "routing_model_update",
+  "value": "0"
+}
+{
+  "timestamp": "2025-11-24T11:22:57Z",
+  "metric": "utility_weights_update",
+  "value": "1"
+}
+{
+  "timestamp": "2025-11-24T11:22:57Z",
+  "metric": "daily_learning_complete",
+  "value": "0"
+}
+{
+  "timestamp": "2025-11-24T12:22:58Z",
+  "metric": "routing_model_update",
+  "value": "0"
+}
+{
+  "timestamp": "2025-11-24T12:22:58Z",
+  "metric": "utility_weights_update",
+  "value": "1"
+}
+{
+  "timestamp": "2025-11-24T12:22:58Z",
+  "metric": "daily_learning_complete",
+  "value": "1"
+}
+{
+  "timestamp": "2025-11-24T13:22:58Z",
+  "metric": "routing_model_update",
+  "value": "0"
+}
+{
+  "timestamp": "2025-11-24T13:22:58Z",
+  "metric": "utility_weights_update",
+  "value": "1"
+}
+{
+  "timestamp": "2025-11-24T13:22:58Z",
+  "metric": "daily_learning_complete",
+  "value": "0"
+}
+{
+  "timestamp": "2025-11-24T14:22:58Z",
+  "metric": "routing_model_update",
+  "value": "0"
+}
+{
+  "timestamp": "2025-11-24T14:22:58Z",
+  "metric": "utility_weights_update",
+  "value": "1"
+}
+{
+  "timestamp": "2025-11-24T14:22:58Z",
+  "metric": "daily_learning_complete",
+  "value": "0"
+}
+{
+  "timestamp": "2025-11-24T15:22:59Z",
+  "metric": "routing_model_update",
+  "value": "0"
+}
+{
+  "timestamp": "2025-11-24T15:22:59Z",
+  "metric": "utility_weights_update",
+  "value": "1"
+}
+{
+  "timestamp": "2025-11-24T15:22:59Z",
+  "metric": "daily_learning_complete",
+  "value": "1"
+}
+{
+  "timestamp": "2025-11-24T16:22:59Z",
+  "metric": "routing_model_update",
+  "value": "0"
+}
+{
+  "timestamp": "2025-11-24T16:22:59Z",
+  "metric": "utility_weights_update",
+  "value": "1"
+}
+{
+  "timestamp": "2025-11-24T16:22:59Z",
+  "metric": "daily_learning_complete",
+  "value": "0"
+}
+{
+  "timestamp": "2025-11-24T17:22:59Z",
+  "metric": "routing_model_update",
+  "value": "0"
+}
+{
+  "timestamp": "2025-11-24T17:22:59Z",
+  "metric": "utility_weights_update",
+  "value": "1"
+}
+{
+  "timestamp": "2025-11-24T17:22:59Z",
+  "metric": "daily_learning_complete",
+  "value": "0"
+}
+{
+  "timestamp": "2025-11-24T18:22:59Z",
+  "metric": "routing_model_update",
+  "value": "0"
+}
+{
+  "timestamp": "2025-11-24T18:23:00Z",
+  "metric": "utility_weights_update",
+  "value": "1"
+}
+{
+  "timestamp": "2025-11-24T18:23:00Z",
+  "metric": "daily_learning_complete",
+  "value": "1"
+}
+{
+  "timestamp": "2025-11-24T19:23:00Z",
+  "metric": "routing_model_update",
+  "value": "0"
+}
+{
+  "timestamp": "2025-11-24T19:23:00Z",
+  "metric": "utility_weights_update",
+  "value": "1"
+}
+{
+  "timestamp": "2025-11-24T19:23:00Z",
+  "metric": "daily_learning_complete",
+  "value": "0"
+}
+{
+  "timestamp": "2025-11-24T20:23:01Z",
+  "metric": "routing_model_update",
+  "value": "0"
+}
+{
+  "timestamp": "2025-11-24T20:23:01Z",
+  "metric": "utility_weights_update",
+  "value": "1"
+}
+{
+  "timestamp": "2025-11-24T20:23:01Z",
+  "metric": "daily_learning_complete",
+  "value": "0"
+}
+{
+  "timestamp": "2025-11-24T21:23:02Z",
+  "metric": "routing_model_update",
+  "value": "0"
+}
+{
+  "timestamp": "2025-11-24T21:23:02Z",
+  "metric": "utility_weights_update",
+  "value": "1"
+}
+{
+  "timestamp": "2025-11-24T21:23:02Z",
+  "metric": "daily_learning_complete",
+  "value": "0"
+}
+{
+  "timestamp": "2025-11-24T22:23:02Z",
+  "metric": "routing_model_update",
+  "value": "0"
+}
+{
+  "timestamp": "2025-11-24T22:23:03Z",
+  "metric": "utility_weights_update",
+  "value": "1"
+}
+{
+  "timestamp": "2025-11-24T22:23:03Z",
+  "metric": "daily_learning_complete",
+  "value": "1"
+}
+{
+  "timestamp": "2025-11-24T23:23:03Z",
+  "metric": "routing_model_update",
+  "value": "0"
+}
+{
+  "timestamp": "2025-11-24T23:23:03Z",
+  "metric": "utility_weights_update",
+  "value": "1"
+}
+{
+  "timestamp": "2025-11-24T23:23:03Z",
+  "metric": "daily_learning_complete",
+  "value": "0"
+}
+{
+  "timestamp": "2025-11-25T00:23:04Z",
+  "metric": "routing_model_update",
+  "value": "0"
+}
+{
+  "timestamp": "2025-11-25T00:23:04Z",
+  "metric": "utility_weights_update",
+  "value": "1"
+}
+{
+  "timestamp": "2025-11-25T00:23:04Z",
+  "metric": "daily_learning_complete",
+  "value": "0"
+}
+{
+  "timestamp": "2025-11-25T01:23:05Z",
+  "metric": "routing_model_update",
+  "value": "0"
+}
+{
+  "timestamp": "2025-11-25T01:23:05Z",
+  "metric": "utility_weights_update",
+  "value": "1"
+}
+{
+  "timestamp": "2025-11-25T01:23:05Z",
+  "metric": "daily_learning_complete",
+  "value": "1"
+}
+{
+  "timestamp": "2025-11-25T02:23:05Z",
+  "metric": "routing_model_update",
+  "value": "0"
+}
+{
+  "timestamp": "2025-11-25T02:23:05Z",
+  "metric": "utility_weights_update",
+  "value": "1"
+}
+{
+  "timestamp": "2025-11-25T02:23:05Z",
+  "metric": "daily_learning_complete",
+  "value": "0"
+}
+{
+  "timestamp": "2025-11-25T03:23:06Z",
+  "metric": "routing_model_update",
+  "value": "0"
+}
+{
+  "timestamp": "2025-11-25T03:23:06Z",
+  "metric": "utility_weights_update",
+  "value": "1"
+}
+{
+  "timestamp": "2025-11-25T03:23:06Z",
+  "metric": "daily_learning_complete",
+  "value": "0"
+}
+{
+  "timestamp": "2025-11-25T04:23:07Z",
+  "metric": "routing_model_update",
+  "value": "0"
+}
+{
+  "timestamp": "2025-11-25T04:23:07Z",
+  "metric": "utility_weights_update",
+  "value": "1"
+}
+{
+  "timestamp": "2025-11-25T04:23:07Z",
+  "metric": "daily_learning_complete",
+  "value": "1"
+}
+{
+  "timestamp": "2025-11-25T05:23:07Z",
+  "metric": "routing_model_update",
+  "value": "0"
+}
+{
+  "timestamp": "2025-11-25T05:23:07Z",
+  "metric": "utility_weights_update",
+  "value": "1"
+}
+{
+  "timestamp": "2025-11-25T05:23:07Z",
+  "metric": "daily_learning_complete",
+  "value": "0"
+}
+{
+  "timestamp": "2025-11-25T06:23:08Z",
+  "metric": "routing_model_update",
+  "value": "0"
+}
+{
+  "timestamp": "2025-11-25T06:23:08Z",
+  "metric": "utility_weights_update",
+  "value": "1"
+}
+{
+  "timestamp": "2025-11-25T06:23:08Z",
+  "metric": "daily_learning_complete",
+  "value": "0"
+}
+{
+  "timestamp": "2025-11-25T07:23:09Z",
+  "metric": "routing_model_update",
+  "value": "0"
+}
+{
+  "timestamp": "2025-11-25T07:23:09Z",
+  "metric": "utility_weights_update",
+  "value": "1"
+}
+{
+  "timestamp": "2025-11-25T07:23:09Z",
+  "metric": "daily_learning_complete",
+  "value": "1"
+}
+{
+  "timestamp": "2025-11-25T08:23:09Z",
+  "metric": "routing_model_update",
+  "value": "0"
+}
+{
+  "timestamp": "2025-11-25T08:23:09Z",
+  "metric": "utility_weights_update",
+  "value": "1"
+}
+{
+  "timestamp": "2025-11-25T08:23:09Z",
+  "metric": "daily_learning_complete",
+  "value": "0"
+}
+{
+  "timestamp": "2025-11-25T09:23:10Z",
+  "metric": "routing_model_update",
+  "value": "0"
+}
+{
+  "timestamp": "2025-11-25T09:23:10Z",
+  "metric": "utility_weights_update",
+  "value": "1"
+}
+{
+  "timestamp": "2025-11-25T09:23:10Z",
+  "metric": "daily_learning_complete",
+  "value": "0"
+}
+{
+  "timestamp": "2025-11-25T10:23:10Z",
+  "metric": "routing_model_update",
+  "value": "0"
+}
+{
+  "timestamp": "2025-11-25T10:23:10Z",
+  "metric": "utility_weights_update",
+  "value": "1"
+}
+{
+  "timestamp": "2025-11-25T10:23:10Z",
+  "metric": "daily_learning_complete",
+  "value": "0"
+}
+{
+  "timestamp": "2025-11-25T11:23:11Z",
+  "metric": "routing_model_update",
+  "value": "0"
+}
+{
+  "timestamp": "2025-11-25T11:23:11Z",
+  "metric": "utility_weights_update",
+  "value": "1"
+}
+{
+  "timestamp": "2025-11-25T11:23:11Z",
+  "metric": "daily_learning_complete",
+  "value": "1"
+}
+{
+  "timestamp": "2025-11-25T12:23:11Z",
+  "metric": "routing_model_update",
+  "value": "0"
+}
+{
+  "timestamp": "2025-11-25T12:23:11Z",
+  "metric": "utility_weights_update",
+  "value": "1"
+}
+{
+  "timestamp": "2025-11-25T12:23:11Z",
+  "metric": "daily_learning_complete",
+  "value": "0"
+}
+{
+  "timestamp": "2025-11-25T13:23:11Z",
+  "metric": "routing_model_update",
+  "value": "0"
+}
+{
+  "timestamp": "2025-11-25T13:23:11Z",
+  "metric": "utility_weights_update",
+  "value": "1"
+}
+{
+  "timestamp": "2025-11-25T13:23:11Z",
+  "metric": "daily_learning_complete",
+  "value": "0"
+}
+{
+  "timestamp": "2025-11-25T14:23:12Z",
+  "metric": "routing_model_update",
+  "value": "0"
+}
+{
+  "timestamp": "2025-11-25T14:23:12Z",
+  "metric": "utility_weights_update",
+  "value": "1"
+}
+{
+  "timestamp": "2025-11-25T14:23:12Z",
+  "metric": "daily_learning_complete",
+  "value": "1"
+}
+{
+  "timestamp": "2025-11-25T15:23:12Z",
+  "metric": "routing_model_update",
+  "value": "0"
+}
+{
+  "timestamp": "2025-11-25T15:23:12Z",
+  "metric": "utility_weights_update",
+  "value": "1"
+}
+{
+  "timestamp": "2025-11-25T15:23:12Z",
+  "metric": "daily_learning_complete",
+  "value": "0"
+}
+{
+  "timestamp": "2025-11-25T16:23:12Z",
+  "metric": "routing_model_update",
+  "value": "0"
+}
+{
+  "timestamp": "2025-11-25T16:23:12Z",
+  "metric": "utility_weights_update",
+  "value": "1"
+}
+{
+  "timestamp": "2025-11-25T16:23:12Z",
+  "metric": "daily_learning_complete",
+  "value": "0"
+}
