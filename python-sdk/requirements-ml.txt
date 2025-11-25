@@ -12,6 +12,7 @@ langchain==0.1.0
 langchain-openai==0.0.2
 langchain-community==0.0.10
 langchain-core==0.1.10
+langsmith==0.0.77
 
 # Vector Stores and Embeddings
 chromadb==0.4.22
