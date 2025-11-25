@@ -216,15 +216,22 @@ for scan_type in "${TYPES[@]}"; do
             log_info "  [4/5] snyk (Comprehensive - Proprietary DB)..."
             if command -v snyk &> /dev/null; then
                 # Check if authenticated
-                SNYK_AUTH=$(snyk auth status 2>&1 || echo "not authenticated")
-                if echo "$SNYK_AUTH" | grep -q "authenticated"; then
+                SNYK_AUTH=$(snyk config get api 2>&1)
+                if [ -n "$SNYK_AUTH" ] && [ "$SNYK_AUTH" != "null" ]; then
                     # Run Snyk test
                     SNYK_RESULT=$(snyk test --json 2>/dev/null || echo '{"vulnerabilities": []}')
-                    SNYK_VULNS=$(echo "$SNYK_RESULT" | jq '[.vulnerabilities[]?] | length' 2>/dev/null || echo "0")
-                    SNYK_CRITICAL=$(echo "$SNYK_RESULT" | jq '[.vulnerabilities[]? | select(.severity == "critical")] | length' 2>/dev/null || echo "0")
-                    SNYK_HIGH=$(echo "$SNYK_RESULT" | jq '[.vulnerabilities[]? | select(.severity == "high")] | length' 2>/dev/null || echo "0")
-                    SNYK_MEDIUM=$(echo "$SNYK_RESULT" | jq '[.vulnerabilities[]? | select(.severity == "medium")] | length' 2>/dev/null || echo "0")
-                    SNYK_LOW=$(echo "$SNYK_RESULT" | jq '[.vulnerabilities[]? | select(.severity == "low")] | length' 2>/dev/null || echo "0")
+                    SNYK_VULNS=$(echo "$SNYK_RESULT" | jq -r '[.vulnerabilities[]?] | length' 2>/dev/null | tr -d '\n' || echo "0")
+                    SNYK_CRITICAL=$(echo "$SNYK_RESULT" | jq -r '[.vulnerabilities[]? | select(.severity == "critical")] | length' 2>/dev/null | tr -d '\n' || echo "0")
+                    SNYK_HIGH=$(echo "$SNYK_RESULT" | jq -r '[.vulnerabilities[]? | select(.severity == "high")] | length' 2>/dev/null | tr -d '\n' || echo "0")
+                    SNYK_MEDIUM=$(echo "$SNYK_RESULT" | jq -r '[.vulnerabilities[]? | select(.severity == "medium")] | length' 2>/dev/null | tr -d '\n' || echo "0")
+                    SNYK_LOW=$(echo "$SNYK_RESULT" | jq -r '[.vulnerabilities[]? | select(.severity == "low")] | length' 2>/dev/null | tr -d '\n' || echo "0")
+
+                    # Ensure numeric values
+                    SNYK_VULNS=${SNYK_VULNS:-0}
+                    SNYK_CRITICAL=${SNYK_CRITICAL:-0}
+                    SNYK_HIGH=${SNYK_HIGH:-0}
+                    SNYK_MEDIUM=${SNYK_MEDIUM:-0}
+                    SNYK_LOW=${SNYK_LOW:-0}
 
                     TOTAL_VULNS=$((TOTAL_VULNS + SNYK_VULNS))
                     SCAN_DETAILS="${SCAN_DETAILS}\n#### snyk\n- **Vulnerabilities**: $SNYK_VULNS ($SNYK_CRITICAL critical, $SNYK_HIGH high, $SNYK_MEDIUM medium, $SNYK_LOW low)\n- **Database**: Snyk Vulnerability Database (Proprietary)\n- **Coverage**: Multi-language, comprehensive\n"
