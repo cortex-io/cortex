@@ -29,20 +29,26 @@ if (!isEnabled) {
   const serviceName = process.env.ELASTIC_APM_SERVICE_NAME || 'commit-relay';
   const serverUrl = process.env.ELASTIC_APM_SERVER_URL;
   const secretToken = process.env.ELASTIC_APM_SECRET_TOKEN;
+  const apiKey = process.env.ELASTIC_APM_API_KEY;
   const environment = process.env.ELASTIC_APM_ENVIRONMENT || process.env.NODE_ENV || 'development';
 
   if (!serverUrl) {
     console.warn('[APM] Elastic APM is enabled but ELASTIC_APM_SERVER_URL is not set. APM will not work.');
     module.exports = null;
+  } else if (!secretToken && !apiKey) {
+    console.warn('[APM] Elastic APM is enabled but neither ELASTIC_APM_SECRET_TOKEN nor ELASTIC_APM_API_KEY is set. APM will not work.');
+    module.exports = null;
   } else {
     try {
-      // Initialize APM agent
-      const apm = require('elastic-apm-node').start({
+      // Initialize APM agent with either API Key (for Serverless) or Secret Token (for traditional)
+      const apmConfig = {
         // Service identification
         serviceName: serviceName,
         serverUrl: serverUrl,
-        secretToken: secretToken,
         environment: environment,
+
+        // Authentication (API Key for Serverless, Secret Token for traditional)
+        ...(apiKey ? { apiKey: apiKey } : { secretToken: secretToken }),
 
         // Logging configuration
         logLevel: process.env.ELASTIC_APM_LOG_LEVEL || 'info',
@@ -68,12 +74,15 @@ if (!isEnabled) {
           'service.type': 'api-server',
           'deployment.environment': environment
         }
-      });
+      };
+
+      const apm = require('elastic-apm-node').start(apmConfig);
 
       console.log(`[APM] Elastic APM initialized successfully`);
       console.log(`[APM]   Service: ${serviceName}`);
       console.log(`[APM]   Environment: ${environment}`);
       console.log(`[APM]   Server: ${serverUrl}`);
+      console.log(`[APM]   Auth: ${apiKey ? 'API Key (Serverless)' : 'Secret Token'}`);
       console.log(`[APM]   Sample Rate: ${process.env.ELASTIC_APM_TRANSACTION_SAMPLE_RATE || '1.0'}`);
 
       // Export APM instance for use in application

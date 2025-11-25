@@ -280,10 +280,138 @@ function getTraceId() {
   }
 }
 
+/**
+ * Track LLM API calls (Anthropic, OpenAI, etc.)
+ * @param {Object} callData - LLM call data
+ * @param {string} callData.provider - LLM provider (e.g., 'anthropic', 'openai')
+ * @param {string} callData.model - Model name (e.g., 'claude-3-opus')
+ * @param {number} callData.duration - Call duration in milliseconds
+ * @param {Object} callData.tokens - Token usage data
+ * @param {number} callData.tokens.input - Input tokens
+ * @param {number} callData.tokens.output - Output tokens
+ * @param {number} callData.tokens.total - Total tokens
+ * @param {string} callData.status - Call status ('success', 'error', 'timeout')
+ * @param {string} callData.operation - Operation type (e.g., 'messages.create', 'chat.completion')
+ * @param {Object} callData.metadata - Additional metadata
+ */
+function trackLLMCall(callData) {
+  if (!apm) return;
+
+  try {
+    // Create custom span for LLM call
+    const span = apm.startSpan(`llm.${callData.provider}.${callData.operation}`, 'external.http');
+
+    if (span) {
+      span.addLabels({
+        'llm.provider': callData.provider,
+        'llm.model': callData.model,
+        'llm.operation': callData.operation,
+        'llm.status': callData.status,
+        'llm.tokens.input': callData.tokens?.input || 0,
+        'llm.tokens.output': callData.tokens?.output || 0,
+        'llm.tokens.total': callData.tokens?.total || 0,
+        'llm.duration_ms': callData.duration || 0
+      });
+
+      // Add cost estimate (approximate for Anthropic)
+      const inputCost = (callData.tokens?.input || 0) * 0.000015; // $15 per 1M tokens
+      const outputCost = (callData.tokens?.output || 0) * 0.000075; // $75 per 1M tokens
+      const totalCost = inputCost + outputCost;
+
+      span.addLabels({
+        'llm.cost.input_usd': inputCost.toFixed(6),
+        'llm.cost.output_usd': outputCost.toFixed(6),
+        'llm.cost.total_usd': totalCost.toFixed(6)
+      });
+
+      span.end();
+    }
+
+    // Add transaction-level labels
+    addLabels({
+      'llm.provider': callData.provider,
+      'llm.model': callData.model,
+      'llm.tokens.total': callData.tokens?.total || 0,
+      'llm.status': callData.status
+    });
+
+    // Set custom context
+    apm.setCustomContext({
+      llm_call: {
+        provider: callData.provider,
+        model: callData.model,
+        operation: callData.operation,
+        tokens: callData.tokens,
+        duration: callData.duration,
+        status: callData.status,
+        metadata: callData.metadata || {}
+      }
+    });
+  } catch (error) {
+    console.error('[APM] Failed to track LLM call:', error.message);
+  }
+}
+
+/**
+ * Track worker spawn operations
+ * @param {Object} spawnData - Worker spawn data
+ * @param {string} spawnData.workerId - Worker ID
+ * @param {string} spawnData.workerType - Worker type (e.g., 'implementation', 'analysis')
+ * @param {string} spawnData.taskId - Associated task ID
+ * @param {string} spawnData.master - Parent master (e.g., 'development-master')
+ * @param {number} spawnData.spawnDuration - Time to spawn in milliseconds
+ * @param {string} spawnData.status - Spawn status ('success', 'failed')
+ * @param {Object} spawnData.metadata - Additional metadata
+ */
+function trackWorkerSpawn(spawnData) {
+  if (!apm) return;
+
+  try {
+    // Create custom span for worker spawn
+    const span = apm.startSpan(`worker.spawn.${spawnData.workerType}`, 'process.spawn');
+
+    if (span) {
+      span.addLabels({
+        'worker.id': spawnData.workerId,
+        'worker.type': spawnData.workerType,
+        'worker.task_id': spawnData.taskId,
+        'worker.master': spawnData.master,
+        'worker.spawn_duration_ms': spawnData.spawnDuration || 0,
+        'worker.status': spawnData.status
+      });
+
+      span.end();
+    }
+
+    // Add transaction-level labels
+    addLabels({
+      'worker.spawn.type': spawnData.workerType,
+      'worker.spawn.status': spawnData.status,
+      'worker.spawn.duration_ms': spawnData.spawnDuration || 0
+    });
+
+    // Track as agent event
+    trackAgentEvent('spawned', {
+      agentId: spawnData.workerId,
+      agentType: spawnData.workerType,
+      taskId: spawnData.taskId,
+      metadata: {
+        master: spawnData.master,
+        spawnDuration: spawnData.spawnDuration,
+        ...spawnData.metadata
+      }
+    });
+  } catch (error) {
+    console.error('[APM] Failed to track worker spawn:', error.message);
+  }
+}
+
 module.exports = {
   trackAgentEvent,
   trackToolUsage,
   trackRelayCompletion,
+  trackLLMCall,
+  trackWorkerSpawn,
   withCustomSpan,
   captureException,
   setUser,
