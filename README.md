@@ -7,6 +7,20 @@
 [![Status](https://img.shields.io/badge/Status-Production%20Ready-green)](https://github.com/ry-ops/commit-relay)
 [![Architecture](https://img.shields.io/badge/Architecture-Master--Worker-blue)](./docs/master-worker-architecture.md)
 [![License](https://img.shields.io/badge/License-MIT-yellow)](./LICENSE)
+[![API Endpoints](https://img.shields.io/badge/API%20Endpoints-128-blue)](./docs/API-REFERENCE.md)
+[![Code Lines](https://img.shields.io/badge/Code%20Lines-27K%2B-brightgreen)](https://github.com/ry-ops/commit-relay)
+
+[![Node.js](https://img.shields.io/badge/Node.js-18%2B-339933?logo=node.js&logoColor=white)](https://nodejs.org)
+[![Python](https://img.shields.io/badge/Python-3.8%2B-3776AB?logo=python&logoColor=white)](https://python.org)
+[![PyTorch](https://img.shields.io/badge/PyTorch-Neural%20Routing-EE4C2C?logo=pytorch&logoColor=white)](https://pytorch.org)
+[![Elastic APM](https://img.shields.io/badge/Elastic%20APM-Observability-005571?logo=elastic&logoColor=white)](https://www.elastic.co/apm)
+[![LangSmith](https://img.shields.io/badge/LangSmith-LLM%20Tracing-1C3C3C?logo=langchain&logoColor=white)](https://smith.langchain.com)
+
+[![Anthropic Claude](https://img.shields.io/badge/Claude-Sonnet%204.5-191919?logo=anthropic&logoColor=white)](https://anthropic.com)
+[![FAISS](https://img.shields.io/badge/FAISS-Vector%20DB-00A98F?logo=meta&logoColor=white)](https://github.com/facebookresearch/faiss)
+[![Security](https://img.shields.io/badge/Security-CVE%20Monitoring-red?logo=security&logoColor=white)](./docs/API-REFERENCE.md#security--cve-monitoring)
+[![Governance](https://img.shields.io/badge/Governance-SOC2%20%7C%20GDPR-blueviolet?logo=shield&logoColor=white)](./docs/governance-framework.md)
+[![Documentation](https://img.shields.io/badge/Documentation-Comprehensive-blue?logo=readthedocs&logoColor=white)](./docs)
 
 ---
 
