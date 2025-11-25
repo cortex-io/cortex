@@ -16,7 +16,7 @@
       "redact_in_logs": true
     },
     "sast": {
-      "enabled": false,
+      "enabled": true,
       "languages": ["javascript", "typescript", "python"],
       "rules": "default"
     },

@@ -467,6 +467,32 @@
       "timeout_at": null,
       "last_heartbeat": null,
       "session_id": null
+    },
+    {
+      "worker_id": "worker-scan-037",
+      "worker_type": "scan-worker",
+      "spawned_by": "security-master",
+      "spawned_at": "2025-11-23T12:47:50-0600",
+      "status": "pending",
+      "task_id": "security-scan-1763923669236-v9jt0qgg",
+      "token_budget": 8000,
+      "tokens_used": 0,
+      "timeout_at": null,
+      "last_heartbeat": null,
+      "session_id": null
+    },
+    {
+      "worker_id": "worker-scan-038",
+      "worker_type": "scan-worker",
+      "spawned_by": "security-master",
+      "spawned_at": "2025-11-23T13:49:05-0600",
+      "status": "pending",
+      "task_id": "security-scan-1763927340345-nspcx4qi",
+      "token_budget": 8000,
+      "tokens_used": 0,
+      "timeout_at": null,
+      "last_heartbeat": null,
+      "session_id": null
     }
   ],
   "completed_workers": [
@@ -512,11 +538,11 @@
   ],
   "failed_workers": [],
   "stats": {
-    "total_spawned_today": 51,
+    "total_spawned_today": 53,
     "total_completed_today": 3,
     "total_failed_today": 0,
     "success_rate": 7,
     "note": "Reset to clean state after power outage"
   },
-  "updated_at": "2025-11-20T08:40:37-0600"
+  "updated_at": "2025-11-23T13:49:05-0600"
 }
