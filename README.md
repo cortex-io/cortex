@@ -29,7 +29,19 @@ Each master agent focuses on a domain like development, security, or inventory m
 - 🏗️ **Agentstudio Platform**: Agent registry, templates, versions, performance tracking, marketplace
 - 🧠 **Advanced Autonomy**: Self-optimization, prediction, self-healing, emergent behaviors
 
-**🆕 Open Source AI Architecture** (Latest):
+**🆕 ML/AI Integration** (Latest):
+- 🧠 **Neural Routing**: PyTorch-based task-to-master routing (ready for training)
+- 🔍 **RAG System**: FAISS vector store with semantic code search over codebase
+- 📚 **Context Retrieval**: Sentence-transformers (all-MiniLM-L6-v2) for enhanced prompts
+- 🎯 **A/B Testing**: Gradual ML rollout framework (shadow → canary → production)
+- 🔄 **Hybrid Routing**: Neural + rule-based with intelligent fallback
+- 📊 **ML Monitoring**: Real-time metrics, routing quality tracking, performance analytics
+- 🚀 **Production Deployment**: Automated deployment scripts with configuration management
+- 📈 **Training Pipeline**: Data collection, model training infrastructure ready
+- 💡 **Smart Fallback**: Graceful degradation when ML components unavailable
+- 🎓 **Continuous Learning**: Framework for model retraining on historical decisions
+
+**🆕 Open Source AI Architecture**:
 - 🔌 **LLM Gateway**: Multi-provider support (Anthropic, OpenAI, Ollama) with automatic failover
 - 🧠 **Smart Model Selection**: Complexity scoring, sensitivity detection, cost-aware routing
 - 🔍 **Hybrid Search**: BM25 keyword + semantic search with RRF fusion
@@ -59,6 +71,7 @@ Each master agent focuses on a domain like development, security, or inventory m
 - 🔧 **Adaptive Thresholds**: single_expert=0.70, multi_expert=0.50, minimum=0.25
 - 🧠 **Type-Based Routing**: CAG-enhanced prefix detection for instant expert selection
 - 📊 **DDQD Validated**: Stress-tested with 91.5% worker success rate
+- 🤖 **ML-Enhanced**: Neural routing and RAG integration ready for deployment
 
 **🆕 Q3: Advanced Autonomy System** (Complete):
 - 🔧 **Autonomous Optimization**: Self-tuning agents, resource scaling, performance optimization
@@ -862,6 +875,20 @@ commit-relay/
 │   ├── configs/
 │   │   └── agent-registry.json        # Master agent configuration (v2.0)
 │   └── logs/                          # Activity logs (masters + workers + EMs)
+├── llm-mesh/                          # ML/AI Integration Layer
+│   ├── lib/
+│   │   ├── routing/                   # Neural router (PyTorch)
+│   │   ├── rag/                       # RAG system (FAISS + sentence-transformers)
+│   │   ├── prediction/                # Task outcome predictors
+│   │   └── integration/               # ML-enhanced MoE router
+│   ├── models/                        # Trained model checkpoints
+│   ├── training-data/                 # Historical routing decisions
+│   ├── vectors/                       # Vector stores for semantic search
+│   ├── scripts/
+│   │   ├── data/                      # Data export and collection
+│   │   ├── rag/                       # Vector store creation and testing
+│   │   └── integration/               # Deployment and monitoring
+│   └── config/                        # ML deployment configuration
 ├── coordination/
 │   ├── task-queue.json               # Task management (v2.0 schema)
 │   ├── worker-pool.json              # Worker tracking
@@ -1542,7 +1569,10 @@ coordination/vector-db/
 
 ### Architecture & Design
 
-- [**Phase 1: ASI/MoE/RAG Implementation**](./PHASE_1_IMPLEMENTATION.md) - **NEW**: Complete agentic AI architecture
+- [**ML/AI Deployment Guide**](./docs/ML-DEPLOYMENT.md) - **NEW**: Complete ML/AI integration guide
+- [**ML/AI Architecture**](./docs/ML-AI-ARCHITECTURE.md) - **NEW**: PyTorch + LangChain architecture
+- [**ML/AI Quick Start**](./docs/ML-AI-QUICKSTART.md) - **NEW**: Getting started with ML features
+- [**Phase 1: ASI/MoE/RAG Implementation**](./PHASE_1_IMPLEMENTATION.md) - Complete agentic AI architecture
 - [Master-Worker Architecture](./docs/master-worker-architecture.md) - Complete system design
 - [Master Agent Examples](./docs/master-agent-examples.md) - Real-world workflows
 - [Task Queue Schema](./docs/task-queue-schema.md) - Coordination file schemas
