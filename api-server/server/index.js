@@ -7641,6 +7641,213 @@ app.get('/api/users/stats', async (req, res) => {
 });
 
 // ============================================================================
+// Achievement Master Endpoints
+// ============================================================================
+
+const AchievementTracker = require('../../coordination/masters/achievement/lib/achievement-tracker');
+const StrategyPlanner = require('../../coordination/masters/achievement/lib/strategy-planner');
+
+/**
+ * GET /api/achievements/progress
+ * Get current achievement progress from GitHub
+ */
+app.get('/api/achievements/progress',
+  getLimiter,
+  async (req, res) => {
+  const { addLabels } = require('./utils/apm-events');
+
+  try {
+    const tracker = new AchievementTracker({
+      githubToken: process.env.GITHUB_TOKEN,
+      username: process.env.GITHUB_USERNAME || 'ry-ops'
+    });
+
+    const progress = await tracker.getAllProgress();
+
+    // Add APM labels
+    addLabels({
+      'achievement.total': progress.summary?.total_achievements || 0,
+      'achievement.unlocked': progress.summary?.unlocked || 0,
+      'achievement.in_progress': progress.summary?.in_progress || 0
+    });
+
+    res.json(progress);
+  } catch (error) {
+    console.error('Error fetching achievement progress:', error);
+    res.status(500).json({ error: 'Failed to fetch achievement progress' });
+  }
+});
+
+/**
+ * GET /api/achievements/opportunities
+ * Get achievement opportunity scores
+ */
+app.get('/api/achievements/opportunities',
+  getLimiter,
+  async (req, res) => {
+  const { addLabels } = require('./utils/apm-events');
+
+  try {
+    const tracker = new AchievementTracker({
+      githubToken: process.env.GITHUB_TOKEN,
+      username: process.env.GITHUB_USERNAME || 'ry-ops'
+    });
+
+    const opportunities = await tracker.getOpportunityScores();
+
+    // Add APM labels for top opportunity
+    if (opportunities.top_3 && opportunities.top_3.length > 0) {
+      const topOpp = opportunities.top_3[0];
+      addLabels({
+        'achievement.top_opportunity': topOpp.name,
+        'achievement.top_score': topOpp.opportunity_score,
+        'achievement.top_strategy': topOpp.automation_strategy
+      });
+    }
+
+    res.json(opportunities);
+  } catch (error) {
+    console.error('Error fetching achievement opportunities:', error);
+    res.status(500).json({ error: 'Failed to fetch achievement opportunities' });
+  }
+});
+
+/**
+ * GET /api/achievements/plan
+ * Get strategic achievement plan
+ */
+app.get('/api/achievements/plan',
+  getLimiter,
+  async (req, res) => {
+  const { addLabels } = require('./utils/apm-events');
+
+  try {
+    const planner = new StrategyPlanner({
+      githubToken: process.env.GITHUB_TOKEN,
+      username: process.env.GITHUB_USERNAME || 'ry-ops'
+    });
+
+    const plan = await planner.generatePlan();
+
+    // Add APM labels
+    addLabels({
+      'achievement.plan_tasks': plan.task_queue?.length || 0,
+      'achievement.immediate_wins': plan.gaps?.immediate_wins?.length || 0,
+      'achievement.high_priority': plan.gaps?.high_priority?.length || 0
+    });
+
+    res.json(plan);
+  } catch (error) {
+    console.error('Error generating achievement plan:', error);
+    res.status(500).json({ error: 'Failed to generate achievement plan' });
+  }
+});
+
+/**
+ * GET /api/achievements/definitions
+ * Get achievement definitions and metadata
+ */
+app.get('/api/achievements/definitions',
+  getLimiter,
+  async (req, res) => {
+  try {
+    const definitionsPath = path.join(__dirname, '../../coordination/masters/achievement/config/achievement-definitions.json');
+    const definitions = await readJSON(definitionsPath);
+
+    res.json(definitions);
+  } catch (error) {
+    console.error('Error reading achievement definitions:', error);
+    res.status(500).json({ error: 'Failed to read achievement definitions' });
+  }
+});
+
+/**
+ * GET /api/achievements/metrics
+ * Get achievement tracking metrics and history
+ */
+app.get('/api/achievements/metrics',
+  getLimiter,
+  async (req, res) => {
+  try {
+    const metricsPath = path.join(__dirname, '../../coordination/masters/achievement/metrics/tracking-history.jsonl');
+
+    if (!fsSync.existsSync(metricsPath)) {
+      return res.json({
+        total_tracking_events: 0,
+        metrics: [],
+        latest: null
+      });
+    }
+
+    const content = await fs.readFile(metricsPath, 'utf-8');
+    const metrics = content.trim().split('\n')
+      .filter(line => line)
+      .map(line => JSON.parse(line));
+
+    const latest = metrics.length > 0 ? metrics[metrics.length - 1] : null;
+
+    res.json({
+      total_tracking_events: metrics.length,
+      metrics: metrics.slice(-50), // Last 50 events
+      latest: latest
+    });
+  } catch (error) {
+    console.error('Error reading achievement metrics:', error);
+    res.status(500).json({ error: 'Failed to read achievement metrics' });
+  }
+});
+
+/**
+ * POST /api/achievements/execute/:workflow
+ * Execute achievement automation workflow
+ */
+app.post('/api/achievements/execute/:workflow', async (req, res) => {
+  const { workflow } = req.params;
+  const { feature_name, skip_review } = req.body;
+
+  try {
+    const workflowScripts = {
+      'quickdraw': '../../coordination/masters/achievement/workflows/quickdraw-workflow.sh',
+      'pr-automation': '../../coordination/masters/achievement/workflows/pr-automation-workflow.sh'
+    };
+
+    const scriptPath = workflowScripts[workflow];
+
+    if (!scriptPath) {
+      return res.status(400).json({ error: 'Invalid workflow name' });
+    }
+
+    const fullPath = path.join(__dirname, scriptPath);
+
+    if (!fsSync.existsSync(fullPath)) {
+      return res.status(404).json({ error: 'Workflow script not found' });
+    }
+
+    // Execute workflow in background
+    const { exec } = require('child_process');
+    const cmd = `bash ${fullPath} ${feature_name || ''} ${skip_review !== false ? 'true' : 'false'}`;
+
+    exec(cmd, (error, stdout, stderr) => {
+      if (error) {
+        console.error(`Workflow execution error: ${error}`);
+      }
+      console.log(`Workflow output: ${stdout}`);
+      if (stderr) console.error(`Workflow stderr: ${stderr}`);
+    });
+
+    res.json({
+      success: true,
+      workflow: workflow,
+      message: 'Workflow execution started in background',
+      feature_name: feature_name || 'auto-generated'
+    });
+  } catch (error) {
+    console.error('Error executing achievement workflow:', error);
+    res.status(500).json({ error: 'Failed to execute achievement workflow' });
+  }
+});
+
+// ============================================================================
 // Daemon Status Polling (WebSocket Push)
 // ============================================================================
 

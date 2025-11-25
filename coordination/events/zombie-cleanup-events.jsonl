@@ -11597,3 +11597,6 @@
 
 
 
+
+{"event_type":"zombie_process_terminated","worker_id":"worker-implementation-039","timestamp":"2025-11-25T12:15:28-0600","data":{}}
+{"event_type":"zombie_cleanup_completed","worker_id":"worker-implementation-039","timestamp":"2025-11-25T12:15:28-0600","data":{}}

@@ -1,0 +1,30 @@
+{"timestamp":"2025-11-25T12:10:48-0600","type":"coordinator_stopped","data":{"pid":55479}}
+{"timestamp":"2025-11-25T12:11:19-0600","type":"routing_alert_created","data":{"alert_id":"routing-1764094279-coordinator_not_running","type":"coordinator_not_running","severity":"critical"}}
+{"timestamp":"2025-11-25T12:11:19-0600","type":"integration_validator_stopped","data":{"pid":56324}}
+{"timestamp":"2025-11-25T12:11:21-0600","type":"coordinator_started","data":{"pid":17652}}
+{"timestamp":"2025-11-25T12:11:21-0600","type":"coordinator_stopped","data":{"pid":17652}}
+{"timestamp":"2025-11-25T12:12:24-0600","type":"coordinator_started","data":{"pid":19837}}
+{"timestamp":"2025-11-25T12:12:24-0600","type":"coordinator_stopped","data":{"pid":19837}}
+{"timestamp":"2025-11-25T12:13:30-0600","type":"coordinator_started","data":{"pid":25107}}
+{"id":"evt-1764094526-52199","timestamp":"2025-11-25T12:15:26-06:00","type":"worker_presumed_dead","data":"{\"event_type\":\"worker_presumed_dead\",\"worker_id\":\"worker-implementation-039\",\"task_id\":\"task-elastic-apm-integration\",\"time_since_heartbeat_seconds\":9999,\"health_status\":\"unresponsive\",\"timestamp\":\"2025-11-25T12:15:26-0600\",\"detected_by\":\"heartbeat-monitor\"}","source":"automation"}
+{"id":"evt-1764094528-52199","timestamp":"2025-11-25T12:15:28-06:00","type":"zombie_detected","data":"","source":"automation"}
+{"id":"evt-1764094528-52199","timestamp":"2025-11-25T12:15:28-06:00","type":"zombie_process_terminated","data":"{\"event_type\":\"zombie_process_terminated\",\"worker_id\":\"worker-implementation-039\",\"timestamp\":\"2025-11-25T12:15:28-0600\",\"data\":{}}","source":"automation"}
+{"id":"evt-1764094528-52199","timestamp":"2025-11-25T12:15:28-06:00","type":"zombie_cleanup_completed","data":"{\"event_type\":\"zombie_cleanup_completed\",\"worker_id\":\"worker-implementation-039\",\"timestamp\":\"2025-11-25T12:15:28-0600\",\"data\":{}}","source":"automation"}
+{
+  "timestamp": "2025-11-25T13:00:01-0600",
+  "type": "pool_size_alert",
+  "data": {
+    "pool_size": 14,
+    "threshold": 10,
+    "severity": "warning"
+  }
+}
+{
+  "timestamp": "2025-11-25T14:00:00-0600",
+  "type": "pool_size_alert",
+  "data": {
+    "pool_size": 14,
+    "threshold": 10,
+    "severity": "warning"
+  }
+}

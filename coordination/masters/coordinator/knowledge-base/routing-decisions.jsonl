@@ -775,3 +775,22 @@
   "learned_at": "2025-11-25T17:23:12Z",
   "source": "learner"
 }
+{"task_id":"task-elastic-apm-integration","timestamp":"2025-11-25T12:12:38-0600","routing_strategy":"pattern_fallback","decision":{"primary_expert":"development","primary_confidence":0.75,"strategy":"pattern_match","parallel_experts":[],"scores":{"development":0.75,"security":0,"inventory":0}},"rule_used":"code-development"}
+{
+  "task_type": "null",
+  "complexity": "null",
+  "recommended_worker_type": "feature-implementer",
+  "confidence": 92.75,
+  "evidence_count": 4,
+  "learned_at": "2025-11-25T18:23:13Z",
+  "source": "learner"
+}
+{
+  "task_type": "null",
+  "complexity": "null",
+  "recommended_worker_type": "feature-implementer",
+  "confidence": 92.75,
+  "evidence_count": 4,
+  "learned_at": "2025-11-25T19:23:13Z",
+  "source": "learner"
+}
