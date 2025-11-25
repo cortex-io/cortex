@@ -11,7 +11,12 @@
  * - Command injection protection
  * - Path traversal protection
  * - CORS restrictions
+ * - Elastic APM observability (v3.0)
  */
+
+// CRITICAL: APM must be initialized BEFORE any other requires
+// This ensures full instrumentation of all modules
+const apm = require('../apm');
 
 // Load environment variables
 require('dotenv').config();
@@ -6131,6 +6136,40 @@ app.get('/api/agentstudio/templates',
     console.error('Error fetching templates:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
+});
+
+// ============================================================================
+// Error Handler Middleware with APM Integration
+// ============================================================================
+
+const { captureException } = require('./utils/apm-events');
+
+// Global error handler (must be last middleware)
+app.use((err, req, res, next) => {
+  // Capture exception in APM with context
+  captureException(err, {
+    operation: `${req.method} ${req.path}`,
+    metadata: {
+      request: {
+        method: req.method,
+        path: req.path,
+        query: req.query,
+        ip: req.ip
+      }
+    }
+  });
+
+  // Log error
+  console.error('Error:', err);
+
+  // Send error response
+  const statusCode = err.statusCode || err.status || 500;
+  res.status(statusCode).json({
+    error: process.env.NODE_ENV === 'production'
+      ? 'Internal server error'
+      : err.message,
+    ...(process.env.NODE_ENV !== 'production' && { stack: err.stack })
+  });
 });
 
 // ============================================================================
