@@ -1000,10 +1000,24 @@ app.get('/api/coordination/raw', async (req, res) => {
  * Get detailed worker information
  */
 app.get('/api/workers', async (req, res) => {
+  const { withCustomSpan, addLabels } = require('./utils/apm-events');
+
   try {
     // Read live worker specs from all directories (active, completed, failed)
     const workerSpecsDir = path.join(COORD_DIR, 'worker-specs');
-    const liveWorkerPool = await generateLiveWorkerPool(workerSpecsDir);
+
+    const liveWorkerPool = await withCustomSpan('worker-pool-query', 'db.read', async () => {
+      return await generateLiveWorkerPool(workerSpecsDir);
+    });
+
+    // Add custom labels for APM tracking
+    addLabels({
+      'worker.active_count': liveWorkerPool.stats.total_active,
+      'worker.completed_count': liveWorkerPool.stats.total_completed,
+      'worker.failed_count': liveWorkerPool.stats.total_failed,
+      'worker.total_count': liveWorkerPool.stats.total_active + liveWorkerPool.stats.total_completed + liveWorkerPool.stats.total_failed
+    });
+
     res.json(liveWorkerPool);
   } catch (error) {
     console.error('Error reading worker pool:', error);
@@ -1178,11 +1192,31 @@ app.get('/api/execution-managers', async (req, res) => {
  * Get task queue information
  */
 app.get('/api/tasks', async (req, res) => {
+  const { withCustomSpan, addLabels } = require('./utils/apm-events');
+
   try {
-    const taskQueue = await readJSON(FILES.taskQueue);
+    const taskQueue = await withCustomSpan('task-queue-query', 'db.read', async () => {
+      return await readJSON(FILES.taskQueue);
+    });
+
     if (!taskQueue) {
       return res.status(500).json({ error: 'Failed to read task queue' });
     }
+
+    // Add custom labels for task metrics
+    const taskCounts = {
+      pending: (taskQueue.pending || []).length,
+      active: (taskQueue.active || []).length,
+      completed: (taskQueue.completed || []).length
+    };
+
+    addLabels({
+      'task.pending_count': taskCounts.pending,
+      'task.active_count': taskCounts.active,
+      'task.completed_count': taskCounts.completed,
+      'task.total_count': taskCounts.pending + taskCounts.active + taskCounts.completed
+    });
+
     res.json(taskQueue);
   } catch (error) {
     console.error('Error reading task queue:', error);
@@ -1841,7 +1875,7 @@ app.get('/api/moe-intelligence',
       hourlyActivity[hour][master] = (hourlyActivity[hour][master] || 0) + 1;
     });
 
-    res.json({
+    const responseData = {
       summary: {
         totalDecisions: filteredDecisions.length,
         timeRange,
@@ -1870,7 +1904,19 @@ app.get('/api/moe-intelligence',
         },
         scores: d.scores
       }))
+    };
+
+    // Add APM labels for MoE routing metrics
+    const { addLabels } = require('./utils/apm-events');
+    addLabels({
+      'moe.total_decisions': filteredDecisions.length,
+      'moe.avg_confidence': parseFloat(responseData.summary.avgConfidence),
+      'moe.most_used_master': responseData.summary.mostUsedMaster,
+      'moe.unique_strategies': responseData.summary.uniqueStrategies.length,
+      'moe.time_range': timeRange
     });
+
+    res.json(responseData);
 
   } catch (error) {
     console.error('Error reading MoE intelligence data:', error);
@@ -6137,6 +6183,214 @@ app.get('/api/agentstudio/templates',
     res.status(500).json({ error: 'Internal server error' });
   }
 });
+
+// ============================================================================
+// Security & CVE Monitoring Endpoints
+// ============================================================================
+
+/**
+ * GET /api/security/scans
+ * Get security scan history with CVE tracking and APM instrumentation
+ */
+app.get('/api/security/scans',
+  getLimiter,
+  async (req, res) => {
+  const { withCustomSpan, addLabels } = require('./utils/apm-events');
+
+  try {
+    const timeRange = req.query.range || '30d'; // 1h, 6h, 24h, 7d, 30d
+    const scanHistoryFile = path.join(__dirname, '../../coordination/metrics/security-scan-history.jsonl');
+
+    // Read security scan history with custom span
+    const scanHistory = await withCustomSpan('security-scan-history-read', 'db.read', async () => {
+      if (!fsSync.existsSync(scanHistoryFile)) {
+        return [];
+      }
+
+      const content = fsSync.readFileSync(scanHistoryFile, 'utf-8');
+      return content
+        .trim()
+        .split('\n')
+        .filter(line => line)
+        .map(line => {
+          try {
+            return JSON.parse(line);
+          } catch (e) {
+            return null;
+          }
+        })
+        .filter(item => item !== null);
+    });
+
+    // Filter by time range
+    const now = Date.now();
+    const rangeMs = {
+      '1h': 3600000,
+      '6h': 21600000,
+      '24h': 86400000,
+      '7d': 604800000,
+      '30d': 2592000000
+    }[timeRange] || 2592000000;
+
+    const filteredScans = scanHistory.filter(scan => {
+      if (!scan.initiated_at) return false;
+      const timestamp = new Date(scan.initiated_at).getTime();
+      return (now - timestamp) <= rangeMs;
+    });
+
+    // Calculate security metrics
+    const completedScans = filteredScans.filter(s => s.status === 'completed');
+    const latestScan = completedScans.length > 0 ? completedScans[completedScans.length - 1] : null;
+
+    const totalFindings = {
+      critical: 0,
+      high: 0,
+      medium: 0,
+      low: 0,
+      total: 0
+    };
+
+    let highestRiskLevel = 'LOW';
+    const riskLevelPriority = { 'CRITICAL': 4, 'HIGH': 3, 'MEDIUM': 2, 'LOW': 1 };
+
+    completedScans.forEach(scan => {
+      if (scan.findings) {
+        totalFindings.critical += scan.findings.critical || 0;
+        totalFindings.high += scan.findings.high || 0;
+        totalFindings.medium += scan.findings.medium || 0;
+        totalFindings.low += scan.findings.low || 0;
+        totalFindings.total += scan.findings.total || 0;
+
+        if (scan.risk_level && riskLevelPriority[scan.risk_level] > riskLevelPriority[highestRiskLevel]) {
+          highestRiskLevel = scan.risk_level;
+        }
+      }
+    });
+
+    // Calculate trend (comparing latest vs average)
+    const avgCritical = completedScans.length > 0 ? totalFindings.critical / completedScans.length : 0;
+    const trend = latestScan?.findings?.critical > avgCritical ? 'increasing' : 'decreasing';
+
+    const responseData = {
+      summary: {
+        totalScans: filteredScans.length,
+        completedScans: completedScans.length,
+        timeRange,
+        latestScan: latestScan ? {
+          task_id: latestScan.task_id,
+          completed_at: latestScan.completed_at,
+          findings: latestScan.findings,
+          risk_level: latestScan.risk_level
+        } : null,
+        highestRiskLevel,
+        trend
+      },
+      aggregatedFindings: totalFindings,
+      scanHistory: filteredScans.slice(-20).reverse(), // Last 20 scans
+      vulnerabilityTrend: completedScans.map(scan => ({
+        timestamp: scan.completed_at || scan.initiated_at,
+        critical: scan.findings?.critical || 0,
+        high: scan.findings?.high || 0,
+        medium: scan.findings?.medium || 0,
+        low: scan.findings?.low || 0,
+        risk_level: scan.risk_level
+      }))
+    };
+
+    // Add APM labels for security metrics
+    addLabels({
+      'security.total_scans': filteredScans.length,
+      'security.critical_findings': latestScan?.findings?.critical || 0,
+      'security.high_findings': latestScan?.findings?.high || 0,
+      'security.medium_findings': latestScan?.findings?.medium || 0,
+      'security.total_vulnerabilities': latestScan?.findings?.total || 0,
+      'security.risk_level': highestRiskLevel,
+      'security.trend': trend
+    });
+
+    res.json(responseData);
+
+  } catch (error) {
+    console.error('Error reading security scans:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+/**
+ * GET /api/security/current
+ * Get current security posture with real-time CVE status
+ */
+app.get('/api/security/current',
+  getLimiter,
+  async (req, res) => {
+  const { addLabels } = require('./utils/apm-events');
+
+  try {
+    const scanHistoryFile = path.join(__dirname, '../../coordination/metrics/security-scan-history.jsonl');
+
+    // Get latest completed scan
+    let latestScan = null;
+    if (fsSync.existsSync(scanHistoryFile)) {
+      const content = fsSync.readFileSync(scanHistoryFile, 'utf-8');
+      const scans = content
+        .trim()
+        .split('\n')
+        .filter(line => line)
+        .map(line => {
+          try {
+            return JSON.parse(line);
+          } catch (e) {
+            return null;
+          }
+        })
+        .filter(item => item !== null && item.status === 'completed');
+
+      latestScan = scans.length > 0 ? scans[scans.length - 1] : null;
+    }
+
+    const currentStatus = {
+      lastScanned: latestScan?.completed_at || null,
+      riskLevel: latestScan?.risk_level || 'UNKNOWN',
+      findings: latestScan?.findings || { critical: 0, high: 0, medium: 0, low: 0, total: 0 },
+      requiresAttention: (latestScan?.findings?.critical || 0) > 0 || (latestScan?.findings?.high || 0) > 0,
+      healthScore: latestScan?.findings ? calculateSecurityScore(latestScan.findings) : 0
+    };
+
+    // Add APM labels
+    addLabels({
+      'security.current_risk': currentStatus.riskLevel,
+      'security.health_score': currentStatus.healthScore,
+      'security.requires_attention': currentStatus.requiresAttention ? 1 : 0
+    });
+
+    res.json(currentStatus);
+
+  } catch (error) {
+    console.error('Error reading current security status:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+/**
+ * Calculate security health score (0-100)
+ * Lower is worse, higher is better
+ */
+function calculateSecurityScore(findings) {
+  const weights = {
+    critical: -40,
+    high: -15,
+    medium: -5,
+    low: -1
+  };
+
+  let score = 100;
+  score += (findings.critical || 0) * weights.critical;
+  score += (findings.high || 0) * weights.high;
+  score += (findings.medium || 0) * weights.medium;
+  score += (findings.low || 0) * weights.low;
+
+  return Math.max(0, Math.min(100, score));
+}
 
 // ============================================================================
 // Error Handler Middleware with APM Integration
