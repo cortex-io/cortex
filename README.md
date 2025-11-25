@@ -29,8 +29,21 @@ Each master agent focuses on a domain like development, security, or inventory m
 - 🏗️ **Agentstudio Platform**: Agent registry, templates, versions, performance tracking, marketplace
 - 🧠 **Advanced Autonomy**: Self-optimization, prediction, self-healing, emergent behaviors
 
+**🆕 Elastic Cloud Observability & APM** (December 2025):
+- 📊 **[Elastic APM Dashboard](https://cloud.elastic.co)**: Production-grade monitoring with Elastic Cloud (replaces terminal dashboard)
+- 🔍 **128 REST API Endpoints**: Complete API coverage with full documentation ([API Reference](./docs/API-REFERENCE.md))
+- 🎯 **Custom APM Instrumentation**: 5 endpoints with custom spans and 25+ business metric labels
+- 🛡️ **Real-Time Security Monitoring**: CVE tracking with health scores, risk levels, and trend analysis
+- 📈 **8 Pre-Built Kibana Visualizations**: Worker health, task queues, MoE confidence, security posture
+- 🚨 **10 Intelligent Alert Rules**: Critical CVE detection, worker failures, performance degradation
+- 💰 **LLM Cost Tracking**: Automatic token usage and cost calculation for Anthropic API calls
+- 🔧 **Worker Lifecycle Tracking**: Spawn duration, success rates, and performance metrics
+- 📡 **Distributed Tracing**: End-to-end request tracking with waterfall visualization
+- 🎓 **5-Minute Quick Start**: Simple dashboard setup with comprehensive guides
+
 **🆕 ML/AI Integration** (Latest):
-- 🧠 **Neural Routing**: PyTorch-based task-to-master routing (ready for training)
+- 🧠 **PyTorch Neural Routing**: PyTorch-based task-to-master routing with training pipeline
+- 📊 **LangSmith Tracing**: LLM call monitoring and performance analytics
 - 🔍 **RAG System**: FAISS vector store with semantic code search over codebase
 - 📚 **Context Retrieval**: Sentence-transformers (all-MiniLM-L6-v2) for enhanced prompts
 - 🎯 **A/B Testing**: Gradual ML rollout framework (shadow → canary → production)
