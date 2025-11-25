@@ -234,9 +234,17 @@ graph TB
         L1["━━━ Task Flow/Routing"]
         L2["╍╍╍ Data/Integration"]
         L3["┅┅┅ Monitoring/Reporting"]
-        L4["Solid Arrow = Direct Control"]
-        L5["Dashed Arrow = Data Flow/Usage"]
-        L6["Dotted Arrow = Monitoring/Events"]
+        L4["🔷 ML/Observability"]
+        L5["Solid Arrow = Direct Control"]
+        L6["Dashed Arrow = Data Flow/Usage"]
+        L7["Dotted Arrow = Monitoring/Events"]
+    end
+
+    subgraph Observability["📊 Observability & ML (NEW)"]
+        APM["Elastic Cloud APM<br/>128 API Endpoints<br/>Custom Spans & Labels"]
+        TORCH["PyTorch Routing<br/>Neural Task-to-Master<br/>Training Pipeline"]
+        LANG["LangSmith<br/>LLM Tracing<br/>Cost Analytics"]
+        SEC["Security Monitor<br/>CVE Tracking<br/>Health Scores"]
     end
 
     subgraph Daemons["🤖 Autonomous Daemons (8)"]
@@ -251,7 +259,7 @@ graph TB
     end
 
     subgraph Masters["🎯 Master Agents (5)"]
-        CM["Coordinator Master<br/>MoE Routing"]
+        CM["Coordinator Master<br/>MoE + PyTorch Routing"]
         DM["Development Master<br/>Feature/Bug Work"]
         SM["Security Master<br/>CVE/Vulnerability"]
         IM["Inventory Master<br/>Cataloging"]
@@ -423,6 +431,40 @@ graph TB
     EVT -.->|Triggers| AF
     EVT -.->|Alerts| DA
 
+    %% NEW: Elastic APM monitoring (MONITORING)
+    APM -.->|Monitors| CM
+    APM -.->|Monitors| DM
+    APM -.->|Monitors| SM
+    APM -.->|Monitors| IM
+    APM -.->|Monitors| CI
+    APM -.->|Monitors| W1
+    APM -.->|Monitors| W2
+    APM -.->|Monitors| W3
+    APM -.->|Monitors| W4
+    APM -.->|Monitors| W5
+    APM -.->|Monitors| W6
+    APM -.->|Monitors| W7
+    APM -.->|Monitors| CD
+    APM -.->|Monitors| WD
+    APM -.->|Monitors| HM
+
+    %% NEW: PyTorch routing integration (DATA FLOW)
+    CM -.->|Uses| TORCH
+    TORCH -.->|Learns from| CM
+
+    %% NEW: LangSmith LLM tracing (DATA FLOW)
+    CM -.->|Traces| LANG
+    DM -.->|Traces| LANG
+    SM -.->|Traces| LANG
+    IM -.->|Traces| LANG
+    CI -.->|Traces| LANG
+
+    %% NEW: Security monitoring (MONITORING)
+    SM -.->|Reports| SEC
+    W4 -.->|Scans| SEC
+    W5 -.->|Fixes| SEC
+    SEC -.->|Alerts| DA
+
     style CM fill:#c5cae9,stroke:#3949ab,stroke-width:3px
     style DM fill:#bbdefb,stroke:#1976d2,stroke-width:3px
     style SM fill:#ffcdd2,stroke:#d32f2f,stroke-width:3px
@@ -446,6 +488,12 @@ graph TB
     style G7 fill:#fff3e0,stroke:#e65100,stroke-width:3px
     style Legend fill:#f5f5f5,stroke:#424242,stroke-width:2px
 
+    %% NEW: Observability & ML component styles
+    style APM fill:#e8f5e9,stroke:#2e7d32,stroke-width:3px
+    style TORCH fill:#fff3e0,stroke:#ef6c00,stroke-width:3px
+    style LANG fill:#e1f5fe,stroke:#0277bd,stroke-width:3px
+    style SEC fill:#fce4ec,stroke:#c2185b,stroke-width:3px
+
     %% Animate all connections with different styles
     linkStyle default stroke:#666,stroke-width:2px,fill:none
 
@@ -463,6 +511,18 @@ graph TB
 
     %% Event-driven connections (dashed, animated, orange)
     linkStyle 93,94,95 stroke:#ff9800,stroke-width:2.5px,stroke-dasharray:10 5
+
+    %% NEW: APM monitoring connections (dotted, green) - 96-110
+    linkStyle 96,97,98,99,100,101,102,103,104,105,106,107,108,109,110 stroke:#2e7d32,stroke-width:2.5px,stroke-dasharray:2 2
+
+    %% NEW: PyTorch routing connections (dashed, orange) - 111-112
+    linkStyle 111,112 stroke:#ef6c00,stroke-width:2.5px,stroke-dasharray:8 4
+
+    %% NEW: LangSmith tracing connections (dashed, blue) - 113-117
+    linkStyle 113,114,115,116,117 stroke:#0277bd,stroke-width:2.5px,stroke-dasharray:8 4
+
+    %% NEW: Security monitoring connections (dotted, pink) - 118-121
+    linkStyle 118,119,120,121 stroke:#c2185b,stroke-width:2.5px,stroke-dasharray:2 2
 ```
 
 **Understanding the Architecture Flow:**
@@ -497,6 +557,32 @@ The diagram illustrates commit-relay's complete orchestration system with color-
 - Event system triggers Worker Daemon for automated worker spawning
 - Events trigger Auto-Fix daemon for reactive remediation
 - Critical events are logged for monitoring and alerting
+
+**🆕 Elastic APM Monitoring (Green, Dotted)**:
+- APM monitors all 5 specialist masters (Coordinator, Development, Security, Inventory, CI/CD)
+- Tracks all 7 worker types with custom spans and business metric labels
+- Monitors core daemons (Coordinator, Worker, Heartbeat) for system health
+- Real-time metrics: worker pool health, task queue depth, response times, error rates
+- 128 instrumented API endpoints with distributed tracing
+
+**🆕 PyTorch Neural Routing (Orange, Dashed)**:
+- Coordinator Master uses PyTorch for intelligent task-to-master routing
+- Neural network learns from routing decisions and outcomes
+- Bidirectional feedback loop: CM uses TORCH for predictions, TORCH learns from CM's results
+- Improves routing accuracy over time with continuous learning
+
+**🆕 LangSmith LLM Tracing (Blue, Dashed)**:
+- Traces LLM API calls from all 5 specialist masters
+- Automatic token usage tracking and cost calculation
+- Performance analytics: latency, throughput, success rates
+- Supports prompt engineering and model optimization
+
+**🆕 Security Monitoring (Pink, Dotted)**:
+- Security Master reports vulnerability findings to Security Monitor
+- Scan Worker (W4) sends CVE scan results for real-time tracking
+- Security Fix Worker (W5) reports remediation actions
+- Security Monitor alerts Dashboard with critical findings
+- Health scoring: 0-100 scale based on severity-weighted vulnerabilities
 
 **Key Highlights:**
 - **G7 (Governance/Audit)**: Central audit trail receiving logs from all masters and coordinator daemon
