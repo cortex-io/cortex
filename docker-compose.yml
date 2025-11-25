@@ -1,81 +1,37 @@
 version: '3.8'
 
-# Docker Compose for commit-relay development services
-# Includes vector databases for production RAG integration
-
 services:
-  # Weaviate Vector Database
-  weaviate:
-    image: semitechnologies/weaviate:1.22.4
-    restart: unless-stopped
+  api:
+    build: .
     ports:
-      - "8080:8080"
-      - "50051:50051"  # gRPC
+      - "5001:5001"
     environment:
-      QUERY_DEFAULTS_LIMIT: 25
-      AUTHENTICATION_ANONYMOUS_ACCESS_ENABLED: 'true'
-      PERSISTENCE_DATA_PATH: '/var/lib/weaviate'
-      DEFAULT_VECTORIZER_MODULE: 'none'
-      ENABLE_MODULES: ''
-      CLUSTER_HOSTNAME: 'node1'
-      # Performance tuning
-      ASYNC_INDEXING: 'true'
-      # Logging
-      LOG_LEVEL: 'info'
+      - NODE_ENV=production
+      - GITHUB_TOKEN=${GITHUB_TOKEN}
+      - ELASTIC_APM_SECRET_TOKEN=${ELASTIC_APM_SECRET_TOKEN}
     volumes:
-      - weaviate_data:/var/lib/weaviate
+      - ./coordination:/app/coordination
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8080/v1/.well-known/ready"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 30s
-
-  # Qdrant Vector Database
-  qdrant:
-    image: qdrant/qdrant:v1.7.0
+      test: ["CMD", "curl", "-f", "http://localhost:5001/api/health"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
     restart: unless-stopped
-    ports:
-      - "6333:6333"   # REST API
-      - "6334:6334"   # gRPC
+
+  postgres:
+    image: postgres:15-alpine
     environment:
-      QDRANT__SERVICE__GRPC_PORT: 6334
-      QDRANT__LOG_LEVEL: INFO
+      - POSTGRES_DB=commit_relay
+      - POSTGRES_USER=commit_relay
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
     volumes:
-      - qdrant_data:/qdrant/storage
+      - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:6333/"]
+      test: ["CMD-SHELL", "pg_isready -U commit_relay"]
       interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 30s
-
-  # Ollama for local embeddings (optional)
-  ollama:
-    image: ollama/ollama:latest
+      timeout: 3s
+      retries: 3
     restart: unless-stopped
-    ports:
-      - "11434:11434"
-    volumes:
-      - ollama_data:/root/.ollama
-    # Uncomment to enable GPU support
-    # deploy:
-    #   resources:
-    #     reservations:
-    #       devices:
-    #         - driver: nvidia
-    #           count: all
-    #           capabilities: [gpu]
 
 volumes:
-  weaviate_data:
-    driver: local
-  qdrant_data:
-    driver: local
-  ollama_data:
-    driver: local
-
-# Network configuration
-networks:
-  default:
-    name: commit-relay-network
+  postgres_data:
