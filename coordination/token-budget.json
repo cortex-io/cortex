@@ -1,10 +1,21 @@
 {
   "total_budget": 500000,
-  "allocated": 0,
-  "in_use": 0,
-  "available": 500000,
-  "updated_at": "2025-11-20T15:00:00-0600",
-  "allocations": {},
+  "allocated": 16000,
+  "in_use": 16000,
+  "available": 484000,
+  "updated_at": "2025-11-23T13:49:05-0600",
+  "allocations": {
+    "worker-scan-037": {
+      "master": "security-master",
+      "tokens": 8000,
+      "allocated_at": "2025-11-23T12:47:50-0600"
+    },
+    "worker-scan-038": {
+      "master": "security-master",
+      "tokens": 8000,
+      "allocated_at": "2025-11-23T13:49:05-0600"
+    }
+  },
   "reclamation_log": [
     {
       "timestamp": "2025-11-20T15:00:00-0600",

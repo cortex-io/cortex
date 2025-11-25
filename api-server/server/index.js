@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 /**
- * Commit-Relay Dashboard Server
+ * Commit-Relay API Server
  * Real-time metrics and monitoring for the master-worker system
  *
  * Security Features (v2.0):
@@ -70,7 +70,7 @@ const queueRouter = require('./routes/queue');
 const securityRouter = require('./routes/security');
 
 const app = express();
-const PORT = process.env.DASHBOARD_PORT || 5001;
+const PORT = process.env.API_PORT || process.env.DASHBOARD_PORT || 5001;
 
 // Server start time for detecting restarts
 const SERVER_START_TIME = Date.now();
@@ -121,7 +121,7 @@ app.use(express.json({ limit: '1mb' }));
 // Security: Trust proxy (for rate limiting behind reverse proxy)
 app.set('trust proxy', 1);
 
-// Static files (no auth required for public dashboard)
+// Static files
 app.use(express.static(path.join(__dirname, '../public')));
 
 // Security: Apply rate limiting to all API routes
@@ -152,7 +152,7 @@ const FILES = {
   taskQueue: path.join(COORD_DIR, 'task-queue.json'),
   handoffs: path.join(COORD_DIR, 'handoffs.json'),
   status: path.join(COORD_DIR, 'status.json'),
-  dashboardEvents: path.join(COORD_DIR, 'dashboard-events.jsonl')
+  systemEvents: path.join(COORD_DIR, 'system-events.jsonl')
 };
 
 // Cache for coordination data
@@ -475,7 +475,7 @@ function calculateSuccessRate(workerPool, period = 'all_time') {
 }
 
 /**
- * Calculate dashboard metrics from coordination data
+ * Calculate system metrics from coordination data
  */
 function calculateMetrics(data, successRatePeriod = 'all_time') {
   const { workerPool, tokenBudget, taskQueue } = data;
@@ -589,11 +589,6 @@ function calculateMetrics(data, successRatePeriod = 'all_time') {
       used: tokenBudget.masters?.cicd?.used || 0,
       workerPool: tokenBudget.masters?.cicd?.worker_pool || 0,
       tasksHandled: tokenBudget.masters?.cicd?.tasks_handled?.length || 0
-    },
-    dashboard: {
-      allocated: tokenBudget.observers?.dashboard?.allocated || 0,
-      used: tokenBudget.observers?.dashboard?.used || 0,
-      eventsProcessed: tokenBudget.observers?.dashboard?.events_processed || 0
     }
   };
 
@@ -853,26 +848,6 @@ app.get('/api/metrics/history', async (req, res) => {
   } catch (error) {
     console.error('Error loading historical metrics:', error);
     res.status(500).json({ error: 'Internal server error' });
-  }
-});
-
-/**
- * GET /api/governance/dashboard
- * Get executive governance dashboard with health score, KPIs, and recommendations
- */
-app.get('/api/governance/dashboard', async (req, res) => {
-  try {
-    // Prevent caching - always return fresh governance data
-    res.set('Cache-Control', 'no-store, no-cache, must-revalidate, private');
-    res.set('Pragma', 'no-cache');
-    res.set('Expires', '0');
-
-    const collector = new MetricsCollector();
-    const dashboard = await collector.generateDashboard();
-    res.json(dashboard);
-  } catch (error) {
-    console.error('Error generating governance dashboard:', error);
-    res.status(500).json({ error: 'Internal server error', message: sanitizeError(error.message) });
   }
 });
 
@@ -1263,7 +1238,7 @@ function normalizeEvent(event) {
 
 /**
  * GET /api/events
- * Get recent dashboard events (merged with task events)
+ * Get recent system events (merged with task events)
  * Query params:
  *   - limit: number of events to return (default: 50)
  *   - session: 'current' to get only current session events (since server start)
@@ -1278,10 +1253,10 @@ app.get('/api/events', async (req, res) => {
 
     let events = [];
 
-    // SINGLE SOURCE OF TRUTH: dashboard-events.jsonl
+    // SINGLE SOURCE OF TRUTH: system-events.jsonl
     // All events (task, git, worker, system, etc.) should be written to this file
-    if (fsSync.existsSync(FILES.dashboardEvents)) {
-      const content = fsSync.readFileSync(FILES.dashboardEvents, 'utf-8');
+    if (fsSync.existsSync(FILES.systemEvents)) {
+      const content = fsSync.readFileSync(FILES.systemEvents, 'utf-8');
 
       // Handle both JSONL (one JSON per line) and pretty-printed multi-line JSON
       // Try to detect format by checking if first line is a complete JSON object
@@ -1404,8 +1379,8 @@ app.get('/api/activity-feed', async (req, res) => {
     let allEvents = [];
 
     // Read events file
-    if (fsSync.existsSync(FILES.dashboardEvents)) {
-      const content = fsSync.readFileSync(FILES.dashboardEvents, 'utf-8');
+    if (fsSync.existsSync(FILES.systemEvents)) {
+      const content = fsSync.readFileSync(FILES.systemEvents, 'utf-8');
       const lines = content.trim().split('\n').filter(line => line);
 
       // Parse each line as JSON
@@ -2095,7 +2070,7 @@ app.get('/api/daemons/all',
       'handoff-processor': checkDaemon('handoff-processor', 'handoff-processor-daemon.sh'),
       'threat-intel': checkDaemon('threat-intel', 'threat-intel-daemon.sh'),
       'backup': checkDaemon('backup', 'backup-daemon.sh'),
-      'dashboard': {
+      'api-server': {
         status: 'running',
         pid: process.pid,
         uptime: process.uptime() + 's',
@@ -2834,9 +2809,9 @@ app.post('/api/health-alerts/:id/resolve', async (req, res) => {
     // Write back to file
     await fs.writeFile(healthAlertsPath, JSON.stringify(healthAlertsData, null, 2), 'utf-8');
 
-    // Emit dashboard event
+    // Emit system event
     const alert = healthAlertsData.alerts[alertIndex];
-    emitDashboardEvent('health_alert_resolved', {
+    emitSystemEvent('health_alert_resolved', {
       alert_id: alert.id,
       alert_type: alert.type,
       severity: alert.severity,
@@ -2946,8 +2921,8 @@ app.post('/api/health-alerts/:id/restart-worker',
 
       await fs.writeFile(healthAlertsPath, JSON.stringify(healthAlertsData, null, 2), 'utf-8');
 
-      // Emit dashboard event
-      emitDashboardEvent('worker_restarted', {
+      // Emit system event
+      emitSystemEvent('worker_restarted', {
         worker_id: workerId,
         alert_id: safeAlertId,
         alert_type: alert?.type || 'unknown',
@@ -3025,9 +3000,9 @@ app.post('/api/health-alerts/:id/note', async (req, res) => {
     // Write back to file
     await fs.writeFile(healthAlertsPath, JSON.stringify(healthAlertsData, null, 2), 'utf-8');
 
-    // Emit dashboard event
+    // Emit system event
     const alert = healthAlertsData.alerts[alertIndex];
-    emitDashboardEvent('health_alert_note_added', {
+    emitSystemEvent('health_alert_note_added', {
       alert_id: alert.id,
       alert_type: alert.type,
       severity: alert.severity,
@@ -3072,8 +3047,8 @@ app.delete('/api/health-alerts/:id', async (req, res) => {
     // Write back to file
     await fs.writeFile(healthAlertsPath, JSON.stringify(healthAlertsData, null, 2), 'utf-8');
 
-    // Emit dashboard event
-    emitDashboardEvent('health_alert_deleted', {
+    // Emit system event
+    emitSystemEvent('health_alert_deleted', {
       alert_id: removedAlert.id,
       alert_type: removedAlert.type,
       severity: removedAlert.severity,
@@ -3190,8 +3165,8 @@ app.post('/api/health-alerts/:id/repair', async (req, res) => {
 
     await fs.writeFile(healthAlertsPath, JSON.stringify(healthAlertsData, null, 2), 'utf-8');
 
-    // Emit dashboard event
-    emitDashboardEvent('health_alert_repair_initiated', {
+    // Emit system event
+    emitSystemEvent('health_alert_repair_initiated', {
       alert_id: alert.id,
       alert_type: alert.type,
       severity: alert.severity,
@@ -3295,10 +3270,10 @@ app.get('/api/git-info', async (req, res) => {
 });
 
 /**
- * GET /api/dashboard-server/status
- * Get dashboard server status
+ * GET /api/server/status
+ * Get API server status
  */
-app.get('/api/dashboard-server/status', (req, res) => {
+app.get('/api/server/status', (req, res) => {
   res.json({
     status: 'running',
     pid: process.pid,
@@ -3308,10 +3283,10 @@ app.get('/api/dashboard-server/status', (req, res) => {
 });
 
 /**
- * POST /api/dashboard-server/control
- * Control dashboard server (restart only - can't stop itself)
+ * POST /api/server/control
+ * Control API server (restart only - can't stop itself)
  */
-app.post('/api/dashboard-server/control', async (req, res) => {
+app.post('/api/server/control', async (req, res) => {
   const { action } = req.body;
 
   if (action === 'restart') {
@@ -3322,7 +3297,7 @@ app.post('/api/dashboard-server/control', async (req, res) => {
       // Send success response first
       res.json({
         success: true,
-        message: 'Dashboard server restarting...',
+        message: 'API server restarting...',
         note: 'Please refresh the page in 2-3 seconds'
       });
 
@@ -3340,7 +3315,7 @@ app.post('/api/dashboard-server/control', async (req, res) => {
         }, 500);
       }, 1000);
     } catch (error) {
-      console.error('Error restarting dashboard server:', error);
+      console.error('Error restarting API server:', error);
       res.status(500).json({
         success: false,
         message: 'Failed to restart server',
@@ -3362,7 +3337,7 @@ app.post('/api/dashboard-server/control', async (req, res) => {
 app.get('/api/event-log/info', (req, res) => {
   try {
     const fsSync = require('fs');
-    const eventLogPath = FILES.dashboardEvents;
+    const eventLogPath = FILES.systemEvents;
 
     if (!fsSync.existsSync(eventLogPath)) {
       return res.json({
@@ -3404,8 +3379,8 @@ app.get('/api/event-log/info', (req, res) => {
 app.post('/api/event-log/purge', (req, res) => {
   try {
     const fsSync = require('fs');
-    const eventLogPath = FILES.dashboardEvents;
-    const archiveDir = path.join(COMMIT_RELAY_HOME, 'coordination', 'dashboard-events-archive');
+    const eventLogPath = FILES.systemEvents;
+    const archiveDir = path.join(COMMIT_RELAY_HOME, 'coordination', 'system-events-archive');
 
     // Create archive directory if it doesn't exist
     if (!fsSync.existsSync(archiveDir)) {
@@ -3422,7 +3397,7 @@ app.post('/api/event-log/purge', (req, res) => {
 
     // Create archive file with timestamp
     const timestamp = new Date().toISOString().replace(/[:.]/g, '-').split('T')[0];
-    const archiveFile = path.join(archiveDir, `dashboard-events-${timestamp}.jsonl`);
+    const archiveFile = path.join(archiveDir, `system-events-${timestamp}.jsonl`);
 
     // Copy current log to archive
     if (fsSync.existsSync(eventLogPath) && eventCount > 0) {
@@ -3583,7 +3558,7 @@ app.post('/api/terminal-settings', async (req, res) => {
 
     // Add metadata
     settings.last_updated = new Date().toISOString();
-    settings.updated_by = req.headers['x-user'] || 'dashboard';
+    settings.updated_by = req.headers['x-user'] || 'api-server';
 
     // Write updated settings
     await fs.writeFile(settingsPath, JSON.stringify(settings, null, 2), 'utf-8');
@@ -5150,7 +5125,7 @@ const sseClients = new Map();
  * Streams JSONL log files with auto-tail functionality
  */
 app.get('/api/logs/stream', (req, res) => {
-  const logFile = req.query.file || 'dashboard-events';
+  const logFile = req.query.file || 'system-events';
   const clientId = Date.now() + Math.random();
 
   // Set headers for SSE
@@ -5203,7 +5178,7 @@ function broadcastLogEvent(logFile, event) {
 app.get('/api/logs/available', (req, res) => {
   const coordDir = path.join(COMMIT_RELAY_HOME, 'coordination');
   const logFiles = [
-    { name: 'dashboard-events', path: 'dashboard-events.jsonl', description: 'Dashboard events and system activity' },
+    { name: 'system-events', path: 'system-events.jsonl', description: 'System events and activity' },
     { name: 'health-reports', path: 'health-reports.jsonl', description: 'System health check reports' },
     { name: 'pm-activity', path: 'pm-activity.jsonl', description: 'Process manager activity log' },
     { name: 'git-operations', path: 'git-operations.jsonl', description: 'Git push/pull operations' },
@@ -5224,7 +5199,7 @@ app.get('/api/logs/available', (req, res) => {
  */
 app.get('/api/logs/tail', async (req, res) => {
   try {
-    const logFile = req.query.file || 'dashboard-events';
+    const logFile = req.query.file || 'system-events';
     const lines = parseInt(req.query.lines) || 100;
 
     const logPath = path.join(COMMIT_RELAY_HOME, 'coordination', `${logFile}.jsonl`);
@@ -5428,8 +5403,8 @@ app.post('/api/users', async (req, res) => {
     // Write back to file
     await safeWriteJSON(usersPath, usersData);
 
-    // Emit dashboard event
-    emitDashboardEvent('user_created', {
+    // Emit system event
+    emitSystemEvent('user_created', {
       user_id: newUser.id,
       username: newUser.username,
       role: newUser.role,
@@ -5528,8 +5503,8 @@ app.put('/api/users/:id', async (req, res) => {
     // Write back to file
     await safeWriteJSON(usersPath, usersData);
 
-    // Emit dashboard event
-    emitDashboardEvent('user_updated', {
+    // Emit system event
+    emitSystemEvent('user_updated', {
       user_id: updatedUser.id,
       username: updatedUser.username,
       role: updatedUser.role,
@@ -5578,8 +5553,8 @@ app.delete('/api/users/:id', async (req, res) => {
     // Write back to file
     await safeWriteJSON(usersPath, usersData);
 
-    // Emit dashboard event
-    emitDashboardEvent('user_deleted', {
+    // Emit system event
+    emitSystemEvent('user_deleted', {
       user_id: deletedUser.id,
       username: deletedUser.username,
       message: `User deleted: ${deletedUser.username}`
@@ -5638,8 +5613,8 @@ app.post('/api/users/:id/login', async (req, res) => {
     // Write back to file
     await safeWriteJSON(usersPath, usersData);
 
-    // Emit dashboard event
-    emitDashboardEvent('user_login', {
+    // Emit system event
+    emitSystemEvent('user_login', {
       user_id: user.id,
       username: user.username,
       timestamp: user.last_login,
@@ -5662,119 +5637,6 @@ app.post('/api/users/:id/login', async (req, res) => {
       error: 'Internal server error',
       details: sanitizeError(error)
     });
-  }
-});
-
-// ============================================================================
-// Phase 7: Enhanced Dashboard & Observability APIs
-// ============================================================================
-
-// Historical Analytics
-app.get('/api/dashboard/analytics/summary', async (req, res) => {
-  try {
-    const { execSync } = require('child_process');
-    const result = execSync(`${COMMIT_RELAY_HOME}/scripts/dashboard-analytics summary`, {
-      encoding: 'utf-8',
-      timeout: 10000
-    });
-    res.json(JSON.parse(result));
-  } catch (error) {
-    res.json({
-      worker_success: [],
-      throughput: { tasks_completed: 0, workers_spawned: 0 },
-      degradations: [],
-      patterns_identified: 0
-    });
-  }
-});
-
-app.get('/api/dashboard/analytics/trends', async (req, res) => {
-  try {
-    const days = req.query.days || 7;
-    const { execSync } = require('child_process');
-    const result = execSync(`${COMMIT_RELAY_HOME}/scripts/dashboard-analytics trends ${days}`, {
-      encoding: 'utf-8',
-      timeout: 10000
-    });
-    res.json(JSON.parse(result));
-  } catch (error) {
-    res.json({ error: 'Failed to get trends', worker_success: [], token_trends: [] });
-  }
-});
-
-// Visualizations
-app.get('/api/dashboard/visualizations/all', async (req, res) => {
-  try {
-    const hours = req.query.hours || 24;
-    const { execSync } = require('child_process');
-    const result = execSync(`${COMMIT_RELAY_HOME}/scripts/dashboard-viz all ${hours}`, {
-      encoding: 'utf-8',
-      timeout: 10000
-    });
-    res.json(JSON.parse(result));
-  } catch (error) {
-    res.json({
-      gantt: [],
-      heatmap: [],
-      health: { overall_status: 'unknown' },
-      distribution: []
-    });
-  }
-});
-
-app.get('/api/dashboard/visualizations/health', async (req, res) => {
-  try {
-    const { execSync } = require('child_process');
-    const result = execSync(`${COMMIT_RELAY_HOME}/scripts/dashboard-viz health`, {
-      encoding: 'utf-8',
-      timeout: 10000
-    });
-    res.json(JSON.parse(result));
-  } catch (error) {
-    res.json({
-      overall_status: 'unknown',
-      metrics: { active_workers: 0, success_rate: 0 }
-    });
-  }
-});
-
-// Alerts
-app.get('/api/dashboard/alerts/active', async (req, res) => {
-  try {
-    const { execSync } = require('child_process');
-    const result = execSync(`${COMMIT_RELAY_HOME}/scripts/dashboard-alerts list`, {
-      encoding: 'utf-8',
-      timeout: 10000
-    });
-    res.json(JSON.parse(result));
-  } catch (error) {
-    res.json([]);
-  }
-});
-
-app.get('/api/dashboard/alerts/stats', async (req, res) => {
-  try {
-    const { execSync } = require('child_process');
-    const result = execSync(`${COMMIT_RELAY_HOME}/scripts/dashboard-alerts stats`, {
-      encoding: 'utf-8',
-      timeout: 10000
-    });
-    res.json(JSON.parse(result));
-  } catch (error) {
-    res.json({ active_alerts: 0, by_severity: {} });
-  }
-});
-
-app.post('/api/dashboard/alerts/check', async (req, res) => {
-  try {
-    const { execSync } = require('child_process');
-    const result = execSync(`${COMMIT_RELAY_HOME}/scripts/dashboard-alerts check`, {
-      encoding: 'utf-8',
-      timeout: 10000
-    });
-    res.json(JSON.parse(result));
-  } catch (error) {
-    res.json([]);
   }
 });
 
@@ -6097,7 +5959,7 @@ app.post('/api/agentstudio/agents',
     fsSync.mkdirSync(path.join(agentDir, 'knowledge-base'), { recursive: true });
 
     // Emit event
-    emitDashboardEvent('agent_created', {
+    emitSystemEvent('agent_created', {
       agent_id: id,
       agent_name: name,
       agent_type: type,
@@ -6156,7 +6018,7 @@ app.patch('/api/agentstudio/agents/:id',
 
     // Emit event if status changed
     if (updates.status) {
-      emitDashboardEvent('agent_status_changed', {
+      emitSystemEvent('agent_status_changed', {
         agent_id: id,
         new_status: updates.status,
         message: `Agent ${id} status changed to ${updates.status}`
@@ -6277,12 +6139,11 @@ app.get('/api/agentstudio/templates',
 
 const server = app.listen(PORT, () => {
   console.log(`\n┌─────────────────────────────────────────────────────┐`);
-  console.log(`│  Commit-Relay Dashboard Server                      │`);
+  console.log(`│  Commit-Relay API Server                            │`);
   console.log(`├─────────────────────────────────────────────────────┤`);
   console.log(`│  HTTP Server:   http://localhost:${PORT}              │`);
   console.log(`│  WebSocket:     ws://localhost:${PORT}                │`);
   console.log(`│  SSE Streaming: /api/logs/stream                    │`);
-  console.log(`│  Dashboard UI:  http://localhost:${PORT}/             │`);
   console.log(`└─────────────────────────────────────────────────────┘\n`);
 });
 
@@ -6372,10 +6233,10 @@ function broadcastUpdate(data) {
 }
 
 /**
- * Emit a dashboard event to dashboard-events.jsonl
+ * Emit a system event to system-events.jsonl
  * Now includes automatic JSON validation and repair
  */
-function emitDashboardEvent(type, data) {
+function emitSystemEvent(type, data) {
   try {
     const fsSync = require('fs');
     const event = {
@@ -6383,21 +6244,21 @@ function emitDashboardEvent(type, data) {
       timestamp: new Date().toISOString(),
       type: type,
       data: data,
-      source: 'dashboard'
+      source: 'api-server'
     };
 
     // Use safe write with validation and repair
-    const result = safeWriteJSON(FILES.dashboardEvents, event, true);
+    const result = safeWriteJSON(FILES.systemEvents, event, true);
 
     if (result.success) {
-      console.log(`Dashboard event emitted: ${type}`);
+      console.log(`System event emitted: ${type}`);
     } else {
-      console.error(`Failed to emit dashboard event: ${type}`, result.error);
+      console.error(`Failed to emit system event: ${type}`, result.error);
       logValidation('ERROR', `Event emission failed for type: ${type}`, { error: result.error, event });
     }
   } catch (error) {
-    console.error('Error emitting dashboard event:', error);
-    logValidation('ERROR', 'Exception in emitDashboardEvent', { error: error.message, type });
+    console.error('Error emitting system event:', error);
+    logValidation('ERROR', 'Exception in emitSystemEvent', { error: error.message, type });
   }
 }
 
@@ -6476,7 +6337,7 @@ watcher.on('change', async (filePath) => {
 });
 
 // ============================================================================
-// Dashboard Events Stream Watcher
+// System Events Stream Watcher
 // ============================================================================
 
 /**
@@ -6564,13 +6425,13 @@ function createLogWatcher(logName, logPath, shouldBroadcastWebSocket = false) {
         newLines.forEach(line => {
           try {
             const event = JSON.parse(line);
-            const normalizedEvent = logName === 'dashboard-events' ? normalizeEvent(event) : event;
+            const normalizedEvent = logName === 'system-events' ? normalizeEvent(event) : event;
 
             // Broadcast to SSE clients (ELK-style streaming)
             broadcastLogEvent(logName, normalizedEvent);
 
-            // For dashboard-events, also broadcast to WebSocket (backward compatibility)
-            if (shouldBroadcastWebSocket && logName === 'dashboard-events') {
+            // For system-events, also broadcast to WebSocket (backward compatibility)
+            if (shouldBroadcastWebSocket && logName === 'system-events') {
               broadcastEvent(normalizedEvent);
             }
 
@@ -6588,8 +6449,8 @@ function createLogWatcher(logName, logPath, shouldBroadcastWebSocket = false) {
   return watcher;
 }
 
-// Watch dashboard-events.jsonl (main event stream)
-const eventWatcher = createLogWatcher('dashboard-events', FILES.dashboardEvents, true);
+// Watch system-events.jsonl (main event stream)
+const eventWatcher = createLogWatcher('system-events', FILES.systemEvents, true);
 
 // Watch additional log files for ELK-style streaming
 const logWatchers = [];
@@ -7543,7 +7404,7 @@ setInterval(async () => {
 // ============================================================================
 
 process.on('SIGINT', () => {
-  console.log('\nShutting down dashboard server...');
+  console.log('\nShutting down API server...');
   watcher.close();
   eventWatcher.close();
   logWatchers.forEach(w => w.close());
@@ -7554,7 +7415,7 @@ process.on('SIGINT', () => {
 });
 
 process.on('SIGTERM', () => {
-  console.log('\nShutting down dashboard server...');
+  console.log('\nShutting down API server...');
   watcher.close();
   eventWatcher.close();
   logWatchers.forEach(w => w.close());

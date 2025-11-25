@@ -1,1 +1,0 @@
-{"deployment_id":"example-deployment-001","worker_id":"dashboard-worker-EXAMPLE","task_id":"task-000","handoff_id":"example-handoff","components":"events,metrics,tasks","priority":"immediate","status":"success","timestamp":"2025-11-04T19:00:00Z","duration_seconds":3,"note":"Example deployment record - actual deployments will be appended by dashboard-update-worker.sh"}
