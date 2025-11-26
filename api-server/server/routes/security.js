@@ -20,6 +20,7 @@ const path = require('path');
 const fs = require('fs').promises;
 const { execFile } = require('child_process');
 const { promisify } = require('util');
+const { sanitizeFilename, safeJoin, isPathWithinDirectory } = require('../lib/path-validator');
 
 const execFileAsync = promisify(execFile);
 
@@ -43,6 +44,12 @@ const REPOS_CLONE_DIR = path.join(COMMIT_RELAY_HOME, 'repos');
  */
 async function readJsonFile(filePath) {
   try {
+    // Validate the file path is within coordination directory
+    if (!isPathWithinDirectory(filePath, COORDINATION_DIR)) {
+      console.warn(`Attempted path traversal blocked: ${filePath}`);
+      return null;
+    }
+
     const content = await fs.readFile(filePath, 'utf-8');
     return JSON.parse(content);
   } catch (error) {
