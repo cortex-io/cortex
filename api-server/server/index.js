@@ -58,6 +58,9 @@ const {
   sanitizeError
 } = require('./utils/security');
 
+// Path validation utilities
+const { sanitizeFilename, safeJoin, validateId, validateDateString } = require('./lib/path-validator');
+
 // Governance modules
 const { ComplianceEngine, MetricsCollector } = require('../../lib/governance/compliance');
 
@@ -5253,9 +5256,18 @@ app.get('/api/logs/tail', async (req, res) => {
     const logFile = req.query.file || 'system-events';
     const lines = parseInt(req.query.lines) || 100;
 
-    const logPath = path.join(COMMIT_RELAY_HOME, 'coordination', `${logFile}.jsonl`);
+    // Validate and sanitize the log file name
+    const sanitizedLogFile = sanitizeFilename(logFile, ['.jsonl']);
+    if (!sanitizedLogFile) {
+      return res.status(400).json({ error: 'Invalid log file name' });
+    }
 
-    if (!fsSync.existsSync(logPath)) {
+    // Remove extension if provided (we'll add it)
+    const baseLogFile = sanitizedLogFile.replace('.jsonl', '');
+    const coordDir = path.join(COMMIT_RELAY_HOME, 'coordination');
+    const logPath = safeJoin(coordDir, `${baseLogFile}.jsonl`);
+
+    if (!logPath || !fsSync.existsSync(logPath)) {
       return res.status(404).json({ error: 'Log file not found' });
     }
 
