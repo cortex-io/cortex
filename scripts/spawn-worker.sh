@@ -356,6 +356,22 @@ fi
 
 print_info "Review configuration: enabled=$REVIEW_ENABLED, cycles=$REVIEW_CYCLES"
 
+# Phase 5.3: Get tool clustering assignment (58% tool reduction)
+TOOL_FILTER_CLI="$COMMIT_RELAY_HOME/lib/tools/tool-filter-cli.js"
+TOOL_ASSIGNMENT="{}"
+if [ -f "$TOOL_FILTER_CLI" ]; then
+    print_info "Applying tool clustering for $WORKER_TYPE..."
+    # Get tool assignment from filter
+    TOOL_RESULT=$(node "$TOOL_FILTER_CLI" get-tools "$WORKER_TYPE" 2>/dev/null || echo "{}")
+    if [ "$TOOL_RESULT" != "{}" ] && [ "$TOOL_RESULT" != "null" ]; then
+        TOOL_ASSIGNMENT="$TOOL_RESULT"
+        ESSENTIAL_COUNT=$(echo "$TOOL_ASSIGNMENT" | jq -r '.essential_tools | length' 2>/dev/null || echo "0")
+        OPTIONAL_COUNT=$(echo "$TOOL_ASSIGNMENT" | jq -r '.optional_tools | length' 2>/dev/null || echo "0")
+        TOTAL_TOOLS=$((ESSENTIAL_COUNT + OPTIONAL_COUNT))
+        print_info "Tool assignment: $TOTAL_TOOLS tools ($ESSENTIAL_COUNT essential, $OPTIONAL_COUNT optional)"
+    fi
+fi
+
 cat > "$WORKER_SPEC_FILE" <<EOF
 {
   "worker_id": "$WORKER_ID",
@@ -384,8 +400,9 @@ cat > "$WORKER_SPEC_FILE" <<EOF
     "timeout_minutes": $TIMEOUT_MINUTES,
     "max_retries": 1
   },
+  "tool_assignment": $TOOL_ASSIGNMENT,
   "deliverables": [],
-  "prompt_template": "agents/prompts/workers/${WORKER_TYPE}.md",
+  "prompt_template": "agents/prompts/workers/${WORKER_TYPE}-v2.md",
   "execution": {
     "started_at": null,
     "completed_at": null,
@@ -515,8 +532,8 @@ export REVIEW_POLICY_PATH="$REVIEW_POLICY_FILE"
 
 # Display next steps
 print_info "Next Steps:"
-echo "1. Start Claude Code session with worker prompt:"
-echo "   claude-code --prompt-file agents/prompts/workers/${WORKER_TYPE}.md"
+echo "1. Start Claude Code session with worker prompt (Phase 5.1: AGENTS.md format):"
+echo "   claude-code --prompt-file agents/prompts/workers/${WORKER_TYPE}-v2.md"
 echo ""
 echo "2. Worker will read its specification from:"
 echo "   $WORKER_SPEC_FILE"
