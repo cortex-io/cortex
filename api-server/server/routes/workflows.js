@@ -13,6 +13,7 @@
 const express = require('express');
 const router = express.Router();
 const path = require('path');
+const { sanitizeFilename, validateId } = require('../lib/path-validator');
 
 // Import workflow engine
 const WorkflowEngine = require('../../../lib/orchestration/workflow-engine');
@@ -101,7 +102,16 @@ router.get('/executions/:id', async (req, res) => {
   try {
     const { id } = req.params;
 
-    const execution = await workflowEngine.getExecution(id);
+    // Validate execution ID format
+    const sanitizedId = validateId(id);
+    if (!sanitizedId) {
+      return res.status(400).json({
+        success: false,
+        error: 'Invalid execution ID format'
+      });
+    }
+
+    const execution = await workflowEngine.getExecution(sanitizedId);
 
     if (!execution) {
       return res.status(404).json({
@@ -152,7 +162,16 @@ router.delete('/executions/:id', async (req, res) => {
   try {
     const { id } = req.params;
 
-    const execution = await workflowEngine.getExecution(id);
+    // Validate execution ID format
+    const sanitizedId = validateId(id);
+    if (!sanitizedId) {
+      return res.status(400).json({
+        success: false,
+        error: 'Invalid execution ID format'
+      });
+    }
+
+    const execution = await workflowEngine.getExecution(sanitizedId);
 
     if (!execution) {
       return res.status(404).json({
@@ -247,26 +266,35 @@ router.get('/:name', async (req, res) => {
   try {
     const { name } = req.params;
 
+    // Validate workflow name to prevent path traversal
+    const sanitizedName = sanitizeFilename(name, []);
+    if (!sanitizedName || sanitizedName !== name) {
+      return res.status(400).json({
+        success: false,
+        error: 'Invalid workflow name format'
+      });
+    }
+
     // Try to load if not cached
-    if (!workflowEngine.getWorkflow(name)) {
+    if (!workflowEngine.getWorkflow(sanitizedName)) {
       try {
-        await workflowEngine.loadWorkflow(`${name}.yaml`);
+        await workflowEngine.loadWorkflow(`${sanitizedName}.yaml`);
       } catch (loadError) {
         return res.status(404).json({
           success: false,
           error: 'Workflow not found',
-          message: `Workflow '${name}' does not exist`
+          message: `Workflow '${sanitizedName}' does not exist`
         });
       }
     }
 
-    const workflow = workflowEngine.getWorkflow(name);
+    const workflow = workflowEngine.getWorkflow(sanitizedName);
 
     if (!workflow) {
       return res.status(404).json({
         success: false,
         error: 'Workflow not found',
-        message: `Workflow '${name}' does not exist`
+        message: `Workflow '${sanitizedName}' does not exist`
       });
     }
 
@@ -301,21 +329,30 @@ router.post('/:name/execute', async (req, res) => {
     const { name } = req.params;
     const { inputs = {}, options = {} } = req.body;
 
+    // Validate workflow name to prevent path traversal
+    const sanitizedName = sanitizeFilename(name, []);
+    if (!sanitizedName || sanitizedName !== name) {
+      return res.status(400).json({
+        success: false,
+        error: 'Invalid workflow name format'
+      });
+    }
+
     // Verify workflow exists
-    if (!workflowEngine.getWorkflow(name)) {
+    if (!workflowEngine.getWorkflow(sanitizedName)) {
       try {
-        await workflowEngine.loadWorkflow(`${name}.yaml`);
+        await workflowEngine.loadWorkflow(`${sanitizedName}.yaml`);
       } catch (loadError) {
         return res.status(404).json({
           success: false,
           error: 'Workflow not found',
-          message: `Workflow '${name}' does not exist`
+          message: `Workflow '${sanitizedName}' does not exist`
         });
       }
     }
 
     // Validate required inputs
-    const workflow = workflowEngine.getWorkflow(name);
+    const workflow = workflowEngine.getWorkflow(sanitizedName);
     if (workflow.inputs) {
       const missingInputs = [];
       for (const [key, config] of Object.entries(workflow.inputs)) {
@@ -336,7 +373,7 @@ router.post('/:name/execute', async (req, res) => {
     // Check for async execution
     if (options.async) {
       // Start execution asynchronously
-      const executionId = `exec-${name}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+      const executionId = `exec-${sanitizedName}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 
       // Return immediately with execution ID
       res.status(202).json({
@@ -350,13 +387,13 @@ router.post('/:name/execute', async (req, res) => {
       });
 
       // Execute in background
-      workflowEngine.execute(name, inputs, options).catch(error => {
+      workflowEngine.execute(sanitizedName, inputs, options).catch(error => {
         console.error(`Background workflow execution failed: ${error.message}`);
       });
 
     } else {
       // Synchronous execution
-      const execution = await workflowEngine.execute(name, inputs, options);
+      const execution = await workflowEngine.execute(sanitizedName, inputs, options);
 
       res.json({
         success: true,
@@ -393,7 +430,16 @@ router.get('/:name/executions', async (req, res) => {
     const { name } = req.params;
     const { limit = 50, offset = 0, status } = req.query;
 
-    const result = await workflowEngine.listExecutions(name, {
+    // Validate workflow name to prevent path traversal
+    const sanitizedName = sanitizeFilename(name, []);
+    if (!sanitizedName || sanitizedName !== name) {
+      return res.status(400).json({
+        success: false,
+        error: 'Invalid workflow name format'
+      });
+    }
+
+    const result = await workflowEngine.listExecutions(sanitizedName, {
       limit: parseInt(limit, 10),
       offset: parseInt(offset, 10)
     });
@@ -407,7 +453,7 @@ router.get('/:name/executions', async (req, res) => {
     res.json({
       success: true,
       data: {
-        workflow_name: name,
+        workflow_name: sanitizedName,
         executions,
         pagination: {
           total: result.total,
@@ -435,8 +481,17 @@ router.post('/:name/validate', async (req, res) => {
   try {
     const { name } = req.params;
 
+    // Validate workflow name to prevent path traversal
+    const sanitizedName = sanitizeFilename(name, []);
+    if (!sanitizedName || sanitizedName !== name) {
+      return res.status(400).json({
+        success: false,
+        error: 'Invalid workflow name format'
+      });
+    }
+
     // Load and validate workflow
-    const workflow = await workflowEngine.loadWorkflow(`${name}.yaml`);
+    const workflow = await workflowEngine.loadWorkflow(`${sanitizedName}.yaml`);
 
     // Build DAG to validate dependencies
     const dag = workflowEngine.buildDAG(workflow.steps);
