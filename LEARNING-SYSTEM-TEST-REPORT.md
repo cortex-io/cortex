@@ -5,7 +5,7 @@
 
 ## Executive Summary
 
-This report documents comprehensive testing of the commit-relay learning system, which implements an ASI (Artificial Superintelligence) learning cycle for continuous improvement. The system consists of three main components:
+This report documents comprehensive testing of the cortex learning system, which implements an ASI (Artificial Superintelligence) learning cycle for continuous improvement. The system consists of three main components:
 
 1. **Critic** - Evaluates worker performance and generates training data
 2. **Learner** - Extracts patterns and updates models based on training data
@@ -541,7 +541,7 @@ fi
 
 ## Conclusion
 
-The commit-relay learning system infrastructure is **fundamentally sound and 95% functional**. The three main components (Critic, Learner, Problem Generator) are well-architected and successfully implement the ASI learning cycle concept.
+The cortex learning system infrastructure is **fundamentally sound and 95% functional**. The three main components (Critic, Learner, Problem Generator) are well-architected and successfully implement the ASI learning cycle concept.
 
 ### What's Working Excellently
 1. **Critic Component**: Perfect execution, comprehensive evaluation, quality training data generation
@@ -573,30 +573,30 @@ Despite the JQ syntax issues blocking pattern extraction, the learning system ha
 ### Appendix A: File Locations
 
 **Training Data:**
-- `/Users/ryandahlberg/commit-relay/coordination/knowledge-base/training-examples/positive-examples.jsonl`
-- `/Users/ryandahlberg/commit-relay/coordination/knowledge-base/training-examples/negative-examples.jsonl`
-- `/Users/ryandahlberg/commit-relay/coordination/knowledge-base/training-examples/training-examples.jsonl`
+- `/Users/ryandahlberg/cortex/coordination/knowledge-base/training-examples/positive-examples.jsonl`
+- `/Users/ryandahlberg/cortex/coordination/knowledge-base/training-examples/negative-examples.jsonl`
+- `/Users/ryandahlberg/cortex/coordination/knowledge-base/training-examples/training-examples.jsonl`
 
 **Learned Patterns:**
-- `/Users/ryandahlberg/commit-relay/coordination/knowledge-base/learned-patterns/patterns-latest.json`
+- `/Users/ryandahlberg/cortex/coordination/knowledge-base/learned-patterns/patterns-latest.json`
 
 **Model Versions:**
-- `/Users/ryandahlberg/commit-relay/coordination/knowledge-base/model-versions/routing-model-*.jsonl`
-- `/Users/ryandahlberg/commit-relay/coordination/knowledge-base/model-versions/utility-weights-*.json`
+- `/Users/ryandahlberg/cortex/coordination/knowledge-base/model-versions/routing-model-*.jsonl`
+- `/Users/ryandahlberg/cortex/coordination/knowledge-base/model-versions/utility-weights-*.json`
 
 **Feedback Reports:**
-- `/Users/ryandahlberg/commit-relay/coordination/knowledge-base/feedback-reports/feedback-*.json`
+- `/Users/ryandahlberg/cortex/coordination/knowledge-base/feedback-reports/feedback-*.json`
 
 **Metrics:**
-- `/Users/ryandahlberg/commit-relay/coordination/metrics/learning/evaluations.jsonl`
-- `/Users/ryandahlberg/commit-relay/coordination/metrics/learning/learner-metrics.jsonl`
-- `/Users/ryandahlberg/commit-relay/coordination/metrics/learning/improvement-*.json`
+- `/Users/ryandahlberg/cortex/coordination/metrics/learning/evaluations.jsonl`
+- `/Users/ryandahlberg/cortex/coordination/metrics/learning/learner-metrics.jsonl`
+- `/Users/ryandahlberg/cortex/coordination/metrics/learning/improvement-*.json`
 
 **Exploration:**
-- `/Users/ryandahlberg/commit-relay/coordination/knowledge-base/exploration/exploration-log.jsonl`
+- `/Users/ryandahlberg/cortex/coordination/knowledge-base/exploration/exploration-log.jsonl`
 
 **Logs:**
-- `/Users/ryandahlberg/commit-relay/agents/logs/system/daily-learning-scheduler.log`
+- `/Users/ryandahlberg/cortex/agents/logs/system/daily-learning-scheduler.log`
 
 ### Appendix B: Test Data Summary
 

@@ -4,8 +4,8 @@
 
 set -euo pipefail
 
-COMMIT_RELAY_HOME="${COMMIT_RELAY_HOME:-/Users/ryandahlberg/commit-relay}"
-TEST_DIR="${COMMIT_RELAY_HOME}/testing/governance"
+CORTEX_HOME="${CORTEX_HOME:-/Users/ryandahlberg/cortex}"
+TEST_DIR="${CORTEX_HOME}/testing/governance"
 RESULTS_DIR="${TEST_DIR}/results"
 
 # Colors

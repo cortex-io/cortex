@@ -19,10 +19,10 @@ set -euo pipefail
 
 # Configuration
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-COMMIT_RELAY_HOME="${COMMIT_RELAY_HOME:-$(cd "$SCRIPT_DIR/../../.." && pwd)}"
+CORTEX_HOME="${CORTEX_HOME:-$(cd "$SCRIPT_DIR/../../.." && pwd)}"
 
 readonly REGISTRY_FILE="$SCRIPT_DIR/agents.json"
-readonly REGISTRY_LOCK="/tmp/commit-relay-registry.lock"
+readonly REGISTRY_LOCK="/tmp/cortex-registry.lock"
 readonly ACTIVE_DIR="$SCRIPT_DIR/active"
 readonly IDLE_DIR="$SCRIPT_DIR/idle"
 readonly RETIRED_DIR="$SCRIPT_DIR/retired"
@@ -453,7 +453,7 @@ create_agent_from_template() {
     local agent_id="$2"
     local customizations="${3:-{}}"
 
-    local template_file="$COMMIT_RELAY_HOME/coordination/agentstudio/templates/${template_name}.json"
+    local template_file="$CORTEX_HOME/coordination/agentstudio/templates/${template_name}.json"
 
     if [ ! -f "$template_file" ]; then
         echo "ERROR: Template not found: $template_name" >&2

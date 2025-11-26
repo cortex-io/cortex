@@ -1,15 +1,15 @@
 """
-Custom exceptions for the Commit-Relay Python SDK.
+Custom exceptions for the Cortex Python SDK.
 
 This module defines the exception hierarchy used throughout the SDK for
-handling various error conditions when interacting with the commit-relay
+handling various error conditions when interacting with the cortex
 dashboard API.
 """
 
 
 class CommitRelayError(Exception):
     """
-    Base exception for all commit-relay SDK errors.
+    Base exception for all cortex SDK errors.
 
     All custom exceptions in this SDK inherit from this base class,
     making it easy to catch any SDK-related error.
@@ -22,7 +22,7 @@ class APIError(CommitRelayError):
     Raised when an API request fails.
 
     This includes HTTP errors, invalid responses, or server-side errors
-    returned by the commit-relay dashboard API.
+    returned by the cortex dashboard API.
 
     Attributes:
         status_code (int): HTTP status code if available

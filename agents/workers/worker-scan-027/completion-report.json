@@ -26,19 +26,19 @@
     "primary": {
       "file": "security-audit-report.json",
       "type": "security_audit_report",
-      "location": "/Users/ryandahlberg/Projects/commit-relay/agents/workers/worker-scan-027/security-audit-report.json",
+      "location": "/Users/ryandahlberg/Projects/cortex/agents/workers/worker-scan-027/security-audit-report.json",
       "size_bytes": 5234
     },
     "supporting": [
       {
         "file": "execution-log.md",
         "type": "execution_log",
-        "location": "/Users/ryandahlberg/Projects/commit-relay/agents/workers/worker-scan-027/execution-log.md"
+        "location": "/Users/ryandahlberg/Projects/cortex/agents/workers/worker-scan-027/execution-log.md"
       },
       {
         "file": "completion-report.json",
         "type": "completion_report",
-        "location": "/Users/ryandahlberg/Projects/commit-relay/agents/workers/worker-scan-027/completion-report.json"
+        "location": "/Users/ryandahlberg/Projects/cortex/agents/workers/worker-scan-027/completion-report.json"
       }
     ]
   },
@@ -100,7 +100,7 @@
     "spawned_at": "2025-11-16T10:33:27-0600",
     "test_task": true,
     "moe_test_id": "ddqd-v5-1763307968",
-    "coordination_file": "/Users/ryandahlberg/Projects/commit-relay/coordination/worker-specs/active/worker-scan-027.json"
+    "coordination_file": "/Users/ryandahlberg/Projects/cortex/coordination/worker-specs/active/worker-scan-027.json"
   },
 
   "conclusion": "Security audit completed successfully. Repository demonstrates good security practices with no critical vulnerabilities. Comprehensive report generated with actionable recommendations for continuous improvement."

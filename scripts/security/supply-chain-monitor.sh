@@ -5,21 +5,21 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-COMMIT_RELAY_HOME="${COMMIT_RELAY_HOME:-$(cd "$SCRIPT_DIR/../.." && pwd)}"
+CORTEX_HOME="${CORTEX_HOME:-$(cd "$SCRIPT_DIR/../.." && pwd)}"
 
-source "$COMMIT_RELAY_HOME/scripts/lib/logging.sh" 2>/dev/null || {
+source "$CORTEX_HOME/scripts/lib/logging.sh" 2>/dev/null || {
     log_info() { echo "[INFO] $1"; }
     log_warn() { echo "[WARN] $1"; }
     log_error() { echo "[ERROR] $1"; }
 }
 
 # Supply chain directory
-SUPPLY_CHAIN_DIR="$COMMIT_RELAY_HOME/coordination/security/supply-chain"
+SUPPLY_CHAIN_DIR="$CORTEX_HOME/coordination/security/supply-chain"
 mkdir -p "$SUPPLY_CHAIN_DIR"
 
 # Scan dependencies
 scan_dependencies() {
-    local project_dir="${1:-$COMMIT_RELAY_HOME}"
+    local project_dir="${1:-$CORTEX_HOME}"
     local output_file="$SUPPLY_CHAIN_DIR/deps-$(date +%Y%m%d-%H%M%S).json"
 
     log_info "Scanning dependencies in: $project_dir"
@@ -147,7 +147,7 @@ check_vulnerabilities() {
 
 # Verify package integrity
 verify_integrity() {
-    local project_dir="${1:-$COMMIT_RELAY_HOME}"
+    local project_dir="${1:-$CORTEX_HOME}"
 
     log_info "Verifying package integrity..."
 
@@ -189,7 +189,7 @@ verify_integrity() {
 
 # Generate SBOM (Software Bill of Materials)
 generate_sbom() {
-    local project_dir="${1:-$COMMIT_RELAY_HOME}"
+    local project_dir="${1:-$CORTEX_HOME}"
     local output_file="$SUPPLY_CHAIN_DIR/sbom-$(date +%Y%m%d).json"
 
     log_info "Generating SBOM for: $project_dir"
@@ -199,7 +199,7 @@ generate_sbom() {
 
     # Build SBOM
     local sbom=$(jq -n \
-        --arg name "commit-relay" \
+        --arg name "cortex" \
         --arg version "1.0.0" \
         --arg generated "$(date +%Y-%m-%dT%H:%M:%S%z)" \
         --argjson deps "$deps" \
@@ -233,16 +233,16 @@ export -f generate_sbom
 if [ "${BASH_SOURCE[0]}" = "${0}" ]; then
     case "${1:-help}" in
         scan)
-            scan_dependencies "${2:-$COMMIT_RELAY_HOME}"
+            scan_dependencies "${2:-$CORTEX_HOME}"
             ;;
         vuln|vulnerabilities)
             check_vulnerabilities "${2:-}"
             ;;
         verify)
-            verify_integrity "${2:-$COMMIT_RELAY_HOME}"
+            verify_integrity "${2:-$CORTEX_HOME}"
             ;;
         sbom)
-            generate_sbom "${2:-$COMMIT_RELAY_HOME}"
+            generate_sbom "${2:-$CORTEX_HOME}"
             ;;
         *)
             echo "Supply Chain Security Monitor"

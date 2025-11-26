@@ -44,7 +44,7 @@ class AchievementTracker {
     const url = `${this.apiBase}${endpoint}`;
     const headers = {
       'Accept': 'application/vnd.github.v3+json',
-      'User-Agent': 'commit-relay-achievement-tracker',
+      'User-Agent': 'cortex-achievement-tracker',
       ...(this.githubToken && { 'Authorization': `Bearer ${this.githubToken}` }),
       ...options.headers
     };

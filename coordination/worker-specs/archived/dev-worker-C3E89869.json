@@ -14,7 +14,7 @@
     "created_at": "2025-11-11T11:36:34-0600",
     "created_by": "create-task-cli",
     "context": {
-      "repository": "ry-ops/commit-relay",
+      "repository": "ry-ops/cortex",
       "branch": "main",
       "description": "GOVERNANCE UPGRADE - Phase 3: Automated Data Lineage & Audit Trails. Implement comprehensive lineage tracking and audit trail system integrated with Phase 1 catalog and Phase 2 access control. Build LineageTracker class for recording all operations, implement comprehensive audit trail logging, create lineage visualization (source → transformation → target), add audit query interface and compliance reports. Success criteria: 100% operation lineage tracked, audit trail completeness 99.9%, lineage query response <500ms, compliance report generation <2 seconds.",
       "requirements": []
@@ -30,8 +30,8 @@
     "expertise_area": "",
     "skills_required": [],
     "knowledge_base_refs": {
-      "implementation_patterns": "/Users/ryandahlberg/commit-relay/scripts/../coordination/masters/development/knowledge-base/implementation-patterns.jsonl",
-      "architecture_docs": "/Users/ryandahlberg/commit-relay/scripts/../coordination/masters/development/knowledge-base/codebase-architecture.json"
+      "implementation_patterns": "/Users/ryandahlberg/cortex/scripts/../coordination/masters/development/knowledge-base/implementation-patterns.jsonl",
+      "architecture_docs": "/Users/ryandahlberg/cortex/scripts/../coordination/masters/development/knowledge-base/codebase-architecture.json"
     }
   },
   "resources": {

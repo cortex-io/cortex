@@ -12,8 +12,8 @@ const path = require('path');
 // Paths to the prompts registry
 // Primary: coordination/prompts for centralized storage
 // Fallback: llm-mesh/prompts for legacy support
-const COORD_DIR = process.env.COMMIT_RELAY_HOME
-  ? path.join(process.env.COMMIT_RELAY_HOME, 'coordination')
+const COORD_DIR = process.env.CORTEX_HOME
+  ? path.join(process.env.CORTEX_HOME, 'coordination')
   : path.join(__dirname, '../../coordination');
 
 const PRIMARY_REGISTRY_PATH = path.join(COORD_DIR, 'prompts/registry.json');

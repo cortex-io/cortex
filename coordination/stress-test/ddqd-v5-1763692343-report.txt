@@ -56,9 +56,9 @@ Token Budget Used: 0 / 500000 (0.0%)
 Some MoE validation tests did not meet targets.
 Review metrics above for areas needing improvement.
 
-Full logs: /Users/ryandahlberg/Projects/commit-relay/agents/logs/stress-test/ddqd-v5-1763692343.log
-Metrics: /Users/ryandahlberg/Projects/commit-relay/coordination/stress-test/ddqd-v5-1763692343-metrics.json
-MoE Metrics: /Users/ryandahlberg/Projects/commit-relay/coordination/stress-test/ddqd-v5-1763692343-moe-metrics.json
-Report: /Users/ryandahlberg/Projects/commit-relay/coordination/stress-test/ddqd-v5-1763692343-report.txt
+Full logs: /Users/ryandahlberg/Projects/cortex/agents/logs/stress-test/ddqd-v5-1763692343.log
+Metrics: /Users/ryandahlberg/Projects/cortex/coordination/stress-test/ddqd-v5-1763692343-metrics.json
+MoE Metrics: /Users/ryandahlberg/Projects/cortex/coordination/stress-test/ddqd-v5-1763692343-moe-metrics.json
+Report: /Users/ryandahlberg/Projects/cortex/coordination/stress-test/ddqd-v5-1763692343-report.txt
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━

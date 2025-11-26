@@ -1,5 +1,5 @@
 """
-Git Operations resource client for commit-relay API.
+Git Operations resource client for cortex API.
 
 Provides access to git-related operations and repository information.
 """

@@ -1,4 +1,4 @@
-name: Commit-Relay Security Scan
+name: Cortex Security Scan
 
 on:
   push:
@@ -22,9 +22,9 @@ jobs:
         with:
           python-version: '3.9'
 
-      - name: Install commit-relay client
+      - name: Install cortex client
         run: |
-          pip install -e /path/to/commit-relay/python-sdk
+          pip install -e /path/to/cortex/python-sdk
 
       - name: Run Security Scan
         id: security_scan
@@ -62,7 +62,7 @@ jobs:
             const success = '${{ steps.security_scan.outcome }}' === 'success';
             const body = success
               ? '✅ Security scan passed - no vulnerabilities found'
-              : '❌ Security scan failed - vulnerabilities detected. Check commit-relay dashboard for details.';
+              : '❌ Security scan failed - vulnerabilities detected. Check cortex dashboard for details.';
 
             github.rest.issues.createComment({
               issue_number: context.issue.number,
@@ -75,4 +75,4 @@ jobs:
         if: always()
         run: |
           echo "Security scan completed"
-          echo "View detailed results at commit-relay dashboard"
+          echo "View detailed results at cortex dashboard"

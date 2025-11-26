@@ -25,17 +25,17 @@ const { sanitizeFilename, safeJoin, isPathWithinDirectory } = require('../lib/pa
 const execFileAsync = promisify(execFile);
 
 // Paths
-const COMMIT_RELAY_HOME = process.env.COMMIT_RELAY_HOME || path.join(__dirname, '../../..');
-const COORDINATION_DIR = path.join(COMMIT_RELAY_HOME, 'coordination');
-const AGENTS_DIR = path.join(COMMIT_RELAY_HOME, 'agents/workers');
+const CORTEX_HOME = process.env.CORTEX_HOME || path.join(__dirname, '../../..');
+const COORDINATION_DIR = path.join(CORTEX_HOME, 'coordination');
+const AGENTS_DIR = path.join(CORTEX_HOME, 'agents/workers');
 const VULNERABILITY_SUMMARY_PATH = path.join(COORDINATION_DIR, 'metrics/vulnerability-summary.json');
 const SCAN_HISTORY_PATH = path.join(COORDINATION_DIR, 'metrics/security-scan-history.jsonl');
 const REMEDIATIONS_PATH = path.join(COORDINATION_DIR, 'metrics/security-remediations.jsonl');
-const SPAWN_WORKER_SCRIPT = path.join(COMMIT_RELAY_HOME, 'scripts/spawn-worker.sh');
-const SECURITY_PR_GENERATOR_SCRIPT = path.join(COMMIT_RELAY_HOME, 'scripts/security-pr-generator.sh');
+const SPAWN_WORKER_SCRIPT = path.join(CORTEX_HOME, 'scripts/spawn-worker.sh');
+const SECURITY_PR_GENERATOR_SCRIPT = path.join(CORTEX_HOME, 'scripts/security-pr-generator.sh');
 const EVENTS_PATH = path.join(COORDINATION_DIR, 'events/security-events.jsonl');
 const PORTFOLIO_PATH = path.join(COORDINATION_DIR, 'portfolio/repositories.json');
-const REPOS_CLONE_DIR = path.join(COMMIT_RELAY_HOME, 'repos');
+const REPOS_CLONE_DIR = path.join(CORTEX_HOME, 'repos');
 
 /**
  * Helper: Read JSON file safely
@@ -873,11 +873,11 @@ router.post('/scan', async (req, res) => {
         SPAWN_WORKER_SCRIPT,
         ['scan', taskId],
         {
-          cwd: COMMIT_RELAY_HOME,
+          cwd: CORTEX_HOME,
           timeout: 30000,
           env: {
             ...process.env,
-            COMMIT_RELAY_HOME
+            CORTEX_HOME
           }
         }
       );
@@ -941,15 +941,15 @@ router.post('/scan', async (req, res) => {
 
 /**
  * POST /api/v1/security/scan/all
- * Triggers security scan for all repositories (currently scans commit-relay)
+ * Triggers security scan for all repositories (currently scans cortex)
  */
 router.post('/scan/all', async (req, res) => {
   try {
     // Generate task ID
     const taskId = generateTaskId();
 
-    // For now, scan the commit-relay repository itself
-    const repositoryPath = COMMIT_RELAY_HOME;
+    // For now, scan the cortex repository itself
+    const repositoryPath = CORTEX_HOME;
 
     // Spawn a scan worker
     try {
@@ -1483,11 +1483,11 @@ router.post('/remediations/:id/approve', async (req, res) => {
         SECURITY_PR_GENERATOR_SCRIPT,
         [id],
         {
-          cwd: COMMIT_RELAY_HOME,
+          cwd: CORTEX_HOME,
           timeout: 120000,
           env: {
             ...process.env,
-            COMMIT_RELAY_HOME,
+            CORTEX_HOME,
             REMEDIATION_ID: id
           }
         }
@@ -1680,7 +1680,7 @@ router.get('/remediations/:id/pr', async (req, res) => {
           ['pr', 'view', prNumber, '--repo', `${owner}/${repo}`, '--json',
            'state,title,body,reviews,statusCheckRollup,mergeable,additions,deletions,changedFiles'],
           {
-            cwd: COMMIT_RELAY_HOME,
+            cwd: CORTEX_HOME,
             timeout: 30000
           }
         );

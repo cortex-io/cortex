@@ -7,7 +7,7 @@
   "summary": "Successfully implemented comprehensive user management API enhancements",
 
   "implementation_details": {
-    "file_modified": "/Users/ryandahlberg/Projects/commit-relay/dashboard/server/routes/users.js",
+    "file_modified": "/Users/ryandahlberg/Projects/cortex/dashboard/server/routes/users.js",
     "lines_added": "~690 lines",
     "approach": "Extended existing user management router with advanced features",
 

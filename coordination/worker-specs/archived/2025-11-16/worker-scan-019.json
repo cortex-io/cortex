@@ -28,11 +28,11 @@
   },
   "results": {
     "status": "SUCCESS",
-    "output_location": "/Users/ryandahlberg/Projects/commit-relay/agents/logs/workers/2025-11-16/worker-scan-019/scan_results.json",
+    "output_location": "/Users/ryandahlberg/Projects/cortex/agents/logs/workers/2025-11-16/worker-scan-019/scan_results.json",
     "summary": "DDQD Test: Mock scan completed with 3 test findings (1 high, 1 medium, 1 low)",
     "artifacts": [
-      "/Users/ryandahlberg/Projects/commit-relay/agents/logs/workers/2025-11-16/worker-scan-019/scan_results.json",
-      "/Users/ryandahlberg/Projects/commit-relay/agents/logs/workers/2025-11-16/worker-scan-019/vulnerability_list.md"
+      "/Users/ryandahlberg/Projects/cortex/agents/logs/workers/2025-11-16/worker-scan-019/scan_results.json",
+      "/Users/ryandahlberg/Projects/cortex/agents/logs/workers/2025-11-16/worker-scan-019/vulnerability_list.md"
     ]
   }
 }

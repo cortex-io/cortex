@@ -97,6 +97,6 @@
   },
   "mcp": {
     "tools": ["spawn_worker", "get_worker_pool", "get_task_queue"],
-    "resources": ["commit-relay://coordination/worker-pool", "commit-relay://coordination/task-queue"]
+    "resources": ["cortex://coordination/worker-pool", "cortex://coordination/task-queue"]
   }
 }

@@ -12,7 +12,7 @@
   "analysis": {
     "codebase_type": "File-based system using JSON for coordination",
     "finding": "No actual database or SQL queries found in codebase",
-    "architecture": "commit-relay uses file-based coordination with JSON files",
+    "architecture": "cortex uses file-based coordination with JSON files",
     "identified_optimization_opportunities": [
       "Multiple filter operations in /dashboard/server/index.js could be optimized",
       "Worker pool filtering happens multiple times and could be cached",

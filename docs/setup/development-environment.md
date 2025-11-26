@@ -1,13 +1,13 @@
 # Development Environment Setup
 
-Complete guide for setting up your commit-relay development environment.
+Complete guide for setting up your cortex development environment.
 
 ## Quick Start
 
 1. Clone and install:
 ```bash
-git clone https://github.com/ry-ops/commit-relay.git
-cd commit-relay
+git clone https://github.com/ry-ops/cortex.git
+cd cortex
 npm install
 ```
 

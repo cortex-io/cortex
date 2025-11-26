@@ -34,9 +34,9 @@
       "secrets_detection"
     ],
     "knowledge_base_refs": {
-      "vulnerability_database": "/Users/ryandahlberg/commit-relay/scripts/../coordination/masters/security/knowledge-base/vulnerability-history.jsonl",
-      "remediation_strategies": "/Users/ryandahlberg/commit-relay/scripts/../coordination/masters/security/knowledge-base/remediation-patterns.json",
-      "false_positives": "/Users/ryandahlberg/commit-relay/scripts/../coordination/masters/security/knowledge-base/false-positives.json"
+      "vulnerability_database": "/Users/ryandahlberg/cortex/scripts/../coordination/masters/security/knowledge-base/vulnerability-history.jsonl",
+      "remediation_strategies": "/Users/ryandahlberg/cortex/scripts/../coordination/masters/security/knowledge-base/remediation-patterns.json",
+      "false_positives": "/Users/ryandahlberg/cortex/scripts/../coordination/masters/security/knowledge-base/false-positives.json"
     },
     "relevant_past_findings": {}
   },

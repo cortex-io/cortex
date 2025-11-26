@@ -1,14 +1,14 @@
-<img src="https://github.com/ry-ops/commit-relay/blob/main/commit-relay.png" width="100%">
+<img src="https://github.com/ry-ops/cortex/blob/main/cortex.png" width="100%">
 
-# Commit-Relay
+# Cortex
 
 **Multi-agent AI system for autonomous GitHub repository management.**
 
-[![Status](https://img.shields.io/badge/Status-Production%20Ready-green)](https://github.com/ry-ops/commit-relay)
+[![Status](https://img.shields.io/badge/Status-Production%20Ready-green)](https://github.com/ry-ops/cortex)
 [![Architecture](https://img.shields.io/badge/Architecture-Master--Worker-blue)](./docs/master-worker-architecture.md)
 [![License](https://img.shields.io/badge/License-MIT-yellow)](./LICENSE)
 [![API Endpoints](https://img.shields.io/badge/API%20Endpoints-128-blue)](./docs/API-REFERENCE.md)
-[![Code Lines](https://img.shields.io/badge/Code%20Lines-27K%2B-brightgreen)](https://github.com/ry-ops/commit-relay)
+[![Code Lines](https://img.shields.io/badge/Code%20Lines-27K%2B-brightgreen)](https://github.com/ry-ops/cortex)
 
 [![Node.js](https://img.shields.io/badge/Node.js-18%2B-339933?logo=node.js&logoColor=white)](https://nodejs.org)
 [![Python](https://img.shields.io/badge/Python-3.8%2B-3776AB?logo=python&logoColor=white)](https://python.org)
@@ -24,11 +24,27 @@
 
 ---
 
+## 🧠 Cortex: Self-Improving AI Development Orchestration
+
+**Cortex by ry-ops** is a self-improving AI development platform powered by **Mixture of Experts (MoE) learning**. Unlike traditional automation tools, Cortex actively learns from every task execution, continuously improving its decision-making and routing capabilities.
+
+### The MoE Advantage
+
+Cortex uses a **Mixture of Experts** architecture where:
+- **Coordinator Master** intelligently routes tasks to specialist masters based on learned patterns
+- **Specialist Masters** (Development, Security, Inventory, CI/CD) handle domain-specific operations
+- **Learning System** tracks outcomes, identifies patterns, and improves routing decisions over time
+- **Meta-Programming** enables Cortex to improve itself using its own MoE system
+
+**Result**: The more you use Cortex, the smarter it gets at managing your projects.
+
+---
+
 ## Overview
 
-Commit-Relay automates the entire repository lifecycle using a network of intelligent agents that communicate through structured coordination files.
+Cortex automates the entire repository lifecycle using a network of intelligent agents that communicate through structured coordination files.
 
-Each master agent focuses on a domain like development, security, or inventory management, spawning lightweight workers to execute precise tasks in parallel. The result: a transparent, self-managing system that keeps projects moving efficiently and audibly from idea to pull request.
+Each master agent focuses on a domain like development, security, or inventory management, spawning lightweight workers to execute precise tasks in parallel. The result: a transparent, self-managing, **self-improving** system that keeps projects moving efficiently from idea to pull request.
 
 ### Key Features
 
@@ -541,7 +557,7 @@ graph TB
 
 **Understanding the Architecture Flow:**
 
-The diagram illustrates commit-relay's complete orchestration system with color-coded connections showing different types of interactions:
+The diagram illustrates cortex's complete orchestration system with color-coded connections showing different types of interactions:
 
 **🔵 Task Flow (Blue, Dashed)**:
 - Coordinator Daemon routes incoming tasks to Coordinator Master
@@ -967,7 +983,7 @@ Each script:
 ## Repository Structure
 
 ```
-commit-relay/
+cortex/
 ├── agents/
 │   ├── prompts/
 │   │   ├── coordinator-master.md      # System orchestrator (v2.0)
@@ -1069,7 +1085,7 @@ commit-relay/
     ├── worker-daemon.sh              # Background worker launcher (autonomous)
     ├── daemon-control.sh             # Daemon management (start/stop/status)
     ├── start-worker.sh               # Manual worker startup
-    ├── start-commit-relay.sh         # System startup script
+    ├── start-cortex.sh         # System startup script
     ├── worker-status.sh              # Monitor workers
     ├── run-security-master.sh        # Launch security master (v4.0)
     ├── run-coordinator-master.sh     # Launch coordinator master (MoE routing)
@@ -1108,8 +1124,8 @@ commit-relay/
 
 1. **Clone the repository**:
    ```bash
-   git clone https://github.com/ry-ops/commit-relay.git
-   cd commit-relay
+   git clone https://github.com/ry-ops/cortex.git
+   cd cortex
    ```
 
 2. **Install Worker Daemon** (one-time setup for autonomous operation):
@@ -1433,7 +1449,7 @@ Emergency Reserve (9%): 25k
 - ✅ File-watching for automatic refresh
 - ✅ Responsive dark-theme UI
 
-**Result**: Complete visibility into commit-relay system operations in real-time
+**Result**: Complete visibility into cortex system operations in real-time
 
 ---
 
@@ -1831,4 +1847,4 @@ The master-worker architecture was inspired by Kubernetes orchestration patterns
 
 ---
 
-**Questions?** See [documentation](./docs/) or [create an issue](https://github.com/ry-ops/commit-relay/issues).
+**Questions?** See [documentation](./docs/) or [create an issue](https://github.com/ry-ops/cortex/issues).

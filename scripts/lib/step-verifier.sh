@@ -10,7 +10,7 @@
 #   - Progress tracking
 #
 # Usage:
-#   source "$COMMIT_RELAY_HOME/scripts/lib/step-verifier.sh"
+#   source "$CORTEX_HOME/scripts/lib/step-verifier.sh"
 #   verify_step "$spec_file" "step-1"
 #   progress=$(get_verification_progress "$spec_file")
 
@@ -20,12 +20,12 @@ set -euo pipefail
 # Configuration
 # ============================================================================
 
-COMMIT_RELAY_HOME="${COMMIT_RELAY_HOME:-$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)}"
+CORTEX_HOME="${CORTEX_HOME:-$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)}"
 
 # Verification configuration
-VERIFIER_CONFIG="${COMMIT_RELAY_HOME}/coordination/config/step-verifier.json"
-VERIFICATION_HISTORY="${COMMIT_RELAY_HOME}/coordination/metrics/verification-history.jsonl"
-VERIFICATION_EVENTS="${COMMIT_RELAY_HOME}/coordination/events/verification-events.jsonl"
+VERIFIER_CONFIG="${CORTEX_HOME}/coordination/config/step-verifier.json"
+VERIFICATION_HISTORY="${CORTEX_HOME}/coordination/metrics/verification-history.jsonl"
+VERIFICATION_EVENTS="${CORTEX_HOME}/coordination/events/verification-events.jsonl"
 
 # Create directories
 mkdir -p "$(dirname "$VERIFIER_CONFIG")"

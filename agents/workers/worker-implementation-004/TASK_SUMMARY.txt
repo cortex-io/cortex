@@ -32,7 +32,7 @@ DELIVERABLES
 KEY FINDINGS
 ------------
 ✓ Service Health: Dashboard API operational (http://localhost:3000/api/health)
-✓ Codebase Analysis: commit-relay uses file-based coordination (no SQL database)
+✓ Codebase Analysis: cortex uses file-based coordination (no SQL database)
 ✓ Performance Issues Identified: Multiple filter operations in server/index.js
 ✓ Recommendations Provided: Caching, pagination, single-pass aggregation
 

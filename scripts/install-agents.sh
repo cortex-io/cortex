@@ -1,16 +1,16 @@
 #!/bin/bash
 # scripts/install-agents.sh
-# Install commit-relay agents to make them available in Claude Code
+# Install cortex agents to make them available in Claude Code
 
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-COMMIT_RELAY_HOME="${COMMIT_RELAY_HOME:-$(cd "$SCRIPT_DIR/.." && pwd)}"
-PROJECT_AGENTS_DIR="$COMMIT_RELAY_HOME/.claude/agents"
+CORTEX_HOME="${CORTEX_HOME:-$(cd "$SCRIPT_DIR/.." && pwd)}"
+PROJECT_AGENTS_DIR="$CORTEX_HOME/.claude/agents"
 USER_AGENTS_DIR="$HOME/.claude/agents"
 
 echo "╔════════════════════════════════════════════════════╗"
-echo "║  Commit-Relay Agent Installation                   ║"
+echo "║  Cortex Agent Installation                   ║"
 echo "╚════════════════════════════════════════════════════╝"
 echo ""
 
@@ -63,10 +63,10 @@ echo "║  Installation Complete                             ║"
 echo "╚════════════════════════════════════════════════════╝"
 echo ""
 echo "📍 Project agents location: $PROJECT_AGENTS_DIR"
-echo "📍 Working directory: $COMMIT_RELAY_HOME"
+echo "📍 Working directory: $CORTEX_HOME"
 echo ""
 echo "🔍 To view agents in Claude Code:"
-echo "   1. Ensure you're in the commit-relay directory"
+echo "   1. Ensure you're in the cortex directory"
 echo "   2. Run: /agents"
 echo ""
 echo "💡 Agents are automatically discovered from .claude/agents/"

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Analytics demonstration for commit-relay SDK.
+Analytics demonstration for cortex SDK.
 
 Showcases advanced analytics capabilities including:
 - Metrics aggregation and statistics

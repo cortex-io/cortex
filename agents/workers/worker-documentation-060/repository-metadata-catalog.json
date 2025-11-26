@@ -6,9 +6,9 @@
     "catalog_version": "1.0.0"
   },
   "repository": {
-    "name": "commit-relay",
+    "name": "cortex",
     "description": "AI-powered commit automation system with master-worker architecture",
-    "remote_url": "https://github.com/ry-ops/commit-relay.git",
+    "remote_url": "https://github.com/ry-ops/cortex.git",
     "author": "ry-ops",
     "license": "MIT",
     "license_year": 2025,
@@ -17,7 +17,7 @@
   },
   "project_packages": {
     "root": {
-      "name": "commit-relay",
+      "name": "cortex",
       "version": "1.0.0",
       "main": "index.js",
       "dependencies": {
@@ -35,12 +35,12 @@
         "test:coverage": "jest --coverage",
         "test:ci": "jest --ci --coverage --maxWorkers=2"
       },
-      "keywords": ["commit-relay", "automation", "ai", "governance"]
+      "keywords": ["cortex", "automation", "ai", "governance"]
     },
     "dashboard": {
-      "name": "commit-relay-dashboard",
+      "name": "cortex-dashboard",
       "version": "1.0.0",
-      "description": "Real-time metrics dashboard for commit-relay master-worker system",
+      "description": "Real-time metrics dashboard for cortex master-worker system",
       "main": "server/index.js",
       "dependencies": {
         "chokidar": "^3.5.3",
@@ -60,7 +60,7 @@
         "dev": "nodemon server/index.js",
         "test": "node test/server.test.js"
       },
-      "keywords": ["commit-relay", "dashboard", "metrics", "monitoring"]
+      "keywords": ["cortex", "dashboard", "metrics", "monitoring"]
     },
     "python_sdk": {
       "name": "python-sdk",
@@ -160,7 +160,7 @@
       },
       {
         "name": "python-sdk",
-        "purpose": "Python SDK for commit-relay integration"
+        "purpose": "Python SDK for cortex integration"
       },
       {
         "name": "scripts",

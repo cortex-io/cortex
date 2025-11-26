@@ -4,7 +4,7 @@
       "id": "test-autonomous-001",
       "title": "Autonomous Test: Create greeting script",
       "type": "development",
-      "description": "development: Create a bash script at scripts/greet.sh that accepts a name argument and prints 'Hello, [name]! Welcome to autonomous commit-relay!'",
+      "description": "development: Create a bash script at scripts/greet.sh that accepts a name argument and prints 'Hello, [name]! Welcome to autonomous cortex!'",
       "priority": "high",
       "status": "failed",
       "created_at": "2025-11-16T10:35:00-0600",
@@ -329,7 +329,7 @@
       "created_at": "2025-11-22T06:15:00-0600",
       "created_by": "dashboard-migration",
       "context": {
-        "repository": "ry-ops/commit-relay",
+        "repository": "ry-ops/cortex",
         "target_dir": "eui-dashboard/src/components/dashboard/panels",
         "api_endpoints": [
           "/api/logs/stream",
@@ -361,7 +361,7 @@
       "created_at": "2025-11-22T06:15:00-0600",
       "created_by": "dashboard-migration",
       "context": {
-        "repository": "ry-ops/commit-relay",
+        "repository": "ry-ops/cortex",
         "target_dir": "eui-dashboard/src/components/dashboard/visualizations",
         "api_endpoints": [
           "/api/users",
@@ -394,7 +394,7 @@
       "created_at": "2025-11-22T06:15:00-0600",
       "created_by": "dashboard-migration",
       "context": {
-        "repository": "ry-ops/commit-relay",
+        "repository": "ry-ops/cortex",
         "target_dir": "eui-dashboard/src/components/dashboard/visualizations",
         "api_endpoints": [
           "/api/optimizer/scheduler/stats",
@@ -430,7 +430,7 @@
       "created_at": "2025-11-22T06:15:00-0600",
       "created_by": "dashboard-migration",
       "context": {
-        "repository": "ry-ops/commit-relay",
+        "repository": "ry-ops/cortex",
         "target_dir": "eui-dashboard/src/components/dashboard/visualizations",
         "api_endpoints": [
           "/api/metrics",
@@ -462,7 +462,7 @@
       "created_at": "2025-11-22T06:15:00-0600",
       "created_by": "dashboard-migration",
       "context": {
-        "repository": "ry-ops/commit-relay",
+        "repository": "ry-ops/cortex",
         "target_dir": "eui-dashboard/src/components/dashboard/visualizations",
         "api_endpoints": [
           "/api/agentstudio/agents",
@@ -490,7 +490,7 @@
       "created_at": "2025-11-22T06:15:00-0600",
       "created_by": "dashboard-migration",
       "context": {
-        "repository": "ry-ops/commit-relay",
+        "repository": "ry-ops/cortex",
         "target_dir": "eui-dashboard/src/components/dashboard/panels",
         "api_endpoints": [
           "/api/execution-managers"
@@ -515,7 +515,7 @@
       "created_at": "2025-11-22T06:15:00-0600",
       "created_by": "dashboard-migration",
       "context": {
-        "repository": "ry-ops/commit-relay",
+        "repository": "ry-ops/cortex",
         "target_dir": "eui-dashboard/src/components/dashboard/visualizations",
         "api_endpoints": [
           "/api/moe/accuracy",
@@ -542,7 +542,7 @@
       "created_at": "2025-11-22T06:15:00-0600",
       "created_by": "dashboard-migration",
       "context": {
-        "repository": "ry-ops/commit-relay",
+        "repository": "ry-ops/cortex",
         "target_dir": "eui-dashboard/src/components/dashboard/visualizations",
         "api_endpoints": [
           "/api/ddqd/schedule",
@@ -570,7 +570,7 @@
       "created_at": "2025-11-22T06:15:00-0600",
       "created_by": "dashboard-migration",
       "context": {
-        "repository": "ry-ops/commit-relay",
+        "repository": "ry-ops/cortex",
         "target_dir": "eui-dashboard/src/components/dashboard/visualizations",
         "reference_files": [
           "dashboard/public/traces.html",
@@ -596,7 +596,7 @@
       "created_at": "2025-11-22T06:15:00-0600",
       "created_by": "dashboard-migration",
       "context": {
-        "repository": "ry-ops/commit-relay",
+        "repository": "ry-ops/cortex",
         "target_dir": "eui-dashboard/src/components/dashboard/panels",
         "api_endpoints": [
           "/api/streams"
@@ -620,7 +620,7 @@
       "created_at": "2025-11-22T06:15:00-0600",
       "created_by": "dashboard-migration",
       "context": {
-        "repository": "ry-ops/commit-relay",
+        "repository": "ry-ops/cortex",
         "target_dir": "eui-dashboard/src/components/dashboard/visualizations",
         "api_endpoints": [
           "/api/coordination/raw"
@@ -638,7 +638,7 @@
       "id": "task-elastic-apm-integration",
       "title": "Integrate Elastic APM for full observability",
       "type": "development:feature",
-      "description": "Implement comprehensive Elastic APM integration into the commit-relay FastAPI application for traces, logs, metrics, and custom events",
+      "description": "Implement comprehensive Elastic APM integration into the cortex FastAPI application for traces, logs, metrics, and custom events",
       "priority": "high",
       "status": "worker_spawned",
       "created_at": "2025-11-25T12:00:00-0600",

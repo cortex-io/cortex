@@ -5,7 +5,7 @@
   "agent_type": "master",
   "agent_class": "custom-master",
   "description": "A basic master agent template for orchestrating tasks and coordinating workers. Provides task routing, worker management, and basic coordination capabilities.",
-  "author": "commit-relay",
+  "author": "cortex",
   "tags": ["master", "orchestration", "coordination", "basic"],
   "capabilities": [
     {

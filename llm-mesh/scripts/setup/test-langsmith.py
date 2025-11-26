@@ -103,7 +103,7 @@ def main():
         print("2. Create an API key")
         print("3. Add it to llm-mesh/.env as LANGCHAIN_API_KEY")
         print("4. Set LANGCHAIN_TRACING_V2=true")
-        print("5. Set LANGCHAIN_PROJECT=commit-relay (or your preferred project name)")
+        print("5. Set LANGCHAIN_PROJECT=cortex (or your preferred project name)")
         sys.exit(1)
 
     # Test connection

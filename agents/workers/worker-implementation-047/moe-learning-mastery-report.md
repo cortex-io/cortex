@@ -6,7 +6,7 @@
 
 ## Executive Summary
 
-This report documents a comprehensive analysis of the commit-relay MoE (Mixture of Experts) system, covering architecture, agent capabilities, operational workflows, security patterns, and optimization opportunities. The analysis reveals a sophisticated but underperforming system with significant improvement potential.
+This report documents a comprehensive analysis of the cortex MoE (Mixture of Experts) system, covering architecture, agent capabilities, operational workflows, security patterns, and optimization opportunities. The analysis reveals a sophisticated but underperforming system with significant improvement potential.
 
 ### Key Findings
 
@@ -21,7 +21,7 @@ This report documents a comprehensive analysis of the commit-relay MoE (Mixture 
 
 ### System Components
 
-The commit-relay system implements a MoE-inspired architecture with:
+The cortex system implements a MoE-inspired architecture with:
 
 1. **Coordinator Master**: Central orchestrator using MoE routing
 2. **Specialist Masters**: Development, Security, Inventory, CI/CD
@@ -142,7 +142,7 @@ The primary failure mode is zombie workers - processes that start but never exec
 | A06 Vulnerable Components | High | Many npm dependencies |
 | A09 Logging/Monitoring | High | Critical for worker tracking |
 
-### Commit-Relay Specific Concerns
+### Cortex Specific Concerns
 
 1. **Worker Security**: Prompt injection, file system access, token abuse
 2. **API Security**: Unauthenticated local access, no rate limiting
@@ -286,7 +286,7 @@ This analysis produced the following artifacts:
 
 ## Conclusion
 
-The commit-relay MoE system has a solid architectural foundation but is critically underperforming due to worker health issues. The primary bottleneck is the 7% worker success rate caused by missing check-in protocols.
+The cortex MoE system has a solid architectural foundation but is critically underperforming due to worker health issues. The primary bottleneck is the 7% worker success rate caused by missing check-in protocols.
 
 **Critical Path to Recovery:**
 1. Fix worker prompts with mandatory heartbeats

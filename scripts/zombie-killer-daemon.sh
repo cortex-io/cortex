@@ -10,16 +10,16 @@ set -euo pipefail
 
 # Get script directory
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-COMMIT_RELAY_HOME="${COMMIT_RELAY_HOME:-$(cd "$SCRIPT_DIR/.." && pwd)}"
+CORTEX_HOME="${CORTEX_HOME:-$(cd "$SCRIPT_DIR/.." && pwd)}"
 
 # Load libraries
 source "$SCRIPT_DIR/lib/logging.sh" 2>/dev/null || true
 
 # Configuration
-DAEMON_NAME="commit-relay-zombie-killer"
+DAEMON_NAME="cortex-zombie-killer"
 CHECK_INTERVAL="${ZOMBIE_KILLER_INTERVAL:-300}"  # Check every 5 minutes
 STALE_THRESHOLD="${ZOMBIE_STALE_THRESHOLD:-900}"  # 15 minutes = stale
-LOG_FILE="${COMMIT_RELAY_HOME}/agents/logs/system/zombie-killer.log"
+LOG_FILE="${CORTEX_HOME}/agents/logs/system/zombie-killer.log"
 PID_FILE="/tmp/${DAEMON_NAME}.pid"
 
 # Ensure log directory exists
@@ -50,7 +50,7 @@ echo $$ > "$PID_FILE"
 log_zombie "INFO: Zombie Killer daemon starting (PID $$)"
 log_zombie "INFO: Check interval: ${CHECK_INTERVAL}s"
 log_zombie "INFO: Stale threshold: ${STALE_THRESHOLD}s ($(($STALE_THRESHOLD / 60)) minutes)"
-log_zombie "INFO: Working directory: $COMMIT_RELAY_HOME"
+log_zombie "INFO: Working directory: $CORTEX_HOME"
 
 # Cleanup on exit
 cleanup() {
@@ -74,7 +74,7 @@ iso_to_seconds() {
 
 # Main zombie killer loop
 while true; do
-    cd "$COMMIT_RELAY_HOME"
+    cd "$CORTEX_HOME"
 
     CURRENT_TIME=$(get_timestamp_seconds)
     ACTIVE_SPECS_DIR="coordination/worker-specs/active"

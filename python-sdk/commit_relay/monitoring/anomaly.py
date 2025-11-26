@@ -1,5 +1,5 @@
 """
-Anomaly detection for commit-relay metrics.
+Anomaly detection for cortex metrics.
 
 Detects anomalies using statistical methods including Z-score and IQR.
 """

@@ -538,7 +538,7 @@ save_strategy_plan() {
     local worker_id="$2"
     local task_id="$3"
 
-    local kb_dir="${COMMIT_RELAY_HOME:-/Users/ryandahlberg/commit-relay}/coordination/knowledge-base/strategy-plans"
+    local kb_dir="${CORTEX_HOME:-/Users/ryandahlberg/cortex}/coordination/knowledge-base/strategy-plans"
     mkdir -p "$kb_dir"
 
     local plan_file="$kb_dir/${worker_id}-plan.json"
@@ -566,7 +566,7 @@ save_strategy_plan() {
 load_strategy_plan() {
     local worker_id="$1"
 
-    local kb_dir="${COMMIT_RELAY_HOME:-/Users/ryandahlberg/commit-relay}/coordination/knowledge-base/strategy-plans"
+    local kb_dir="${CORTEX_HOME:-/Users/ryandahlberg/cortex}/coordination/knowledge-base/strategy-plans"
     local plan_file="$kb_dir/${worker_id}-plan.json"
 
     if [ -f "$plan_file" ]; then

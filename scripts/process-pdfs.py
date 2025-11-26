@@ -82,7 +82,7 @@ def format_size(size_bytes):
     return f"{size_bytes:.1f}TB"
 
 def main():
-    library_dir = Path('/Users/ryandahlberg/commit-relay/library')
+    library_dir = Path('/Users/ryandahlberg/cortex/library')
     input_dir = library_dir / 'new'
     output_dir = library_dir / 'processed'
 

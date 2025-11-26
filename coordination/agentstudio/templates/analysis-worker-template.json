@@ -5,7 +5,7 @@
   "agent_type": "worker",
   "agent_class": "analysis-worker",
   "description": "A worker agent specialized in code analysis tasks. Performs static analysis, code review, and quality assessments.",
-  "author": "commit-relay",
+  "author": "cortex",
   "tags": ["worker", "analysis", "code-review", "quality"],
   "capabilities": [
     {

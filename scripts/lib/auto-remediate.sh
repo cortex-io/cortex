@@ -10,7 +10,7 @@
 #   - Execution logging and metrics
 #
 # Usage:
-#   source "$COMMIT_RELAY_HOME/scripts/lib/auto-remediate.sh"
+#   source "$CORTEX_HOME/scripts/lib/auto-remediate.sh"
 #   remediate_pattern "$pattern_id"
 
 set -euo pipefail
@@ -19,18 +19,18 @@ set -euo pipefail
 # Configuration
 # ============================================================================
 
-COMMIT_RELAY_HOME="${COMMIT_RELAY_HOME:-$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)}"
+CORTEX_HOME="${CORTEX_HOME:-$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)}"
 
 # Playbook storage
-PLAYBOOKS_DIR="${COMMIT_RELAY_HOME}/coordination/remediation-playbooks"
+PLAYBOOKS_DIR="${CORTEX_HOME}/coordination/remediation-playbooks"
 PLAYBOOK_INDEX="${PLAYBOOKS_DIR}/index.json"
 
 # Execution history
 REMEDIATION_HISTORY="${PLAYBOOKS_DIR}/history.jsonl"
-REMEDIATION_METRICS="${COMMIT_RELAY_HOME}/coordination/metrics/remediation-metrics.json"
+REMEDIATION_METRICS="${CORTEX_HOME}/coordination/metrics/remediation-metrics.json"
 
 # Events
-REMEDIATION_EVENTS="${COMMIT_RELAY_HOME}/coordination/events/remediation-events.jsonl"
+REMEDIATION_EVENTS="${CORTEX_HOME}/coordination/events/remediation-events.jsonl"
 
 # Create directories
 mkdir -p "$PLAYBOOKS_DIR"
@@ -263,7 +263,7 @@ execute_action() {
             local max_value=$(echo "$action" | jq -r '.max_value // null')
 
             local worker_type=$(echo "$context" | jq -r '.worker_type')
-            local spec_template="${COMMIT_RELAY_HOME}/coordination/worker-specs/templates/${worker_type}.json"
+            local spec_template="${CORTEX_HOME}/coordination/worker-specs/templates/${worker_type}.json"
 
             if [ ! -f "$spec_template" ]; then
                 # Create template if not exists
@@ -304,7 +304,7 @@ execute_action() {
 
         "reset_circuit_breaker")
             local worker_type=$(echo "$context" | jq -r '.worker_type')
-            local cb_file="${COMMIT_RELAY_HOME}/coordination/worker-restart/circuit-breakers.json"
+            local cb_file="${CORTEX_HOME}/coordination/worker-restart/circuit-breakers.json"
 
             if [ -f "$cb_file" ]; then
                 local temp_cb="${cb_file}.tmp"
@@ -324,10 +324,10 @@ execute_action() {
             while IFS= read -r path_type; do
                 case "$path_type" in
                     "locks")
-                        rm -f "${COMMIT_RELAY_HOME}/coordination/locks/${worker_id}*"
+                        rm -f "${CORTEX_HOME}/coordination/locks/${worker_id}*"
                         ;;
                     "temp_files")
-                        rm -rf "${COMMIT_RELAY_HOME}/tmp/${worker_id}"
+                        rm -rf "${CORTEX_HOME}/tmp/${worker_id}"
                         ;;
                 esac
             done <<< "$paths"
@@ -339,8 +339,8 @@ execute_action() {
         "restart_worker")
             local worker_id=$(echo "$context" | jq -r '.worker_id')
 
-            if [ -f "${COMMIT_RELAY_HOME}/scripts/lib/worker-restart.sh" ]; then
-                source "${COMMIT_RELAY_HOME}/scripts/lib/worker-restart.sh"
+            if [ -f "${CORTEX_HOME}/scripts/lib/worker-restart.sh" ]; then
+                source "${CORTEX_HOME}/scripts/lib/worker-restart.sh"
                 if type restart_worker &>/dev/null; then
                     restart_worker "$worker_id" || result="failure"
                 fi

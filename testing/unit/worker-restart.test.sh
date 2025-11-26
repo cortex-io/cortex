@@ -6,10 +6,10 @@
 set -e
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-COMMIT_RELAY_HOME="$(cd "$SCRIPT_DIR/../.." && pwd)"
-export COMMIT_RELAY_HOME
+CORTEX_HOME="$(cd "$SCRIPT_DIR/../.." && pwd)"
+export CORTEX_HOME
 
-source "$COMMIT_RELAY_HOME/scripts/lib/worker-restart.sh"
+source "$CORTEX_HOME/scripts/lib/worker-restart.sh"
 
 GREEN='\033[0;32m'
 RED='\033[0;31m'
@@ -42,11 +42,11 @@ setup_test_env() {
     TEST_WORKER_TYPE="implementation-worker"
 
     # Create test directories
-    mkdir -p "$COMMIT_RELAY_HOME/coordination/worker-specs/zombie/$(date +%Y-%m-%d)"
-    mkdir -p "$COMMIT_RELAY_HOME/coordination/restart/queue"
+    mkdir -p "$CORTEX_HOME/coordination/worker-specs/zombie/$(date +%Y-%m-%d)"
+    mkdir -p "$CORTEX_HOME/coordination/restart/queue"
 
     # Create test zombie spec
-    ZOMBIE_SPEC="$COMMIT_RELAY_HOME/coordination/worker-specs/zombie/$(date +%Y-%m-%d)/${TEST_WORKER_ID}.json"
+    ZOMBIE_SPEC="$CORTEX_HOME/coordination/worker-specs/zombie/$(date +%Y-%m-%d)/${TEST_WORKER_ID}.json"
     cat > "$ZOMBIE_SPEC" <<'EOFSPEC'
 {
   "worker_id": "test-restart-worker-001",
@@ -75,16 +75,16 @@ setup_test_env() {
 EOFSPEC
 
     # Create test token budget
-    echo '{"total_budget": 500000, "total_used": 100000}' > "$COMMIT_RELAY_HOME/coordination/token-budget.json"
+    echo '{"total_budget": 500000, "total_used": 100000}' > "$CORTEX_HOME/coordination/token-budget.json"
 
     # Initialize circuit breaker file
-    echo '{}' > "$COMMIT_RELAY_HOME/coordination/restart/circuit-breakers.json"
+    echo '{}' > "$CORTEX_HOME/coordination/restart/circuit-breakers.json"
 }
 
 cleanup_test_env() {
-    rm -rf "$COMMIT_RELAY_HOME/coordination/worker-specs/zombie/$(date +%Y-%m-%d)/${TEST_WORKER_ID}"* 2>/dev/null || true
-    rm -rf "$COMMIT_RELAY_HOME/coordination/restart/queue/${TEST_WORKER_ID}"* 2>/dev/null || true
-    rm -f "$COMMIT_RELAY_HOME/coordination/restart/circuit-breakers.json" 2>/dev/null || true
+    rm -rf "$CORTEX_HOME/coordination/worker-specs/zombie/$(date +%Y-%m-%d)/${TEST_WORKER_ID}"* 2>/dev/null || true
+    rm -rf "$CORTEX_HOME/coordination/restart/queue/${TEST_WORKER_ID}"* 2>/dev/null || true
+    rm -f "$CORTEX_HOME/coordination/restart/circuit-breakers.json" 2>/dev/null || true
     rm -f /tmp/restart-rate-limit-* 2>/dev/null || true
 }
 
@@ -97,7 +97,7 @@ setup_test_env
 
 # Test 1
 test_start "Restart library loads"
-if [ -f "$COMMIT_RELAY_HOME/scripts/lib/worker-restart.sh" ]; then
+if [ -f "$CORTEX_HOME/scripts/lib/worker-restart.sh" ]; then
     test_pass
 else
     test_fail "Library file not found"
@@ -263,7 +263,7 @@ rm -f /tmp/restart-rate-limit-* 2>/dev/null || true
 restart_worker "$TEST_WORKER_ID" 2>/dev/null || true
 
 # Check if queue entry was created
-QUEUE_ENTRY="$COMMIT_RELAY_HOME/coordination/restart/queue/${TEST_WORKER_ID}-restart-1.json"
+QUEUE_ENTRY="$CORTEX_HOME/coordination/restart/queue/${TEST_WORKER_ID}-restart-1.json"
 if [ -f "$QUEUE_ENTRY" ]; then
     test_pass
 else
@@ -292,7 +292,7 @@ fi
 test_start "emit_restart_event creates event log"
 emit_restart_event "test_event" "$TEST_WORKER_ID" '{"test": true}' 2>/dev/null || true
 
-EVENTS_LOG="$COMMIT_RELAY_HOME/coordination/events/worker-restart-events.jsonl"
+EVENTS_LOG="$CORTEX_HOME/coordination/events/worker-restart-events.jsonl"
 if [ -f "$EVENTS_LOG" ] && grep -q "test_event" "$EVENTS_LOG"; then
     test_pass
 else

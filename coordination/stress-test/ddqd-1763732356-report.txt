@@ -46,8 +46,8 @@ Token Budget Used: 0 / 500000 (0.0%)
 All v4.0 orchestration systems validated successfully.
 System is operating at god-mode efficiency.
 
-Full logs: /Users/ryandahlberg/Projects/commit-relay/agents/logs/stress-test/ddqd-1763732356.log
-Metrics: /Users/ryandahlberg/Projects/commit-relay/coordination/stress-test/ddqd-1763732356-metrics.json
-Report: /Users/ryandahlberg/Projects/commit-relay/coordination/stress-test/ddqd-1763732356-report.txt
+Full logs: /Users/ryandahlberg/Projects/cortex/agents/logs/stress-test/ddqd-1763732356.log
+Metrics: /Users/ryandahlberg/Projects/cortex/coordination/stress-test/ddqd-1763732356-metrics.json
+Report: /Users/ryandahlberg/Projects/cortex/coordination/stress-test/ddqd-1763732356-report.txt
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━

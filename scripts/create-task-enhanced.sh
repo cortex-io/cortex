@@ -17,7 +17,7 @@ set -o pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 # Set log level before loading (required for logging.sh compatibility)
-export COMMIT_RELAY_LOG_LEVEL=1  # INFO level
+export CORTEX_LOG_LEVEL=1  # INFO level
 
 # 🎯 NEW: Use core foundation (replaces manual library loading)
 source "$SCRIPT_DIR/lib/init-common.sh" || exit 99
@@ -48,7 +48,7 @@ usage() {
     cat << EOF
 Usage: $0 [OPTIONS]
 
-Enhanced Task Management CLI for Commit-Relay
+Enhanced Task Management CLI for Cortex
 ✨ Now with automatic validation and observability!
 
 MODES:
@@ -57,7 +57,7 @@ MODES:
 
 OPTIONS:
   --type TYPE              Task type (security-scan, security-fix, development)
-  --repo REPO              Repository (e.g., ry-ops/commit-relay)
+  --repo REPO              Repository (e.g., ry-ops/cortex)
   --priority PRIORITY      Priority: critical, high, medium, low (default: high)
   --branch BRANCH          Branch name (default: main)
   --description DESC       Task description
@@ -68,7 +68,7 @@ EXAMPLES:
   $0
 
   # Create security scan task
-  $0 --type security-scan --repo ry-ops/commit-relay --priority high
+  $0 --type security-scan --repo ry-ops/cortex --priority high
 
   # Create development task
   $0 --type development --repo ry-ops/mcp-server --description "Add new feature"
@@ -121,7 +121,7 @@ done
 # Interactive mode if no arguments
 if [ -z "$TASK_TYPE" ]; then
     INTERACTIVE=true
-    echo -e "${CYAN}=== Commit-Relay Enhanced Task Creator ===${NC}"
+    echo -e "${CYAN}=== Cortex Enhanced Task Creator ===${NC}"
     echo -e "${GREEN}✨ With automatic validation and observability${NC}"
     echo ""
 
@@ -144,7 +144,7 @@ if [ -z "$TASK_TYPE" ]; then
     esac
 
     # Get repository
-    read -p "Repository (e.g., ry-ops/commit-relay): " REPOSITORY
+    read -p "Repository (e.g., ry-ops/cortex): " REPOSITORY
 
     # Get priority
     echo -e "${BLUE}Select priority:${NC}"
@@ -178,15 +178,15 @@ log_info "Creating task: $TASK_TYPE for $REPOSITORY"
 trace_event "task.validation.started" "info" "{\"type\":\"$TASK_TYPE\",\"repo\":\"$REPOSITORY\"}"
 
 # 🎯 NEW: Check governance permission
-if ! check_permission "$COMMIT_RELAY_PRINCIPAL" "task-queue" "write"; then
+if ! check_permission "$CORTEX_PRINCIPAL" "task-queue" "write"; then
     log_error "Permission denied: Cannot create tasks"
-    trace_event "task.permission.denied" "error" "{\"principal\":\"$COMMIT_RELAY_PRINCIPAL\"}"
+    trace_event "task.permission.denied" "error" "{\"principal\":\"$CORTEX_PRINCIPAL\"}"
     trace_end "task.create" "failed"
     exit 1
 fi
 
-log_debug "Permission check passed for $COMMIT_RELAY_PRINCIPAL"
-trace_event "task.permission.granted" "success" "{\"principal\":\"$COMMIT_RELAY_PRINCIPAL\"}"
+log_debug "Permission check passed for $CORTEX_PRINCIPAL"
+trace_event "task.permission.granted" "success" "{\"principal\":\"$CORTEX_PRINCIPAL\"}"
 
 # Generate task ID
 TASK_ID="task-${TASK_TYPE}-$(date +%s)"
@@ -264,7 +264,7 @@ TASK_SPEC=$(cat <<EOF
   "requirements": $REQUIREMENTS,
   "goal_specification": $GOAL_SPEC,
   "metadata": {
-    "created_by": "$COMMIT_RELAY_PRINCIPAL",
+    "created_by": "$CORTEX_PRINCIPAL",
     "trace_id": "$TRACE_ID"
   }
 }
@@ -297,7 +297,7 @@ log_info "✅ Task specification validation passed"
 trace_event "task.validation.success" "success" "{\"task_id\":\"$TASK_ID\"}"
 
 # Read current task queue
-TASK_QUEUE_FILE="$COMMIT_RELAY_HOME/coordination/task-queue.json"
+TASK_QUEUE_FILE="$CORTEX_HOME/coordination/task-queue.json"
 
 if [ ! -f "$TASK_QUEUE_FILE" ]; then
     log_warn "Task queue not found, creating new one"

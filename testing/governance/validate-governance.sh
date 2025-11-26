@@ -5,8 +5,8 @@
 
 set -euo pipefail
 
-COMMIT_RELAY_HOME="${COMMIT_RELAY_HOME:-/Users/ryandahlberg/commit-relay}"
-TEST_OUTPUT_DIR="${COMMIT_RELAY_HOME}/testing/governance/results"
+CORTEX_HOME="${CORTEX_HOME:-/Users/ryandahlberg/cortex}"
+TEST_OUTPUT_DIR="${CORTEX_HOME}/testing/governance/results"
 ROUTING_RESULTS="${TEST_OUTPUT_DIR}/routing-results.jsonl"
 AUDIT_LOG="${TEST_OUTPUT_DIR}/governance-audit-trail.jsonl"
 VALIDATION_REPORT="${TEST_OUTPUT_DIR}/validation-report.json"
@@ -235,7 +235,7 @@ components=(
 
 for component_spec in "${components[@]}"; do
     IFS=':' read -r path name <<< "${component_spec}"
-    if [ -f "${COMMIT_RELAY_HOME}/${path}" ]; then
+    if [ -f "${CORTEX_HOME}/${path}" ]; then
         log_success "${name} exists"
     else
         log_failure "${name} missing at ${path}"

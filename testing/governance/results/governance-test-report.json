@@ -8,7 +8,7 @@
     "skipped": 0,
     "pass_rate": 45.45
   },
-  "audit_log": "/Users/ryandahlberg/commit-relay/tests/governance/results/governance-audit-trail.jsonl",
+  "audit_log": "/Users/ryandahlberg/cortex/tests/governance/results/governance-audit-trail.jsonl",
   "test_categories": {
     "risk_assessment": 4,
     "approval_workflow": 2,

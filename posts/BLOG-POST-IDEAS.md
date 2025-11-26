@@ -1,4 +1,4 @@
-# Commit-Relay Blog Post Ideas
+# Cortex Blog Post Ideas
 **Generated**: 2025-11-19
 **Total Estimated Posts**: 150-200
 **Status**: Planning Phase
@@ -29,7 +29,7 @@
 - [ ] "The Five Agent Types: A Practical Framework for AI Systems"
   - Simple Reflex, Model-Based Reflex, Goal-Based, Utility-Based, Learning
   - When to use each type
-  - Real-world examples from commit-relay
+  - Real-world examples from cortex
 
 - [ ] "From Simple Reflex to Learning: The Evolution of AI Agents"
   - Progressive enhancement of agent capabilities
@@ -924,7 +924,7 @@
 **Technical Level**: Low to Medium
 
 ### Getting Started
-- [ ] "Getting Started with commit-relay: Installation to First Task"
+- [ ] "Getting Started with cortex: Installation to First Task"
   - Prerequisites
   - Installation steps
   - Configuration
@@ -1000,7 +1000,7 @@
   - Fix strategies
 
 ### System Extension
-- [ ] "Building Custom Daemons for commit-relay"
+- [ ] "Building Custom Daemons for cortex"
   - Daemon template
   - Integration points
   - Health monitoring
@@ -1082,7 +1082,7 @@
   - Testing
   - Gradual rollout
 
-- [ ] "Upgrading commit-relay: Best Practices"
+- [ ] "Upgrading cortex: Best Practices"
   - Backup procedures
   - Migration steps
   - Validation
@@ -1141,13 +1141,13 @@
   - Human oversight
 
 ### Technical Philosophy
-- [ ] "Why We Built commit-relay in Bash: A Retrospective"
+- [ ] "Why We Built cortex in Bash: A Retrospective"
   - Technology choices
   - Tradeoffs made
   - Lessons learned
   - Would we do it again?
 
-- [ ] "The Path to AGI: Lessons from commit-relay"
+- [ ] "The Path to AGI: Lessons from cortex"
   - Learning systems
   - Continuous improvement
   - General vs specialized intelligence
@@ -1258,10 +1258,10 @@
 ## Priority Ranking
 
 ### High Priority (Publish First)
-1. Getting Started with commit-relay
+1. Getting Started with cortex
 2. The Five Agent Types Framework
 3. Q1 in Review: 12 Weeks, 4000 Lines
-4. Why We Built commit-relay in Bash
+4. Why We Built cortex in Bash
 5. The Uninitialized Variable Disaster
 6. Goal Planner Deep-Dive
 7. Utility Optimizer Deep-Dive

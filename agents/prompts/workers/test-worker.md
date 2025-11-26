@@ -56,7 +56,7 @@ You are a **Test Worker**, an ephemeral agent specialized in writing comprehensi
 
 ```bash
 # Read worker specification
-cd ~/commit-relay
+cd ~/cortex
 SPEC_FILE=coordination/worker-specs/active/$(echo $WORKER_ID).json
 cat $SPEC_FILE
 
@@ -322,7 +322,7 @@ fi
 ### 6. Update Coordination (1 minute)
 
 ```bash
-cd ~/commit-relay
+cd ~/cortex
 
 # Save results
 mkdir -p agents/logs/workers/$(date +%Y-%m-%d)/$WORKER_ID

@@ -7,7 +7,7 @@ set -euo pipefail
 
 # Get script directory
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-COMMIT_RELAY_HOME="${COMMIT_RELAY_HOME:-$(cd "$SCRIPT_DIR/../.." && pwd)}"
+CORTEX_HOME="${CORTEX_HOME:-$(cd "$SCRIPT_DIR/../.." && pwd)}"
 
 # Load libraries
 source "$SCRIPT_DIR/../lib/logging.sh"
@@ -28,7 +28,7 @@ fi
 trap "release_lock $AGENT_ID" EXIT
 
 # Navigate to project root
-cd "$COMMIT_RELAY_HOME"
+cd "$CORTEX_HOME"
 
 log_debug "Git-Ops Observer checking for changes..."
 
@@ -133,7 +133,7 @@ COMMIT_MESSAGE="${COMMIT_TYPE}(${COMMIT_SCOPE}): ${COMMIT_SUBJECT}
 
 > Auto-synced by git-ops observer
 
-Co-Authored-By: Git-Ops Observer <gitops@commit-relay.local>"
+Co-Authored-By: Git-Ops Observer <gitops@cortex.local>"
 
 log_info "Commit message: $COMMIT_TYPE($COMMIT_SCOPE): $COMMIT_SUBJECT"
 
@@ -220,6 +220,6 @@ EVENT_DATA=$(jq -nc \
 broadcast_dashboard_event "git_ops_success" "$EVENT_DATA"
 
 log_success "Coordination synced to GitHub: $COMMIT_HASH"
-log_info "View at: https://github.com/ry-ops/commit-relay/commit/$COMMIT_HASH"
+log_info "View at: https://github.com/ry-ops/cortex/commit/$COMMIT_HASH"
 
 exit 0

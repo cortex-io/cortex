@@ -2,7 +2,7 @@
 Execution Monitor - Real-time task execution tracking and monitoring.
 
 Provides APIs to monitor task execution, wait for completion, and track
-execution metrics for commit-relay tasks.
+execution metrics for cortex tasks.
 """
 
 import time

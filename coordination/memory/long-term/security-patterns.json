@@ -4,7 +4,7 @@
   "updated_at": "2025-11-21T02:10:00Z",
   "created_by": "moe-learning-task-worker-045",
   "updated_by": "worker-implementation-055",
-  "description": "Comprehensive library of security patterns, vulnerabilities, and remediation strategies with 20+ patterns and commit-relay specific analysis",
+  "description": "Comprehensive library of security patterns, vulnerabilities, and remediation strategies with 20+ patterns and cortex specific analysis",
   "vulnerability_patterns": {
     "injection_attacks": {
       "types": ["SQL Injection", "Command Injection", "XSS", "LDAP Injection", "Template Injection", "Shell Injection"],

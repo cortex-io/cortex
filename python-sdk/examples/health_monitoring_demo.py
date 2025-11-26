@@ -100,7 +100,7 @@ def main():
         health = TaskHealthMonitor(manager, client)
     except Exception as e:
         print(f"\nError: Failed to initialize: {e}")
-        print("\nNote: This demo reads from the commit-relay task queue.")
+        print("\nNote: This demo reads from the cortex task queue.")
         return
 
     # Get health report

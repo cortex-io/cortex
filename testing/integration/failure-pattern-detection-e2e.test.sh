@@ -6,10 +6,10 @@
 set -e
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-COMMIT_RELAY_HOME="$(cd "$SCRIPT_DIR/../.." && pwd)"
-export COMMIT_RELAY_HOME
+CORTEX_HOME="$(cd "$SCRIPT_DIR/../.." && pwd)"
+export CORTEX_HOME
 
-source "$COMMIT_RELAY_HOME/scripts/lib/failure-pattern-detection.sh"
+source "$CORTEX_HOME/scripts/lib/failure-pattern-detection.sh"
 
 GREEN='\033[0;32m'
 RED='\033[0;31m'
@@ -27,7 +27,7 @@ echo ""
 echo -e "${YELLOW}Setting up test environment...${NC}"
 
 # Backup existing files
-BACKUP_DIR="${COMMIT_RELAY_HOME}/testing/.backups/pattern-detection-$(date +%s)"
+BACKUP_DIR="${CORTEX_HOME}/testing/.backups/pattern-detection-$(date +%s)"
 mkdir -p "$BACKUP_DIR"
 
 [ -f "$PATTERN_DB" ] && cp "$PATTERN_DB" "$BACKUP_DIR/"
@@ -42,9 +42,9 @@ mkdir -p "$(dirname "$ZOMBIE_EVENTS")"
 mkdir -p "$(dirname "$RESTART_EVENTS")"
 
 # Create worker specs FIRST for event enrichment
-mkdir -p "$COMMIT_RELAY_HOME/coordination/worker-specs/zombie/2025-11-18"
+mkdir -p "$CORTEX_HOME/coordination/worker-specs/zombie/2025-11-18"
 for i in 1 2 3 4 5; do
-    cat > "$COMMIT_RELAY_HOME/coordination/worker-specs/zombie/2025-11-18/scan-worker-$i.json" <<EOFSPEC
+    cat > "$CORTEX_HOME/coordination/worker-specs/zombie/2025-11-18/scan-worker-$i.json" <<EOFSPEC
 {
   "worker_id": "scan-worker-$i",
   "worker_type": "scan-worker",
@@ -176,7 +176,7 @@ echo "✓ Step 7: Test pattern matching for new events"
 new_event='{"event_type":"zombie_detected","worker_id":"scan-worker-6","timestamp":"2025-11-18T14:25:00-0600","data":{}}'
 
 # Create spec for new worker
-cat > "$COMMIT_RELAY_HOME/coordination/worker-specs/zombie/2025-11-18/scan-worker-6.json" <<EOFSPEC
+cat > "$CORTEX_HOME/coordination/worker-specs/zombie/2025-11-18/scan-worker-6.json" <<EOFSPEC
 {
   "worker_id": "scan-worker-6",
   "worker_type": "scan-worker",
@@ -253,7 +253,7 @@ echo ""
 echo -e "${YELLOW}Cleaning up test environment...${NC}"
 
 # Remove test workers specs
-rm -rf "$COMMIT_RELAY_HOME/coordination/worker-specs/zombie/2025-11-18/scan-worker-"*
+rm -rf "$CORTEX_HOME/coordination/worker-specs/zombie/2025-11-18/scan-worker-"*
 
 # Restore backups if they exist
 if [ -f "$BACKUP_DIR/failure-patterns.jsonl" ]; then

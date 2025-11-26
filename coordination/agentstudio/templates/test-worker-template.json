@@ -5,7 +5,7 @@
   "agent_type": "worker",
   "agent_class": "test-worker",
   "description": "A worker agent specialized in running tests and generating test reports. Executes unit tests, integration tests, and generates coverage reports.",
-  "author": "commit-relay",
+  "author": "cortex",
   "tags": ["worker", "testing", "qa", "automation"],
   "capabilities": [
     {

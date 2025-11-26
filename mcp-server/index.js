@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 /**
- * Commit-Relay MCP Server
+ * Cortex MCP Server
  *
- * Model Context Protocol server that exposes commit-relay capabilities
+ * Model Context Protocol server that exposes cortex capabilities
  * as standardized Tools and Resources for AI agents.
  *
  * Protocol: JSON-RPC 2.0 over stdio
@@ -15,9 +15,9 @@ const path = require('path');
 const { spawn } = require('child_process');
 
 // Server configuration
-const SERVER_NAME = 'commit-relay-mcp';
+const SERVER_NAME = 'cortex-mcp';
 const SERVER_VERSION = '1.0.0';
-const COMMIT_RELAY_HOME = process.env.COMMIT_RELAY_HOME || path.resolve(__dirname, '..');
+const CORTEX_HOME = process.env.CORTEX_HOME || path.resolve(__dirname, '..');
 
 // Tool definitions
 const tools = require('./tools');
@@ -158,7 +158,7 @@ class MCPServer {
       throw new Error(`Unknown tool: ${name}`);
     }
 
-    const result = await tool.execute(args, COMMIT_RELAY_HOME);
+    const result = await tool.execute(args, CORTEX_HOME);
 
     return {
       content: [
@@ -172,14 +172,14 @@ class MCPServer {
 
   async handleResourcesList() {
     return {
-      resources: resources.getResourceDefinitions(COMMIT_RELAY_HOME)
+      resources: resources.getResourceDefinitions(CORTEX_HOME)
     };
   }
 
   async handleResourceRead(params) {
     const { uri } = params;
 
-    const content = await resources.readResource(uri, COMMIT_RELAY_HOME);
+    const content = await resources.readResource(uri, CORTEX_HOME);
 
     return {
       contents: [

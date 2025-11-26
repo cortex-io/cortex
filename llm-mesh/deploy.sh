@@ -1,12 +1,12 @@
 #!/bin/bash
 # LLM Mesh Deployment Script
-# Sets up and deploys complete LLM Mesh architecture for commit-relay
+# Sets up and deploys complete LLM Mesh architecture for cortex
 
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 LLM_MESH_HOME="$SCRIPT_DIR"
-COMMIT_RELAY_HOME="$(dirname "$LLM_MESH_HOME")"
+CORTEX_HOME="$(dirname "$LLM_MESH_HOME")"
 
 # Color output
 RED='\033[0;31m'
@@ -53,8 +53,8 @@ check_prerequisites() {
     done
 
     # Check directory structure
-    if [ ! -d "$COMMIT_RELAY_HOME/coordination" ]; then
-        log_error "commit-relay coordination directory not found"
+    if [ ! -d "$CORTEX_HOME/coordination" ]; then
+        log_error "cortex coordination directory not found"
         errors=$((errors + 1))
     fi
 
@@ -175,7 +175,7 @@ test_components() {
 
     # Test 3: MoE Router
     log_info "Testing MoE router..."
-    local routing_result=$(GOVERNANCE_BYPASS=true bash "$COMMIT_RELAY_HOME/coordination/masters/coordinator/lib/moe-router.sh" "test-deploy" "Fix authentication vulnerability" 2>/dev/null || echo "error")
+    local routing_result=$(GOVERNANCE_BYPASS=true bash "$CORTEX_HOME/coordination/masters/coordinator/lib/moe-router.sh" "test-deploy" "Fix authentication vulnerability" 2>/dev/null || echo "error")
 
     if [ "$routing_result" != "error" ]; then
         local routed_expert=$(echo "$routing_result" | jq -r '.decision.primary_expert')

@@ -12,10 +12,10 @@
 set -eo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-COMMIT_RELAY_HOME="$(cd "$SCRIPT_DIR/.." && pwd)"
-export COMMIT_RELAY_HOME
+CORTEX_HOME="$(cd "$SCRIPT_DIR/.." && pwd)"
+export CORTEX_HOME
 
-cd "$COMMIT_RELAY_HOME"
+cd "$CORTEX_HOME"
 
 # Load bypass auditor
 source coordination/governance/lib/bypass-auditor.sh
@@ -33,7 +33,7 @@ TESTS_PASSED=0
 TESTS_FAILED=0
 
 # Clean audit log before tests
-AUDIT_LOG="$COMMIT_RELAY_HOME/coordination/governance/bypass-audit.jsonl"
+AUDIT_LOG="$CORTEX_HOME/coordination/governance/bypass-audit.jsonl"
 rm -f "$AUDIT_LOG"
 mkdir -p "$(dirname "$AUDIT_LOG")"
 
@@ -57,7 +57,7 @@ run_test() {
 
 # Test 1: Developer cannot bypass validation for >0 minutes
 test_developer_authorization() {
-    export COMMIT_RELAY_PRINCIPAL="developer"
+    export CORTEX_PRINCIPAL="developer"
     ! check_bypass_authorization "developer" "validation" 30
 }
 
@@ -81,7 +81,7 @@ test_director_authorization() {
 
 # Test 5: Bypass gets logged
 test_bypass_logging() {
-    export COMMIT_RELAY_PRINCIPAL="director"
+    export CORTEX_PRINCIPAL="director"
     audit_bypass "validation" "Testing bypass logging" "test_suite" 30
 
     grep -q "Testing bypass logging" "$AUDIT_LOG"
@@ -89,7 +89,7 @@ test_bypass_logging() {
 
 # Test 6: Denied bypass gets logged
 test_denied_bypass_logging() {
-    export COMMIT_RELAY_PRINCIPAL="developer"
+    export CORTEX_PRINCIPAL="developer"
     ! audit_bypass "governance" "Should be denied" "none" 30
 
     grep -q "denied" "$AUDIT_LOG"
@@ -109,7 +109,7 @@ test_risk_calculation_high() {
 
 # Test 9: Bypass activation
 test_bypass_activation() {
-    export COMMIT_RELAY_PRINCIPAL="director"
+    export CORTEX_PRINCIPAL="director"
     audit_bypass "validation" "Test activation" "test" 60
 
     is_bypass_active
@@ -117,7 +117,7 @@ test_bypass_activation() {
 
 # Test 10: Bypass expiration
 test_bypass_expiration() {
-    export COMMIT_RELAY_PRINCIPAL="director"
+    export CORTEX_PRINCIPAL="director"
     audit_bypass "validation" "Test expiration" "test" 0
 
     # Set expiration to past
@@ -128,7 +128,7 @@ test_bypass_expiration() {
 
 # Test 11: Early bypass end
 test_bypass_end() {
-    export COMMIT_RELAY_PRINCIPAL="director"
+    export CORTEX_PRINCIPAL="director"
     audit_bypass "validation" "Test early end" "test" 60
 
     end_bypass
@@ -147,7 +147,7 @@ test_bypass_stats() {
 # Test 13: Environment bypass detection
 test_env_bypass() {
     export GOVERNANCE_BYPASS=true
-    export COMMIT_RELAY_PRINCIPAL="system"
+    export CORTEX_PRINCIPAL="system"
 
     check_env_bypass
 

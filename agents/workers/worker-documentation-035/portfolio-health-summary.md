@@ -139,7 +139,7 @@ Monitor repositories for commit activity to identify stale/inactive projects. Se
 ## Notable Repositories
 
 ### Primary Project
-**ry-ops/commit-relay**
+**ry-ops/cortex**
 - Language: JavaScript
 - Visibility: Private
 - Description: Multi-agent AI system for autonomous GitHub repository management

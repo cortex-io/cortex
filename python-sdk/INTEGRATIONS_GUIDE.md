@@ -135,7 +135,7 @@ For each repository, the following data is collected:
 
 #### Setup
 
-1. Add commit-relay client to your project
+1. Add cortex client to your project
 2. Create GitHub Actions workflow
 3. Use `GitHubActionsTrigger` to create tasks
 
@@ -158,8 +158,8 @@ jobs:
         with:
           python-version: '3.9'
 
-      - name: Install commit-relay
-        run: pip install commit-relay-client
+      - name: Install cortex
+        run: pip install cortex-client
 
       - name: Run Security Scan
         run: python scripts/security-scan.py
@@ -464,11 +464,11 @@ Error: API rate limit exceeded
 ## Examples
 
 See example scripts:
-- `/Users/ryandahlberg/commit-relay/python-sdk/examples/repository_discovery_demo.py`
-- `/Users/ryandahlberg/commit-relay/python-sdk/examples/cicd_integration_demo.py`
+- `/Users/ryandahlberg/cortex/python-sdk/examples/repository_discovery_demo.py`
+- `/Users/ryandahlberg/cortex/python-sdk/examples/cicd_integration_demo.py`
 
 ## API Reference
 
 See inline documentation in:
-- `/Users/ryandahlberg/commit-relay/python-sdk/commit_relay/integrations/github_discovery.py`
-- `/Users/ryandahlberg/commit-relay/python-sdk/commit_relay/integrations/github_actions.py`
+- `/Users/ryandahlberg/cortex/python-sdk/commit_relay/integrations/github_discovery.py`
+- `/Users/ryandahlberg/cortex/python-sdk/commit_relay/integrations/github_actions.py`

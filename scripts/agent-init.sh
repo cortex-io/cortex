@@ -1,5 +1,5 @@
 #!/bin/bash
-# Initialize a new agent in the commit-relay system
+# Initialize a new agent in the cortex system
 
 set -e
 
@@ -12,7 +12,7 @@ fi
 AGENT_NAME=$1
 DATE=$(date +"%Y-%m-%dT%H:%M:%S%z")
 
-cd ~/commit-relay
+cd ~/cortex
 
 echo "Initializing new agent: $AGENT_NAME"
 
@@ -28,7 +28,7 @@ cat > "agents/logs/$AGENT_NAME/$(date +%Y-%m-%d).md" <<EOF
 ### $(date +%H:%M) - Agent Initialized
 **Status**: Created and ready for first check-in
 
-Agent $AGENT_NAME has been initialized and is ready to join the commit-relay system.
+Agent $AGENT_NAME has been initialized and is ready to join the cortex system.
 
 ---
 EOF

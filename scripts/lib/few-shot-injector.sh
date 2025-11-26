@@ -13,8 +13,8 @@
 set -euo pipefail
 
 # Configuration
-COMMIT_RELAY_HOME="${COMMIT_RELAY_HOME:-$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)}"
-KB_DIR="${COMMIT_RELAY_HOME}/coordination/knowledge-base"
+CORTEX_HOME="${CORTEX_HOME:-$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)}"
+KB_DIR="${CORTEX_HOME}/coordination/knowledge-base"
 TRAINING_EXAMPLES="${KB_DIR}/training-examples/positive-examples.jsonl"
 
 ##############################################################################

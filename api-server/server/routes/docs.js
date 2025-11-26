@@ -72,7 +72,7 @@ router.get('/ui', (req, res) => {
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Commit-Relay API Documentation</title>
+  <title>Cortex API Documentation</title>
   <link rel="stylesheet" type="text/css" href="https://unpkg.com/swagger-ui-dist@5.9.0/swagger-ui.css">
   <style>
     body {

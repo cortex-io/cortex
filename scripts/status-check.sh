@@ -1,13 +1,13 @@
 #!/bin/bash
-# Quick status overview of commit-relay system
+# Quick status overview of cortex system
 
 set -e
 
-cd ~/commit-relay
+cd ~/cortex
 git pull origin main --quiet
 
 echo "================================"
-echo "Commit-Relay System Status"
+echo "Cortex System Status"
 echo "================================"
 echo ""
 

@@ -1,5 +1,5 @@
 """
-Events resource client for commit-relay API.
+Events resource client for cortex API.
 
 Provides access to system events and event stream endpoints.
 """

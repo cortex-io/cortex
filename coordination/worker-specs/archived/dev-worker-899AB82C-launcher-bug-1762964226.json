@@ -20,7 +20,7 @@
       "Automated remediation system",
       "Executive compliance dashboard"
     ],
-    "repository": "ry-ops/commit-relay",
+    "repository": "ry-ops/cortex",
     "branch": "main",
     "handoff_id": "coord-to-development-5FF5697C-5658-43EA-9F11-238D43A08304",
     "retry_info": {

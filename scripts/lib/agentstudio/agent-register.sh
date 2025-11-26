@@ -98,7 +98,7 @@ register_agent() {
     # Determine agent type from class
     local agent_type="utility"
     case "$agent_class" in
-        *-master|commit-relay)
+        *-master|cortex)
             agent_type="master"
             ;;
         *-worker)

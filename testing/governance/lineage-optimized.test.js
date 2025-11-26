@@ -53,7 +53,7 @@ describe('OptimizedLineageQuery', () => {
     await fs.writeFile(testIndexPath, JSON.stringify(sampleIndex, null, 2));
 
     // Override paths for testing
-    process.env.COMMIT_RELAY_HOME = path.dirname(path.dirname(testLogPath));
+    process.env.CORTEX_HOME = path.dirname(path.dirname(testLogPath));
 
     query = new OptimizedLineageQuery({ cacheSize: 10, indexTTL: 60000 });
   });

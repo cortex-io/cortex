@@ -7,10 +7,10 @@ set -euo pipefail
 
 # Get script directory
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-COMMIT_RELAY_HOME="${COMMIT_RELAY_HOME:-$(cd "$SCRIPT_DIR/.." && pwd)}"
+CORTEX_HOME="${CORTEX_HOME:-$(cd "$SCRIPT_DIR/.." && pwd)}"
 
 PID_FILE="/tmp/pm-daemon.pid"
-LOG_FILE="$COMMIT_RELAY_HOME/agents/logs/system/pm-daemon.log"
+LOG_FILE="$CORTEX_HOME/agents/logs/system/pm-daemon.log"
 
 # Check if already running
 if [ -f "$PID_FILE" ]; then
@@ -26,7 +26,7 @@ if [ -f "$PID_FILE" ]; then
 fi
 
 echo "Starting PM daemon..."
-echo "Working directory: $COMMIT_RELAY_HOME"
+echo "Working directory: $CORTEX_HOME"
 echo "Log file: $LOG_FILE"
 
 # Ensure log directory exists
@@ -34,7 +34,7 @@ mkdir -p "$(dirname "$LOG_FILE")"
 
 # Start daemon with normal priority (renice to 0)
 # Use nohup to detach from terminal
-cd "$COMMIT_RELAY_HOME"
+cd "$CORTEX_HOME"
 nohup nice -n 0 bash "$SCRIPT_DIR/pm-daemon.sh" > /dev/null 2>&1 &
 DAEMON_PID=$!
 

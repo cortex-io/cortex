@@ -13,9 +13,9 @@ set -euo pipefail
 
 # Get script directory
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-COMMIT_RELAY_HOME="${COMMIT_RELAY_HOME:-$(cd "$SCRIPT_DIR/.." && pwd)}"
+CORTEX_HOME="${CORTEX_HOME:-$(cd "$SCRIPT_DIR/.." && pwd)}"
 
-cd "$COMMIT_RELAY_HOME"
+cd "$CORTEX_HOME"
 
 LEARNING_METRICS_DIR="coordination/metrics/learning"
 TRAINING_EXAMPLES_DIR="coordination/knowledge-base/training-examples"

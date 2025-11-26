@@ -1,5 +1,5 @@
 """
-Daemons resource client for commit-relay API.
+Daemons resource client for cortex API.
 
 Provides control over daemon processes including starting, stopping,
 and monitoring daemon status.

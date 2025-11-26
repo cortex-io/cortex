@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Daily report generation for commit-relay.
+Daily report generation for cortex.
 
 Generates comprehensive daily reports including:
 - System metrics summary
@@ -137,7 +137,7 @@ def main():
     print("7. Generating index file...")
     index_path = os.path.join(output_dir, 'INDEX.md')
     with open(index_path, 'w') as f:
-        f.write(f"""# Commit-Relay Daily Report
+        f.write(f"""# Cortex Daily Report
 
 **Generated:** {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
 

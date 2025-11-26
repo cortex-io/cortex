@@ -1,13 +1,13 @@
 #!/bin/bash
 # scripts/create-task.sh
-# Task Management CLI - Easy task creation for commit-relay
+# Task Management CLI - Easy task creation for cortex
 # Supports both interactive mode and command-line mode
 
 set -euo pipefail
 
 # Get script directory
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-COMMIT_RELAY_HOME="${COMMIT_RELAY_HOME:-$(cd "$SCRIPT_DIR/.." && pwd)}"
+CORTEX_HOME="${CORTEX_HOME:-$(cd "$SCRIPT_DIR/.." && pwd)}"
 
 # Load libraries
 source "$SCRIPT_DIR/lib/logging.sh"
@@ -36,7 +36,7 @@ usage() {
     cat << EOF
 Usage: $0 [OPTIONS]
 
-Task Management CLI for Commit-Relay
+Task Management CLI for Cortex
 
 MODES:
   Interactive:  $0                           (no arguments)
@@ -68,7 +68,7 @@ EXAMPLES:
 
   # Development task
   $0 --type development \\
-     --repo ry-ops/commit-relay \\
+     --repo ry-ops/cortex \\
      --description "Add new feature: task scheduling"
 
   # Batch processing
@@ -132,7 +132,7 @@ fi
 
 # Generate next task ID
 generate_task_id() {
-    cd "$COMMIT_RELAY_HOME"
+    cd "$CORTEX_HOME"
 
     # Find highest task number from unique IDs
     HIGHEST=$(jq -r '.tasks[].id' coordination/task-queue.json | \
@@ -209,7 +209,7 @@ validate_priority() {
 interactive_mode() {
     clear
     echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
-    echo -e "${BLUE}  Commit-Relay Task Creation${NC}"
+    echo -e "${BLUE}  Cortex Task Creation${NC}"
     echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
     echo ""
 
@@ -362,7 +362,7 @@ create_task() {
         }')
 
     # Add task to queue
-    cd "$COMMIT_RELAY_HOME"
+    cd "$CORTEX_HOME"
     jq --argjson task "$task" \
        '.tasks += [$task] | .updated_at = "'$(date +%Y-%m-%dT%H:%M:%S%z)'"' \
        coordination/task-queue.json > /tmp/task-queue-updated.json
@@ -373,7 +373,7 @@ create_task() {
 
 # Main execution
 main() {
-    cd "$COMMIT_RELAY_HOME"
+    cd "$CORTEX_HOME"
 
     # Interactive mode
     if [ "$INTERACTIVE" = "true" ]; then

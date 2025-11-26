@@ -6,10 +6,10 @@
 set -e
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-COMMIT_RELAY_HOME="$(cd "$SCRIPT_DIR/../.." && pwd)"
-export COMMIT_RELAY_HOME
+CORTEX_HOME="$(cd "$SCRIPT_DIR/../.." && pwd)"
+export CORTEX_HOME
 
-source "$COMMIT_RELAY_HOME/scripts/lib/zombie-cleanup.sh"
+source "$CORTEX_HOME/scripts/lib/zombie-cleanup.sh"
 
 GREEN='\033[0;32m'
 RED='\033[0;31m'
@@ -39,10 +39,10 @@ test_fail() {
 setup_test_env() {
     TEST_WORKER_ID="test-zombie-worker-001"
     TEST_TASK_ID="task-zombie-test-001"
-    TEST_WORKER_SPEC="$COMMIT_RELAY_HOME/coordination/worker-specs/active/${TEST_WORKER_ID}.json"
-    TEST_WORKER_DIR="$COMMIT_RELAY_HOME/agents/workers/$TEST_WORKER_ID"
+    TEST_WORKER_SPEC="$CORTEX_HOME/coordination/worker-specs/active/${TEST_WORKER_ID}.json"
+    TEST_WORKER_DIR="$CORTEX_HOME/agents/workers/$TEST_WORKER_ID"
 
-    mkdir -p "$COMMIT_RELAY_HOME/coordination/worker-specs/active"
+    mkdir -p "$CORTEX_HOME/coordination/worker-specs/active"
     mkdir -p "$TEST_WORKER_DIR/logs"
 
     # Create test worker spec
@@ -78,7 +78,7 @@ EOFSPEC
 cleanup_test_env() {
     rm -rf "$TEST_WORKER_DIR"
     rm -f "$TEST_WORKER_SPEC"
-    rm -f "$COMMIT_RELAY_HOME/coordination/worker-specs/zombie"/*/"${TEST_WORKER_ID}.json" 2>/dev/null || true
+    rm -f "$CORTEX_HOME/coordination/worker-specs/zombie"/*/"${TEST_WORKER_ID}.json" 2>/dev/null || true
     rm -f /tmp/zombie-cleanup-count-* 2>/dev/null || true
 }
 
@@ -92,7 +92,7 @@ setup_test_env
 
 # Test 1
 test_start "Zombie cleanup library loads"
-if [ -f "$COMMIT_RELAY_HOME/scripts/lib/zombie-cleanup.sh" ]; then
+if [ -f "$CORTEX_HOME/scripts/lib/zombie-cleanup.sh" ]; then
     test_pass
 else
     test_fail "Library file not found"
@@ -132,7 +132,7 @@ jq --arg t "$old_time" '.heartbeat.last_heartbeat = $t' "$TEST_WORKER_SPEC" > "$
 mv "${TEST_WORKER_SPEC}.tmp" "$TEST_WORKER_SPEC"
 
 # Create test token budget
-TOKEN_BUDGET="$COMMIT_RELAY_HOME/coordination/token-budget.json"
+TOKEN_BUDGET="$CORTEX_HOME/coordination/token-budget.json"
 echo '{"total_budget": 500000, "total_used": 125000}' > "$TOKEN_BUDGET"
 
 return_worker_tokens "$TEST_WORKER_ID" >/dev/null 2>&1
@@ -154,7 +154,7 @@ echo "Test log line 2" > "$TEST_WORKER_DIR/logs/stderr.log"
 archive_worker_logs "$TEST_WORKER_ID" >/dev/null 2>&1
 
 ARCHIVE_DATE=$(date +%Y-%m-%d)
-ARCHIVE_DIR="$COMMIT_RELAY_HOME/agents/logs/zombie-workers/$ARCHIVE_DATE"
+ARCHIVE_DIR="$CORTEX_HOME/agents/logs/zombie-workers/$ARCHIVE_DATE"
 
 if [ -d "$ARCHIVE_DIR/${TEST_WORKER_ID}-logs" ]; then
     test_pass
@@ -167,7 +167,7 @@ test_start "cleanup_worker_state moves spec to zombie dir"
 cleanup_worker_state "$TEST_WORKER_ID" >/dev/null 2>&1
 
 ZOMBIE_DATE=$(date +%Y-%m-%d)
-ZOMBIE_SPEC="$COMMIT_RELAY_HOME/coordination/worker-specs/zombie/$ZOMBIE_DATE/${TEST_WORKER_ID}.json"
+ZOMBIE_SPEC="$CORTEX_HOME/coordination/worker-specs/zombie/$ZOMBIE_DATE/${TEST_WORKER_ID}.json"
 
 if [ -f "$ZOMBIE_SPEC" ]; then
     test_pass
@@ -224,7 +224,7 @@ fi
 test_start "emit_zombie_event creates event log"
 emit_zombie_event "test_event" "$TEST_WORKER_ID" '{"test": true}' >/dev/null 2>&1
 
-EVENTS_LOG="$COMMIT_RELAY_HOME/coordination/events/zombie-cleanup-events.jsonl"
+EVENTS_LOG="$CORTEX_HOME/coordination/events/zombie-cleanup-events.jsonl"
 if [ -f "$EVENTS_LOG" ] && grep -q "test_event" "$EVENTS_LOG"; then
     test_pass
 else
@@ -233,7 +233,7 @@ fi
 
 # Test 11
 test_start "Configuration file exists and is valid JSON"
-CONFIG_FILE="$COMMIT_RELAY_HOME/coordination/config/zombie-cleanup-policy.json"
+CONFIG_FILE="$CORTEX_HOME/coordination/config/zombie-cleanup-policy.json"
 if [ -f "$CONFIG_FILE" ] && jq empty "$CONFIG_FILE" 2>/dev/null; then
     test_pass
 else

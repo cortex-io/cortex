@@ -1,13 +1,13 @@
 #!/bin/bash
 # scripts/interactive-tutorial.sh
-# Interactive tutorial for learning Commit-Relay
+# Interactive tutorial for learning Cortex
 # Part of Phase 5: Developer Experience
 
 set -euo pipefail
 
 # Get script directory
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-COMMIT_RELAY_HOME="${COMMIT_RELAY_HOME:-$(cd "$SCRIPT_DIR/.." && pwd)}"
+CORTEX_HOME="${CORTEX_HOME:-$(cd "$SCRIPT_DIR/.." && pwd)}"
 
 # ANSI color codes
 RED='\033[0;31m'
@@ -70,14 +70,14 @@ wait_for_enter() {
 
 # Welcome
 show_welcome() {
-    print_header "Welcome to Commit-Relay Interactive Tutorial"
+    print_header "Welcome to Cortex Interactive Tutorial"
 
     echo ""
     echo -e "${BOLD}🎓 Learning Objectives:${NC}"
     echo ""
     echo "  By the end of this tutorial, you will know how to:"
     echo ""
-    echo "  ✓ Understand Commit-Relay architecture"
+    echo "  ✓ Understand Cortex architecture"
     echo "  ✓ Start and monitor daemons"
     echo "  ✓ Create and track tasks"
     echo "  ✓ Spawn and monitor workers"
@@ -88,7 +88,7 @@ show_welcome() {
     echo -e "${BOLD}⏱  Estimated Time:${NC} 20-30 minutes"
     echo ""
     echo -e "${BOLD}📋 Prerequisites:${NC}"
-    echo "  - Commit-Relay installed and configured"
+    echo "  - Cortex installed and configured"
     echo "  - Basic understanding of command line"
     echo "  - Terminal with 80+ columns recommended"
     echo ""
@@ -98,11 +98,11 @@ show_welcome() {
 
 # Lesson 1: Architecture Overview
 lesson_architecture() {
-    print_header "Lesson 1: Understanding Commit-Relay Architecture"
+    print_header "Lesson 1: Understanding Cortex Architecture"
 
     print_step "1.1" "Core Components"
 
-    echo "Commit-Relay is built on a distributed agent architecture:"
+    echo "Cortex is built on a distributed agent architecture:"
     echo ""
     echo -e "${BOLD}Master Agents${NC} (Specialists):"
     echo "  • development-master   - Code changes, bug fixes, features"
@@ -155,7 +155,7 @@ lesson_architecture() {
     local total_daemons=9
 
     for daemon in worker-daemon pm-daemon coordinator-daemon heartbeat-monitor-daemon metrics-snapshot-daemon integration-validator-daemon failure-pattern-daemon worker-restart-daemon auto-fix-daemon; do
-        local pidfile="/tmp/commit-relay-${daemon}.pid"
+        local pidfile="/tmp/cortex-${daemon}.pid"
         if [ -f "$pidfile" ]; then
             local pid=$(cat "$pidfile")
             if ps -p "$pid" > /dev/null 2>&1; then
@@ -262,7 +262,7 @@ lesson_tasks() {
 
     if [[ "$create_task" = "y" || "$create_task" = "Y" ]]; then
         echo ""
-        ./scripts/wizards/create-task.sh --quick "Tutorial demo task - Hello Commit-Relay!" medium development
+        ./scripts/wizards/create-task.sh --quick "Tutorial demo task - Hello Cortex!" medium development
         echo ""
         print_success "Demo task created!"
     fi
@@ -274,8 +274,8 @@ lesson_tasks() {
     echo "Check the current task queue:"
     echo ""
 
-    if [ -f "$COMMIT_RELAY_HOME/coordination/task-queue.json" ]; then
-        cat "$COMMIT_RELAY_HOME/coordination/task-queue.json" | jq '{
+    if [ -f "$CORTEX_HOME/coordination/task-queue.json" ]; then
+        cat "$CORTEX_HOME/coordination/task-queue.json" | jq '{
             total: (.tasks | length),
             queued: ([.tasks[] | select(.status == "queued")] | length),
             in_progress: ([.tasks[] | select(.status == "in_progress")] | length),
@@ -338,13 +338,13 @@ lesson_workers() {
     echo "Check active workers:"
     echo ""
 
-    local active_count=$(ls "$COMMIT_RELAY_HOME/coordination/worker-specs/active/" 2>/dev/null | wc -l)
+    local active_count=$(ls "$CORTEX_HOME/coordination/worker-specs/active/" 2>/dev/null | wc -l)
     echo -e "${BOLD}Active workers:${NC} $active_count"
     echo ""
 
     if [ $active_count -gt 0 ]; then
         echo "Recent workers:"
-        ls -lt "$COMMIT_RELAY_HOME/coordination/worker-specs/active/" | head -5
+        ls -lt "$CORTEX_HOME/coordination/worker-specs/active/" | head -5
     fi
 
     echo ""
@@ -466,7 +466,7 @@ lesson_selfhealing() {
 
     print_step "7.1" "Autonomous Recovery"
 
-    echo "Commit-Relay includes five self-healing subsystems:"
+    echo "Cortex includes five self-healing subsystems:"
     echo ""
     echo -e "${BOLD}1. Heartbeat Monitoring${NC}"
     echo "   • Tracks worker health every 30 seconds"
@@ -570,11 +570,11 @@ show_completion() {
     print_header "Tutorial Complete! 🎉"
 
     echo ""
-    echo -e "${BOLD}${GREEN}Congratulations!${NC} You've completed the Commit-Relay tutorial."
+    echo -e "${BOLD}${GREEN}Congratulations!${NC} You've completed the Cortex tutorial."
     echo ""
     echo -e "${BOLD}You learned:${NC}"
     echo ""
-    print_success "Commit-Relay architecture and components"
+    print_success "Cortex architecture and components"
     print_success "How to manage daemons"
     print_success "Creating and tracking tasks"
     print_success "Spawning and monitoring workers"
@@ -611,7 +611,7 @@ show_completion() {
     echo "  🌐 Web Dashboard:  http://localhost:3000"
     echo ""
 
-    echo -e "${BOLD}Thank you for learning Commit-Relay!${NC}"
+    echo -e "${BOLD}Thank you for learning Cortex!${NC}"
     echo ""
 }
 

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-PDF Analysis Script for Commit-Relay Upgrade Paths
+PDF Analysis Script for Cortex Upgrade Paths
 Analyzes PDFs, identifies relevant upgrade paths, and creates implementation prompts.
 """
 
@@ -53,7 +53,7 @@ def extract_text_from_pdf(pdf_path):
         return ""
 
 def analyze_relevance(text, filename):
-    """Analyze if the PDF content is relevant to commit-relay upgrades."""
+    """Analyze if the PDF content is relevant to cortex upgrades."""
     filename_lower = filename.lower()
 
     # Score relevance based on keyword matches
@@ -98,13 +98,13 @@ def generate_implementation_prompt(filename, category, text):
 
     # Category-specific prompts
     prompts = {
-        'ai_agents': f"""# AI Agent Enhancement for Commit-Relay
+        'ai_agents': f"""# AI Agent Enhancement for Cortex
 
 ## Source Document
 {filename}
 
 ## Overview
-This document contains insights on AI agent capabilities that could enhance commit-relay's multi-agent orchestration system.
+This document contains insights on AI agent capabilities that could enhance cortex's multi-agent orchestration system.
 
 ## Potential Upgrade Paths
 
@@ -129,16 +129,16 @@ This document contains insights on AI agent capabilities that could enhance comm
 - Add observability for new agent behaviors
 
 ## Priority: HIGH
-This directly enhances core commit-relay functionality.
+This directly enhances core cortex functionality.
 """,
 
-        'observability': f"""# Observability Enhancement for Commit-Relay
+        'observability': f"""# Observability Enhancement for Cortex
 
 ## Source Document
 {filename}
 
 ## Overview
-This document provides insights on observability practices that could improve commit-relay's monitoring capabilities.
+This document provides insights on observability practices that could improve cortex's monitoring capabilities.
 
 ## Potential Upgrade Paths
 
@@ -166,13 +166,13 @@ This document provides insights on observability practices that could improve co
 Observability is critical for system reliability.
 """,
 
-        'security': f"""# Security Enhancement for Commit-Relay
+        'security': f"""# Security Enhancement for Cortex
 
 ## Source Document
 {filename}
 
 ## Overview
-This document contains security practices and threat management strategies applicable to commit-relay.
+This document contains security practices and threat management strategies applicable to cortex.
 
 ## Potential Upgrade Paths
 
@@ -200,13 +200,13 @@ This document contains security practices and threat management strategies appli
 Security is essential for production systems.
 """,
 
-        'data_management': f"""# Data Management Enhancement for Commit-Relay
+        'data_management': f"""# Data Management Enhancement for Cortex
 
 ## Source Document
 {filename}
 
 ## Overview
-This document provides data management and analytics insights for improving commit-relay's data handling.
+This document provides data management and analytics insights for improving cortex's data handling.
 
 ## Potential Upgrade Paths
 
@@ -234,13 +234,13 @@ This document provides data management and analytics insights for improving comm
 Enhances operational insights.
 """,
 
-        'api_management': f"""# API Management Enhancement for Commit-Relay
+        'api_management': f"""# API Management Enhancement for Cortex
 
 ## Source Document
 {filename}
 
 ## Overview
-This document covers API lifecycle management practices applicable to commit-relay's service architecture.
+This document covers API lifecycle management practices applicable to cortex's service architecture.
 
 ## Potential Upgrade Paths
 
@@ -268,7 +268,7 @@ This document covers API lifecycle management practices applicable to commit-rel
 Improves system interfaces and reliability.
 """,
 
-        'governance': f"""# Governance Enhancement for Commit-Relay
+        'governance': f"""# Governance Enhancement for Cortex
 
 ## Source Document
 {filename}
@@ -302,13 +302,13 @@ This document provides governance frameworks and compliance practices for AI sys
 Important for enterprise adoption.
 """,
 
-        'devops': f"""# DevOps Enhancement for Commit-Relay
+        'devops': f"""# DevOps Enhancement for Cortex
 
 ## Source Document
 {filename}
 
 ## Overview
-This document covers DevOps and CI/CD practices for improving commit-relay's automation capabilities.
+This document covers DevOps and CI/CD practices for improving cortex's automation capabilities.
 
 ## Potential Upgrade Paths
 
@@ -336,7 +336,7 @@ This document covers DevOps and CI/CD practices for improving commit-relay's aut
 Enhances automation capabilities.
 """,
 
-        'cloud': f"""# Cloud Enhancement for Commit-Relay
+        'cloud': f"""# Cloud Enhancement for Cortex
 
 ## Source Document
 {filename}
@@ -370,7 +370,7 @@ This document covers cloud architecture and infrastructure practices.
 Future consideration for scale.
 """,
 
-        'prompt_engineering': f"""# Prompt Engineering Enhancement for Commit-Relay
+        'prompt_engineering': f"""# Prompt Engineering Enhancement for Cortex
 
 ## Source Document
 {filename}
@@ -404,7 +404,7 @@ This document covers prompt engineering and LLM optimization techniques.
 Directly improves agent performance.
 """,
 
-        'productivity': f"""# Productivity Enhancement for Commit-Relay
+        'productivity': f"""# Productivity Enhancement for Cortex
 
 ## Source Document
 {filename}
@@ -501,7 +501,7 @@ def create_prompt_pdf(output_path, title, content):
     doc.build(story)
 
 def main():
-    library_dir = Path('/Users/ryandahlberg/commit-relay/library')
+    library_dir = Path('/Users/ryandahlberg/cortex/library')
     input_dir = library_dir / 'unread'
     output_dir = library_dir / 'processed'
 
@@ -559,7 +559,7 @@ def main():
             except Exception as e:
                 print(f"  ✗ Error creating PDF: {e}\n")
         else:
-            print(f"  ○ Not relevant to commit-relay upgrades")
+            print(f"  ○ Not relevant to cortex upgrades")
             # Delete non-relevant files
             pdf_path.unlink()
             print(f"  ✓ Deleted (not relevant)\n")

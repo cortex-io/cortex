@@ -9,7 +9,7 @@
 
 ## Your Role
 
-You are the **Git-Ops Observer**, an autonomous agent responsible for ensuring all commit-relay coordination state is automatically synchronized to GitHub. You operate in the background, monitoring for uncommitted changes and pushing them automatically once approved.
+You are the **Git-Ops Observer**, an autonomous agent responsible for ensuring all cortex coordination state is automatically synchronized to GitHub. You operate in the background, monitoring for uncommitted changes and pushing them automatically once approved.
 
 ### Key Characteristics
 
@@ -51,8 +51,8 @@ You are the **Git-Ops Observer**, an autonomous agent responsible for ensuring a
 
 ```bash
 #!/bin/bash
-# Navigate to commit-relay home
-cd ~/commit-relay
+# Navigate to cortex home
+cd ~/cortex
 
 # Source library functions
 source scripts/lib/logging.sh
@@ -79,7 +79,7 @@ trap "release_lock $AGENT_ID" EXIT
 ```bash
 log_debug "Checking for uncommitted changes..."
 
-cd ~/commit-relay
+cd ~/cortex
 
 # Pull latest from remote first
 git fetch origin main --quiet
@@ -209,7 +209,7 @@ COMMIT_MESSAGE="${COMMIT_TYPE}(${COMMIT_SCOPE}): ${COMMIT_SUBJECT}
 ${COMMIT_BODY}
 > Auto-synced by git-ops observer
 
-Co-Authored-By: Git-Ops Observer <gitops@commit-relay.local>"
+Co-Authored-By: Git-Ops Observer <gitops@cortex.local>"
 
 log_info "Commit message: $COMMIT_TYPE($COMMIT_SCOPE): $COMMIT_SUBJECT"
 ```
@@ -306,7 +306,7 @@ EVENT_DATA=$(jq -nc \
 broadcast_dashboard_event "git_ops_success" "$EVENT_DATA"
 
 log_success "Coordination state synced to GitHub: $COMMIT_HASH"
-log_info "Repository: https://github.com/ry-ops/commit-relay/commit/$COMMIT_HASH"
+log_info "Repository: https://github.com/ry-ops/cortex/commit/$COMMIT_HASH"
 ```
 
 ---
@@ -319,10 +319,10 @@ Run every N minutes via cron:
 
 ```bash
 # Run every 5 minutes
-*/5 * * * * /Users/ryandahlberg/commit-relay/scripts/observers/run-git-ops.sh
+*/5 * * * * /Users/ryandahlberg/cortex/scripts/observers/run-git-ops.sh
 
 # Or every 15 minutes for less frequent updates
-*/15 * * * * /Users/ryandahlberg/commit-relay/scripts/observers/run-git-ops.sh
+*/15 * * * * /Users/ryandahlberg/cortex/scripts/observers/run-git-ops.sh
 ```
 
 ### Mode 2: Daemon Mode
@@ -333,7 +333,7 @@ Continuous monitoring with sleep intervals:
 #!/bin/bash
 while true; do
     # Run git-ops check
-    /Users/ryandahlberg/commit-relay/scripts/observers/run-git-ops.sh
+    /Users/ryandahlberg/cortex/scripts/observers/run-git-ops.sh
 
     # Sleep for 5 minutes
     sleep 300
@@ -346,8 +346,8 @@ Use file system watching (fswatch/inotify):
 
 ```bash
 # Watch coordination directory for changes
-fswatch -o ~/commit-relay/coordination/ | while read num; do
-    /Users/ryandahlberg/commit-relay/scripts/observers/run-git-ops.sh
+fswatch -o ~/cortex/coordination/ | while read num; do
+    /Users/ryandahlberg/cortex/scripts/observers/run-git-ops.sh
 done
 ```
 
@@ -357,7 +357,7 @@ done
 
 ### 1. Lock Mechanism
 - Only one git-ops observer can run at a time
-- PID-based lock file in `/tmp/commit-relay-git-ops.lock`
+- PID-based lock file in `/tmp/cortex-git-ops.lock`
 - Automatic cleanup on exit
 
 ### 2. Change Validation
@@ -421,7 +421,7 @@ export GIT_OPS_DRY_RUN=false          # Set to true to skip actual push
 
 ### Issue: "Another git-ops observer is already running"
 **Cause**: Stale lock file or concurrent execution
-**Solution**: Check `/tmp/commit-relay-git-ops.lock` and remove if PID is dead
+**Solution**: Check `/tmp/cortex-git-ops.lock` and remove if PID is dead
 
 ### Issue: "No changes staged after git add"
 **Cause**: Changes were in ignored files or already committed

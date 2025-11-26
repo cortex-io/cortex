@@ -1,4 +1,4 @@
-# Commit-Relay Repository Catalog
+# Cortex Repository Catalog
 
 **Generated**: 2025-11-16T10:33:59-0600
 **Task ID**: moe-test-ddqd-v5-1763308845-ffaee228
@@ -11,8 +11,8 @@
 
 ### Basic Information
 
-- **Repository Name**: commit-relay
-- **GitHub URL**: https://github.com/ry-ops/commit-relay
+- **Repository Name**: cortex
+- **GitHub URL**: https://github.com/ry-ops/cortex
 - **Description**: AI-powered commit automation system with master-worker architecture
 - **License**: MIT
 - **Version**: 5.0 (Hybrid RAG + CAG Performance Layer)
@@ -44,7 +44,7 @@
 ### Directory Structure
 
 ```
-commit-relay/
+cortex/
 ├── agents/                  # Agent prompts, configs, logs, and workers
 ├── coordination/            # Task coordination, worker pool, budgets
 ├── dashboard/               # Real-time metrics dashboard (Node.js/Express)
@@ -68,7 +68,7 @@ commit-relay/
 
 ### Node.js Dependencies (Root)
 
-**package.json** (commit-relay root)
+**package.json** (cortex root)
 
 **Production Dependencies**:
 - `ajv`: ^8.17.1 - JSON schema validator
@@ -294,7 +294,7 @@ commit-relay/
 - `agent-init.sh` - Initialize new agents
 - `cleanup-zombie-workers.sh` - Cleanup failed workers
 - `archive-failed-workers.sh` - Archive failed workers
-- `start-commit-relay.sh` - System startup
+- `start-cortex.sh` - System startup
 
 **v5.0 Utilities**:
 - `cag/load-cache.sh` - CAG cache validation and loading
@@ -474,7 +474,7 @@ commit-relay/
 
 ### GitHub Integration
 
-- Repository: ry-ops/commit-relay
+- Repository: ry-ops/cortex
 - API Access: PyGithub >=1.59.0
 - CLI: gh (GitHub CLI)
 - Operations: Repository discovery, PR creation, issue management
@@ -492,7 +492,7 @@ commit-relay/
 
 **Repository Catalog Complete**
 
-- **Repository**: commit-relay (v5.0)
+- **Repository**: cortex (v5.0)
 - **Total Size**: 156M
 - **Files**: 3,655+ tracked
 - **Scripts**: 82 automation scripts

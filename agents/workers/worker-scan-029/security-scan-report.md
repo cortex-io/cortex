@@ -21,7 +21,7 @@ This security audit identified **1 CRITICAL** and **3 HIGH** priority security i
 ### 🔴 CRITICAL-001: Exposed Anthropic API Key in .env File
 
 **Severity**: CRITICAL
-**File**: `/Users/ryandahlberg/Projects/commit-relay/llm-mesh/.env:8`
+**File**: `/Users/ryandahlberg/Projects/cortex/llm-mesh/.env:8`
 **Status**: ACTIVE EXPOSURE
 
 **Description**:
@@ -50,7 +50,7 @@ ANTHROPIC_API_KEY=sk-ant-api03-a3tTTiVEgcdBqdN7BcY570Q7Y4uk2U3Fl-JWTO6tZot6e9sOp
 ### 🟠 HIGH-001: Missing API_KEY in Dashboard Configuration
 
 **Severity**: HIGH
-**File**: `/Users/ryandahlberg/Projects/commit-relay/dashboard/.env:12`
+**File**: `/Users/ryandahlberg/Projects/cortex/dashboard/.env:12`
 **Status**: UNPROTECTED
 
 **Description**:
@@ -78,7 +78,7 @@ The authentication middleware allows unauthenticated access when `NODE_ENV=devel
 ### 🟠 HIGH-002: Overly Permissive File Permissions
 
 **Severity**: HIGH
-**File**: `/Users/ryandahlberg/Projects/commit-relay/llm-mesh/safety/filters/secrets-detector.sh`
+**File**: `/Users/ryandahlberg/Projects/cortex/llm-mesh/safety/filters/secrets-detector.sh`
 **Permissions**: `rwx--x--x (711)`
 
 **Description**:
@@ -155,7 +155,7 @@ Multiple shell scripts use potentially dangerous patterns:
 ### 🟡 MEDIUM-002: CORS Configuration
 
 **Severity**: MEDIUM
-**File**: `/Users/ryandahlberg/Projects/commit-relay/dashboard/.env:16`
+**File**: `/Users/ryandahlberg/Projects/cortex/dashboard/.env:16`
 
 **Description**:
 CORS allows localhost origins only:
@@ -176,7 +176,7 @@ While appropriate for development, production deployment requires review.
 ### 🟡 MEDIUM-003: Rate Limiting Configuration
 
 **Severity**: MEDIUM
-**File**: `/Users/ryandahlberg/Projects/commit-relay/dashboard/.env:19-21`
+**File**: `/Users/ryandahlberg/Projects/cortex/dashboard/.env:19-21`
 
 **Description**:
 Current rate limits may be insufficient for production DoS protection:

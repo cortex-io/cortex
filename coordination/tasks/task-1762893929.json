@@ -1,13 +1,13 @@
 {
   "id": "task-1762893929",
-  "title": "Modernize Dashboard UI with Commit-Relay Specific Metrics",
+  "title": "Modernize Dashboard UI with Cortex Specific Metrics",
   "type": "feature",
   "priority": "medium",
   "status": "pending",
   "created_at": "2025-11-11T20:45:29Z",
   "created_by": "user",
   "context": {
-    "description": "Update dashboard look and feel to focus on commit-relay specific metrics and KPIs with ELK-style design",
+    "description": "Update dashboard look and feel to focus on cortex specific metrics and KPIs with ELK-style design",
     "design_style": "ELK (Elasticsearch/Kibana) - data-dense, powerful visualizations, professional monitoring aesthetic",
     "requirements": [
       "Implement ELK-style dashboard design (Kibana-inspired)",
@@ -15,7 +15,7 @@
       "Data-dense layout with multiple visualizations visible at once",
       "Time-series charts for worker/task activity",
       "Keep dark/light mode toggle functionality",
-      "Remove generic metrics, focus only on commit-relay specific KPIs",
+      "Remove generic metrics, focus only on cortex specific KPIs",
       "Update main dashboard (overview) with relevant metrics:",
       "  - Worker Pool Status (active/target/capacity)",
       "  - MoE Routing Statistics (confidence, activation rates)",
@@ -24,7 +24,7 @@
       "  - Master Status (coordinator, development, security, inventory)",
       "  - Recent Events Feed (last 10-20 events)",
       "Keep and update API documentation page with current endpoints",
-      "Keep and update About page with current commit-relay version and features",
+      "Keep and update About page with current cortex version and features",
       "Maintain existing Alpine.js/Tailwind architecture",
       "Ensure responsive design works on all screen sizes"
     ],
@@ -55,7 +55,7 @@
       "/api/governance/compliance"
     ],
     "about_page_content": {
-      "project_name": "Commit-Relay",
+      "project_name": "Cortex",
       "version": "1.0.0",
       "description": "AI-powered autonomous task execution system with MoE architecture",
       "features": [
@@ -71,7 +71,7 @@
   },
   "deliverables": [
     "Updated dashboard/public/index.html with refined UI",
-    "Focused metrics displaying only commit-relay KPIs",
+    "Focused metrics displaying only cortex KPIs",
     "Updated API documentation section",
     "Updated About page with current version info",
     "Maintained dark/light mode functionality",

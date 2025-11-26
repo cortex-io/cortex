@@ -9,7 +9,7 @@
 ## Task Details
 **Title**: Security audit and compliance scanning for production systems
 
-**Description**: Performed comprehensive security audit and compliance scanning for the commit-relay production system.
+**Description**: Performed comprehensive security audit and compliance scanning for the cortex production system.
 
 ## Execution Timeline
 - **Started**: 2025-11-16T16:35:12Z

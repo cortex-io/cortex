@@ -7,12 +7,12 @@ set -euo pipefail
 
 # Get script directory
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-COMMIT_RELAY_HOME="${COMMIT_RELAY_HOME:-$(cd "$SCRIPT_DIR/.." && pwd)}"
+CORTEX_HOME="${CORTEX_HOME:-$(cd "$SCRIPT_DIR/.." && pwd)}"
 
 # Configuration
 PID_FILE="/tmp/pm-daemon.pid"
-LOG_FILE="$COMMIT_RELAY_HOME/agents/logs/system/pm-daemon-health.log"
-PM_STATE_FILE="$COMMIT_RELAY_HOME/coordination/pm-state.json"
+LOG_FILE="$CORTEX_HOME/agents/logs/system/pm-daemon-health.log"
+PM_STATE_FILE="$CORTEX_HOME/coordination/pm-state.json"
 MAX_LOOP_AGE_MINUTES=10  # Alert if no loop in 10 minutes
 
 # Logging
@@ -99,7 +99,7 @@ restart_pm_daemon() {
     fi
 
     # Start new daemon
-    cd "$COMMIT_RELAY_HOME"
+    cd "$CORTEX_HOME"
     nohup "$SCRIPT_DIR/pm-daemon.sh" > /dev/null 2>&1 &
     local new_pid=$!
 

@@ -2,7 +2,7 @@
 """
 CI/CD Integration Demo
 
-This shows how to use commit-relay from GitHub Actions or other CI/CD.
+This shows how to use cortex from GitHub Actions or other CI/CD.
 """
 
 import os

@@ -1,6 +1,6 @@
 # LangSmith Integration Guide
 
-This guide explains how to connect commit-relay to your LangSmith account for observability and monitoring of LangChain operations.
+This guide explains how to connect cortex to your LangSmith account for observability and monitoring of LangChain operations.
 
 ## What is LangSmith?
 
@@ -35,7 +35,7 @@ LANGCHAIN_TRACING_V2=true
 LANGCHAIN_API_KEY=lsv2_pt_xxx...
 
 # Project name (organizes traces)
-LANGCHAIN_PROJECT=commit-relay
+LANGCHAIN_PROJECT=cortex
 ```
 
 ### Step 3: Install Dependencies
@@ -51,7 +51,7 @@ pip install -r python-sdk/requirements-ml.txt
 ### Step 4: Test Connection
 
 ```bash
-cd /Users/ryandahlberg/Projects/commit-relay
+cd /Users/ryandahlberg/Projects/cortex
 python llm-mesh/scripts/setup/test-langsmith.py
 ```
 
@@ -75,7 +75,7 @@ Once configured, LangSmith automatically traces all LangChain operations:
 ### In LangSmith Dashboard
 
 1. Go to https://smith.langchain.com/
-2. Select your project (e.g., "commit-relay")
+2. Select your project (e.g., "cortex")
 3. View traces in real-time as they execute
 4. Click on a trace to see detailed breakdown
 
@@ -96,13 +96,13 @@ Set different projects for different environments:
 
 ```bash
 # Development
-LANGCHAIN_PROJECT=commit-relay-dev
+LANGCHAIN_PROJECT=cortex-dev
 
 # Staging
-LANGCHAIN_PROJECT=commit-relay-staging
+LANGCHAIN_PROJECT=cortex-staging
 
 # Production
-LANGCHAIN_PROJECT=commit-relay-prod
+LANGCHAIN_PROJECT=cortex-prod
 ```
 
 ### By Component
@@ -111,7 +111,7 @@ You can also set project names programmatically:
 
 ```python
 import os
-os.environ["LANGCHAIN_PROJECT"] = "commit-relay-moe-routing"
+os.environ["LANGCHAIN_PROJECT"] = "cortex-moe-routing"
 
 # Your LangChain code here
 ```
@@ -181,11 +181,11 @@ result_b = ensemble_router.route(task)
 
 Then compare in LangSmith dashboard.
 
-## Integration with Commit-Relay
+## Integration with Cortex
 
 ### Where Tracing Applies
 
-LangSmith will trace these commit-relay components:
+LangSmith will trace these cortex components:
 
 1. **RAG Retrieval** (`llm-mesh/lib/rag/`)
    - Vector store searches
@@ -220,7 +220,7 @@ results = retriever.retrieve("authentication implementation")
 
 ```bash
 # Good
-LANGCHAIN_PROJECT=commit-relay-moe-routing
+LANGCHAIN_PROJECT=cortex-moe-routing
 
 # Not ideal
 LANGCHAIN_PROJECT=test
@@ -232,7 +232,7 @@ LANGCHAIN_PROJECT=test
 from langchain.callbacks import tracing_v2_enabled
 
 with tracing_v2_enabled(
-    project_name="commit-relay",
+    project_name="cortex",
     tags=["production", "high-priority"]
 ):
     result = chain.run(input)

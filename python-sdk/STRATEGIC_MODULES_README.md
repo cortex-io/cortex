@@ -1,10 +1,10 @@
-# Strategic Modules for Commit-Relay Python SDK
+# Strategic Modules for Cortex Python SDK
 
-Three powerful extensions to the commit-relay Python SDK providing intelligent automation, repository discovery, and CI/CD integration.
+Three powerful extensions to the cortex Python SDK providing intelligent automation, repository discovery, and CI/CD integration.
 
 ## Overview
 
-This implementation adds three strategic capabilities to the commit-relay system:
+This implementation adds three strategic capabilities to the cortex system:
 
 ### 1. ML-Powered Insights
 Predictive analytics and intelligent automation using machine learning:
@@ -19,7 +19,7 @@ Automatically discover and onboard GitHub repositories:
 - **Batch Onboarding** - Automatically create tasks for new repositories
 
 ### 3. CI/CD Pipeline Integration
-Integrate commit-relay with GitHub Actions and other CI/CD platforms:
+Integrate cortex with GitHub Actions and other CI/CD platforms:
 - **GitHubActionsTrigger** - Trigger tasks from workflows
 - **GitHubActionsReporter** - Report results back to GitHub
 - **Workflow Templates** - Ready-to-use security scan and PR review workflows
@@ -135,7 +135,7 @@ jobs:
 All examples are executable and demonstrate real-world usage:
 
 ```bash
-cd /Users/ryandahlberg/commit-relay/python-sdk/examples
+cd /Users/ryandahlberg/cortex/python-sdk/examples
 
 # ML insights demonstration
 python ml_insights_demo.py
@@ -366,7 +366,7 @@ For repository discovery:
 
 ## Contributing
 
-These modules are part of the commit-relay automation system. For contributions:
+These modules are part of the cortex automation system. For contributions:
 
 1. Follow existing code style
 2. Add tests for new features
@@ -375,7 +375,7 @@ These modules are part of the commit-relay automation system. For contributions:
 
 ## License
 
-Part of the commit-relay automation system.
+Part of the cortex automation system.
 
 ## Status
 
@@ -385,4 +385,4 @@ Part of the commit-relay automation system.
 
 **Implementation Date:** 2025-11-07
 **Version:** 1.0.0
-**Development Master:** commit-relay
+**Development Master:** cortex

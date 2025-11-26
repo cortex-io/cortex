@@ -8,15 +8,15 @@
     "task_type": "development",
     "deliverable": "scripts/test-hello.sh",
     "outcome": "Script already existed from previous worker execution (worker-implementation-003)",
-    "verification": "Script tested and produces expected output: 'Hello from commit-relay'"
+    "verification": "Script tested and produces expected output: 'Hello from cortex'"
   },
   "findings": {
     "script_status": "already_exists",
-    "script_path": "/Users/ryandahlberg/Projects/commit-relay/scripts/test-hello.sh",
+    "script_path": "/Users/ryandahlberg/Projects/cortex/scripts/test-hello.sh",
     "script_permissions": "-rwxr-xr-x",
     "created_by": "worker-implementation-003",
     "test_result": "success",
-    "output": "Hello from commit-relay"
+    "output": "Hello from cortex"
   },
   "service_health": {
     "dashboard_api": "healthy",

@@ -13,13 +13,13 @@ from typing import Dict, Any, Optional
 
 class EventEmitter:
     """
-    Universal event emitter for commit-relay.
+    Universal event emitter for cortex.
 
     Single Source of Truth: /coordination/dashboard-events.jsonl
     All events (task, worker, git, system, etc.) must be emitted through this class.
     """
 
-    def __init__(self, commit_relay_home: str = '/Users/ryandahlberg/commit-relay'):
+    def __init__(self, commit_relay_home: str = '/Users/ryandahlberg/cortex'):
         self.commit_relay_home = Path(commit_relay_home)
         self.events_file = self.commit_relay_home / 'coordination' / 'dashboard-events.jsonl'
 

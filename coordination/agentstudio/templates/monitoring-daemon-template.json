@@ -5,7 +5,7 @@
   "agent_type": "daemon",
   "agent_class": "custom-monitor",
   "description": "A daemon agent for continuous monitoring and health checks. Tracks system metrics, detects anomalies, and triggers alerts.",
-  "author": "commit-relay",
+  "author": "cortex",
   "tags": ["daemon", "monitoring", "health", "metrics"],
   "capabilities": [
     {

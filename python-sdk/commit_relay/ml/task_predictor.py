@@ -32,7 +32,7 @@ class TaskFailurePredictor:
         self.manager = manager
         self.model = None
         self.feature_columns = ['priority_score', 'type_score', 'hour_of_day', 'day_of_week']
-        self.model_path = Path('/Users/ryandahlberg/commit-relay/python-sdk/models/task_failure_model.pkl')
+        self.model_path = Path('/Users/ryandahlberg/cortex/python-sdk/models/task_failure_model.pkl')
 
     def _prepare_features(self, tasks: List[Dict]) -> pd.DataFrame:
         """Prepare features for ML model."""

@@ -20,7 +20,7 @@ readonly PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 
 # Configuration
 readonly DAEMON_NAME="threat-intel"
-readonly PID_FILE="${PID_FILE:-/tmp/commit-relay-threat-intel.pid}"
+readonly PID_FILE="${PID_FILE:-/tmp/cortex-threat-intel.pid}"
 readonly LOG_FILE="${LOG_FILE:-coordination/security/threat-intel/daemon.log}"
 
 # Directories
@@ -37,7 +37,7 @@ readonly FULL_SYNC_INTERVAL="${FULL_SYNC_INTERVAL:-86400}"     # 24 hours
 readonly RECENT_CHECK_INTERVAL="${RECENT_CHECK_INTERVAL:-3600}" # 1 hour
 readonly CRITICAL_CHECK_INTERVAL="${CRITICAL_CHECK_INTERVAL:-900}" # 15 minutes for critical vulns
 
-# Keywords to monitor (relevant to commit-relay stack)
+# Keywords to monitor (relevant to cortex stack)
 readonly MONITORED_KEYWORDS=(
     "bash"
     "jq"
