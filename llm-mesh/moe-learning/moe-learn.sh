@@ -19,6 +19,8 @@ NC='\033[0m' # No Color
 OUTCOME_TRACKER="$EVALUATORS_DIR/outcome-tracker.sh"
 PATTERN_LEARNER="$EVALUATORS_DIR/pattern-learner.sh"
 ROUTER_IMPROVER="$EVALUATORS_DIR/router-improver.sh"
+EVAL_HARNESS="$SCRIPT_DIR/evaluation/eval-router.sh"
+COMPARE_STRATEGIES="$SCRIPT_DIR/evaluation/compare-strategies.sh"
 
 ##############################################################################
 # print_header: Print section header
@@ -34,6 +36,16 @@ print_header() {
 ##############################################################################
 run_learning_cycle() {
     print_header "MoE Learning Cycle"
+
+    # Phase 0: Pre-improvement evaluation (baseline)
+    if [ -f "$EVAL_HARNESS" ]; then
+        echo -e "${YELLOW}Phase 0: Baseline Evaluation${NC}"
+        echo "Running evaluation against golden dataset..."
+        local baseline_summary=$(bash "$EVAL_HARNESS" run 2>&1 | tee /dev/tty | grep "Summary:" | awk '{print $2}')
+        echo -e "${GREEN}✓ Baseline evaluation complete${NC}"
+        echo "Results: $baseline_summary"
+        echo ""
+    fi
 
     echo -e "${YELLOW}Phase 1: Pattern Learning${NC}"
     echo "Analyzing routing outcomes and extracting patterns..."
@@ -57,14 +69,81 @@ run_learning_cycle() {
         bash "$ROUTER_IMPROVER" apply
         echo -e "${GREEN}✓ Improvements applied${NC}\n"
 
-        echo -e "${YELLOW}Phase 5: Validating Improvements${NC}"
-        bash "$ROUTER_IMPROVER" validate
-        echo -e "${GREEN}✓ Validation complete${NC}\n"
+        # Phase 5: Post-improvement evaluation
+        if [ -f "$EVAL_HARNESS" ] && [ -n "${baseline_summary:-}" ]; then
+            echo -e "${YELLOW}Phase 5: Post-Improvement Evaluation${NC}"
+            echo "Re-running evaluation to measure improvement..."
+            local improved_summary=$(bash "$EVAL_HARNESS" run 2>&1 | tee /dev/tty | grep "Summary:" | awk '{print $2}')
+            echo -e "${GREEN}✓ Post-improvement evaluation complete${NC}"
+            echo "Results: $improved_summary"
+            echo ""
+
+            # Compare results
+            if [ -n "${improved_summary:-}" ]; then
+                echo -e "${YELLOW}Phase 6: Impact Analysis${NC}"
+                compare_eval_results "$baseline_summary" "$improved_summary"
+            fi
+        else
+            echo -e "${YELLOW}Phase 5: Validating Improvements${NC}"
+            bash "$ROUTER_IMPROVER" validate
+            echo -e "${GREEN}✓ Validation complete${NC}\n"
+        fi
     else
         echo "Improvements not applied. Run './moe-learn.sh apply' to apply later."
     fi
 
     print_header "Learning Cycle Complete"
+}
+
+##############################################################################
+# compare_eval_results: Compare before/after evaluation results
+##############################################################################
+compare_eval_results() {
+    local baseline_file="$1"
+    local improved_file="$2"
+
+    if [ ! -f "$baseline_file" ] || [ ! -f "$improved_file" ]; then
+        echo "Could not compare results (files not found)"
+        return 1
+    fi
+
+    local baseline=$(cat "$baseline_file")
+    local improved=$(cat "$improved_file")
+
+    local accuracy_before=$(echo "$baseline" | jq -r '.metrics.avg_routing_accuracy')
+    local accuracy_after=$(echo "$improved" | jq -r '.metrics.avg_routing_accuracy')
+    local calibration_before=$(echo "$baseline" | jq -r '.metrics.avg_confidence_calibration')
+    local calibration_after=$(echo "$improved" | jq -r '.metrics.avg_confidence_calibration')
+
+    local accuracy_delta=$(echo "$accuracy_after - $accuracy_before" | bc)
+    local calibration_delta=$(echo "$calibration_after - $calibration_before" | bc)
+
+    echo "Impact Summary:"
+    echo "  Routing Accuracy: $accuracy_before → $accuracy_after (Δ $accuracy_delta)"
+    echo "  Confidence Calibration: $calibration_before → $calibration_after (Δ $calibration_delta)"
+    echo ""
+
+    if (( $(echo "$accuracy_delta > 2" | bc -l) )); then
+        echo -e "${GREEN}✓ Significant improvement in routing accuracy!${NC}"
+    elif (( $(echo "$accuracy_delta > 0" | bc -l) )); then
+        echo -e "${YELLOW}⚠ Marginal improvement in routing accuracy${NC}"
+    else
+        echo -e "${RED}✗ No improvement or regression in routing accuracy${NC}"
+    fi
+}
+
+##############################################################################
+# run_evaluation: Run systematic evaluation
+##############################################################################
+run_evaluation() {
+    print_header "MoE Router Evaluation"
+
+    if [ ! -f "$EVAL_HARNESS" ]; then
+        echo -e "${RED}Error: Evaluation harness not found: $EVAL_HARNESS${NC}"
+        return 1
+    fi
+
+    bash "$EVAL_HARNESS" run
 }
 
 ##############################################################################
@@ -128,7 +207,8 @@ MoE Learning System - Continuous improvement for routing decisions
 Usage: $0 <command> [arguments]
 
 Commands:
-  learn                           Run complete learning cycle
+  learn                           Run complete learning cycle (with evaluation)
+  eval                            Run systematic evaluation against golden dataset
   track <task_id> <status> [quality]  Track a task outcome
                                   status: completed|failed|reassigned
                                   quality: 0-1 (optional, default 0.5)
@@ -181,6 +261,9 @@ fi
 case "$1" in
     learn)
         run_learning_cycle
+        ;;
+    eval)
+        run_evaluation
         ;;
     track)
         shift
