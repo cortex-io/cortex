@@ -9,7 +9,7 @@ from datetime import datetime, timezone, timedelta
 from pathlib import Path
 
 # Paths
-BASE_DIR = Path("/Users/ryandahlberg/commit-relay")
+BASE_DIR = Path("/Users/ryandahlberg/cortex")
 EVENTS_FILE = BASE_DIR / "coordination" / "dashboard-events.jsonl"
 TASK_QUEUE_FILE = BASE_DIR / "coordination" / "task-queue.json"
 HEALTH_ALERTS_FILE = BASE_DIR / "coordination" / "health-alerts.json"

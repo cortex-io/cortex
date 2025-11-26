@@ -12,11 +12,11 @@ set -euo pipefail
 
 # Get project root dynamically
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-COMMIT_RELAY_HOME="${COMMIT_RELAY_HOME:-$(cd "$SCRIPT_DIR/.." && pwd)}"
+CORTEX_HOME="${CORTEX_HOME:-$(cd "$SCRIPT_DIR/.." && pwd)}"
 
 # Configuration
-EVENTS_FILE="$COMMIT_RELAY_HOME/coordination/dashboard-events.jsonl"
-VALIDATION_LOG="$COMMIT_RELAY_HOME/coordination/logs/json-validation.log"
+EVENTS_FILE="$CORTEX_HOME/coordination/dashboard-events.jsonl"
+VALIDATION_LOG="$CORTEX_HOME/coordination/logs/json-validation.log"
 
 # Source JSON validator
 source "$SCRIPT_DIR/lib/json-validator.sh"
@@ -25,8 +25,8 @@ source "$SCRIPT_DIR/lib/json-validator.sh"
 source "$SCRIPT_DIR/lib/access-check.sh"
 
 # Ensure directories exist
-mkdir -p "$COMMIT_RELAY_HOME/coordination"
-mkdir -p "$COMMIT_RELAY_HOME/coordination/logs"
+mkdir -p "$CORTEX_HOME/coordination"
+mkdir -p "$CORTEX_HOME/coordination/logs"
 
 # Parse arguments
 EVENT_TYPE="${1:-}"

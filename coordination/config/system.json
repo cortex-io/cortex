@@ -1,7 +1,7 @@
 {
   "version": "1.0",
   "last_updated": "2025-11-17T11:00:00Z",
-  "description": "Centralized configuration for commit-relay core services",
+  "description": "Centralized configuration for cortex core services",
 
   "logging": {
     "level": "info",
@@ -121,7 +121,7 @@
   },
 
   "paths": {
-    "project_root": "/Users/ryandahlberg/commit-relay",
+    "project_root": "/Users/ryandahlberg/cortex",
     "scripts_lib": "scripts/lib",
     "coordination": "coordination",
     "agents": "agents",

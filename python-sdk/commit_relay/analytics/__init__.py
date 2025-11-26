@@ -1,8 +1,8 @@
 """
-Analytics module for commit-relay SDK.
+Analytics module for cortex SDK.
 
 Provides data aggregation, trend analysis, and forecasting capabilities
-for commit-relay metrics.
+for cortex metrics.
 """
 
 from .aggregator import MetricsAggregator

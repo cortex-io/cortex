@@ -1,5 +1,5 @@
 """
-Setup script for commit-relay-client Python SDK.
+Setup script for cortex-client Python SDK.
 """
 
 from setuptools import setup, find_packages
@@ -11,17 +11,17 @@ if os.path.exists(readme_path):
     with open(readme_path, 'r', encoding='utf-8') as f:
         long_description = f.read()
 else:
-    long_description = 'Python SDK for Commit-Relay automation system'
+    long_description = 'Python SDK for Cortex automation system'
 
 setup(
-    name='commit-relay-client',
+    name='cortex-client',
     version='0.1.0',
-    description='Python SDK for Commit-Relay automation system with analytics, monitoring, and reporting',
+    description='Python SDK for Cortex automation system with analytics, monitoring, and reporting',
     long_description=long_description,
     long_description_content_type='text/markdown',
-    author='Commit-Relay Team',
-    author_email='noreply@commit-relay.local',
-    url='https://github.com/yourusername/commit-relay',
+    author='Cortex Team',
+    author_email='noreply@cortex.local',
+    url='https://github.com/yourusername/cortex',
     packages=find_packages(exclude=['tests', 'tests.*', 'examples', 'examples.*']),
     install_requires=[
         'requests>=2.28.0',
@@ -59,9 +59,9 @@ setup(
         'Programming Language :: Python :: 3.11',
         'Programming Language :: Python :: 3.12',
     ],
-    keywords='commit-relay automation api-client analytics monitoring',
+    keywords='cortex automation api-client analytics monitoring',
     project_urls={
-        'Source': 'https://github.com/yourusername/commit-relay',
-        'Documentation': 'https://github.com/yourusername/commit-relay/tree/main/python-sdk',
+        'Source': 'https://github.com/yourusername/cortex',
+        'Documentation': 'https://github.com/yourusername/cortex/tree/main/python-sdk',
     },
 )

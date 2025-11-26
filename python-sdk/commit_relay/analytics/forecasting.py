@@ -1,5 +1,5 @@
 """
-Forecasting module for commit-relay metrics.
+Forecasting module for cortex metrics.
 
 Provides simple forecasting capabilities for predicting future metric values.
 """

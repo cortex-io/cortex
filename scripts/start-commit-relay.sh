@@ -1,22 +1,22 @@
 #!/bin/bash
-# scripts/start-commit-relay.sh
-# Main startup script for Commit-Relay system
+# scripts/start-cortex.sh
+# Main startup script for Cortex system
 # Automatically detects and launches pending workers
 
 set -euo pipefail
 
 # Get script directory
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-COMMIT_RELAY_HOME="${COMMIT_RELAY_HOME:-$(cd "$SCRIPT_DIR/.." && pwd)}"
+CORTEX_HOME="${CORTEX_HOME:-$(cd "$SCRIPT_DIR/.." && pwd)}"
 
 # Load libraries
 source "$SCRIPT_DIR/lib/logging.sh"
 source "$SCRIPT_DIR/lib/coordination.sh"
 
-cd "$COMMIT_RELAY_HOME"
+cd "$CORTEX_HOME"
 
-log_section "Commit-Relay Startup"
-log_info "Working Directory: $COMMIT_RELAY_HOME"
+log_section "Cortex Startup"
+log_info "Working Directory: $CORTEX_HOME"
 log_info "Date: $(date)"
 log_info ""
 
@@ -40,11 +40,11 @@ if lsof -i :$DASHBOARD_PORT > /dev/null 2>&1; then
     log_info "Dashboard server already running on port $DASHBOARD_PORT"
 else
     log_info "Launching dashboard server on port $DASHBOARD_PORT..."
-    mkdir -p "$COMMIT_RELAY_HOME/agents/logs/system"
-    cd "$COMMIT_RELAY_HOME/dashboard"
-    nohup node server/index.js > "$COMMIT_RELAY_HOME/agents/logs/system/dashboard-server.log" 2>&1 &
+    mkdir -p "$CORTEX_HOME/agents/logs/system"
+    cd "$CORTEX_HOME/dashboard"
+    nohup node server/index.js > "$CORTEX_HOME/agents/logs/system/dashboard-server.log" 2>&1 &
     DASHBOARD_SERVER_PID=$!
-    cd "$COMMIT_RELAY_HOME"
+    cd "$CORTEX_HOME"
     sleep 2
     if lsof -i :$DASHBOARD_PORT > /dev/null 2>&1; then
         log_success "Dashboard server started (PID: $DASHBOARD_SERVER_PID)"
@@ -59,7 +59,7 @@ log_info ""
 log_section "Starting Core Daemons"
 
 # Create logs directory if it doesn't exist
-DAEMON_LOGS_DIR="$COMMIT_RELAY_HOME/logs/daemons"
+DAEMON_LOGS_DIR="$CORTEX_HOME/logs/daemons"
 mkdir -p "$DAEMON_LOGS_DIR"
 
 # Define daemons to start
@@ -99,7 +99,7 @@ log_info ""
 
 # Verify agents are installed
 log_section "Verifying Claude Code Agents"
-AGENTS_DIR="$COMMIT_RELAY_HOME/.claude/agents"
+AGENTS_DIR="$CORTEX_HOME/.claude/agents"
 REQUIRED_AGENTS=("coordinator-master" "security-master" "development-master" "inventory-master" "cicd-master")
 MISSING_AGENTS=()
 
@@ -142,7 +142,7 @@ log_info ""
 # Check for pending workers
 log_section "Checking for Pending Workers"
 
-ACTIVE_SPECS_DIR="$COMMIT_RELAY_HOME/coordination/worker-specs/active"
+ACTIVE_SPECS_DIR="$CORTEX_HOME/coordination/worker-specs/active"
 PENDING_WORKERS=()
 
 if [ -d "$ACTIVE_SPECS_DIR" ]; then
@@ -165,7 +165,7 @@ if [ "$PENDING_COUNT" -eq 0 ]; then
     log_info "No pending workers found"
     log_info ""
     log_section "System Status"
-    log_info "Commit-Relay is ready"
+    log_info "Cortex is ready"
     log_info "Dashboard agent is monitoring coordination state"
     log_info "Dashboard UI: http://localhost:${DASHBOARD_PORT:-5001}/"
     log_info ""
@@ -215,8 +215,8 @@ else
     done
     log_info ""
     log_info "To auto-start the first pending worker:"
-    log_info "  AUTO_START=true ./scripts/start-commit-relay.sh"
+    log_info "  AUTO_START=true ./scripts/start-cortex.sh"
 fi
 
 log_info ""
-log_section "Commit-Relay Ready"
+log_section "Cortex Ready"

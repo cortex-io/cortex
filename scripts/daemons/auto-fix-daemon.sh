@@ -17,19 +17,19 @@ set -euo pipefail
 
 # Get script directory
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-COMMIT_RELAY_HOME="${COMMIT_RELAY_HOME:-$(cd "$SCRIPT_DIR/../.." && pwd)}"
+CORTEX_HOME="${CORTEX_HOME:-$(cd "$SCRIPT_DIR/../.." && pwd)}"
 
 # Load libraries
-source "$COMMIT_RELAY_HOME/scripts/lib/auto-fix.sh"
-source "$COMMIT_RELAY_HOME/scripts/lib/failure-pattern-detection.sh" 2>/dev/null || true
-source "$COMMIT_RELAY_HOME/scripts/lib/logging.sh" 2>/dev/null || true
+source "$CORTEX_HOME/scripts/lib/auto-fix.sh"
+source "$CORTEX_HOME/scripts/lib/failure-pattern-detection.sh" 2>/dev/null || true
+source "$CORTEX_HOME/scripts/lib/logging.sh" 2>/dev/null || true
 
 # Daemon configuration
-DAEMON_NAME="commit-relay-auto-fix"
+DAEMON_NAME="cortex-auto-fix"
 POLL_INTERVAL="${AUTO_FIX_POLL_INTERVAL:-600}"  # Check every 10 minutes
-LOG_FILE="${COMMIT_RELAY_HOME}/agents/logs/system/auto-fix-daemon.log"
+LOG_FILE="${CORTEX_HOME}/agents/logs/system/auto-fix-daemon.log"
 PID_FILE="/tmp/${DAEMON_NAME}.pid"
-METRICS_FILE="${COMMIT_RELAY_HOME}/coordination/metrics/auto-fix-daemon-metrics.json"
+METRICS_FILE="${CORTEX_HOME}/coordination/metrics/auto-fix-daemon-metrics.json"
 
 # Ensure directories exist
 mkdir -p "$(dirname "$LOG_FILE")"
@@ -59,7 +59,7 @@ echo $$ > "$PID_FILE"
 
 log_daemon "INFO: Auto-fix daemon starting (PID $$)"
 log_daemon "INFO: Poll interval: ${POLL_INTERVAL}s"
-log_daemon "INFO: Working directory: $COMMIT_RELAY_HOME"
+log_daemon "INFO: Working directory: $CORTEX_HOME"
 
 # Cleanup on exit
 cleanup() {
@@ -123,7 +123,7 @@ save_metrics() {
     echo "$metrics_json" > "$METRICS_FILE"
 
     # Also append to time series log
-    local metrics_log="${COMMIT_RELAY_HOME}/coordination/metrics/auto-fix-history.jsonl"
+    local metrics_log="${CORTEX_HOME}/coordination/metrics/auto-fix-history.jsonl"
     mkdir -p "$(dirname "$metrics_log")"
     echo "$metrics_json" >> "$metrics_log"
 }
@@ -294,7 +294,7 @@ monitor_fix_validation() {
 # ============================================================================
 
 while true; do
-    cd "$COMMIT_RELAY_HOME"
+    cd "$CORTEX_HOME"
 
     ((CYCLE_COUNT++))
     log_daemon "INFO: Starting auto-fix cycle #$CYCLE_COUNT"

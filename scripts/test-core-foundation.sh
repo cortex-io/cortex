@@ -26,7 +26,7 @@ echo "=========================================="
 echo "Test 2: Environment Variables"
 echo "=========================================="
 
-echo "COMMIT_RELAY_HOME: $COMMIT_RELAY_HOME"
+echo "CORTEX_HOME: $CORTEX_HOME"
 echo "LOG_LEVEL: $LOG_LEVEL"
 echo "GOVERNANCE_ENABLED: $GOVERNANCE_ENABLED"
 echo "OBSERVABILITY_ENABLED: $OBSERVABILITY_ENABLED"
@@ -34,7 +34,7 @@ echo "VALIDATION_ENABLED: $VALIDATION_ENABLED"
 echo "TRACE_ID: ${TRACE_ID:-not set}"
 echo "SPAN_ID: ${SPAN_ID:-not set}"
 
-if [ -n "$COMMIT_RELAY_HOME" ] && [ -n "$LOG_LEVEL" ]; then
+if [ -n "$CORTEX_HOME" ] && [ -n "$LOG_LEVEL" ]; then
   echo "✅ Environment variables set correctly"
 else
   echo "❌ FAIL: Environment variables not set"
@@ -173,7 +173,7 @@ trace_event "test.step2" "success" '{"message":"Step 2 completed"}'
 trace_end "test-operation" "success"
 
 # Check if events file was created
-EVENT_FILE="$COMMIT_RELAY_HOME/coordination/observability/events/all-events.jsonl"
+EVENT_FILE="$CORTEX_HOME/coordination/observability/events/all-events.jsonl"
 if [ -f "$EVENT_FILE" ]; then
   # Count events
   EVENT_COUNT=$(grep -c "test-operation" "$EVENT_FILE" || echo "0")
@@ -203,7 +203,7 @@ REQUIRED_DIRS=(
 
 ALL_EXIST=true
 for dir in "${REQUIRED_DIRS[@]}"; do
-  if [ -d "$COMMIT_RELAY_HOME/$dir" ]; then
+  if [ -d "$CORTEX_HOME/$dir" ]; then
     echo "✅ $dir exists"
   else
     echo "❌ $dir missing"
@@ -235,7 +235,7 @@ REQUIRED_FILES=(
 
 ALL_EXIST=true
 for file in "${REQUIRED_FILES[@]}"; do
-  if [ -f "$COMMIT_RELAY_HOME/$file" ]; then
+  if [ -f "$CORTEX_HOME/$file" ]; then
     echo "✅ $file exists"
   else
     echo "❌ $file missing"

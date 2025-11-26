@@ -26,12 +26,12 @@ echo ""
 
 # Get script directory
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-COMMIT_RELAY_HOME="$(cd "$SCRIPT_DIR/.." && pwd)"
+CORTEX_HOME="$(cd "$SCRIPT_DIR/.." && pwd)"
 
 # Simple initialization (just what we need for demo)
 if [ -f "$SCRIPT_DIR/lib/validation-service.sh" ]; then
     # Minimal setup
-    export COMMIT_RELAY_HOME
+    export CORTEX_HOME
     export VALIDATION_ENABLED=true
 
     # Load just validation (avoid logging.sh issues for demo)
@@ -169,7 +169,7 @@ GOOD_WORKER_SPEC=$(cat <<EOF
     "timeout_minutes": 45
   },
   "scope": {
-    "repository": "ry-ops/commit-relay",
+    "repository": "ry-ops/cortex",
     "branch": "main"
   },
   "task_data": {

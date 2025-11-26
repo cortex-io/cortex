@@ -18,10 +18,10 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-COMMIT_RELAY_HOME="${COMMIT_RELAY_HOME:-$(cd "$SCRIPT_DIR/../.." && pwd)}"
+CORTEX_HOME="${CORTEX_HOME:-$(cd "$SCRIPT_DIR/../.." && pwd)}"
 
 # Load heartbeat library
-source "$COMMIT_RELAY_HOME/scripts/lib/heartbeat.sh"
+source "$CORTEX_HOME/scripts/lib/heartbeat.sh"
 
 # Configuration
 WORKER_ID="${1:-}"
@@ -40,7 +40,7 @@ if [ -z "$WORKER_PID" ]; then
 fi
 
 # Log file
-LOG_FILE="$COMMIT_RELAY_HOME/agents/workers/$WORKER_ID/logs/heartbeat-emitter.log"
+LOG_FILE="$CORTEX_HOME/agents/workers/$WORKER_ID/logs/heartbeat-emitter.log"
 mkdir -p "$(dirname "$LOG_FILE")"
 exec >> "$LOG_FILE" 2>&1
 
@@ -64,7 +64,7 @@ while true; do
     fi
 
     # Determine current activity by checking recent log output
-    WORKER_LOGS="$COMMIT_RELAY_HOME/agents/workers/$WORKER_ID/logs/stdout.log"
+    WORKER_LOGS="$CORTEX_HOME/agents/workers/$WORKER_ID/logs/stdout.log"
     if [ -f "$WORKER_LOGS" ]; then
         # Get last non-empty line from logs as activity indicator
         RECENT_ACTIVITY=$(tail -n 5 "$WORKER_LOGS" 2>/dev/null | grep -v '^$' | tail -n 1 | cut -c1-100 || echo "Processing task")

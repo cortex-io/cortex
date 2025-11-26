@@ -7,7 +7,7 @@
   "task_id": "task-1762553466",
   "status": "running",
   "scope": {
-    "repository": "ryandahlberg/commit-relay",
+    "repository": "ryandahlberg/cortex",
     "branch": "main",
     "description": "Worker task for task-1762553466"
   },

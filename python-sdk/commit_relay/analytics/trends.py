@@ -1,5 +1,5 @@
 """
-Trend analysis for commit-relay metrics.
+Trend analysis for cortex metrics.
 
 Provides statistical methods for detecting and analyzing trends in
 time-series metrics data.

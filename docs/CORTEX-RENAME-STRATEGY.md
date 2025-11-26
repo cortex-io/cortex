@@ -1,15 +1,15 @@
 # Cortex Rename Strategy
-## Transforming commit-relay to Cortex by ry-ops
+## Transforming cortex to Cortex by ry-ops
 
 **Date**: 2025-11-26
 **Status**: Planning Phase
-**Objective**: Complete rename of commit-relay to Cortex with MoE system at forefront
+**Objective**: Complete rename of cortex to Cortex with MoE system at forefront
 
 ---
 
 ## Executive Summary
 
-This document outlines the comprehensive strategy for renaming the commit-relay project to **Cortex by ry-ops**. Cortex will leverage its Mixture of Experts (MoE) learning system for self-improvement and development of other ry-ops projects.
+This document outlines the comprehensive strategy for renaming the cortex project to **Cortex by ry-ops**. Cortex will leverage its Mixture of Experts (MoE) learning system for self-improvement and development of other ry-ops projects.
 
 ---
 
@@ -17,7 +17,7 @@ This document outlines the comprehensive strategy for renaming the commit-relay 
 
 ### Project Structure
 ```
-commit-relay/
+cortex/
 ├── agents/              # Worker agent definitions
 ├── api-server/          # REST API server
 ├── coordination/        # Central coordination state
@@ -37,7 +37,7 @@ commit-relay/
 - **Worker Pool**: Dynamic worker management
 - **Knowledge Base**: Routing decisions and learned patterns
 
-### Files Containing "commit-relay"
+### Files Containing "cortex"
 20+ files including:
 - `package.json` - name, keywords, description
 - `package-lock.json` - name references
@@ -46,7 +46,7 @@ commit-relay/
 - `docs/` - documentation files
 - Agent prompts and worker definitions
 - Security documentation
-- Image files: `commit-relay.png`, `commit-relay1.png`
+- Image files: `cortex.png`, `cortex1.png`
 
 ---
 
@@ -56,12 +56,12 @@ commit-relay/
 
 #### 1.1 Backup and Safety
 - [x] Verify git history is intact
-- [ ] Create backup branch: `git branch backup-commit-relay-20251126`
+- [ ] Create backup branch: `git branch backup-cortex-20251126`
 - [ ] Commit all current changes
 - [ ] Document current running processes
 
 #### 1.2 Analysis Complete
-- [x] Identified 20+ files with "commit-relay" references
+- [x] Identified 20+ files with "cortex" references
 - [x] Reviewed API endpoint structure (v1, gateway)
 - [x] Mapped directory structure
 - [x] Identified image assets to rename
@@ -71,7 +71,7 @@ commit-relay/
 #### 2.1 Directory Rename
 ```bash
 cd /Users/ryandahlberg/Projects/
-mv commit-relay cortex
+mv cortex cortex
 cd cortex
 ```
 
@@ -93,24 +93,24 @@ cd cortex
 ```
 
 #### 2.3 Image Assets
-- Rename: `commit-relay.png` → `cortex-logo.png`
-- Rename: `commit-relay1.png` → `cortex-logo-alt.png` (or delete if unused)
+- Rename: `cortex.png` → `cortex-logo.png`
+- Rename: `cortex1.png` → `cortex-logo-alt.png` (or delete if unused)
 
 #### 2.4 File References (20+ files)
 Use global find and replace:
 ```bash
 # Find all occurrences
-grep -r "commit-relay" . --exclude-dir=node_modules --exclude-dir=.git
+grep -r "cortex" . --exclude-dir=node_modules --exclude-dir=.git
 
 # Replace in specific files (execute after review)
 find . -type f \( -name "*.js" -o -name "*.md" -o -name "*.json" \) \
   -not -path "*/node_modules/*" -not -path "*/.git/*" \
-  -exec sed -i '' 's/commit-relay/cortex/g' {} +
+  -exec sed -i '' 's/cortex/cortex/g' {} +
 
 # Replace capitalized versions
 find . -type f \( -name "*.js" -o -name "*.md" -o -name "*.json" \) \
   -not -path "*/node_modules/*" -not -path "*/.git/*" \
-  -exec sed -i '' 's/Commit-Relay/Cortex/g' {} +
+  -exec sed -i '' 's/Cortex/Cortex/g' {} +
 
 # Replace COMMIT_RELAY environment variable references
 find . -type f \( -name "*.js" -o -name "*.sh" -o -name ".env*" \) \
@@ -125,7 +125,7 @@ find . -type f \( -name "*.js" -o -name "*.sh" -o -name ".env*" \) \
 - Port: 3001
 - Middleware: helmet, cors, rate limiting
 - Routes: `/routing`, `/agents`, `/tasks`, `/health`
-- **Action**: Update header comment from "Commit-Relay" to "Cortex"
+- **Action**: Update header comment from "Cortex" to "Cortex"
 
 **API v1** (`api-server/server/routes/api-v1.js`)
 - Endpoints: `/api/v1/version`, `/api/v1/health`
@@ -212,9 +212,9 @@ CORTEX_LOG_LEVEL=info
 ```bash
 # Commit the rename
 git add -A
-git commit -m "refactor: Rename commit-relay to Cortex
+git commit -m "refactor: Rename cortex to Cortex
 
-BREAKING CHANGE: Project renamed from commit-relay to Cortex by ry-ops
+BREAKING CHANGE: Project renamed from cortex to Cortex by ry-ops
 
 - Rename all file and directory references
 - Update package.json and dependencies
@@ -227,12 +227,12 @@ BREAKING CHANGE: Project renamed from commit-relay to Cortex by ry-ops
 Refs: #cortex-rename"
 
 # Create tag for the transition
-git tag -a v2.0.0-cortex -m "Cortex v2.0.0 - Major rebrand from commit-relay"
+git tag -a v2.0.0-cortex -m "Cortex v2.0.0 - Major rebrand from cortex"
 ```
 
 #### 6.2 GitHub Repository
 1. Go to GitHub repository settings
-2. Rename repository: `commit-relay` → `cortex`
+2. Rename repository: `cortex` → `cortex`
 3. Update repository description: "Cortex by ry-ops: Self-improving AI development orchestration with Mixture of Experts"
 4. Update topics/tags: `cortex`, `moe`, `mixture-of-experts`, `ai-automation`, `self-improving`
 5. GitHub will automatically redirect old URLs
@@ -240,13 +240,13 @@ git tag -a v2.0.0-cortex -m "Cortex v2.0.0 - Major rebrand from commit-relay"
 ### Phase 7: Cross-Project Updates
 
 #### 7.1 Blog Project (`/Users/ryandahlberg/Projects/blog`)
-- [ ] Search for "commit-relay" references
+- [ ] Search for "cortex" references
 - [ ] Update any blog posts mentioning the project
 - [ ] Update footer/header links if present
 - [ ] Create announcement blog post about Cortex
 
 #### 7.2 DriveIQ Project
-- [ ] Search for "commit-relay" references
+- [ ] Search for "cortex" references
 - [ ] Update integration points (if any)
 - [ ] Update documentation
 
@@ -355,7 +355,7 @@ npm run test        # Run tests
 - [ ] Blog post: "Introducing Cortex by ry-ops"
 - [ ] Highlight MoE self-improvement capabilities
 - [ ] Explain meta-programming approach
-- [ ] Share lessons learned from commit-relay
+- [ ] Share lessons learned from cortex
 
 ---
 
@@ -363,7 +363,7 @@ npm run test        # Run tests
 
 ### Technical Success
 - [x] All tests pass
-- [ ] No references to "commit-relay" in active code
+- [ ] No references to "cortex" in active code
 - [ ] API endpoints function correctly
 - [ ] MoE system operational
 - [ ] Documentation complete and accurate
@@ -389,14 +389,14 @@ npm run test        # Run tests
 If critical issues arise:
 ```bash
 # Restore from backup branch
-git checkout backup-commit-relay-20251126
+git checkout backup-cortex-20251126
 
 # Or revert the rename commit
 git revert <commit-hash>
 
 # Rename directory back
 cd /Users/ryandahlberg/Projects/
-mv cortex commit-relay
+mv cortex cortex
 ```
 
 ---

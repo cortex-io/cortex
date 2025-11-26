@@ -1,7 +1,7 @@
 {
-  "name": "commit-relay",
-  "version": "1.0.0",
-  "description": "AI-powered commit automation system with master-worker architecture",
+  "name": "cortex",
+  "version": "2.0.0",
+  "description": "Cortex by ry-ops: Self-improving AI development orchestration with Mixture of Experts learning",
   "main": "index.js",
   "scripts": {
     "test": "jest",
@@ -10,10 +10,14 @@
     "test:ci": "jest --ci --coverage --maxWorkers=2"
   },
   "keywords": [
-    "commit-relay",
+    "cortex",
+    "moe",
+    "mixture-of-experts",
+    "self-improving",
     "automation",
     "ai",
-    "governance"
+    "orchestration",
+    "ry-ops"
   ],
   "author": "ry-ops",
   "license": "MIT",

@@ -28,7 +28,7 @@ Key additions in this synthesis:
 
 ## Executive Summary
 
-This report documents the comprehensive learning task for the Mixture of Experts (MoE) system to deeply understand commit-relay architecture, workflows, agents, security patterns, development standards, and operational intelligence.
+This report documents the comprehensive learning task for the Mixture of Experts (MoE) system to deeply understand cortex architecture, workflows, agents, security patterns, development standards, and operational intelligence.
 
 ### Key Achievements
 
@@ -235,7 +235,7 @@ Task Submission → MoE Router → Expert Assignment → Worker Spawn → Execut
 - **A05 Security Misconfiguration**: Daemon configs, CORS
 - **A06 Vulnerable Components**: npm dependencies
 
-### Commit-Relay Specific Security
+### Cortex Specific Security
 
 - **Worker Security**: Token limits, time limits, PM monitoring
 - **Coordination Integrity**: Access control governance, atomic operations
@@ -436,7 +436,7 @@ Task Submission → MoE Router → Expert Assignment → Worker Spawn → Execut
 
 ## Conclusion
 
-This MoE learning task has achieved comprehensive mastery of the commit-relay system architecture, agent specializations, security patterns, development standards, and operational intelligence. The 7 deliverables provide a knowledge base that will:
+This MoE learning task has achieved comprehensive mastery of the cortex system architecture, agent specializations, security patterns, development standards, and operational intelligence. The 7 deliverables provide a knowledge base that will:
 
 - **Improve routing accuracy** through better pattern understanding (95.7% routing accuracy confirmed)
 - **Enhance agent performance** with clear capability mapping

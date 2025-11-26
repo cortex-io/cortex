@@ -7,11 +7,11 @@ set -euo pipefail
 # Configuration
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 LLM_MESH_HOME="$SCRIPT_DIR/../.."
-COMMIT_RELAY_HOME="${COMMIT_RELAY_HOME:-$(cd "$SCRIPT_DIR/../../.." && pwd)}"
+CORTEX_HOME="${CORTEX_HOME:-$(cd "$SCRIPT_DIR/../../.." && pwd)}"
 
 # Paths
-ROUTING_DECISIONS="$COMMIT_RELAY_HOME/coordination/masters/coordinator/logs/routing-decisions.jsonl"
-TASK_QUEUE="$COMMIT_RELAY_HOME/coordination/task-queue.json"
+ROUTING_DECISIONS="$CORTEX_HOME/coordination/masters/coordinator/logs/routing-decisions.jsonl"
+TASK_QUEUE="$CORTEX_HOME/coordination/task-queue.json"
 OUTCOMES_CATALOG="$SCRIPT_DIR/../catalog/routing-decisions.jsonl"
 METRICS_DIR="$SCRIPT_DIR/../metrics"
 
@@ -50,8 +50,8 @@ track_outcome() {
     local task_type=""
 
     # Try to find task in various locations
-    if [ -f "$COMMIT_RELAY_HOME/coordination/tasks/$task_id.json" ]; then
-        local task_file="$COMMIT_RELAY_HOME/coordination/tasks/$task_id.json"
+    if [ -f "$CORTEX_HOME/coordination/tasks/$task_id.json" ]; then
+        local task_file="$CORTEX_HOME/coordination/tasks/$task_id.json"
         task_description=$(jq -r '.context.description // .description // .title' "$task_file")
         task_type=$(jq -r '.type // "unknown"' "$task_file")
     fi

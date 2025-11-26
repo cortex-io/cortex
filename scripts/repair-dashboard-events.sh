@@ -5,9 +5,9 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-COMMIT_RELAY_HOME="${COMMIT_RELAY_HOME:-$(cd "$SCRIPT_DIR/.." && pwd)}"
+CORTEX_HOME="${CORTEX_HOME:-$(cd "$SCRIPT_DIR/.." && pwd)}"
 
-EVENTS_FILE="$COMMIT_RELAY_HOME/coordination/dashboard-events.jsonl"
+EVENTS_FILE="$CORTEX_HOME/coordination/dashboard-events.jsonl"
 BACKUP_FILE="$EVENTS_FILE.backup.$(date +%s)"
 
 echo "Repairing dashboard-events.jsonl..."
@@ -20,9 +20,9 @@ cp "$EVENTS_FILE" "$BACKUP_FILE"
 node <<'NODEJS_SCRIPT'
 const fs = require('fs');
 const path = require('path');
-const validator = require(path.join(process.env.COMMIT_RELAY_HOME, 'dashboard/server/utils/json-validator.js'));
+const validator = require(path.join(process.env.CORTEX_HOME, 'dashboard/server/utils/json-validator.js'));
 
-const eventsFile = path.join(process.env.COMMIT_RELAY_HOME, 'coordination/dashboard-events.jsonl');
+const eventsFile = path.join(process.env.CORTEX_HOME, 'coordination/dashboard-events.jsonl');
 
 // Read file
 const content = fs.readFileSync(eventsFile, 'utf-8');

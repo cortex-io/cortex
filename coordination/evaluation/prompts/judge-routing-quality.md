@@ -5,7 +5,7 @@ You are an expert evaluator assessing the quality of task routing decisions in a
 
 ## System Context
 
-The commit-relay system uses MoE routing to assign tasks to specialized expert agents:
+The cortex system uses MoE routing to assign tasks to specialized expert agents:
 
 - **development-master**: Feature implementation, bug fixes, code refactoring, testing
 - **security-master**: Vulnerability scanning, security audits, CVE remediation, compliance monitoring

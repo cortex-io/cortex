@@ -7,7 +7,7 @@ Dashboard-controlled terminal window management for worker spawning. Allows togg
 ## ✅ Completed Implementation
 
 ### 1. Configuration File
-**File**: `/Users/ryandahlberg/commit-relay/coordination/config/terminal-settings.json`
+**File**: `/Users/ryandahlberg/cortex/coordination/config/terminal-settings.json`
 
 ```json
 {
@@ -27,7 +27,7 @@ Dashboard-controlled terminal window management for worker spawning. Allows togg
 - `updated_by`: User/system that made the change
 
 ### 2. Worker Daemon Integration
-**File**: `/Users/ryandahlberg/commit-relay/scripts/worker-daemon.sh` (lines 200-242)
+**File**: `/Users/ryandahlberg/cortex/scripts/worker-daemon.sh` (lines 200-242)
 
 **Changes Made**:
 - Reads terminal settings before each worker launch
@@ -54,7 +54,7 @@ fi
 
 ### 3. Dashboard API Endpoints
 
-**Add to**: `/Users/ryandahlberg/commit-relay/dashboard/server/index.js`
+**Add to**: `/Users/ryandahlberg/cortex/dashboard/server/index.js`
 **Location**: After line 2547 (after event-log routes)
 
 #### GET /api/terminal-settings
@@ -157,7 +157,7 @@ app.post('/api/terminal-settings', async (req, res) => {
 
 ### 4. Dashboard UI Components
 
-**Add to**: `/Users/ryandahlberg/commit-relay/dashboard/public/index.html`
+**Add to**: `/Users/ryandahlberg/cortex/dashboard/public/index.html`
 **Location**: In the Settings panel or as a new Quick Controls section
 
 #### HTML Structure

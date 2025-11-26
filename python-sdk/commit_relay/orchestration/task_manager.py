@@ -1,7 +1,7 @@
 """
 Task Manager - Programmatic task creation and management.
 
-Provides APIs to create, update, and query tasks in the commit-relay system.
+Provides APIs to create, update, and query tasks in the cortex system.
 """
 
 from typing import Optional, Dict, List, Any
@@ -41,11 +41,11 @@ class TaskManager:
     Programmatic task creation and management.
 
     The TaskManager provides a Python API for creating and managing tasks
-    in the commit-relay system. Tasks are automatically picked up by the
+    in the cortex system. Tasks are automatically picked up by the
     worker daemon for execution.
 
     Example:
-        >>> manager = TaskManager(commit_relay_home='/path/to/commit-relay')
+        >>> manager = TaskManager(commit_relay_home='/path/to/cortex')
         >>> task_id = manager.create_security_scan(
         ...     repository='ry-ops/mcp-server-unifi',
         ...     priority=TaskPriority.HIGH
@@ -54,21 +54,21 @@ class TaskManager:
         Created task: task-025
 
     Attributes:
-        commit_relay_home: Path to commit-relay repository
+        commit_relay_home: Path to cortex repository
         auto_commit: Whether to automatically commit and push changes
         task_queue_path: Path to task-queue.json file
     """
 
     def __init__(
         self,
-        commit_relay_home: str = '/Users/ryandahlberg/commit-relay',
+        commit_relay_home: str = '/Users/ryandahlberg/cortex',
         auto_commit: bool = True
     ):
         """
         Initialize TaskManager.
 
         Args:
-            commit_relay_home: Path to commit-relay repository root
+            commit_relay_home: Path to cortex repository root
             auto_commit: Whether to automatically commit and push changes to git
         """
         self.commit_relay_home = os.path.expanduser(commit_relay_home)

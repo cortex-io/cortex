@@ -5,10 +5,10 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-COMMIT_RELAY_HOME="${COMMIT_RELAY_HOME:-$(cd "$SCRIPT_DIR/../.." && pwd)}"
+CORTEX_HOME="${CORTEX_HOME:-$(cd "$SCRIPT_DIR/../.." && pwd)}"
 
-IDENTITY_CLI="$COMMIT_RELAY_HOME/lib/governance/identity/agent-identity.js"
-CAPABILITY_CLI="$COMMIT_RELAY_HOME/lib/governance/identity/capability-policy.js"
+IDENTITY_CLI="$CORTEX_HOME/lib/governance/identity/agent-identity.js"
+CAPABILITY_CLI="$CORTEX_HOME/lib/governance/identity/capability-policy.js"
 
 ##############################################################################
 # verify_identity: Verify agent identity token

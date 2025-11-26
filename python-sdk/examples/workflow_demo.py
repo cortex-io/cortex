@@ -117,7 +117,7 @@ def parallel_repository_scans():
     repos = [
         'ry-ops/mcp-server-unifi',
         'ry-ops/n8n-mcp-server',
-        'ry-ops/commit-relay'
+        'ry-ops/cortex'
     ]
 
     print(f"Building workflow to scan {len(repos)} repositories in parallel...")
@@ -138,7 +138,7 @@ def parallel_repository_scans():
     print("Workflow structure:")
     print("  scan_mcp-server-unifi")
     print("  scan_n8n-mcp-server     (all run in parallel)")
-    print("  scan_commit-relay")
+    print("  scan_cortex")
     print()
 
     # Execute workflow
@@ -246,7 +246,7 @@ def main():
     """Run workflow demonstrations."""
 
     print("=" * 70)
-    print("Commit-Relay: Workflow Orchestration Demo")
+    print("Cortex: Workflow Orchestration Demo")
     print("=" * 70)
     print()
     print("This demo shows three workflow patterns:")

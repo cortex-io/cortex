@@ -7,12 +7,12 @@ set -euo pipefail
 
 # Get script directory
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-COMMIT_RELAY_HOME="${COMMIT_RELAY_HOME:-$(cd "$SCRIPT_DIR/../.." && pwd)}"
+CORTEX_HOME="${CORTEX_HOME:-$(cd "$SCRIPT_DIR/../.." && pwd)}"
 
 # Load libraries
-source "$COMMIT_RELAY_HOME/scripts/lib/logging.sh"
+source "$CORTEX_HOME/scripts/lib/logging.sh"
 
-cd "$COMMIT_RELAY_HOME"
+cd "$CORTEX_HOME"
 
 log_section "CAG Cache Loader - v1.0"
 log_info "Loading static knowledge caches for all masters"
@@ -21,7 +21,7 @@ log_info ""
 # Function to validate and load cache
 load_cache() {
     local master_name=$1
-    local cache_file="$COMMIT_RELAY_HOME/coordination/masters/$master_name/cag-cache/static-knowledge.json"
+    local cache_file="$CORTEX_HOME/coordination/masters/$master_name/cag-cache/static-knowledge.json"
 
     if [ ! -f "$cache_file" ]; then
         log_error "Cache not found for $master_name: $cache_file"
@@ -54,7 +54,7 @@ SUCCESS_COUNT=0
 for master in "${MASTERS[@]}"; do
     if load_cache "$master"; then
         SUCCESS_COUNT=$((SUCCESS_COUNT + 1))
-        TOKENS=$(jq -r '.metadata.estimated_tokens' "$COMMIT_RELAY_HOME/coordination/masters/$master/cag-cache/static-knowledge.json")
+        TOKENS=$(jq -r '.metadata.estimated_tokens' "$CORTEX_HOME/coordination/masters/$master/cag-cache/static-knowledge.json")
         TOTAL_TOKENS=$((TOTAL_TOKENS + TOKENS))
     fi
     log_info ""

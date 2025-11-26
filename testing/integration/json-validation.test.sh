@@ -6,10 +6,10 @@ set -e
 
 # Get project root
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-COMMIT_RELAY_HOME="$(cd "$SCRIPT_DIR/../.." && pwd)"
+CORTEX_HOME="$(cd "$SCRIPT_DIR/../.." && pwd)"
 
 # Source the validator
-source "$COMMIT_RELAY_HOME/scripts/lib/json-validator.sh"
+source "$CORTEX_HOME/scripts/lib/json-validator.sh"
 
 # Colors
 GREEN='\033[0;32m'
@@ -126,7 +126,7 @@ fi
 
 # Test 8: JSONL file validation (create test file)
 test_start "JSONL file validation"
-TEST_JSONL="$COMMIT_RELAY_HOME/testing/test-events.jsonl"
+TEST_JSONL="$CORTEX_HOME/testing/test-events.jsonl"
 cat > "$TEST_JSONL" <<EOF
 {"id":"evt-1","type":"test","data":"valid"}
 {"id":"evt-2","type":"test","data":"valid"}
@@ -172,7 +172,7 @@ rm -f "$TEST_JSONL.backup"*
 # Test 11: Node.js validator - Valid JSON
 test_start "Node.js validator - Valid JSON"
 NODE_TEST_RESULT=$(node -e "
-const validator = require('$COMMIT_RELAY_HOME/dashboard/server/utils/json-validator.js');
+const validator = require('$CORTEX_HOME/dashboard/server/utils/json-validator.js');
 const result = validator.validateAndRepairJSON('{\"id\":\"test\",\"data\":\"value\"}');
 console.log(result.success);
 ")
@@ -185,7 +185,7 @@ fi
 # Test 12: Node.js validator - Repair trailing comma
 test_start "Node.js validator - Repair trailing comma"
 NODE_TEST_RESULT=$(node -e "
-const validator = require('$COMMIT_RELAY_HOME/dashboard/server/utils/json-validator.js');
+const validator = require('$CORTEX_HOME/dashboard/server/utils/json-validator.js');
 const result = validator.validateAndRepairJSON('{\"id\":\"test\",\"data\":\"value\",}');
 console.log(result.success);
 ")
@@ -198,7 +198,7 @@ fi
 # Test 13: Node.js validator - Repair unclosed brace
 test_start "Node.js validator - Repair unclosed brace"
 NODE_TEST_RESULT=$(node -e "
-const validator = require('$COMMIT_RELAY_HOME/dashboard/server/utils/json-validator.js');
+const validator = require('$CORTEX_HOME/dashboard/server/utils/json-validator.js');
 const result = validator.validateAndRepairJSON('{\"id\":\"test\",\"data\":\"value\"');
 console.log(result.success);
 ")
@@ -210,9 +210,9 @@ fi
 
 # Test 14: Node.js safeWriteJSON
 test_start "Node.js safeWriteJSON"
-TEST_FILE="$COMMIT_RELAY_HOME/testing/test-safe-write.jsonl"
+TEST_FILE="$CORTEX_HOME/testing/test-safe-write.jsonl"
 NODE_TEST_RESULT=$(node -e "
-const validator = require('$COMMIT_RELAY_HOME/dashboard/server/utils/json-validator.js');
+const validator = require('$CORTEX_HOME/dashboard/server/utils/json-validator.js');
 const result = validator.safeWriteJSON('$TEST_FILE', {id: 'test', data: 'value'}, false);
 console.log(result.success);
 ")
@@ -225,7 +225,7 @@ fi
 
 # Test 15: emit-event.sh integration
 test_start "emit-event.sh with valid data"
-if "$COMMIT_RELAY_HOME/scripts/emit-event.sh" test_event '{"test":"data"}' test-suite 2>/dev/null; then
+if "$CORTEX_HOME/scripts/emit-event.sh" test_event '{"test":"data"}' test-suite 2>/dev/null; then
     test_pass
 else
     test_fail "emit-event.sh failed with valid data"

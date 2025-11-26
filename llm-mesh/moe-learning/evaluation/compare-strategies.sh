@@ -6,12 +6,12 @@ set -euo pipefail
 
 # Configuration
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-COMMIT_RELAY_HOME="${COMMIT_RELAY_HOME:-$(cd "$SCRIPT_DIR/../../.." && pwd)}"
+CORTEX_HOME="${CORTEX_HOME:-$(cd "$SCRIPT_DIR/../../.." && pwd)}"
 
 # Paths
 EVAL_HARNESS="$SCRIPT_DIR/eval-router.sh"
-ROUTING_PATTERNS="$COMMIT_RELAY_HOME/coordination/masters/coordinator/knowledge-base/routing-patterns.json"
-RESULTS_DIR="$COMMIT_RELAY_HOME/coordination/evaluation/results"
+ROUTING_PATTERNS="$CORTEX_HOME/coordination/masters/coordinator/knowledge-base/routing-patterns.json"
+RESULTS_DIR="$CORTEX_HOME/coordination/evaluation/results"
 
 # Colors
 GREEN='\033[0;32m'

@@ -38,7 +38,7 @@
   },
   "repositories": [
     {
-      "name": "ry-ops/commit-relay",
+      "name": "ry-ops/cortex",
       "health_status": "healthy",
       "language": "HTML",
       "visibility": "PRIVATE",
@@ -444,8 +444,8 @@
   },
   "improvements_since_last_report": [
     "Added 1 new repository (ResuMate)",
-    "commit-relay now shows active development (pushed today)",
-    "Updated primary language for commit-relay from JavaScript to HTML",
+    "cortex now shows active development (pushed today)",
+    "Updated primary language for cortex from JavaScript to HTML",
     "Fresh data from GitHub API (previously 19 days stale)"
   ],
   "next_steps": [

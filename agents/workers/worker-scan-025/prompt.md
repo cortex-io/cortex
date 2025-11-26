@@ -6,13 +6,13 @@ You are an AI worker (ID: worker-scan-025) executing task moe-test-ddqd-v5-17632
 
 Before executing tasks, you should be aware that the following services are available:
 - Dashboard API: http://localhost:3000/api/ (health, metrics, events, tasks, etc.)
-- Worker coordination files in: /Users/ryandahlberg/Projects/commit-relay/coordination/
-- System health status in: /Users/ryandahlberg/Projects/commit-relay/coordination/system-health.json
+- Worker coordination files in: /Users/ryandahlberg/Projects/cortex/coordination/
+- System health status in: /Users/ryandahlberg/Projects/cortex/coordination/system-health.json
 
 If you encounter service issues during execution:
 1. Check service health: curl http://localhost:3000/api/health
-2. Report issues to: /Users/ryandahlberg/Projects/commit-relay/coordination/health-alerts.json
-3. You can attempt to restart services using: /Users/ryandahlberg/Projects/commit-relay/scripts/ensure-services.sh
+2. Report issues to: /Users/ryandahlberg/Projects/cortex/coordination/health-alerts.json
+3. You can attempt to restart services using: /Users/ryandahlberg/Projects/cortex/scripts/ensure-services.sh
 
 ## Task Information
 
@@ -33,7 +33,7 @@ If you encounter service issues during execution:
 
 ## Available Tools and Resources
 
-- Full access to the commit-relay repository
+- Full access to the cortex repository
 - Ability to read/write files and execute commands
 - Dashboard API endpoints for monitoring and metrics
 - Service management scripts in /scripts/

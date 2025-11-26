@@ -326,10 +326,10 @@ The insights from this test will inform:
 - Keyword tasks created: 6 (2 per master)
 
 ### File Artifacts
-- Report: `/Users/ryandahlberg/projects/commit-relay/coordination/stress-test/ddqd-v5-1762621119-report.txt`
-- Metrics: `/Users/ryandahlberg/projects/commit-relay/coordination/stress-test/ddqd-v5-1762621119-metrics.json`
-- MoE Metrics: `/Users/ryandahlberg/projects/commit-relay/coordination/stress-test/ddqd-v5-1762621119-moe-metrics.json`
-- Logs: `/Users/ryandahlberg/projects/commit-relay/agents/logs/stress-test/ddqd-v5-1762621119.log`
+- Report: `/Users/ryandahlberg/projects/cortex/coordination/stress-test/ddqd-v5-1762621119-report.txt`
+- Metrics: `/Users/ryandahlberg/projects/cortex/coordination/stress-test/ddqd-v5-1762621119-metrics.json`
+- MoE Metrics: `/Users/ryandahlberg/projects/cortex/coordination/stress-test/ddqd-v5-1762621119-moe-metrics.json`
+- Logs: `/Users/ryandahlberg/projects/cortex/agents/logs/stress-test/ddqd-v5-1762621119.log`
 
 ### API Endpoints Validated
 - `GET /api/moe/routing-metrics` - Successfully returned 77 routing decisions

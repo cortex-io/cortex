@@ -36,7 +36,7 @@
 ELASTIC_APM_ENABLED=true
 
 # Service identification
-ELASTIC_APM_SERVICE_NAME=commit-relay-staging
+ELASTIC_APM_SERVICE_NAME=cortex-staging
 
 # Elastic Cloud credentials
 ELASTIC_APM_SERVER_URL=https://your-deployment.apm.region.cloud.es.io:443
@@ -85,7 +85,7 @@ npm start
 - [ ] Verify APM initialization in logs:
 ```
 [APM] Elastic APM initialized successfully
-[APM]   Service: commit-relay-staging
+[APM]   Service: cortex-staging
 [APM]   Environment: staging
 [APM]   Server: https://your-deployment...
 [APM]   Sample Rate: 1.0
@@ -99,7 +99,7 @@ npm start
 ### Step 4: Verify in Kibana
 - [ ] Open Kibana in Elastic Cloud
 - [ ] Navigate to **Observability** → **APM**
-- [ ] Verify service appears: **commit-relay-staging**
+- [ ] Verify service appears: **cortex-staging**
 - [ ] Make test requests to API endpoints
 - [ ] Verify transactions appear (may take 10-30 seconds)
 
@@ -116,7 +116,7 @@ curl http://localhost:5001/api/metrics
 ```
 
 - [ ] Check in Kibana:
-  - **Services** → commit-relay-staging → Transactions
+  - **Services** → cortex-staging → Transactions
   - Verify requests appear with timing
   - Check service map shows dependencies
 
@@ -164,7 +164,7 @@ labels.task.id: "task-*"
 
 ```bash
 ELASTIC_APM_ENABLED=true
-ELASTIC_APM_SERVICE_NAME=commit-relay-production
+ELASTIC_APM_SERVICE_NAME=cortex-production
 ELASTIC_APM_SERVER_URL=https://your-production-deployment.apm.region.cloud.es.io:443
 ELASTIC_APM_SECRET_TOKEN=your-production-secret-token
 ELASTIC_APM_ENVIRONMENT=production
@@ -307,6 +307,6 @@ git push origin main
 ---
 
 **Implementation Commit**: `71e8c3e`
-**GitHub URL**: https://github.com/ry-ops/commit-relay/commit/71e8c3e
+**GitHub URL**: https://github.com/ry-ops/cortex/commit/71e8c3e
 **Documentation**: docs/APM-INTEGRATION.md
 **Status**: ✅ Ready for Staging Deployment

@@ -17,19 +17,19 @@ set -eo pipefail
 
 # Get script directory
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-COMMIT_RELAY_HOME="$(cd "$SCRIPT_DIR/../.." && pwd)"
-export COMMIT_RELAY_HOME
+CORTEX_HOME="$(cd "$SCRIPT_DIR/../.." && pwd)"
+export CORTEX_HOME
 
 # Daemon configuration
 DAEMON_NAME="observability-hub"
-PID_FILE="/tmp/commit-relay-${DAEMON_NAME}.pid"
-LOG_FILE="$COMMIT_RELAY_HOME/agents/logs/system/${DAEMON_NAME}.log"
-ERROR_LOG="$COMMIT_RELAY_HOME/agents/logs/system/${DAEMON_NAME}-error.log"
+PID_FILE="/tmp/cortex-${DAEMON_NAME}.pid"
+LOG_FILE="$CORTEX_HOME/agents/logs/system/${DAEMON_NAME}.log"
+ERROR_LOG="$CORTEX_HOME/agents/logs/system/${DAEMON_NAME}-error.log"
 
 # Event configuration
-EVENT_FILE="$COMMIT_RELAY_HOME/coordination/observability/events/all-events.jsonl"
-STREAM_DIR="$COMMIT_RELAY_HOME/coordination/observability/stream"
-INDICES_DIR="$COMMIT_RELAY_HOME/coordination/observability/indices"
+EVENT_FILE="$CORTEX_HOME/coordination/observability/events/all-events.jsonl"
+STREAM_DIR="$CORTEX_HOME/coordination/observability/stream"
+INDICES_DIR="$CORTEX_HOME/coordination/observability/indices"
 
 # Processing interval (seconds)
 PROCESSING_INTERVAL=10

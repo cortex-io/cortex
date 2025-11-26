@@ -1,9 +1,9 @@
 {
-  "catalog_name": "commit-relay",
+  "catalog_name": "cortex",
   "version": "1.0.0",
   "created_at": "2025-11-18T00:00:00Z",
   "last_updated": "2025-11-18T00:00:00Z",
-  "description": "Unified catalog for all Commit-Relay data and AI assets",
+  "description": "Unified catalog for all Cortex data and AI assets",
   "namespaces": [
     {
       "name": "coordinator",

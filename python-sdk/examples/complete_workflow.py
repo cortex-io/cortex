@@ -38,7 +38,7 @@ def main():
         lifecycle = TaskLifecycleManager(client, auto_commit=False)
     except Exception as e:
         print(f"\nError: Failed to initialize: {e}")
-        print("\nNote: This demo requires commit-relay to be set up.")
+        print("\nNote: This demo requires cortex to be set up.")
         print("      Set auto_commit=False to skip git operations.")
         sys.exit(1)
 

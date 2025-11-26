@@ -6,10 +6,10 @@
 set -e
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-COMMIT_RELAY_HOME="$(cd "$SCRIPT_DIR/../.." && pwd)"
-export COMMIT_RELAY_HOME
+CORTEX_HOME="$(cd "$SCRIPT_DIR/../.." && pwd)"
+export CORTEX_HOME
 
-ROUTER="$COMMIT_RELAY_HOME/coordination/masters/coordinator/lib/moe-router.sh"
+ROUTER="$CORTEX_HOME/coordination/masters/coordinator/lib/moe-router.sh"
 
 GREEN='\033[0;32m'
 RED='\033[0;31m'
@@ -190,7 +190,7 @@ fi
 
 # Test 15: Routing decision is logged to JSONL file
 test_start "Routing decision is logged to JSONL file"
-ROUTING_LOG="$COMMIT_RELAY_HOME/coordination/masters/coordinator/knowledge-base/routing-decisions.jsonl"
+ROUTING_LOG="$CORTEX_HOME/coordination/masters/coordinator/knowledge-base/routing-decisions.jsonl"
 BEFORE_COUNT=$(wc -l < "$ROUTING_LOG" 2>/dev/null || echo 0)
 RESULT=$(GOVERNANCE_BYPASS=true "$ROUTER" "task-log-test-$(date +%s)" "Test logging" 2>/dev/null)
 sleep 1

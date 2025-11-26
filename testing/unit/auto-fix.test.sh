@@ -6,10 +6,10 @@
 set -e
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-COMMIT_RELAY_HOME="$(cd "$SCRIPT_DIR/../.." && pwd)"
-export COMMIT_RELAY_HOME
+CORTEX_HOME="$(cd "$SCRIPT_DIR/../.." && pwd)"
+export CORTEX_HOME
 
-source "$COMMIT_RELAY_HOME/scripts/lib/auto-fix.sh"
+source "$CORTEX_HOME/scripts/lib/auto-fix.sh"
 
 GREEN='\033[0;32m'
 RED='\033[0;31m'
@@ -38,10 +38,10 @@ test_fail() {
 
 setup_test_env() {
     # Create test directories
-    mkdir -p "$COMMIT_RELAY_HOME/coordination/auto-fix"
-    mkdir -p "$COMMIT_RELAY_HOME/coordination/patterns"
-    mkdir -p "$COMMIT_RELAY_HOME/coordination/events"
-    mkdir -p "$COMMIT_RELAY_HOME/coordination/worker-specs/templates"
+    mkdir -p "$CORTEX_HOME/coordination/auto-fix"
+    mkdir -p "$CORTEX_HOME/coordination/patterns"
+    mkdir -p "$CORTEX_HOME/coordination/events"
+    mkdir -p "$CORTEX_HOME/coordination/worker-specs/templates"
 
     # Backup existing files
     [ -f "$FIX_HISTORY_FILE" ] && mv "$FIX_HISTORY_FILE" "${FIX_HISTORY_FILE}.backup"
@@ -55,7 +55,7 @@ setup_test_env() {
 EOFPATTERN
 
     # Create test worker spec
-    cat > "$COMMIT_RELAY_HOME/coordination/worker-specs/templates/scan-worker.json" <<'EOFSPEC'
+    cat > "$CORTEX_HOME/coordination/worker-specs/templates/scan-worker.json" <<'EOFSPEC'
 {
   "worker_type": "scan-worker",
   "resources": {
@@ -77,8 +77,8 @@ cleanup_test_env() {
     # Remove test files
     rm -f "$FIX_HISTORY_FILE" "$FIX_STATE_FILE" "$FIX_EVENTS_LOG"
     rm -f "$PATTERN_DB"
-    rm -f "$COMMIT_RELAY_HOME/coordination/worker-specs/templates/scan-worker.json"
-    rm -f "$COMMIT_RELAY_HOME/coordination/worker-specs/templates/scan-worker.json.backup."*
+    rm -f "$CORTEX_HOME/coordination/worker-specs/templates/scan-worker.json"
+    rm -f "$CORTEX_HOME/coordination/worker-specs/templates/scan-worker.json.backup."*
 
     # Restore backups
     [ -f "${FIX_HISTORY_FILE}.backup" ] && mv "${FIX_HISTORY_FILE}.backup" "$FIX_HISTORY_FILE"
@@ -96,7 +96,7 @@ setup_test_env
 
 # Test 1
 test_start "Auto-fix library loads"
-if [ -f "$COMMIT_RELAY_HOME/scripts/lib/auto-fix.sh" ]; then
+if [ -f "$CORTEX_HOME/scripts/lib/auto-fix.sh" ]; then
     test_pass
 else
     test_fail "Library file not found"
@@ -193,7 +193,7 @@ backup=$(execute_fix_action "$action" "$context" 2>/dev/null || echo "")
 
 if [ -n "$backup" ] && [ -f "$backup" ]; then
     # Check if spec was modified
-    new_value=$(jq -r '.resources.memory_limit_mb' "$COMMIT_RELAY_HOME/coordination/worker-specs/templates/scan-worker.json")
+    new_value=$(jq -r '.resources.memory_limit_mb' "$CORTEX_HOME/coordination/worker-specs/templates/scan-worker.json")
     # Convert to integer for comparison (handles floating point from bc)
     new_value_int=$(echo "$new_value" | cut -d. -f1)
     if [ "$new_value_int" = "3072" ]; then
@@ -208,8 +208,8 @@ fi
 # Test 12
 test_start "execute_fix creates history entry"
 # Reset spec first
-cp "$COMMIT_RELAY_HOME/coordination/worker-specs/templates/scan-worker.json.backup."* \
-   "$COMMIT_RELAY_HOME/coordination/worker-specs/templates/scan-worker.json" 2>/dev/null || true
+cp "$CORTEX_HOME/coordination/worker-specs/templates/scan-worker.json.backup."* \
+   "$CORTEX_HOME/coordination/worker-specs/templates/scan-worker.json" 2>/dev/null || true
 
 backup_info=$(execute_fix "fix_increase_memory_for_oom" "test_pattern_oom" 2>/dev/null || echo "[]")
 
@@ -224,7 +224,7 @@ test_start "rollback_fix restores previous configuration"
 if [ -n "$backup_info" ] && [ "$backup_info" != "[]" ]; then
     rollback_fix "fix_increase_memory_for_oom" "$backup_info" 2>/dev/null
 
-    restored_value=$(jq -r '.resources.memory_limit_mb' "$COMMIT_RELAY_HOME/coordination/worker-specs/templates/scan-worker.json")
+    restored_value=$(jq -r '.resources.memory_limit_mb' "$CORTEX_HOME/coordination/worker-specs/templates/scan-worker.json")
     if [ "$restored_value" = "2048" ]; then
         test_pass
     else
@@ -248,8 +248,8 @@ fi
 test_start "apply_auto_fix runs end-to-end"
 # Reset environment
 rm -f "$FIX_HISTORY_FILE"
-cp "$COMMIT_RELAY_HOME/coordination/worker-specs/templates/scan-worker.json.backup."* \
-   "$COMMIT_RELAY_HOME/coordination/worker-specs/templates/scan-worker.json" 2>/dev/null || true
+cp "$CORTEX_HOME/coordination/worker-specs/templates/scan-worker.json.backup."* \
+   "$CORTEX_HOME/coordination/worker-specs/templates/scan-worker.json" 2>/dev/null || true
 
 applied_fix=$(apply_auto_fix "test_pattern_oom" 2>&1 || echo "")
 

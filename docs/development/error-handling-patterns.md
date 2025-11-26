@@ -2,7 +2,7 @@
 
 ## Overview
 
-Standardized error handling patterns for commit-relay ensuring consistent error responses, proper error propagation, and effective debugging.
+Standardized error handling patterns for cortex ensuring consistent error responses, proper error propagation, and effective debugging.
 
 **Principles**: Fail fast, fail informative, fail recoverable
 

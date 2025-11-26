@@ -2,7 +2,7 @@
 
 ## Overview
 
-This document describes the implementation of MoE-inspired routing and multi-agent architecture in commit-relay, based on insights from AI agent workflows and Mixture of Experts neural network design.
+This document describes the implementation of MoE-inspired routing and multi-agent architecture in cortex, based on insights from AI agent workflows and Mixture of Experts neural network design.
 
 ## Key Concepts
 
@@ -19,7 +19,7 @@ This document describes the implementation of MoE-inspired routing and multi-age
 - Like activating 1B out of 7B parameters
 - Microsecond-level routing decisions
 
-**Commit-Relay**: Hybrid approach combining both!
+**Cortex**: Hybrid approach combining both!
 
 ## Implementation
 
@@ -439,7 +439,7 @@ Like MoE's 1B/7B active parameters:
 
 ## Summary
 
-The MoE architecture in commit-relay is now fully operational:
+The MoE architecture in cortex is now fully operational:
 
 ✅ **Phase 1**: Confidence-based routing with sparse expert activation
 ✅ **Phase 2**: Multi-strategy result aggregation (voting, weighted, sequential, parallel, auto)

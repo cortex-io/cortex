@@ -14,7 +14,7 @@
     "test_suite": "governance-validation"
   },
   "context": {
-    "repository": "ry-ops/commit-relay",
+    "repository": "ry-ops/cortex",
     "branch": "main",
     "test_scenario": true
   }

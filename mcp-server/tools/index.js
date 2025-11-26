@@ -1,5 +1,5 @@
 /**
- * MCP Tools for Commit-Relay
+ * MCP Tools for Cortex
  *
  * Each tool wraps a master agent capability and exposes it
  * via the Model Context Protocol.
@@ -139,7 +139,7 @@ const toolImplementations = {
 
     return new Promise((resolve, reject) => {
       const proc = spawn('bash', [routerPath, task_id, task_description], {
-        env: { ...process.env, GOVERNANCE_BYPASS: 'true', COMMIT_RELAY_HOME: home }
+        env: { ...process.env, GOVERNANCE_BYPASS: 'true', CORTEX_HOME: home }
       });
 
       let stdout = '';
@@ -170,7 +170,7 @@ const toolImplementations = {
         '--master', master,
         '--priority', priority
       ], {
-        env: { ...process.env, GOVERNANCE_BYPASS: 'true', COMMIT_RELAY_HOME: home }
+        env: { ...process.env, GOVERNANCE_BYPASS: 'true', CORTEX_HOME: home }
       });
 
       let stdout = '';

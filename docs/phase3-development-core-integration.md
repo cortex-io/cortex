@@ -1,6 +1,6 @@
 # Phase 3 Development Core Capabilities - Integration Guide
 
-This document provides integration notes for the Phase 3 Development Core Capabilities implemented in commit-relay.
+This document provides integration notes for the Phase 3 Development Core Capabilities implemented in cortex.
 
 ## Overview
 
@@ -17,7 +17,7 @@ Phase 3 adds 13 core development capabilities across 5 categories:
 
 ### Item 23: Goal Decomposition with Verification
 
-**Location**: `/Users/ryandahlberg/commit-relay/scripts/lib/worker-spec-builder.sh`
+**Location**: `/Users/ryandahlberg/cortex/scripts/lib/worker-spec-builder.sh`
 
 **New Functions**:
 - `build_checkpoint_criteria()` - Create checkpoint criteria for a step
@@ -58,7 +58,7 @@ validate_checkpoint "/path/to/spec.json" "compile-code"
 
 ### Item 24: Context-aware Resource Allocation
 
-**Location**: `/Users/ryandahlberg/commit-relay/scripts/lib/task-allocator.sh`
+**Location**: `/Users/ryandahlberg/cortex/scripts/lib/task-allocator.sh`
 
 **Key Functions**:
 - `allocate_resources()` - Main allocation function
@@ -91,13 +91,13 @@ record_allocation_outcome \
     "completed"
 ```
 
-**Configuration**: `/Users/ryandahlberg/commit-relay/coordination/config/task-allocation-policy.json`
+**Configuration**: `/Users/ryandahlberg/cortex/coordination/config/task-allocation-policy.json`
 
 ---
 
 ### Item 25: Prompt Versioning and A/B Testing
 
-**Location**: `/Users/ryandahlberg/commit-relay/scripts/lib/prompt-manager.sh`
+**Location**: `/Users/ryandahlberg/cortex/scripts/lib/prompt-manager.sh`
 
 **Key Functions**:
 - `register_prompt_version()` - Register a new prompt version
@@ -138,7 +138,7 @@ analyze_ab_test "$test_id"
 end_ab_test "$test_id" "true"  # promote winner
 ```
 
-**Data Location**: `/Users/ryandahlberg/commit-relay/coordination/prompt-versions/`
+**Data Location**: `/Users/ryandahlberg/cortex/coordination/prompt-versions/`
 
 ---
 
@@ -146,7 +146,7 @@ end_ab_test "$test_id" "true"  # promote winner
 
 ### Item 27: Automated Remediation Playbooks
 
-**Location**: `/Users/ryandahlberg/commit-relay/scripts/lib/auto-remediate.sh`
+**Location**: `/Users/ryandahlberg/cortex/scripts/lib/auto-remediate.sh`
 
 **Key Functions**:
 - `remediate_pattern()` - Main remediation entry point
@@ -167,7 +167,7 @@ execute_playbook "pb-timeout-increase" '{"worker_type":"implementation-worker"}'
 validate_remediation "exec-12345" 24
 ```
 
-**Playbook Index**: `/Users/ryandahlberg/commit-relay/coordination/remediation-playbooks/index.json`
+**Playbook Index**: `/Users/ryandahlberg/cortex/coordination/remediation-playbooks/index.json`
 
 **Built-in Playbooks**:
 - `pb-timeout-increase` - Increase worker timeout
@@ -179,7 +179,7 @@ validate_remediation "exec-12345" 24
 
 ### Item 29: Risk-based Resource Allocation
 
-**Location**: `/Users/ryandahlberg/commit-relay/scripts/lib/risk-scorer.sh`
+**Location**: `/Users/ryandahlberg/cortex/scripts/lib/risk-scorer.sh`
 
 **Key Functions**:
 - `score_task_risk()` - Calculate risk score for a task
@@ -217,7 +217,7 @@ record_task_outcome "task-789" "implementation-worker" "feature" "completed" 65
 
 ### Item 31: API Versioning
 
-**Location**: `/Users/ryandahlberg/commit-relay/dashboard/server/routes/api-v1.js`
+**Location**: `/Users/ryandahlberg/cortex/dashboard/server/routes/api-v1.js`
 
 **Integration in index.js**:
 ```javascript
@@ -245,9 +245,9 @@ app.use('/api', (req, res, next) => {
 
 ### Item 32: OpenAPI Specification
 
-**Location**: `/Users/ryandahlberg/commit-relay/dashboard/server/openapi.json`
+**Location**: `/Users/ryandahlberg/cortex/dashboard/server/openapi.json`
 
-**Documentation Routes** (`/Users/ryandahlberg/commit-relay/dashboard/server/routes/docs.js`):
+**Documentation Routes** (`/Users/ryandahlberg/cortex/dashboard/server/routes/docs.js`):
 - `GET /api/docs` - OpenAPI JSON
 - `GET /api/docs/openapi.json` - Raw JSON
 - `GET /api/docs/openapi.yaml` - YAML format
@@ -262,7 +262,7 @@ app.use('/api', (req, res, next) => {
 
 ### Item 35: Query Optimization for RAG
 
-**Location**: `/Users/ryandahlberg/commit-relay/scripts/lib/rag/query-optimizer.sh`
+**Location**: `/Users/ryandahlberg/cortex/scripts/lib/rag/query-optimizer.sh`
 
 **Key Functions**:
 - `optimize_query()` - Main optimization function
@@ -290,13 +290,13 @@ reranked=$(rerank_results "$results" "$expanded")
 - BM25 + recency re-ranking
 - Query caching
 
-**Configuration**: `/Users/ryandahlberg/commit-relay/coordination/config/rag-query-optimizer.json`
+**Configuration**: `/Users/ryandahlberg/cortex/coordination/config/rag-query-optimizer.json`
 
 ---
 
 ### Item 36: Semantic Chunking Strategies
 
-**Location**: `/Users/ryandahlberg/commit-relay/scripts/lib/rag/semantic-chunker.sh`
+**Location**: `/Users/ryandahlberg/cortex/scripts/lib/rag/semantic-chunker.sh`
 
 **Key Functions**:
 - `chunk_document()` - Chunk a file
@@ -326,7 +326,7 @@ metrics=$(get_chunking_metrics)
 - Overlap management
 - Keyword extraction per chunk
 
-**Configuration**: `/Users/ryandahlberg/commit-relay/coordination/config/semantic-chunker.json`
+**Configuration**: `/Users/ryandahlberg/cortex/coordination/config/semantic-chunker.json`
 
 ---
 
@@ -334,7 +334,7 @@ metrics=$(get_chunking_metrics)
 
 ### Item 37: Step-by-step Verification
 
-**Location**: `/Users/ryandahlberg/commit-relay/scripts/lib/step-verifier.sh`
+**Location**: `/Users/ryandahlberg/cortex/scripts/lib/step-verifier.sh`
 
 **Key Functions**:
 - `verify_step()` - Verify a single step
@@ -378,7 +378,7 @@ progress=$(get_verification_progress "/path/to/spec.json")
 
 ### Item 38: Reasoning Trace Validation
 
-**Location**: `/Users/ryandahlberg/commit-relay/scripts/lib/reasoning-validator.sh`
+**Location**: `/Users/ryandahlberg/cortex/scripts/lib/reasoning-validator.sh`
 
 **Key Functions**:
 - `validate_reasoning_trace()` - Full validation
@@ -423,14 +423,14 @@ add_to_training_set "$trace"
 
 All configuration files are auto-generated on first use:
 
-1. `/Users/ryandahlberg/commit-relay/coordination/config/task-allocation-policy.json`
-2. `/Users/ryandahlberg/commit-relay/coordination/config/risk-scoring-policy.json`
-3. `/Users/ryandahlberg/commit-relay/coordination/config/rag-query-optimizer.json`
-4. `/Users/ryandahlberg/commit-relay/coordination/config/semantic-chunker.json`
-5. `/Users/ryandahlberg/commit-relay/coordination/config/step-verifier.json`
-6. `/Users/ryandahlberg/commit-relay/coordination/config/reasoning-validator.json`
-7. `/Users/ryandahlberg/commit-relay/coordination/remediation-playbooks/index.json`
-8. `/Users/ryandahlberg/commit-relay/coordination/prompt-versions/registry.json`
+1. `/Users/ryandahlberg/cortex/coordination/config/task-allocation-policy.json`
+2. `/Users/ryandahlberg/cortex/coordination/config/risk-scoring-policy.json`
+3. `/Users/ryandahlberg/cortex/coordination/config/rag-query-optimizer.json`
+4. `/Users/ryandahlberg/cortex/coordination/config/semantic-chunker.json`
+5. `/Users/ryandahlberg/cortex/coordination/config/step-verifier.json`
+6. `/Users/ryandahlberg/cortex/coordination/config/reasoning-validator.json`
+7. `/Users/ryandahlberg/cortex/coordination/remediation-playbooks/index.json`
+8. `/Users/ryandahlberg/cortex/coordination/prompt-versions/registry.json`
 
 ---
 
@@ -438,14 +438,14 @@ All configuration files are auto-generated on first use:
 
 Each capability writes to its own history/metrics file:
 
-- Task allocation: `/Users/ryandahlberg/commit-relay/coordination/metrics/task-allocation-history.jsonl`
-- Risk scoring: `/Users/ryandahlberg/commit-relay/coordination/metrics/risk-scoring-history.jsonl`
-- Query optimization: `/Users/ryandahlberg/commit-relay/coordination/metrics/query-history.jsonl`
-- Chunking: `/Users/ryandahlberg/commit-relay/coordination/metrics/chunking-history.jsonl`
-- Verification: `/Users/ryandahlberg/commit-relay/coordination/metrics/verification-history.jsonl`
-- Reasoning validation: `/Users/ryandahlberg/commit-relay/coordination/metrics/reasoning-validation-history.jsonl`
-- Remediation: `/Users/ryandahlberg/commit-relay/coordination/remediation-playbooks/history.jsonl`
-- Prompt outcomes: `/Users/ryandahlberg/commit-relay/coordination/prompt-versions/outcomes.jsonl`
+- Task allocation: `/Users/ryandahlberg/cortex/coordination/metrics/task-allocation-history.jsonl`
+- Risk scoring: `/Users/ryandahlberg/cortex/coordination/metrics/risk-scoring-history.jsonl`
+- Query optimization: `/Users/ryandahlberg/cortex/coordination/metrics/query-history.jsonl`
+- Chunking: `/Users/ryandahlberg/cortex/coordination/metrics/chunking-history.jsonl`
+- Verification: `/Users/ryandahlberg/cortex/coordination/metrics/verification-history.jsonl`
+- Reasoning validation: `/Users/ryandahlberg/cortex/coordination/metrics/reasoning-validation-history.jsonl`
+- Remediation: `/Users/ryandahlberg/cortex/coordination/remediation-playbooks/history.jsonl`
+- Prompt outcomes: `/Users/ryandahlberg/cortex/coordination/prompt-versions/outcomes.jsonl`
 
 ---
 
@@ -479,7 +479,7 @@ app.use('/api/docs', docsRouter);
 
 ## Dependencies
 
-All scripts use standard tools available in the commit-relay environment:
+All scripts use standard tools available in the cortex environment:
 - bash
 - jq
 - bc

@@ -1,13 +1,13 @@
 #!/bin/bash
 # scripts/wizards/create-task.sh
-# Interactive task creation wizard for Commit-Relay
+# Interactive task creation wizard for Cortex
 # Part of Phase 5: Developer Experience
 
 set -euo pipefail
 
 # Get script directory
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-COMMIT_RELAY_HOME="${COMMIT_RELAY_HOME:-$(cd "$SCRIPT_DIR/../.." && pwd)}"
+CORTEX_HOME="${CORTEX_HOME:-$(cd "$SCRIPT_DIR/../.." && pwd)}"
 
 # ANSI color codes
 RED='\033[0;31m'
@@ -251,7 +251,7 @@ create_task_wizard() {
     # Step 8: Create task file
     print_section "Step 8: Creating Task"
 
-    local task_file="$COMMIT_RELAY_HOME/coordination/tasks/${task_id}.json"
+    local task_file="$CORTEX_HOME/coordination/tasks/${task_id}.json"
     local timestamp=$(date -u +%Y-%m-%dT%H:%M:%SZ)
 
     # Build tags array
@@ -287,7 +287,7 @@ EOF
     # Step 9: Add to task queue
     print_info "Adding task to queue..."
 
-    local task_queue="$COMMIT_RELAY_HOME/coordination/task-queue.json"
+    local task_queue="$CORTEX_HOME/coordination/task-queue.json"
 
     # Read current queue
     if [ ! -f "$task_queue" ]; then
@@ -306,7 +306,7 @@ EOF
     print_success "Task added to queue"
 
     # Step 10: Log event
-    local event_log="$COMMIT_RELAY_HOME/coordination/dashboard-events.jsonl"
+    local event_log="$CORTEX_HOME/coordination/dashboard-events.jsonl"
 
     cat >> "$event_log" <<EOF
 {"event_type":"task_created","task_id":"$task_id","priority":"$priority","task_type":"$task_type","timestamp":"$timestamp","created_by":"$(whoami)","source":"wizard"}
@@ -355,7 +355,7 @@ create_task_quick() {
 
     local task_id=$(generate_task_id "task")
     local timestamp=$(date -u +%Y-%m-%dT%H:%M:%SZ)
-    local task_file="$COMMIT_RELAY_HOME/coordination/tasks/${task_id}.json"
+    local task_file="$CORTEX_HOME/coordination/tasks/${task_id}.json"
 
     cat > "$task_file" <<EOF
 {
@@ -375,7 +375,7 @@ create_task_quick() {
 EOF
 
     # Add to queue
-    local task_queue="$COMMIT_RELAY_HOME/coordination/task-queue.json"
+    local task_queue="$CORTEX_HOME/coordination/task-queue.json"
     local task_json=$(cat "$task_file")
 
     jq --argjson task "$task_json" \

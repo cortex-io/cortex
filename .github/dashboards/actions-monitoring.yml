@@ -110,8 +110,8 @@ monitoring:
       
     email:
       recipients:
-        - admin@commit-relay.io
-        - ops@commit-relay.io
+        - admin@cortex.io
+        - ops@cortex.io
         
     pagerduty:
       integration_key: "${PAGERDUTY_INTEGRATION_KEY}"
@@ -142,7 +142,7 @@ reports:
     enabled: true
     schedule: "0 9 * * *"
     recipients:
-      - admin@commit-relay.io
+      - admin@cortex.io
     metrics:
       - total_executions
       - success_rate
@@ -154,7 +154,7 @@ reports:
     enabled: true
     schedule: "0 9 * * 1"
     recipients:
-      - team@commit-relay.io
+      - team@cortex.io
     include:
       - trend_analysis
       - top_failures

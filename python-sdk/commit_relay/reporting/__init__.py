@@ -1,5 +1,5 @@
 """
-Reporting module for commit-relay SDK.
+Reporting module for cortex SDK.
 
 Provides visualization, report generation, and data export capabilities.
 """

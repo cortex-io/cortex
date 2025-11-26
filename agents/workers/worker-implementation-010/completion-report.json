@@ -4,7 +4,7 @@
   "task_type": "implementation-worker",
   "status": "completed",
   "completed_at": "2025-11-21T02:40:00Z",
-  "summary": "Implemented new user groups/teams management API endpoints for the commit-relay dashboard",
+  "summary": "Implemented new user groups/teams management API endpoints for the cortex dashboard",
   "deliverables": [
     {
       "type": "code_implementation",

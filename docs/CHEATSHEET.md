@@ -1,6 +1,6 @@
-# Commit-Relay Command Cheatsheet
+# Cortex Command Cheatsheet
 
-Quick reference for common Commit-Relay operations.
+Quick reference for common Cortex operations.
 
 ---
 
@@ -8,12 +8,12 @@ Quick reference for common Commit-Relay operations.
 
 ```bash
 # Set environment variable
-export COMMIT_RELAY_HOME=/path/to/commit-relay
+export COMMIT_RELAY_HOME=/path/to/cortex
 
 # Start all daemons
 ./scripts/wizards/daemon-control.sh  # Interactive
 # or
-./scripts/start-commit-relay.sh      # Automated
+./scripts/start-cortex.sh      # Automated
 
 # Monitor system
 ./scripts/dashboards/system-live.sh
@@ -40,7 +40,7 @@ export COMMIT_RELAY_HOME=/path/to/commit-relay
 
 ```bash
 # Check all daemon status
-for pidfile in /tmp/commit-relay-*.pid; do
+for pidfile in /tmp/cortex-*.pid; do
     [ -f "$pidfile" ] && ps -p $(cat "$pidfile") && echo "✓ $(basename $pidfile)" || echo "✗ $(basename $pidfile)"
 done
 
@@ -138,10 +138,10 @@ cat coordination/worker-specs/zombie/worker-<ID>.json | jq '.cleanup_metadata'
 ./scripts/wizards/daemon-control.sh
 
 # Start all daemons
-./scripts/start-commit-relay.sh
+./scripts/start-cortex.sh
 
 # Stop all daemons
-pkill -f "commit-relay.*daemon"
+pkill -f "cortex.*daemon"
 ```
 
 ### Individual Daemon Control
@@ -159,10 +159,10 @@ scripts/daemons/worker-restart-daemon.sh &
 scripts/daemons/auto-fix-daemon.sh &
 
 # Check daemon PID
-cat /tmp/commit-relay-<daemon>.pid
+cat /tmp/cortex-<daemon>.pid
 
 # Kill specific daemon
-kill $(cat /tmp/commit-relay-<daemon>.pid)
+kill $(cat /tmp/cortex-<daemon>.pid)
 ```
 
 ### Daemon Logs
@@ -466,10 +466,10 @@ cat coordination/governance/approval-workflow.json | jq .
 pkill -f "worker-.*"
 
 # Stop all daemons
-pkill -f "commit-relay.*daemon"
+pkill -f "cortex.*daemon"
 
 # Restart system
-./scripts/start-commit-relay.sh
+./scripts/start-cortex.sh
 
 # Check system status
 ./scripts/dashboards/system-live.sh
@@ -616,7 +616,7 @@ alias cr-budget='cat $COMMIT_RELAY_HOME/coordination/token-budget.json | jq .'
 watch -n 5 'tail -20 $COMMIT_RELAY_HOME/coordination/dashboard-events.jsonl | jq .'
 
 # Auto-refresh daemon status
-watch -n 10 'ps aux | grep "commit-relay.*daemon"'
+watch -n 10 'ps aux | grep "cortex.*daemon"'
 ```
 
 ### jq Filters
@@ -656,7 +656,7 @@ Can't find what you need?
 
 1. Check the [Quick Start Guide](./QUICK-START.md)
 2. Search [runbooks](./runbooks/)
-3. Check [GitHub Issues](https://github.com/ry-ops/commit-relay/issues)
+3. Check [GitHub Issues](https://github.com/ry-ops/cortex/issues)
 4. Review system logs: `agents/logs/system/`
 
 ---

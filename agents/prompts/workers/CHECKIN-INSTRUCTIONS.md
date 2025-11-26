@@ -56,7 +56,7 @@ checkin_failed "Test suite failed with 3 errors" 60
 ### 1. Initialize (2-3 minutes)
 
 # Read worker spec and set up environment
-cd ~/commit-relay
+cd ~/cortex
 SPEC_FILE=coordination/worker-specs/active/$(echo $WORKER_ID).json
 
 # REQUIRED: Check in to confirm task received
@@ -423,7 +423,7 @@ worker_checkin "in_progress" 50  # Could crash if WORKER_ID not set
 ```markdown
 ### 1. Initialize
 
-cd ~/commit-relay
+cd ~/cortex
 SPEC_FILE=coordination/worker-specs/active/$(echo $WORKER_ID).json
 
 ### 2. Implement
@@ -446,7 +446,7 @@ SPEC_FILE=coordination/worker-specs/active/$(echo $WORKER_ID).json
 ```markdown
 ### 1. Initialize
 
-cd ~/commit-relay
+cd ~/cortex
 SPEC_FILE=coordination/worker-specs/active/$(echo $WORKER_ID).json
 
 # ADDED: Enable check-ins

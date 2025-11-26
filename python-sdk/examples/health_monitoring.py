@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Health monitoring demonstration for commit-relay SDK.
+Health monitoring demonstration for cortex SDK.
 
 Showcases health checking and anomaly detection:
 - Comprehensive system health checks

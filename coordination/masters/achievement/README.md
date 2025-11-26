@@ -1,10 +1,10 @@
 # Achievement Master
 
-Strategic GitHub achievement tracking and automation system for commit-relay.
+Strategic GitHub achievement tracking and automation system for cortex.
 
 ## Overview
 
-Achievement Master leverages commit-relay's MoE (Mixture of Experts) architecture to systematically unlock GitHub achievements through intelligent task routing and workflow automation.
+Achievement Master leverages cortex's MoE (Mixture of Experts) architecture to systematically unlock GitHub achievements through intelligent task routing and workflow automation.
 
 ## Architecture
 
@@ -189,7 +189,7 @@ cat coordination/masters/achievement/metrics/pr-automation-history.jsonl
 
 ## Contributing
 
-Achievement Master is part of commit-relay's autonomous system. All PRs use co-authored commits:
+Achievement Master is part of cortex's autonomous system. All PRs use co-authored commits:
 
 ```bash
 git commit -m "feat: Description
@@ -199,7 +199,7 @@ Co-Authored-By: Claude <noreply@anthropic.com>"
 
 ## License
 
-MIT License - Part of commit-relay project
+MIT License - Part of cortex project
 
 ---
 

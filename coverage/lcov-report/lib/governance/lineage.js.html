@@ -1414,7 +1414,7 @@
  * Phase 3 of Governance Upgrade
  *
  * Provides comprehensive tracking of all operations, transformations,
- * and data flows through the commit-relay system.
+ * and data flows through the cortex system.
  */
 &nbsp;
 const fs = <span class="cstat-no" title="statement not covered" >require('fs').promises;</span>
@@ -1656,7 +1656,7 @@ class AuditLogger {
       context: {
         ...event.context,
         ip_address: event.context?.ip_address || 'localhost',
-        user_agent: event.context?.user_agent || 'commit-relay-system',
+        user_agent: event.context?.user_agent || 'cortex-system',
         session_id: event.context?.session_id || null
       },
       compliance_tags: this.generateComplianceTags(event),

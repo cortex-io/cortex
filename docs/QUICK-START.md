@@ -1,12 +1,12 @@
-# Commit-Relay Quick Start Guide
+# Cortex Quick Start Guide
 
-Get productive with Commit-Relay in **under 30 minutes**!
+Get productive with Cortex in **under 30 minutes**!
 
 ---
 
-## What is Commit-Relay?
+## What is Cortex?
 
-Commit-Relay is an autonomous AI-powered software development system featuring:
+Cortex is an autonomous AI-powered software development system featuring:
 
 - **Mixture-of-Experts (MoE) Routing**: Intelligent task distribution to specialized agents
 - **Master-Worker Architecture**: Coordinated autonomous agents for development tasks
@@ -65,8 +65,8 @@ git --version
 
 ```bash
 # Clone the repository
-git clone https://github.com/ry-ops/commit-relay.git
-cd commit-relay
+git clone https://github.com/ry-ops/cortex.git
+cd cortex
 
 # Set environment variable (add to ~/.bashrc or ~/.zshrc)
 export COMMIT_RELAY_HOME=$(pwd)
@@ -117,7 +117,7 @@ ls coordination/config/
 # Wait for all 9 daemons to start
 
 # Option 2: Automated Startup Script
-./scripts/start-commit-relay.sh
+./scripts/start-cortex.sh
 
 # Verify all daemons are running
 # Should see 9/9 daemons healthy
@@ -185,7 +185,7 @@ Let's create a simple task to test the system:
    - Choose: `3` (medium)
 
 6. **Step 6: Repository (Optional)**
-   - Enter: `ry-ops/commit-relay` (or press Enter to skip)
+   - Enter: `ry-ops/cortex` (or press Enter to skip)
 
 7. **Step 7: Review Specification**
    - Review the worker spec summary
@@ -200,13 +200,13 @@ Let's create a simple task to test the system:
 ✓ Worker spawned successfully!
 
 ℹ Check worker status with:
-  /path/to/commit-relay/scripts/worker-status.sh
+  /path/to/cortex/scripts/worker-status.sh
 
 ℹ View worker logs in:
-  /path/to/commit-relay/agents/logs/workers/
+  /path/to/cortex/agents/logs/workers/
 
 ℹ Monitor system with dashboard:
-  /path/to/commit-relay/scripts/dashboards/system-live.sh
+  /path/to/cortex/scripts/dashboards/system-live.sh
 ```
 
 ### Step 5: Monitor Worker Execution
@@ -259,7 +259,7 @@ tail -f agents/logs/system/heartbeat-monitor-daemon.log
 
 ### Step 7: Use the Dashboards
 
-Commit-Relay provides several monitoring tools:
+Cortex provides several monitoring tools:
 
 #### Real-Time System Dashboard
 
@@ -361,7 +361,7 @@ tail -f agents/logs/workers/<date>/worker-<ID>/worker.log
 ./scripts/wizards/daemon-control.sh
 
 # Check all daemon status (manual)
-for pidfile in /tmp/commit-relay-*.pid; do
+for pidfile in /tmp/cortex-*.pid; do
     [ -f "$pidfile" ] && ps -p $(cat "$pidfile") && echo "✓ $(basename $pidfile)" || echo "✗ $(basename $pidfile)"
 done
 
@@ -411,7 +411,7 @@ grep "circuit_breaker" coordination/dashboard-events.jsonl
 
 ## Next Steps
 
-Congratulations! You're now productive with Commit-Relay. Here's what to explore next:
+Congratulations! You're now productive with Cortex. Here's what to explore next:
 
 ### 1. Learn More About the System
 
@@ -518,8 +518,8 @@ ls -la coordination/dashboard-events.jsonl
 
 ### Community
 
-- GitHub Issues: [Report bugs and request features](https://github.com/ry-ops/commit-relay/issues)
-- Discussions: [Ask questions and share ideas](https://github.com/ry-ops/commit-relay/discussions)
+- GitHub Issues: [Report bugs and request features](https://github.com/ry-ops/cortex/issues)
+- Discussions: [Ask questions and share ideas](https://github.com/ry-ops/cortex/discussions)
 
 ---
 
@@ -546,11 +546,11 @@ Now that you're up and running, consider:
 1. **Run Daily Operations**: Follow [Daily Operations Checklist](./runbooks/daily-operations.md)
 2. **Explore Advanced Features**: Read about self-healing, MoE routing, governance
 3. **Customize Configuration**: Adjust policies, timeouts, and limits for your use case
-4. **Contribute**: Help improve Commit-Relay with code, docs, or feedback
+4. **Contribute**: Help improve Cortex with code, docs, or feedback
 
 ---
 
-**Welcome to Commit-Relay!** 🚀
+**Welcome to Cortex!** 🚀
 
 You're now ready to leverage autonomous AI-powered software development.
 

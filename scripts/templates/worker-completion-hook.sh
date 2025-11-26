@@ -7,12 +7,12 @@ set -euo pipefail
 
 # Get script directory and load libraries
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-COMMIT_RELAY_HOME="${COMMIT_RELAY_HOME:-$(cd "$SCRIPT_DIR/../.." && pwd)}"
+CORTEX_HOME="${CORTEX_HOME:-$(cd "$SCRIPT_DIR/../.." && pwd)}"
 
 # Load required libraries
-source "$COMMIT_RELAY_HOME/scripts/lib/logging.sh"
-source "$COMMIT_RELAY_HOME/scripts/lib/coordination.sh"
-source "$COMMIT_RELAY_HOME/scripts/lib/git-automation.sh"
+source "$CORTEX_HOME/scripts/lib/logging.sh"
+source "$CORTEX_HOME/scripts/lib/coordination.sh"
+source "$CORTEX_HOME/scripts/lib/git-automation.sh"
 
 # Worker context (these should be set by the worker process)
 WORKER_ID="${WORKER_ID:-unknown-worker}"
@@ -65,7 +65,7 @@ if [ "$SKIP_GIT_AUTO" = "true" ]; then
 else
     log_section "Automatic Git Workflow"
 
-    cd "$COMMIT_RELAY_HOME"
+    cd "$CORTEX_HOME"
 
     # Convert FILES_CHANGED to array if it's a string
     if [ -n "$FILES_CHANGED" ]; then
@@ -111,7 +111,7 @@ fi
 
 log_section "Updating Worker Status"
 
-WORKER_SPEC="$COMMIT_RELAY_HOME/coordination/worker-specs/active/${WORKER_ID}.json"
+WORKER_SPEC="$CORTEX_HOME/coordination/worker-specs/active/${WORKER_ID}.json"
 
 if [ -f "$WORKER_SPEC" ]; then
     # Update worker spec with completion info
@@ -146,7 +146,7 @@ log_info ""
 
 # log_section "Handoff to CI/CD Master"
 #
-# HANDOFF_FILE="$COMMIT_RELAY_HOME/coordination/masters/cicd/handoffs/${WORKER_ID}-handoff.json"
+# HANDOFF_FILE="$CORTEX_HOME/coordination/masters/cicd/handoffs/${WORKER_ID}-handoff.json"
 #
 # jq -nc \
 #     --arg worker_id "$WORKER_ID" \

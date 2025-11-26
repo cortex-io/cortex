@@ -5,7 +5,7 @@
 ### 1. Configure API Keys
 
 ```bash
-cd /Users/ryandahlberg/Projects/commit-relay/llm-mesh
+cd /Users/ryandahlberg/Projects/cortex/llm-mesh
 
 # Edit .env file and add your API key
 nano .env
@@ -103,7 +103,7 @@ nano .env
 
 - Complete task processing pipeline
 - Connects all 4 phases
-- Integrates with commit-relay task queue
+- Integrates with cortex task queue
 
 **Key Files**:
 - `task-processor.sh` - End-to-end task processing

@@ -15,7 +15,7 @@ readonly PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 # Source metrics collector
 source "$PROJECT_ROOT/scripts/lib/observability/metrics-collector.sh"
 
-readonly PID_FILE="/tmp/commit-relay-metrics-aggregator.pid"
+readonly PID_FILE="/tmp/cortex-metrics-aggregator.pid"
 readonly LOG_FILE="$PROJECT_ROOT/coordination/observability/metrics/aggregator.log"
 readonly AGGREGATION_INTERVAL=300  # 5 minutes
 

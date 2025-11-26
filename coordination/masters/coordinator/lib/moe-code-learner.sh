@@ -6,11 +6,11 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-COMMIT_RELAY_HOME="${COMMIT_RELAY_HOME:-$(cd "$SCRIPT_DIR/../../../.." && pwd)}"
+CORTEX_HOME="${CORTEX_HOME:-$(cd "$SCRIPT_DIR/../../../.." && pwd)}"
 
-FINDINGS_DIR="$COMMIT_RELAY_HOME/coordination/code-runner/findings"
-LEARNING_DIR="$COMMIT_RELAY_HOME/coordination/masters/coordinator/knowledge-base/code-patterns"
-ROUTING_KB="$COMMIT_RELAY_HOME/coordination/masters/coordinator/knowledge-base/routing-decisions.jsonl"
+FINDINGS_DIR="$CORTEX_HOME/coordination/code-runner/findings"
+LEARNING_DIR="$CORTEX_HOME/coordination/masters/coordinator/knowledge-base/code-patterns"
+ROUTING_KB="$CORTEX_HOME/coordination/masters/coordinator/knowledge-base/routing-decisions.jsonl"
 
 # Ensure directories exist
 mkdir -p "$LEARNING_DIR"

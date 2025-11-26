@@ -32,7 +32,7 @@
         },
         "startup_cleanup": {
           "description": "On system startup, detect and cleanup previous session artifacts",
-          "script": "scripts/startup-recovery.sh - runs on commit-relay initialization",
+          "script": "scripts/startup-recovery.sh - runs on cortex initialization",
           "detection": "Compare task session_id with current session_id",
           "resolution": {
             "worker_spawned_tasks": "Mark as 'cancelled_on_restart' if session_id != current",
@@ -158,8 +158,8 @@
     "expertise_area": "",
     "skills_required": [],
     "knowledge_base_refs": {
-      "implementation_patterns": "/Users/ryandahlberg/commit-relay/scripts/../coordination/masters/development/knowledge-base/implementation-patterns.jsonl",
-      "architecture_docs": "/Users/ryandahlberg/commit-relay/scripts/../coordination/masters/development/knowledge-base/codebase-architecture.json"
+      "implementation_patterns": "/Users/ryandahlberg/cortex/scripts/../coordination/masters/development/knowledge-base/implementation-patterns.jsonl",
+      "architecture_docs": "/Users/ryandahlberg/cortex/scripts/../coordination/masters/development/knowledge-base/codebase-architecture.json"
     }
   },
   "resources": {

@@ -4,7 +4,7 @@
   "worker_id": "sec-worker-E9E9BFEB",
   "task_id": "moe-test-ddqd-v5-1763247177-0adcd7ae",
   "audit_type": "comprehensive_security_compliance",
-  "scope": "commit-relay production systems",
+  "scope": "cortex production systems",
 
   "executive_summary": {
     "overall_security_posture": "good",
@@ -297,10 +297,10 @@
 
   "audit_trail": {
     "scanned_directories": [
-      "/Users/ryandahlberg/commit-relay/scripts",
-      "/Users/ryandahlberg/commit-relay/lib/governance",
-      "/Users/ryandahlberg/commit-relay/dashboard",
-      "/Users/ryandahlberg/commit-relay/coordination/governance"
+      "/Users/ryandahlberg/cortex/scripts",
+      "/Users/ryandahlberg/cortex/lib/governance",
+      "/Users/ryandahlberg/cortex/dashboard",
+      "/Users/ryandahlberg/cortex/coordination/governance"
     ],
     "tools_used": [
       "grep pattern matching",

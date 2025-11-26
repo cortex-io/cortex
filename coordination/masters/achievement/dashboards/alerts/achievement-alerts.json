@@ -140,7 +140,7 @@
     },
     "email": {
       "smtp_server": "${SMTP_SERVER}",
-      "from": "achievement-master@commit-relay.io"
+      "from": "achievement-master@cortex.io"
     },
     "pagerduty": {
       "integration_key": "${PAGERDUTY_INTEGRATION_KEY}"

@@ -5,16 +5,16 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-COMMIT_RELAY_HOME="${COMMIT_RELAY_HOME:-$(cd "$SCRIPT_DIR/../.." && pwd)}"
+CORTEX_HOME="${CORTEX_HOME:-$(cd "$SCRIPT_DIR/../.." && pwd)}"
 
-source "$COMMIT_RELAY_HOME/scripts/lib/logging.sh" 2>/dev/null || {
+source "$CORTEX_HOME/scripts/lib/logging.sh" 2>/dev/null || {
     log_info() { echo "[INFO] $1"; }
     log_warn() { echo "[WARN] $1"; }
     log_error() { echo "[ERROR] $1"; }
 }
 
 # Simulation directory
-SIM_DIR="$COMMIT_RELAY_HOME/coordination/security/simulations"
+SIM_DIR="$CORTEX_HOME/coordination/security/simulations"
 mkdir -p "$SIM_DIR"
 
 # Simulation scenarios
@@ -113,7 +113,7 @@ simulate_token_exhaustion() {
         fi
 
         # Check if detected
-        local alert_file="$COMMIT_RELAY_HOME/coordination/health-alerts.json"
+        local alert_file="$CORTEX_HOME/coordination/health-alerts.json"
         if [ -f "$alert_file" ] && grep -q "token" "$alert_file"; then
             record_detection "$sim_file" "Token alert triggered" "success"
         fi
@@ -163,7 +163,7 @@ simulate_anomalous_behavior() {
     done
 
     # Check anomaly detector
-    local anomaly_log="$COMMIT_RELAY_HOME/coordination/events/anomaly-events.jsonl"
+    local anomaly_log="$CORTEX_HOME/coordination/events/anomaly-events.jsonl"
     if [ -f "$anomaly_log" ]; then
         record_detection "$sim_file" "Anomaly detector active" "success"
     else

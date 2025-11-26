@@ -1,13 +1,13 @@
 #!/bin/bash
 # scripts/wizards/debug-helper.sh
-# Interactive troubleshooting wizard for Commit-Relay
+# Interactive troubleshooting wizard for Cortex
 # Part of Phase 5: Developer Experience
 
 set -euo pipefail
 
 # Get script directory
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-COMMIT_RELAY_HOME="${COMMIT_RELAY_HOME:-$(cd "$SCRIPT_DIR/../.." && pwd)}"
+CORTEX_HOME="${CORTEX_HOME:-$(cd "$SCRIPT_DIR/../.." && pwd)}"
 
 # ANSI color codes
 RED='\033[0;31m'
@@ -103,12 +103,12 @@ debug_stuck_workers() {
     local stuck_threshold=7200  # 2 hours
     local found_stuck=false
 
-    if [ ! -d "$COMMIT_RELAY_HOME/coordination/worker-specs/active" ]; then
+    if [ ! -d "$CORTEX_HOME/coordination/worker-specs/active" ]; then
         print_warning "No active workers directory found"
         return
     fi
 
-    for spec in "$COMMIT_RELAY_HOME/coordination/worker-specs/active"/worker-*.json; do
+    for spec in "$CORTEX_HOME/coordination/worker-specs/active"/worker-*.json; do
         [ ! -f "$spec" ] && continue
 
         local worker_id created_at status
@@ -151,7 +151,7 @@ debug_stuck_workers() {
             fi
 
             # Check logs
-            local log_dir="$COMMIT_RELAY_HOME/agents/logs/workers/$(date +%Y-%m-%d)/$worker_id"
+            local log_dir="$CORTEX_HOME/agents/logs/workers/$(date +%Y-%m-%d)/$worker_id"
             if [ -d "$log_dir" ]; then
                 echo "  Logs: $log_dir/worker.log"
                 echo "  Last 3 log lines:"
@@ -173,7 +173,7 @@ debug_stuck_workers() {
 debug_failed_tasks() {
     print_section "Analyzing Failed Tasks"
 
-    local task_queue="$COMMIT_RELAY_HOME/coordination/task-queue.json"
+    local task_queue="$CORTEX_HOME/coordination/task-queue.json"
 
     if [ ! -f "$task_queue" ]; then
         print_warning "Task queue file not found"
@@ -221,7 +221,7 @@ debug_daemon_health() {
 
     for daemon_info in "${daemons[@]}"; do
         IFS=':' read -r daemon_name display_name <<< "$daemon_info"
-        local pidfile="/tmp/commit-relay-${daemon_name}.pid"
+        local pidfile="/tmp/cortex-${daemon_name}.pid"
 
         if [ -f "$pidfile" ]; then
             local pid
@@ -271,20 +271,20 @@ debug_logs() {
     case "$log_choice" in
         1)
             print_info "Searching daemon logs for errors..."
-            grep -r -i "error" "$COMMIT_RELAY_HOME/agents/logs/system/"*.log 2>/dev/null | tail -50 || print_info "No errors found"
+            grep -r -i "error" "$CORTEX_HOME/agents/logs/system/"*.log 2>/dev/null | tail -50 || print_info "No errors found"
             ;;
         2)
             print_info "Searching worker logs for errors..."
-            find "$COMMIT_RELAY_HOME/agents/logs/workers/" -name "worker.log" -exec grep -i "error" {} + 2>/dev/null | tail -50 || print_info "No errors found"
+            find "$CORTEX_HOME/agents/logs/workers/" -name "worker.log" -exec grep -i "error" {} + 2>/dev/null | tail -50 || print_info "No errors found"
             ;;
         3)
             echo ""
             echo "Available daemon logs:"
-            ls -1 "$COMMIT_RELAY_HOME/agents/logs/system/" 2>/dev/null || print_warning "No daemon logs found"
+            ls -1 "$CORTEX_HOME/agents/logs/system/" 2>/dev/null || print_warning "No daemon logs found"
             echo ""
             read -p "Enter daemon log filename: " daemon_log
-            if [ -f "$COMMIT_RELAY_HOME/agents/logs/system/$daemon_log" ]; then
-                tail -50 "$COMMIT_RELAY_HOME/agents/logs/system/$daemon_log"
+            if [ -f "$CORTEX_HOME/agents/logs/system/$daemon_log" ]; then
+                tail -50 "$CORTEX_HOME/agents/logs/system/$daemon_log"
             else
                 print_error "Log file not found"
             fi
@@ -292,7 +292,7 @@ debug_logs() {
         4)
             echo ""
             read -p "Enter worker ID: " worker_id
-            local worker_log_dir="$COMMIT_RELAY_HOME/agents/logs/workers/$(date +%Y-%m-%d)/$worker_id"
+            local worker_log_dir="$CORTEX_HOME/agents/logs/workers/$(date +%Y-%m-%d)/$worker_id"
             if [ -d "$worker_log_dir" ]; then
                 tail -50 "$worker_log_dir/worker.log" 2>/dev/null || print_error "No log file found"
             else
@@ -304,7 +304,7 @@ debug_logs() {
             read -p "Enter search pattern: " search_pattern
             print_info "Searching all logs for: $search_pattern"
             echo ""
-            grep -r -i "$search_pattern" "$COMMIT_RELAY_HOME/agents/logs/" 2>/dev/null | tail -50 || print_info "No matches found"
+            grep -r -i "$search_pattern" "$CORTEX_HOME/agents/logs/" 2>/dev/null | tail -50 || print_info "No matches found"
             ;;
         *)
             print_error "Invalid choice"
@@ -315,7 +315,7 @@ debug_logs() {
 debug_token_budget() {
     print_section "Token Budget Analysis"
 
-    local budget_file="$COMMIT_RELAY_HOME/coordination/token-budget.json"
+    local budget_file="$CORTEX_HOME/coordination/token-budget.json"
 
     if [ ! -f "$budget_file" ]; then
         print_error "Token budget file not found"
@@ -349,7 +349,7 @@ debug_token_budget() {
 
     # Active workers
     local active_total=0
-    for spec in "$COMMIT_RELAY_HOME/coordination/worker-specs/active"/worker-*.json; do
+    for spec in "$CORTEX_HOME/coordination/worker-specs/active"/worker-*.json; do
         [ ! -f "$spec" ] && continue
 
         local worker_id allocated
@@ -363,7 +363,7 @@ debug_token_budget() {
     # Zombie workers (should be 0)
     local zombie_total=0
     local zombie_count=0
-    for zombie in "$COMMIT_RELAY_HOME/coordination/worker-specs/zombie"/worker-*.json 2>/dev/null; do
+    for zombie in "$CORTEX_HOME/coordination/worker-specs/zombie"/worker-*.json 2>/dev/null; do
         [ ! -f "$zombie" ] && continue
 
         local worker_id allocated
@@ -399,7 +399,7 @@ debug_token_budget() {
 debug_zombies() {
     print_section "Zombie Worker Analysis"
 
-    local zombie_dir="$COMMIT_RELAY_HOME/coordination/worker-specs/zombie"
+    local zombie_dir="$CORTEX_HOME/coordination/worker-specs/zombie"
 
     if [ ! -d "$zombie_dir" ]; then
         print_warning "No zombie directory found"
@@ -449,7 +449,7 @@ debug_zombies() {
 debug_patterns() {
     print_section "Failure Pattern Analysis"
 
-    local patterns_file="$COMMIT_RELAY_HOME/coordination/patterns/failure-patterns.jsonl"
+    local patterns_file="$CORTEX_HOME/coordination/patterns/failure-patterns.jsonl"
 
     if [ ! -f "$patterns_file" ]; then
         print_warning "No failure patterns file found"
@@ -506,7 +506,7 @@ debug_patterns() {
 debug_autofix() {
     print_section "Auto-Fix History"
 
-    local fix_history="$COMMIT_RELAY_HOME/coordination/auto-fix/fix-history.jsonl"
+    local fix_history="$CORTEX_HOME/coordination/auto-fix/fix-history.jsonl"
 
     if [ ! -f "$fix_history" ]; then
         print_warning "No auto-fix history found"
@@ -552,7 +552,7 @@ debug_autofix() {
 main_menu() {
     while true; do
         clear
-        print_header "Commit-Relay Debug Helper"
+        print_header "Cortex Debug Helper"
 
         echo "Select debugging task:"
         echo ""

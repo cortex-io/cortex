@@ -10,8 +10,8 @@ const fsSync = require('fs');
 const path = require('path');
 
 // Base paths
-const COMMIT_RELAY_HOME = process.env.COMMIT_RELAY_HOME || path.join(__dirname, '../../..');
-const COORD_DIR = path.join(COMMIT_RELAY_HOME, 'coordination');
+const CORTEX_HOME = process.env.CORTEX_HOME || path.join(__dirname, '../../..');
+const COORD_DIR = path.join(CORTEX_HOME, 'coordination');
 const DECISIONS_FILE = path.join(COORD_DIR, 'masters/coordinator/knowledge-base/routing-decisions.jsonl');
 
 /**

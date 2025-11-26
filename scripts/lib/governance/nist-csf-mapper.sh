@@ -42,7 +42,7 @@ initialize_nist_dirs() {
 }
 
 #
-# Map commit-relay controls to NIST CSF
+# Map cortex controls to NIST CSF
 #
 get_control_mappings() {
     cat <<'EOF'

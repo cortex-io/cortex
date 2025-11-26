@@ -23,7 +23,7 @@ The ry-ops GitHub organization currently maintains **20 active repositories** wi
 
 ### Visibility Status
 - **Public**: 17 repositories
-- **Private**: 3 repositories (commit-relay, aiana, minimal, cara)
+- **Private**: 3 repositories (cortex, aiana, minimal, cara)
 
 ## Repository Health Assessment
 
@@ -38,7 +38,7 @@ All repositories are currently marked as `pending_catalog`, indicating they requ
 
 ### Critical Observations
 
-#### 1. **commit-relay** (Primary System)
+#### 1. **cortex** (Primary System)
 - **Status**: Active, Private
 - **Language**: JavaScript
 - **Last Commit**: 2025-11-01T19:25:22Z
@@ -51,7 +51,7 @@ All repositories are currently marked as `pending_catalog`, indicating they requ
 - **Language**: None (likely shell scripts or configuration)
 - **Last Commit**: 2025-11-01T14:55:11Z
 - **Description**: AI conversation attendant for Claude Code
-- **Health**: Supporting system for commit-relay
+- **Health**: Supporting system for cortex
 - **Notes**: Monitors Claude Code API conversations
 
 #### 3. MCP Server Ecosystem (14 repositories)
@@ -124,7 +124,7 @@ No repositories identified as high risk at this time.
 1. **Complete Repository Cataloging**
    - All 20 repositories are marked `pending_catalog`
    - Spawn catalog-workers to perform deep analysis of each repository
-   - Priority: commit-relay, aiana, high-star MCP servers
+   - Priority: cortex, aiana, high-star MCP servers
 
 2. **Documentation Improvements**
    - 10+ repositories lack descriptions
@@ -139,7 +139,7 @@ No repositories identified as high risk at this time.
 ### Strategic Initiatives
 
 1. **Health Monitoring Automation**
-   - Implement automated health checks via commit-relay
+   - Implement automated health checks via cortex
    - Track test coverage across all repositories
    - Monitor dependency vulnerabilities
    - Set up stale repository detection (>90 days no commits)
@@ -182,7 +182,7 @@ Public:     ██████████████████████�
 Private:    ███████                            15% (3 repos)
 ```
 
-## Integration with commit-relay
+## Integration with cortex
 
 ### Current Integration Status
 - **Repository Discovery**: Automated via GitHub API

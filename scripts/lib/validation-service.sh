@@ -1,5 +1,5 @@
 #!/bin/bash
-# validation-service.sh - Systematic validation for all commit-relay operations
+# validation-service.sh - Systematic validation for all cortex operations
 # Prevents the 2025-11-11 incident (malformed JSON paralysis) from ever happening again
 #
 # Core Functions:
@@ -19,7 +19,7 @@ set -euo pipefail
 # Configuration
 # ==============================================================================
 
-SCHEMAS_DIR="${SCHEMAS_DIR:-$COMMIT_RELAY_HOME/coordination/schemas}"
+SCHEMAS_DIR="${SCHEMAS_DIR:-$CORTEX_HOME/coordination/schemas}"
 VALIDATION_ENABLED="${VALIDATION_ENABLED:-true}"
 
 # ==============================================================================
@@ -401,7 +401,7 @@ validate_task_spec() {
 # ==============================================================================
 
 # Governance rules file
-GOVERNANCE_RULES_FILE="${GOVERNANCE_RULES_FILE:-$COMMIT_RELAY_HOME/coordination/policies/governance-rules.json}"
+GOVERNANCE_RULES_FILE="${GOVERNANCE_RULES_FILE:-$CORTEX_HOME/coordination/policies/governance-rules.json}"
 
 # Validate compliance with governance rules
 validate_compliance() {
@@ -507,10 +507,10 @@ validate_compliance() {
 
   # Rule 6: Check approval requirements
   local requires_approval="false"
-  if [ -f "$COMMIT_RELAY_HOME/coordination/policies/approval-required.json" ]; then
+  if [ -f "$CORTEX_HOME/coordination/policies/approval-required.json" ]; then
     requires_approval=$(jq -r --arg wt "$worker_type" --arg tt "$task_type" \
       '.operations[] | select(.worker_types | any(. == $wt) or .task_types | any(. == $tt)) | .name' \
-      "$COMMIT_RELAY_HOME/coordination/policies/approval-required.json" 2>/dev/null | head -1)
+      "$CORTEX_HOME/coordination/policies/approval-required.json" 2>/dev/null | head -1)
   fi
 
   if [ -n "$requires_approval" ]; then
@@ -520,7 +520,7 @@ validate_compliance() {
       ((errors++))
     else
       # Verify approval exists and is valid
-      local approval_file="$COMMIT_RELAY_HOME/coordination/approvals/approved/${approval_id}.json"
+      local approval_file="$CORTEX_HOME/coordination/approvals/approved/${approval_id}.json"
       if [ ! -f "$approval_file" ]; then
         log_error "validate_compliance: Approval $approval_id not found or not approved"
         ((errors++))
@@ -533,7 +533,7 @@ validate_compliance() {
     local max_concurrent=$(jq -r --arg wt "$worker_type" \
       '.concurrent_limits[$wt] // .concurrent_limits.default // 10' "$GOVERNANCE_RULES_FILE")
 
-    local current_count=$(find "$COMMIT_RELAY_HOME/coordination/worker-specs/active" \
+    local current_count=$(find "$CORTEX_HOME/coordination/worker-specs/active" \
       -name "worker-${worker_type}-*.json" 2>/dev/null | wc -l | tr -d ' ')
 
     if [ "$current_count" -ge "$max_concurrent" ]; then
@@ -583,7 +583,7 @@ pre_flight_checks() {
   if [ -n "$task_id" ] && [ "$task_id" != "null" ]; then
     local task_exists
     task_exists=$(jq --arg tid "$task_id" '.tasks[] | select(.id == $tid) | .id' \
-      "$COMMIT_RELAY_HOME/coordination/task-queue.json" 2>/dev/null || echo "")
+      "$CORTEX_HOME/coordination/task-queue.json" 2>/dev/null || echo "")
 
     if [ -z "$task_exists" ]; then
       log_error "Pre-flight check failed: Task not found in queue: $task_id"
@@ -598,7 +598,7 @@ pre_flight_checks() {
   if [ -n "$worker_type" ] && [ "$worker_type" != "null" ]; then
     local type_exists
     type_exists=$(jq --arg wt "$worker_type" '.worker_types[$wt] // empty' \
-      "$COMMIT_RELAY_HOME/agents/configs/agent-registry.json" 2>/dev/null || echo "")
+      "$CORTEX_HOME/agents/configs/agent-registry.json" 2>/dev/null || echo "")
 
     if [ -z "$type_exists" ]; then
       log_warn "Pre-flight check warning: Worker type not in registry: $worker_type"
@@ -612,7 +612,7 @@ pre_flight_checks() {
   if [ "$token_budget" -gt 0 ]; then
     local available_tokens
     available_tokens=$(jq -r '.remaining // 0' \
-      "$COMMIT_RELAY_HOME/coordination/token-budget.json" 2>/dev/null || echo "0")
+      "$CORTEX_HOME/coordination/token-budget.json" 2>/dev/null || echo "0")
 
     if [ "$available_tokens" -lt "$token_budget" ]; then
       log_warn "Pre-flight check warning: Insufficient token budget (need: $token_budget, available: $available_tokens)"

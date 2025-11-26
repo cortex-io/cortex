@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Generate a Corporate Memphis style project image for commit-relay
+Generate a Corporate Memphis style project image for cortex
 """
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
@@ -27,7 +27,7 @@ ax.set_ylim(0, 9)
 ax.axis('off')
 
 # Title
-ax.text(8, 8.2, 'commit-relay', fontsize=72, weight='bold',
+ax.text(8, 8.2, 'cortex', fontsize=72, weight='bold',
         ha='center', va='top', color=COLORS['purple'], family='sans-serif')
 ax.text(8, 7.6, 'AI-Powered Development Orchestration', fontsize=24,
         ha='center', va='top', color=COLORS['blue'], family='sans-serif', style='italic')
@@ -154,7 +154,7 @@ for i, (badge_text, badge_color) in enumerate(zip(badges, badge_colors)):
 plt.tight_layout()
 
 # Save as PDF
-output_file = '/Users/ryandahlberg/commit-relay/commit-relay-project-image.pdf'
+output_file = '/Users/ryandahlberg/cortex/cortex-project-image.pdf'
 plt.savefig(output_file, format='pdf', dpi=300, bbox_inches='tight',
             facecolor=COLORS['bg'], edgecolor='none')
 print(f"✓ Created Corporate Memphis style image: {output_file}")

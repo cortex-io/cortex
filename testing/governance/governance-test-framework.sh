@@ -13,8 +13,8 @@ BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
 # Test configuration
-COMMIT_RELAY_HOME="${COMMIT_RELAY_HOME:-/Users/ryandahlberg/commit-relay}"
-TEST_OUTPUT_DIR="${COMMIT_RELAY_HOME}/testing/governance/results"
+CORTEX_HOME="${CORTEX_HOME:-/Users/ryandahlberg/cortex}"
+TEST_OUTPUT_DIR="${CORTEX_HOME}/testing/governance/results"
 AUDIT_LOG="${TEST_OUTPUT_DIR}/governance-audit-trail.jsonl"
 TEST_REPORT="${TEST_OUTPUT_DIR}/governance-test-report.json"
 TIMESTAMP=$(date -u +%Y-%m-%dT%H:%M:%SZ)
@@ -426,7 +426,7 @@ test_compliance_monitoring() {
     local missing_files=()
 
     # Check for MoE router
-    if [ ! -f "${COMMIT_RELAY_HOME}/coordination/masters/coordinator/lib/moe-router.sh" ]; then
+    if [ ! -f "${CORTEX_HOME}/coordination/masters/coordinator/lib/moe-router.sh" ]; then
         missing_files+=("moe-router.sh")
         compliance_passed=false
     fi

@@ -1,10 +1,10 @@
 # Daemon Monitoring Architecture
 
-This document describes the health monitoring system for commit-relay daemons and expected behavior patterns.
+This document describes the health monitoring system for cortex daemons and expected behavior patterns.
 
 ## Overview
 
-The commit-relay system uses a Health Monitor Daemon (`health-monitor-daemon.sh`) to track the health of all system components and automatically spawn backups when failures are detected.
+The cortex system uses a Health Monitor Daemon (`health-monitor-daemon.sh`) to track the health of all system components and automatically spawn backups when failures are detected.
 
 ## Daemon Types
 
@@ -16,7 +16,7 @@ These daemons run continuously and should maintain regular heartbeats:
 - **Purpose**: Project Manager - monitors worker health and intervention
 - **Heartbeat Source**: `coordination/pm-state.json` (field: `pm_daemon.last_loop`)
 - **Expected Frequency**: Every 3 minutes (180 seconds)
-- **PID File**: `/tmp/commit-relay-pm-daemon.pid`
+- **PID File**: `/tmp/cortex-pm-daemon.pid`
 - **Monitoring Strategy**:
   - Check process via PID file first
   - Then verify `pm-state.json` has recent `last_loop` timestamp
@@ -26,20 +26,20 @@ These daemons run continuously and should maintain regular heartbeats:
 - **Purpose**: Automatically launches pending workers
 - **Heartbeat Source**: Process check via `pgrep`
 - **Expected Frequency**: Continuous process
-- **PID File**: `/tmp/commit-relay-worker-daemon.pid`
+- **PID File**: `/tmp/cortex-worker-daemon.pid`
 - **Monitoring Strategy**: Check if process is running
 
 #### 3. Health Monitor Daemon (`health-monitor-daemon.sh`)
 - **Purpose**: Monitors all other daemons and system health
 - **Heartbeat Source**: Self-monitoring (this daemon)
 - **Expected Frequency**: Every 3 minutes (180 seconds)
-- **PID File**: `/tmp/commit-relay-health-monitor.pid`
+- **PID File**: `/tmp/cortex-health-monitor.pid`
 - **Monitoring Strategy**: Monitored by external dashboard/admin
 
 #### 4. Metrics Snapshot Daemon (`metrics-snapshot-daemon.sh`)
 - **Purpose**: Collects historical metrics snapshots
 - **Expected Frequency**: Periodic snapshots
-- **PID File**: `/tmp/commit-relay-metrics-snapshot.pid`
+- **PID File**: `/tmp/cortex-metrics-snapshot.pid`
 
 #### 5. Dashboard Server
 - **Purpose**: Real-time monitoring and admin interface
@@ -141,7 +141,7 @@ The health monitor implements multiple checks to prevent false positives:
 
 ## Automated Repair System
 
-The health monitoring system integrates with the commit-relay automation system:
+The health monitoring system integrates with the cortex automation system:
 
 ### Auto-Repair Flow
 
@@ -169,7 +169,7 @@ The Health Monitor Daemon itself should be monitored:
 - **Dashboard**: Admin page shows Health Monitor status and controls
 - **Process Check**: `ps aux | grep health-monitor-daemon`
 - **Log Monitoring**: `tail -f agents/logs/system/health-monitor.log`
-- **PID File**: Check `/tmp/commit-relay-health-monitor.pid`
+- **PID File**: Check `/tmp/cortex-health-monitor.pid`
 
 ## Best Practices
 
@@ -223,7 +223,7 @@ The Health Monitor Daemon itself should be monitored:
                ▼                                ▼
     ┌──────────────────┐           ┌──────────────────┐
     │  Health Alerts   │           │  Auto Repair     │
-    │  (Dashboard UI)  │──────────>│  (commit-relay)  │
+    │  (Dashboard UI)  │──────────>│  (cortex)  │
     └──────────────────┘           └──────────────────┘
 ```
 

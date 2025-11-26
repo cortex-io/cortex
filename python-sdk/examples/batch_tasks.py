@@ -26,7 +26,7 @@ def batch_security_scans():
     repositories = [
         'ry-ops/mcp-server-unifi',
         'ry-ops/n8n-mcp-server',
-        'ry-ops/commit-relay',
+        'ry-ops/cortex',
         'ry-ops/another-repo',
         'ry-ops/test-repo'
     ]
@@ -181,7 +181,7 @@ def create_weekly_maintenance_tasks():
     repositories = [
         'ry-ops/mcp-server-unifi',
         'ry-ops/n8n-mcp-server',
-        'ry-ops/commit-relay'
+        'ry-ops/cortex'
     ]
 
     print(f"Creating weekly maintenance tasks for {len(repositories)} repositories...")
@@ -242,7 +242,7 @@ def create_sample_json_config():
             },
             {
                 "type": "development",
-                "repository": "ry-ops/commit-relay",
+                "repository": "ry-ops/cortex",
                 "branch": "feature/new-feature",
                 "priority": "medium",
                 "requirements": [
@@ -262,7 +262,7 @@ def create_sample_json_config():
         ]
     }
 
-    config_path = Path('/tmp/commit-relay-batch-tasks.json')
+    config_path = Path('/tmp/cortex-batch-tasks.json')
     with open(config_path, 'w') as f:
         json.dump(config, f, indent=2)
 
@@ -279,7 +279,7 @@ def main():
     """Run batch task creation demonstrations."""
 
     print("=" * 70)
-    print("Commit-Relay: Batch Task Creation Demo")
+    print("Cortex: Batch Task Creation Demo")
     print("=" * 70)
     print()
     print("This demo shows different batch task creation patterns:")

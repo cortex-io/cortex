@@ -1,13 +1,13 @@
 #!/bin/bash
 # Access Control Helper Functions
-# Provides permission checking for all commit-relay scripts
+# Provides permission checking for all cortex scripts
 #
 # Usage:
 #   source "$(dirname "${BASH_SOURCE[0]}")/lib/access-check.sh"
 #   check_permission "$principal" "$asset" "$operation" || exit 1
 
 # Configuration
-GOVERNANCE_LIB="${COMMIT_RELAY_HOME:-/Users/ryandahlberg/Projects/commit-relay}/lib/governance"
+GOVERNANCE_LIB="${CORTEX_HOME:-/Users/ryandahlberg/Projects/cortex}/lib/governance"
 ACCESS_CLI="$GOVERNANCE_LIB/access-cli.js"
 
 # Permission check cache disabled for Bash 3.2 compatibility
@@ -148,8 +148,8 @@ log_access_decision() {
 ##
 get_current_principal() {
     # Check environment variable first
-    if [ -n "${COMMIT_RELAY_PRINCIPAL:-}" ]; then
-        echo "$COMMIT_RELAY_PRINCIPAL"
+    if [ -n "${CORTEX_PRINCIPAL:-}" ]; then
+        echo "$CORTEX_PRINCIPAL"
         return
     fi
 

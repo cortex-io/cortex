@@ -2,7 +2,7 @@
 
 ## Overview
 
-Webhook support for real-time event notifications from commit-relay.
+Webhook support for real-time event notifications from cortex.
 
 ## Supported Events
 

@@ -7,7 +7,7 @@ set -euo pipefail
 
 # Get script directory
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-COMMIT_RELAY_HOME="${COMMIT_RELAY_HOME:-$(cd "$SCRIPT_DIR/../.." && pwd)}"
+CORTEX_HOME="${CORTEX_HOME:-$(cd "$SCRIPT_DIR/../.." && pwd)}"
 
 # ANSI color codes
 RED='\033[0;31m'
@@ -113,7 +113,7 @@ select_option() {
 
 # Check token budget
 check_token_budget() {
-    local budget_file="$COMMIT_RELAY_HOME/coordination/token-budget.json"
+    local budget_file="$CORTEX_HOME/coordination/token-budget.json"
 
     if [[ ! -f "$budget_file" ]]; then
         print_warning "Token budget file not found. Skipping budget check."
@@ -264,7 +264,7 @@ main() {
 
     # Step 6: Repository (optional)
     print_section "Step 6: Repository (Optional)"
-    print_info "Format: owner/repo (e.g., ry-ops/commit-relay)"
+    print_info "Format: owner/repo (e.g., ry-ops/cortex)"
     repository=$(read_input "Enter repository" "")
     if [[ -n "$repository" ]]; then
         print_success "Repository: $repository"
@@ -284,7 +284,7 @@ main() {
         print_warning "Worker not spawned. Specification saved for reference."
         echo ""
         echo "To spawn manually, run:"
-        echo -e "${CYAN}$COMMIT_RELAY_HOME/scripts/spawn-worker.sh \\${NC}"
+        echo -e "${CYAN}$CORTEX_HOME/scripts/spawn-worker.sh \\${NC}"
         echo -e "${CYAN}  --type $worker_type \\${NC}"
         echo -e "${CYAN}  --task-id $task_id \\${NC}"
         echo -e "${CYAN}  --master $master \\${NC}"
@@ -296,7 +296,7 @@ main() {
     fi
 
     # Build spawn command
-    spawn_cmd="$COMMIT_RELAY_HOME/scripts/spawn-worker.sh"
+    spawn_cmd="$CORTEX_HOME/scripts/spawn-worker.sh"
     spawn_args=(
         "--type" "$worker_type"
         "--task-id" "$task_id"
@@ -317,13 +317,13 @@ main() {
         print_success "${GREEN}${BOLD}Worker spawned successfully!${NC}"
         echo ""
         print_info "Check worker status with:"
-        echo -e "  ${CYAN}$COMMIT_RELAY_HOME/scripts/worker-status.sh${NC}"
+        echo -e "  ${CYAN}$CORTEX_HOME/scripts/worker-status.sh${NC}"
         echo ""
         print_info "View worker logs in:"
-        echo -e "  ${CYAN}$COMMIT_RELAY_HOME/agents/logs/workers/${NC}"
+        echo -e "  ${CYAN}$CORTEX_HOME/agents/logs/workers/${NC}"
         echo ""
         print_info "Monitor system with dashboard:"
-        echo -e "  ${CYAN}$COMMIT_RELAY_HOME/scripts/dashboards/system-live.sh${NC}"
+        echo -e "  ${CYAN}$CORTEX_HOME/scripts/dashboards/system-live.sh${NC}"
     else
         echo ""
         print_error "${RED}${BOLD}Failed to spawn worker!${NC}"

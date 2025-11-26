@@ -1,13 +1,13 @@
 #!/bin/bash
 # scripts/system-maintenance.sh
-# System Maintenance Script for commit-relay
+# System Maintenance Script for cortex
 # Performs automated cleanup, archival, and optimization tasks
 
 set -euo pipefail
 
 # Get script directory
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-COMMIT_RELAY_HOME="${COMMIT_RELAY_HOME:-$(cd "$SCRIPT_DIR/.." && pwd)}"
+CORTEX_HOME="${CORTEX_HOME:-$(cd "$SCRIPT_DIR/.." && pwd)}"
 
 # Load libraries if available
 if [[ -f "$SCRIPT_DIR/lib/logging.sh" ]]; then
@@ -26,7 +26,7 @@ BLUE="\033[0;34m"
 NC="\033[0m"  # No Color
 
 # Configuration
-ARCHIVE_DIR="$COMMIT_RELAY_HOME/coordination/archives"
+ARCHIVE_DIR="$CORTEX_HOME/coordination/archives"
 LOG_RETENTION_DAYS=30
 HISTORY_RETENTION_DAYS=7
 DRY_RUN=false
@@ -36,7 +36,7 @@ usage() {
     cat <<EOF
 Usage: $0 [OPTIONS]
 
-System maintenance script for commit-relay. Performs cleanup, archival, and optimization.
+System maintenance script for cortex. Performs cleanup, archival, and optimization.
 
 OPTIONS:
     --dry-run           Show what would be done without making changes
@@ -107,7 +107,7 @@ done
 echo -e "${BLUE}"
 cat <<'EOF'
 ╔═══════════════════════════════════════════════════════════╗
-║         commit-relay System Maintenance Script            ║
+║         cortex System Maintenance Script            ║
 ║                                                           ║
 ║  Automated cleanup, archival, and optimization            ║
 ╚═══════════════════════════════════════════════════════════╝
@@ -125,7 +125,7 @@ mkdir -p "$ARCHIVE_DIR"
 archive_logs() {
     echo -e "${BLUE}═══ Task 1: Archiving Old Logs ═══${NC}"
 
-    local logs_dir="$COMMIT_RELAY_HOME/agents/logs"
+    local logs_dir="$CORTEX_HOME/agents/logs"
     if [[ ! -d "$logs_dir" ]]; then
         log_warn "Logs directory not found: $logs_dir"
         return 0
@@ -169,7 +169,7 @@ archive_logs() {
 cleanup_failed_workers() {
     echo -e "${BLUE}═══ Task 2: Cleaning Failed Worker Specs ═══${NC}"
 
-    local failed_dir="$COMMIT_RELAY_HOME/coordination/worker-specs/failed"
+    local failed_dir="$CORTEX_HOME/coordination/worker-specs/failed"
     if [[ ! -d "$failed_dir" ]]; then
         log_warn "Failed worker specs directory not found: $failed_dir"
         return 0
@@ -212,7 +212,7 @@ cleanup_failed_workers() {
 compress_history() {
     echo -e "${BLUE}═══ Task 3: Compressing Historical Data ═══${NC}"
 
-    local history_dir="$COMMIT_RELAY_HOME/coordination/history"
+    local history_dir="$CORTEX_HOME/coordination/history"
     if [[ ! -d "$history_dir" ]]; then
         log_warn "History directory not found: $history_dir"
         return 0
@@ -260,7 +260,7 @@ compress_history() {
 archive_dashboard_events() {
     echo -e "${BLUE}═══ Task 4: Archiving Dashboard Events ═══${NC}"
 
-    local events_file="$COMMIT_RELAY_HOME/coordination/dashboard-events.jsonl"
+    local events_file="$CORTEX_HOME/coordination/dashboard-events.jsonl"
     if [[ ! -f "$events_file" ]]; then
         log_warn "Dashboard events file not found: $events_file"
         return 0
@@ -312,7 +312,7 @@ cleanup_test_artifacts() {
     local removed_count=0
 
     for pattern in "${test_patterns[@]}"; do
-        local files=$(find "$COMMIT_RELAY_HOME" -name "$(basename "$pattern")" -type f 2>/dev/null || true)
+        local files=$(find "$CORTEX_HOME" -name "$(basename "$pattern")" -type f 2>/dev/null || true)
 
         if [[ -n "$files" ]]; then
             local count=$(echo "$files" | wc -l | tr -d ' ')
@@ -342,7 +342,7 @@ optimize_coordination_files() {
     echo -e "${BLUE}═══ Task 6: Optimizing Coordination Files ═══${NC}"
 
     # Clean up processed handoffs older than 7 days
-    local handoff_dir="$COMMIT_RELAY_HOME/coordination/masters/coordinator/handoffs"
+    local handoff_dir="$CORTEX_HOME/coordination/masters/coordinator/handoffs"
     if [[ -d "$handoff_dir" ]]; then
         local old_handoffs=$(find "$handoff_dir" -name "*.processed" -mtime +7 2>/dev/null || true)
 

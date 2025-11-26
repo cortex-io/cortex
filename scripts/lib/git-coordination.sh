@@ -161,7 +161,7 @@ create_consolidated_pr() {
     # Build PR body
     local pr_body="## Summary\n\n"
     pr_body+="Autonomous implementation of task **${task_id}**: ${description}\n\n"
-    pr_body+="This PR was created automatically by the commit-relay CI/CD system.\n\n"
+    pr_body+="This PR was created automatically by the cortex CI/CD system.\n\n"
     pr_body+="### Worker Contributions\n\n"
 
     for worker_id in "${worker_ids[@]}"; do
@@ -200,7 +200,7 @@ create_consolidated_pr() {
     pr_body+="- [ ] Verify no breaking changes\n\n"
     pr_body+="---\n\n"
     pr_body+="🤖 **Generated with [Claude Code](https://claude.com/claude-code)**\n\n"
-    pr_body+="_This PR was autonomously created by commit-relay CI/CD system._"
+    pr_body+="_This PR was autonomously created by cortex CI/CD system._"
 
     # Create PR title
     local pr_title="feat(${task_id}): ${description}"

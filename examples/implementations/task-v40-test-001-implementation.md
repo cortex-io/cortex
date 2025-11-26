@@ -24,4 +24,4 @@ This file documents the implementation of: Worker task
 
 ---
 
-🤖 Implemented by commit-relay autonomous worker system
+🤖 Implemented by cortex autonomous worker system

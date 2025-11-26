@@ -8,7 +8,7 @@
 - **Duration**: ~1 minute
 
 ## Objective
-Create a simple hello world bash script in `scripts/test-hello.sh` that prints 'Hello from commit-relay'
+Create a simple hello world bash script in `scripts/test-hello.sh` that prints 'Hello from cortex'
 
 ## Execution Timeline
 
@@ -25,7 +25,7 @@ Create a simple hello world bash script in `scripts/test-hello.sh` that prints '
 - Previous worker: worker-worker-1763310797-8808
 
 ### 3. Deliverable Verification (16:34:50)
-- Script found at: `/Users/ryandahlberg/Projects/commit-relay/scripts/test-hello.sh`
+- Script found at: `/Users/ryandahlberg/Projects/cortex/scripts/test-hello.sh`
 - Created by: worker-implementation-003
 - Permissions: -rwxr-xr-x (executable)
 - File size: 178 bytes
@@ -35,17 +35,17 @@ Script contents:
 ```bash
 #!/usr/bin/env bash
 
-# Simple hello world test script for commit-relay system
+# Simple hello world test script for cortex system
 # Created by: worker-implementation-003
 # Task: test-system-e2e-001
 
-echo "Hello from commit-relay"
+echo "Hello from cortex"
 ```
 **Result**: Contents match requirements exactly
 
 ### 5. Functional Testing (16:34:52)
-- Executed: `bash /Users/ryandahlberg/Projects/commit-relay/scripts/test-hello.sh`
-- Output: `Hello from commit-relay`
+- Executed: `bash /Users/ryandahlberg/Projects/cortex/scripts/test-hello.sh`
+- Output: `Hello from cortex`
 - **Result**: SUCCESS ✓
 
 ## Findings

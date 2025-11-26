@@ -3,7 +3,7 @@
 # Part of Phase 3: Automated Data Lineage & Audit Trails
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-COMMIT_RELAY_HOME="${COMMIT_RELAY_HOME:-$(cd "$SCRIPT_DIR/../.." && pwd)}"
+CORTEX_HOME="${CORTEX_HOME:-$(cd "$SCRIPT_DIR/../.." && pwd)}"
 
 # Lineage tracking functions
 
@@ -23,7 +23,7 @@ record_lineage() {
     local actor="$4"
     local transformation="${5:-}"
 
-    local lineage_log="$COMMIT_RELAY_HOME/coordination/governance/lineage-log.jsonl"
+    local lineage_log="$CORTEX_HOME/coordination/governance/lineage-log.jsonl"
     mkdir -p "$(dirname "$lineage_log")"
 
     local lineage_id="lineage-$(date +%s)-$(openssl rand -hex 3 2>/dev/null || echo $RANDOM)"
@@ -68,7 +68,7 @@ log_audit() {
     local outcome="$4"
     local context_json="${5:-{}}"
 
-    local audit_log="$COMMIT_RELAY_HOME/coordination/governance/audit-trail.jsonl"
+    local audit_log="$CORTEX_HOME/coordination/governance/audit-trail.jsonl"
     mkdir -p "$(dirname "$audit_log")"
 
     local audit_id="audit-$(date +%s)-$(openssl rand -hex 3 2>/dev/null || echo $RANDOM)"
@@ -115,7 +115,7 @@ EOF
 ##############################################################################
 query_lineage() {
     local entity="$1"
-    node "$COMMIT_RELAY_HOME/lib/governance/lineage.js" query-lineage "$entity"
+    node "$CORTEX_HOME/lib/governance/lineage.js" query-lineage "$entity"
 }
 
 ##############################################################################
@@ -126,7 +126,7 @@ query_lineage() {
 ##############################################################################
 query_audit() {
     local criteria="${1:-{}}"
-    node "$COMMIT_RELAY_HOME/lib/governance/lineage.js" query-audit "$criteria"
+    node "$CORTEX_HOME/lib/governance/lineage.js" query-audit "$criteria"
 }
 
 ##############################################################################
@@ -137,7 +137,7 @@ query_audit() {
 ##############################################################################
 generate_compliance_report() {
     local period="${1:-30d}"
-    node "$COMMIT_RELAY_HOME/lib/governance/lineage.js" compliance-report "$period"
+    node "$CORTEX_HOME/lib/governance/lineage.js" compliance-report "$period"
 }
 
 ##############################################################################
@@ -148,7 +148,7 @@ generate_compliance_report() {
 build_lineage_graph() {
     local entity="$1"
     local depth="${2:-3}"
-    node "$COMMIT_RELAY_HOME/lib/governance/lineage.js" lineage-graph "$entity" "$depth"
+    node "$CORTEX_HOME/lib/governance/lineage.js" lineage-graph "$entity" "$depth"
 }
 
 # Export functions for sourcing

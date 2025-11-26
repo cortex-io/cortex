@@ -8,7 +8,7 @@
 ## Task Summary
 
 **Title**: Autonomous Test: Create greeting script
-**Description**: Create a bash script at scripts/greet.sh that accepts a name argument and prints 'Hello, [name]! Welcome to autonomous commit-relay!'
+**Description**: Create a bash script at scripts/greet.sh that accepts a name argument and prints 'Hello, [name]! Welcome to autonomous cortex!'
 
 ## Execution Summary
 
@@ -36,7 +36,7 @@ The task was found to be already completed by worker-implementation-017 at 2025-
 
 4. **Testing Performed**
    - Test 1: `greet.sh "TestUser"` → ✅ PASS
-     - Output: "Hello, TestUser! Welcome to autonomous commit-relay!"
+     - Output: "Hello, TestUser! Welcome to autonomous cortex!"
    - Test 2: `greet.sh` (no args) → ✅ PASS
      - Correctly displays error and usage information
 
@@ -54,7 +54,7 @@ The `scripts/greet.sh` script meets all requirements:
 
 ```bash
 #!/bin/bash
-# Greeting script for commit-relay
+# Greeting script for cortex
 # Created by: worker-implementation-017
 # Task: test-autonomous-001
 
@@ -75,7 +75,7 @@ fi
 NAME="$1"
 
 # Print the greeting
-echo "Hello, ${NAME}! Welcome to autonomous commit-relay!"
+echo "Hello, ${NAME}! Welcome to autonomous cortex!"
 ```
 
 ## Conclusion

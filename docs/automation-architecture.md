@@ -1,4 +1,4 @@
-# Commit-Relay Automation Architecture
+# Cortex Automation Architecture
 
 **Status**: 🚧 In Progress
 **Version**: 1.0
@@ -9,7 +9,7 @@
 
 ## Overview
 
-This document outlines the three-phase approach to building autonomous agent automation for the commit-relay master-worker system. The goal is to move from manual orchestration (using Task tool directly) to fully autonomous agent coordination.
+This document outlines the three-phase approach to building autonomous agent automation for the cortex master-worker system. The goal is to move from manual orchestration (using Task tool directly) to fully autonomous agent coordination.
 
 **Current State**: Manual "role-playing" where we invoke agents via Task tool
 **Target State**: Self-coordinating system where agents autonomously process task queues
@@ -153,7 +153,7 @@ Optional:
   --timeout MINUTES     Worker timeout (default: from worker type)
 
 Environment:
-  COMMIT_RELAY_HOME     Path to commit-relay repository
+  COMMIT_RELAY_HOME     Path to cortex repository
 
 Output:
   Worker ID (e.g., worker-scan-101)
@@ -181,7 +181,7 @@ Optional:
   --force               Skip confirmation prompts
 
 Environment:
-  COMMIT_RELAY_HOME     Path to commit-relay repository
+  COMMIT_RELAY_HOME     Path to cortex repository
 
 Output:
   Logs to agents/logs/security/YYYY-MM-DD.md
@@ -205,7 +205,7 @@ Example:
 
 **1. User Triggers Master**
 ```bash
-$ cd ~/commit-relay
+$ cd ~/cortex
 $ ./scripts/run-security-master.sh
 ```
 
@@ -448,7 +448,7 @@ LOG_RETENTION_DAYS=30
 $ ./scripts/coordinator-daemon.sh start
 
 Starting coordinator-daemon...
-✅ PID 12345 written to /var/run/commit-relay-daemon.pid
+✅ PID 12345 written to /var/run/cortex-daemon.pid
 ✅ Logs: agents/logs/daemon/2025-11-02.log
 ✅ Polling task queue every 30 seconds
 ✅ Auto-dispatch: critical=yes, high=yes, medium=no, low=no
@@ -1075,7 +1075,7 @@ process_event_queue() {
 
 acquire_lock() {
   local AGENT_ID=$1
-  local LOCK_FILE="/tmp/commit-relay-${AGENT_ID}.lock"
+  local LOCK_FILE="/tmp/cortex-${AGENT_ID}.lock"
 
   # Check if another instance running
   if [ -f "$LOCK_FILE" ]; then
@@ -1095,7 +1095,7 @@ acquire_lock() {
 
 release_lock() {
   local AGENT_ID=$1
-  rm -f "/tmp/commit-relay-${AGENT_ID}.lock"
+  rm -f "/tmp/cortex-${AGENT_ID}.lock"
 }
 ```
 
@@ -1265,7 +1265,7 @@ All phases should track:
 API_KEY="sk-1234567890"
 
 # ✅ Good
-API_KEY="${N8N_API_KEY:-$(security find-generic-password -a n8n -s commit-relay -w)}"
+API_KEY="${N8N_API_KEY:-$(security find-generic-password -a n8n -s cortex -w)}"
 ```
 
 ### Script Permissions
@@ -1358,7 +1358,7 @@ No, they conflict. Choose one at a time.
 ## Appendix A: File Structure
 
 ```
-commit-relay/
+cortex/
 ├── scripts/
 │   ├── spawn-worker.sh              # Phase 1
 │   ├── run-coordinator.sh           # Phase 1

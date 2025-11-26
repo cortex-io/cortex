@@ -1,6 +1,6 @@
 # LLM Mesh - ML/AI Intelligence Layer
 
-This directory contains the ML/AI components that enhance commit-relay with intelligent routing, prediction, and context-aware agents.
+This directory contains the ML/AI components that enhance cortex with intelligent routing, prediction, and context-aware agents.
 
 ## Quick Start
 

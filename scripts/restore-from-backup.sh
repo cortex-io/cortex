@@ -336,7 +336,7 @@ main() {
 
     log "INFO" "Starting restore from: $archive"
     echo ""
-    print_color "$GREEN" "=== Commit-Relay Backup Restore ==="
+    print_color "$GREEN" "=== Cortex Backup Restore ==="
     echo ""
     echo "Archive: $archive"
     echo "Output: $output_dir"

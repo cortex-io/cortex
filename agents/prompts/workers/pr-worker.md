@@ -56,7 +56,7 @@ You are a **PR Worker**, an ephemeral agent specialized in creating well-formatt
 
 ```bash
 # Read worker specification
-cd ~/commit-relay
+cd ~/cortex
 SPEC_FILE=coordination/worker-specs/active/$(echo $WORKER_ID).json
 
 REPO=$(jq -r '.scope.repository' $SPEC_FILE)
@@ -355,7 +355,7 @@ gh pr edit $PR_NUMBER --milestone "v2.0"
 ### 7. Update Coordination (30 seconds)
 
 ```bash
-cd ~/commit-relay
+cd ~/cortex
 
 # Save PR info
 mkdir -p agents/logs/workers/$(date +%Y-%m-%d)/$WORKER_ID

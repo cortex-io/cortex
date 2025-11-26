@@ -13,20 +13,20 @@ set -euo pipefail
 
 # Configuration
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-COMMIT_RELAY_HOME="${COMMIT_RELAY_HOME:-$(cd "$SCRIPT_DIR/.." && pwd)}"
-COORD_DIR="$COMMIT_RELAY_HOME/coordination"
+CORTEX_HOME="${CORTEX_HOME:-$(cd "$SCRIPT_DIR/.." && pwd)}"
+COORD_DIR="$CORTEX_HOME/coordination"
 MASTERS_DIR="$COORD_DIR/masters"
 WORKER_SPECS_DIR="$COORD_DIR/worker-specs/active"
-LOG_DIR="$COMMIT_RELAY_HOME/agents/logs/system"
+LOG_DIR="$CORTEX_HOME/agents/logs/system"
 LOG_FILE="$LOG_DIR/handoff-processor.log"
-PID_FILE="/tmp/commit-relay-handoff-processor.pid"
+PID_FILE="/tmp/cortex-handoff-processor.pid"
 EVENTS_FILE="$COORD_DIR/dashboard-events.jsonl"
 
 # Polling interval
 POLL_INTERVAL=10  # Check every 10 seconds
 
 # Daemon name
-DAEMON_NAME="commit-relay-handoff-processor"
+DAEMON_NAME="cortex-handoff-processor"
 
 ###############################################################################
 # Logging Functions
@@ -209,7 +209,7 @@ initialize() {
     echo $$ > "$PID_FILE"
     log_daemon "INFO: Handoff processor daemon started (PID $$)"
     log_daemon "INFO: Poll interval: ${POLL_INTERVAL}s"
-    log_daemon "INFO: Working directory: $COMMIT_RELAY_HOME"
+    log_daemon "INFO: Working directory: $CORTEX_HOME"
 
     # Log startup event
     log_event "handoff_processor_started" "{\"pid\":$$}"

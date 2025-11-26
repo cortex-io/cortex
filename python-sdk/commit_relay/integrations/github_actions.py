@@ -9,7 +9,7 @@ from typing import Dict, Optional
 
 class GitHubActionsTrigger:
     """
-    Trigger commit-relay tasks from GitHub Actions.
+    Trigger cortex tasks from GitHub Actions.
 
     Example GitHub Action workflow:
 
@@ -24,7 +24,7 @@ class GitHubActionsTrigger:
           - uses: actions/checkout@v2
           - name: Run Security Scan
             run: |
-              pip install commit-relay-client
+              pip install cortex-client
               python .github/scripts/security-scan.py
             env:
               GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -141,7 +141,7 @@ class GitHubActionsTrigger:
 
 class GitHubActionsReporter:
     """
-    Report commit-relay results back to GitHub Actions.
+    Report cortex results back to GitHub Actions.
 
     Example:
         reporter = GitHubActionsReporter()
@@ -168,7 +168,7 @@ class GitHubActionsReporter:
     def create_task_summary(self, task: Dict):
         """Create formatted summary for a task."""
         summary = f"""
-## Commit-Relay Task: {task['id']}
+## Cortex Task: {task['id']}
 
 **Status:** {task['status']}
 **Type:** {task['type']}

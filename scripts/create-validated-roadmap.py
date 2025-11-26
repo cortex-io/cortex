@@ -37,7 +37,7 @@ def create_validated_roadmap(output_path):
     story = []
 
     # Title
-    story.append(Paragraph("Commit-Relay Implementation Roadmap", title_style))
+    story.append(Paragraph("Cortex Implementation Roadmap", title_style))
     story.append(Paragraph("VALIDATED BY MoE EXPERT ANALYSIS", subtitle_style))
     story.append(Paragraph(f"Generated: {datetime.now().strftime('%Y-%m-%d')}", subtitle_style))
     story.append(Spacer(1, 20))
@@ -45,7 +45,7 @@ def create_validated_roadmap(output_path):
     # Validation Summary
     story.append(Paragraph("MoE Validation Summary", section_style))
     summary_text = """
-    This roadmap has been validated by commit-relay's own MoE system using specialist masters:
+    This roadmap has been validated by cortex's own MoE system using specialist masters:
     <br/><br/>
     <b>Security-Master Analysis:</b> 15 Beneficial, 2 Questionable<br/>
     <b>Development-Master Analysis:</b> 29 Beneficial, 3 Questionable, 1 Not Beneficial, 1 Complete
@@ -180,7 +180,7 @@ def create_validated_roadmap(output_path):
 
     # Questionable/Not Recommended
     story.append(Paragraph("NOT RECOMMENDED", section_style))
-    story.append(Paragraph("Items that don't fit commit-relay's architecture or provide limited value.", note_style))
+    story.append(Paragraph("Items that don't fit cortex's architecture or provide limited value.", note_style))
     story.append(Spacer(1, 10))
 
     not_recommended = [
@@ -201,7 +201,7 @@ def create_validated_roadmap(output_path):
 
     # Already Complete
     story.append(Paragraph("ALREADY IMPLEMENTED", section_style))
-    story.append(Paragraph("These capabilities already exist in commit-relay.", note_style))
+    story.append(Paragraph("These capabilities already exist in cortex.", note_style))
     story.append(Spacer(1, 10))
 
     already_done = [
@@ -277,7 +277,7 @@ def create_validated_roadmap(output_path):
     doc.build(story)
 
 def main():
-    library_dir = Path('/Users/ryandahlberg/commit-relay/library')
+    library_dir = Path('/Users/ryandahlberg/cortex/library')
     output_path = library_dir / 'COMMIT-RELAY-VALIDATED-ROADMAP.pdf'
 
     print("Creating validated implementation roadmap...")
