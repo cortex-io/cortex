@@ -10,6 +10,7 @@ const router = express.Router();
 const fs = require('fs').promises;
 const fsSync = require('fs');
 const path = require('path');
+const { sanitizeFilename, validateId, validateDateString, isPathWithinDirectory } = require('../lib/path-validator');
 
 // Configuration
 const COMMIT_RELAY_HOME = process.env.COMMIT_RELAY_HOME || path.join(__dirname, '../../..');
@@ -23,6 +24,12 @@ const TRACES_INDEX_DIR = path.join(TRACES_DIR, 'indices');
  */
 async function readJSON(filePath) {
     try {
+        // Validate the file path is within traces directory
+        if (!isPathWithinDirectory(filePath, TRACES_DIR)) {
+            console.warn(`Attempted path traversal blocked: ${filePath}`);
+            return null;
+        }
+
         const content = await fs.readFile(filePath, 'utf-8');
         return JSON.parse(content);
     } catch (error) {
@@ -52,8 +59,17 @@ router.get('/', async (req, res) => {
 
         // Collect traces based on filter
         if (task_id) {
-            // Filter by task ID
-            const indexFile = path.join(TRACES_INDEX_DIR, `by-task-${task_id}.index`);
+            // Filter by task ID - validate task_id
+            const sanitizedTaskId = validateId(task_id);
+            if (!sanitizedTaskId) {
+                return res.status(400).json({ error: 'Invalid task ID format' });
+            }
+
+            const indexFile = path.join(TRACES_INDEX_DIR, `by-task-${sanitizedTaskId}.index`);
+            if (!isPathWithinDirectory(indexFile, TRACES_INDEX_DIR)) {
+                return res.status(400).json({ error: 'Invalid task ID' });
+            }
+
             if (fsSync.existsSync(indexFile)) {
                 const traceIds = (await fs.readFile(indexFile, 'utf-8')).trim().split('\n');
                 for (const traceId of traceIds) {
@@ -62,8 +78,17 @@ router.get('/', async (req, res) => {
                 }
             }
         } else if (day) {
-            // Filter by day
-            const indexFile = path.join(TRACES_INDEX_DIR, `by-day-${day}.index`);
+            // Filter by day - validate date format
+            const sanitizedDay = validateDateString(day);
+            if (!sanitizedDay) {
+                return res.status(400).json({ error: 'Invalid date format. Use YYYY-MM-DD' });
+            }
+
+            const indexFile = path.join(TRACES_INDEX_DIR, `by-day-${sanitizedDay}.index`);
+            if (!isPathWithinDirectory(indexFile, TRACES_INDEX_DIR)) {
+                return res.status(400).json({ error: 'Invalid date' });
+            }
+
             if (fsSync.existsSync(indexFile)) {
                 const traceIds = (await fs.readFile(indexFile, 'utf-8')).trim().split('\n');
                 for (const traceId of traceIds) {

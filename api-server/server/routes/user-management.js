@@ -16,6 +16,7 @@ const router = express.Router();
 const { body, param, validationResult } = require('express-validator');
 const fs = require('fs').promises;
 const path = require('path');
+const { validateId, isPathWithinDirectory } = require('../lib/path-validator');
 
 // Configuration
 const COORD_DIR = path.resolve(__dirname, '../../../coordination');
@@ -58,7 +59,19 @@ ensureDirectories();
  * Helper: Read user file
  */
 async function readUser(userId, dir = ACTIVE_DIR) {
-  const userFile = path.join(dir, `${userId}.json`);
+  // Validate userId to prevent path traversal
+  const sanitizedUserId = validateId(userId);
+  if (!sanitizedUserId) {
+    throw new Error('Invalid user ID format');
+  }
+
+  const userFile = path.join(dir, `${sanitizedUserId}.json`);
+
+  // Ensure the file path is within the expected directory
+  if (!isPathWithinDirectory(userFile, USERS_DIR)) {
+    throw new Error('Invalid user file path');
+  }
+
   const content = await fs.readFile(userFile, 'utf-8');
   return JSON.parse(content);
 }
