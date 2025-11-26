@@ -11,25 +11,25 @@ set -euo pipefail
 
 # Get script directory
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-COMMIT_RELAY_HOME="${COMMIT_RELAY_HOME:-$(cd "$SCRIPT_DIR/.." && pwd)}"
+CORTEX_HOME="${CORTEX_HOME:-$(cd "$SCRIPT_DIR/.." && pwd)}"
 
 # Load libraries
 source "$SCRIPT_DIR/lib/logging.sh" 2>/dev/null || true
 
 # Configuration
-DAEMON_NAME="commit-relay-metrics-snapshot"
+DAEMON_NAME="cortex-metrics-snapshot"
 SNAPSHOT_INTERVAL="${SNAPSHOT_INTERVAL:-300}"  # 5 minutes by default
-HISTORY_DIR="${COMMIT_RELAY_HOME}/coordination/history"
+HISTORY_DIR="${CORTEX_HOME}/coordination/history"
 DAILY_DIR="${HISTORY_DIR}/daily"
 HOURLY_DIR="${HISTORY_DIR}/hourly"
-LOG_FILE="${COMMIT_RELAY_HOME}/agents/logs/system/metrics-snapshot.log"
+LOG_FILE="${CORTEX_HOME}/agents/logs/system/metrics-snapshot.log"
 PID_FILE="/tmp/${DAEMON_NAME}.pid"
 
 # Coordination files
-WORKER_POOL="${COMMIT_RELAY_HOME}/coordination/worker-pool.json"
-TOKEN_BUDGET="${COMMIT_RELAY_HOME}/coordination/token-budget.json"
-TASK_QUEUE="${COMMIT_RELAY_HOME}/coordination/task-queue.json"
-ORCHESTRATOR_STATE="${COMMIT_RELAY_HOME}/coordination/orchestrator/state/current.json"
+WORKER_POOL="${CORTEX_HOME}/coordination/worker-pool.json"
+TOKEN_BUDGET="${CORTEX_HOME}/coordination/token-budget.json"
+TASK_QUEUE="${CORTEX_HOME}/coordination/task-queue.json"
+ORCHESTRATOR_STATE="${CORTEX_HOME}/coordination/orchestrator/state/current.json"
 
 # Ensure directories exist
 mkdir -p "$(dirname "$LOG_FILE")"
@@ -186,8 +186,8 @@ collect_metrics() {
     local total_ems=0
     local em_success_rate=0
 
-    local EM_ACTIVE_DIR="${COMMIT_RELAY_HOME}/coordination/execution-managers/active"
-    local EM_COMPLETED_DIR="${COMMIT_RELAY_HOME}/coordination/execution-managers/completed"
+    local EM_ACTIVE_DIR="${CORTEX_HOME}/coordination/execution-managers/active"
+    local EM_COMPLETED_DIR="${CORTEX_HOME}/coordination/execution-managers/completed"
 
     if [ -d "$EM_ACTIVE_DIR" ]; then
         active_ems=$(find "$EM_ACTIVE_DIR" -name "*.json" -type f 2>/dev/null | wc -l | tr -d ' ')
@@ -359,7 +359,7 @@ LAST_DAILY_AGGREGATION=""
 SNAPSHOTS_COLLECTED=0
 
 while true; do
-    cd "$COMMIT_RELAY_HOME"
+    cd "$CORTEX_HOME"
 
     CURRENT_TIME=$(date +%Y-%m-%dT%H:%M:%S%z)
     CURRENT_DATE=$(date +%Y-%m-%d)

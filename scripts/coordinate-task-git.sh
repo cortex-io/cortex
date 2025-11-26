@@ -7,7 +7,7 @@ set -euo pipefail
 
 # Get script directory
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-COMMIT_RELAY_HOME="${COMMIT_RELAY_HOME:-$(cd "$SCRIPT_DIR/.." && pwd)}"
+CORTEX_HOME="${CORTEX_HOME:-$(cd "$SCRIPT_DIR/.." && pwd)}"
 
 # Load libraries
 source "$SCRIPT_DIR/lib/logging.sh"
@@ -93,7 +93,7 @@ if [ -z "$TASK_ID" ]; then
     usage
 fi
 
-cd "$COMMIT_RELAY_HOME"
+cd "$CORTEX_HOME"
 
 # Execute command
 case "$COMMAND" in

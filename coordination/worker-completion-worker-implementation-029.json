@@ -33,7 +33,7 @@
     "services_operational": true
   },
   "artifacts": {
-    "completion_report": "/Users/ryandahlberg/Projects/commit-relay/agents/logs/workers/2025-11-16/worker-implementation-029/completion_summary.md",
+    "completion_report": "/Users/ryandahlberg/Projects/cortex/agents/logs/workers/2025-11-16/worker-implementation-029/completion_summary.md",
     "test_output": "All 6 tests passing"
   },
   "metrics": {

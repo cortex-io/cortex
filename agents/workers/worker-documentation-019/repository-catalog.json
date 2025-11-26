@@ -3,7 +3,7 @@
   "generated_at": "2025-11-21T02:38:30Z",
   "generated_by": "worker-documentation-019",
   "repository": {
-    "name": "commit-relay",
+    "name": "cortex",
     "version": "1.0.0",
     "description": "AI-powered commit automation system with master-worker architecture",
     "author": "ry-ops",
@@ -54,7 +54,7 @@
   },
   "packages": {
     "root": {
-      "name": "commit-relay",
+      "name": "cortex",
       "version": "1.0.0",
       "dependencies": {
         "ajv": "^8.17.1",
@@ -73,9 +73,9 @@
       }
     },
     "dashboard": {
-      "name": "commit-relay-dashboard",
+      "name": "cortex-dashboard",
       "version": "1.0.0",
-      "description": "Real-time metrics dashboard for commit-relay master-worker system",
+      "description": "Real-time metrics dashboard for cortex master-worker system",
       "main": "server/index.js",
       "dependencies": {
         "chokidar": "^3.5.3",

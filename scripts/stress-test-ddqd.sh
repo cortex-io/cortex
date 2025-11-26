@@ -1,5 +1,5 @@
 #!/bin/bash
-# DDQD Stress Test - "God Mode" for Commit-Relay v4.0
+# DDQD Stress Test - "God Mode" for Cortex v4.0
 # Comprehensive 60-minute stress test for v4.0 three-layer orchestration architecture
 # Tests: Task Orchestrator, Zombie Killer, Heartbeat Protocol, Workforce Streams, Token Management, Execution Managers
 

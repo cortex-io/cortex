@@ -13,10 +13,10 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-COMMIT_RELAY_HOME="${COMMIT_RELAY_HOME:-$(cd "$SCRIPT_DIR/../.." && pwd)}"
+CORTEX_HOME="${CORTEX_HOME:-$(cd "$SCRIPT_DIR/../.." && pwd)}"
 
 # Load dependencies
-source "$COMMIT_RELAY_HOME/scripts/lib/heartbeat.sh"
+source "$CORTEX_HOME/scripts/lib/heartbeat.sh"
 
 # Configuration
 ZOMBIE_THRESHOLD_SECONDS="${ZOMBIE_THRESHOLD_SECONDS:-300}"
@@ -25,9 +25,9 @@ VERIFY_TIMEOUT="${VERIFY_TIMEOUT:-5}"
 MAX_CLEANUPS_PER_MINUTE="${MAX_CLEANUPS_PER_MINUTE:-5}"
 
 # Directories
-ZOMBIE_SPECS_DIR="$COMMIT_RELAY_HOME/coordination/worker-specs/zombie"
-ACTIVE_SPECS_DIR="$COMMIT_RELAY_HOME/coordination/worker-specs/active"
-CLEANUP_LOG="$COMMIT_RELAY_HOME/agents/logs/system/zombie-cleanup.log"
+ZOMBIE_SPECS_DIR="$CORTEX_HOME/coordination/worker-specs/zombie"
+ACTIVE_SPECS_DIR="$CORTEX_HOME/coordination/worker-specs/active"
+CLEANUP_LOG="$CORTEX_HOME/agents/logs/system/zombie-cleanup.log"
 
 # Ensure directories exist
 mkdir -p "$ZOMBIE_SPECS_DIR"
@@ -92,7 +92,7 @@ verify_zombie_status() {
     fi
 
     # Check process status
-    local worker_dir="$COMMIT_RELAY_HOME/agents/workers/$worker_id"
+    local worker_dir="$CORTEX_HOME/agents/workers/$worker_id"
     if [ -f "$worker_dir/worker.pid" ]; then
         local worker_pid=$(cat "$worker_dir/worker.pid")
 
@@ -144,7 +144,7 @@ check_cleanup_rate_limit() {
 ##############################################################################
 terminate_worker_process() {
     local worker_id="$1"
-    local worker_dir="$COMMIT_RELAY_HOME/agents/workers/$worker_id"
+    local worker_dir="$CORTEX_HOME/agents/workers/$worker_id"
 
     log_cleanup "INFO: Terminating worker $worker_id process..."
 
@@ -231,7 +231,7 @@ return_worker_tokens() {
     log_cleanup "INFO: Returning $remaining tokens to budget for $worker_id"
 
     # Update token budget
-    local token_budget="$COMMIT_RELAY_HOME/coordination/token-budget.json"
+    local token_budget="$CORTEX_HOME/coordination/token-budget.json"
     if [ -f "$token_budget" ]; then
         # Atomically update budget
         jq --argjson returned "$remaining" \
@@ -255,7 +255,7 @@ return_worker_tokens() {
 ##############################################################################
 archive_worker_logs() {
     local worker_id="$1"
-    local worker_dir="$COMMIT_RELAY_HOME/agents/workers/$worker_id"
+    local worker_dir="$CORTEX_HOME/agents/workers/$worker_id"
 
     if [ ! -d "$worker_dir" ]; then
         log_cleanup "INFO: No worker directory to archive for $worker_id"
@@ -264,7 +264,7 @@ archive_worker_logs() {
 
     # Create archive directory
     local archive_date=$(date +%Y-%m-%d)
-    local archive_dir="$COMMIT_RELAY_HOME/agents/logs/zombie-workers/$archive_date"
+    local archive_dir="$CORTEX_HOME/agents/logs/zombie-workers/$archive_date"
     mkdir -p "$archive_dir"
 
     # Archive logs
@@ -345,7 +345,7 @@ emit_zombie_event() {
         }')
 
     # Write to events log
-    local events_log="$COMMIT_RELAY_HOME/coordination/events/zombie-cleanup-events.jsonl"
+    local events_log="$CORTEX_HOME/coordination/events/zombie-cleanup-events.jsonl"
     mkdir -p "$(dirname "$events_log")"
     echo "$event_json" >> "$events_log"
 
@@ -415,8 +415,8 @@ cleanup_zombie_worker() {
     emit_zombie_event "zombie_cleanup_completed" "$worker_id"
 
     # Phase 4.3: Check if worker should be restarted
-    if [ -f "$COMMIT_RELAY_HOME/scripts/lib/worker-restart.sh" ]; then
-        source "$COMMIT_RELAY_HOME/scripts/lib/worker-restart.sh" 2>/dev/null || true
+    if [ -f "$CORTEX_HOME/scripts/lib/worker-restart.sh" ]; then
+        source "$CORTEX_HOME/scripts/lib/worker-restart.sh" 2>/dev/null || true
 
         if command -v should_restart_worker &> /dev/null; then
             if should_restart_worker "$worker_id"; then

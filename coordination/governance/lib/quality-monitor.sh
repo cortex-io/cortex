@@ -1,6 +1,6 @@
 #!/bin/bash
 # coordination/governance/lib/quality-monitor.sh
-# Data Quality Monitoring for Commit-Relay
+# Data Quality Monitoring for Cortex
 #
 # Purpose:
 # - Detect data quality issues before they cause failures
@@ -59,7 +59,7 @@ check_data_quality() {
 
     # Check 2: Schema Validation
     if [ "$schema_name" != "auto" ] && [ "$schema_name" != "none" ]; then
-        local schema_file="${COMMIT_RELAY_HOME:-/Users/ryandahlberg/commit-relay}/coordination/schemas/${schema_name}.json"
+        local schema_file="${CORTEX_HOME:-/Users/ryandahlberg/cortex}/coordination/schemas/${schema_name}.json"
         if [ -f "$schema_file" ]; then
             if validate_against_schema "$file_path" "$schema_file"; then
                 passed=$((passed + 1))
@@ -212,7 +212,7 @@ check_worker_references() {
     fi
 
     # Check if task exists in task queue
-    local task_queue="${COMMIT_RELAY_HOME:-/Users/ryandahlberg/commit-relay}/coordination/task-queue.json"
+    local task_queue="${CORTEX_HOME:-/Users/ryandahlberg/cortex}/coordination/task-queue.json"
     if [ -f "$task_queue" ]; then
         if jq -e ".tasks[] | select(.id == \"$task_id\")" "$task_queue" > /dev/null 2>&1; then
             return 0  # Task found
@@ -243,7 +243,7 @@ get_quality_level() {
 
 # Check quality of all workers
 check_all_workers() {
-    local worker_specs_dir="${COMMIT_RELAY_HOME:-/Users/ryandahlberg/commit-relay}/coordination/worker-specs/active"
+    local worker_specs_dir="${CORTEX_HOME:-/Users/ryandahlberg/cortex}/coordination/worker-specs/active"
     local total=0
     local passed=0
     local failed=0
@@ -339,14 +339,14 @@ log_quality_issue() {
   "source": "$source",
   "quality_score": $score,
   "failed_checks": $failed,
-  "principal": "${COMMIT_RELAY_PRINCIPAL:-system}",
+  "principal": "${CORTEX_PRINCIPAL:-system}",
   "quality_report": $quality_report
 }
 EOF
 )
 
         # Append to quality log
-        local quality_log="${COMMIT_RELAY_HOME:-/Users/ryandahlberg/commit-relay}/coordination/governance/quality-issues.jsonl"
+        local quality_log="${CORTEX_HOME:-/Users/ryandahlberg/cortex}/coordination/governance/quality-issues.jsonl"
         mkdir -p "$(dirname "$quality_log")"
         echo "$log_entry" >> "$quality_log"
     fi
@@ -364,6 +364,6 @@ export -f get_overall_health 2>/dev/null || true
 export -f log_quality_issue 2>/dev/null || true
 
 # Log that quality monitor is loaded
-if [ "${COMMIT_RELAY_LOG_LEVEL:-1}" -le 0 ] 2>/dev/null; then
+if [ "${CORTEX_LOG_LEVEL:-1}" -le 0 ] 2>/dev/null; then
     echo "[GOVERNANCE] Quality monitor loaded" >&2
 fi

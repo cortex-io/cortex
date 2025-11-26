@@ -1,4 +1,4 @@
-# Governance Architecture for Commit-Relay
+# Governance Architecture for Cortex
 
 **Version**: 1.0
 **Date**: 2025-11-17
@@ -9,7 +9,7 @@
 
 ## Executive Summary
 
-This document defines the governance architecture for commit-relay, building on the observability and validation foundations established in Phases 0-2. The governance layer provides automated compliance checking, data quality monitoring, PII detection, and executive visibility.
+This document defines the governance architecture for cortex, building on the observability and validation foundations established in Phases 0-2. The governance layer provides automated compliance checking, data quality monitoring, PII detection, and executive visibility.
 
 **Key Objectives:**
 1. Automated compliance with GDPR, SOC2, and internal policies

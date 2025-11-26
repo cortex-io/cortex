@@ -13,10 +13,10 @@
 set -eo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-COMMIT_RELAY_HOME="$(cd "$SCRIPT_DIR/.." && pwd)"
-export COMMIT_RELAY_HOME
+CORTEX_HOME="$(cd "$SCRIPT_DIR/.." && pwd)"
+export CORTEX_HOME
 
-cd "$COMMIT_RELAY_HOME"
+cd "$CORTEX_HOME"
 
 # Load quality monitor
 source coordination/governance/lib/quality-monitor.sh
@@ -176,16 +176,16 @@ test_check_all_workers_empty() {
     local temp_dir="/tmp/test-workers-$$"
     mkdir -p "$temp_dir"
 
-    local old_dir="${COMMIT_RELAY_HOME}"
-    export COMMIT_RELAY_HOME="/tmp/test-commit-relay-$$"
-    mkdir -p "$COMMIT_RELAY_HOME/coordination/worker-specs/active"
+    local old_dir="${CORTEX_HOME}"
+    export CORTEX_HOME="/tmp/test-cortex-$$"
+    mkdir -p "$CORTEX_HOME/coordination/worker-specs/active"
 
     local result=$(check_all_workers)
     local total=$(echo "$result" | jq -r '.workers_checked')
 
     # Cleanup
-    export COMMIT_RELAY_HOME="$old_dir"
-    rm -rf "/tmp/test-commit-relay-$$"
+    export CORTEX_HOME="$old_dir"
+    rm -rf "/tmp/test-cortex-$$"
 
     [ "$total" -eq 0 ]
 }
@@ -206,7 +206,7 @@ test_quality_issue_logging() {
     local result=$(check_data_quality "$test_file" "none")
     log_quality_issue "$result" "$test_file"
 
-    local log_file="$COMMIT_RELAY_HOME/coordination/governance/quality-issues.jsonl"
+    local log_file="$CORTEX_HOME/coordination/governance/quality-issues.jsonl"
     local logged=$([ -f "$log_file" ] && grep -c "test-quality-log" "$log_file" 2>/dev/null || echo 0)
 
     rm -f "$test_file"

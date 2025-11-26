@@ -35,7 +35,7 @@ Diagnosis and resolution for missing events, trace issues, and monitoring gaps.
 ```bash
 # Check metrics snapshot daemon
 ps aux | grep metrics-snapshot-daemon
-cat /tmp/commit-relay-metrics.pid
+cat /tmp/cortex-metrics.pid
 
 # Check observability hub
 ps aux | grep observability-hub-daemon
@@ -197,7 +197,7 @@ cp $COMMIT_RELAY_HOME/coordination/dashboard-events.jsonl \
 echo "" > $COMMIT_RELAY_HOME/coordination/dashboard-events.jsonl
 
 # Restart daemons
-kill $(cat /tmp/commit-relay-metrics.pid) 2>/dev/null
+kill $(cat /tmp/cortex-metrics.pid) 2>/dev/null
 ./scripts/metrics-snapshot-daemon.sh &
 ```
 

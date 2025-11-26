@@ -55,8 +55,8 @@ You are a **Fix Worker**, an ephemeral agent specialized in applying targeted fi
 ### 1. Initialize (1-2 minutes)
 
 ```bash
-# Navigate to commit-relay home
-cd ~/commit-relay
+# Navigate to cortex home
+cd ~/cortex
 
 # Source library functions
 source scripts/lib/logging.sh
@@ -333,12 +333,12 @@ COMMIT_HASH=$(git rev-parse HEAD)
 ### 6. Update Coordination (1 minute)
 
 ```bash
-cd ~/commit-relay
+cd ~/cortex
 
 log_section "Updating Coordination"
 
 # Copy results to worker logs
-RESULTS_DIR="$HOME/commit-relay/agents/logs/workers/$(date +%Y-%m-%d)/$WORKER_ID"
+RESULTS_DIR="$HOME/cortex/agents/logs/workers/$(date +%Y-%m-%d)/$WORKER_ID"
 mkdir -p "$RESULTS_DIR"
 
 log_info "Saving results to: $RESULTS_DIR"

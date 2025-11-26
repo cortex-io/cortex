@@ -1,5 +1,5 @@
 """
-Integration module for connecting ML components to commit-relay.
+Integration module for connecting ML components to cortex.
 
 Provides adapters and wrappers for seamless ML/AI integration.
 """

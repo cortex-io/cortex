@@ -794,3 +794,197 @@
   "learned_at": "2025-11-25T19:23:13Z",
   "source": "learner"
 }
+{
+  "task_type": "null",
+  "complexity": "null",
+  "recommended_worker_type": "feature-implementer",
+  "confidence": 92.75,
+  "evidence_count": 4,
+  "learned_at": "2025-11-25T20:23:14Z",
+  "source": "learner"
+}
+{"timestamp":"2025-11-25T20:56:51Z","task":"achievement-dashboard-config","routed_to":"development-master","confidence":0.95,"strategy":"achievement_automation"}
+{"timestamp":"2025-11-25T20:56:51Z","task":"workflow-automation-scripts","routed_to":"cicd-master","confidence":0.92,"strategy":"achievement_automation"}
+{"timestamp":"2025-11-25T20:56:51Z","task":"api-integration-guide","routed_to":"development-master","confidence":0.94,"strategy":"achievement_automation"}
+{"timestamp":"2025-11-25T20:56:51Z","task":"kibana-dashboard-export","routed_to":"development-master","confidence":0.93,"strategy":"achievement_automation"}
+{"timestamp":"2025-11-25T20:56:51Z","task":"security-best-practices","routed_to":"security-master","confidence":0.96,"strategy":"achievement_automation"}
+{
+  "task_type": "null",
+  "complexity": "null",
+  "recommended_worker_type": "feature-implementer",
+  "confidence": 92.75,
+  "evidence_count": 4,
+  "learned_at": "2025-11-25T21:23:14Z",
+  "source": "learner"
+}
+{
+  "task_type": "null",
+  "complexity": "null",
+  "recommended_worker_type": "feature-implementer",
+  "confidence": 92.75,
+  "evidence_count": 4,
+  "learned_at": "2025-11-25T22:23:15Z",
+  "source": "learner"
+}
+{
+  "task_type": "null",
+  "complexity": "null",
+  "recommended_worker_type": "feature-implementer",
+  "confidence": 92.75,
+  "evidence_count": 4,
+  "learned_at": "2025-11-25T23:23:16Z",
+  "source": "learner"
+}
+{
+  "task_type": "null",
+  "complexity": "null",
+  "recommended_worker_type": "feature-implementer",
+  "confidence": 92.75,
+  "evidence_count": 4,
+  "learned_at": "2025-11-26T00:23:16Z",
+  "source": "learner"
+}
+{
+  "task_type": "null",
+  "complexity": "null",
+  "recommended_worker_type": "feature-implementer",
+  "confidence": 92.75,
+  "evidence_count": 4,
+  "learned_at": "2025-11-26T01:23:17Z",
+  "source": "learner"
+}
+{
+  "task_type": "null",
+  "complexity": "null",
+  "recommended_worker_type": "feature-implementer",
+  "confidence": 92.75,
+  "evidence_count": 4,
+  "learned_at": "2025-11-26T02:23:17Z",
+  "source": "learner"
+}
+{
+  "task_type": "null",
+  "complexity": "null",
+  "recommended_worker_type": "feature-implementer",
+  "confidence": 92.75,
+  "evidence_count": 4,
+  "learned_at": "2025-11-26T03:23:18Z",
+  "source": "learner"
+}
+{
+  "task_type": "null",
+  "complexity": "null",
+  "recommended_worker_type": "feature-implementer",
+  "confidence": 92.75,
+  "evidence_count": 4,
+  "learned_at": "2025-11-26T04:23:19Z",
+  "source": "learner"
+}
+{
+  "task_type": "null",
+  "complexity": "null",
+  "recommended_worker_type": "feature-implementer",
+  "confidence": 92.75,
+  "evidence_count": 4,
+  "learned_at": "2025-11-26T05:23:20Z",
+  "source": "learner"
+}
+{
+  "task_type": "null",
+  "complexity": "null",
+  "recommended_worker_type": "feature-implementer",
+  "confidence": 92.75,
+  "evidence_count": 4,
+  "learned_at": "2025-11-26T06:23:21Z",
+  "source": "learner"
+}
+{
+  "task_type": "null",
+  "complexity": "null",
+  "recommended_worker_type": "feature-implementer",
+  "confidence": 92.75,
+  "evidence_count": 4,
+  "learned_at": "2025-11-26T07:23:21Z",
+  "source": "learner"
+}
+{
+  "task_type": "null",
+  "complexity": "null",
+  "recommended_worker_type": "feature-implementer",
+  "confidence": 92.75,
+  "evidence_count": 4,
+  "learned_at": "2025-11-26T08:23:22Z",
+  "source": "learner"
+}
+{
+  "task_type": "null",
+  "complexity": "null",
+  "recommended_worker_type": "feature-implementer",
+  "confidence": 92.75,
+  "evidence_count": 4,
+  "learned_at": "2025-11-26T09:23:23Z",
+  "source": "learner"
+}
+{
+  "task_type": "null",
+  "complexity": "null",
+  "recommended_worker_type": "feature-implementer",
+  "confidence": 92.75,
+  "evidence_count": 4,
+  "learned_at": "2025-11-26T10:23:24Z",
+  "source": "learner"
+}
+{
+  "task_type": "null",
+  "complexity": "null",
+  "recommended_worker_type": "feature-implementer",
+  "confidence": 92.75,
+  "evidence_count": 4,
+  "learned_at": "2025-11-26T11:23:24Z",
+  "source": "learner"
+}
+{
+  "task_type": "null",
+  "complexity": "null",
+  "recommended_worker_type": "feature-implementer",
+  "confidence": 92.75,
+  "evidence_count": 4,
+  "learned_at": "2025-11-26T12:23:25Z",
+  "source": "learner"
+}
+{
+  "task_type": "null",
+  "complexity": "null",
+  "recommended_worker_type": "feature-implementer",
+  "confidence": 92.75,
+  "evidence_count": 4,
+  "learned_at": "2025-11-26T13:23:25Z",
+  "source": "learner"
+}
+{
+  "task_type": "null",
+  "complexity": "null",
+  "recommended_worker_type": "feature-implementer",
+  "confidence": 92.75,
+  "evidence_count": 4,
+  "learned_at": "2025-11-26T14:23:25Z",
+  "source": "learner"
+}
+{
+  "task_type": "null",
+  "complexity": "null",
+  "recommended_worker_type": "feature-implementer",
+  "confidence": 92.75,
+  "evidence_count": 4,
+  "learned_at": "2025-11-26T15:23:25Z",
+  "source": "learner"
+}
+{
+  "task_type": "null",
+  "complexity": "null",
+  "recommended_worker_type": "feature-implementer",
+  "confidence": 92.75,
+  "evidence_count": 4,
+  "learned_at": "2025-11-26T16:23:26Z",
+  "source": "learner"
+}

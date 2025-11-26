@@ -34,7 +34,7 @@ class GitHubDiscoveryService:
         """
         self.gh = github_client
         self.manager = task_manager
-        self.catalog_file = '/Users/ryandahlberg/commit-relay/data/repository-catalog.json'
+        self.catalog_file = '/Users/ryandahlberg/cortex/data/repository-catalog.json'
 
     def discover_organization_repos(self, org_name: str,
                                    exclude_archived: bool = True,
@@ -88,7 +88,7 @@ class GitHubDiscoveryService:
                           run_security_scan: bool = True,
                           run_catalog: bool = True) -> Dict[str, str]:
         """
-        Onboard a repository into commit-relay.
+        Onboard a repository into cortex.
 
         Args:
             repo_info: Repository information dict

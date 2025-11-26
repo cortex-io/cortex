@@ -1,7 +1,7 @@
 """
 Event Stream - Real-time event monitoring and streaming.
 
-Provides APIs to monitor and stream task-related events from the commit-relay
+Provides APIs to monitor and stream task-related events from the cortex
 event log, enabling real-time visibility into system operations.
 """
 
@@ -36,19 +36,19 @@ class EventStream:
         >>> stream.watch_task_events('task-025', on_event=on_event, timeout=60)
 
     Attributes:
-        commit_relay_home: Path to commit-relay repository
+        commit_relay_home: Path to cortex repository
         events_file: Path to dashboard-events.jsonl file
     """
 
     def __init__(
         self,
-        commit_relay_home: str = '/Users/ryandahlberg/commit-relay'
+        commit_relay_home: str = '/Users/ryandahlberg/cortex'
     ):
         """
         Initialize EventStream.
 
         Args:
-            commit_relay_home: Path to commit-relay repository root
+            commit_relay_home: Path to cortex repository root
         """
         self.commit_relay_home = Path(os.path.expanduser(commit_relay_home))
         self.events_file = self.commit_relay_home / 'coordination' / 'dashboard-events.jsonl'

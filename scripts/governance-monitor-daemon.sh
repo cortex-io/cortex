@@ -5,7 +5,7 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-COMMIT_RELAY_HOME="${COMMIT_RELAY_HOME:-$(cd "$SCRIPT_DIR/.." && pwd)}"
+CORTEX_HOME="${CORTEX_HOME:-$(cd "$SCRIPT_DIR/.." && pwd)}"
 
 # Configuration
 MONITOR_INTERVAL=300  # 5 minutes
@@ -25,7 +25,7 @@ check_governance_health() {
     log "Checking governance health..."
 
     # Run governance dashboard check
-    local health_json=$(node "$COMMIT_RELAY_HOME/lib/governance/compliance.js" dashboard 2>/dev/null)
+    local health_json=$(node "$CORTEX_HOME/lib/governance/compliance.js" dashboard 2>/dev/null)
     local health_score=$(echo "$health_json" | jq -r '.health_score // 0')
     local status=$(echo "$health_json" | jq -r '.status // "unknown"')
 
@@ -68,7 +68,7 @@ check_governance_health() {
 run_compliance_checks() {
     log "Running compliance checks..."
 
-    local report=$(node "$COMMIT_RELAY_HOME/lib/governance/compliance.js" compliance-report 2>/dev/null)
+    local report=$(node "$CORTEX_HOME/lib/governance/compliance.js" compliance-report 2>/dev/null)
     local total_violations=$(echo "$report" | jq -r '.summary.total_violations // 0')
     local compliance_rate=$(echo "$report" | jq -r '.summary.compliance_rate // "0%"')
 
@@ -85,7 +85,7 @@ run_compliance_checks() {
 check_pii_detections() {
     log "Checking recent PII detections..."
 
-    local pii_log="$COMMIT_RELAY_HOME/coordination/governance/pii-detections.jsonl"
+    local pii_log="$CORTEX_HOME/coordination/governance/pii-detections.jsonl"
     if [ -f "$pii_log" ]; then
         local recent_count=$(tail -100 "$pii_log" | wc -l | tr -d ' ')
         if [ "$recent_count" -gt 0 ]; then
@@ -106,7 +106,7 @@ check_pii_detections() {
 check_drift_detections() {
     log "Checking for agent performance drift..."
 
-    local drift_log="$COMMIT_RELAY_HOME/coordination/governance/drift-detections.jsonl"
+    local drift_log="$CORTEX_HOME/coordination/governance/drift-detections.jsonl"
     if [ -f "$drift_log" ]; then
         local recent_drift=$(tail -50 "$drift_log" | jq -r 'select(.drifts | length > 0) | "\(.agent_id): \(.drifts | length) metrics drifting"' 2>/dev/null | head -5)
         if [ -n "$recent_drift" ]; then
@@ -119,14 +119,14 @@ check_drift_detections() {
 }
 
 generate_summary_report() {
-    local report_file="$COMMIT_RELAY_HOME/coordination/governance/monitoring-summary.json"
+    local report_file="$CORTEX_HOME/coordination/governance/monitoring-summary.json"
 
     cat > "$report_file" <<EOF
 {
   "timestamp": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
-  "health_check": $(node "$COMMIT_RELAY_HOME/lib/governance/compliance.js" dashboard 2>/dev/null || echo '{"error": "failed"}'),
-  "compliance": $(node "$COMMIT_RELAY_HOME/lib/governance/compliance.js" compliance-report 2>/dev/null || echo '{"error": "failed"}'),
-  "metrics": $(node "$COMMIT_RELAY_HOME/lib/governance/compliance.js" metrics 2>/dev/null || echo '{"error": "failed"}')
+  "health_check": $(node "$CORTEX_HOME/lib/governance/compliance.js" dashboard 2>/dev/null || echo '{"error": "failed"}'),
+  "compliance": $(node "$CORTEX_HOME/lib/governance/compliance.js" compliance-report 2>/dev/null || echo '{"error": "failed"}'),
+  "metrics": $(node "$CORTEX_HOME/lib/governance/compliance.js" metrics 2>/dev/null || echo '{"error": "failed"}')
 }
 EOF
 

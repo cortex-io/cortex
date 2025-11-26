@@ -1,5 +1,5 @@
 """
-LLM Mesh - ML/AI integration for commit-relay.
+LLM Mesh - ML/AI integration for cortex.
 
 Provides neural routing, RAG, and predictive capabilities for the MoE system.
 """

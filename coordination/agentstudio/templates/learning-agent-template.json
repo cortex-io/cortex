@@ -5,7 +5,7 @@
   "agent_type": "learning",
   "agent_class": "custom-learner",
   "description": "A learning agent that improves through feedback and pattern recognition. Implements adaptive algorithms and continuous improvement mechanisms.",
-  "author": "commit-relay",
+  "author": "cortex",
   "tags": ["learning", "adaptive", "ml", "improvement"],
   "capabilities": [
     {

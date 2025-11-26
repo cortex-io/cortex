@@ -7,7 +7,7 @@ set -euo pipefail
 
 # Get script directory
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-COMMIT_RELAY_HOME="${COMMIT_RELAY_HOME:-$(cd "$SCRIPT_DIR/.." && pwd)}"
+CORTEX_HOME="${CORTEX_HOME:-$(cd "$SCRIPT_DIR/.." && pwd)}"
 
 # Colors
 GREEN="\033[0;32m"
@@ -22,7 +22,7 @@ echo -e "${BLUE}Autonomous Execution Test${NC}"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo ""
 
-cd "$COMMIT_RELAY_HOME"
+cd "$CORTEX_HOME"
 
 # Test 1: Worker daemon running
 echo -e "${YELLOW}Test 1: Worker Daemon Status${NC}"

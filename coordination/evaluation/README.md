@@ -6,9 +6,9 @@
 
 ## Overview
 
-The Agent Ops Evaluation Framework provides systematic quality measurement for commit-relay's MoE routing system. It uses **LM-as-Judge** (Claude) to evaluate routing decisions against a golden dataset, enabling data-driven improvement of the routing algorithm.
+The Agent Ops Evaluation Framework provides systematic quality measurement for cortex's MoE routing system. It uses **LM-as-Judge** (Claude) to evaluate routing decisions against a golden dataset, enabling data-driven improvement of the routing algorithm.
 
-This is the first implementation from the [Agent Architecture Implementation Review](../../docs/AGENT-ARCHITECTURE-IMPLEMENTATION-REVIEW.md), chosen as the foundation for commit-relay's evolution into a sustainable platform.
+This is the first implementation from the [Agent Architecture Implementation Review](../../docs/AGENT-ARCHITECTURE-IMPLEMENTATION-REVIEW.md), chosen as the foundation for cortex's evolution into a sustainable platform.
 
 ## Architecture
 
@@ -33,7 +33,7 @@ llm-mesh/moe-learning/evaluation/
 ### 1. Run Your First Evaluation
 
 ```bash
-cd /Users/ryandahlberg/Projects/commit-relay
+cd /Users/ryandahlberg/Projects/cortex
 
 # Ensure ANTHROPIC_API_KEY is set
 export ANTHROPIC_API_KEY="your-key-here"

@@ -6,7 +6,7 @@
   "status": "success",
   "summary": {
     "title": "Repository Metadata and Dependencies Catalog",
-    "description": "Successfully cataloged all repository metadata and dependencies for commit-relay",
+    "description": "Successfully cataloged all repository metadata and dependencies for cortex",
     "deliverables": [
       "repository-catalog.json - Comprehensive catalog of repository structure, metadata, and dependencies"
     ]
@@ -26,7 +26,7 @@
     ]
   },
   "catalog_highlights": {
-    "repository_name": "commit-relay",
+    "repository_name": "cortex",
     "version": "1.0.0",
     "total_commits": 680,
     "repository_size": "856MB",

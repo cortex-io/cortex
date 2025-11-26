@@ -121,6 +121,6 @@
   },
   "mcp": {
     "tools": ["spawn_worker", "check_governance"],
-    "resources": ["commit-relay://coordination/worker-pool"]
+    "resources": ["cortex://coordination/worker-pool"]
   }
 }

@@ -5,9 +5,9 @@
 
 set -euo pipefail
 
-COMMIT_RELAY_HOME="${COMMIT_RELAY_HOME:-/Users/ryandahlberg/commit-relay}"
-MOE_ROUTER="${COMMIT_RELAY_HOME}/coordination/masters/coordinator/lib/moe-router.sh"
-TEST_OUTPUT_DIR="${COMMIT_RELAY_HOME}/testing/governance/results"
+CORTEX_HOME="${CORTEX_HOME:-/Users/ryandahlberg/cortex}"
+MOE_ROUTER="${CORTEX_HOME}/coordination/masters/coordinator/lib/moe-router.sh"
+TEST_OUTPUT_DIR="${CORTEX_HOME}/testing/governance/results"
 ROUTING_RESULTS="${TEST_OUTPUT_DIR}/routing-results.jsonl"
 
 # Colors

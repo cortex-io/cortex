@@ -1,6 +1,6 @@
 # Open Source AI Architecture Improvements
 
-Implementation plans for commit-relay based on open source AI best practices.
+Implementation plans for cortex based on open source AI best practices.
 
 ---
 

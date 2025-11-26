@@ -1,12 +1,12 @@
 ---
 name: cicd-master
-description: CI/CD specialist for commit-relay. Handles build automation, test orchestration, deployment strategies, release workflows, and pipeline optimization. Use this agent for all CI/CD tasks including builds, tests, deployments, releases, and pipeline management.
+description: CI/CD specialist for cortex. Handles build automation, test orchestration, deployment strategies, release workflows, and pipeline optimization. Use this agent for all CI/CD tasks including builds, tests, deployments, releases, and pipeline management.
 model: sonnet
 ---
 
 # CI/CD Master Agent
 
-You are the **CI/CD Master** for the commit-relay automation system.
+You are the **CI/CD Master** for the cortex automation system.
 
 ## Role & Responsibilities
 
@@ -20,7 +20,7 @@ You are the **CI/CD Master** for the commit-relay automation system.
 
 ## Context & State
 
-- **Working Directory**: `/Users/ryandahlberg/commit-relay`
+- **Working Directory**: `/Users/ryandahlberg/cortex`
 - **Context Directory**: `coordination/masters/cicd/`
 - **State File**: `coordination/masters/cicd/context/master-state.json`
 - **Knowledge Base**: `coordination/masters/cicd/knowledge-base/`
@@ -236,7 +236,7 @@ Workers generate commits automatically:
 
 Task: <task-id>
 Worker: <worker-type> (<file-count> files)
-Autonomous: commit-relay CI/CD
+Autonomous: cortex CI/CD
 
 🤖 Generated with [Claude Code](https://claude.com/claude-code)
 

@@ -8,7 +8,7 @@
 
 ## Executive Summary
 
-This document describes a Kubernetes-inspired master-worker architecture for commit-relay that addresses token efficiency and scalability challenges. The system transitions from persistent long-running agents to a model where:
+This document describes a Kubernetes-inspired master-worker architecture for cortex that addresses token efficiency and scalability challenges. The system transitions from persistent long-running agents to a model where:
 
 - **Master Agents** provide orchestration and strategic decision-making
 - **Worker Agents** execute focused, ephemeral tasks with minimal context
@@ -804,7 +804,7 @@ def calculate_worker_count(queue_depth, avg_task_duration):
 
 ```
 ┌─────────────────────────────────────────────────────────┐
-│ Commit-Relay System Status - 2025-11-01 10:30 AM       │
+│ Cortex System Status - 2025-11-01 10:30 AM       │
 ├─────────────────────────────────────────────────────────┤
 │ MASTERS                                                 │
 │  ✓ coordinator-master  [12.5k/50k tokens]  Active      │
@@ -901,7 +901,7 @@ Maintain compatibility during transition:
 
 ## Conclusion
 
-The master-worker architecture transforms commit-relay from a monolithic agent system into a scalable, efficient orchestration platform. By decomposing work and leveraging parallel execution, the system achieves:
+The master-worker architecture transforms cortex from a monolithic agent system into a scalable, efficient orchestration platform. By decomposing work and leveraging parallel execution, the system achieves:
 
 - **80-90% token efficiency improvement**
 - **3-5x throughput increase**
@@ -909,7 +909,7 @@ The master-worker architecture transforms commit-relay from a monolithic agent s
 - **Reduced risk of token exhaustion**
 - **Foundation for future scale**
 
-This architecture positions commit-relay as a production-ready multi-agent system capable of managing dozens of repositories autonomously.
+This architecture positions cortex as a production-ready multi-agent system capable of managing dozens of repositories autonomously.
 
 ---
 

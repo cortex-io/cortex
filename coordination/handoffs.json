@@ -36,7 +36,7 @@
         "summary": "Initial security scans completed for all 3 repositories",
         "deliverables": {
           "scan_results": "agents/logs/security/2025-10-31.md",
-          "repositories_scanned": ["mcp-server-unifi", "n8n-mcp-server", "commit-relay"],
+          "repositories_scanned": ["mcp-server-unifi", "n8n-mcp-server", "cortex"],
           "issues_found": 2,
           "tasks_created": ["task-004", "task-005"]
         },

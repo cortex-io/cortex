@@ -1,11 +1,11 @@
 #!/bin/bash
 # scripts/system-status.sh
-# Comprehensive status check for entire commit-relay platform
+# Comprehensive status check for entire cortex platform
 
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-COMMIT_RELAY_HOME="${COMMIT_RELAY_HOME:-$(cd "$SCRIPT_DIR/.." && pwd)}"
+CORTEX_HOME="${CORTEX_HOME:-$(cd "$SCRIPT_DIR/.." && pwd)}"
 
 # Colors
 GREEN='\033[0;32m'
@@ -22,7 +22,7 @@ echo ""
 
 # 1. Check Claude Code Agents
 echo -e "${BLUE}┌─ Claude Code Agents ─────────────────────────────────────${NC}"
-AGENTS_DIR="$COMMIT_RELAY_HOME/.claude/agents"
+AGENTS_DIR="$CORTEX_HOME/.claude/agents"
 if [ -d "$AGENTS_DIR" ]; then
     AGENT_COUNT=$(find "$AGENTS_DIR" -name "*.md" -type f | wc -l | tr -d ' ')
     echo -e "${GREEN}✓${NC} Agents directory: $AGENTS_DIR"
@@ -43,7 +43,7 @@ echo ""
 
 # 2. Check Worker Daemon
 echo -e "${BLUE}┌─ Worker Daemon ──────────────────────────────────────────${NC}"
-PID_FILE="/tmp/commit-relay-worker-daemon.pid"
+PID_FILE="/tmp/cortex-worker-daemon.pid"
 if [ -f "$PID_FILE" ]; then
     PID=$(cat "$PID_FILE")
     if ps -p "$PID" > /dev/null 2>&1; then
@@ -72,7 +72,7 @@ echo ""
 
 # 4. Check Active Workers
 echo -e "${BLUE}┌─ Active Workers ─────────────────────────────────────────${NC}"
-ACTIVE_SPECS_DIR="$COMMIT_RELAY_HOME/coordination/worker-specs/active"
+ACTIVE_SPECS_DIR="$CORTEX_HOME/coordination/worker-specs/active"
 if [ -d "$ACTIVE_SPECS_DIR" ]; then
     WORKER_COUNT=$(find "$ACTIVE_SPECS_DIR" -name "*.json" -type f 2>/dev/null | wc -l | tr -d ' ')
     echo -e "${GREEN}✓${NC} Active worker specs: $WORKER_COUNT"
@@ -102,7 +102,7 @@ echo ""
 
 # 5. Check Git Status
 echo -e "${BLUE}┌─ Git Repository ─────────────────────────────────────────${NC}"
-cd "$COMMIT_RELAY_HOME"
+cd "$CORTEX_HOME"
 if git rev-parse --git-dir > /dev/null 2>&1; then
     BRANCH=$(git branch --show-current 2>/dev/null || echo "unknown")
     echo -e "${GREEN}✓${NC} Branch: $BRANCH"
@@ -119,7 +119,7 @@ echo ""
 
 # 6. Check Coordination State
 echo -e "${BLUE}┌─ Coordination State ─────────────────────────────────────${NC}"
-BUDGET_FILE="$COMMIT_RELAY_HOME/coordination/token-budget.json"
+BUDGET_FILE="$CORTEX_HOME/coordination/token-budget.json"
 if [ -f "$BUDGET_FILE" ]; then
     echo -e "${GREEN}✓${NC} Token budget file exists"
     TOTAL_ALLOCATED=$(jq -r '.masters[] | .daily_limit' "$BUDGET_FILE" 2>/dev/null | awk '{s+=$1} END {print s}' || echo "0")
@@ -168,7 +168,7 @@ elif [ "$DAEMON_RUNNING" = true ]; then
     echo "  • Dashboard is NOT running"
     echo ""
     echo "To start dashboard:"
-    echo "  cd $COMMIT_RELAY_HOME/dashboard && npm start"
+    echo "  cd $CORTEX_HOME/dashboard && npm start"
 elif [ "$DASHBOARD_RUNNING" = true ]; then
     echo -e "${YELLOW}⚠ Platform Status: PARTIALLY OPERATIONAL${NC}"
     echo ""
@@ -181,7 +181,7 @@ else
     echo -e "${RED}✗ Platform Status: NOT RUNNING${NC}"
     echo ""
     echo "To launch platform:"
-    echo "  ./scripts/start-commit-relay.sh"
+    echo "  ./scripts/start-cortex.sh"
 fi
 
 echo ""

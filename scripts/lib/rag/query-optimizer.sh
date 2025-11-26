@@ -10,7 +10,7 @@
 #   - Query caching for performance
 #
 # Usage:
-#   source "$COMMIT_RELAY_HOME/scripts/lib/rag/query-optimizer.sh"
+#   source "$CORTEX_HOME/scripts/lib/rag/query-optimizer.sh"
 #   optimized=$(optimize_query "how to implement auth")
 #   reranked=$(rerank_results "$results" "$query")
 
@@ -20,12 +20,12 @@ set -euo pipefail
 # Configuration
 # ============================================================================
 
-COMMIT_RELAY_HOME="${COMMIT_RELAY_HOME:-$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)}"
+CORTEX_HOME="${CORTEX_HOME:-$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)}"
 
 # Query optimizer configuration
-OPTIMIZER_CONFIG="${COMMIT_RELAY_HOME}/coordination/config/rag-query-optimizer.json"
-QUERY_CACHE="${COMMIT_RELAY_HOME}/coordination/cache/query-cache.json"
-QUERY_HISTORY="${COMMIT_RELAY_HOME}/coordination/metrics/query-history.jsonl"
+OPTIMIZER_CONFIG="${CORTEX_HOME}/coordination/config/rag-query-optimizer.json"
+QUERY_CACHE="${CORTEX_HOME}/coordination/cache/query-cache.json"
+QUERY_HISTORY="${CORTEX_HOME}/coordination/metrics/query-history.jsonl"
 
 # Create directories
 mkdir -p "$(dirname "$QUERY_CACHE")"

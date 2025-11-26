@@ -7,7 +7,7 @@ set -euo pipefail
 # Configuration
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 LLM_MESH_HOME="$SCRIPT_DIR/../.."
-COMMIT_RELAY_HOME="${COMMIT_RELAY_HOME:-$(cd "$SCRIPT_DIR/../../.." && pwd)}"
+CORTEX_HOME="${CORTEX_HOME:-$(cd "$SCRIPT_DIR/../../.." && pwd)}"
 
 # Paths
 OUTCOMES_CATALOG="$SCRIPT_DIR/../catalog/routing-decisions.jsonl"

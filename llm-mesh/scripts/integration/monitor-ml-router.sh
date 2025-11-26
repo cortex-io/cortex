@@ -1,7 +1,7 @@
 #!/bin/bash
 # Monitor ML router performance
 
-METRICS_FILE="${COMMIT_RELAY_HOME:-/Users/ryandahlberg/Projects/commit-relay}/coordination/metrics/ml-router-metrics.jsonl"
+METRICS_FILE="${CORTEX_HOME:-/Users/ryandahlberg/Projects/cortex}/coordination/metrics/ml-router-metrics.jsonl"
 
 echo "📊 ML Router Metrics"
 echo "===================="

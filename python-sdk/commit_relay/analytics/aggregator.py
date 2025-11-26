@@ -1,5 +1,5 @@
 """
-Metrics aggregation for commit-relay analytics.
+Metrics aggregation for cortex analytics.
 
 Provides tools for aggregating and summarizing metrics data over various
 time periods and dimensions.
@@ -13,7 +13,7 @@ class MetricsAggregator:
     """
     Aggregate and analyze metrics data.
 
-    Provides various aggregation methods for analyzing commit-relay metrics
+    Provides various aggregation methods for analyzing cortex metrics
     over time, including worker statistics, task throughput, and success rates.
 
     Example:

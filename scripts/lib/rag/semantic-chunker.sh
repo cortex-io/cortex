@@ -11,7 +11,7 @@
 #   - Metadata extraction per chunk
 #
 # Usage:
-#   source "$COMMIT_RELAY_HOME/scripts/lib/rag/semantic-chunker.sh"
+#   source "$CORTEX_HOME/scripts/lib/rag/semantic-chunker.sh"
 #   chunks=$(chunk_document "$file_path")
 #   chunks=$(chunk_text "$text" "markdown")
 
@@ -21,11 +21,11 @@ set -euo pipefail
 # Configuration
 # ============================================================================
 
-COMMIT_RELAY_HOME="${COMMIT_RELAY_HOME:-$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)}"
+CORTEX_HOME="${CORTEX_HOME:-$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)}"
 
 # Chunker configuration
-CHUNKER_CONFIG="${COMMIT_RELAY_HOME}/coordination/config/semantic-chunker.json"
-CHUNKING_HISTORY="${COMMIT_RELAY_HOME}/coordination/metrics/chunking-history.jsonl"
+CHUNKER_CONFIG="${CORTEX_HOME}/coordination/config/semantic-chunker.json"
+CHUNKING_HISTORY="${CORTEX_HOME}/coordination/metrics/chunking-history.jsonl"
 
 # Create directories
 mkdir -p "$(dirname "$CHUNKER_CONFIG")"

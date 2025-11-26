@@ -3,7 +3,7 @@
   "worker_id": "worker-scan-027",
   "task_type": "security_audit",
   "scan_timestamp": "2025-11-16T16:35:00-0600",
-  "repository": "commit-relay",
+  "repository": "cortex",
   "scan_scope": "production_systems",
 
   "executive_summary": {
@@ -173,5 +173,5 @@
     "completed_at": "2025-11-16T16:36:00-0600"
   },
 
-  "conclusion": "The commit-relay repository demonstrates good security practices with proper .gitignore configuration, rate limiting, CORS restrictions, and no hardcoded secrets. The main areas for improvement are enabling API authentication in development and implementing automated secret scanning. Overall security posture is ACCEPTABLE for development environment."
+  "conclusion": "The cortex repository demonstrates good security practices with proper .gitignore configuration, rate limiting, CORS restrictions, and no hardcoded secrets. The main areas for improvement are enabling API authentication in development and implementing automated secret scanning. Overall security posture is ACCEPTABLE for development environment."
 }

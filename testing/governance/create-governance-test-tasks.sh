@@ -4,9 +4,9 @@
 
 set -euo pipefail
 
-COMMIT_RELAY_HOME="${COMMIT_RELAY_HOME:-/Users/ryandahlberg/commit-relay}"
-TASK_QUEUE="${COMMIT_RELAY_HOME}/coordination/task-queue.json"
-TEST_OUTPUT_DIR="${COMMIT_RELAY_HOME}/testing/governance/results"
+CORTEX_HOME="${CORTEX_HOME:-/Users/ryandahlberg/cortex}"
+TASK_QUEUE="${CORTEX_HOME}/coordination/task-queue.json"
+TEST_OUTPUT_DIR="${CORTEX_HOME}/testing/governance/results"
 TIMESTAMP=$(date +%s)
 
 # Colors
@@ -55,7 +55,7 @@ create_task() {
     "test_suite": "governance-validation"
   },
   "context": {
-    "repository": "ry-ops/commit-relay",
+    "repository": "ry-ops/cortex",
     "branch": "main",
     "test_scenario": true
   }

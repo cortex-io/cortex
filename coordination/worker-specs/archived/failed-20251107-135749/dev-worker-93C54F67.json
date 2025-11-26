@@ -14,7 +14,7 @@
     "created_at": "2025-11-05T17:01:56Z",
     "created_by": "create-task-cli",
     "context": {
-      "repository": "ry-ops/commit-relay",
+      "repository": "ry-ops/cortex",
       "branch": "main",
       "description": "Replace token budget pie chart with AUTONOMOUS PRODUCTIVITY METRICS. Edit dashboard/public/dashboard-v2.js: Replace initTokenChart() and tokenChart with initProductivityChart() and productivityChart. Create time-series line chart with ApexCharts showing: 1) Tasks completed per day (green), 2) Autonomous commits per day (blue), 3) Worker success rate (purple), 4) Avg completion time (orange). Add stat cards: Total Autonomous Commits, Hours Saved, Tasks Today, Current Streak. Edit dashboard/server/index.js: Add /api/productivity-metrics endpoint returning historical data. Make it visually stunning with gradients and animations. Title: 🚀 Autonomous Productivity Analytics. MUST edit actual dashboard files, NOT create test files.",
       "requirements": []
@@ -32,8 +32,8 @@
       "testing"
     ],
     "knowledge_base_refs": {
-      "implementation_patterns": "/Users/ryandahlberg/commit-relay/scripts/../coordination/masters/development/knowledge-base/implementation-patterns.jsonl",
-      "architecture_docs": "/Users/ryandahlberg/commit-relay/scripts/../coordination/masters/development/knowledge-base/codebase-architecture.json"
+      "implementation_patterns": "/Users/ryandahlberg/cortex/scripts/../coordination/masters/development/knowledge-base/implementation-patterns.jsonl",
+      "architecture_docs": "/Users/ryandahlberg/cortex/scripts/../coordination/masters/development/knowledge-base/codebase-architecture.json"
     }
   },
   "resources": {

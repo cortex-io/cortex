@@ -1,6 +1,6 @@
 {
   "version": "1.0.0",
-  "description": "Vector store configuration for commit-relay RAG system",
+  "description": "Vector store configuration for cortex RAG system",
 
   "active_provider": "file",
 

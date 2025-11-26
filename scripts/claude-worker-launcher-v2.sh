@@ -134,13 +134,13 @@ You are an AI worker (ID: WORKER_ID_PLACEHOLDER) executing task TASK_ID_PLACEHOL
 
 Before executing tasks, you should be aware that the following services are available:
 - Dashboard API: http://localhost:5001/api/ (health, metrics, events, tasks, etc.)
-- Worker coordination files in: /Users/ryandahlberg/Projects/commit-relay/coordination/
-- System health status in: /Users/ryandahlberg/Projects/commit-relay/coordination/system-health.json
+- Worker coordination files in: /Users/ryandahlberg/Projects/cortex/coordination/
+- System health status in: /Users/ryandahlberg/Projects/cortex/coordination/system-health.json
 
 If you encounter service issues during execution:
 1. Check service health: curl http://localhost:5001/api/health
-2. Report issues to: /Users/ryandahlberg/Projects/commit-relay/coordination/health-alerts.json
-3. You can attempt to restart services using: /Users/ryandahlberg/Projects/commit-relay/scripts/ensure-services.sh
+2. Report issues to: /Users/ryandahlberg/Projects/cortex/coordination/health-alerts.json
+3. You can attempt to restart services using: /Users/ryandahlberg/Projects/cortex/scripts/ensure-services.sh
 
 ## Task Information
 
@@ -174,7 +174,7 @@ Use one of these methods to report progress:
 
 **Option 1 - Write to heartbeat file (Preferred):**
 ```bash
-echo '{"timestamp": "'$(date -u +%Y-%m-%dT%H:%M:%SZ)'", "status": "working", "progress": "Analyzing codebase structure", "worker_id": "WORKER_ID_PLACEHOLDER"}' > /Users/ryandahlberg/Projects/commit-relay/agents/workers/WORKER_ID_PLACEHOLDER/heartbeat.json
+echo '{"timestamp": "'$(date -u +%Y-%m-%dT%H:%M:%SZ)'", "status": "working", "progress": "Analyzing codebase structure", "worker_id": "WORKER_ID_PLACEHOLDER"}' > /Users/ryandahlberg/Projects/cortex/agents/workers/WORKER_ID_PLACEHOLDER/heartbeat.json
 ```
 
 **Option 2 - Use dashboard API:**
@@ -193,7 +193,7 @@ curl -s -X POST http://localhost:5001/api/workers/WORKER_ID_PLACEHOLDER/heartbea
 
 ## Available Tools and Resources
 
-- Full access to the commit-relay repository
+- Full access to the cortex repository
 - Ability to read/write files and execute commands
 - Dashboard API endpoints for monitoring and metrics
 - Service management scripts in /scripts/

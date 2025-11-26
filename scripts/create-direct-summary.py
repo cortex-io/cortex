@@ -36,7 +36,7 @@ def create_summary_pdf(output_path):
     story = []
 
     # Title
-    story.append(Paragraph("Commit-Relay Implementation Roadmap", title_style))
+    story.append(Paragraph("Cortex Implementation Roadmap", title_style))
     story.append(Paragraph(f"Generated: {datetime.now().strftime('%Y-%m-%d')}", subtitle_style))
     story.append(Spacer(1, 20))
 
@@ -44,7 +44,7 @@ def create_summary_pdf(output_path):
     story.append(Paragraph("Executive Summary", section_style))
     summary_text = """
     This roadmap consolidates implementation recommendations from 33 analyzed documents
-    into a phased plan for commit-relay enhancements. Items are categorized by implementation
+    into a phased plan for cortex enhancements. Items are categorized by implementation
     phase and compatibility with the current architecture.
     <br/><br/>
     <b>Source Categories:</b> Security (13), AI Agents (11), Prompt Engineering (5),
@@ -75,7 +75,7 @@ def create_summary_pdf(output_path):
 
     # Already Implemented
     story.append(Paragraph("Already Implemented", section_style))
-    story.append(Paragraph("These capabilities are already present in commit-relay:", note_style))
+    story.append(Paragraph("These capabilities are already present in cortex:", note_style))
     story.append(Spacer(1, 10))
 
     implemented = [
@@ -298,7 +298,7 @@ def create_summary_pdf(output_path):
     doc.build(story)
 
 def main():
-    library_dir = Path('/Users/ryandahlberg/commit-relay/library')
+    library_dir = Path('/Users/ryandahlberg/cortex/library')
     output_path = library_dir / 'COMMIT-RELAY-IMPLEMENTATION-ROADMAP.pdf'
 
     print("Creating comprehensive implementation roadmap...")

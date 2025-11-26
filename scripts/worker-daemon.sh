@@ -1,13 +1,13 @@
 #!/bin/bash
 # scripts/worker-daemon.sh
 # Background daemon that monitors for pending workers and launches them automatically
-# Part of commit-relay autonomous automation system
+# Part of cortex autonomous automation system
 
 set -euo pipefail
 
 # Get script directory
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-COMMIT_RELAY_HOME="${COMMIT_RELAY_HOME:-$(cd "$SCRIPT_DIR/.." && pwd)}"
+CORTEX_HOME="${CORTEX_HOME:-$(cd "$SCRIPT_DIR/.." && pwd)}"
 
 # Load libraries
 source "$SCRIPT_DIR/lib/logging.sh"
@@ -15,10 +15,10 @@ source "$SCRIPT_DIR/lib/coordination.sh"
 source "$SCRIPT_DIR/lib/heartbeat.sh"
 
 # Daemon configuration
-DAEMON_NAME="commit-relay-worker-daemon"
+DAEMON_NAME="cortex-worker-daemon"
 POLL_INTERVAL="${WORKER_DAEMON_POLL_INTERVAL:-30}"  # Check every 30 seconds
 AUTO_CLOSE_WORKERS="${AUTO_CLOSE_WORKERS:-true}"     # Auto-close terminal tabs after completion
-LOG_FILE="${COMMIT_RELAY_HOME}/agents/logs/system/worker-daemon.log"
+LOG_FILE="${CORTEX_HOME}/agents/logs/system/worker-daemon.log"
 PID_FILE="/tmp/${DAEMON_NAME}.pid"
 
 # Ensure log directory exists
@@ -48,7 +48,7 @@ echo $$ > "$PID_FILE"
 
 log_daemon "INFO: Worker daemon starting (PID $$)"
 log_daemon "INFO: Poll interval: ${POLL_INTERVAL}s"
-log_daemon "INFO: Working directory: $COMMIT_RELAY_HOME"
+log_daemon "INFO: Working directory: $CORTEX_HOME"
 
 # Cleanup on exit
 cleanup() {
@@ -60,12 +60,12 @@ cleanup() {
 trap cleanup SIGTERM SIGINT EXIT
 
 # Track active workers using a simple file-based approach
-TRACKING_DIR="/tmp/commit-relay-workers"
+TRACKING_DIR="/tmp/cortex-workers"
 mkdir -p "$TRACKING_DIR"
 
 # Sparse Pool Manager Integration (MoE-inspired)
 check_pool_capacity() {
-    local sparse_manager="$COMMIT_RELAY_HOME/scripts/sparse-pool-manager.sh"
+    local sparse_manager="$CORTEX_HOME/scripts/sparse-pool-manager.sh"
 
     if [ ! -f "$sparse_manager" ]; then
         # No sparse manager - allow unlimited (legacy mode)
@@ -82,7 +82,7 @@ check_pool_capacity() {
     fi
 
     # Check pool state file for capacity
-    local pool_state="$COMMIT_RELAY_HOME/coordination/memory/working/pool-state.json"
+    local pool_state="$CORTEX_HOME/coordination/memory/working/pool-state.json"
     if [ -f "$pool_state" ]; then
         local active_workers=$(jq -r '.pool_metrics.active_workers' "$pool_state" 2>/dev/null || echo 0)
         local target_workers=$(jq -r '.pool_metrics.target_workers' "$pool_state" 2>/dev/null || echo 99)
@@ -105,10 +105,10 @@ check_pool_capacity() {
 
 # Check for completed workers and finalize their lifecycle
 check_completed_workers() {
-    local ACTIVE_SPECS_DIR="$COMMIT_RELAY_HOME/coordination/worker-specs/active"
-    local COMPLETED_DIR="$COMMIT_RELAY_HOME/coordination/worker-specs/completed"
-    local FAILED_DIR="$COMMIT_RELAY_HOME/coordination/worker-specs/failed"
-    local WORKERS_DIR="$COMMIT_RELAY_HOME/agents/workers"
+    local ACTIVE_SPECS_DIR="$CORTEX_HOME/coordination/worker-specs/active"
+    local COMPLETED_DIR="$CORTEX_HOME/coordination/worker-specs/completed"
+    local FAILED_DIR="$CORTEX_HOME/coordination/worker-specs/failed"
+    local WORKERS_DIR="$CORTEX_HOME/agents/workers"
 
     mkdir -p "$COMPLETED_DIR" "$FAILED_DIR"
 
@@ -157,7 +157,7 @@ check_completed_workers() {
             # Update task queue status
             local task_id=$(jq -r '.task_id' "$COMPLETED_DIR/$(basename "$spec_file")" 2>/dev/null || echo "")
             if [ -n "$task_id" ] && [ "$task_id" != "null" ]; then
-                local task_queue="$COMMIT_RELAY_HOME/coordination/task-queue.json"
+                local task_queue="$CORTEX_HOME/coordination/task-queue.json"
                 if [ -f "$task_queue" ]; then
                     jq --arg tid "$task_id" \
                        '(.tasks[] | select(.id == $tid)).status = "completed"' \
@@ -191,7 +191,7 @@ check_completed_workers() {
             # Update task queue status
             local task_id=$(jq -r '.task_id' "$FAILED_DIR/$(basename "$spec_file")" 2>/dev/null || echo "")
             if [ -n "$task_id" ] && [ "$task_id" != "null" ]; then
-                local task_queue="$COMMIT_RELAY_HOME/coordination/task-queue.json"
+                local task_queue="$CORTEX_HOME/coordination/task-queue.json"
                 if [ -f "$task_queue" ]; then
                     jq --arg tid "$task_id" \
                        '(.tasks[] | select(.id == $tid)).status = "failed"' \
@@ -211,7 +211,7 @@ check_completed_workers() {
 
 # Main daemon loop
 while true; do
-    cd "$COMMIT_RELAY_HOME"
+    cd "$CORTEX_HOME"
 
     # Check for completed workers first
     check_completed_workers
@@ -229,7 +229,7 @@ while true; do
     fi
 
     # Check for pending workers
-    ACTIVE_SPECS_DIR="$COMMIT_RELAY_HOME/coordination/worker-specs/active"
+    ACTIVE_SPECS_DIR="$CORTEX_HOME/coordination/worker-specs/active"
 
     if [ -d "$ACTIVE_SPECS_DIR" ]; then
         for spec_file in "$ACTIVE_SPECS_DIR"/*.json; do
@@ -245,10 +245,10 @@ while true; do
                 log_daemon "ERROR: Moving malformed spec to quarantine"
 
                 # Create quarantine directory
-                mkdir -p "$COMMIT_RELAY_HOME/coordination/worker-specs/quarantine"
+                mkdir -p "$CORTEX_HOME/coordination/worker-specs/quarantine"
 
                 # Move malformed spec to quarantine with timestamp
-                quarantine_file="$COMMIT_RELAY_HOME/coordination/worker-specs/quarantine/$(basename "$spec_file" .json)-malformed-$(date +%s).json"
+                quarantine_file="$CORTEX_HOME/coordination/worker-specs/quarantine/$(basename "$spec_file" .json)-malformed-$(date +%s).json"
                 mv "$spec_file" "$quarantine_file"
 
                 # Emit governance alert
@@ -308,11 +308,11 @@ while true; do
 
                 # Use Claude Code launcher to spawn worker with AI capabilities
                 # Use enhanced launcher with Terminal.app and TTY support
-                CLAUDE_LAUNCHER="$COMMIT_RELAY_HOME/scripts/claude-worker-launcher-v2.sh"
+                CLAUDE_LAUNCHER="$CORTEX_HOME/scripts/claude-worker-launcher-v2.sh"
 
                 if [ -f "$CLAUDE_LAUNCHER" ]; then
                     # Read terminal settings
-                    TERMINAL_SETTINGS="$COMMIT_RELAY_HOME/coordination/config/terminal-settings.json"
+                    TERMINAL_SETTINGS="$CORTEX_HOME/coordination/config/terminal-settings.json"
                     TERMINAL_ENABLED="true"
                     HEADLESS_MODE="false"
                     AUTO_CLOSE_DURATION="0"
@@ -324,7 +324,7 @@ while true; do
                     fi
 
                     # Build launch command
-                    TERMINAL_CMD="cd $COMMIT_RELAY_HOME && $CLAUDE_LAUNCHER $WORKER_ID"
+                    TERMINAL_CMD="cd $CORTEX_HOME && $CLAUDE_LAUNCHER $WORKER_ID"
 
                     if [ "$TERMINAL_ENABLED" = "true" ] && [ "$HEADLESS_MODE" = "false" ]; then
                         log_daemon "INFO: Launching worker with Claude Code in Terminal window"
@@ -348,7 +348,7 @@ while true; do
 
                         # Launch worker headless in background
                         (
-                            cd "$COMMIT_RELAY_HOME"
+                            cd "$CORTEX_HOME"
                             mkdir -p "agents/workers/$WORKER_ID/logs"
                             "$CLAUDE_LAUNCHER" "$WORKER_ID" "$TASK_ID" "$WORKER_TYPE" \
                                 > "agents/workers/$WORKER_ID/logs/stdout.log" 2>&1 &
@@ -366,7 +366,7 @@ while true; do
                        mv "${spec_file}.tmp" "$spec_file"
 
                     # Move to failed directory
-                    mv "$spec_file" "$COMMIT_RELAY_HOME/coordination/worker-specs/failed/"
+                    mv "$spec_file" "$CORTEX_HOME/coordination/worker-specs/failed/"
 
                     continue
                 fi

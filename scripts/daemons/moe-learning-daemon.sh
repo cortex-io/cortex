@@ -14,27 +14,27 @@ set -euo pipefail
 
 # Get script directory
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-COMMIT_RELAY_HOME="${COMMIT_RELAY_HOME:-$(cd "$SCRIPT_DIR/../.." && pwd)}"
+CORTEX_HOME="${CORTEX_HOME:-$(cd "$SCRIPT_DIR/../.." && pwd)}"
 
 # Load libraries
-source "$COMMIT_RELAY_HOME/scripts/lib/logging.sh" 2>/dev/null || {
+source "$CORTEX_HOME/scripts/lib/logging.sh" 2>/dev/null || {
     log_info() { echo "[INFO] $1"; }
     log_warn() { echo "[WARN] $1"; }
     log_error() { echo "[ERROR] $1"; }
     log_success() { echo "[SUCCESS] $1"; }
 }
 
-source "$COMMIT_RELAY_HOME/scripts/lib/learning-agent/learner.sh"
+source "$CORTEX_HOME/scripts/lib/learning-agent/learner.sh"
 
-cd "$COMMIT_RELAY_HOME"
+cd "$CORTEX_HOME"
 
 # Daemon configuration
-DAEMON_NAME="commit-relay-moe-learning"
+DAEMON_NAME="cortex-moe-learning"
 LEARNING_INTERVAL="${MOE_LEARNING_INTERVAL:-3600}"  # Default: 1 hour (3600 seconds)
 MIN_EXAMPLES="${MOE_MIN_EXAMPLES:-3}"  # Minimum examples for pattern validity
 PID_FILE="/tmp/${DAEMON_NAME}.pid"
-LOG_FILE="$COMMIT_RELAY_HOME/agents/logs/system/moe-learning-daemon.log"
-METRICS_DIR="$COMMIT_RELAY_HOME/coordination/metrics/learning"
+LOG_FILE="$CORTEX_HOME/agents/logs/system/moe-learning-daemon.log"
+METRICS_DIR="$CORTEX_HOME/coordination/metrics/learning"
 
 # Ensure directories exist
 mkdir -p "$(dirname "$LOG_FILE")"
@@ -68,7 +68,7 @@ log_daemon "=========================================="
 log_daemon "PID: $$"
 log_daemon "Learning interval: ${LEARNING_INTERVAL}s ($(( LEARNING_INTERVAL / 60 )) minutes)"
 log_daemon "Min examples for patterns: $MIN_EXAMPLES"
-log_daemon "Working directory: $COMMIT_RELAY_HOME"
+log_daemon "Working directory: $CORTEX_HOME"
 
 # Cleanup on exit
 cleanup() {
@@ -95,8 +95,8 @@ run_learning_cycle() {
     log_daemon "[$cycle_id] Starting learning cycle..."
 
     # Check for sufficient training data
-    local positive_file="$COMMIT_RELAY_HOME/coordination/knowledge-base/training-examples/positive-examples.jsonl"
-    local negative_file="$COMMIT_RELAY_HOME/coordination/knowledge-base/training-examples/negative-examples.jsonl"
+    local positive_file="$CORTEX_HOME/coordination/knowledge-base/training-examples/positive-examples.jsonl"
+    local negative_file="$CORTEX_HOME/coordination/knowledge-base/training-examples/negative-examples.jsonl"
 
     local total_examples=0
     if [ -f "$positive_file" ]; then

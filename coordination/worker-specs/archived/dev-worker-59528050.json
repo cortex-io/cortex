@@ -14,7 +14,7 @@
   "created_at": "2025-11-08T10:41:38-0600",
   "created_by": "create-task-cli",
   "context": {
-    "repository": "ry-ops/commit-relay",
+    "repository": "ry-ops/cortex",
     "branch": "main",
     "description": "Create DDQD v5.0 stress test with MoE Intelligence validation: routing accuracy, confidence scores, learning system, sparse activation testing. Keywords: development testing stress-test MoE validation shell-script bash. Implement test_moe_routing test_moe_confidence test_moe_learning test_moe_pool_efficiency functions, run 5min test, generate MoE metrics report.",
     "requirements": []
@@ -34,8 +34,8 @@
   "testing"
 ],
     "knowledge_base_refs": {
-      "implementation_patterns": "/Users/ryandahlberg/projects/commit-relay/scripts/../coordination/masters/development/knowledge-base/implementation-patterns.jsonl",
-      "architecture_docs": "/Users/ryandahlberg/projects/commit-relay/scripts/../coordination/masters/development/knowledge-base/codebase-architecture.json"
+      "implementation_patterns": "/Users/ryandahlberg/projects/cortex/scripts/../coordination/masters/development/knowledge-base/implementation-patterns.jsonl",
+      "architecture_docs": "/Users/ryandahlberg/projects/cortex/scripts/../coordination/masters/development/knowledge-base/codebase-architecture.json"
     }
   },
   "resources": {

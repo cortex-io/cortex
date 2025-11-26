@@ -4,12 +4,12 @@
   "worker_id": "worker-documentation-054",
   "generated_at": "2025-11-21T01:23:00Z",
   "repository": {
-    "name": "commit-relay",
+    "name": "cortex",
     "description": "AI-powered commit automation system with master-worker architecture",
     "version": "1.0.0",
     "license": "MIT",
     "author": "ry-ops",
-    "remote": "https://github.com/ry-ops/commit-relay.git",
+    "remote": "https://github.com/ry-ops/cortex.git",
     "branch": "main",
     "latest_commit": {
       "hash": "7c617972b353a76dd11912634906539c5f54ea87",
@@ -89,7 +89,7 @@
       }
     },
     "python": {
-      "package": "commit-relay-client",
+      "package": "cortex-client",
       "version": "0.1.0",
       "python_requires": ">=3.8",
       "core": {
@@ -190,7 +190,7 @@
   },
   "services": {
     "dashboard_api": {
-      "name": "commit-relay-dashboard",
+      "name": "cortex-dashboard",
       "port": 3000,
       "main": "server/index.js",
       "endpoints": [

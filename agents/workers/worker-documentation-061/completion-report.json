@@ -12,7 +12,7 @@
     "deliverables": [
       {
         "type": "report",
-        "path": "/Users/ryandahlberg/Projects/commit-relay/agents/workers/worker-documentation-061/portfolio-health-report.json",
+        "path": "/Users/ryandahlberg/Projects/cortex/agents/workers/worker-documentation-061/portfolio-health-report.json",
         "description": "Comprehensive portfolio health status report"
       }
     ],

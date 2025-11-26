@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Basic usage examples for commit-relay SDK.
+Basic usage examples for cortex SDK.
 
 This script demonstrates fundamental SDK operations including:
 - Connecting to the dashboard API

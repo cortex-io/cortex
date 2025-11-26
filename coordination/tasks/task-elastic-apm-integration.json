@@ -1,7 +1,7 @@
 {
   "task_id": "task-elastic-apm-integration",
   "title": "Integrate Elastic APM for full observability",
-  "description": "Implement comprehensive Elastic APM integration into the commit-relay FastAPI application for traces, logs, metrics, and custom events",
+  "description": "Implement comprehensive Elastic APM integration into the cortex FastAPI application for traces, logs, metrics, and custom events",
   "type": "development:feature",
   "priority": "high",
   "assigned_to": "development-master",
@@ -99,9 +99,9 @@
     "Documentation complete"
   ],
   "verification_steps": [
-    "Start commit-relay with APM enabled",
+    "Start cortex with APM enabled",
     "Make several API requests",
-    "Verify in Elastic Cloud Kibana: Observability → APM → Services → commit-relay",
+    "Verify in Elastic Cloud Kibana: Observability → APM → Services → cortex",
     "Check traces appear with proper timing",
     "Check logs correlate with trace IDs",
     "Verify custom events appear in transaction metadata"

@@ -10,21 +10,21 @@ export WORKER_ID="autonomous-demo-$(date +%s)"
 export WORKER_TYPE="implementation-worker"
 export TASK_ID="${TASK_ID:-demo-task}"
 export TASK_DESCRIPTION="Autonomous workflow demonstration - automated git commit and push"
-export COMMIT_RELAY_HOME="${COMMIT_RELAY_HOME:-$(cd "$(dirname "$0")/../.." && pwd)}"
+export CORTEX_HOME="${CORTEX_HOME:-$(cd "$(dirname "$0")/../.." && pwd)}"
 
 # Load logging library for pretty output
-source "$COMMIT_RELAY_HOME/scripts/lib/logging.sh"
+source "$CORTEX_HOME/scripts/lib/logging.sh"
 
 log_section "Autonomous Worker Demo"
 log_info "Worker ID: $WORKER_ID"
 log_info "Task ID: $TASK_ID"
-log_info "Working Directory: $COMMIT_RELAY_HOME"
+log_info "Working Directory: $CORTEX_HOME"
 log_info ""
 
 # === Phase 1: Do Some Work ===
 log_section "Phase 1: Performing Work"
 
-cd "$COMMIT_RELAY_HOME"
+cd "$CORTEX_HOME"
 
 # Create a demo directory if it doesn't exist
 mkdir -p examples/autonomous-demo
@@ -39,7 +39,7 @@ Worker ID: $WORKER_ID
 Task ID: $TASK_ID
 Timestamp: $(date +%Y-%m-%dT%H:%M:%S%z)
 
-This file was created automatically by an autonomous commit-relay worker.
+This file was created automatically by an autonomous cortex worker.
 
 The worker:
 1. Created this file
@@ -47,7 +47,7 @@ The worker:
 3. Created a descriptive commit message
 4. Pushed to GitHub - all without manual intervention!
 
-This demonstrates the fully autonomous CI/CD workflow of commit-relay.
+This demonstrates the fully autonomous CI/CD workflow of cortex.
 
 🤖 Generated with Claude Code
 EOF
@@ -83,7 +83,7 @@ log_info ""
 
 # Execute the automatic completion hook
 # This handles ALL git operations automatically!
-source "$COMMIT_RELAY_HOME/scripts/templates/worker-completion-hook.sh"
+source "$CORTEX_HOME/scripts/templates/worker-completion-hook.sh"
 
 # === End ===
 # Note: We never reach here because the completion hook exits

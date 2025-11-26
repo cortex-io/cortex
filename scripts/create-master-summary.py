@@ -14,7 +14,7 @@ from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib import colors
 from reportlab.lib.units import inch
 
-# What commit-relay already has implemented
+# What cortex already has implemented
 ALREADY_IMPLEMENTED = {
     'Token budget management with atomic operations',
     'Distributed tracing (OpenTelemetry-inspired)',
@@ -33,7 +33,7 @@ ALREADY_IMPLEMENTED = {
     'Worker restart and failure pattern detection'
 }
 
-# Items not compatible with commit-relay architecture
+# Items not compatible with cortex architecture
 NOT_COMPATIBLE = {
     'Kubernetes deployment',  # Current architecture is local/daemon-based
     'Multi-region support',   # Single-node design
@@ -173,7 +173,7 @@ def create_summary_pdf(output_path, categories, item_counts):
     story = []
 
     # Title page
-    story.append(Paragraph("Commit-Relay Implementation Roadmap", title_style))
+    story.append(Paragraph("Cortex Implementation Roadmap", title_style))
     story.append(Paragraph(f"Generated: {datetime.now().strftime('%Y-%m-%d')}", subtitle_style))
     story.append(Spacer(1, 20))
 
@@ -182,7 +182,7 @@ def create_summary_pdf(output_path, categories, item_counts):
 
     summary_text = f"""
     This document consolidates implementation recommendations from {item_counts['total_files']}
-    source documents into a phased roadmap for commit-relay enhancements.
+    source documents into a phased roadmap for cortex enhancements.
     <br/><br/>
     <b>Total Implementation Items:</b> {item_counts['total_items']}<br/>
     <b>Already Implemented:</b> {item_counts['implemented']} items<br/>
@@ -219,7 +219,7 @@ def create_summary_pdf(output_path, categories, item_counts):
     # Already Implemented Section
     story.append(Paragraph("Already Implemented", section_style))
     story.append(Paragraph(
-        "These capabilities are already present in commit-relay. No action required.",
+        "These capabilities are already present in cortex. No action required.",
         note_style
     ))
     story.append(Spacer(1, 10))
@@ -299,7 +299,7 @@ def create_summary_pdf(output_path, categories, item_counts):
     # Not Compatible Section
     story.append(Paragraph("Not Compatible", section_style))
     story.append(Paragraph(
-        "These items are not compatible with commit-relay's current architecture.",
+        "These items are not compatible with cortex's current architecture.",
         note_style
     ))
     story.append(Spacer(1, 10))
@@ -311,7 +311,7 @@ def create_summary_pdf(output_path, categories, item_counts):
     doc.build(story)
 
 def main():
-    library_dir = Path('/Users/ryandahlberg/commit-relay/library')
+    library_dir = Path('/Users/ryandahlberg/cortex/library')
     processed_dir = library_dir / 'processed'
     output_path = library_dir / 'COMMIT-RELAY-IMPLEMENTATION-ROADMAP.pdf'
 

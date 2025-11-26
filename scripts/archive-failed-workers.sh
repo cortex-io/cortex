@@ -9,7 +9,7 @@
 set -e
 
 # Directories
-COORD_ROOT="/Users/ryandahlberg/commit-relay/coordination"
+COORD_ROOT="/Users/ryandahlberg/cortex/coordination"
 FAILED_DIR="${COORD_ROOT}/worker-specs/failed"
 ARCHIVE_BASE="${COORD_ROOT}/worker-specs/archived"
 ARCHIVE_DIR="${ARCHIVE_BASE}/failed-$(date +%Y%m%d-%H%M%S)"

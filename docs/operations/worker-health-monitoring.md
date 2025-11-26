@@ -2,7 +2,7 @@
 
 ## Overview
 
-Comprehensive health monitoring for commit-relay worker fleet with automated remediation.
+Comprehensive health monitoring for cortex worker fleet with automated remediation.
 
 ## Health Check Types
 
@@ -210,7 +210,7 @@ if (zombieCount > 3) {
   await pagerduty.trigger({
     severity: 'critical',
     summary: `${zombieCount} zombie workers detected`,
-    source: 'commit-relay-worker-health'
+    source: 'cortex-worker-health'
   });
 }
 ```

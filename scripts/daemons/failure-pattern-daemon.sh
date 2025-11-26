@@ -18,18 +18,18 @@ set -euo pipefail
 
 # Get script directory
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-COMMIT_RELAY_HOME="${COMMIT_RELAY_HOME:-$(cd "$SCRIPT_DIR/../.." && pwd)}"
+CORTEX_HOME="${CORTEX_HOME:-$(cd "$SCRIPT_DIR/../.." && pwd)}"
 
 # Load libraries
-source "$COMMIT_RELAY_HOME/scripts/lib/failure-pattern-detection.sh"
-source "$COMMIT_RELAY_HOME/scripts/lib/logging.sh" 2>/dev/null || true
+source "$CORTEX_HOME/scripts/lib/failure-pattern-detection.sh"
+source "$CORTEX_HOME/scripts/lib/logging.sh" 2>/dev/null || true
 
 # Daemon configuration
-DAEMON_NAME="commit-relay-failure-pattern"
+DAEMON_NAME="cortex-failure-pattern"
 POLL_INTERVAL="${PATTERN_DETECTION_POLL_INTERVAL:-300}"  # Check every 5 minutes
-LOG_FILE="${COMMIT_RELAY_HOME}/agents/logs/system/failure-pattern-daemon.log"
+LOG_FILE="${CORTEX_HOME}/agents/logs/system/failure-pattern-daemon.log"
 PID_FILE="/tmp/${DAEMON_NAME}.pid"
-METRICS_FILE="${COMMIT_RELAY_HOME}/coordination/metrics/failure-pattern-metrics.json"
+METRICS_FILE="${CORTEX_HOME}/coordination/metrics/failure-pattern-metrics.json"
 
 # Ensure directories exist
 mkdir -p "$(dirname "$LOG_FILE")"
@@ -59,7 +59,7 @@ echo $$ > "$PID_FILE"
 
 log_daemon "INFO: Failure pattern detection daemon starting (PID $$)"
 log_daemon "INFO: Poll interval: ${POLL_INTERVAL}s"
-log_daemon "INFO: Working directory: $COMMIT_RELAY_HOME"
+log_daemon "INFO: Working directory: $CORTEX_HOME"
 
 # Cleanup on exit
 cleanup() {
@@ -124,7 +124,7 @@ save_metrics() {
     echo "$metrics_json" > "$METRICS_FILE"
 
     # Also append to time series log
-    local metrics_log="${COMMIT_RELAY_HOME}/coordination/metrics/failure-pattern-history.jsonl"
+    local metrics_log="${CORTEX_HOME}/coordination/metrics/failure-pattern-history.jsonl"
     mkdir -p "$(dirname "$metrics_log")"
     echo "$metrics_json" >> "$metrics_log"
 }
@@ -134,7 +134,7 @@ save_metrics() {
 # ============================================================================
 
 generate_daily_report() {
-    local report_dir="$COMMIT_RELAY_HOME/coordination/reports/failure-patterns"
+    local report_dir="$CORTEX_HOME/coordination/reports/failure-patterns"
     mkdir -p "$report_dir"
 
     local report_date=$(date +%Y-%m-%d)
@@ -215,7 +215,7 @@ EOFREPORT
 # ============================================================================
 
 while true; do
-    cd "$COMMIT_RELAY_HOME"
+    cd "$CORTEX_HOME"
 
     ((CYCLE_COUNT++))
     log_daemon "INFO: Starting pattern detection cycle #$CYCLE_COUNT"

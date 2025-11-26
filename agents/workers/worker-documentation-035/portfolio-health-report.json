@@ -38,7 +38,7 @@
   },
   "repositories": [
     {
-      "name": "ry-ops/commit-relay",
+      "name": "ry-ops/cortex",
       "health_status": "pending_catalog",
       "language": "JavaScript",
       "visibility": "private",

@@ -1,20 +1,20 @@
 #!/bin/bash
 # scripts/daemon-supervisor.sh
 # Monitors critical daemons and automatically restarts them if they stop
-# Ensures commit-relay system remains operational
+# Ensures cortex system remains operational
 
 set -euo pipefail
 
 # Get script directory
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-COMMIT_RELAY_HOME="${COMMIT_RELAY_HOME:-$(cd "$SCRIPT_DIR/.." && pwd)}"
+CORTEX_HOME="${CORTEX_HOME:-$(cd "$SCRIPT_DIR/.." && pwd)}"
 
 # Configuration
 DAEMON_NAME="daemon-supervisor"
 CHECK_INTERVAL="${DAEMON_SUPERVISOR_INTERVAL:-60}"  # Check every 60 seconds
-LOG_FILE="${COMMIT_RELAY_HOME}/agents/logs/system/daemon-supervisor.log"
+LOG_FILE="${CORTEX_HOME}/agents/logs/system/daemon-supervisor.log"
 PID_FILE="/tmp/${DAEMON_NAME}.pid"
-EVENTS_FILE="${COMMIT_RELAY_HOME}/coordination/events/daemon-supervisor-events.jsonl"
+EVENTS_FILE="${CORTEX_HOME}/coordination/events/daemon-supervisor-events.jsonl"
 
 # Critical daemons to monitor (name:script pairs)
 CRITICAL_DAEMONS=(
@@ -77,7 +77,7 @@ declare -A restart_counts 2>/dev/null || true
 
 # Main monitoring loop
 while true; do
-    cd "$COMMIT_RELAY_HOME"
+    cd "$CORTEX_HOME"
 
     # Check critical daemons
     for daemon_pair in "${CRITICAL_DAEMONS[@]}"; do
@@ -96,7 +96,7 @@ while true; do
 
             # Attempt restart
             log "INFO: Attempting to restart $daemon_name..."
-            nohup "$script_path" >> "$COMMIT_RELAY_HOME/agents/logs/system/${daemon_name}.log" 2>&1 &
+            nohup "$script_path" >> "$CORTEX_HOME/agents/logs/system/${daemon_name}.log" 2>&1 &
 
             sleep 3
 
@@ -131,7 +131,7 @@ while true; do
         if ! pgrep -f "$script_name" > /dev/null 2>&1; then
             # Silently restart optional daemons
             if [ -f "$script_path" ]; then
-                nohup "$script_path" >> "$COMMIT_RELAY_HOME/agents/logs/system/${daemon_name}.log" 2>&1 &
+                nohup "$script_path" >> "$CORTEX_HOME/agents/logs/system/${daemon_name}.log" 2>&1 &
                 sleep 2
 
                 if pgrep -f "$script_name" > /dev/null 2>&1; then

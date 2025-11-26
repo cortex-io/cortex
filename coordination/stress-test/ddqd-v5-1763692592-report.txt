@@ -56,9 +56,9 @@ Token Budget Used: 0 / 500000 (0.0%)
 All MoE intelligence validation tests passed successfully.
 MoE routing system is operating with high accuracy and efficiency.
 
-Full logs: /Users/ryandahlberg/Projects/commit-relay/agents/logs/stress-test/ddqd-v5-1763692592.log
-Metrics: /Users/ryandahlberg/Projects/commit-relay/coordination/stress-test/ddqd-v5-1763692592-metrics.json
-MoE Metrics: /Users/ryandahlberg/Projects/commit-relay/coordination/stress-test/ddqd-v5-1763692592-moe-metrics.json
-Report: /Users/ryandahlberg/Projects/commit-relay/coordination/stress-test/ddqd-v5-1763692592-report.txt
+Full logs: /Users/ryandahlberg/Projects/cortex/agents/logs/stress-test/ddqd-v5-1763692592.log
+Metrics: /Users/ryandahlberg/Projects/cortex/coordination/stress-test/ddqd-v5-1763692592-metrics.json
+MoE Metrics: /Users/ryandahlberg/Projects/cortex/coordination/stress-test/ddqd-v5-1763692592-moe-metrics.json
+Report: /Users/ryandahlberg/Projects/cortex/coordination/stress-test/ddqd-v5-1763692592-report.txt
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━

@@ -6,9 +6,9 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-COMMIT_RELAY_HOME="${COMMIT_RELAY_HOME:-$(cd "$SCRIPT_DIR/../.." && pwd)}"
-FINDINGS_DIR="$COMMIT_RELAY_HOME/coordination/code-runner/findings"
-LEARNING_DIR="$COMMIT_RELAY_HOME/coordination/masters/coordinator/knowledge-base/code-patterns"
+CORTEX_HOME="${CORTEX_HOME:-$(cd "$SCRIPT_DIR/../.." && pwd)}"
+FINDINGS_DIR="$CORTEX_HOME/coordination/code-runner/findings"
+LEARNING_DIR="$CORTEX_HOME/coordination/masters/coordinator/knowledge-base/code-patterns"
 
 # Ensure directories exist
 mkdir -p "$FINDINGS_DIR"
@@ -261,8 +261,8 @@ if [ "$ISSUE_COUNT" -gt 0 ]; then
                "report": "'$REPORT_FILE'",
                "issue_count": '$ISSUE_COUNT'
            }
-       }]' "$COMMIT_RELAY_HOME/coordination/task-queue.json" > /tmp/task-queue-code-runner.json && \
-    mv /tmp/task-queue-code-runner.json "$COMMIT_RELAY_HOME/coordination/task-queue.json"
+       }]' "$CORTEX_HOME/coordination/task-queue.json" > /tmp/task-queue-code-runner.json && \
+    mv /tmp/task-queue-code-runner.json "$CORTEX_HOME/coordination/task-queue.json"
 
     log "Created task: $TASK_ID (priority: $PRIORITY)"
 fi
@@ -282,16 +282,16 @@ jq -c '.findings[] | {
 }' "$REPORT_FILE" >> "$LEARNING_FILE" 2>/dev/null || true
 
 # Update MoE routing knowledge with code patterns
-if [ -f "$COMMIT_RELAY_HOME/coordination/masters/coordinator/knowledge-base/routing-decisions.jsonl" ]; then
+if [ -f "$CORTEX_HOME/coordination/masters/coordinator/knowledge-base/routing-decisions.jsonl" ]; then
     echo "{\"event\":\"code_analysis\",\"commit\":\"$COMMIT_HASH\",\"issues\":$ISSUE_COUNT,\"files\":$FILES_ANALYZED,\"timestamp\":\"$(date -u +%Y-%m-%dT%H:%M:%SZ)\",\"insight\":\"code_runner_pattern_detection\"}" >> \
-        "$COMMIT_RELAY_HOME/coordination/masters/coordinator/knowledge-base/routing-decisions.jsonl"
+        "$CORTEX_HOME/coordination/masters/coordinator/knowledge-base/routing-decisions.jsonl"
 fi
 
 # Trigger MoE learning from findings
-MOE_LEARNER="$COMMIT_RELAY_HOME/coordination/masters/coordinator/lib/moe-code-learner.sh"
+MOE_LEARNER="$CORTEX_HOME/coordination/masters/coordinator/lib/moe-code-learner.sh"
 if [ -x "$MOE_LEARNER" ] && [ "$ISSUE_COUNT" -gt 0 ]; then
     log "Triggering MoE learning cycle"
-    "$MOE_LEARNER" >> "$COMMIT_RELAY_HOME/agents/logs/system/code-runner.log" 2>&1 || \
+    "$MOE_LEARNER" >> "$CORTEX_HOME/agents/logs/system/code-runner.log" 2>&1 || \
         log "Warning: MoE learner execution failed (non-critical)"
 fi
 

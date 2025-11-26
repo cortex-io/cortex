@@ -100,12 +100,12 @@ ls README* LICENSE* .gitignore .github/workflows/
 ```json
 {
   "worker_id": "catalog-worker-123",
-  "repository": "ry-ops/commit-relay",
+  "repository": "ry-ops/cortex",
   "cataloged_at": "2025-11-26T15:00:00-06:00",
   "depth": "full",
 
   "metadata": {
-    "name": "ry-ops/commit-relay",
+    "name": "ry-ops/cortex",
     "description": "Kubernetes-inspired master-worker AI system for autonomous software development",
     "visibility": "public",
     "language": "Markdown",
@@ -123,7 +123,7 @@ ls README* LICENSE* .gitignore .github/workflows/
     "open_issues": 3,
     "default_branch": "main",
     "is_archived": false,
-    "homepage": "https://commit-relay.dev",
+    "homepage": "https://cortex.dev",
     "license": "MIT"
   },
 
@@ -184,7 +184,7 @@ ls README* LICENSE* .gitignore .github/workflows/
     "security_concerns": []
   },
 
-  "readme_excerpt": "Commit-Relay is a Kubernetes-inspired multi-agent system that orchestrates autonomous software development tasks. It uses a master-worker architecture with specialized agents for development, security, and inventory management...",
+  "readme_excerpt": "Cortex is a Kubernetes-inspired multi-agent system that orchestrates autonomous software development tasks. It uses a master-worker architecture with specialized agents for development, security, and inventory management...",
 
   "status": "active",
   "health_status": "healthy",
@@ -408,14 +408,14 @@ cat > /tmp/catalog_report.json <<EOF
 EOF
 
 # Save to coordination
-WORKER_LOG_DIR="~/commit-relay/agents/logs/workers/$(date +%Y-%m-%d)/$WORKER_ID"
+WORKER_LOG_DIR="~/cortex/agents/logs/workers/$(date +%Y-%m-%d)/$WORKER_ID"
 mkdir -p "$WORKER_LOG_DIR"
 cp /tmp/catalog_report.json "$WORKER_LOG_DIR/"
 ```
 
 ### 7. Update Coordination (1min)
 ```bash
-cd ~/commit-relay
+cd ~/cortex
 
 # Commit catalog results
 git add agents/logs/

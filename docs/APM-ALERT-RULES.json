@@ -14,18 +14,18 @@
         {
           "type": "email",
           "recipients": ["security-team@example.com"],
-          "subject": "CRITICAL: CVE Detected in commit-relay",
+          "subject": "CRITICAL: CVE Detected in cortex",
           "body": "Critical security vulnerabilities detected. Check Kibana dashboard immediately."
         },
         {
           "type": "slack",
           "channel": "#security-alerts",
-          "message": ":rotating_light: *CRITICAL CVE DETECTED* in commit-relay\nCheck security dashboard: {{kibana.url}}"
+          "message": ":rotating_light: *CRITICAL CVE DETECTED* in cortex\nCheck security dashboard: {{kibana.url}}"
         },
         {
           "type": "pagerduty",
           "severity": "critical",
-          "description": "Critical CVE detected in commit-relay"
+          "description": "Critical CVE detected in cortex"
         }
       ],
       "enabled": true
@@ -43,7 +43,7 @@
       "actions": [
         {
           "type": "slack",
-          "channel": "#commit-relay-alerts",
+          "channel": "#cortex-alerts",
           "message": ":warning: High worker failure rate detected: {{context.value}}%"
         },
         {
@@ -66,7 +66,7 @@
       "actions": [
         {
           "type": "slack",
-          "channel": "#commit-relay-alerts",
+          "channel": "#cortex-alerts",
           "message": ":chart_with_downwards_trend: MoE routing confidence low: {{context.value}}"
         }
       ],
@@ -85,7 +85,7 @@
       "actions": [
         {
           "type": "slack",
-          "channel": "#commit-relay-alerts",
+          "channel": "#cortex-alerts",
           "message": ":hourglass: Task queue backlog high: {{context.value}} pending tasks"
         }
       ],
@@ -96,7 +96,7 @@
       "type": "apm.transaction_duration_anomaly",
       "description": "Detects anomalous increases in API response time",
       "conditions": {
-        "service": "commit-relay",
+        "service": "cortex",
         "transaction_type": "request",
         "anomaly_severity": "major",
         "ml_job": "high_mean_response_time"
@@ -105,7 +105,7 @@
       "actions": [
         {
           "type": "slack",
-          "channel": "#commit-relay-alerts",
+          "channel": "#cortex-alerts",
           "message": ":turtle: API response time degradation detected on {{context.transaction_name}}"
         }
       ],
@@ -125,7 +125,7 @@
         {
           "type": "email",
           "recipients": ["security-team@example.com"],
-          "subject": "Security Health Score Low for commit-relay",
+          "subject": "Security Health Score Low for cortex",
           "body": "Security health score: {{context.value}}/100. Review vulnerabilities immediately."
         },
         {
@@ -168,7 +168,7 @@
       "actions": [
         {
           "type": "slack",
-          "channel": "#commit-relay-alerts",
+          "channel": "#cortex-alerts",
           "message": ":construction: Worker pool near capacity: {{context.value}} active workers"
         }
       ],
@@ -187,7 +187,7 @@
       "actions": [
         {
           "type": "slack",
-          "channel": "#commit-relay-alerts",
+          "channel": "#cortex-alerts",
           "message": ":thinking_face: Low MoE strategy diversity. Only {{context.value}} strategies in use."
         }
       ],
@@ -221,14 +221,14 @@
     "slack": {
       "webhook_url": "https://hooks.slack.com/services/YOUR/WEBHOOK/URL",
       "channels": {
-        "#commit-relay-alerts": "General operational alerts",
+        "#cortex-alerts": "General operational alerts",
         "#security-alerts": "Security and CVE alerts"
       }
     },
     "email": {
       "smtp_host": "smtp.example.com",
       "smtp_port": 587,
-      "from": "alerts@commit-relay.local",
+      "from": "alerts@cortex.local",
       "recipients": {
         "ops-team@example.com": "Operations team",
         "security-team@example.com": "Security team"
@@ -236,7 +236,7 @@
     },
     "pagerduty": {
       "integration_key": "YOUR_PAGERDUTY_INTEGRATION_KEY",
-      "service_name": "commit-relay"
+      "service_name": "cortex"
     }
   },
   "alert_routing": {

@@ -1,6 +1,6 @@
 # ML/AI Integration - Quick Start Guide
 
-This guide helps you get started with PyTorch and LangChain integration in commit-relay.
+This guide helps you get started with PyTorch and LangChain integration in cortex.
 
 ## What We've Built
 
@@ -47,7 +47,7 @@ llm-mesh/
 
 ### Step 1: Install ML Dependencies
 ```bash
-cd /Users/ryandahlberg/Projects/commit-relay
+cd /Users/ryandahlberg/Projects/cortex
 
 # Install PyTorch, LangChain, and dependencies
 pip install -r python-sdk/requirements-ml.txt
@@ -261,7 +261,7 @@ python scripts/monitoring/view-metrics.py
 **1. Import Errors**
 ```bash
 # Ensure you're in the right directory
-cd /Users/ryandahlberg/Projects/commit-relay
+cd /Users/ryandahlberg/Projects/cortex
 
 # Re-install dependencies
 pip install -r python-sdk/requirements-ml.txt

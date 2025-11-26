@@ -1,8 +1,8 @@
-# Kibana Dashboard Setup for commit-relay
+# Kibana Dashboard Setup for cortex
 
 ## Overview
 
-This guide provides step-by-step instructions for creating custom dashboards and alerts in Kibana to monitor commit-relay operations, including:
+This guide provides step-by-step instructions for creating custom dashboards and alerts in Kibana to monitor cortex operations, including:
 - Worker pool metrics
 - Task queue monitoring
 - MoE routing intelligence
@@ -12,7 +12,7 @@ This guide provides step-by-step instructions for creating custom dashboards and
 ## Prerequisites
 
 - Elastic Cloud account with APM enabled
-- commit-relay API server running with APM instrumentation
+- cortex API server running with APM instrumentation
 - Access to Kibana
 
 ---
@@ -181,7 +181,7 @@ This guide provides step-by-step instructions for creating custom dashboards and
 └──────────────────────────┴──────────────────────────────┘
 ```
 
-5. **Save** as "commit-relay Operations Dashboard"
+5. **Save** as "cortex Operations Dashboard"
 
 ### 2.2 Add Time Range Selector
 
@@ -206,14 +206,14 @@ This guide provides step-by-step instructions for creating custom dashboards and
 2. Select **APM rule** → **Transaction error rate**
 3. Configure:
    - **Name**: "High Worker Failure Rate"
-   - **Service**: commit-relay
+   - **Service**: cortex
    - **Transaction type**: All
    - **Check every**: 1 minute
    - **Threshold**: Error rate > 10% for 5 minutes
    - **Severity**: High
 4. **Actions**:
    - Send email to: ops-team@example.com
-   - Post to Slack: #commit-relay-alerts
+   - Post to Slack: #cortex-alerts
 5. **Save**
 
 ### 3.2 Low MoE Confidence Alert
@@ -229,7 +229,7 @@ This guide provides step-by-step instructions for creating custom dashboards and
    - **Check every**: 5 minutes
    - **Severity**: Medium
 3. **Actions**:
-   - Post to Slack: #commit-relay-alerts
+   - Post to Slack: #cortex-alerts
 4. **Save**
 
 ### 3.3 Critical Security Vulnerability Detected
@@ -263,7 +263,7 @@ This guide provides step-by-step instructions for creating custom dashboards and
    - **Check every**: 5 minutes
    - **Severity**: Medium
 3. **Actions**:
-   - Post to Slack: #commit-relay-alerts
+   - Post to Slack: #cortex-alerts
 4. **Save**
 
 ### 3.5 API Response Time Degradation
@@ -273,13 +273,13 @@ This guide provides step-by-step instructions for creating custom dashboards and
 1. Create new **APM** → **Transaction duration anomaly** rule
 2. Configure:
    - **Name**: "API Response Time Degradation"
-   - **Service**: commit-relay
+   - **Service**: cortex
    - **Transaction type**: request
    - **Anomaly severity**: Major
    - **Check every**: 1 minute
    - **Severity**: High
 3. **Actions**:
-   - Post to Slack: #commit-relay-alerts
+   - Post to Slack: #cortex-alerts
 4. **Save**
 
 ### 3.6 Security Health Score Low
@@ -340,15 +340,15 @@ transaction.duration.us > 200000 AND labels.worker.active_count > 20
 ### 5.1 Export Dashboard
 
 1. Go to **Analytics** → **Dashboard**
-2. Open "commit-relay Operations Dashboard"
+2. Open "cortex Operations Dashboard"
 3. Click **Share** → **Export**
-4. Save as `commit-relay-dashboard.ndjson`
+4. Save as `cortex-dashboard.ndjson`
 
 ### 5.2 Import to Another Environment
 
 1. Go to **Stack Management** → **Saved Objects**
 2. Click **Import**
-3. Upload `commit-relay-dashboard.ndjson`
+3. Upload `cortex-dashboard.ndjson`
 4. Click **Import**
 
 ---
@@ -383,7 +383,7 @@ transaction.duration.us > 200000 AND labels.worker.active_count > 20
 
 1. Verify APM server is running: `ps aux | grep node`
 2. Check APM logs: `cat /tmp/apm-server.log`
-3. Verify data in APM: Go to APM → Services → commit-relay
+3. Verify data in APM: Go to APM → Services → cortex
 4. Check time range in dashboard (try "Last 24 hours")
 
 ### Custom Labels Not Appearing
@@ -407,7 +407,7 @@ transaction.duration.us > 200000 AND labels.worker.active_count > 20
 - [Kibana Dashboard Documentation](https://www.elastic.co/guide/en/kibana/current/dashboard.html)
 - [APM Custom Dashboards](https://www.elastic.co/guide/en/kibana/current/apm-custom-dashboards.html)
 - [Alerting in Kibana](https://www.elastic.co/guide/en/kibana/current/alerting-getting-started.html)
-- commit-relay APM Integration Guide: [docs/APM-INTEGRATION.md](./APM-INTEGRATION.md)
+- cortex APM Integration Guide: [docs/APM-INTEGRATION.md](./APM-INTEGRATION.md)
 
 ---
 

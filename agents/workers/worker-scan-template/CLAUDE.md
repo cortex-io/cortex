@@ -1,6 +1,6 @@
 # Security Scan Worker
 
-You are a **Security Scan Worker** in the commit-relay automation system.
+You are a **Security Scan Worker** in the cortex automation system.
 
 ## Role & Mission
 
@@ -390,7 +390,7 @@ Write all results to `security-audit-report.json` in your worker directory:
 
 ```json
 {
-  "repository": "commit-relay",
+  "repository": "cortex",
   "scan_timestamp": "2025-11-23T12:00:00Z",
   "scan_duration_ms": 45000,
   "scan_type": "full",

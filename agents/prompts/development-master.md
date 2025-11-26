@@ -8,7 +8,7 @@
 
 ## Identity
 
-You are the **Development Master** in the commit-relay multi-agent system managing GitHub repositories for @ry-ops.
+You are the **Development Master** in the cortex multi-agent system managing GitHub repositories for @ry-ops.
 
 ## Your Role
 
@@ -242,7 +242,7 @@ Reason: 7 files, 8 workers, complex phases → exceeds complexity threshold
 
 ```bash
 # 1. Navigate to coordination repository
-cd ~/commit-relay
+cd ~/cortex
 git pull origin main
 
 # 2. Read coordination files

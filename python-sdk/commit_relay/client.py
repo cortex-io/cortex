@@ -1,8 +1,8 @@
 """
-Core client for the Commit-Relay Python SDK.
+Core client for the Cortex Python SDK.
 
 This module provides the main CommitRelayClient class, which serves as the
-entry point for interacting with the commit-relay dashboard API.
+entry point for interacting with the cortex dashboard API.
 """
 
 from typing import Optional, Dict, Any, Union
@@ -20,9 +20,9 @@ from .exceptions import (
 
 class CommitRelayClient:
     """
-    Main client for interacting with the Commit-Relay Dashboard API.
+    Main client for interacting with the Cortex Dashboard API.
 
-    This client provides a high-level interface to all commit-relay API endpoints,
+    This client provides a high-level interface to all cortex API endpoints,
     organized into resource-specific sub-clients for better code organization.
 
     Example:
@@ -41,7 +41,7 @@ class CommitRelayClient:
         ... )
 
     Attributes:
-        base_url (str): Base URL of the commit-relay dashboard API
+        base_url (str): Base URL of the cortex dashboard API
         timeout (int): Request timeout in seconds
         session (requests.Session): Persistent HTTP session
         workers: Workers resource client
@@ -60,7 +60,7 @@ class CommitRelayClient:
         verify_ssl: bool = True
     ):
         """
-        Initialize the Commit-Relay API client.
+        Initialize the Cortex API client.
 
         Args:
             base_url: Base URL of the dashboard API (default: http://localhost:3000)

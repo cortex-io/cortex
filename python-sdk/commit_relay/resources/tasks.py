@@ -1,5 +1,5 @@
 """
-Tasks resource client for commit-relay API.
+Tasks resource client for cortex API.
 
 Provides access to task-related endpoints including listing tasks,
 getting task details, and analyzing task execution metrics.
@@ -12,7 +12,7 @@ class Tasks:
     """
     Client for task-related API endpoints.
 
-    Handles all operations related to commit-relay tasks, including
+    Handles all operations related to cortex tasks, including
     listing tasks, filtering by status, and analyzing task outcomes.
 
     Example:

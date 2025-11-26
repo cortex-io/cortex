@@ -1,7 +1,7 @@
 {
   "version": "1.0.0",
   "last_updated": "2025-11-21T00:00:00Z",
-  "description": "Policy-as-code definitions for commit-relay governance",
+  "description": "Policy-as-code definitions for cortex governance",
   "policies": [
     {
       "policy_id": "pol-001",
@@ -81,7 +81,7 @@
           "description": "Limit file system access scope",
           "condition": "all(worker.file_paths, path => startsWith(path, policy.allowed_paths))",
           "params": {
-            "allowed_paths": ["/Users/ryandahlberg/commit-relay/"]
+            "allowed_paths": ["/Users/ryandahlberg/cortex/"]
           },
           "action": "reject",
           "message": "Worker attempting to access files outside allowed paths"

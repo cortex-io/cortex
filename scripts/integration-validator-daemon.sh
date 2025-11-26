@@ -17,14 +17,14 @@ set -euo pipefail
 
 # Configuration
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-COMMIT_RELAY_HOME="${COMMIT_RELAY_HOME:-$(cd "$SCRIPT_DIR/.." && pwd)}"
-COORD_DIR="$COMMIT_RELAY_HOME/coordination"
+CORTEX_HOME="${CORTEX_HOME:-$(cd "$SCRIPT_DIR/.." && pwd)}"
+COORD_DIR="$CORTEX_HOME/coordination"
 TASK_QUEUE="$COORD_DIR/task-queue.json"
 ROUTING_HEALTH_FILE="$COORD_DIR/routing-health.json"
 HEALTH_ALERTS_FILE="$COORD_DIR/health-alerts.json"
-LOG_DIR="$COMMIT_RELAY_HOME/agents/logs/system"
+LOG_DIR="$CORTEX_HOME/agents/logs/system"
 LOG_FILE="$LOG_DIR/integration-validator.log"
-PID_FILE="/tmp/commit-relay-integration-validator.pid"
+PID_FILE="/tmp/cortex-integration-validator.pid"
 EVENTS_FILE="$COORD_DIR/dashboard-events.jsonl"
 
 # Monitoring intervals
@@ -33,7 +33,7 @@ ROUTING_TIMEOUT=300  # Alert if task not routed within 5 minutes (300 seconds)
 STALL_THRESHOLD=1800  # Alert if no tasks processed in 30 minutes (1800 seconds)
 
 # Daemon name
-DAEMON_NAME="commit-relay-integration-validator"
+DAEMON_NAME="cortex-integration-validator"
 
 ###############################################################################
 # Logging Functions
@@ -232,7 +232,7 @@ check_routing_pipeline() {
     fi
 
     # Check if coordinator is running
-    local coordinator_pid_file="/tmp/commit-relay-coordinator.pid"
+    local coordinator_pid_file="/tmp/cortex-coordinator.pid"
     if [ ! -f "$coordinator_pid_file" ]; then
         log_daemon "ERROR: Coordinator daemon PID file not found"
         create_alert "coordinator_not_running" "critical" "Coordinator daemon is not running - tasks will not be routed"
@@ -247,7 +247,7 @@ check_routing_pipeline() {
     fi
 
     # Check if worker daemon is running
-    local worker_pid_file="/tmp/commit-relay-worker-daemon.pid"
+    local worker_pid_file="/tmp/cortex-worker-daemon.pid"
     if [ ! -f "$worker_pid_file" ]; then
         log_daemon "WARN: Worker daemon PID file not found"
         create_alert "worker_daemon_not_running" "high" "Worker daemon is not running - workers will not be spawned"
@@ -317,7 +317,7 @@ main_loop() {
     log_daemon "INFO: Starting main integration validator loop"
 
     while true; do
-        cd "$COMMIT_RELAY_HOME"
+        cd "$CORTEX_HOME"
 
         # Run routing health checks
         check_routing_pipeline

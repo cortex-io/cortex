@@ -18,7 +18,7 @@ source "$PROJECT_ROOT/scripts/lib/observability/alerting.sh" 2>/dev/null || true
 
 # Configuration
 readonly DAEMON_NAME="anomaly-detector"
-readonly PID_FILE="${PID_FILE:-/tmp/commit-relay-anomaly-detector.pid}"
+readonly PID_FILE="${PID_FILE:-/tmp/cortex-anomaly-detector.pid}"
 readonly LOG_FILE="${LOG_FILE:-coordination/observability/anomalies/anomaly-detector.log}"
 readonly CHECK_INTERVAL="${CHECK_INTERVAL:-60}"  # Check every 60 seconds
 readonly BASELINE_UPDATE_INTERVAL="${BASELINE_UPDATE_INTERVAL:-3600}"  # Update baselines hourly

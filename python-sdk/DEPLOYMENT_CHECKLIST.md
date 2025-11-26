@@ -7,14 +7,14 @@ Use this checklist to deploy the ML, Discovery, and CI/CD modules to production.
 ### 1. Environment Setup
 
 - [ ] Python 3.9+ installed
-- [ ] commit-relay backend running
+- [ ] cortex backend running
 - [ ] GitHub personal access token created (for discovery features)
 - [ ] GitHub Actions configured (for CI/CD features)
 
 ### 2. Install Dependencies
 
 ```bash
-cd /Users/ryandahlberg/commit-relay/python-sdk
+cd /Users/ryandahlberg/cortex/python-sdk
 pip install -r requirements.txt
 ```
 
@@ -39,7 +39,7 @@ python -c "import os; assert os.environ.get('GITHUB_TOKEN'), 'Token not set'"
 ### 4. Install SDK
 
 ```bash
-pip install -e /Users/ryandahlberg/commit-relay/python-sdk
+pip install -e /Users/ryandahlberg/cortex/python-sdk
 ```
 
 **Verify:**
@@ -52,7 +52,7 @@ python -c "from commit_relay import TaskFailurePredictor, GitHubDiscoveryService
 ### 1. ML Module Tests
 
 ```bash
-cd /Users/ryandahlberg/commit-relay/python-sdk/examples
+cd /Users/ryandahlberg/cortex/python-sdk/examples
 
 # Test ML insights (requires historical task data)
 python ml_insights_demo.py
@@ -110,7 +110,7 @@ else:
 ```
 
 - [ ] Initial model training completed
-- [ ] Model file created: `/Users/ryandahlberg/commit-relay/python-sdk/models/task_failure_model.pkl`
+- [ ] Model file created: `/Users/ryandahlberg/cortex/python-sdk/models/task_failure_model.pkl`
 
 #### B. Set Up Anomaly Monitoring
 
@@ -205,10 +205,10 @@ if repos:
 
 ```bash
 # Copy workflow templates to your repositories
-cp /Users/ryandahlberg/commit-relay/python-sdk/.github/workflows/security-scan.yml \
+cp /Users/ryandahlberg/cortex/python-sdk/.github/workflows/security-scan.yml \
    /path/to/your/repo/.github/workflows/
 
-cp /Users/ryandahlberg/commit-relay/python-sdk/.github/workflows/pr-review.yml \
+cp /Users/ryandahlberg/cortex/python-sdk/.github/workflows/pr-review.yml \
    /path/to/your/repo/.github/workflows/
 ```
 
@@ -291,7 +291,7 @@ Check GitHub Actions workflow runs:
 
 - [ ] Workflows appear in Actions tab
 - [ ] Runs complete successfully
-- [ ] Tasks created in commit-relay
+- [ ] Tasks created in cortex
 - [ ] Results reported correctly
 
 ## Monitoring Setup
@@ -411,7 +411,7 @@ If issues arise:
 **Solution:** Check GitHub Actions logs, verify secrets
 
 ### Issue: Tasks not created
-**Solution:** Verify commit-relay backend accessible
+**Solution:** Verify cortex backend accessible
 
 ## Documentation References
 

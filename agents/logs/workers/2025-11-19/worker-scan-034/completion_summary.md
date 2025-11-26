@@ -11,7 +11,7 @@
 ## Execution Summary
 
 ### Task Objective
-Perform comprehensive testing of the commit-relay Access Control permissions system to validate that role-based access control (RBAC) is functioning correctly with proper permission enforcement and namespace restrictions.
+Perform comprehensive testing of the cortex Access Control permissions system to validate that role-based access control (RBAC) is functioning correctly with proper permission enforcement and namespace restrictions.
 
 ### Execution Timeline
 - **Started:** 2025-11-19T08:55:48-0600
@@ -150,7 +150,7 @@ The worker spec at `coordination/worker-specs/active/worker-scan-034.json` shoul
 
 ## Conclusion
 
-The test-final-permissions task has been completed successfully. The commit-relay Access Control system is functioning correctly with proper role-based access control, namespace restrictions, and comprehensive audit logging. All tests passed with 100% success rate.
+The test-final-permissions task has been completed successfully. The cortex Access Control system is functioning correctly with proper role-based access control, namespace restrictions, and comprehensive audit logging. All tests passed with 100% success rate.
 
 Two non-critical issues were identified and documented for follow-up action. The system maintains a strong security posture with deny-by-default enforcement.
 

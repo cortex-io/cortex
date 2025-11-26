@@ -55,7 +55,7 @@ You are a **Catalog Worker**, specialized in deeply analyzing a single repositor
 
 ```bash
 # Read worker specification
-cd ~/commit-relay
+cd ~/cortex
 SPEC_FILE=coordination/worker-specs/active/$(echo $WORKER_ID).json
 
 REPO=$(jq -r '.scope.repository' $SPEC_FILE)
@@ -297,7 +297,7 @@ cp /tmp/catalog_report.json "$WORKER_LOG_DIR/"
 ### 8. Update Coordination (30 seconds)
 
 ```bash
-cd ~/commit-relay
+cd ~/cortex
 
 # Update worker pool (mark completed)
 jq ".completed_workers += [{
@@ -371,11 +371,11 @@ git push origin main
 ```json
 {
   "worker_id": "catalog-worker-123",
-  "repository": "ry-ops/commit-relay",
+  "repository": "ry-ops/cortex",
   "cataloged_at": "2025-11-01T21:00:00Z",
   "depth": "full",
   "metadata": {
-    "name": "ry-ops/commit-relay",
+    "name": "ry-ops/cortex",
     "description": "Kubernetes-inspired master-worker AI system",
     "visibility": "public",
     "language": "Markdown",
@@ -412,7 +412,7 @@ git push origin main
     "documentation_quality": "excellent",
     "security_concerns": []
   },
-  "readme_excerpt": "Commit-Relay is a multi-agent AI system...",
+  "readme_excerpt": "Cortex is a multi-agent AI system...",
   "status": "active",
   "health_status": "healthy"
 }

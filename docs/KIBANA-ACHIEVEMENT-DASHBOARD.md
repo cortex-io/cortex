@@ -2,14 +2,14 @@
 
 **Real-time GitHub Achievement Progress Monitoring**
 
-This guide shows how to create visualizations in Kibana for tracking GitHub achievement progress via commit-relay's Achievement Master.
+This guide shows how to create visualizations in Kibana for tracking GitHub achievement progress via cortex's Achievement Master.
 
 ---
 
 ## Prerequisites
 
 - Elastic APM configured (see [QUICK-START-MONITORING.md](./QUICK-START-MONITORING.md))
-- commit-relay API server running on `http://localhost:5001`
+- cortex API server running on `http://localhost:5001`
 - GitHub token configured (`GITHUB_TOKEN` environment variable)
 - Achievement Master endpoints active
 
@@ -485,4 +485,4 @@ Time to Achievement =
 
 ---
 
-**Built with commit-relay Achievement Master** 🏆
+**Built with cortex Achievement Master** 🏆

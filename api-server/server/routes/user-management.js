@@ -1,7 +1,7 @@
 /**
  * User Management API Routes
  *
- * Provides RESTful endpoints for managing users in the commit-relay system:
+ * Provides RESTful endpoints for managing users in the cortex system:
  * - GET /api/users - List all active users
  * - POST /api/users - Create new user
  * - GET /api/users/:userId - Get specific user details

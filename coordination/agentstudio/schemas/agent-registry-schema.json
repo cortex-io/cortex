@@ -42,7 +42,7 @@
         "inventory-master",
         "cicd-master",
         "dashboard-agent",
-        "commit-relay",
+        "cortex",
         "analysis-worker",
         "implementation-worker",
         "scan-worker",

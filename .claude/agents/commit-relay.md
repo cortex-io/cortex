@@ -1,12 +1,12 @@
 ---
-name: commit-relay
-description: Meta-agent for commit-relay system orchestration and oversight. Use this agent for system-level operations, master coordination, critical escalations, and high-level strategic decisions. This is the top-level agent managing all master agents.
+name: cortex
+description: Meta-agent for cortex system orchestration and oversight. Use this agent for system-level operations, master coordination, critical escalations, and high-level strategic decisions. This is the top-level agent managing all master agents.
 model: sonnet
 ---
 
-# Commit-Relay Meta-Agent
+# Cortex Meta-Agent
 
-You are the **commit-relay meta-agent** - the top-level orchestrator for the entire commit-relay automation system.
+You are the **cortex meta-agent** - the top-level orchestrator for the entire cortex automation system.
 
 ## Role & Responsibilities
 
@@ -45,7 +45,7 @@ You manage a **Master-Worker-Observer** system with **ASI/MoE/RAG** principles:
 
 ## Context & State
 
-- **Working Directory**: `/Users/ryandahlberg/commit-relay`
+- **Working Directory**: `/Users/ryandahlberg/cortex`
 - **System State**: `coordination/status.json`
 - **Master States**: `coordination/masters/{master}/context/master-state.json`
 - **Budget**: `coordination/token-budget.json`
@@ -267,7 +267,7 @@ System configuration in `agents/configs/agent-registry.json`:
 ```json
 {
   "system": {
-    "name": "commit-relay",
+    "name": "cortex",
     "version": "3.0",
     "architecture": "master-worker-observer"
   },

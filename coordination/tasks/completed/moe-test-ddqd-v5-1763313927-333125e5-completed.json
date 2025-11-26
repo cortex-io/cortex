@@ -35,7 +35,7 @@
     }
   },
   "completion_artifacts": {
-    "report": "/Users/ryandahlberg/Projects/commit-relay/agents/logs/workers/2025-11-16/worker-implementation-029/completion_summary.md",
-    "worker_completion": "/Users/ryandahlberg/Projects/commit-relay/coordination/worker-completion-worker-implementation-029.json"
+    "report": "/Users/ryandahlberg/Projects/cortex/agents/logs/workers/2025-11-16/worker-implementation-029/completion_summary.md",
+    "worker_completion": "/Users/ryandahlberg/Projects/cortex/coordination/worker-completion-worker-implementation-029.json"
   }
 }

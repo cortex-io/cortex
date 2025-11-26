@@ -1,9 +1,9 @@
 #!/bin/bash
 # scripts/lib/coordination.sh
-# Coordination file utilities for commit-relay
+# Coordination file utilities for cortex
 
 # Coordination directory
-COORD_DIR="${COMMIT_RELAY_HOME:-$(pwd)}/coordination"
+COORD_DIR="${CORTEX_HOME:-$(pwd)}/coordination"
 
 # Ensure coordination directory exists
 ensure_coordination_dir() {
@@ -281,7 +281,7 @@ consume_tokens() {
 # Acquire lock for agent (prevent concurrent runs)
 acquire_lock() {
     local agent_id=$1
-    local lock_file="/tmp/commit-relay-${agent_id}.lock"
+    local lock_file="/tmp/cortex-${agent_id}.lock"
 
     if [ -f "$lock_file" ]; then
         local pid=$(cat "$lock_file")
@@ -302,7 +302,7 @@ acquire_lock() {
 # Release lock for agent
 release_lock() {
     local agent_id=$1
-    local lock_file="/tmp/commit-relay-${agent_id}.lock"
+    local lock_file="/tmp/cortex-${agent_id}.lock"
 
     rm -f "$lock_file"
     log_debug "Released lock for $agent_id"
@@ -311,7 +311,7 @@ release_lock() {
 # Get worker type config
 get_worker_config() {
     local worker_type=$1
-    local registry_file="${COMMIT_RELAY_HOME:-$(pwd)}/agents/configs/agent-registry.json"
+    local registry_file="${CORTEX_HOME:-$(pwd)}/agents/configs/agent-registry.json"
 
     if [ ! -f "$registry_file" ]; then
         log_error "Agent registry not found: $registry_file"

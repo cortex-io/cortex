@@ -73,7 +73,7 @@ At end of file:
 
 ### Bug Location
 
-**File**: `/Users/ryandahlberg/commit-relay/scripts/claude-worker-launcher-v2.sh`
+**File**: `/Users/ryandahlberg/cortex/scripts/claude-worker-launcher-v2.sh`
 **Lines**: 148-152 (template placeholder replacement section)
 
 ### The Critical Bug - Line 152
@@ -431,7 +431,7 @@ log "✅ All placeholders substituted successfully"
 ---
 
 **References:**
-- Launcher script: `/Users/ryandahlberg/commit-relay/scripts/claude-worker-launcher-v2.sh`
-- Failed worker logs: `/Users/ryandahlberg/commit-relay/agents/workers/dev-worker-04B8F99C/`
-- Worker prompt: `/Users/ryandahlberg/commit-relay/agents/workers/dev-worker-04B8F99C/prompt.md`
-- Task handoff: `/Users/ryandahlberg/commit-relay/coordination/masters/coordinator/handoffs/to-development-task-1762961220.json`
+- Launcher script: `/Users/ryandahlberg/cortex/scripts/claude-worker-launcher-v2.sh`
+- Failed worker logs: `/Users/ryandahlberg/cortex/agents/workers/dev-worker-04B8F99C/`
+- Worker prompt: `/Users/ryandahlberg/cortex/agents/workers/dev-worker-04B8F99C/prompt.md`
+- Task handoff: `/Users/ryandahlberg/cortex/coordination/masters/coordinator/handoffs/to-development-task-1762961220.json`

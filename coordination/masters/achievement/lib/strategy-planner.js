@@ -151,7 +151,7 @@ class StrategyPlanner {
         'Auto-merge after tests pass'
       ],
       'discussion_response': [
-        'Enable discussions on commit-relay repo',
+        'Enable discussions on cortex repo',
         'Monitor for new questions',
         'Generate helpful responses',
         'Submit answers',

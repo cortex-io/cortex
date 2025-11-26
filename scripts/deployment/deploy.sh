@@ -162,7 +162,7 @@ switch_traffic() {
   log_info "Switching nginx traffic to $new_color..."
   
   # Update nginx upstream
-  sed -i '' "s/server localhost:[0-9]*/server localhost:$new_port/" /etc/nginx/sites-available/commit-relay
+  sed -i '' "s/server localhost:[0-9]*/server localhost:$new_port/" /etc/nginx/sites-available/cortex
   nginx -t && nginx -s reload
 }
 

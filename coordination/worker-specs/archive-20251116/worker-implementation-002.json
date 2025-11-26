@@ -9,7 +9,7 @@
   "scope": {
     "phase": "architecture_discovery_and_agents",
     "objectives": [
-      "Deep understanding of commit-relay architecture",
+      "Deep understanding of cortex architecture",
       "Master agent specializations analysis",
       "Worker pool and task queue patterns"
     ]

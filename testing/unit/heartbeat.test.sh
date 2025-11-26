@@ -6,10 +6,10 @@
 set -e
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-COMMIT_RELAY_HOME="$(cd "$SCRIPT_DIR/../.." && pwd)"
-export COMMIT_RELAY_HOME
+CORTEX_HOME="$(cd "$SCRIPT_DIR/../.." && pwd)"
+export CORTEX_HOME
 
-source "$COMMIT_RELAY_HOME/scripts/lib/heartbeat.sh"
+source "$CORTEX_HOME/scripts/lib/heartbeat.sh"
 
 GREEN='\033[0;32m'
 RED='\033[0;31m'
@@ -39,9 +39,9 @@ test_fail() {
 setup_test_env() {
     TEST_WORKER_ID="test-worker-heartbeat-001"
     TEST_TASK_ID="task-heartbeat-test-001"
-    TEST_WORKER_SPEC="$COMMIT_RELAY_HOME/coordination/worker-specs/active/${TEST_WORKER_ID}.json"
+    TEST_WORKER_SPEC="$CORTEX_HOME/coordination/worker-specs/active/${TEST_WORKER_ID}.json"
 
-    mkdir -p "$COMMIT_RELAY_HOME/coordination/worker-specs/active"
+    mkdir -p "$CORTEX_HOME/coordination/worker-specs/active"
 
     cat > "$TEST_WORKER_SPEC" <<'EOFSPEC'
 {
@@ -77,7 +77,7 @@ setup_test_env
 
 # Test 1
 test_start "Heartbeat library loads"
-[ -f "$COMMIT_RELAY_HOME/scripts/lib/heartbeat.sh" ] && test_pass || test_fail
+[ -f "$CORTEX_HOME/scripts/lib/heartbeat.sh" ] && test_pass || test_fail
 
 # Test 2
 test_start "Initialize heartbeat"

@@ -42,7 +42,7 @@
       "automation": {
         "enabled": true,
         "strategy": "coauthor_commits",
-        "notes": "commit-relay already does this via Co-Authored-By: Claude"
+        "notes": "cortex already does this via Co-Authored-By: Claude"
       }
     },
     "pull_shark": {
@@ -387,7 +387,7 @@
   "automation_strategies": {
     "coauthor_commits": {
       "description": "Add Co-Authored-By to all commits",
-      "implementation": "Already implemented in commit-relay",
+      "implementation": "Already implemented in cortex",
       "master": "all-masters"
     },
     "feature_branch_workflow": {

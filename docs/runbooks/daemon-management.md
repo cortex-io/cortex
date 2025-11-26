@@ -6,7 +6,7 @@ Start/stop operations, log rotation, and daemon upgrades.
 
 ## Overview
 
-This runbook covers the complete management of Commit-Relay daemons including startup, shutdown, log management, and upgrade procedures.
+This runbook covers the complete management of Cortex daemons including startup, shutdown, log management, and upgrade procedures.
 
 ---
 
@@ -14,14 +14,14 @@ This runbook covers the complete management of Commit-Relay daemons including st
 
 | Daemon | PID File | Log File | Purpose |
 |--------|----------|----------|---------|
-| worker | `/tmp/commit-relay-worker.pid` | `worker-daemon.log` | Worker spawning |
-| pm | `/tmp/commit-relay-pm.pid` | `pm-daemon.log` | Process management |
-| heartbeat | `/tmp/commit-relay-heartbeat.pid` | `heartbeat-monitor-daemon.log` | Health monitoring |
-| metrics | `/tmp/commit-relay-metrics.pid` | `metrics-snapshot-daemon.log` | Metrics collection |
-| coordinator | `/tmp/commit-relay-coordinator.pid` | `coordinator-daemon.log` | Task coordination |
-| integration | `/tmp/commit-relay-integration.pid` | `integration-validator-daemon.log` | Validation |
-| failure-pattern | `/tmp/commit-relay-failure-pattern.pid` | `failure-pattern-daemon.log` | Pattern detection |
-| auto-fix | `/tmp/commit-relay-auto-fix.pid` | `auto-fix-daemon.log` | Automatic fixes |
+| worker | `/tmp/cortex-worker.pid` | `worker-daemon.log` | Worker spawning |
+| pm | `/tmp/cortex-pm.pid` | `pm-daemon.log` | Process management |
+| heartbeat | `/tmp/cortex-heartbeat.pid` | `heartbeat-monitor-daemon.log` | Health monitoring |
+| metrics | `/tmp/cortex-metrics.pid` | `metrics-snapshot-daemon.log` | Metrics collection |
+| coordinator | `/tmp/cortex-coordinator.pid` | `coordinator-daemon.log` | Task coordination |
+| integration | `/tmp/cortex-integration.pid` | `integration-validator-daemon.log` | Validation |
+| failure-pattern | `/tmp/cortex-failure-pattern.pid` | `failure-pattern-daemon.log` | Pattern detection |
+| auto-fix | `/tmp/cortex-auto-fix.pid` | `auto-fix-daemon.log` | Automatic fixes |
 
 ---
 
@@ -31,7 +31,7 @@ This runbook covers the complete management of Commit-Relay daemons including st
 
 ```bash
 # Using startup script
-./scripts/start-commit-relay.sh
+./scripts/start-cortex.sh
 
 # Using daemon control wizard
 ./scripts/wizards/daemon-control.sh
@@ -60,7 +60,7 @@ This runbook covers the complete management of Commit-Relay daemons including st
 DAEMON="worker"
 LOG_FILE="$COMMIT_RELAY_HOME/agents/logs/system/${DAEMON}-daemon.log"
 nohup ./scripts/${DAEMON}-daemon.sh >> "$LOG_FILE" 2>&1 &
-echo $! > /tmp/commit-relay-${DAEMON}.pid
+echo $! > /tmp/cortex-${DAEMON}.pid
 ```
 
 ### Verify Startup
@@ -69,8 +69,8 @@ echo $! > /tmp/commit-relay-${DAEMON}.pid
 # Check daemon started
 DAEMON="worker"
 sleep 2
-if [[ -f "/tmp/commit-relay-${DAEMON}.pid" ]]; then
-    PID=$(cat "/tmp/commit-relay-${DAEMON}.pid")
+if [[ -f "/tmp/cortex-${DAEMON}.pid" ]]; then
+    PID=$(cat "/tmp/cortex-${DAEMON}.pid")
     if ps -p $PID > /dev/null 2>&1; then
         echo "$DAEMON started successfully (PID: $PID)"
     else
@@ -87,10 +87,10 @@ fi
 
 ```bash
 # Graceful stop all
-for pidfile in /tmp/commit-relay-*.pid; do
+for pidfile in /tmp/cortex-*.pid; do
     if [[ -f "$pidfile" ]]; then
         PID=$(cat "$pidfile")
-        NAME=$(basename "$pidfile" .pid | sed 's/commit-relay-//')
+        NAME=$(basename "$pidfile" .pid | sed 's/cortex-//')
         if ps -p $PID > /dev/null 2>&1; then
             echo "Stopping $NAME (PID: $PID)"
             kill -TERM $PID
@@ -103,7 +103,7 @@ done
 sleep 5
 
 # Force kill any remaining
-pkill -9 -f "commit-relay.*daemon" 2>/dev/null || true
+pkill -9 -f "cortex.*daemon" 2>/dev/null || true
 ```
 
 ### Stop Individual Daemon
@@ -114,7 +114,7 @@ pkill -9 -f "commit-relay.*daemon" 2>/dev/null || true
 
 # Manual stop
 DAEMON="worker"
-PID_FILE="/tmp/commit-relay-${DAEMON}.pid"
+PID_FILE="/tmp/cortex-${DAEMON}.pid"
 
 if [[ -f "$PID_FILE" ]]; then
     PID=$(cat "$PID_FILE")
@@ -139,10 +139,10 @@ fi
 
 ```bash
 # Kill everything immediately
-pkill -9 -f "commit-relay"
+pkill -9 -f "cortex"
 
 # Clean up all PID files
-rm -f /tmp/commit-relay-*.pid
+rm -f /tmp/cortex-*.pid
 
 echo "All daemons force stopped"
 ```
@@ -221,8 +221,8 @@ done
 
 ```bash
 # Create logrotate config
-cat > /etc/logrotate.d/commit-relay << 'EOF'
-/path/to/commit-relay/agents/logs/system/*.log {
+cat > /etc/logrotate.d/cortex << 'EOF'
+/path/to/cortex/agents/logs/system/*.log {
     daily
     rotate 7
     compress
@@ -232,7 +232,7 @@ cat > /etc/logrotate.d/commit-relay << 'EOF'
     create 0644
     postrotate
         # Signal daemons to reopen logs
-        pkill -HUP -f "commit-relay.*daemon" || true
+        pkill -HUP -f "cortex.*daemon" || true
     endscript
 }
 EOF
@@ -320,7 +320,7 @@ for script in $COMMIT_RELAY_HOME/scripts/daemons/*.sh; do
 done
 
 # 6. Start daemons
-./scripts/start-commit-relay.sh
+./scripts/start-cortex.sh
 
 # 7. Verify health
 sleep 10
@@ -344,7 +344,7 @@ cp -r "$BACKUP_DIR/scripts/"* $COMMIT_RELAY_HOME/scripts/
 git checkout <previous-commit>
 
 # 4. Restart
-./scripts/start-commit-relay.sh
+./scripts/start-cortex.sh
 ```
 
 ---
@@ -358,9 +358,9 @@ git checkout <previous-commit>
 ./scripts/dashboards/daemon-monitor.sh --status
 
 # Detailed status
-for pidfile in /tmp/commit-relay-*.pid; do
+for pidfile in /tmp/cortex-*.pid; do
     if [[ -f "$pidfile" ]]; then
-        NAME=$(basename "$pidfile" .pid | sed 's/commit-relay-//')
+        NAME=$(basename "$pidfile" .pid | sed 's/cortex-//')
         PID=$(cat "$pidfile")
 
         if ps -p $PID > /dev/null 2>&1; then
@@ -381,9 +381,9 @@ done
 # Add to crontab: */5 * * * * /path/to/check-daemons.sh
 
 #!/bin/bash
-for pidfile in /tmp/commit-relay-*.pid; do
+for pidfile in /tmp/cortex-*.pid; do
     if [[ -f "$pidfile" ]]; then
-        NAME=$(basename "$pidfile" .pid | sed 's/commit-relay-//')
+        NAME=$(basename "$pidfile" .pid | sed 's/cortex-//')
         PID=$(cat "$pidfile")
 
         if ! ps -p $PID > /dev/null 2>&1; then
@@ -439,7 +439,7 @@ cat $COMMIT_RELAY_HOME/coordination/config/worker-restart-policy.json | jq .
 
 ```bash
 # Remove stale PID
-rm -f /tmp/commit-relay-worker.pid
+rm -f /tmp/cortex-worker.pid
 
 # Check script
 bash -n ./scripts/worker-daemon.sh
@@ -463,15 +463,15 @@ DEBUG=1 ./scripts/worker-daemon.sh
 grep -i "error\|fatal" $COMMIT_RELAY_HOME/agents/logs/system/*.log | tail -50
 
 # Monitor resources
-top -pid $(cat /tmp/commit-relay-worker.pid)
+top -pid $(cat /tmp/cortex-worker.pid)
 ```
 
 ### High Resource Usage
 
 ```bash
 # Find resource-heavy daemons
-ps aux | grep commit-relay | sort -k3 -rn | head -5  # By CPU
-ps aux | grep commit-relay | sort -k4 -rn | head -5  # By memory
+ps aux | grep cortex | sort -k3 -rn | head -5  # By CPU
+ps aux | grep cortex | sort -k4 -rn | head -5  # By memory
 ```
 
 ---

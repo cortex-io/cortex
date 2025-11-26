@@ -1,4 +1,4 @@
-# Commit-Relay Core Principles Framework
+# Cortex Core Principles Framework
 ## Building Systematic Excellence Into the DNA
 
 **Status**: CRITICAL - Foundation for all development
@@ -891,7 +891,7 @@ vim scripts/daemon-supervisor.sh
 # Add to DAEMON_LIST array
 
 # 3. Manually add to startup script
-vim scripts/start-commit-relay.sh
+vim scripts/start-cortex.sh
 # Add to DAEMONS array
 
 # 4. Manually create log directory
@@ -914,7 +914,7 @@ mkdir -p logs/daemons
 
 # Automatically:
 # ✅ Adds to daemon-supervisor.sh
-# ✅ Adds to start-commit-relay.sh
+# ✅ Adds to start-cortex.sh
 # ✅ Creates log directory
 # ✅ Sets up PID file location
 # ✅ Registers with service discovery
@@ -1318,7 +1318,7 @@ If yes, we've achieved the "pit of success."
 5. Measure improvements weekly
 
 **Questions? Issues?**
-- Document: `/Users/ryandahlberg/commit-relay/CORE-PRINCIPLES.md`
+- Document: `/Users/ryandahlberg/cortex/CORE-PRINCIPLES.md`
 - Related: `OBSERVABILITY-STRATEGY.md`, `DAEMON-MANAGEMENT.md`
 - Contact: System Architecture Team
 

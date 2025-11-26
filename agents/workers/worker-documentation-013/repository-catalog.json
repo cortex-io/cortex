@@ -6,12 +6,12 @@
     "catalog_version": "1.0"
   },
   "repository": {
-    "name": "commit-relay",
+    "name": "cortex",
     "description": "AI-powered commit automation system with master-worker architecture",
     "version": "1.0.0",
     "author": "ry-ops",
     "license": "MIT",
-    "github_url": "https://github.com/ry-ops/commit-relay.git",
+    "github_url": "https://github.com/ry-ops/cortex.git",
     "total_commits": 680,
     "size_mb": 856,
     "main_branch": "main",
@@ -29,8 +29,8 @@
     },
     "remote": {
       "name": "origin",
-      "fetch_url": "https://github.com/ry-ops/commit-relay.git",
-      "push_url": "https://github.com/ry-ops/commit-relay.git"
+      "fetch_url": "https://github.com/ry-ops/cortex.git",
+      "push_url": "https://github.com/ry-ops/cortex.git"
     }
   },
   "directory_structure": {
@@ -85,7 +85,7 @@
   },
   "dependencies": {
     "root_project": {
-      "name": "commit-relay",
+      "name": "cortex",
       "version": "1.0.0",
       "dependencies": {
         "ajv": "^8.17.1",
@@ -104,9 +104,9 @@
       }
     },
     "dashboard_project": {
-      "name": "commit-relay-dashboard",
+      "name": "cortex-dashboard",
       "version": "1.0.0",
-      "description": "Real-time metrics dashboard for commit-relay master-worker system",
+      "description": "Real-time metrics dashboard for cortex master-worker system",
       "dependencies": {
         "chokidar": "^3.5.3",
         "cors": "^2.8.5",
@@ -170,7 +170,7 @@
     ]
   },
   "keywords": [
-    "commit-relay",
+    "cortex",
     "automation",
     "ai",
     "governance",

@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 /**
- * Commit-Relay API Server
+ * Cortex API Server
  * Real-time metrics and monitoring for the master-worker system
  *
  * Security Features (v2.0):
@@ -152,8 +152,8 @@ app.use('/api/v1/queue', queueRouter);
 app.use('/api/v1/security', securityRouter);
 
 // Paths to coordination files
-const COMMIT_RELAY_HOME = process.env.COMMIT_RELAY_HOME || path.join(__dirname, '../..');
-const COORD_DIR = path.join(COMMIT_RELAY_HOME, 'coordination');
+const CORTEX_HOME = process.env.CORTEX_HOME || path.join(__dirname, '../..');
+const COORD_DIR = path.join(CORTEX_HOME, 'coordination');
 const FILES = {
   workerPool: path.join(COORD_DIR, 'worker-pool.json'),
   tokenBudget: path.join(COORD_DIR, 'token-budget.json'),
@@ -350,7 +350,7 @@ async function getDaemonStatus() {
   const { execSync } = require('child_process');
   const fsSync = require('fs');
 
-  const PID_FILE = '/tmp/commit-relay-worker-daemon.pid';
+  const PID_FILE = '/tmp/cortex-worker-daemon.pid';
   const LOG_FILE = path.join(__dirname, '../../agents/logs/system/worker-daemon.log');
 
   let status = 'stopped';
@@ -3122,14 +3122,14 @@ app.delete('/api/health-alerts/:id', async (req, res) => {
 
 /**
  * POST /api/health-alerts/:id/repair
- * Create automated repair task for health alert via commit-relay
+ * Create automated repair task for health alert via cortex
  */
 app.post('/api/health-alerts/:id/repair', async (req, res) => {
   const { id } = req.params;
   const { execSync } = require('child_process');
 
   try {
-    const healthAlertsPath = path.join(COMMIT_RELAY_HOME, 'coordination', 'health-alerts.json');
+    const healthAlertsPath = path.join(CORTEX_HOME, 'coordination', 'health-alerts.json');
     const healthAlertsContent = await fs.readFile(healthAlertsPath, 'utf-8');
     const healthAlertsData = JSON.parse(healthAlertsContent);
 
@@ -3155,7 +3155,7 @@ app.post('/api/health-alerts/:id/repair', async (req, res) => {
       created_at: new Date().toISOString(),
       created_by: 'health-alert-repair-system',
       context: {
-        repository: 'ry-ops/commit-relay',
+        repository: 'ry-ops/cortex',
         branch: 'main',
         description: `Automated repair task from health alert: ${alert.message}`,
         alert: {
@@ -3180,9 +3180,9 @@ app.post('/api/health-alerts/:id/repair', async (req, res) => {
 
     // Emit task created event
     try {
-      const eventScript = path.join(COMMIT_RELAY_HOME, 'scripts', 'emit-event.sh');
+      const eventScript = path.join(CORTEX_HOME, 'scripts', 'emit-event.sh');
       execSync(`${eventScript} task_created ${taskId} "Repair task created from health alert ${alert.id}"`, {
-        cwd: COMMIT_RELAY_HOME,
+        cwd: CORTEX_HOME,
         stdio: 'pipe'
       });
     } catch (emitError) {
@@ -3191,11 +3191,11 @@ app.post('/api/health-alerts/:id/repair', async (req, res) => {
 
     // Route task through MoE coordinator
     try {
-      const moeRouter = path.join(COMMIT_RELAY_HOME, 'coordination', 'masters', 'coordinator', 'lib', 'moe-router.sh');
+      const moeRouter = path.join(CORTEX_HOME, 'coordination', 'masters', 'coordinator', 'lib', 'moe-router.sh');
       const taskDesc = `${taskTitle}. ${alert.message}`;
       const routeCmd = `TASK_DESC="${taskDesc}" ${moeRouter} "${taskId}" "${taskDesc}"`;
       const routeOutput = execSync(routeCmd, {
-        cwd: COMMIT_RELAY_HOME,
+        cwd: CORTEX_HOME,
         stdio: 'pipe',
         encoding: 'utf-8'
       });
@@ -3230,7 +3230,7 @@ app.post('/api/health-alerts/:id/repair', async (req, res) => {
 
     res.json({
       success: true,
-      message: 'Repair task created and routed to commit-relay',
+      message: 'Repair task created and routed to cortex',
       task_id: taskId,
       alert_id: alert.id,
       task: repairTask
@@ -3434,7 +3434,7 @@ app.post('/api/event-log/purge', (req, res) => {
   try {
     const fsSync = require('fs');
     const eventLogPath = FILES.systemEvents;
-    const archiveDir = path.join(COMMIT_RELAY_HOME, 'coordination', 'system-events-archive');
+    const archiveDir = path.join(CORTEX_HOME, 'coordination', 'system-events-archive');
 
     // Create archive directory if it doesn't exist
     if (!fsSync.existsSync(archiveDir)) {
@@ -3484,8 +3484,8 @@ app.post('/api/event-log/purge', (req, res) => {
 app.post('/api/moe/clear-routing-decisions', (req, res) => {
   try {
     const fsSync = require('fs');
-    const routingDecisionsPath = path.join(COMMIT_RELAY_HOME, 'coordination', 'masters', 'coordinator', 'knowledge-base', 'routing-decisions.jsonl');
-    const backupDir = path.join(COMMIT_RELAY_HOME, 'coordination', 'masters', 'coordinator', 'knowledge-base', 'backups');
+    const routingDecisionsPath = path.join(CORTEX_HOME, 'coordination', 'masters', 'coordinator', 'knowledge-base', 'routing-decisions.jsonl');
+    const backupDir = path.join(CORTEX_HOME, 'coordination', 'masters', 'coordinator', 'knowledge-base', 'backups');
 
     // Create backup directory if it doesn't exist
     if (!fsSync.existsSync(backupDir)) {
@@ -3513,7 +3513,7 @@ app.post('/api/moe/clear-routing-decisions', (req, res) => {
     fsSync.writeFileSync(routingDecisionsPath, '', 'utf-8');
 
     // Also reset moe-metrics.json if it exists (but not stress-test metrics)
-    const moeMetricsPath = path.join(COMMIT_RELAY_HOME, 'coordination', 'masters', 'coordinator', 'knowledge-base', 'moe-metrics.json');
+    const moeMetricsPath = path.join(CORTEX_HOME, 'coordination', 'masters', 'coordinator', 'knowledge-base', 'moe-metrics.json');
     if (fsSync.existsSync(moeMetricsPath)) {
       const metricsBackup = path.join(backupDir, `moe-metrics-${timestamp}.json`);
       fsSync.copyFileSync(moeMetricsPath, metricsBackup);
@@ -3549,7 +3549,7 @@ app.post('/api/moe/clear-routing-decisions', (req, res) => {
  */
 app.get('/api/terminal-settings', async (req, res) => {
   try {
-    const settingsPath = path.join(COMMIT_RELAY_HOME, 'coordination', 'config', 'terminal-settings.json');
+    const settingsPath = path.join(CORTEX_HOME, 'coordination', 'config', 'terminal-settings.json');
 
     // Default settings if file doesn't exist
     const defaultSettings = {
@@ -3579,7 +3579,7 @@ app.get('/api/terminal-settings', async (req, res) => {
  */
 app.post('/api/terminal-settings', async (req, res) => {
   try {
-    const settingsPath = path.join(COMMIT_RELAY_HOME, 'coordination', 'config', 'terminal-settings.json');
+    const settingsPath = path.join(CORTEX_HOME, 'coordination', 'config', 'terminal-settings.json');
     const { terminal_windows_enabled, headless_mode, auto_close_duration_minutes } = req.body;
 
     // Validation
@@ -3640,7 +3640,7 @@ app.post('/api/daemon/control',
 
     try {
       const scriptPath = path.join(__dirname, '../../scripts/worker-daemon.sh');
-      const PID_FILE = '/tmp/commit-relay-worker-daemon.pid';
+      const PID_FILE = '/tmp/cortex-worker-daemon.pid';
 
       if (action === 'start') {
         // Check if already running using safe PID validation
@@ -3713,7 +3713,7 @@ app.post('/api/pm-daemon/control',
 
     try {
       const scriptPath = path.join(__dirname, '../../scripts/pm-daemon.sh');
-      const PID_FILE = '/tmp/commit-relay-pm-daemon.pid';
+      const PID_FILE = '/tmp/cortex-pm-daemon.pid';
 
       if (action === 'start') {
         // Check if already running using safe PID validation
@@ -3795,7 +3795,7 @@ app.post('/api/pm-daemon/control',
 app.get('/api/health-daemon/status', async (req, res) => {
   const { execSync } = require('child_process');
   const fsSync = require('fs');
-  const PID_FILE = '/tmp/commit-relay-health-monitor.pid';
+  const PID_FILE = '/tmp/cortex-health-monitor.pid';
 
   try {
     if (!fsSync.existsSync(PID_FILE)) {
@@ -3833,7 +3833,7 @@ app.post('/api/health-daemon/control', async (req, res) => {
 
   try {
     const scriptPath = path.join(__dirname, '../../scripts/health-monitor-daemon.sh');
-    const PID_FILE = '/tmp/commit-relay-health-monitor.pid';
+    const PID_FILE = '/tmp/cortex-health-monitor.pid';
     const fsSync = require('fs');
 
     if (action === 'start') {
@@ -3885,7 +3885,7 @@ app.post('/api/health-daemon/control', async (req, res) => {
 app.get('/api/metrics-daemon/status', async (req, res) => {
   const { execSync } = require('child_process');
   const fsSync = require('fs');
-  const PID_FILE = '/tmp/commit-relay-metrics-snapshot.pid';
+  const PID_FILE = '/tmp/cortex-metrics-snapshot.pid';
 
   try {
     if (!fsSync.existsSync(PID_FILE)) {
@@ -3923,7 +3923,7 @@ app.post('/api/metrics-daemon/control', async (req, res) => {
 
   try {
     const scriptPath = path.join(__dirname, '../../scripts/metrics-snapshot-daemon.sh');
-    const PID_FILE = '/tmp/commit-relay-metrics-snapshot.pid';
+    const PID_FILE = '/tmp/cortex-metrics-snapshot.pid';
     const fsSync = require('fs');
 
     if (action === 'start') {
@@ -3978,7 +3978,7 @@ app.post('/api/coordinator-daemon/control', async (req, res) => {
 
   try {
     const scriptPath = path.join(__dirname, '../../scripts/coordinator-daemon.sh');
-    const PID_FILE = '/tmp/commit-relay-coordinator.pid';
+    const PID_FILE = '/tmp/cortex-coordinator.pid';
     const fsSync = require('fs');
 
     if (action === 'start') {
@@ -4037,8 +4037,8 @@ app.post('/api/coordinator-daemon/control', async (req, res) => {
 app.get('/api/coordinator-daemon/status', (req, res) => {
   const { execSync } = require('child_process');
   const fsSync = require('fs');
-  const PID_FILE = '/tmp/commit-relay-coordinator.pid';
-  const STATE_FILE = path.join(COMMIT_RELAY_HOME, 'coordination', 'orchestrator', 'state', 'current.json');
+  const PID_FILE = '/tmp/cortex-coordinator.pid';
+  const STATE_FILE = path.join(CORTEX_HOME, 'coordination', 'orchestrator', 'state', 'current.json');
 
   try {
     if (fsSync.existsSync(PID_FILE)) {
@@ -4087,7 +4087,7 @@ app.post('/api/integration-validator/control', async (req, res) => {
 
   try {
     const scriptPath = path.join(__dirname, '../../scripts/integration-validator-daemon.sh');
-    const PID_FILE = '/tmp/commit-relay-integration-validator.pid';
+    const PID_FILE = '/tmp/cortex-integration-validator.pid';
     const fsSync = require('fs');
 
     if (action === 'start') {
@@ -4146,7 +4146,7 @@ app.post('/api/integration-validator/control', async (req, res) => {
 app.get('/api/integration-validator/status', (req, res) => {
   const { execSync } = require('child_process');
   const fsSync = require('fs');
-  const PID_FILE = '/tmp/commit-relay-integration-validator.pid';
+  const PID_FILE = '/tmp/cortex-integration-validator.pid';
 
   try {
     if (fsSync.existsSync(PID_FILE)) {
@@ -4206,8 +4206,8 @@ app.post('/api/moe/learning/activate', async (req, res) => {
       });
     }
 
-    const taskFile = path.join(COMMIT_RELAY_HOME, 'coordination', 'tasks', 'task-moe-learning-mastery.json');
-    const taskQueueFile = path.join(COMMIT_RELAY_HOME, 'coordination', 'task-queue.json');
+    const taskFile = path.join(CORTEX_HOME, 'coordination', 'tasks', 'task-moe-learning-mastery.json');
+    const taskQueueFile = path.join(CORTEX_HOME, 'coordination', 'task-queue.json');
 
     // Check if task file exists
     if (!fsSync.existsSync(taskFile)) {
@@ -4334,7 +4334,7 @@ app.get('/api/moe/learning/deliverables', async (req, res) => {
     ];
 
     const deliverableStatus = deliverables.map(d => {
-      const filePath = path.join(COMMIT_RELAY_HOME, d.file);
+      const filePath = path.join(CORTEX_HOME, d.file);
       const exists = fsSync.existsSync(filePath);
 
       let status = 'pending';
@@ -4392,7 +4392,7 @@ app.get('/api/moe/learning/deliverables/:filename', async (req, res) => {
       return res.status(404).json({ error: 'File not found or not allowed' });
     }
 
-    const filePath = path.join(COMMIT_RELAY_HOME, allowedFiles[filename]);
+    const filePath = path.join(CORTEX_HOME, allowedFiles[filename]);
 
     if (!fsSync.existsSync(filePath)) {
       return res.status(404).json({ error: 'File does not exist yet' });
@@ -4429,7 +4429,7 @@ app.get('/api/moe/routing', async (req, res) => {
     const { promisify } = require('util');
     const execAsync = promisify(exec);
 
-    const routingLogPath = path.join(COMMIT_RELAY_HOME, 'coordination', 'masters', 'coordinator', 'logs', 'routing-decisions.jsonl');
+    const routingLogPath = path.join(CORTEX_HOME, 'coordination', 'masters', 'coordinator', 'logs', 'routing-decisions.jsonl');
 
     if (!fsSync.existsSync(routingLogPath)) {
       return res.json({ decisions: [] });
@@ -4457,7 +4457,7 @@ app.get('/api/moe/routing', async (req, res) => {
 app.get('/api/moe/pool', async (req, res) => {
   try {
     const fsSync = require('fs');
-    const poolStatePath = path.join(COMMIT_RELAY_HOME, 'coordination', 'memory', 'working', 'pool-state.json');
+    const poolStatePath = path.join(CORTEX_HOME, 'coordination', 'memory', 'working', 'pool-state.json');
 
     if (!fsSync.existsSync(poolStatePath)) {
       return res.json({
@@ -4498,8 +4498,8 @@ app.get('/api/moe/pool', async (req, res) => {
 app.get('/api/moe/learning', async (req, res) => {
   try {
     const fsSync = require('fs');
-    const successMetricsPath = path.join(COMMIT_RELAY_HOME, 'coordination', 'memory', 'long-term', 'success-metrics.json');
-    const taskPatternsPath = path.join(COMMIT_RELAY_HOME, 'coordination', 'memory', 'long-term', 'task-patterns.json');
+    const successMetricsPath = path.join(CORTEX_HOME, 'coordination', 'memory', 'long-term', 'success-metrics.json');
+    const taskPatternsPath = path.join(CORTEX_HOME, 'coordination', 'memory', 'long-term', 'task-patterns.json');
 
     let metrics = {
       total_tasks: 0,
@@ -4582,7 +4582,7 @@ app.get('/api/learning-monitor/status', async (req, res) => {
     const { execSync } = require('child_process');
 
     // Check if daemon is running
-    const pidFile = path.join(COMMIT_RELAY_HOME, 'coordination', 'pids', 'learning-monitor.pid');
+    const pidFile = path.join(CORTEX_HOME, 'coordination', 'pids', 'learning-monitor.pid');
     let isRunning = false;
     let pid = null;
 
@@ -4597,7 +4597,7 @@ app.get('/api/learning-monitor/status', async (req, res) => {
     }
 
     // Get metrics
-    const metricsFile = path.join(COMMIT_RELAY_HOME, 'coordination', 'metrics', 'learning-monitor-metrics.json');
+    const metricsFile = path.join(CORTEX_HOME, 'coordination', 'metrics', 'learning-monitor-metrics.json');
     let metrics = {
       total_checks: 0,
       total_completed: 0,
@@ -4610,7 +4610,7 @@ app.get('/api/learning-monitor/status', async (req, res) => {
 
     // Find active learning tasks
     const activeTasks = [];
-    const handsoffsPattern = path.join(COMMIT_RELAY_HOME, 'coordination', 'masters', '*', 'handoffs', 'task-moe-learning-*.json');
+    const handsoffsPattern = path.join(CORTEX_HOME, 'coordination', 'masters', '*', 'handoffs', 'task-moe-learning-*.json');
 
     try {
       const handoffFiles = execSync(`ls ${handsoffsPattern} 2>/dev/null || true`, { encoding: 'utf-8' }).trim().split('\n').filter(f => f);
@@ -4621,7 +4621,7 @@ app.get('/api/learning-monitor/status', async (req, res) => {
           const taskId = task.task_id || task.handoff_id;
 
           // Count deliverables
-          const delivDir = path.join(COMMIT_RELAY_HOME, 'coordination', 'moe-learning', 'deliverables', taskId);
+          const delivDir = path.join(CORTEX_HOME, 'coordination', 'moe-learning', 'deliverables', taskId);
           let deliverableCount = 0;
           if (fsSync.existsSync(delivDir)) {
             deliverableCount = fsSync.readdirSync(delivDir).length;
@@ -4665,7 +4665,7 @@ app.get('/api/learning-monitor/status', async (req, res) => {
 app.get('/api/learning-monitor/events', async (req, res) => {
   try {
     const fsSync = require('fs');
-    const eventsFile = path.join(COMMIT_RELAY_HOME, 'coordination', 'events', 'learning-events.jsonl');
+    const eventsFile = path.join(CORTEX_HOME, 'coordination', 'events', 'learning-events.jsonl');
     const limit = parseInt(req.query.limit) || 50;
 
     if (!fsSync.existsSync(eventsFile)) {
@@ -4699,9 +4699,9 @@ app.post('/api/learning-monitor/control', async (req, res) => {
     const { execSync } = require('child_process');
     const fsSync = require('fs');
 
-    const daemonScript = path.join(COMMIT_RELAY_HOME, 'scripts', 'learning-task-monitor-daemon.sh');
-    const pidFile = path.join(COMMIT_RELAY_HOME, 'coordination', 'pids', 'learning-monitor.pid');
-    const logFile = path.join(COMMIT_RELAY_HOME, 'agents', 'logs', 'system', 'learning-task-monitor.log');
+    const daemonScript = path.join(CORTEX_HOME, 'scripts', 'learning-task-monitor-daemon.sh');
+    const pidFile = path.join(CORTEX_HOME, 'coordination', 'pids', 'learning-monitor.pid');
+    const logFile = path.join(CORTEX_HOME, 'agents', 'logs', 'system', 'learning-task-monitor.log');
 
     if (action === 'start') {
       // Check if already running
@@ -4719,7 +4719,7 @@ app.post('/api/learning-monitor/control', async (req, res) => {
       // Start daemon
       execSync(`nohup ${daemonScript} >> ${logFile} 2>&1 &`, {
         shell: '/bin/bash',
-        cwd: COMMIT_RELAY_HOME
+        cwd: CORTEX_HOME
       });
 
       // Wait for PID file
@@ -4764,7 +4764,7 @@ app.get('/api/moe/accuracy', async (req, res) => {
   try {
     const fsSync = require('fs');
 
-    const routingLogPath = path.join(COMMIT_RELAY_HOME, 'coordination', 'masters', 'coordinator', 'knowledge-base', 'routing-decisions.jsonl');
+    const routingLogPath = path.join(CORTEX_HOME, 'coordination', 'masters', 'coordinator', 'knowledge-base', 'routing-decisions.jsonl');
 
     if (!fsSync.existsSync(routingLogPath)) {
       return res.json({
@@ -4868,7 +4868,7 @@ app.get('/api/moe/confidence-distribution', async (req, res) => {
   try {
     const fsSync = require('fs');
 
-    const routingLogPath = path.join(COMMIT_RELAY_HOME, 'coordination', 'masters', 'coordinator', 'knowledge-base', 'routing-decisions.jsonl');
+    const routingLogPath = path.join(CORTEX_HOME, 'coordination', 'masters', 'coordinator', 'knowledge-base', 'routing-decisions.jsonl');
 
     if (!fsSync.existsSync(routingLogPath)) {
       return res.json({
@@ -4948,7 +4948,7 @@ app.get('/api/moe/pool-utilization', async (req, res) => {
     const fsSync = require('fs');
 
     // Read routing decisions to calculate expert utilization
-    const routingLogPath = path.join(COMMIT_RELAY_HOME, 'coordination', 'masters', 'coordinator', 'knowledge-base', 'routing-decisions.jsonl');
+    const routingLogPath = path.join(CORTEX_HOME, 'coordination', 'masters', 'coordinator', 'knowledge-base', 'routing-decisions.jsonl');
 
     let expertCounts = {
       development: 0,
@@ -4986,7 +4986,7 @@ app.get('/api/moe/pool-utilization', async (req, res) => {
     }
 
     // Read worker pool for current state
-    const workerPoolPath = path.join(COMMIT_RELAY_HOME, 'coordination', 'worker-pool.json');
+    const workerPoolPath = path.join(CORTEX_HOME, 'coordination', 'worker-pool.json');
     let poolData = { active_workers: [] };
 
     if (fsSync.existsSync(workerPoolPath)) {
@@ -5026,7 +5026,7 @@ app.get('/api/moe/pool-utilization', async (req, res) => {
       ((currentUtilization.total / maxCapacity) * 100).toFixed(1) : 0;
 
     // Read worker spec files for detailed status
-    const workerSpecsDir = path.join(COMMIT_RELAY_HOME, 'coordination', 'worker-specs', 'active');
+    const workerSpecsDir = path.join(CORTEX_HOME, 'coordination', 'worker-specs', 'active');
     let activeCount = 0;
     let runningCount = 0;
     let pendingCount = 0;
@@ -5067,7 +5067,7 @@ app.get('/api/moe/pool-utilization', async (req, res) => {
 app.post('/api/pm/state', async (req, res) => {
   try {
     const fsSync = require('fs');
-    const pmStatePath = path.join(COMMIT_RELAY_HOME, 'coordination', 'pm-state.json');
+    const pmStatePath = path.join(CORTEX_HOME, 'coordination', 'pm-state.json');
 
     // Write state to file
     fsSync.writeFileSync(pmStatePath, JSON.stringify(req.body, null, 2));
@@ -5100,7 +5100,7 @@ app.post('/api/health/report', async (req, res) => {
   try {
     const { component, status, details } = req.body;
     const fsSync = require('fs');
-    const healthLogPath = path.join(COMMIT_RELAY_HOME, 'coordination', 'health-reports.jsonl');
+    const healthLogPath = path.join(CORTEX_HOME, 'coordination', 'health-reports.jsonl');
 
     const report = {
       component,
@@ -5138,7 +5138,7 @@ app.post('/api/health/report', async (req, res) => {
 app.post('/api/metrics/report', async (req, res) => {
   try {
     const fsSync = require('fs');
-    const metricsLogPath = path.join(COMMIT_RELAY_HOME, 'coordination', 'metrics-snapshots.jsonl');
+    const metricsLogPath = path.join(CORTEX_HOME, 'coordination', 'metrics-snapshots.jsonl');
 
     const snapshot = {
       ...req.body,
@@ -5230,7 +5230,7 @@ function broadcastLogEvent(logFile, event) {
  * Get available log files for streaming
  */
 app.get('/api/logs/available', (req, res) => {
-  const coordDir = path.join(COMMIT_RELAY_HOME, 'coordination');
+  const coordDir = path.join(CORTEX_HOME, 'coordination');
   const logFiles = [
     { name: 'system-events', path: 'system-events.jsonl', description: 'System events and activity' },
     { name: 'health-reports', path: 'health-reports.jsonl', description: 'System health check reports' },
@@ -5264,7 +5264,7 @@ app.get('/api/logs/tail', async (req, res) => {
 
     // Remove extension if provided (we'll add it)
     const baseLogFile = sanitizedLogFile.replace('.jsonl', '');
-    const coordDir = path.join(COMMIT_RELAY_HOME, 'coordination');
+    const coordDir = path.join(CORTEX_HOME, 'coordination');
     const logPath = safeJoin(coordDir, `${baseLogFile}.jsonl`);
 
     if (!logPath || !fsSync.existsSync(logPath)) {
@@ -5711,7 +5711,7 @@ app.post('/api/users/:id/login', async (req, res) => {
 app.get('/api/optimizer/scheduler/stats', async (req, res) => {
   try {
     const { execSync } = require('child_process');
-    const result = execSync(`${COMMIT_RELAY_HOME}/scripts/optimizer-scheduler stats`, {
+    const result = execSync(`${CORTEX_HOME}/scripts/optimizer-scheduler stats`, {
       encoding: 'utf-8',
       timeout: 10000
     });
@@ -5724,7 +5724,7 @@ app.get('/api/optimizer/scheduler/stats', async (req, res) => {
 app.get('/api/optimizer/scheduler/balance', async (req, res) => {
   try {
     const { execSync } = require('child_process');
-    const result = execSync(`${COMMIT_RELAY_HOME}/scripts/optimizer-scheduler balance`, {
+    const result = execSync(`${CORTEX_HOME}/scripts/optimizer-scheduler balance`, {
       encoding: 'utf-8',
       timeout: 10000
     });
@@ -5738,7 +5738,7 @@ app.get('/api/optimizer/scheduler/balance', async (req, res) => {
 app.get('/api/optimizer/tokens/stats', async (req, res) => {
   try {
     const { execSync } = require('child_process');
-    const result = execSync(`${COMMIT_RELAY_HOME}/scripts/optimizer-tokens stats`, {
+    const result = execSync(`${CORTEX_HOME}/scripts/optimizer-tokens stats`, {
       encoding: 'utf-8',
       timeout: 10000
     });
@@ -5751,7 +5751,7 @@ app.get('/api/optimizer/tokens/stats', async (req, res) => {
 app.get('/api/optimizer/tokens/forecast', async (req, res) => {
   try {
     const { execSync } = require('child_process');
-    const result = execSync(`${COMMIT_RELAY_HOME}/scripts/optimizer-tokens forecast`, {
+    const result = execSync(`${CORTEX_HOME}/scripts/optimizer-tokens forecast`, {
       encoding: 'utf-8',
       timeout: 10000
     });
@@ -5765,7 +5765,7 @@ app.get('/api/optimizer/tokens/forecast', async (req, res) => {
 app.get('/api/optimizer/pool/stats', async (req, res) => {
   try {
     const { execSync } = require('child_process');
-    const result = execSync(`${COMMIT_RELAY_HOME}/scripts/optimizer-pool stats`, {
+    const result = execSync(`${CORTEX_HOME}/scripts/optimizer-pool stats`, {
       encoding: 'utf-8',
       timeout: 10000
     });
@@ -5779,7 +5779,7 @@ app.get('/api/optimizer/pool/stats', async (req, res) => {
 app.get('/api/optimizer/profile/stats', async (req, res) => {
   try {
     const { execSync } = require('child_process');
-    const result = execSync(`${COMMIT_RELAY_HOME}/scripts/optimizer-profile stats`, {
+    const result = execSync(`${CORTEX_HOME}/scripts/optimizer-profile stats`, {
       encoding: 'utf-8',
       timeout: 10000
     });
@@ -5792,7 +5792,7 @@ app.get('/api/optimizer/profile/stats', async (req, res) => {
 app.get('/api/optimizer/profile/bottlenecks', async (req, res) => {
   try {
     const { execSync } = require('child_process');
-    const result = execSync(`${COMMIT_RELAY_HOME}/scripts/optimizer-profile bottlenecks`, {
+    const result = execSync(`${CORTEX_HOME}/scripts/optimizer-profile bottlenecks`, {
       encoding: 'utf-8',
       timeout: 10000
     });
@@ -5805,7 +5805,7 @@ app.get('/api/optimizer/profile/bottlenecks', async (req, res) => {
 app.get('/api/optimizer/profile/recommendations', async (req, res) => {
   try {
     const { execSync } = require('child_process');
-    const result = execSync(`${COMMIT_RELAY_HOME}/scripts/optimizer-profile tune`, {
+    const result = execSync(`${CORTEX_HOME}/scripts/optimizer-profile tune`, {
       encoding: 'utf-8',
       timeout: 10000
     });
@@ -5827,7 +5827,7 @@ app.get('/api/agentstudio/agents',
   getLimiter,
   async (req, res) => {
   try {
-    const registryPath = path.join(COMMIT_RELAY_HOME, 'coordination/agentstudio/registry/agents.json');
+    const registryPath = path.join(CORTEX_HOME, 'coordination/agentstudio/registry/agents.json');
 
     if (!fsSync.existsSync(registryPath)) {
       return res.json({
@@ -5886,7 +5886,7 @@ app.get('/api/agentstudio/agents/:id',
   async (req, res) => {
   try {
     const { id } = req.params;
-    const registryPath = path.join(COMMIT_RELAY_HOME, 'coordination/agentstudio/registry/agents.json');
+    const registryPath = path.join(CORTEX_HOME, 'coordination/agentstudio/registry/agents.json');
 
     if (!fsSync.existsSync(registryPath)) {
       return res.status(404).json({ error: 'Agent registry not found' });
@@ -5907,7 +5907,7 @@ app.get('/api/agentstudio/agents/:id',
     };
 
     // Check for active workers/tasks for this agent
-    const activeDir = path.join(COMMIT_RELAY_HOME, 'coordination/worker-specs/active');
+    const activeDir = path.join(CORTEX_HOME, 'coordination/worker-specs/active');
     if (fsSync.existsSync(activeDir)) {
       const activeFiles = fsSync.readdirSync(activeDir);
       runtimeInfo.current_tasks = activeFiles.filter(f =>
@@ -5916,7 +5916,7 @@ app.get('/api/agentstudio/agents/:id',
     }
 
     // Check handoffs
-    const handoffsDir = path.join(COMMIT_RELAY_HOME, `coordination/masters/${id.replace('-master', '')}/handoffs`);
+    const handoffsDir = path.join(CORTEX_HOME, `coordination/masters/${id.replace('-master', '')}/handoffs`);
     let pendingHandoffs = 0;
     if (fsSync.existsSync(handoffsDir)) {
       const handoffFiles = fsSync.readdirSync(handoffsDir);
@@ -5963,7 +5963,7 @@ app.post('/api/agentstudio/agents',
       });
     }
 
-    const registryPath = path.join(COMMIT_RELAY_HOME, 'coordination/agentstudio/registry/agents.json');
+    const registryPath = path.join(CORTEX_HOME, 'coordination/agentstudio/registry/agents.json');
 
     if (!fsSync.existsSync(registryPath)) {
       return res.status(500).json({ error: 'Agent registry not found' });
@@ -5981,7 +5981,7 @@ app.post('/api/agentstudio/agents',
     // Load template if specified
     let baseAgent = {};
     if (template) {
-      const templatePath = path.join(COMMIT_RELAY_HOME, `coordination/agentstudio/templates/${template}.json`);
+      const templatePath = path.join(CORTEX_HOME, `coordination/agentstudio/templates/${template}.json`);
       if (fsSync.existsSync(templatePath)) {
         baseAgent = JSON.parse(fsSync.readFileSync(templatePath, 'utf-8'));
       }
@@ -6017,7 +6017,7 @@ app.post('/api/agentstudio/agents',
     fsSync.writeFileSync(registryPath, JSON.stringify(registry, null, 2));
 
     // Create agent directories
-    const agentDir = path.join(COMMIT_RELAY_HOME, `coordination/agents/${id}`);
+    const agentDir = path.join(CORTEX_HOME, `coordination/agents/${id}`);
     fsSync.mkdirSync(path.join(agentDir, 'context'), { recursive: true });
     fsSync.mkdirSync(path.join(agentDir, 'knowledge-base'), { recursive: true });
 
@@ -6052,7 +6052,7 @@ app.patch('/api/agentstudio/agents/:id',
     const { id } = req.params;
     const updates = req.body;
 
-    const registryPath = path.join(COMMIT_RELAY_HOME, 'coordination/agentstudio/registry/agents.json');
+    const registryPath = path.join(CORTEX_HOME, 'coordination/agentstudio/registry/agents.json');
 
     if (!fsSync.existsSync(registryPath)) {
       return res.status(404).json({ error: 'Agent registry not found' });
@@ -6108,7 +6108,7 @@ app.get('/api/agentstudio/registry/summary',
   getLimiter,
   async (req, res) => {
   try {
-    const registryPath = path.join(COMMIT_RELAY_HOME, 'coordination/agentstudio/registry/agents.json');
+    const registryPath = path.join(CORTEX_HOME, 'coordination/agentstudio/registry/agents.json');
 
     if (!fsSync.existsSync(registryPath)) {
       return res.json({
@@ -6160,7 +6160,7 @@ app.get('/api/agentstudio/templates',
   getLimiter,
   async (req, res) => {
   try {
-    const templatesDir = path.join(COMMIT_RELAY_HOME, 'coordination/agentstudio/templates');
+    const templatesDir = path.join(CORTEX_HOME, 'coordination/agentstudio/templates');
 
     if (!fsSync.existsSync(templatesDir)) {
       return res.json({ templates: [] });
@@ -6444,7 +6444,7 @@ app.use((err, req, res, next) => {
 
 const server = app.listen(PORT, () => {
   console.log(`\n┌─────────────────────────────────────────────────────┐`);
-  console.log(`│  Commit-Relay API Server                            │`);
+  console.log(`│  Cortex API Server                            │`);
   console.log(`├─────────────────────────────────────────────────────┤`);
   console.log(`│  HTTP Server:   http://localhost:${PORT}              │`);
   console.log(`│  WebSocket:     ws://localhost:${PORT}                │`);

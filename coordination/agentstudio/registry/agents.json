@@ -1,6 +1,6 @@
 {
   "schema_version": "1.0.0",
-  "registry_id": "commit-relay-agent-registry",
+  "registry_id": "cortex-agent-registry",
   "created_at": "2025-11-20T00:00:00Z",
   "updated_at": "2025-11-20T00:00:00Z",
   "agents": {

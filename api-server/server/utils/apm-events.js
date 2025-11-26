@@ -2,7 +2,7 @@
  * Elastic APM Custom Event Tracking Utilities
  *
  * This module provides helper functions for tracking custom events,
- * spans, and labels in Elastic APM for commit-relay operations.
+ * spans, and labels in Elastic APM for cortex operations.
  */
 
 const apm = require('../../apm');

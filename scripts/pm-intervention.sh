@@ -6,14 +6,14 @@
 set -euo pipefail
 
 # Configuration
-COMMIT_RELAY_HOME="${COMMIT_RELAY_HOME:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)}"
+CORTEX_HOME="${CORTEX_HOME:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)}"
 
 # Directories
-WORKER_SPECS_DIR="$COMMIT_RELAY_HOME/coordination/worker-specs"
-CHECKINS_DIR="$COMMIT_RELAY_HOME/coordination/worker-checkins"
-ALERTS_DIR="$COMMIT_RELAY_HOME/coordination/pm-alerts"
-REQUESTS_DIR="$COMMIT_RELAY_HOME/coordination/pm-requests"
-PM_ACTIVITY_LOG="$COMMIT_RELAY_HOME/coordination/pm-activity.jsonl"
+WORKER_SPECS_DIR="$CORTEX_HOME/coordination/worker-specs"
+CHECKINS_DIR="$CORTEX_HOME/coordination/worker-checkins"
+ALERTS_DIR="$CORTEX_HOME/coordination/pm-alerts"
+REQUESTS_DIR="$CORTEX_HOME/coordination/pm-requests"
+PM_ACTIVITY_LOG="$CORTEX_HOME/coordination/pm-activity.jsonl"
 
 # Logging function
 log_intervention() {

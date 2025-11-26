@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# Greeting script for commit-relay
+# Greeting script for cortex
 # Created by: worker-implementation-017
 # Task: test-autonomous-001
 #
@@ -22,4 +22,4 @@ fi
 NAME="$1"
 
 # Print the greeting
-echo "Hello, ${NAME}! Welcome to autonomous commit-relay!"
+echo "Hello, ${NAME}! Welcome to autonomous cortex!"

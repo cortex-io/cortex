@@ -8,7 +8,7 @@
 
 ## Executive Summary
 
-This report provides a comprehensive health assessment of the commit-relay system portfolio, including repository inventory, worker pool status, service health, and system metrics.
+This report provides a comprehensive health assessment of the cortex system portfolio, including repository inventory, worker pool status, service health, and system metrics.
 
 ### Overall Status: **DEGRADED**
 
@@ -41,8 +41,8 @@ None:          2 repositories (10%)
 
 ### Key Repositories
 
-#### 1. commit-relay (Primary System)
-- **URL:** https://github.com/ry-ops/commit-relay
+#### 1. cortex (Primary System)
+- **URL:** https://github.com/ry-ops/cortex
 - **Language:** JavaScript
 - **Status:** Active
 - **Health:** pending_catalog
@@ -376,7 +376,7 @@ Primarily Python-focused (70%) with TypeScript support (10%)
 
 ## Conclusion
 
-The commit-relay portfolio consists of 20 active repositories, primarily Python-based MCP servers for infrastructure integration. While the repository inventory is complete, the system is currently in a **DEGRADED** state due to failed services and high worker failure rates.
+The cortex portfolio consists of 20 active repositories, primarily Python-based MCP servers for infrastructure integration. While the repository inventory is complete, the system is currently in a **DEGRADED** state due to failed services and high worker failure rates.
 
 **Critical Next Steps:**
 1. Restore service health (coordinator, development-master, pm-daemon)

@@ -58,7 +58,7 @@ def main():
         manager = TaskManager(auto_commit=False)
     except Exception as e:
         print(f"\nError: Failed to initialize: {e}")
-        print("\nNote: This demo reads from the commit-relay event log.")
+        print("\nNote: This demo reads from the cortex event log.")
         return
 
     # Section 1: Recent Events

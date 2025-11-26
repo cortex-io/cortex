@@ -13,8 +13,8 @@ const path = require('path');
 const { sanitizeFilename, validateId, validateDateString, isPathWithinDirectory } = require('../lib/path-validator');
 
 // Configuration
-const COMMIT_RELAY_HOME = process.env.COMMIT_RELAY_HOME || path.join(__dirname, '../../..');
-const TRACES_DIR = path.join(COMMIT_RELAY_HOME, 'coordination/observability/traces');
+const CORTEX_HOME = process.env.CORTEX_HOME || path.join(__dirname, '../../..');
+const TRACES_DIR = path.join(CORTEX_HOME, 'coordination/observability/traces');
 const TRACES_ACTIVE_DIR = path.join(TRACES_DIR, 'active');
 const TRACES_COMPLETED_DIR = path.join(TRACES_DIR, 'completed');
 const TRACES_INDEX_DIR = path.join(TRACES_DIR, 'indices');

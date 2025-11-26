@@ -23,7 +23,7 @@ TASK_SPEC_BUILDER_LOADED=1
 
 # Load dependencies
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-COMMIT_RELAY_HOME="$(cd "$SCRIPT_DIR/../.." && pwd)"
+CORTEX_HOME="$(cd "$SCRIPT_DIR/../.." && pwd)"
 
 # Simple validation functions
 validate_json_syntax() {
@@ -48,7 +48,7 @@ safe_write_json() {
 
 # Generate next task ID
 generate_task_id() {
-    cd "$COMMIT_RELAY_HOME"
+    cd "$CORTEX_HOME"
 
     # Find highest task number
     local highest=$(jq -r '.tasks[].id' coordination/task-queue.json 2>/dev/null | \
@@ -258,7 +258,7 @@ add_task_to_queue() {
     local task_json="$1"
     local queue_file="${2:-coordination/task-queue.json}"
 
-    cd "$COMMIT_RELAY_HOME"
+    cd "$CORTEX_HOME"
 
     # Validate task JSON
     if ! validate_json_syntax "$task_json"; then
@@ -324,6 +324,6 @@ export -f create_task 2>/dev/null || true
 export -f generate_task_id 2>/dev/null || true
 
 # Log that builder is loaded
-if [ "${COMMIT_RELAY_LOG_LEVEL:-1}" -le 0 ] 2>/dev/null; then
+if [ "${CORTEX_LOG_LEVEL:-1}" -le 0 ] 2>/dev/null; then
     echo "[BUILDER] Task spec builder loaded" >&2
 fi

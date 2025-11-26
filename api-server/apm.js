@@ -1,12 +1,12 @@
 /**
  * Elastic APM Initialization Module
  *
- * This module initializes the Elastic APM agent for the commit-relay API server.
+ * This module initializes the Elastic APM agent for the cortex API server.
  * It must be loaded before any other modules to ensure full instrumentation.
  *
  * Configuration is done via environment variables:
  * - ELASTIC_APM_ENABLED: Enable/disable APM (default: false)
- * - ELASTIC_APM_SERVICE_NAME: Service name in APM (default: commit-relay)
+ * - ELASTIC_APM_SERVICE_NAME: Service name in APM (default: cortex)
  * - ELASTIC_APM_SERVER_URL: APM Server URL
  * - ELASTIC_APM_SECRET_TOKEN: Authentication token for APM Server
  * - ELASTIC_APM_ENVIRONMENT: Environment name (e.g., production, staging, development)
@@ -26,7 +26,7 @@ if (!isEnabled) {
   module.exports = null;
 } else {
   // Validate required configuration
-  const serviceName = process.env.ELASTIC_APM_SERVICE_NAME || 'commit-relay';
+  const serviceName = process.env.ELASTIC_APM_SERVICE_NAME || 'cortex';
   const serverUrl = process.env.ELASTIC_APM_SERVER_URL;
   const secretToken = process.env.ELASTIC_APM_SECRET_TOKEN;
   const apiKey = process.env.ELASTIC_APM_API_KEY;

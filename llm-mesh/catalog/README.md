@@ -2,7 +2,7 @@
 
 ## Overview
 
-The LLM Mesh Catalog provides a central registry and discovery system for all objects in the commit-relay ecosystem: agents, tools, prompts, and LLM services.
+The LLM Mesh Catalog provides a central registry and discovery system for all objects in the cortex ecosystem: agents, tools, prompts, and LLM services.
 
 ## Architecture
 

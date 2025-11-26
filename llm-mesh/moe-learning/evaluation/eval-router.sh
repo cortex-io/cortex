@@ -6,13 +6,13 @@ set -euo pipefail
 
 # Configuration
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-COMMIT_RELAY_HOME="${COMMIT_RELAY_HOME:-$(cd "$SCRIPT_DIR/../../.." && pwd)}"
+CORTEX_HOME="${CORTEX_HOME:-$(cd "$SCRIPT_DIR/../../.." && pwd)}"
 
 # Paths
-GOLDEN_DATASET="$COMMIT_RELAY_HOME/coordination/evaluation/golden-routing-decisions.jsonl"
-JUDGE_PROMPT="$COMMIT_RELAY_HOME/coordination/evaluation/prompts/judge-routing-quality.md"
-RESULTS_DIR="$COMMIT_RELAY_HOME/coordination/evaluation/results"
-MOE_ROUTER="$COMMIT_RELAY_HOME/coordination/masters/coordinator/lib/moe-router.sh"
+GOLDEN_DATASET="$CORTEX_HOME/coordination/evaluation/golden-routing-decisions.jsonl"
+JUDGE_PROMPT="$CORTEX_HOME/coordination/evaluation/prompts/judge-routing-quality.md"
+RESULTS_DIR="$CORTEX_HOME/coordination/evaluation/results"
+MOE_ROUTER="$CORTEX_HOME/coordination/masters/coordinator/lib/moe-router.sh"
 
 # LLM Configuration
 LLM_API_KEY="${ANTHROPIC_API_KEY:-}"

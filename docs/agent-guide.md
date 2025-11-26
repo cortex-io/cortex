@@ -6,7 +6,7 @@ Every agent session should follow this pattern:
 
 ```bash
 # 1. Navigate to coordination repo
-cd ~/commit-relay
+cd ~/cortex
 
 # 2. Pull latest state
 git pull origin main

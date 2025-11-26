@@ -13,10 +13,10 @@
 set -e
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-COMMIT_RELAY_HOME="$(cd "$SCRIPT_DIR/../.." && pwd)"
-export COMMIT_RELAY_HOME
+CORTEX_HOME="$(cd "$SCRIPT_DIR/../.." && pwd)"
+export CORTEX_HOME
 
-source "$COMMIT_RELAY_HOME/scripts/lib/heartbeat.sh"
+source "$CORTEX_HOME/scripts/lib/heartbeat.sh"
 
 GREEN='\033[0;32m'
 RED='\033[0;31m'
@@ -41,16 +41,16 @@ cleanup() {
     echo "Cleaning up test resources..."
 
     # Stop heartbeat emitter if running
-    if [ -f "$COMMIT_RELAY_HOME/agents/workers/$TEST_WORKER_ID/heartbeat.pid" ]; then
-        HEARTBEAT_PID=$(cat "$COMMIT_RELAY_HOME/agents/workers/$TEST_WORKER_ID/heartbeat.pid")
+    if [ -f "$CORTEX_HOME/agents/workers/$TEST_WORKER_ID/heartbeat.pid" ]; then
+        HEARTBEAT_PID=$(cat "$CORTEX_HOME/agents/workers/$TEST_WORKER_ID/heartbeat.pid")
         kill "$HEARTBEAT_PID" 2>/dev/null || true
     fi
 
     # Remove test worker spec
-    rm -f "$COMMIT_RELAY_HOME/coordination/worker-specs/active/${TEST_WORKER_ID}.json"
+    rm -f "$CORTEX_HOME/coordination/worker-specs/active/${TEST_WORKER_ID}.json"
 
     # Remove test worker directory
-    rm -rf "$COMMIT_RELAY_HOME/agents/workers/$TEST_WORKER_ID"
+    rm -rf "$CORTEX_HOME/agents/workers/$TEST_WORKER_ID"
 
     echo "Cleanup complete"
 }
@@ -59,9 +59,9 @@ trap cleanup EXIT
 
 echo "Step 1: Creating test worker spec..."
 
-mkdir -p "$COMMIT_RELAY_HOME/coordination/worker-specs/active"
+mkdir -p "$CORTEX_HOME/coordination/worker-specs/active"
 
-cat > "$COMMIT_RELAY_HOME/coordination/worker-specs/active/${TEST_WORKER_ID}.json" <<'EOFSPEC'
+cat > "$CORTEX_HOME/coordination/worker-specs/active/${TEST_WORKER_ID}.json" <<'EOFSPEC'
 {
   "worker_id": "test-worker-heartbeat-e2e-001",
   "worker_type": "test-worker",
@@ -93,7 +93,7 @@ else
 fi
 
 # Verify heartbeat data was added
-HEARTBEAT_DATA=$(jq '.heartbeat' "$COMMIT_RELAY_HOME/coordination/worker-specs/active/${TEST_WORKER_ID}.json")
+HEARTBEAT_DATA=$(jq '.heartbeat' "$CORTEX_HOME/coordination/worker-specs/active/${TEST_WORKER_ID}.json")
 if [ "$HEARTBEAT_DATA" != "null" ]; then
     echo -e "${GREEN}✓${NC} Heartbeat data present in worker spec"
 else
@@ -105,10 +105,10 @@ echo ""
 echo "Step 3: Starting test worker process..."
 
 # Create test worker directory
-mkdir -p "$COMMIT_RELAY_HOME/agents/workers/$TEST_WORKER_ID/logs"
+mkdir -p "$CORTEX_HOME/agents/workers/$TEST_WORKER_ID/logs"
 
 # Create a simple test worker process that runs for 90 seconds
-cat > "$COMMIT_RELAY_HOME/agents/workers/$TEST_WORKER_ID/test-process.sh" <<'EOFPROC'
+cat > "$CORTEX_HOME/agents/workers/$TEST_WORKER_ID/test-process.sh" <<'EOFPROC'
 #!/bin/bash
 echo "Test worker process starting..."
 for i in {1..90}; do
@@ -118,20 +118,20 @@ done
 echo "Test worker process completed"
 EOFPROC
 
-chmod +x "$COMMIT_RELAY_HOME/agents/workers/$TEST_WORKER_ID/test-process.sh"
+chmod +x "$CORTEX_HOME/agents/workers/$TEST_WORKER_ID/test-process.sh"
 
 # Start the test worker process
-nohup "$COMMIT_RELAY_HOME/agents/workers/$TEST_WORKER_ID/test-process.sh" \
-    > "$COMMIT_RELAY_HOME/agents/workers/$TEST_WORKER_ID/logs/stdout.log" 2>&1 &
+nohup "$CORTEX_HOME/agents/workers/$TEST_WORKER_ID/test-process.sh" \
+    > "$CORTEX_HOME/agents/workers/$TEST_WORKER_ID/logs/stdout.log" 2>&1 &
 WORKER_PID=$!
 
-echo "$WORKER_PID" > "$COMMIT_RELAY_HOME/agents/workers/$TEST_WORKER_ID/worker.pid"
+echo "$WORKER_PID" > "$CORTEX_HOME/agents/workers/$TEST_WORKER_ID/worker.pid"
 echo -e "${GREEN}✓${NC} Test worker process started (PID: $WORKER_PID)"
 
 echo ""
 echo "Step 4: Starting heartbeat emitter..."
 
-HEARTBEAT_EMITTER="$COMMIT_RELAY_HOME/scripts/lib/worker-heartbeat-emitter.sh"
+HEARTBEAT_EMITTER="$CORTEX_HOME/scripts/lib/worker-heartbeat-emitter.sh"
 
 if [ ! -f "$HEARTBEAT_EMITTER" ]; then
     echo -e "${RED}✗${NC} Heartbeat emitter not found at $HEARTBEAT_EMITTER"
@@ -139,10 +139,10 @@ if [ ! -f "$HEARTBEAT_EMITTER" ]; then
 fi
 
 nohup "$HEARTBEAT_EMITTER" "$TEST_WORKER_ID" "$WORKER_PID" \
-    > "$COMMIT_RELAY_HOME/agents/workers/$TEST_WORKER_ID/logs/heartbeat-emitter.log" 2>&1 &
+    > "$CORTEX_HOME/agents/workers/$TEST_WORKER_ID/logs/heartbeat-emitter.log" 2>&1 &
 HEARTBEAT_PID=$!
 
-echo "$HEARTBEAT_PID" > "$COMMIT_RELAY_HOME/agents/workers/$TEST_WORKER_ID/heartbeat.pid"
+echo "$HEARTBEAT_PID" > "$CORTEX_HOME/agents/workers/$TEST_WORKER_ID/heartbeat.pid"
 echo -e "${GREEN}✓${NC} Heartbeat emitter started (PID: $HEARTBEAT_PID)"
 
 echo ""
@@ -160,7 +160,7 @@ echo ""
 echo "Step 6: Verifying heartbeat emission..."
 
 # Check heartbeat sequence number
-HEARTBEAT_SEQ=$(jq -r '.heartbeat.heartbeat_sequence' "$COMMIT_RELAY_HOME/coordination/worker-specs/active/${TEST_WORKER_ID}.json")
+HEARTBEAT_SEQ=$(jq -r '.heartbeat.heartbeat_sequence' "$CORTEX_HOME/coordination/worker-specs/active/${TEST_WORKER_ID}.json")
 
 if [ "$HEARTBEAT_SEQ" -ge 2 ]; then
     echo -e "${GREEN}✓${NC} Heartbeat sequence: $HEARTBEAT_SEQ (≥2 heartbeats emitted)"
@@ -168,12 +168,12 @@ else
     echo -e "${RED}✗${NC} Heartbeat sequence: $HEARTBEAT_SEQ (expected ≥2)"
     echo ""
     echo "Heartbeat emitter log:"
-    tail -n 20 "$COMMIT_RELAY_HOME/agents/workers/$TEST_WORKER_ID/logs/heartbeat-emitter.log" || echo "No log found"
+    tail -n 20 "$CORTEX_HOME/agents/workers/$TEST_WORKER_ID/logs/heartbeat-emitter.log" || echo "No log found"
     exit 1
 fi
 
 # Check last heartbeat timestamp
-LAST_HEARTBEAT=$(jq -r '.heartbeat.last_heartbeat' "$COMMIT_RELAY_HOME/coordination/worker-specs/active/${TEST_WORKER_ID}.json")
+LAST_HEARTBEAT=$(jq -r '.heartbeat.last_heartbeat' "$CORTEX_HOME/coordination/worker-specs/active/${TEST_WORKER_ID}.json")
 TIME_SINCE=$(get_time_since_heartbeat "$TEST_WORKER_ID")
 
 if [ "$TIME_SINCE" -lt 35 ]; then
@@ -183,11 +183,11 @@ else
 fi
 
 # Check health status
-HEALTH_STATUS=$(jq -r '.heartbeat.health.status' "$COMMIT_RELAY_HOME/coordination/worker-specs/active/${TEST_WORKER_ID}.json")
+HEALTH_STATUS=$(jq -r '.heartbeat.health.status' "$CORTEX_HOME/coordination/worker-specs/active/${TEST_WORKER_ID}.json")
 echo -e "${GREEN}✓${NC} Health status: $HEALTH_STATUS"
 
 # Check health score
-HEALTH_SCORE=$(jq -r '.heartbeat.health.health_score' "$COMMIT_RELAY_HOME/coordination/worker-specs/active/${TEST_WORKER_ID}.json")
+HEALTH_SCORE=$(jq -r '.heartbeat.health.health_score' "$CORTEX_HOME/coordination/worker-specs/active/${TEST_WORKER_ID}.json")
 echo -e "${GREEN}✓${NC} Health score: $HEALTH_SCORE/100"
 
 echo ""
@@ -198,7 +198,7 @@ if pgrep -f "heartbeat-monitor-daemon.sh" > /dev/null 2>&1; then
     echo -e "${GREEN}✓${NC} Heartbeat monitor daemon is running"
 
     # Check monitor metrics
-    METRICS_FILE="$COMMIT_RELAY_HOME/coordination/metrics/heartbeat-monitor-metrics.json"
+    METRICS_FILE="$CORTEX_HOME/coordination/metrics/heartbeat-monitor-metrics.json"
     if [ -f "$METRICS_FILE" ]; then
         TOTAL_WORKERS=$(jq -r '.total_workers_checked' "$METRICS_FILE")
         echo -e "${GREEN}✓${NC} Monitor metrics available (monitoring $TOTAL_WORKERS workers)"

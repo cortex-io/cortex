@@ -68,7 +68,7 @@
     },
     {
       "id": "task-003",
-      "title": "Initial security scan: commit-relay",
+      "title": "Initial security scan: cortex",
       "type": "security",
       "priority": "medium",
       "status": "completed",
@@ -76,7 +76,7 @@
       "created_at": "2025-10-31T18:35:00Z",
       "created_by": "coordinator-agent",
       "completed_at": "2025-10-31T19:05:00Z",
-      "repository": "ry-ops/commit-relay",
+      "repository": "ry-ops/cortex",
       "context": {
         "description": "Run comprehensive security scan including dependency audit, vulnerability check, and code security analysis",
         "scan_types": [
@@ -275,7 +275,7 @@
     },
     {
       "id": "task-009",
-      "title": "Build real-time metrics dashboard for commit-relay",
+      "title": "Build real-time metrics dashboard for cortex",
       "type": "development",
       "priority": "high",
       "status": "completed",
@@ -283,9 +283,9 @@
       "created_at": "2025-11-01T20:00:00Z",
       "created_by": "coordinator-master",
       "completed_at": "2025-11-01T20:50:00Z",
-      "repository": "ry-ops/commit-relay",
+      "repository": "ry-ops/cortex",
       "context": {
-        "description": "Build a real-time metrics dashboard to monitor worker activity, token usage, task progress, and system health. Include integration prompt when commit-relay tools are used.",
+        "description": "Build a real-time metrics dashboard to monitor worker activity, token usage, task progress, and system health. Include integration prompt when cortex tools are used.",
         "requirements": [
           "Real-time worker status monitoring (active, completed, failed)",
           "Token budget visualization (masters, workers, emergency reserve)",
@@ -298,7 +298,7 @@
         "components": [
           "Backend server (Node.js/Python with WebSocket)",
           "Frontend UI (HTML/CSS/JS with charts)",
-          "Integration hook (prompt on commit-relay usage)",
+          "Integration hook (prompt on cortex usage)",
           "Data aggregation from coordination files"
         ],
         "related_issues": [],
@@ -339,7 +339,7 @@
       "results": {
         "status": "SUCCESS",
         "pr_number": 1,
-        "pr_url": "https://github.com/ry-ops/commit-relay/pull/1",
+        "pr_url": "https://github.com/ry-ops/cortex/pull/1",
         "files_created": 12,
         "lines_added": 2266,
         "features_delivered": [
@@ -690,13 +690,13 @@
       "completed_at": "2025-11-07T15:08:02Z",
       "created_at": "2025-11-04T15:51:00Z",
       "created_by": "user",
-      "repository": "ry-ops/commit-relay",
+      "repository": "ry-ops/cortex",
       "context": {
         "description": "Optimize dashboard to ensure data is always up-to-date with minimal latency. Address redundancies between dashboard-agent-monitor.sh and server file watching, reduce update latency, and improve system reliability.",
         "current_issues": [
           "Dashboard-agent-monitor.sh duplicates server chokidar file watching functionality",
           "500ms file watcher stability threshold causes noticeable lag",
-          "Dashboard server requires manual startup (not integrated into start-commit-relay.sh)",
+          "Dashboard server requires manual startup (not integrated into start-cortex.sh)",
           "Daemon status not pushed via WebSocket (only HTTP polling)",
           "No data freshness indicators or stale data warnings",
           "Missing event buffer for reconnecting WebSocket clients"
@@ -724,7 +724,7 @@
           "dashboard/server/index.js",
           "dashboard/public/dashboard-v2.js",
           "scripts/dashboard-agent-monitor.sh",
-          "scripts/start-commit-relay.sh"
+          "scripts/start-cortex.sh"
         ],
         "technical_approach": [
           "Reduce chokidar awaitWriteFinish.stabilityThreshold from 500ms to 150ms",
@@ -742,7 +742,7 @@
           "All data sources push via WebSocket (no polling for core data)",
           "Reconnecting clients receive missed events (up to 50)",
           "Clear visual indicators when data is stale",
-          "Dashboard auto-starts with commit-relay system"
+          "Dashboard auto-starts with cortex system"
         ],
         "estimated_effort": "MEDIUM - Multiple file modifications and architectural improvements",
         "related_issues": []
@@ -768,7 +768,7 @@
           "dashboard/public/dashboard-v2.js",
           "dashboard/public/index.html",
           "scripts/dashboard-agent-monitor.sh",
-          "scripts/start-commit-relay.sh"
+          "scripts/start-cortex.sh"
         ],
         "performance_metrics": {
           "file_watcher_latency": "150ms (reduced from 500ms)",
@@ -812,7 +812,7 @@
       "completed_at": "2025-11-04T17:10:00Z",
       "created_at": "2025-11-04T16:30:00Z",
       "created_by": "user",
-      "repository": "ry-ops/commit-relay",
+      "repository": "ry-ops/cortex",
       "context": {
         "description": "Fix dashboard metrics to show accurate real-time data. Currently showing incorrect counts (e.g., 7 active workers when none are running). Add time-based filtering for success rate and improve task tracking.",
         "current_issues": [
@@ -932,7 +932,7 @@
       "started_at": "2025-11-04T17:15:00Z",
       "created_at": "2025-11-04T17:00:00Z",
       "created_by": "user",
-      "repository": "ry-ops/commit-relay",
+      "repository": "ry-ops/cortex",
       "context": {
         "description": "Redesign the Token Budget card to clearly distinguish between master (user) consumption vs worker consumption, show budget period, reset time, and provide detailed breakdown with progress bars.",
         "current_issues": [
@@ -1102,7 +1102,7 @@
       "started_at": "2025-11-04T18:00:00Z",
       "created_at": "2025-11-04T17:45:00Z",
       "created_by": "user",
-      "repository": "ry-ops/commit-relay",
+      "repository": "ry-ops/cortex",
       "context": {
         "description": "Create a new CI/CD master agent that receives instructions from the coordinator and implements multi-workforce streams to enable parallel task execution, increasing throughput and efficiency.",
         "strategic_goals": [
@@ -1264,7 +1264,7 @@
           "coordination/token-budget.json",
           "dashboard/server/index.js (add stream metrics)",
           "dashboard/public/index.html (add stream visualization)",
-          "scripts/start-commit-relay.sh (verify cicd-master)"
+          "scripts/start-cortex.sh (verify cicd-master)"
         ],
         "success_criteria": [
           "CI/CD master agent responds to coordinator assignments",
@@ -1329,7 +1329,7 @@
           "coordination/masters/coordinator/context/master-state.json",
           "coordination/token-budget.json",
           "coordination/worker-pool.json",
-          "scripts/start-commit-relay.sh",
+          "scripts/start-cortex.sh",
           "dashboard/public/index.html",
           "dashboard/server/index.js"
         ],
@@ -1448,7 +1448,7 @@
       "completed_at": "2025-11-07T15:08:01Z",
       "created_at": "2025-11-04T18:15:00Z",
       "created_by": "user",
-      "repository": "ry-ops/commit-relay",
+      "repository": "ry-ops/cortex",
       "context": {
         "description": "Consolidate the dashboard overview by merging tasks into the real-time events feed, making events show ALL system activity (workers, tasks, system events). Remove the Recent Tasks card and move detailed task information to the dedicated Tasks page.",
         "current_issues": [
@@ -1586,7 +1586,7 @@
       "completed_at": "2025-11-07T15:08:01Z",
       "created_at": "2025-11-04T19:00:00Z",
       "created_by": "user",
-      "repository": "ry-ops/commit-relay",
+      "repository": "ry-ops/cortex",
       "context": {
         "description": "Restructure dashboard data flow so CI/CD master orchestrates dashboard updates. Specialist masters hand off to CI/CD master after completing work, and CI/CD spawns dashboard-update workers to manage real-time data broadcasting and visualization updates.",
         "current_architecture_issues": [
@@ -1905,7 +1905,7 @@
       "created_at": "2025-11-04T22:15:13Z",
       "created_by": "create-task-cli",
       "context": {
-        "repository": "ry-ops/commit-relay",
+        "repository": "ry-ops/cortex",
         "branch": "main",
         "description": "Security scan after dashboard improvements - verify no new vulnerabilities introduced",
         "scan_types": [
@@ -1928,7 +1928,7 @@
       "created_at": "2025-11-05T02:27:25Z",
       "created_by": "create-task-cli",
       "context": {
-        "repository": "ry-ops/commit-relay",
+        "repository": "ry-ops/cortex",
         "branch": "main",
         "description": "Display GitHub commits/updates on dashboard task queue page - show git operations linked to each task",
         "requirements": []
@@ -1943,7 +1943,7 @@
     },
     {
       "id": "task-1762342905",
-      "title": "Add About page to dashboard with: 1) Brief summary/overview of commit-relay project, 2) Mermaid.js flowchart visualizing all mechanisms (coordinator, masters, workers, git automation, dashboard polling), 3) Add 'About' navigation link in left sidebar below Activity",
+      "title": "Add About page to dashboard with: 1) Brief summary/overview of cortex project, 2) Mermaid.js flowchart visualizing all mechanisms (coordinator, masters, workers, git automation, dashboard polling), 3) Add 'About' navigation link in left sidebar below Activity",
       "type": "development",
       "priority": "high",
       "status": "assigned",
@@ -1951,9 +1951,9 @@
       "created_at": "2025-11-05T03:33:47Z",
       "created_by": "create-task-cli",
       "context": {
-        "repository": "ry-ops/commit-relay",
+        "repository": "ry-ops/cortex",
         "branch": "main",
-        "description": "Add About page to dashboard with: 1) Brief summary/overview of commit-relay project, 2) Mermaid.js flowchart visualizing all mechanisms (coordinator, masters, workers, git automation, dashboard polling), 3) Add 'About' navigation link in left sidebar below Activity",
+        "description": "Add About page to dashboard with: 1) Brief summary/overview of cortex project, 2) Mermaid.js flowchart visualizing all mechanisms (coordinator, masters, workers, git automation, dashboard polling), 3) Add 'About' navigation link in left sidebar below Activity",
         "requirements": []
       },
       "assigned_by": "coordinator",
@@ -1970,7 +1970,7 @@
       "created_at": "2025-11-05T11:22:03Z",
       "created_by": "create-task-cli",
       "context": {
-        "repository": "ry-ops/commit-relay",
+        "repository": "ry-ops/cortex",
         "branch": "main",
         "description": "Fix dashboard issues: 1) Task queue sorting (most recent first), 2) Agent Efficiency chart color duplication (Development and Coordinator have same color), 3) Agent Orchestration stale data display. All fixes already implemented in dashboard-v2.js and index.html, need to be committed via proper agent workflow.",
         "requirements": []
@@ -1993,7 +1993,7 @@
       "created_at": "2025-11-05T11:33:46Z",
       "created_by": "create-task-cli",
       "context": {
-        "repository": "ry-ops/commit-relay",
+        "repository": "ry-ops/cortex",
         "branch": "main",
         "description": "System Test - Development Master: Create a simple test file at tests/system-test-dev.txt with content 'Development Master Test Completed' and commit with message 'test: development master verification - Task Completed'",
         "requirements": []
@@ -2016,7 +2016,7 @@
       "created_at": "2025-11-05T11:33:55Z",
       "created_by": "create-task-cli",
       "context": {
-        "repository": "ry-ops/commit-relay",
+        "repository": "ry-ops/cortex",
         "branch": "main",
         "description": "System Test - Security Master: Run a basic security scan on package.json dependencies and create a report at tests/system-test-security.txt with findings summary and 'Security Master Test Completed' message",
         "scan_types": [
@@ -2043,7 +2043,7 @@
       "created_at": "2025-11-05T11:34:05Z",
       "created_by": "create-task-cli",
       "context": {
-        "repository": "ry-ops/commit-relay",
+        "repository": "ry-ops/cortex",
         "description": "System Test - Inventory Master: Generate a simple project inventory listing all master agents and their current status, save to tests/system-test-inventory.txt with 'Inventory Master Test Completed' message",
         "catalog_depth": "deep"
       },
@@ -2065,7 +2065,7 @@
       "created_at": "2025-11-05T11:34:24Z",
       "created_by": "create-task-cli",
       "context": {
-        "repository": "ry-ops/commit-relay",
+        "repository": "ry-ops/cortex",
         "branch": "main",
         "description": "System Test - CI/CD Master: Verify build system by checking package.json scripts and create a build verification report at tests/system-test-cicd.txt with 'CI/CD Master Test Completed' message",
         "requirements": []
@@ -2088,7 +2088,7 @@
       "created_at": "2025-11-05T11:34:36Z",
       "created_by": "create-task-cli",
       "context": {
-        "repository": "ry-ops/commit-relay",
+        "repository": "ry-ops/cortex",
         "branch": "main",
         "description": "System Test - Coordinator Master: Verify task routing system by checking coordination/task-queue.json and coordination/workforce-streams.json, create routing verification report at tests/system-test-coordinator.txt with 'Coordinator Master Test Completed' message",
         "requirements": []
@@ -2111,7 +2111,7 @@
       "created_at": "2025-11-05T12:13:43Z",
       "created_by": "create-task-cli",
       "context": {
-        "repository": "ry-ops/commit-relay",
+        "repository": "ry-ops/cortex",
         "branch": "main",
         "description": "Monitor and report status of active workers (dev-worker-92D7943C and sec-worker-FD673A67). Check worker spec files until completion and provide status report.",
         "requirements": []
@@ -2134,7 +2134,7 @@
       "created_at": "2025-11-05T12:13:44Z",
       "created_by": "create-task-cli",
       "context": {
-        "repository": "ry-ops/commit-relay",
+        "repository": "ry-ops/cortex",
         "branch": "main",
         "description": "Process pending handoff files: coord-to-development-5c74c959.json, coord-to-development-B1034580.json, coord-to-development-task-018.json. Route to appropriate masters.",
         "requirements": []
@@ -2157,7 +2157,7 @@
       "created_at": "2025-11-05T12:13:45Z",
       "created_by": "create-task-cli",
       "context": {
-        "repository": "ry-ops/commit-relay",
+        "repository": "ry-ops/cortex",
         "branch": "main",
         "description": "Clean up all .processed handoff files from coordination/masters/*/handoffs/ directories (7 files total)",
         "requirements": []
@@ -2180,7 +2180,7 @@
       "created_at": "2025-11-05T12:13:46Z",
       "created_by": "create-task-cli",
       "context": {
-        "repository": "ry-ops/commit-relay",
+        "repository": "ry-ops/cortex",
         "branch": "main",
         "description": "Clean up worker specs with empty task_data in coordination/worker-specs/active/ and commit pending changes (modified worker-daemon.sh, new autonomous-worker.sh, deleted worker specs)",
         "requirements": []
@@ -2203,7 +2203,7 @@
       "created_at": "2025-11-05T16:13:41Z",
       "created_by": "create-task-cli",
       "context": {
-        "repository": "ry-ops/commit-relay",
+        "repository": "ry-ops/cortex",
         "branch": "main",
         "description": "Add last updated timestamp to all dashboard cards and charts. Display human-readable date/time (e.g., '2 minutes ago', 'Last updated: 12:15 PM') on each card and chart. Update dashboard/public/dashboard-v2.js and dashboard/server/index.js to include timestamps in API responses and render them in the UI.",
         "requirements": []
@@ -2226,7 +2226,7 @@
       "created_at": "2025-11-05T16:33:29Z",
       "created_by": "create-task-cli",
       "context": {
-        "repository": "ry-ops/commit-relay",
+        "repository": "ry-ops/cortex",
         "branch": "main",
         "description": "Fix worker-daemon.sh to skip launching workers with null/empty task_data. Worker dev-worker-72AA4077 is running with null task_data causing git conflicts. Add validation in daemon to check task_data is not null/empty before launching. Clean up this zombie worker spec.",
         "requirements": []
@@ -2248,7 +2248,7 @@
       "created_at": "2025-11-05T16:41:15Z",
       "created_by": "create-task-cli",
       "context": {
-        "repository": "ry-ops/commit-relay",
+        "repository": "ry-ops/cortex",
         "branch": "main",
         "description": "Improve task queue page status display. Replace raw 'worker_spawned' status text with styled badges/chips like the priority badges (completed, critical, etc.). Make all status values human-readable with appropriate colors: pending (gray), assigned (blue), worker_spawned (purple/running), in_progress (yellow), completed (green), failed (red). Apply consistent styling across all status columns.",
         "requirements": []
@@ -2270,7 +2270,7 @@
       "created_at": "2025-11-05T16:44:12Z",
       "created_by": "create-task-cli",
       "context": {
-        "repository": "ry-ops/commit-relay",
+        "repository": "ry-ops/cortex",
         "branch": "main",
         "description": "CRITICAL: Clean up 19 zombie workers stuck in 'running' status. Workers from Nov 3-5 show running but no actual processes exist. Implement worker health check system: 1) Create cleanup script to detect stale workers (running >2hrs with no process), 2) Mark them as 'timeout' or 'unknown_failure', 3) Move to failed/ directory, 4) Add daemon watchdog to periodically check worker health, 5) Update worker prompt to ensure status updates on exit/error. List: worker-scan-002 through 007, dev-worker-A819947D, C42C00C2, 92D7943C, A2BE7A42, DE5535B6, 89DE27B5, DF971C09, 37A01F3D, 693450EA, 2D6C668D, 5F3CFA26, sec-worker-FD673A67, inv-worker-A6A5C517",
         "requirements": []
@@ -2292,7 +2292,7 @@
       "created_at": "2025-11-05T16:48:50Z",
       "created_by": "create-task-cli",
       "context": {
-        "repository": "ry-ops/commit-relay",
+        "repository": "ry-ops/cortex",
         "branch": "main",
         "description": "Replace token budget pie chart with AUTONOMOUS PRODUCTIVITY METRICS chart showing system's incredible progress\\! Create a multi-line time-series chart tracking: 1) Tasks completed per day (green line trending UP), 2) Autonomous commits per day (blue line), 3) Worker success rate % (purple line), 4) Average task completion time trending DOWN (orange line). Add sparklines showing 7-day trends. Include exciting stats cards: 'Total Autonomous Commits', 'Hours Saved', 'Tasks Completed Today', 'Current Streak'. Make it visually stunning with animations, gradients, and celebration effects when milestones hit. Title: '🚀 Autonomous Productivity Analytics'. This will showcase the system's exponential improvement and make users excited about the progress\\!",
         "requirements": []
@@ -2314,7 +2314,7 @@
       "created_at": "2025-11-05T16:54:08Z",
       "created_by": "create-task-cli",
       "context": {
-        "repository": "ry-ops/commit-relay",
+        "repository": "ry-ops/cortex",
         "branch": "main",
         "description": "URGENT: Previous worker failed to implement. YOU MUST modify dashboard/public/dashboard-v2.js and dashboard/server/index.js. Replace initTokenChart() function with initProductivityChart(). Add API endpoint /api/productivity-metrics. Create time-series chart with ApexCharts showing: tasks_completed_per_day, autonomous_commits_per_day, worker_success_rate, avg_completion_time. Add stat cards. DO NOT just create a test file - you MUST edit the actual dashboard code files and test in browser.",
         "requirements": []
@@ -2335,7 +2335,7 @@
       "created_at": "2025-11-05T16:58:41Z",
       "created_by": "create-task-cli",
       "context": {
-        "repository": "ry-ops/commit-relay",
+        "repository": "ry-ops/cortex",
         "branch": "main",
         "description": "CRITICAL ROOT CAUSE FIX: autonomous-worker.sh is a test harness that creates placeholder files instead of actually executing tasks with Claude Code. Workers complete in 30 seconds because they're not running Claude at all. FIX REQUIRED: 1) Replace autonomous-worker.sh fallback behavior to launch actual Claude Code session with worker prompt, 2) Pass task context to Claude properly, 3) Add worker health monitoring daemon that checks if Claude process is actually running, 4) Implement zombie killer to detect workers marked 'running' with no active process (>15 min stale) and mark them failed, 5) Add worker execution logs showing Claude Code startup and actual implementation work. The system should NEVER create test output files unless explicitly requested - it must run real Claude Code sessions.",
         "requirements": []
@@ -2356,7 +2356,7 @@
       "created_at": "2025-11-05T17:01:56Z",
       "created_by": "create-task-cli",
       "context": {
-        "repository": "ry-ops/commit-relay",
+        "repository": "ry-ops/cortex",
         "branch": "main",
         "description": "Replace token budget pie chart with AUTONOMOUS PRODUCTIVITY METRICS. Edit dashboard/public/dashboard-v2.js: Replace initTokenChart() and tokenChart with initProductivityChart() and productivityChart. Create time-series line chart with ApexCharts showing: 1) Tasks completed per day (green), 2) Autonomous commits per day (blue), 3) Worker success rate (purple), 4) Avg completion time (orange). Add stat cards: Total Autonomous Commits, Hours Saved, Tasks Today, Current Streak. Edit dashboard/server/index.js: Add /api/productivity-metrics endpoint returning historical data. Make it visually stunning with gradients and animations. Title: 🚀 Autonomous Productivity Analytics. MUST edit actual dashboard files, NOT create test files.",
         "requirements": []
@@ -2377,7 +2377,7 @@
       "created_at": "2025-11-05T17:03:35Z",
       "created_by": "create-task-cli",
       "context": {
-        "repository": "ry-ops/commit-relay",
+        "repository": "ry-ops/cortex",
         "branch": "main",
         "description": "Replace token budget pie chart with AUTONOMOUS PRODUCTIVITY ANALYTICS chart. YOU MUST edit dashboard/public/dashboard-v2.js and dashboard/server/index.js files. Create beautiful time-series chart showing tasks completed, commits, success rate, completion time trends. Add stat cards. Make it visually stunning with animations. This will make the user BLUSH with excitement seeing their autonomous system's exponential growth\\!",
         "requirements": []
@@ -2401,7 +2401,7 @@
       "created_at": "2025-11-05T18:07:51Z",
       "created_by": "user",
       "context": {
-        "repository": "ry-ops/commit-relay",
+        "repository": "ry-ops/cortex",
         "branch": "main",
         "description": "Build comprehensive worker health monitoring system with multiple components: 1) Health-check daemon monitoring worker PIDs/heartbeats every 60s, 2) Heartbeat protocol in worker scripts (update every 2min), 3) Dashboard widget showing real-time worker health with visual indicators, 4) Automatic alerts for unresponsive workers, 5) Health metrics API endpoints. Multi-component system requiring backend, frontend, and monitoring infrastructure.",
         "estimated_duration": "90-120 minutes",
@@ -2426,7 +2426,7 @@
       "created_at": "2025-11-05T19:09:30Z",
       "created_by": "create-task-cli",
       "context": {
-        "repository": "ry-ops/commit-relay",
+        "repository": "ry-ops/cortex",
         "branch": "main",
         "description": "Test orchestration: Add heartbeat visualization to dashboard showing last ping time for active workers. Simple single-file update to dashboard-v2.js.",
         "requirements": []
@@ -2449,7 +2449,7 @@
       "created_at": "2025-11-06T14:45:31Z",
       "created_by": "create-task-cli",
       "context": {
-        "repository": "ry-ops/commit-relay",
+        "repository": "ry-ops/cortex",
         "branch": "main",
         "description": "Build automated health alert remediation system with monitoring daemon and worker-based fixes",
         "requirements": {

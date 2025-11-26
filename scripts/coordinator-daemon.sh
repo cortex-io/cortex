@@ -13,22 +13,22 @@ set -euo pipefail
 
 # Configuration
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-COMMIT_RELAY_HOME="${COMMIT_RELAY_HOME:-$(cd "$SCRIPT_DIR/.." && pwd)}"
-COORD_DIR="$COMMIT_RELAY_HOME/coordination"
+CORTEX_HOME="${CORTEX_HOME:-$(cd "$SCRIPT_DIR/.." && pwd)}"
+COORD_DIR="$CORTEX_HOME/coordination"
 TASK_QUEUE="$COORD_DIR/task-queue.json"
 MASTERS_DIR="$COORD_DIR/masters"
 MOE_ROUTER="$MASTERS_DIR/coordinator/lib/moe-router.sh"
 STATE_FILE="$COORD_DIR/orchestrator/state/current.json"
-LOG_DIR="$COMMIT_RELAY_HOME/agents/logs/system"
+LOG_DIR="$CORTEX_HOME/agents/logs/system"
 LOG_FILE="$LOG_DIR/coordinator-daemon.log"
-PID_FILE="/tmp/commit-relay-coordinator.pid"
+PID_FILE="/tmp/cortex-coordinator.pid"
 EVENTS_FILE="$COORD_DIR/dashboard-events.jsonl"
 
 # Polling interval
 POLL_INTERVAL=15  # Check every 15 seconds
 
 # Daemon name
-DAEMON_NAME="commit-relay-coordinator"
+DAEMON_NAME="cortex-coordinator"
 
 ###############################################################################
 # Logging Functions
@@ -96,7 +96,7 @@ EOF
     echo $$ > "$PID_FILE"
     log_daemon "INFO: Coordinator daemon started (PID $$)"
     log_daemon "INFO: Poll interval: ${POLL_INTERVAL}s"
-    log_daemon "INFO: Working directory: $COMMIT_RELAY_HOME"
+    log_daemon "INFO: Working directory: $CORTEX_HOME"
 
     # Log startup event
     log_event "coordinator_started" '{"pid":'$$'}'
@@ -292,7 +292,7 @@ main_loop() {
     log_daemon "INFO: Starting main coordinator loop"
 
     while true; do
-        cd "$COMMIT_RELAY_HOME"
+        cd "$CORTEX_HOME"
 
         # Update state with current timestamp
         jq --arg timestamp "$(date +%Y-%m-%dT%H:%M:%S%z)" \

@@ -10,7 +10,7 @@
 #   - Quality scoring for training data
 #
 # Usage:
-#   source "$COMMIT_RELAY_HOME/scripts/lib/reasoning-validator.sh"
+#   source "$CORTEX_HOME/scripts/lib/reasoning-validator.sh"
 #   result=$(validate_reasoning_trace "$trace_json")
 #   quality=$(score_reasoning_quality "$trace_json")
 
@@ -20,12 +20,12 @@ set -euo pipefail
 # Configuration
 # ============================================================================
 
-COMMIT_RELAY_HOME="${COMMIT_RELAY_HOME:-$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)}"
+CORTEX_HOME="${CORTEX_HOME:-$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)}"
 
 # Validator configuration
-VALIDATOR_CONFIG="${COMMIT_RELAY_HOME}/coordination/config/reasoning-validator.json"
-VALIDATION_HISTORY="${COMMIT_RELAY_HOME}/coordination/metrics/reasoning-validation-history.jsonl"
-TRAINING_DATA="${COMMIT_RELAY_HOME}/coordination/knowledge-base/training-data/validated-traces.jsonl"
+VALIDATOR_CONFIG="${CORTEX_HOME}/coordination/config/reasoning-validator.json"
+VALIDATION_HISTORY="${CORTEX_HOME}/coordination/metrics/reasoning-validation-history.jsonl"
+TRAINING_DATA="${CORTEX_HOME}/coordination/knowledge-base/training-data/validated-traces.jsonl"
 
 # Create directories
 mkdir -p "$(dirname "$VALIDATOR_CONFIG")"

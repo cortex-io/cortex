@@ -20,7 +20,7 @@ source "$SCRIPT_DIR/lib/agentstudio/agent-catalog.sh"
 #
 show_help() {
     cat <<EOF
-Agent Catalog - Manage and discover agents in commit-relay
+Agent Catalog - Manage and discover agents in cortex
 
 Usage: $0 <command> [options]
 

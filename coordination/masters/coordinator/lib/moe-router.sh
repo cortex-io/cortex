@@ -1,5 +1,5 @@
 #!/bin/bash
-# MoE-Inspired Router for Commit-Relay
+# MoE-Inspired Router for Cortex
 # Implements Mixture of Experts routing logic with confidence scoring
 
 set -euo pipefail
@@ -10,18 +10,18 @@ KB_DIR="$SCRIPT_DIR/../knowledge-base"
 ROUTING_PATTERNS="$KB_DIR/routing-patterns.json"
 ROUTING_LOG="$KB_DIR/routing-decisions.jsonl"
 ROUTING_LOG_BACKUP="$SCRIPT_DIR/../logs/routing-decisions.jsonl"
-COMMIT_RELAY_HOME="${COMMIT_RELAY_HOME:-$(cd "$SCRIPT_DIR/../../../.." && pwd)}"
+CORTEX_HOME="${CORTEX_HOME:-$(cd "$SCRIPT_DIR/../../../.." && pwd)}"
 
 # Model selection configuration
-MODEL_TIERS_CONFIG="$COMMIT_RELAY_HOME/llm-mesh/gateway/router/model-tiers.json"
-MODEL_SELECTION_LOG="$COMMIT_RELAY_HOME/coordination/metrics/model-selection.jsonl"
+MODEL_TIERS_CONFIG="$CORTEX_HOME/llm-mesh/gateway/router/model-tiers.json"
+MODEL_SELECTION_LOG="$CORTEX_HOME/coordination/metrics/model-selection.jsonl"
 
 # Learned patterns for adaptive routing (Phase 2 Enhancement #16)
-LEARNED_PATTERNS="$COMMIT_RELAY_HOME/coordination/knowledge-base/learned-patterns/patterns-latest.json"
+LEARNED_PATTERNS="$CORTEX_HOME/coordination/knowledge-base/learned-patterns/patterns-latest.json"
 LEARNED_WEIGHTS_ENABLED="${LEARNED_WEIGHTS_ENABLED:-true}"
 
 # Phase 3 Enhancement #16: Model versions directory for utility weights
-MODEL_VERSIONS_DIR="$COMMIT_RELAY_HOME/coordination/knowledge-base/model-versions"
+MODEL_VERSIONS_DIR="$CORTEX_HOME/coordination/knowledge-base/model-versions"
 UTILITY_WEIGHTS_ENABLED="${UTILITY_WEIGHTS_ENABLED:-true}"
 
 # Governance bypass mode (for bootstrapping governance system itself)
@@ -30,11 +30,11 @@ GOVERNANCE_BYPASS="${GOVERNANCE_BYPASS:-false}"
 # Phase 5.2 Enhancement: Semantic routing with embeddings (94.5% coverage vs 87.5% keywords)
 SEMANTIC_ROUTING_ENABLED="${SEMANTIC_ROUTING_ENABLED:-true}"
 SEMANTIC_CONFIDENCE_THRESHOLD="${SEMANTIC_CONFIDENCE_THRESHOLD:-0.6}"
-SEMANTIC_ROUTER_CLI="$COMMIT_RELAY_HOME/lib/routing/semantic-router-cli.js"
+SEMANTIC_ROUTER_CLI="$CORTEX_HOME/lib/routing/semantic-router-cli.js"
 
 # Load access control (skip if in bypass mode or file doesn't exist)
-if [ "$GOVERNANCE_BYPASS" != "true" ] && [ -f "$COMMIT_RELAY_HOME/scripts/lib/access-check.sh" ]; then
-    source "$COMMIT_RELAY_HOME/scripts/lib/access-check.sh"
+if [ "$GOVERNANCE_BYPASS" != "true" ] && [ -f "$CORTEX_HOME/scripts/lib/access-check.sh" ]; then
+    source "$CORTEX_HOME/scripts/lib/access-check.sh"
 else
     # Stub function for bypass mode or when access-check doesn't exist
     check_permission() {
@@ -1050,7 +1050,7 @@ record_routing_feedback() {
     local score="${4:-0}"
     local keywords="${5:-}"
 
-    local feedback_dir="$COMMIT_RELAY_HOME/coordination/knowledge-base/feedback-reports"
+    local feedback_dir="$CORTEX_HOME/coordination/knowledge-base/feedback-reports"
     mkdir -p "$feedback_dir"
 
     local timestamp=$(date +"%Y-%m-%dT%H:%M:%S%z")

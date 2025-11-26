@@ -2,7 +2,7 @@
 Task Health Monitor - Task-specific health checks and diagnostics.
 
 Provides APIs to monitor task health, detect stalled tasks, identify issues,
-and generate health reports for the commit-relay system.
+and generate health reports for the cortex system.
 """
 
 from typing import Dict, List, Optional
@@ -213,7 +213,7 @@ class TaskHealthMonitor:
                     f"Task pending for {age_minutes:.1f} minutes without worker assignment"
                 )
                 health['recommendations'].append(
-                    "Check worker daemon status with: systemctl status commit-relay-worker"
+                    "Check worker daemon status with: systemctl status cortex-worker"
                 )
             elif task.get('assigned_to') and age_minutes > 15:
                 health['warnings'].append(

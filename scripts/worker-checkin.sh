@@ -6,8 +6,8 @@
 set -euo pipefail
 
 # Configuration
-COMMIT_RELAY_HOME="${COMMIT_RELAY_HOME:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)}"
-CHECKINS_DIR="$COMMIT_RELAY_HOME/coordination/worker-checkins"
+CORTEX_HOME="${CORTEX_HOME:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)}"
+CHECKINS_DIR="$CORTEX_HOME/coordination/worker-checkins"
 
 # Ensure check-ins directory exists
 mkdir -p "$CHECKINS_DIR"

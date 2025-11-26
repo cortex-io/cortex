@@ -1186,7 +1186,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">/**
  * Access Control System
  *
- * Fine-grained, role-based access control for commit-relay AI system.
+ * Fine-grained, role-based access control for cortex AI system.
  * Implements Amgen-proven pattern of simplified permissions (120 roles -&gt; 1-2).
  *
  * Features:
@@ -1209,9 +1209,9 @@ const CatalogManager = <span class="cstat-no" title="statement not covered" >req
 &nbsp;
 class AccessControl {
 <span class="fstat-no" title="function not covered" >  co</span>nstructor(options = <span class="branch-0 cbranch-no" title="branch not covered" >{})</span> {
-<span class="cstat-no" title="statement not covered" >    this.rolesPath = options.rolesPath || '/Users/ryandahlberg/Projects/commit-relay/coordination/governance/roles.json';</span>
-<span class="cstat-no" title="statement not covered" >    this.auditLogPath = options.auditLogPath || '/Users/ryandahlberg/Projects/commit-relay/coordination/governance/access-log.jsonl';</span>
-<span class="cstat-no" title="statement not covered" >    this.catalogPath = options.catalogPath || '/Users/ryandahlberg/Projects/commit-relay/coordination/catalog';</span>
+<span class="cstat-no" title="statement not covered" >    this.rolesPath = options.rolesPath || '/Users/ryandahlberg/Projects/cortex/coordination/governance/roles.json';</span>
+<span class="cstat-no" title="statement not covered" >    this.auditLogPath = options.auditLogPath || '/Users/ryandahlberg/Projects/cortex/coordination/governance/access-log.jsonl';</span>
+<span class="cstat-no" title="statement not covered" >    this.catalogPath = options.catalogPath || '/Users/ryandahlberg/Projects/cortex/coordination/catalog';</span>
 &nbsp;
 <span class="cstat-no" title="statement not covered" >    this.roles = null;</span>
 <span class="cstat-no" title="statement not covered" >    this.catalogManager = null;</span>

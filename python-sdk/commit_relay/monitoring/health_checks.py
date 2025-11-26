@@ -1,5 +1,5 @@
 """
-Health monitoring for commit-relay system.
+Health monitoring for cortex system.
 
 Provides comprehensive health checks for workers, tasks, and system metrics.
 """
@@ -18,7 +18,7 @@ class HealthStatus(Enum):
 
 class HealthChecker:
     """
-    Perform health checks on commit-relay system.
+    Perform health checks on cortex system.
 
     Monitors various aspects of the system including worker pool health,
     task success rates, and system responsiveness.

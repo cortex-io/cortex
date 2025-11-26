@@ -43,8 +43,8 @@ function loadComponents() {
 }
 
 // Paths
-const COORD_DIR = process.env.COMMIT_RELAY_HOME
-  ? path.join(process.env.COMMIT_RELAY_HOME, 'coordination')
+const COORD_DIR = process.env.CORTEX_HOME
+  ? path.join(process.env.CORTEX_HOME, 'coordination')
   : path.join(__dirname, '../../../coordination');
 
 const SLA_POLICY_PATH = path.join(COORD_DIR, 'config/sla-policy.json');

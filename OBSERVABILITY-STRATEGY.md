@@ -1,4 +1,4 @@
-# Commit-Relay Observability Strategy
+# Cortex Observability Strategy
 ## Complete Visibility Across the Agentic Hierarchy
 
 **Status**: Draft Proposal
@@ -588,7 +588,7 @@ Time to debug: 2 minutes (automated)
 - ✅ Works with existing bash/Node.js architecture
 - ✅ Lightweight and fast
 - ✅ Easy to query and extend
-- **Verdict**: Best fit for commit-relay ✓
+- **Verdict**: Best fit for cortex ✓
 
 ### C. Glossary
 
@@ -604,5 +604,5 @@ Time to debug: 2 minutes (automated)
 
 **Document Version**: 1.0
 **Last Updated**: 2025-11-17
-**Author**: Claude (Commit-Relay Analysis)
+**Author**: Claude (Cortex Analysis)
 **Status**: Awaiting Approval

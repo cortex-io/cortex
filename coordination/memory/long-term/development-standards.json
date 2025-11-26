@@ -2,7 +2,7 @@
   "version": "1.0.0",
   "created_at": "2025-11-20T19:20:00Z",
   "created_by": "worker-implementation-047",
-  "description": "Codified development standards, patterns, and best practices for commit-relay",
+  "description": "Codified development standards, patterns, and best practices for cortex",
   "coding_standards": {
     "shell_scripting": {
       "conventions": [

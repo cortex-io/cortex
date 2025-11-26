@@ -13,11 +13,11 @@
 set -e
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-COMMIT_RELAY_HOME="$(cd "$SCRIPT_DIR/../.." && pwd)"
-export COMMIT_RELAY_HOME
+CORTEX_HOME="$(cd "$SCRIPT_DIR/../.." && pwd)"
+export CORTEX_HOME
 
-source "$COMMIT_RELAY_HOME/scripts/lib/heartbeat.sh"
-source "$COMMIT_RELAY_HOME/scripts/lib/zombie-cleanup.sh"
+source "$CORTEX_HOME/scripts/lib/heartbeat.sh"
+source "$CORTEX_HOME/scripts/lib/zombie-cleanup.sh"
 
 GREEN='\033[0;32m'
 RED='\033[0;31m'
@@ -42,29 +42,29 @@ cleanup() {
     echo "Cleaning up test resources..."
 
     # Kill test worker process if running
-    if [ -f "$COMMIT_RELAY_HOME/agents/workers/$TEST_WORKER_ID/worker.pid" ]; then
-        WORKER_PID=$(cat "$COMMIT_RELAY_HOME/agents/workers/$TEST_WORKER_ID/worker.pid")
+    if [ -f "$CORTEX_HOME/agents/workers/$TEST_WORKER_ID/worker.pid" ]; then
+        WORKER_PID=$(cat "$CORTEX_HOME/agents/workers/$TEST_WORKER_ID/worker.pid")
         kill -9 "$WORKER_PID" 2>/dev/null || true
     fi
 
     # Kill heartbeat emitter if running
-    if [ -f "$COMMIT_RELAY_HOME/agents/workers/$TEST_WORKER_ID/heartbeat.pid" ]; then
-        HEARTBEAT_PID=$(cat "$COMMIT_RELAY_HOME/agents/workers/$TEST_WORKER_ID/heartbeat.pid")
+    if [ -f "$CORTEX_HOME/agents/workers/$TEST_WORKER_ID/heartbeat.pid" ]; then
+        HEARTBEAT_PID=$(cat "$CORTEX_HOME/agents/workers/$TEST_WORKER_ID/heartbeat.pid")
         kill -9 "$HEARTBEAT_PID" 2>/dev/null || true
     fi
 
     # Remove test worker spec from active
-    rm -f "$COMMIT_RELAY_HOME/coordination/worker-specs/active/${TEST_WORKER_ID}.json"
+    rm -f "$CORTEX_HOME/coordination/worker-specs/active/${TEST_WORKER_ID}.json"
 
     # Remove test worker directory
-    rm -rf "$COMMIT_RELAY_HOME/agents/workers/$TEST_WORKER_ID"
+    rm -rf "$CORTEX_HOME/agents/workers/$TEST_WORKER_ID"
 
     # Clean up zombie directory
     ZOMBIE_DATE=$(date +%Y-%m-%d)
-    rm -f "$COMMIT_RELAY_HOME/coordination/worker-specs/zombie/$ZOMBIE_DATE/${TEST_WORKER_ID}.json" 2>/dev/null || true
+    rm -f "$CORTEX_HOME/coordination/worker-specs/zombie/$ZOMBIE_DATE/${TEST_WORKER_ID}.json" 2>/dev/null || true
 
     # Clean up archived logs
-    rm -rf "$COMMIT_RELAY_HOME/agents/logs/zombie-workers/$ZOMBIE_DATE/${TEST_WORKER_ID}"* 2>/dev/null || true
+    rm -rf "$CORTEX_HOME/agents/logs/zombie-workers/$ZOMBIE_DATE/${TEST_WORKER_ID}"* 2>/dev/null || true
 
     # Clean up rate limit file
     rm -f /tmp/zombie-cleanup-count-* 2>/dev/null || true
@@ -76,15 +76,15 @@ trap cleanup EXIT
 
 echo "Step 1: Creating test worker with heartbeat..."
 
-mkdir -p "$COMMIT_RELAY_HOME/coordination/worker-specs/active"
-mkdir -p "$COMMIT_RELAY_HOME/agents/workers/$TEST_WORKER_ID/logs"
+mkdir -p "$CORTEX_HOME/coordination/worker-specs/active"
+mkdir -p "$CORTEX_HOME/agents/workers/$TEST_WORKER_ID/logs"
 
 # Create initial token budget state
-TOKEN_BUDGET="$COMMIT_RELAY_HOME/coordination/token-budget.json"
+TOKEN_BUDGET="$CORTEX_HOME/coordination/token-budget.json"
 INITIAL_USED=100000
 echo "{\"total_budget\": 500000, \"total_used\": $INITIAL_USED}" > "$TOKEN_BUDGET"
 
-cat > "$COMMIT_RELAY_HOME/coordination/worker-specs/active/${TEST_WORKER_ID}.json" <<'EOFSPEC'
+cat > "$CORTEX_HOME/coordination/worker-specs/active/${TEST_WORKER_ID}.json" <<'EOFSPEC'
 {
   "worker_id": "test-zombie-e2e-worker-001",
   "worker_type": "test-worker",
@@ -116,7 +116,7 @@ else
 fi
 
 # Verify heartbeat initialized
-HEARTBEAT_DATA=$(jq '.heartbeat' "$COMMIT_RELAY_HOME/coordination/worker-specs/active/${TEST_WORKER_ID}.json")
+HEARTBEAT_DATA=$(jq '.heartbeat' "$CORTEX_HOME/coordination/worker-specs/active/${TEST_WORKER_ID}.json")
 if [ "$HEARTBEAT_DATA" != "null" ]; then
     echo -e "${GREEN}✓${NC} Heartbeat data present"
 else
@@ -128,7 +128,7 @@ echo ""
 echo "Step 3: Creating mock worker process..."
 
 # Create a simple background process to simulate worker
-cat > "$COMMIT_RELAY_HOME/agents/workers/$TEST_WORKER_ID/mock-worker.sh" <<'EOFMOCK'
+cat > "$CORTEX_HOME/agents/workers/$TEST_WORKER_ID/mock-worker.sh" <<'EOFMOCK'
 #!/bin/bash
 echo "Mock worker starting (PID: $$)"
 while true; do
@@ -137,14 +137,14 @@ while true; do
 done
 EOFMOCK
 
-chmod +x "$COMMIT_RELAY_HOME/agents/workers/$TEST_WORKER_ID/mock-worker.sh"
+chmod +x "$CORTEX_HOME/agents/workers/$TEST_WORKER_ID/mock-worker.sh"
 
 # Start mock worker
-nohup "$COMMIT_RELAY_HOME/agents/workers/$TEST_WORKER_ID/mock-worker.sh" \
-    > "$COMMIT_RELAY_HOME/agents/workers/$TEST_WORKER_ID/logs/stdout.log" 2>&1 &
+nohup "$CORTEX_HOME/agents/workers/$TEST_WORKER_ID/mock-worker.sh" \
+    > "$CORTEX_HOME/agents/workers/$TEST_WORKER_ID/logs/stdout.log" 2>&1 &
 WORKER_PID=$!
 
-echo "$WORKER_PID" > "$COMMIT_RELAY_HOME/agents/workers/$TEST_WORKER_ID/worker.pid"
+echo "$WORKER_PID" > "$CORTEX_HOME/agents/workers/$TEST_WORKER_ID/worker.pid"
 echo -e "${GREEN}✓${NC} Mock worker process started (PID: $WORKER_PID)"
 
 # Verify process is running
@@ -164,7 +164,7 @@ for i in {1..3}; do
     sleep 1
 done
 
-HEARTBEAT_SEQ=$(jq -r '.heartbeat.heartbeat_sequence' "$COMMIT_RELAY_HOME/coordination/worker-specs/active/${TEST_WORKER_ID}.json")
+HEARTBEAT_SEQ=$(jq -r '.heartbeat.heartbeat_sequence' "$CORTEX_HOME/coordination/worker-specs/active/${TEST_WORKER_ID}.json")
 echo -e "${GREEN}✓${NC} Emitted 3 heartbeats (sequence: $HEARTBEAT_SEQ)"
 
 echo ""
@@ -174,10 +174,10 @@ echo "   (Making heartbeat appear 350 seconds old)"
 # Manually set last_heartbeat to 350 seconds ago to simulate zombie
 OLD_TIME=$(date -v-350S +%Y-%m-%dT%H:%M:%S%z 2>/dev/null || date -d "350 seconds ago" +%Y-%m-%dT%H:%M:%S%z)
 jq --arg t "$OLD_TIME" '.heartbeat.last_heartbeat = $t' \
-   "$COMMIT_RELAY_HOME/coordination/worker-specs/active/${TEST_WORKER_ID}.json" > \
-   "$COMMIT_RELAY_HOME/coordination/worker-specs/active/${TEST_WORKER_ID}.json.tmp"
-mv "$COMMIT_RELAY_HOME/coordination/worker-specs/active/${TEST_WORKER_ID}.json.tmp" \
-   "$COMMIT_RELAY_HOME/coordination/worker-specs/active/${TEST_WORKER_ID}.json"
+   "$CORTEX_HOME/coordination/worker-specs/active/${TEST_WORKER_ID}.json" > \
+   "$CORTEX_HOME/coordination/worker-specs/active/${TEST_WORKER_ID}.json.tmp"
+mv "$CORTEX_HOME/coordination/worker-specs/active/${TEST_WORKER_ID}.json.tmp" \
+   "$CORTEX_HOME/coordination/worker-specs/active/${TEST_WORKER_ID}.json"
 
 # Verify zombie state
 TIME_SINCE=$(get_time_since_heartbeat "$TEST_WORKER_ID")
@@ -226,7 +226,7 @@ fi
 
 # Test 2: Worker spec moved to zombie directory
 ZOMBIE_DATE=$(date +%Y-%m-%d)
-ZOMBIE_SPEC="$COMMIT_RELAY_HOME/coordination/worker-specs/zombie/$ZOMBIE_DATE/${TEST_WORKER_ID}.json"
+ZOMBIE_SPEC="$CORTEX_HOME/coordination/worker-specs/zombie/$ZOMBIE_DATE/${TEST_WORKER_ID}.json"
 echo -n "   Checking spec relocation... "
 if [ -f "$ZOMBIE_SPEC" ]; then
     echo -e "${GREEN}✓${NC}"
@@ -270,7 +270,7 @@ fi
 
 # Test 6: Logs archived
 echo -n "   Checking log archival... "
-ARCHIVE_DIR="$COMMIT_RELAY_HOME/agents/logs/zombie-workers/$ZOMBIE_DATE"
+ARCHIVE_DIR="$CORTEX_HOME/agents/logs/zombie-workers/$ZOMBIE_DATE"
 if [ -d "$ARCHIVE_DIR/${TEST_WORKER_ID}-logs" ] || [ -d "$ARCHIVE_DIR/${TEST_WORKER_ID}-metadata" ]; then
     echo -e "${GREEN}✓${NC}"
 else
@@ -279,7 +279,7 @@ fi
 
 # Test 7: Worker spec removed from active
 echo -n "   Checking active spec removal... "
-if [ ! -f "$COMMIT_RELAY_HOME/coordination/worker-specs/active/${TEST_WORKER_ID}.json" ]; then
+if [ ! -f "$CORTEX_HOME/coordination/worker-specs/active/${TEST_WORKER_ID}.json" ]; then
     echo -e "${GREEN}✓${NC}"
 else
     echo -e "${RED}✗${NC} Spec still in active directory"
@@ -288,7 +288,7 @@ fi
 
 # Test 8: Cleanup events emitted
 echo -n "   Checking event emission... "
-EVENTS_LOG="$COMMIT_RELAY_HOME/coordination/events/zombie-cleanup-events.jsonl"
+EVENTS_LOG="$CORTEX_HOME/coordination/events/zombie-cleanup-events.jsonl"
 if [ -f "$EVENTS_LOG" ]; then
     # Check for any of the zombie events
     if grep -q "$TEST_WORKER_ID" "$EVENTS_LOG" 2>/dev/null; then

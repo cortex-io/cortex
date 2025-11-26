@@ -22,23 +22,23 @@ set -euo pipefail
 
 # Configuration
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-COMMIT_RELAY_HOME="${COMMIT_RELAY_HOME:-$(cd "$SCRIPT_DIR/../../.." && pwd)}"
+CORTEX_HOME="${CORTEX_HOME:-$(cd "$SCRIPT_DIR/../../.." && pwd)}"
 
 # Source dependencies
 source "$SCRIPT_DIR/critic.sh"
-source "$COMMIT_RELAY_HOME/scripts/lib/logging.sh" 2>/dev/null || {
+source "$CORTEX_HOME/scripts/lib/logging.sh" 2>/dev/null || {
     log_info() { echo "[INFO] $1"; }
     log_warn() { echo "[WARN] $1"; }
     log_error() { echo "[ERROR] $1"; }
 }
 
 # Directories
-readonly COMPLETED_WORKERS_DIR="$COMMIT_RELAY_HOME/coordination/worker-specs/completed"
-readonly PROCESSED_WORKERS_DIR="$COMMIT_RELAY_HOME/coordination/worker-specs/processed"
-readonly TRAINING_EXAMPLES_DIR="$COMMIT_RELAY_HOME/coordination/knowledge-base/training-examples"
-readonly MOE_LEARNING_DIR="$COMMIT_RELAY_HOME/coordination/masters/coordinator/knowledge-base"
-readonly LEARNING_STATE_FILE="$COMMIT_RELAY_HOME/coordination/metrics/learning/learning-state.json"
-readonly TRAINING_BATCH_DIR="$COMMIT_RELAY_HOME/coordination/knowledge-base/training-batches"
+readonly COMPLETED_WORKERS_DIR="$CORTEX_HOME/coordination/worker-specs/completed"
+readonly PROCESSED_WORKERS_DIR="$CORTEX_HOME/coordination/worker-specs/processed"
+readonly TRAINING_EXAMPLES_DIR="$CORTEX_HOME/coordination/knowledge-base/training-examples"
+readonly MOE_LEARNING_DIR="$CORTEX_HOME/coordination/masters/coordinator/knowledge-base"
+readonly LEARNING_STATE_FILE="$CORTEX_HOME/coordination/metrics/learning/learning-state.json"
+readonly TRAINING_BATCH_DIR="$CORTEX_HOME/coordination/knowledge-base/training-batches"
 
 # Ensure directories exist
 mkdir -p "$COMPLETED_WORKERS_DIR" "$PROCESSED_WORKERS_DIR" "$TRAINING_EXAMPLES_DIR" "$TRAINING_BATCH_DIR"
@@ -342,7 +342,7 @@ run_learning_cycle() {
 
 # Calculate and update learning metrics
 calculate_learning_metrics() {
-    local evaluations_file="$COMMIT_RELAY_HOME/coordination/metrics/learning/evaluations.jsonl"
+    local evaluations_file="$CORTEX_HOME/coordination/metrics/learning/evaluations.jsonl"
 
     if [ ! -f "$evaluations_file" ]; then
         return 0
@@ -399,7 +399,7 @@ update_moe_patterns() {
 analyze_quality_trends() {
     local window_days="${1:-7}"
 
-    local evaluations_file="$COMMIT_RELAY_HOME/coordination/metrics/learning/evaluations.jsonl"
+    local evaluations_file="$CORTEX_HOME/coordination/metrics/learning/evaluations.jsonl"
 
     if [ ! -f "$evaluations_file" ]; then
         echo '{"error": "No evaluations available"}'

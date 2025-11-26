@@ -1,7 +1,7 @@
 #!/bin/bash
 # Debug MoE Router keyword matching
 
-TASK="Phase 1 validation of v5.0 Hybrid RAG+CAG: Scan commit-relay repository to validate CAG performance claims"
+TASK="Phase 1 validation of v5.0 Hybrid RAG+CAG: Scan cortex repository to validate CAG performance claims"
 TASK_LOWER=$(echo "$TASK" | tr '[:upper:]' '[:lower:]')
 
 echo "Task description: $TASK"

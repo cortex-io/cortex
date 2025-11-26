@@ -13,10 +13,10 @@ export WORKER_ID="${WORKER_ID:-impl-worker-$(date +%s)}"
 export WORKER_TYPE="implementation-worker"
 export TASK_ID="${TASK_ID:-unknown-task}"
 export TASK_DESCRIPTION="${TASK_DESCRIPTION:-Feature implementation}"
-export COMMIT_RELAY_HOME="${COMMIT_RELAY_HOME:-$(cd "$(dirname "$0")/../.." && pwd)}"
+export CORTEX_HOME="${CORTEX_HOME:-$(cd "$(dirname "$0")/../.." && pwd)}"
 
 # Load logging library
-source "$COMMIT_RELAY_HOME/scripts/lib/logging.sh"
+source "$CORTEX_HOME/scripts/lib/logging.sh"
 
 # === Argument Parsing ===
 usage() {
@@ -43,7 +43,7 @@ ENVIRONMENT VARIABLES:
     WORKER_ID                 Unique worker identifier (default: auto-generated)
     TASK_ID                   Task ID (required)
     TASK_DESCRIPTION          What to implement (required)
-    COMMIT_RELAY_HOME         Project root directory
+    CORTEX_HOME         Project root directory
 
 EOF
     exit 1
@@ -87,7 +87,7 @@ log_info "Task ID: $TASK_ID"
 log_info "Description: $TASK_DESCRIPTION"
 log_info ""
 
-cd "$COMMIT_RELAY_HOME"
+cd "$CORTEX_HOME"
 
 # === Phase 1: Analysis ===
 log_section "Phase 1: Requirements Analysis"
@@ -179,7 +179,7 @@ This file documents the implementation of: $TASK_DESCRIPTION
 
 ---
 
-🤖 Implemented by commit-relay autonomous worker system
+🤖 Implemented by cortex autonomous worker system
 EOF
 
     export FILES_CHANGED="$IMPL_FILE"
@@ -213,7 +213,7 @@ log_section "Phase 4: Autonomous Git Workflow"
 # - Worker status update
 # - Git operation recording
 
-source "$COMMIT_RELAY_HOME/scripts/templates/worker-completion-hook.sh"
+source "$CORTEX_HOME/scripts/templates/worker-completion-hook.sh"
 
 # === End ===
 # Note: We never reach here because the completion hook exits

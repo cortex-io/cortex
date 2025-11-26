@@ -13,28 +13,28 @@ set -euo pipefail
 
 # Get script directory
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-COMMIT_RELAY_HOME="${COMMIT_RELAY_HOME:-$(cd "$SCRIPT_DIR/../.." && pwd)}"
+CORTEX_HOME="${CORTEX_HOME:-$(cd "$SCRIPT_DIR/../.." && pwd)}"
 
 # Load libraries
-source "$COMMIT_RELAY_HOME/scripts/lib/logging.sh" 2>/dev/null || {
+source "$CORTEX_HOME/scripts/lib/logging.sh" 2>/dev/null || {
     log_info() { echo "[INFO] $1"; }
     log_warn() { echo "[WARN] $1"; }
     log_error() { echo "[ERROR] $1"; }
     log_success() { echo "[SUCCESS] $1"; }
 }
 
-cd "$COMMIT_RELAY_HOME"
+cd "$CORTEX_HOME"
 
 # Daemon configuration
-DAEMON_NAME="commit-relay-freshness"
+DAEMON_NAME="cortex-freshness"
 CHECK_INTERVAL="${FRESHNESS_CHECK_INTERVAL:-86400}"  # Default: 24 hours
 FRESHNESS_THRESHOLD="${FRESHNESS_THRESHOLD:-0.3}"
 MAX_REINDEXES="${FRESHNESS_MAX_REINDEXES:-100}"
-PID_FILE="$COMMIT_RELAY_HOME/coordination/pids/freshness-daemon.pid"
-LOG_FILE="$COMMIT_RELAY_HOME/agents/logs/system/freshness-daemon.log"
-POLICY_FILE="$COMMIT_RELAY_HOME/coordination/config/freshness-policy.json"
-METRICS_FILE="$COMMIT_RELAY_HOME/coordination/metrics/freshness-metrics.jsonl"
-EVENTS_FILE="$COMMIT_RELAY_HOME/coordination/events/freshness-events.jsonl"
+PID_FILE="$CORTEX_HOME/coordination/pids/freshness-daemon.pid"
+LOG_FILE="$CORTEX_HOME/agents/logs/system/freshness-daemon.log"
+POLICY_FILE="$CORTEX_HOME/coordination/config/freshness-policy.json"
+METRICS_FILE="$CORTEX_HOME/coordination/metrics/freshness-metrics.jsonl"
+EVENTS_FILE="$CORTEX_HOME/coordination/events/freshness-events.jsonl"
 
 # Ensure directories exist
 mkdir -p "$(dirname "$PID_FILE")"
@@ -78,7 +78,7 @@ log_daemon "Check interval: ${CHECK_INTERVAL}s ($(( CHECK_INTERVAL / 3600 )) hou
 log_daemon "Freshness threshold: $FRESHNESS_THRESHOLD"
 log_daemon "Max reindexes per cycle: $MAX_REINDEXES"
 log_daemon "Policy file: $POLICY_FILE"
-log_daemon "Working directory: $COMMIT_RELAY_HOME"
+log_daemon "Working directory: $CORTEX_HOME"
 
 # Emit startup event
 emit_event "daemon_started" "{\"pid\":$$,\"interval_seconds\":$CHECK_INTERVAL,\"threshold\":$FRESHNESS_THRESHOLD}"
@@ -241,7 +241,7 @@ main();
 # ============================================================================
 
 check_health() {
-    local health_file="$COMMIT_RELAY_HOME/coordination/health/freshness-daemon.json"
+    local health_file="$CORTEX_HOME/coordination/health/freshness-daemon.json"
     mkdir -p "$(dirname "$health_file")"
 
     local success_rate=0

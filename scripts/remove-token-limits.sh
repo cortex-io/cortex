@@ -1,13 +1,13 @@
 #!/bin/bash
 # scripts/remove-token-limits.sh
 # Remove token limit constraints from master prompts and worker specs
-# CAG caching makes token budgets obsolete for the commit-relay system
+# CAG caching makes token budgets obsolete for the cortex system
 
 set -euo pipefail
 
 # Get script directory
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-COMMIT_RELAY_HOME="${COMMIT_RELAY_HOME:-$(cd "$SCRIPT_DIR/.." && pwd)}"
+CORTEX_HOME="${CORTEX_HOME:-$(cd "$SCRIPT_DIR/.." && pwd)}"
 
 # Color definitions
 GREEN="\033[0;32m"
@@ -18,13 +18,13 @@ NC="\033[0m"  # No Color
 
 # Configuration
 DRY_RUN=false
-BACKUP_DIR="$COMMIT_RELAY_HOME/coordination/backups/token-limits-removal-$(date +%Y%m%d-%H%M%S)"
+BACKUP_DIR="$CORTEX_HOME/coordination/backups/token-limits-removal-$(date +%Y%m%d-%H%M%S)"
 
 usage() {
     cat <<EOF
 Usage: $0 [OPTIONS]
 
-Remove token limit constraints from commit-relay system.
+Remove token limit constraints from cortex system.
 CAG caching makes explicit token budgets obsolete.
 
 OPTIONS:
@@ -92,7 +92,7 @@ update_master_prompts() {
     )
 
     for prompt_file in "${master_prompts[@]}"; do
-        local full_path="$COMMIT_RELAY_HOME/$prompt_file"
+        local full_path="$CORTEX_HOME/$prompt_file"
 
         if [[ ! -f "$full_path" ]]; then
             echo -e "${YELLOW}Skipping (not found): $prompt_file${NC}"
@@ -130,7 +130,7 @@ update_master_prompts() {
 update_spawn_worker_script() {
     echo -e "${BLUE}═══ Task 2: Updating Worker Spawn Scripts ═══${NC}"
 
-    local spawn_script="$COMMIT_RELAY_HOME/scripts/spawn-worker.sh"
+    local spawn_script="$CORTEX_HOME/scripts/spawn-worker.sh"
 
     if [[ ! -f "$spawn_script" ]]; then
         echo -e "${YELLOW}Spawn worker script not found${NC}"
@@ -171,7 +171,7 @@ update_master_states() {
     )
 
     for state_file in "${state_files[@]}"; do
-        local full_path="$COMMIT_RELAY_HOME/$state_file"
+        local full_path="$CORTEX_HOME/$state_file"
 
         if [[ ! -f "$full_path" ]]; then
             echo -e "${YELLOW}Skipping (not found): $state_file${NC}"
@@ -203,7 +203,7 @@ update_master_states() {
 create_documentation_note() {
     echo -e "${BLUE}═══ Task 4: Creating Documentation Note ═══${NC}"
 
-    local doc_file="$COMMIT_RELAY_HOME/docs/token-optimization-via-cag.md"
+    local doc_file="$CORTEX_HOME/docs/token-optimization-via-cag.md"
 
     if [[ "$DRY_RUN" == "false" ]]; then
         cat > "$doc_file" <<'DOC_EOF'
@@ -211,7 +211,7 @@ create_documentation_note() {
 
 ## Overview
 
-The commit-relay system has eliminated explicit token budget management due to the implementation of Context-Aware Generation (CAG) caching with prompt caching.
+The cortex system has eliminated explicit token budget management due to the implementation of Context-Aware Generation (CAG) caching with prompt caching.
 
 ## What Changed
 

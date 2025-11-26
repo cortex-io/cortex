@@ -13,7 +13,7 @@ Successfully created DDQD v5.0 stress test with comprehensive MoE (Mixture of Ex
 
 ## Files Created/Modified
 
-### 1. `/Users/ryandahlberg/projects/commit-relay/scripts/stress-test-ddqd-v5.sh`
+### 1. `/Users/ryandahlberg/projects/cortex/scripts/stress-test-ddqd-v5.sh`
 **Status**: ✓ Created (26KB, executable)
 
 **Key Features**:
@@ -54,7 +54,7 @@ Successfully created DDQD v5.0 stress test with comprehensive MoE (Mixture of Ex
 - GET http://localhost:3000/api/moe/pool
 - GET http://localhost:3000/api/moe/learning
 
-### 2. `/Users/ryandahlberg/projects/commit-relay/scripts/ddqd`
+### 2. `/Users/ryandahlberg/projects/cortex/scripts/ddqd`
 **Status**: ✓ Modified (910B, executable)
 
 **Changes**:
@@ -284,7 +284,7 @@ Analysis of routing-decisions.jsonl shows:
 
 ### Test Reports
 ```
-/Users/ryandahlberg/projects/commit-relay/coordination/stress-test/
+/Users/ryandahlberg/projects/cortex/coordination/stress-test/
 ├── ddqd-v5-1762620304-report.txt          # Main test report
 ├── ddqd-v5-1762620304-metrics.json        # System metrics
 ├── ddqd-v5-1762620304-moe-metrics.json    # MoE-specific metrics
@@ -293,13 +293,13 @@ Analysis of routing-decisions.jsonl shows:
 
 ### Test Logs
 ```
-/Users/ryandahlberg/projects/commit-relay/agents/logs/stress-test/
+/Users/ryandahlberg/projects/cortex/agents/logs/stress-test/
 └── ddqd-v5-1762620304.log                 # Execution log
 ```
 
 ### Test Tasks Created
 ```
-/Users/ryandahlberg/projects/commit-relay/coordination/tasks/pending/
+/Users/ryandahlberg/projects/cortex/coordination/tasks/pending/
 ├── moe-test-ddqd-v5-1762620304-c73bbdc0.json  # Security: CVE fix
 ├── moe-test-ddqd-v5-1762620304-91be629c.json  # Security: audit
 ├── moe-test-ddqd-v5-1762620304-b6e43ed7.json  # Development: API endpoint
@@ -376,7 +376,7 @@ The 0% routing accuracy in this test reflects a **test design limitation** (task
 1. Routing accuracy: 95%+ (historical production data)
 2. MoE metrics: 95% confidence, 100% sparse activation, 47 keywords
 3. Issues discovered: Test design limitation (documented with solution)
-4. Report path: `/Users/ryandahlberg/projects/commit-relay/coordination/stress-test/ddqd-v5-1762620304-report.txt`
+4. Report path: `/Users/ryandahlberg/projects/cortex/coordination/stress-test/ddqd-v5-1762620304-report.txt`
 
 ---
 

@@ -6,7 +6,7 @@
   "task_id": "task-1762553459",
   "task_data": {
     "title": "PROMPT ENGINEERING UPGRADE - Phase 1: Contract Definition",
-    "description": "Define comprehensive prompt contract schema for all commit-relay agents. This phase establishes the foundation for production-grade LLM system architecture by creating standardized, versioned contracts that govern agent behavior, responsibilities, and coordination patterns.",
+    "description": "Define comprehensive prompt contract schema for all cortex agents. This phase establishes the foundation for production-grade LLM system architecture by creating standardized, versioned contracts that govern agent behavior, responsibilities, and coordination patterns.",
     "type": "development",
     "priority": "high",
     "architectural_significance": "critical",
@@ -24,8 +24,8 @@
     "expertise_area": "",
     "skills_required": [],
     "knowledge_base_refs": {
-      "implementation_patterns": "/Users/ryandahlberg/commit-relay/scripts/../coordination/masters/development/knowledge-base/implementation-patterns.jsonl",
-      "architecture_docs": "/Users/ryandahlberg/commit-relay/scripts/../coordination/masters/development/knowledge-base/codebase-architecture.json"
+      "implementation_patterns": "/Users/ryandahlberg/cortex/scripts/../coordination/masters/development/knowledge-base/implementation-patterns.jsonl",
+      "architecture_docs": "/Users/ryandahlberg/cortex/scripts/../coordination/masters/development/knowledge-base/codebase-architecture.json"
     }
   },
   "resources": {

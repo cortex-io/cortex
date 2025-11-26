@@ -18,7 +18,7 @@
 #
 # Cron Setup:
 #   # Add to crontab (edit with: crontab -e)
-#   0 * * * * /path/to/commit-relay/scripts/worker-cleanup-cron.sh >> /path/to/commit-relay/agents/logs/system/worker-cleanup.log 2>&1
+#   0 * * * * /path/to/cortex/scripts/worker-cleanup-cron.sh >> /path/to/cortex/agents/logs/system/worker-cleanup.log 2>&1
 ################################################################################
 
 set -euo pipefail

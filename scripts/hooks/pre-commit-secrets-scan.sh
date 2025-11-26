@@ -9,13 +9,13 @@
 
 set -eo pipefail
 
-# Get commit-relay home
+# Get cortex home
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-COMMIT_RELAY_HOME="${COMMIT_RELAY_HOME:-$(cd "$SCRIPT_DIR/../.." && pwd)}"
+CORTEX_HOME="${CORTEX_HOME:-$(cd "$SCRIPT_DIR/../.." && pwd)}"
 
 # Handle --install flag
 if [[ "${1:-}" == "--install" ]]; then
-    HOOK_PATH="$COMMIT_RELAY_HOME/.git/hooks/pre-commit"
+    HOOK_PATH="$CORTEX_HOME/.git/hooks/pre-commit"
     ln -sf "../../scripts/hooks/pre-commit-secrets-scan.sh" "$HOOK_PATH"
     chmod +x "$HOOK_PATH"
     echo "Pre-commit secrets scan hook installed successfully"
@@ -23,7 +23,7 @@ if [[ "${1:-}" == "--install" ]]; then
 fi
 
 # Source PII scanner
-PII_SCANNER="$COMMIT_RELAY_HOME/coordination/governance/lib/pii-scanner.sh"
+PII_SCANNER="$CORTEX_HOME/coordination/governance/lib/pii-scanner.sh"
 if [[ ! -f "$PII_SCANNER" ]]; then
     echo "Warning: PII scanner not found at $PII_SCANNER"
     exit 0

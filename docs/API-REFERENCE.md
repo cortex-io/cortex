@@ -1,4 +1,4 @@
-# commit-relay API Reference
+# cortex API Reference
 
 **Total Endpoints**: 128 | **Base URL**: `http://localhost:5001`
 
@@ -544,4 +544,4 @@ All instrumented endpoints send the following telemetry to Elastic Cloud:
 
 **Last Updated**: 2025-11-25
 **API Version**: 2.0
-**Server**: commit-relay API Server
+**Server**: cortex API Server

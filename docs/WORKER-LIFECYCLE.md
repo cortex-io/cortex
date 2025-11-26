@@ -2,7 +2,7 @@
 
 ## Overview
 
-Workers in the commit-relay system have a well-defined lifecycle from creation to archival. This document describes the complete lifecycle, monitoring, and automated cleanup processes.
+Workers in the cortex system have a well-defined lifecycle from creation to archival. This document describes the complete lifecycle, monitoring, and automated cleanup processes.
 
 ## Worker States
 
@@ -114,17 +114,17 @@ Prevent worker pool bloat by automatically archiving completed and stale workers
 
    **Option 1: Hourly Cleanup (Recommended)**
    ```cron
-   0 * * * * /path/to/commit-relay/scripts/worker-cleanup-cron.sh >> /path/to/commit-relay/agents/logs/system/worker-cleanup.log 2>&1
+   0 * * * * /path/to/cortex/scripts/worker-cleanup-cron.sh >> /path/to/cortex/agents/logs/system/worker-cleanup.log 2>&1
    ```
 
    **Option 2: Every 4 Hours**
    ```cron
-   0 */4 * * * /path/to/commit-relay/scripts/worker-cleanup-cron.sh >> /path/to/commit-relay/agents/logs/system/worker-cleanup.log 2>&1
+   0 */4 * * * /path/to/cortex/scripts/worker-cleanup-cron.sh >> /path/to/cortex/agents/logs/system/worker-cleanup.log 2>&1
    ```
 
    **Option 3: Daily at 2 AM**
    ```cron
-   0 2 * * * /path/to/commit-relay/scripts/worker-cleanup-cron.sh >> /path/to/commit-relay/agents/logs/system/worker-cleanup.log 2>&1
+   0 2 * * * /path/to/cortex/scripts/worker-cleanup-cron.sh >> /path/to/cortex/agents/logs/system/worker-cleanup.log 2>&1
    ```
 
 3. Save and exit (`:wq` in vi/vim)

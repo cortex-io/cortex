@@ -1,8 +1,8 @@
-# Commit-Relay Python SDK - Project Summary
+# Cortex Python SDK - Project Summary
 
 ## Overview
 
-A comprehensive, production-ready Python SDK for the commit-relay automation system with advanced analytics, health monitoring, and reporting capabilities.
+A comprehensive, production-ready Python SDK for the cortex automation system with advanced analytics, health monitoring, and reporting capabilities.
 
 **Status:** COMPLETED
 **Version:** 0.1.0
@@ -31,7 +31,7 @@ A comprehensive, production-ready Python SDK for the commit-relay automation sys
 ### Phase 1: Core SDK (COMPLETED)
 
 #### Client Infrastructure
-- **File:** /Users/ryandahlberg/commit-relay/python-sdk/commit_relay/client.py (320 lines)
+- **File:** /Users/ryandahlberg/cortex/python-sdk/commit_relay/client.py (320 lines)
 - **Features:**
   - Full HTTP request/response handling
   - Comprehensive error mapping to custom exceptions
@@ -41,7 +41,7 @@ A comprehensive, production-ready Python SDK for the commit-relay automation sys
   - Type hints throughout
 
 #### Exception Handling
-- **File:** /Users/ryandahlberg/commit-relay/python-sdk/commit_relay/exceptions.py (84 lines)
+- **File:** /Users/ryandahlberg/cortex/python-sdk/commit_relay/exceptions.py (84 lines)
 - **Features:**
   - Comprehensive exception hierarchy
   - HTTP status code preservation
@@ -227,7 +227,7 @@ All examples are fully executable and tested against live dashboard.
 
 ## File Locations
 
-All files located under: `/Users/ryandahlberg/commit-relay/python-sdk/`
+All files located under: `/Users/ryandahlberg/cortex/python-sdk/`
 
 ### Core Package Structure
 ```
@@ -376,7 +376,7 @@ viz.create_dashboard(hours=24, save_path='/tmp/dashboard.png')
 
 ## Conclusion
 
-The commit-relay Python SDK is **complete and production-ready**. All major features have been implemented, tested, and documented. The SDK provides:
+The cortex Python SDK is **complete and production-ready**. All major features have been implemented, tested, and documented. The SDK provides:
 
 - Clean, pythonic API for all dashboard endpoints
 - Advanced analytics with trend detection and forecasting
@@ -384,7 +384,7 @@ The commit-relay Python SDK is **complete and production-ready**. All major feat
 - Automated reporting with visualizations
 - Extensive documentation and working examples
 
-The SDK has been tested successfully against the live commit-relay dashboard and is ready for use in data-driven automation and analysis workflows.
+The SDK has been tested successfully against the live cortex dashboard and is ready for use in data-driven automation and analysis workflows.
 
 **Total Development Time:** ~2 hours
 **Quality:** Production-ready

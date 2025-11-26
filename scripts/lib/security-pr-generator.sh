@@ -11,7 +11,7 @@
 #   - Track remediation attempts
 #
 # Usage:
-#   source "$COMMIT_RELAY_HOME/scripts/lib/security-pr-generator.sh"
+#   source "$CORTEX_HOME/scripts/lib/security-pr-generator.sh"
 #   create_security_pr "/path/to/repo" "dependency_update" '{"cve":"CVE-2021-23337",...}'
 #
 # CLI Usage:
@@ -25,11 +25,11 @@ set -euo pipefail
 # ============================================================================
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-COMMIT_RELAY_HOME="${COMMIT_RELAY_HOME:-$(cd "$SCRIPT_DIR/../.." && pwd)}"
+CORTEX_HOME="${CORTEX_HOME:-$(cd "$SCRIPT_DIR/../.." && pwd)}"
 
 # Metrics and logging
-REMEDIATION_LOG="${COMMIT_RELAY_HOME}/coordination/metrics/security-remediation.jsonl"
-SECURITY_EVENTS="${COMMIT_RELAY_HOME}/coordination/events/security-events.jsonl"
+REMEDIATION_LOG="${CORTEX_HOME}/coordination/metrics/security-remediation.jsonl"
+SECURITY_EVENTS="${CORTEX_HOME}/coordination/events/security-events.jsonl"
 
 # Ensure directories exist
 mkdir -p "$(dirname "$REMEDIATION_LOG")"
@@ -106,7 +106,7 @@ $title
 
 $body
 
-Autonomous: commit-relay security automation
+Autonomous: cortex security automation
 
 Generated with [Claude Code](https://claude.com/claude-code)
 

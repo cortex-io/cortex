@@ -1,6 +1,6 @@
 # OpenTelemetry Traces
 
-This directory contains distributed tracing data for commit-relay agent workflows.
+This directory contains distributed tracing data for cortex agent workflows.
 
 ## File Format
 

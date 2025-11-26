@@ -19,19 +19,19 @@ set -euo pipefail
 
 # Get script directory and project root
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-COMMIT_RELAY_HOME="${COMMIT_RELAY_HOME:-$(cd "$SCRIPT_DIR/../../.." && pwd)}"
+CORTEX_HOME="${CORTEX_HOME:-$(cd "$SCRIPT_DIR/../../.." && pwd)}"
 
 # Load dependencies
-source "$COMMIT_RELAY_HOME/scripts/lib/logging.sh" 2>/dev/null || {
+source "$CORTEX_HOME/scripts/lib/logging.sh" 2>/dev/null || {
     log_info() { echo "[INFO] $1"; }
     log_warn() { echo "[WARN] $1"; }
     log_error() { echo "[ERROR] $1"; }
 }
 
 # Configuration
-TRAINING_EXAMPLES_DIR="$COMMIT_RELAY_HOME/coordination/knowledge-base/training-examples"
-FEEDBACK_DIR="$COMMIT_RELAY_HOME/coordination/knowledge-base/feedback-reports"
-LEARNING_METRICS_DIR="$COMMIT_RELAY_HOME/coordination/metrics/learning"
+TRAINING_EXAMPLES_DIR="$CORTEX_HOME/coordination/knowledge-base/training-examples"
+FEEDBACK_DIR="$CORTEX_HOME/coordination/knowledge-base/feedback-reports"
+LEARNING_METRICS_DIR="$CORTEX_HOME/coordination/metrics/learning"
 
 # Ensure directories exist
 mkdir -p "$TRAINING_EXAMPLES_DIR" "$FEEDBACK_DIR" "$LEARNING_METRICS_DIR"

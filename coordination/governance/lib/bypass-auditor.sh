@@ -1,6 +1,6 @@
 #!/bin/bash
 # coordination/governance/lib/bypass-auditor.sh
-# Bypass Auditing for Commit-Relay
+# Bypass Auditing for Cortex
 #
 # Purpose:
 # - Track and audit all governance bypass operations
@@ -44,7 +44,7 @@ audit_bypass() {
     local duration_minutes="${4:-30}"
 
     # Get current principal
-    local principal="${COMMIT_RELAY_PRINCIPAL:-system}"
+    local principal="${CORTEX_PRINCIPAL:-system}"
 
     # Check if bypass is authorized
     if ! check_bypass_authorization "$principal" "$bypass_type" "$duration_minutes"; then
@@ -79,7 +79,7 @@ EOF
 )
 
     # Write to bypass audit log
-    local audit_log="${COMMIT_RELAY_HOME:-/Users/ryandahlberg/commit-relay}/coordination/governance/bypass-audit.jsonl"
+    local audit_log="${CORTEX_HOME:-/Users/ryandahlberg/cortex}/coordination/governance/bypass-audit.jsonl"
     mkdir -p "$(dirname "$audit_log")"
     echo "$audit_entry" >> "$audit_log"
 
@@ -179,7 +179,7 @@ EOF
 )
 
     # Write to bypass audit log
-    local audit_log="${COMMIT_RELAY_HOME:-/Users/ryandahlberg/commit-relay}/coordination/governance/bypass-audit.jsonl"
+    local audit_log="${CORTEX_HOME:-/Users/ryandahlberg/cortex}/coordination/governance/bypass-audit.jsonl"
     mkdir -p "$(dirname "$audit_log")"
     echo "$audit_entry" >> "$audit_log"
 }
@@ -211,12 +211,12 @@ end_bypass() {
   "bypass_id": "$bypass_id",
   "timestamp": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
   "event": "bypass_ended",
-  "principal": "${COMMIT_RELAY_PRINCIPAL:-system}"
+  "principal": "${CORTEX_PRINCIPAL:-system}"
 }
 EOF
 )
 
-        local audit_log="${COMMIT_RELAY_HOME:-/Users/ryandahlberg/commit-relay}/coordination/governance/bypass-audit.jsonl"
+        local audit_log="${CORTEX_HOME:-/Users/ryandahlberg/cortex}/coordination/governance/bypass-audit.jsonl"
         echo "$audit_entry" >> "$audit_log"
 
         # Clear bypass variables
@@ -227,7 +227,7 @@ EOF
 
 # Get bypass statistics
 get_bypass_stats() {
-    local audit_log="${COMMIT_RELAY_HOME:-/Users/ryandahlberg/commit-relay}/coordination/governance/bypass-audit.jsonl"
+    local audit_log="${CORTEX_HOME:-/Users/ryandahlberg/cortex}/coordination/governance/bypass-audit.jsonl"
 
     if [ ! -f "$audit_log" ]; then
         echo '{
@@ -299,6 +299,6 @@ export -f get_bypass_stats 2>/dev/null || true
 export -f check_env_bypass 2>/dev/null || true
 
 # Log that bypass auditor is loaded
-if [ "${COMMIT_RELAY_LOG_LEVEL:-1}" -le 0 ] 2>/dev/null; then
+if [ "${CORTEX_LOG_LEVEL:-1}" -le 0 ] 2>/dev/null; then
     echo "[GOVERNANCE] Bypass auditor loaded" >&2
 fi

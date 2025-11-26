@@ -1,7 +1,7 @@
 {
   "worker_id": "worker-scan-035",
   "task_id": "moe-test-ddqd-v5-1763247177-d2866cf8",
-  "repository": "commit-relay",
+  "repository": "cortex",
   "scan_date": "2025-11-20T14:40:00Z",
   "scan_types": ["authentication-audit", "dependency-audit", "secrets-detection", "configuration-review"],
   "summary": {

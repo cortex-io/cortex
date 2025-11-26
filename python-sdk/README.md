@@ -1,6 +1,6 @@
-# Commit-Relay Python SDK
+# Cortex Python SDK
 
-A comprehensive Python SDK for the commit-relay automation system, providing advanced analytics, health monitoring, and reporting capabilities.
+A comprehensive Python SDK for the cortex automation system, providing advanced analytics, health monitoring, and reporting capabilities.
 
 ## Features
 
@@ -339,7 +339,7 @@ manager.generate_alerts_from_anomalies(anomalies)   # Generate from anomalies
 #### TaskManager
 
 ```python
-manager = TaskManager(commit_relay_home='/path/to/commit-relay', auto_commit=True)
+manager = TaskManager(commit_relay_home='/path/to/cortex', auto_commit=True)
 
 # Create tasks
 manager.create_security_scan(repository, branch='main', scan_types=None, priority=HIGH)
@@ -538,8 +538,8 @@ Contributions are welcome! Please see CONTRIBUTING.md for guidelines.
 ## Support
 
 For issues and questions:
-- GitHub Issues: https://github.com/yourusername/commit-relay/issues
-- Documentation: https://github.com/yourusername/commit-relay/tree/main/python-sdk
+- GitHub Issues: https://github.com/yourusername/cortex/issues
+- Documentation: https://github.com/yourusername/cortex/tree/main/python-sdk
 
 ## Changelog
 

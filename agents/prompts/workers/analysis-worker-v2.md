@@ -16,7 +16,7 @@ QUESTION=$(jq -r '.scope.question' coordination/worker-specs/active/[spec].json)
 SCOPE=$(jq -r '.scope.search_scope' coordination/worker-specs/active/[spec].json)
 
 # 3. Navigate to repository (if applicable)
-cd ~/[repo] 2>/dev/null || cd ~/commit-relay
+cd ~/[repo] 2>/dev/null || cd ~/cortex
 
 # 4. Execute research based on analysis type:
 

@@ -6,11 +6,11 @@
 set -e
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-COMMIT_RELAY_HOME="$(cd "$SCRIPT_DIR/../.." && pwd)"
-export COMMIT_RELAY_HOME
+CORTEX_HOME="$(cd "$SCRIPT_DIR/../.." && pwd)"
+export CORTEX_HOME
 
-source "$COMMIT_RELAY_HOME/scripts/lib/auto-fix.sh"
-source "$COMMIT_RELAY_HOME/scripts/lib/failure-pattern-detection.sh" 2>/dev/null || true
+source "$CORTEX_HOME/scripts/lib/auto-fix.sh"
+source "$CORTEX_HOME/scripts/lib/failure-pattern-detection.sh" 2>/dev/null || true
 
 GREEN='\033[0;32m'
 RED='\033[0;31m'
@@ -28,13 +28,13 @@ echo ""
 echo -e "${YELLOW}Setting up test environment...${NC}"
 
 # Backup existing files
-BACKUP_DIR="${COMMIT_RELAY_HOME}/testing/.backups/auto-fix-$(date +%s)"
+BACKUP_DIR="${CORTEX_HOME}/testing/.backups/auto-fix-$(date +%s)"
 mkdir -p "$BACKUP_DIR"
 
 [ -f "$FIX_HISTORY_FILE" ] && cp "$FIX_HISTORY_FILE" "$BACKUP_DIR/"
 [ -f "$PATTERN_DB" ] && cp "$PATTERN_DB" "$BACKUP_DIR/"
-[ -f "$COMMIT_RELAY_HOME/coordination/worker-specs/templates/scan-worker.json" ] && \
-    cp "$COMMIT_RELAY_HOME/coordination/worker-specs/templates/scan-worker.json" "$BACKUP_DIR/"
+[ -f "$CORTEX_HOME/coordination/worker-specs/templates/scan-worker.json" ] && \
+    cp "$CORTEX_HOME/coordination/worker-specs/templates/scan-worker.json" "$BACKUP_DIR/"
 
 # Create test pattern
 cat > "$PATTERN_DB" <<'EOFPATTERN'
@@ -42,8 +42,8 @@ cat > "$PATTERN_DB" <<'EOFPATTERN'
 EOFPATTERN
 
 # Create test worker spec
-mkdir -p "$COMMIT_RELAY_HOME/coordination/worker-specs/templates"
-cat > "$COMMIT_RELAY_HOME/coordination/worker-specs/templates/scan-worker.json" <<'EOFSPEC'
+mkdir -p "$CORTEX_HOME/coordination/worker-specs/templates"
+cat > "$CORTEX_HOME/coordination/worker-specs/templates/scan-worker.json" <<'EOFSPEC'
 {
   "worker_type": "scan-worker",
   "resources": {
@@ -131,7 +131,7 @@ fi
 # Step 6: Record original configuration
 echo ""
 echo "✓ Step 6: Record original worker configuration"
-original_memory=$(jq -r '.resources.memory_limit_mb' "$COMMIT_RELAY_HOME/coordination/worker-specs/templates/scan-worker.json")
+original_memory=$(jq -r '.resources.memory_limit_mb' "$CORTEX_HOME/coordination/worker-specs/templates/scan-worker.json")
 echo "    Original memory limit: ${original_memory}MB"
 
 # Step 7: Apply fix
@@ -150,7 +150,7 @@ fi
 # Step 8: Verify configuration changed
 echo ""
 echo "✓ Step 8: Verify worker configuration updated"
-new_memory=$(jq -r '.resources.memory_limit_mb' "$COMMIT_RELAY_HOME/coordination/worker-specs/templates/scan-worker.json")
+new_memory=$(jq -r '.resources.memory_limit_mb' "$CORTEX_HOME/coordination/worker-specs/templates/scan-worker.json")
 echo "    New memory limit: ${new_memory}MB"
 
 expected_memory=$(echo "$original_memory * 1.5" | bc | cut -d. -f1)
@@ -192,7 +192,7 @@ echo ""
 echo "✓ Step 11: Test fix rollback capability"
 rollback_fix "$fix_id" "$backup_info" 2>/dev/null
 
-rolled_back_memory=$(jq -r '.resources.memory_limit_mb' "$COMMIT_RELAY_HOME/coordination/worker-specs/templates/scan-worker.json")
+rolled_back_memory=$(jq -r '.resources.memory_limit_mb' "$CORTEX_HOME/coordination/worker-specs/templates/scan-worker.json")
 if [ "$rolled_back_memory" = "$original_memory" ]; then
     echo -e "  ${GREEN}PASS${NC}: Configuration restored to original (${rolled_back_memory}MB)"
 else
@@ -223,11 +223,11 @@ if [ -f "$BACKUP_DIR/fix-history.jsonl" ]; then
 fi
 
 if [ -f "$BACKUP_DIR/scan-worker.json" ]; then
-    mv "$BACKUP_DIR/scan-worker.json" "$COMMIT_RELAY_HOME/coordination/worker-specs/templates/scan-worker.json"
+    mv "$BACKUP_DIR/scan-worker.json" "$CORTEX_HOME/coordination/worker-specs/templates/scan-worker.json"
 fi
 
 # Remove test backups
-rm -rf "$COMMIT_RELAY_HOME/coordination/worker-specs/templates/scan-worker.json.backup."*
+rm -rf "$CORTEX_HOME/coordination/worker-specs/templates/scan-worker.json.backup."*
 
 echo ""
 echo "==========================================="

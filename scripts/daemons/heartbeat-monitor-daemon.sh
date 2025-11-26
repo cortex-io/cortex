@@ -18,20 +18,20 @@ set -euo pipefail
 
 # Get script directory
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-COMMIT_RELAY_HOME="${COMMIT_RELAY_HOME:-$(cd "$SCRIPT_DIR/../.." && pwd)}"
+CORTEX_HOME="${CORTEX_HOME:-$(cd "$SCRIPT_DIR/../.." && pwd)}"
 
 # Load libraries
-source "$COMMIT_RELAY_HOME/scripts/lib/heartbeat.sh"
-source "$COMMIT_RELAY_HOME/scripts/lib/zombie-cleanup.sh"
-source "$COMMIT_RELAY_HOME/scripts/lib/logging.sh"
-source "$COMMIT_RELAY_HOME/scripts/lib/coordination.sh" 2>/dev/null || true
+source "$CORTEX_HOME/scripts/lib/heartbeat.sh"
+source "$CORTEX_HOME/scripts/lib/zombie-cleanup.sh"
+source "$CORTEX_HOME/scripts/lib/logging.sh"
+source "$CORTEX_HOME/scripts/lib/coordination.sh" 2>/dev/null || true
 
 # Daemon configuration
-DAEMON_NAME="commit-relay-heartbeat-monitor"
+DAEMON_NAME="cortex-heartbeat-monitor"
 POLL_INTERVAL="${HEARTBEAT_MONITOR_POLL_INTERVAL:-30}"  # Check every 30 seconds
-LOG_FILE="${COMMIT_RELAY_HOME}/agents/logs/system/heartbeat-monitor.log"
+LOG_FILE="${CORTEX_HOME}/agents/logs/system/heartbeat-monitor.log"
 PID_FILE="/tmp/${DAEMON_NAME}.pid"
-METRICS_FILE="${COMMIT_RELAY_HOME}/coordination/metrics/heartbeat-monitor-metrics.json"
+METRICS_FILE="${CORTEX_HOME}/coordination/metrics/heartbeat-monitor-metrics.json"
 
 # Ensure directories exist
 mkdir -p "$(dirname "$LOG_FILE")"
@@ -61,7 +61,7 @@ echo $$ > "$PID_FILE"
 
 log_monitor "INFO: Heartbeat monitor starting (PID $$)"
 log_monitor "INFO: Poll interval: ${POLL_INTERVAL}s"
-log_monitor "INFO: Working directory: $COMMIT_RELAY_HOME"
+log_monitor "INFO: Working directory: $CORTEX_HOME"
 
 # Cleanup on exit
 cleanup() {
@@ -115,7 +115,7 @@ emit_heartbeat_event() {
     fi
 
     # Also log locally
-    local event_log="${COMMIT_RELAY_HOME}/coordination/events/heartbeat-events.jsonl"
+    local event_log="${CORTEX_HOME}/coordination/events/heartbeat-events.jsonl"
     mkdir -p "$(dirname "$event_log")"
     echo "$event_json" >> "$event_log"
 }
@@ -240,7 +240,7 @@ save_metrics() {
     echo "$metrics_json" > "$METRICS_FILE"
 
     # Also append to time series log
-    local metrics_log="${COMMIT_RELAY_HOME}/coordination/metrics/heartbeat-monitor-history.jsonl"
+    local metrics_log="${CORTEX_HOME}/coordination/metrics/heartbeat-monitor-history.jsonl"
     mkdir -p "$(dirname "$metrics_log")"
     echo "$metrics_json" >> "$metrics_log"
 }
@@ -250,7 +250,7 @@ save_metrics() {
 # ============================================================================
 
 while true; do
-    cd "$COMMIT_RELAY_HOME"
+    cd "$CORTEX_HOME"
 
     # Reset counters
     TOTAL_WORKERS_CHECKED=0
@@ -263,7 +263,7 @@ while true; do
     log_monitor "INFO: Starting heartbeat monitoring cycle"
 
     # Monitor all active workers
-    ACTIVE_SPECS_DIR="$COMMIT_RELAY_HOME/coordination/worker-specs/active"
+    ACTIVE_SPECS_DIR="$CORTEX_HOME/coordination/worker-specs/active"
 
     if [ -d "$ACTIVE_SPECS_DIR" ]; then
         for spec_file in "$ACTIVE_SPECS_DIR"/*.json; do

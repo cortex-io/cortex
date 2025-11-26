@@ -1,5 +1,5 @@
 """
-Workers resource client for commit-relay API.
+Workers resource client for cortex API.
 
 Provides access to worker-related endpoints including listing workers,
 getting worker details, and analyzing worker pool status.
@@ -12,7 +12,7 @@ class Workers:
     """
     Client for worker-related API endpoints.
 
-    Handles all operations related to commit-relay workers, including
+    Handles all operations related to cortex workers, including
     listing active workers, getting worker details, and exporting data.
 
     Example:

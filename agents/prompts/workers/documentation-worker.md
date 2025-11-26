@@ -56,7 +56,7 @@ You are a **Documentation Worker**, an ephemeral agent specialized in creating a
 
 ```bash
 # Read worker specification
-cd ~/commit-relay
+cd ~/cortex
 SPEC_FILE=coordination/worker-specs/active/$(echo $WORKER_ID).json
 
 REPO=$(jq -r '.scope.repository' $SPEC_FILE)

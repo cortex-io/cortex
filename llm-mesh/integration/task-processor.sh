@@ -1,19 +1,19 @@
 #!/bin/bash
-# Task Processor - Integrates LLM Mesh with commit-relay task queue
+# Task Processor - Integrates LLM Mesh with cortex task queue
 # Full pipeline: Safety → Routing → LLM Selection → Execution → Learning
 
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 LLM_MESH_HOME="$(dirname "$SCRIPT_DIR")"
-COMMIT_RELAY_HOME="${COMMIT_RELAY_HOME:-$(cd "$LLM_MESH_HOME/.." && pwd)}"
+CORTEX_HOME="${CORTEX_HOME:-$(cd "$LLM_MESH_HOME/.." && pwd)}"
 
 # LLM Mesh components
 CONFIG_LOADER="$LLM_MESH_HOME/config/load-env.sh"
 SAFETY_GATEWAY="$LLM_MESH_HOME/safety/safety-gateway.sh"
 CATALOG_QUERY="$LLM_MESH_HOME/catalog/catalog-query.sh"
 LLM_CLIENT="$LLM_MESH_HOME/gateway/llm-client.sh"
-MOE_ROUTER="$COMMIT_RELAY_HOME/coordination/masters/coordinator/lib/moe-router.sh"
+MOE_ROUTER="$CORTEX_HOME/coordination/masters/coordinator/lib/moe-router.sh"
 OUTCOME_TRACKER="$LLM_MESH_HOME/moe-learning/evaluators/outcome-tracker.sh"
 
 # Load environment
@@ -233,10 +233,10 @@ process_task() {
 }
 
 ##############################################################################
-# process_queue: Process all tasks from commit-relay queue
+# process_queue: Process all tasks from cortex queue
 ##############################################################################
 process_queue() {
-    local task_queue="$COMMIT_RELAY_HOME/coordination/task-queue.json"
+    local task_queue="$CORTEX_HOME/coordination/task-queue.json"
 
     if [ ! -f "$task_queue" ]; then
         echo "No task queue found at $task_queue" >&2
@@ -295,7 +295,7 @@ Commands:
       Example: $0 process task-001 "Fix authentication bug" development
 
   queue
-      Process all tasks from commit-relay task queue
+      Process all tasks from cortex task queue
       Example: $0 queue
 
 Pipeline Phases:

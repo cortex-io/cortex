@@ -21,12 +21,12 @@
   "deliverables": [
     {
       "type": "security_analysis_report",
-      "path": "/Users/ryandahlberg/Projects/commit-relay/agents/workers/worker-scan-025/security-analysis-CVE-2024-12345.md",
+      "path": "/Users/ryandahlberg/Projects/cortex/agents/workers/worker-scan-025/security-analysis-CVE-2024-12345.md",
       "description": "Comprehensive security analysis with POC and remediation guidance"
     },
     {
       "type": "completion_report",
-      "path": "/Users/ryandahlberg/Projects/commit-relay/agents/workers/worker-scan-025/task-completion-report.json",
+      "path": "/Users/ryandahlberg/Projects/cortex/agents/workers/worker-scan-025/task-completion-report.json",
       "description": "Task completion metadata and metrics"
     }
   ],

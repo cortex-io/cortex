@@ -1,16 +1,16 @@
 #!/bin/bash
 # scripts/daemon-control.sh
-# Control script for commit-relay worker daemon
+# Control script for cortex worker daemon
 # Usage: daemon-control.sh {start|stop|restart|status|install|uninstall}
 
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-COMMIT_RELAY_HOME="${COMMIT_RELAY_HOME:-$(cd "$SCRIPT_DIR/.." && pwd)}"
+CORTEX_HOME="${CORTEX_HOME:-$(cd "$SCRIPT_DIR/.." && pwd)}"
 DAEMON_SCRIPT="$SCRIPT_DIR/worker-daemon.sh"
-PID_FILE="/tmp/commit-relay-worker-daemon.pid"
-LOG_FILE="$COMMIT_RELAY_HOME/agents/logs/system/worker-daemon.log"
-PLIST_FILE="$HOME/Library/LaunchAgents/com.ryops.commit-relay.worker-daemon.plist"
+PID_FILE="/tmp/cortex-worker-daemon.pid"
+LOG_FILE="$CORTEX_HOME/agents/logs/system/worker-daemon.log"
+PLIST_FILE="$HOME/Library/LaunchAgents/com.ryops.cortex.worker-daemon.plist"
 
 # Colors for output
 RED='\033[0;31m'
@@ -20,19 +20,19 @@ BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
 print_status() {
-    echo -e "${BLUE}[commit-relay]${NC} $1"
+    echo -e "${BLUE}[cortex]${NC} $1"
 }
 
 print_success() {
-    echo -e "${GREEN}[commit-relay]${NC} ✅ $1"
+    echo -e "${GREEN}[cortex]${NC} ✅ $1"
 }
 
 print_error() {
-    echo -e "${RED}[commit-relay]${NC} ❌ $1"
+    echo -e "${RED}[cortex]${NC} ❌ $1"
 }
 
 print_warning() {
-    echo -e "${YELLOW}[commit-relay]${NC} ⚠️  $1"
+    echo -e "${YELLOW}[cortex]${NC} ⚠️  $1"
 }
 
 # Check if daemon is running
@@ -115,7 +115,7 @@ stop_daemon() {
 show_status() {
     echo ""
     echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-    echo "  Commit-Relay Worker Daemon Status"
+    echo "  Cortex Worker Daemon Status"
     echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
     echo ""
 
@@ -145,7 +145,7 @@ show_status() {
         echo -e "  ${BLUE}Plist File:${NC}   $PLIST_FILE"
 
         # Check if launchd service is loaded
-        if launchctl list | grep -q "com.ryops.commit-relay.worker-daemon"; then
+        if launchctl list | grep -q "com.ryops.cortex.worker-daemon"; then
             echo -e "  ${BLUE}LaunchD:${NC}      ✅ Loaded"
         else
             echo -e "  ${BLUE}LaunchD:${NC}      ⚠️  Not loaded"
@@ -184,7 +184,7 @@ install_service() {
 <plist version="1.0">
 <dict>
     <key>Label</key>
-    <string>com.ryops.commit-relay.worker-daemon</string>
+    <string>com.ryops.cortex.worker-daemon</string>
 
     <key>ProgramArguments</key>
     <array>
@@ -204,12 +204,12 @@ install_service() {
     <string>$LOG_FILE</string>
 
     <key>WorkingDirectory</key>
-    <string>$COMMIT_RELAY_HOME</string>
+    <string>$CORTEX_HOME</string>
 
     <key>EnvironmentVariables</key>
     <dict>
-        <key>COMMIT_RELAY_HOME</key>
-        <string>$COMMIT_RELAY_HOME</string>
+        <key>CORTEX_HOME</key>
+        <string>$CORTEX_HOME</string>
         <key>PATH</key>
         <string>/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:$HOME/.local/bin</string>
     </dict>

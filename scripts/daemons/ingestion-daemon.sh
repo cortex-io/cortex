@@ -1,7 +1,7 @@
 #!/bin/bash
 # scripts/daemons/ingestion-daemon.sh
 # RAG ingestion daemon for scheduled connector runs
-# Part of commit-relay automation system
+# Part of cortex automation system
 
 set -e
 
@@ -237,7 +237,7 @@ Commands:
 Examples:
   $0 start                    # Start the daemon
   $0 status                   # Check if running
-  $0 run-connector github-commit-relay  # Run specific connector
+  $0 run-connector github-cortex  # Run specific connector
   $0 logs 100                 # Show last 100 log lines
 
 Environment Variables:

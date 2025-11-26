@@ -17,7 +17,7 @@ set -euo pipefail
 
 # Configuration
 REPO_OWNER="${GITHUB_REPO_OWNER:-ry-ops}"
-REPO_NAME="${GITHUB_REPO_NAME:-commit-relay}"
+REPO_NAME="${GITHUB_REPO_NAME:-cortex}"
 GITHUB_TOKEN="${GITHUB_TOKEN:?GitHub token required}"
 BASE_BRANCH="${BASE_BRANCH:-main}"
 

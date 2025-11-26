@@ -39,8 +39,8 @@
     ]
   },
   "output_artifacts": {
-    "completion_report": "/Users/ryandahlberg/Projects/commit-relay/agents/workers/worker-scan-022/task-completion-report.json",
-    "security_scan_log": "/Users/ryandahlberg/Projects/commit-relay/agents/workers/worker-scan-022/logs/security-scan-1763310965.log",
-    "execution_log": "/Users/ryandahlberg/Projects/commit-relay/agents/workers/worker-scan-022/logs/execution.log"
+    "completion_report": "/Users/ryandahlberg/Projects/cortex/agents/workers/worker-scan-022/task-completion-report.json",
+    "security_scan_log": "/Users/ryandahlberg/Projects/cortex/agents/workers/worker-scan-022/logs/security-scan-1763310965.log",
+    "execution_log": "/Users/ryandahlberg/Projects/cortex/agents/workers/worker-scan-022/logs/execution.log"
   }
 }

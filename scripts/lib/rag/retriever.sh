@@ -19,10 +19,10 @@ set -euo pipefail
 
 # Configuration
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-COMMIT_RELAY_HOME="${COMMIT_RELAY_HOME:-$(cd "$SCRIPT_DIR/../../.." && pwd)}"
+CORTEX_HOME="${CORTEX_HOME:-$(cd "$SCRIPT_DIR/../../.." && pwd)}"
 
 # Directories
-readonly EMBEDDINGS_DIR="$COMMIT_RELAY_HOME/coordination/knowledge-base/embeddings"
+readonly EMBEDDINGS_DIR="$CORTEX_HOME/coordination/knowledge-base/embeddings"
 readonly CHUNKS_DIR="$EMBEDDINGS_DIR/chunks"
 readonly METADATA_DIR="$EMBEDDINGS_DIR/metadata"
 readonly INDEX_DIR="$EMBEDDINGS_DIR/indices"
@@ -31,7 +31,7 @@ readonly INDEX_DIR="$EMBEDDINGS_DIR/indices"
 source "$SCRIPT_DIR/document-processor.sh" 2>/dev/null || true
 
 # Source logging
-source "$COMMIT_RELAY_HOME/scripts/lib/logging.sh" 2>/dev/null || {
+source "$CORTEX_HOME/scripts/lib/logging.sh" 2>/dev/null || {
     log_info() { echo "[INFO] $1"; }
     log_warn() { echo "[WARN] $1"; }
     log_error() { echo "[ERROR] $1"; }
@@ -369,7 +369,7 @@ calculate_similarity() {
 #------------------------------------------------------------------------------
 
 # Path to vector store JavaScript module
-readonly VECTOR_STORE_JS="$COMMIT_RELAY_HOME/lib/rag/vector-store.js"
+readonly VECTOR_STORE_JS="$CORTEX_HOME/lib/rag/vector-store.js"
 
 # Check if vector search is available
 is_vector_search_available() {
@@ -383,7 +383,7 @@ is_vector_search_available() {
     fi
 
     # Check if vector DB index exists
-    local index_file="$COMMIT_RELAY_HOME/coordination/vector-db/index.json"
+    local index_file="$CORTEX_HOME/coordination/vector-db/index.json"
     if [ ! -f "$index_file" ]; then
         return 1
     fi

@@ -1,6 +1,6 @@
-# Commit-Relay Developer Guide
+# Cortex Developer Guide
 
-Comprehensive guide to understanding, developing, and operating the commit-relay autonomous automation system.
+Comprehensive guide to understanding, developing, and operating the cortex autonomous automation system.
 
 ---
 
@@ -46,7 +46,7 @@ Comprehensive guide to understanding, developing, and operating the commit-relay
 ### Directory Structure
 
 ```
-commit-relay/
+cortex/
 ├── coordination/                    # Central coordination state
 │   ├── task-queue.json             # Pending tasks
 │   ├── token-budget.json           # Token budget management
@@ -151,14 +151,14 @@ Background processes that maintain system health:
 
 ```bash
 # Clone repository
-git clone https://github.com/ry-ops/commit-relay.git
-cd commit-relay
+git clone https://github.com/ry-ops/cortex.git
+cd cortex
 
 # Set environment
 export COMMIT_RELAY_HOME=$(pwd)
 
 # Initialize system
-./scripts/start-commit-relay.sh
+./scripts/start-cortex.sh
 ```
 
 ### Creating a Task

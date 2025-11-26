@@ -31,7 +31,7 @@
   "results": {
     "status": "success",
     "output_location": "scripts/greet.sh",
-    "summary": "Successfully created greeting script at scripts/greet.sh. Script accepts a name argument and prints 'Hello, [name]! Welcome to autonomous commit-relay!'. Includes error handling for missing arguments.",
+    "summary": "Successfully created greeting script at scripts/greet.sh. Script accepts a name argument and prints 'Hello, [name]! Welcome to autonomous cortex!'. Includes error handling for missing arguments.",
     "artifacts": [
       "scripts/greet.sh"
     ]

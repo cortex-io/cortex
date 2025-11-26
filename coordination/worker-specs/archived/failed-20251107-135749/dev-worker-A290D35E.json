@@ -10,7 +10,7 @@
     "type": "development",
     "priority": "high",
     "status": "pending",
-    "repository": "ry-ops/commit-relay",
+    "repository": "ry-ops/cortex",
     "description": "Restructure dashboard data flow so CI/CD master orchestrates dashboard updates. Specialist masters hand off to CI/CD master after completing work, and CI/CD spawns dashboard-update workers to manage real-time data broadcasting and visualization updates.",
     "requirements": [
       "Update specialist master handoff plans to include CI/CD master",
@@ -67,8 +67,8 @@
       "testing"
     ],
     "knowledge_base_refs": {
-      "implementation_patterns": "/Users/ryandahlberg/commit-relay/scripts/../coordination/masters/development/knowledge-base/implementation-patterns.jsonl",
-      "architecture_docs": "/Users/ryandahlberg/commit-relay/scripts/../coordination/masters/development/knowledge-base/codebase-architecture.json"
+      "implementation_patterns": "/Users/ryandahlberg/cortex/scripts/../coordination/masters/development/knowledge-base/implementation-patterns.jsonl",
+      "architecture_docs": "/Users/ryandahlberg/cortex/scripts/../coordination/masters/development/knowledge-base/codebase-architecture.json"
     }
   },
   "resources": {

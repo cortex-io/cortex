@@ -7,7 +7,7 @@ set -euo pipefail
 
 # Get script directory
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-COMMIT_RELAY_HOME="${COMMIT_RELAY_HOME:-$(cd "$SCRIPT_DIR/../.." && pwd)}"
+CORTEX_HOME="${CORTEX_HOME:-$(cd "$SCRIPT_DIR/../.." && pwd)}"
 
 # ANSI color codes
 RED='\033[0;31m'
@@ -21,15 +21,15 @@ NC='\033[0m'
 
 # Daemon definitions
 declare -A DAEMONS
-DAEMONS[worker]="Worker Daemon|scripts/worker-daemon.sh|/tmp/commit-relay-worker.pid"
-DAEMONS[pm]="PM Daemon|scripts/pm-daemon.sh|/tmp/commit-relay-pm.pid"
-DAEMONS[health]="Health Monitor|scripts/daemons/heartbeat-monitor-daemon.sh|/tmp/commit-relay-heartbeat.pid"
-DAEMONS[metrics]="Metrics Snapshot|scripts/metrics-snapshot-daemon.sh|/tmp/commit-relay-metrics.pid"
-DAEMONS[coordinator]="Coordinator Daemon|scripts/coordinator-daemon.sh|/tmp/commit-relay-coordinator.pid"
-DAEMONS[integration]="Integration Validator|scripts/integration-validator-daemon.sh|/tmp/commit-relay-integration.pid"
-DAEMONS[pattern]="Pattern Detection|scripts/daemons/failure-pattern-daemon.sh|/tmp/commit-relay-failure-pattern.pid"
-DAEMONS[restart]="Worker Restart|scripts/daemons/worker-restart-daemon.sh|/tmp/commit-relay-worker-restart.pid"
-DAEMONS[autofix]="Auto-Fix Daemon|scripts/daemons/auto-fix-daemon.sh|/tmp/commit-relay-auto-fix.pid"
+DAEMONS[worker]="Worker Daemon|scripts/worker-daemon.sh|/tmp/cortex-worker.pid"
+DAEMONS[pm]="PM Daemon|scripts/pm-daemon.sh|/tmp/cortex-pm.pid"
+DAEMONS[health]="Health Monitor|scripts/daemons/heartbeat-monitor-daemon.sh|/tmp/cortex-heartbeat.pid"
+DAEMONS[metrics]="Metrics Snapshot|scripts/metrics-snapshot-daemon.sh|/tmp/cortex-metrics.pid"
+DAEMONS[coordinator]="Coordinator Daemon|scripts/coordinator-daemon.sh|/tmp/cortex-coordinator.pid"
+DAEMONS[integration]="Integration Validator|scripts/integration-validator-daemon.sh|/tmp/cortex-integration.pid"
+DAEMONS[pattern]="Pattern Detection|scripts/daemons/failure-pattern-daemon.sh|/tmp/cortex-failure-pattern.pid"
+DAEMONS[restart]="Worker Restart|scripts/daemons/worker-restart-daemon.sh|/tmp/cortex-worker-restart.pid"
+DAEMONS[autofix]="Auto-Fix Daemon|scripts/daemons/auto-fix-daemon.sh|/tmp/cortex-auto-fix.pid"
 
 # Print functions
 print_header() {
@@ -160,7 +160,7 @@ start_daemon() {
 
     print_info "Starting $name..."
 
-    local daemon_script="$COMMIT_RELAY_HOME/$script"
+    local daemon_script="$CORTEX_HOME/$script"
 
     if [[ ! -f "$daemon_script" ]]; then
         print_error "Daemon script not found: $daemon_script"
@@ -242,22 +242,22 @@ view_daemon_logs() {
 
     case "$daemon_key" in
         pattern)
-            log_file="$COMMIT_RELAY_HOME/agents/logs/system/failure-pattern-daemon.log"
+            log_file="$CORTEX_HOME/agents/logs/system/failure-pattern-daemon.log"
             ;;
         restart)
-            log_file="$COMMIT_RELAY_HOME/agents/logs/system/worker-restart-daemon.log"
+            log_file="$CORTEX_HOME/agents/logs/system/worker-restart-daemon.log"
             ;;
         autofix)
-            log_file="$COMMIT_RELAY_HOME/agents/logs/system/auto-fix-daemon.log"
+            log_file="$CORTEX_HOME/agents/logs/system/auto-fix-daemon.log"
             ;;
         health)
-            log_file="$COMMIT_RELAY_HOME/agents/logs/system/heartbeat-monitor-daemon.log"
+            log_file="$CORTEX_HOME/agents/logs/system/heartbeat-monitor-daemon.log"
             ;;
         *)
             # Try to find log in common locations
             local log_name="${daemon_key}-daemon.log"
-            if [[ -f "$COMMIT_RELAY_HOME/agents/logs/system/$log_name" ]]; then
-                log_file="$COMMIT_RELAY_HOME/agents/logs/system/$log_name"
+            if [[ -f "$CORTEX_HOME/agents/logs/system/$log_name" ]]; then
+                log_file="$CORTEX_HOME/agents/logs/system/$log_name"
             fi
             ;;
     esac

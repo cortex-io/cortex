@@ -1,6 +1,6 @@
-# Contributing to commit-relay
+# Contributing to cortex
 
-Thank you for your interest in contributing to commit-relay! This document provides guidelines and instructions for contributing.
+Thank you for your interest in contributing to cortex! This document provides guidelines and instructions for contributing.
 
 ## Table of Contents
 
@@ -50,11 +50,11 @@ We are committed to providing a welcoming and inclusive environment for all cont
 ```bash
 # Fork the repository on GitHub
 # Then clone your fork
-git clone https://github.com/YOUR_USERNAME/commit-relay.git
-cd commit-relay
+git clone https://github.com/YOUR_USERNAME/cortex.git
+cd cortex
 
 # Add upstream remote
-git remote add upstream https://github.com/ry-ops/commit-relay.git
+git remote add upstream https://github.com/ry-ops/cortex.git
 ```
 
 ### Install Dependencies
@@ -189,7 +189,7 @@ git push origin feat/your-feature-name
 
 ### 2. Create Pull Request
 
-1. Go to https://github.com/ry-ops/commit-relay
+1. Go to https://github.com/ry-ops/cortex
 2. Click "New Pull Request"
 3. Select your fork and branch
 4. Fill out the PR template
@@ -372,9 +372,9 @@ Update README.md when:
 
 ## Getting Help
 
-- **Documentation**: https://github.com/ry-ops/commit-relay/wiki
-- **Issues**: https://github.com/ry-ops/commit-relay/issues
-- **Discussions**: https://github.com/ry-ops/commit-relay/discussions
+- **Documentation**: https://github.com/ry-ops/cortex/wiki
+- **Issues**: https://github.com/ry-ops/cortex/issues
+- **Discussions**: https://github.com/ry-ops/cortex/discussions
 
 ---
 
@@ -385,4 +385,4 @@ Contributors will be recognized in:
 - Release notes
 - GitHub contributors page
 
-Thank you for contributing to commit-relay! 🚀
+Thank you for contributing to cortex! 🚀

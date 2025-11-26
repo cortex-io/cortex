@@ -1,6 +1,6 @@
 #!/bin/bash
 # coordination/governance/lib/pii-scanner.sh
-# PII Detection Scanner for Commit-Relay
+# PII Detection Scanner for Cortex
 #
 # Purpose:
 # - Detect Personally Identifiable Information (PII) in content
@@ -256,14 +256,14 @@ log_pii_finding() {
   "source": "$source",
   "risk_level": "$risk_level",
   "findings_count": $findings_count,
-  "principal": "${COMMIT_RELAY_PRINCIPAL:-system}",
+  "principal": "${CORTEX_PRINCIPAL:-system}",
   "scan_result": $scan_result
 }
 EOF
 )
 
         # Append to PII log
-        local pii_log="${COMMIT_RELAY_HOME:-/Users/ryandahlberg/commit-relay}/coordination/governance/pii-incidents.jsonl"
+        local pii_log="${CORTEX_HOME:-/Users/ryandahlberg/cortex}/coordination/governance/pii-incidents.jsonl"
         mkdir -p "$(dirname "$pii_log")"
         echo "$log_entry" >> "$pii_log"
     fi
@@ -295,6 +295,6 @@ export -f log_pii_finding 2>/dev/null || true
 export -f scan_file_for_pii 2>/dev/null || true
 
 # Log that PII scanner is loaded
-if [ "${COMMIT_RELAY_LOG_LEVEL:-1}" -le 0 ] 2>/dev/null; then
+if [ "${CORTEX_LOG_LEVEL:-1}" -le 0 ] 2>/dev/null; then
     echo "[GOVERNANCE] PII scanner loaded" >&2
 fi

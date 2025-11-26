@@ -38,7 +38,7 @@
       "repositories": [
         "ry-ops/mcp-server-unifi",
         "ry-ops/n8n-mcp-server",
-        "ry-ops/commit-relay",
+        "ry-ops/cortex",
         "ry-ops/aiana"
       ],
       "capabilities": [
@@ -61,7 +61,7 @@
         "worker_pool": 20000
       },
       "repositories": [
-        "ry-ops/commit-relay",
+        "ry-ops/cortex",
         "ry-ops/n8n-mcp-server",
         "ry-ops/aiana",
         "ry-ops/ResuMate"

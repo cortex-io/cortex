@@ -1,13 +1,13 @@
 #!/bin/bash
 # scripts/pm-daemon.sh
 # Project Manager Daemon - Monitors workers and ensures task completion
-# Part of commit-relay autonomous automation system
+# Part of cortex autonomous automation system
 
 set -euo pipefail
 
 # Get script directory
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-COMMIT_RELAY_HOME="${COMMIT_RELAY_HOME:-$(cd "$SCRIPT_DIR/.." && pwd)}"
+CORTEX_HOME="${CORTEX_HOME:-$(cd "$SCRIPT_DIR/.." && pwd)}"
 
 # Configuration
 PM_ID="pm-001"
@@ -17,17 +17,17 @@ SNAPSHOT_INTERVAL="${SNAPSHOT_INTERVAL:-300}"  # 5 minutes for historical snapsh
 TEST_MODE="${1:-}"
 
 # Paths
-PM_STATE_FILE="$COMMIT_RELAY_HOME/coordination/pm-state.json"
-PM_ACTIVITY_LOG="$COMMIT_RELAY_HOME/coordination/pm-activity.jsonl"
+PM_STATE_FILE="$CORTEX_HOME/coordination/pm-state.json"
+PM_ACTIVITY_LOG="$CORTEX_HOME/coordination/pm-activity.jsonl"
 PID_FILE="/tmp/pm-daemon.pid"
-LOG_FILE="$COMMIT_RELAY_HOME/agents/logs/system/pm-daemon.log"
+LOG_FILE="$CORTEX_HOME/agents/logs/system/pm-daemon.log"
 
 # Directories
-WORKER_SPECS_DIR="$COMMIT_RELAY_HOME/coordination/worker-specs"
-CHECKINS_DIR="$COMMIT_RELAY_HOME/coordination/worker-checkins"
-REQUESTS_DIR="$COMMIT_RELAY_HOME/coordination/pm-requests"
-ALERTS_DIR="$COMMIT_RELAY_HOME/coordination/pm-alerts"
-HISTORY_DIR="$COMMIT_RELAY_HOME/coordination/history"
+WORKER_SPECS_DIR="$CORTEX_HOME/coordination/worker-specs"
+CHECKINS_DIR="$CORTEX_HOME/coordination/worker-checkins"
+REQUESTS_DIR="$CORTEX_HOME/coordination/pm-requests"
+ALERTS_DIR="$CORTEX_HOME/coordination/pm-alerts"
+HISTORY_DIR="$CORTEX_HOME/coordination/history"
 HOURLY_DIR="$HISTORY_DIR/hourly"
 DAILY_DIR="$HISTORY_DIR/daily"
 
@@ -485,14 +485,14 @@ detect_zombies() {
         local zombie_list=$(printf '%s,' "${zombie_workers[@]}" | sed 's/,$//')
 
         # Check if alert already exists
-        if [ -f "$COMMIT_RELAY_HOME/coordination/health-alerts.json" ]; then
+        if [ -f "$CORTEX_HOME/coordination/health-alerts.json" ]; then
             local existing_zombie_alerts=$(jq '[.alerts[] | select(.type == "zombie_threshold" and .status == "active")] | length' \
-                "$COMMIT_RELAY_HOME/coordination/health-alerts.json" 2>/dev/null || echo 0)
+                "$CORTEX_HOME/coordination/health-alerts.json" 2>/dev/null || echo 0)
 
             if [ "$existing_zombie_alerts" -eq 0 ]; then
                 log_pm "Creating zombie threshold health alert"
 
-                "$COMMIT_RELAY_HOME/scripts/log-health-incident.sh" \
+                "$CORTEX_HOME/scripts/log-health-incident.sh" \
                     "$alert_id" \
                     "pm-daemon" \
                     "zombie_threshold_exceeded" \
@@ -518,8 +518,8 @@ detect_zombies() {
                        "worker_id": null,
                        "investigation_notes": [],
                        "zombie_workers": $workers
-                   }]' "$COMMIT_RELAY_HOME/coordination/health-alerts.json" > "$temp_alerts" && \
-                   mv "$temp_alerts" "$COMMIT_RELAY_HOME/coordination/health-alerts.json"
+                   }]' "$CORTEX_HOME/coordination/health-alerts.json" > "$temp_alerts" && \
+                   mv "$temp_alerts" "$CORTEX_HOME/coordination/health-alerts.json"
 
                 log_pm_event "zombie_threshold_alert" "" \
                     "{\"zombie_count\": $zombie_count, \"threshold\": 10, \"alert_id\": \"$alert_id\"}"
@@ -587,10 +587,10 @@ calculate_metrics() {
         .workers.failed = ($failed | tonumber) |
         .workers.zombie = ($zombie | tonumber) |
         .last_updated = "'$(date +%Y-%m-%dT%H:%M:%S%z)'"' \
-       "$COMMIT_RELAY_HOME/coordination/workforce-streams.json" > \
-       "$COMMIT_RELAY_HOME/coordination/workforce-streams.json.tmp" && \
-       mv "$COMMIT_RELAY_HOME/coordination/workforce-streams.json.tmp" \
-          "$COMMIT_RELAY_HOME/coordination/workforce-streams.json"
+       "$CORTEX_HOME/coordination/workforce-streams.json" > \
+       "$CORTEX_HOME/coordination/workforce-streams.json.tmp" && \
+       mv "$CORTEX_HOME/coordination/workforce-streams.json.tmp" \
+          "$CORTEX_HOME/coordination/workforce-streams.json"
 }
 
 # Create historical snapshot
@@ -613,7 +613,7 @@ create_snapshot() {
     # Read token budget if exists
     local total_budget=200000
     local total_used=0
-    local token_budget_file="$COMMIT_RELAY_HOME/coordination/token-budget.json"
+    local token_budget_file="$CORTEX_HOME/coordination/token-budget.json"
 
     if [ -f "$token_budget_file" ]; then
         total_budget=$(jq -r '.total_budget // 200000' "$token_budget_file" 2>/dev/null || echo 200000)
@@ -629,7 +629,7 @@ create_snapshot() {
     local pending_tasks=0
     local in_progress_tasks=0
     local completed_tasks=0
-    local task_queue_file="$COMMIT_RELAY_HOME/coordination/task-queue.json"
+    local task_queue_file="$CORTEX_HOME/coordination/task-queue.json"
 
     if [ -f "$task_queue_file" ]; then
         pending_tasks=$(jq -r '[.tasks[] | select(.status == "pending")] | length' "$task_queue_file" 2>/dev/null || echo 0)
@@ -745,7 +745,7 @@ LAST_DAILY_AGGREGATION=""
 
 log_pm "INFO: PM daemon starting (PID $$, version $PM_VERSION)"
 log_pm "INFO: Loop interval: ${LOOP_INTERVAL}s, Snapshot interval: ${SNAPSHOT_INTERVAL}s"
-log_pm "INFO: Working directory: $COMMIT_RELAY_HOME"
+log_pm "INFO: Working directory: $CORTEX_HOME"
 
 initialize_pm_state
 

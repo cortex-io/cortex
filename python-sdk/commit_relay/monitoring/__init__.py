@@ -1,5 +1,5 @@
 """
-Monitoring module for commit-relay SDK.
+Monitoring module for cortex SDK.
 
 Provides health monitoring, anomaly detection, and alerting capabilities.
 """

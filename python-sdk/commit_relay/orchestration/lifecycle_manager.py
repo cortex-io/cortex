@@ -47,7 +47,7 @@ class TaskLifecycleManager:
     def __init__(
         self,
         client,
-        commit_relay_home: str = '/Users/ryandahlberg/commit-relay',
+        commit_relay_home: str = '/Users/ryandahlberg/cortex',
         auto_commit: bool = True
     ):
         """
@@ -55,7 +55,7 @@ class TaskLifecycleManager:
 
         Args:
             client: CommitRelayClient instance
-            commit_relay_home: Path to commit-relay repository root
+            commit_relay_home: Path to cortex repository root
             auto_commit: Whether to automatically commit task changes to git
         """
         self.client = client

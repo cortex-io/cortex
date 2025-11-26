@@ -14,7 +14,7 @@
     "created_at": "2025-11-05T16:54:08Z",
     "created_by": "create-task-cli",
     "context": {
-      "repository": "ry-ops/commit-relay",
+      "repository": "ry-ops/cortex",
       "branch": "main",
       "description": "URGENT: Previous worker failed to implement. YOU MUST modify dashboard/public/dashboard-v2.js and dashboard/server/index.js. Replace initTokenChart() function with initProductivityChart(). Add API endpoint /api/productivity-metrics. Create time-series chart with ApexCharts showing: tasks_completed_per_day, autonomous_commits_per_day, worker_success_rate, avg_completion_time. Add stat cards. DO NOT just create a test file - you MUST edit the actual dashboard code files and test in browser.",
       "requirements": []
@@ -32,8 +32,8 @@
       "testing"
     ],
     "knowledge_base_refs": {
-      "implementation_patterns": "/Users/ryandahlberg/commit-relay/scripts/../coordination/masters/development/knowledge-base/implementation-patterns.jsonl",
-      "architecture_docs": "/Users/ryandahlberg/commit-relay/scripts/../coordination/masters/development/knowledge-base/codebase-architecture.json"
+      "implementation_patterns": "/Users/ryandahlberg/cortex/scripts/../coordination/masters/development/knowledge-base/implementation-patterns.jsonl",
+      "architecture_docs": "/Users/ryandahlberg/cortex/scripts/../coordination/masters/development/knowledge-base/codebase-architecture.json"
     }
   },
   "resources": {

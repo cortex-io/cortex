@@ -506,6 +506,45 @@
       "timeout_at": null,
       "last_heartbeat": null,
       "session_id": null
+    },
+    {
+      "worker_id": "worker-scan-040",
+      "worker_type": "scan-worker",
+      "spawned_by": "security-master",
+      "spawned_at": "2025-11-25T19:09:36-0600",
+      "status": "pending",
+      "task_id": "multi-repo-cve-scan-1764119375",
+      "token_budget": 8000,
+      "tokens_used": 0,
+      "timeout_at": null,
+      "last_heartbeat": null,
+      "session_id": null
+    },
+    {
+      "worker_id": "worker-implementation-041",
+      "worker_type": "implementation-worker",
+      "spawned_by": "development-master",
+      "spawned_at": "2025-11-25T19:24:32-0600",
+      "status": "pending",
+      "task_id": "security-fixes-1764120272",
+      "token_budget": 10000,
+      "tokens_used": 0,
+      "timeout_at": null,
+      "last_heartbeat": null,
+      "session_id": null
+    },
+    {
+      "worker_id": "worker-implementation-042",
+      "worker_type": "implementation-worker",
+      "spawned_by": "development-master",
+      "spawned_at": "2025-11-26T07:01:20-0600",
+      "status": "pending",
+      "task_id": "phase2-agent-identity-1764162080",
+      "token_budget": 10000,
+      "tokens_used": 0,
+      "timeout_at": null,
+      "last_heartbeat": null,
+      "session_id": null
     }
   ],
   "completed_workers": [
@@ -551,11 +590,11 @@
   ],
   "failed_workers": [],
   "stats": {
-    "total_spawned_today": 54,
+    "total_spawned_today": 57,
     "total_completed_today": 3,
     "total_failed_today": 0,
     "success_rate": 7,
     "note": "Reset to clean state after power outage"
   },
-  "updated_at": "2025-11-25T12:15:08-0600"
+  "updated_at": "2025-11-26T07:01:20-0600"
 }

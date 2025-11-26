@@ -1,13 +1,13 @@
 #!/bin/bash
 # scripts/spawn-worker.sh
-# Spawn individual worker agents for commit-relay
+# Spawn individual worker agents for cortex
 # Part of Phase 1: Script-Triggered Automation
 
 set -euo pipefail
 
 # Get script directory
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-COMMIT_RELAY_HOME="${COMMIT_RELAY_HOME:-$(cd "$SCRIPT_DIR/.." && pwd)}"
+CORTEX_HOME="${CORTEX_HOME:-$(cd "$SCRIPT_DIR/.." && pwd)}"
 
 # Load libraries
 source "$SCRIPT_DIR/lib/logging.sh"
@@ -203,7 +203,7 @@ case $WORKER_TYPE in
 esac
 
 # Navigate to project root
-cd "$COMMIT_RELAY_HOME"
+cd "$CORTEX_HOME"
 
 # Permission check: Can this master spawn workers?
 PRINCIPAL="${MASTER_AGENT}"
@@ -322,7 +322,7 @@ else
 fi
 
 # Load review configuration from policy if not specified
-REVIEW_POLICY_FILE="$COMMIT_RELAY_HOME/coordination/config/review-policy.json"
+REVIEW_POLICY_FILE="$CORTEX_HOME/coordination/config/review-policy.json"
 if [ -f "$REVIEW_POLICY_FILE" ]; then
     # Get defaults from policy
     POLICY_ENABLED=$(jq -r '.enabled // true' "$REVIEW_POLICY_FILE")
@@ -357,7 +357,7 @@ fi
 print_info "Review configuration: enabled=$REVIEW_ENABLED, cycles=$REVIEW_CYCLES"
 
 # Phase 5.3: Get tool clustering assignment (58% tool reduction)
-TOOL_FILTER_CLI="$COMMIT_RELAY_HOME/lib/tools/tool-filter-cli.js"
+TOOL_FILTER_CLI="$CORTEX_HOME/lib/tools/tool-filter-cli.js"
 TOOL_ASSIGNMENT="{}"
 if [ -f "$TOOL_FILTER_CLI" ]; then
     print_info "Applying tool clustering for $WORKER_TYPE..."
@@ -543,7 +543,7 @@ echo "   $WORKER_LOG_DIR"
 echo ""
 
 print_warning "Remember to commit these changes to the coordination repository!"
-echo "   cd ~/commit-relay"
+echo "   cd ~/cortex"
 echo "   git add ."
 echo "   git commit -m \"feat(\$MASTER_AGENT): spawned $WORKER_ID for $TASK_ID\""
 echo "   git push origin main"

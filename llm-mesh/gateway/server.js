@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // llm-mesh/gateway/server.js
-// Commit-Relay Agent Gateway Server
+// Cortex Agent Gateway Server
 // Centralized control plane for all agent interactions
 
 const express = require('express');
@@ -86,7 +86,7 @@ class AgentGateway {
     // Root endpoint
     this.app.get('/', (req, res) => {
       res.json({
-        service: 'commit-relay-gateway',
+        service: 'cortex-gateway',
         version: '1.0.0',
         status: 'operational',
         endpoints: {

@@ -8,7 +8,7 @@ set -euo pipefail
 # Directories
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
-COMMIT_RELAY_HOME="$PROJECT_ROOT"
+CORTEX_HOME="$PROJECT_ROOT"
 COORDINATION_DIR="$PROJECT_ROOT/coordination"
 LOGS_DIR="$PROJECT_ROOT/agents/logs/stress-test"
 STRESS_TEST_DIR="$COORDINATION_DIR/stress-test"
@@ -178,7 +178,7 @@ test_moe_routing() {
     log "MOE" "Routing tasks through coordinator master..."
 
     # Call coordinator to route all test tasks
-    "$COMMIT_RELAY_HOME/scripts/run-coordinator-master.sh" > /tmp/ddqd-v5-routing-$$.log 2>&1
+    "$CORTEX_HOME/scripts/run-coordinator-master.sh" > /tmp/ddqd-v5-routing-$$.log 2>&1
 
     log "MOE" "Waiting 2 seconds for routing decisions to sync..."
     sleep 2

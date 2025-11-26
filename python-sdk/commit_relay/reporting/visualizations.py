@@ -1,5 +1,5 @@
 """
-Visualization tools for commit-relay metrics.
+Visualization tools for cortex metrics.
 
 Creates charts and graphs for metrics analysis and reporting.
 """
@@ -207,7 +207,7 @@ class DashboardVisualizer:
                 return
 
             fig, axes = plt.subplots(2, 2, figsize=figsize)
-            fig.suptitle('Commit-Relay Dashboard Analytics', fontsize=18, fontweight='bold')
+            fig.suptitle('Cortex Dashboard Analytics', fontsize=18, fontweight='bold')
 
             # Worker activity
             if 'active_workers' in df.columns:

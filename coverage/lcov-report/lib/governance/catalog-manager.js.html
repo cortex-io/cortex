@@ -1643,7 +1643,7 @@ const { execSync } = <span class="cstat-no" title="statement not covered" >requi
 const crypto = <span class="cstat-no" title="statement not covered" >require('crypto');</span>
 &nbsp;
 class CatalogManager {
-<span class="fstat-no" title="function not covered" >  co</span>nstructor(catalogPath = <span class="branch-0 cbranch-no" title="branch not covered" >'/Users/ryandahlberg/Projects/commit-relay/coordination/catalog')</span> {
+<span class="fstat-no" title="function not covered" >  co</span>nstructor(catalogPath = <span class="branch-0 cbranch-no" title="branch not covered" >'/Users/ryandahlberg/Projects/cortex/coordination/catalog')</span> {
 <span class="cstat-no" title="statement not covered" >    this.catalogPath = catalogPath;</span>
 <span class="cstat-no" title="statement not covered" >    this.metastorePath = path.join(catalogPath, 'metastore.json');</span>
 <span class="cstat-no" title="statement not covered" >    this.schemasPath = path.join(catalogPath, 'schemas');</span>
@@ -1968,7 +1968,7 @@ class CatalogManager {
    */
 <span class="fstat-no" title="function not covered" >  as</span>ync _discoverCoordinationAssets() {
     const assets = <span class="cstat-no" title="statement not covered" >[];</span>
-    const coordinationPath = <span class="cstat-no" title="statement not covered" >'/Users/ryandahlberg/Projects/commit-relay/coordination';</span>
+    const coordinationPath = <span class="cstat-no" title="statement not covered" >'/Users/ryandahlberg/Projects/cortex/coordination';</span>
 &nbsp;
     // Key coordination files
     const coordinationFiles = <span class="cstat-no" title="statement not covered" >[</span>
@@ -2042,7 +2042,7 @@ class CatalogManager {
 &nbsp;
 <span class="cstat-no" title="statement not covered" >    for (const masterName of masterNames) {</span>
       // Discover agent state
-      const statePath = <span class="cstat-no" title="statement not covered" >`/Users/ryandahlberg/Projects/commit-relay/coordination/masters/${masterName}/context/master-state.json`;</span>
+      const statePath = <span class="cstat-no" title="statement not covered" >`/Users/ryandahlberg/Projects/cortex/coordination/masters/${masterName}/context/master-state.json`;</span>
 <span class="cstat-no" title="statement not covered" >      try {</span>
         const stateData = <span class="cstat-no" title="statement not covered" >await fs.readFile(statePath, 'utf8');</span>
         const state = <span class="cstat-no" title="statement not covered" >JSON.parse(stateData);</span>
@@ -2065,7 +2065,7 @@ class CatalogManager {
       }
 &nbsp;
       // Discover knowledge bases
-      const kbPath = <span class="cstat-no" title="statement not covered" >`/Users/ryandahlberg/Projects/commit-relay/coordination/masters/${masterName}/knowledge-base`;</span>
+      const kbPath = <span class="cstat-no" title="statement not covered" >`/Users/ryandahlberg/Projects/cortex/coordination/masters/${masterName}/knowledge-base`;</span>
 <span class="cstat-no" title="statement not covered" >      try {</span>
         const kbFiles = <span class="cstat-no" title="statement not covered" >await fs.readdir(kbPath);</span>
 <span class="cstat-no" title="statement not covered" >        for (const kbFile of kbFiles) {</span>
@@ -2098,7 +2098,7 @@ class CatalogManager {
    */
 <span class="fstat-no" title="function not covered" >  as</span>ync _discoverWorkerSpecs() {
     const assets = <span class="cstat-no" title="statement not covered" >[];</span>
-    const workerSpecPath = <span class="cstat-no" title="statement not covered" >'/Users/ryandahlberg/Projects/commit-relay/coordination/worker-specs';</span>
+    const workerSpecPath = <span class="cstat-no" title="statement not covered" >'/Users/ryandahlberg/Projects/cortex/coordination/worker-specs';</span>
 &nbsp;
 <span class="cstat-no" title="statement not covered" >    try {</span>
       const specDirs = <span class="cstat-no" title="statement not covered" >await fs.readdir(workerSpecPath);</span>
@@ -2138,7 +2138,7 @@ class CatalogManager {
    */
 <span class="fstat-no" title="function not covered" >  as</span>ync _discoverAgentPrompts() {
     const assets = <span class="cstat-no" title="statement not covered" >[];</span>
-    const promptPath = <span class="cstat-no" title="statement not covered" >'/Users/ryandahlberg/Projects/commit-relay/.claude/agents';</span>
+    const promptPath = <span class="cstat-no" title="statement not covered" >'/Users/ryandahlberg/Projects/cortex/.claude/agents';</span>
 &nbsp;
 <span class="cstat-no" title="statement not covered" >    try {</span>
       const promptFiles = <span class="cstat-no" title="statement not covered" >await fs.readdir(promptPath);</span>

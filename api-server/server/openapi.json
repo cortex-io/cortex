@@ -1,11 +1,11 @@
 {
   "openapi": "3.0.3",
   "info": {
-    "title": "Commit-Relay Dashboard API",
-    "description": "Real-time metrics and monitoring API for the commit-relay master-worker system",
+    "title": "Cortex Dashboard API",
+    "description": "Real-time metrics and monitoring API for the cortex master-worker system",
     "version": "1.0.0",
     "contact": {
-      "name": "Commit-Relay Team"
+      "name": "Cortex Team"
     },
     "license": {
       "name": "MIT"

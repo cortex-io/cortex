@@ -111,7 +111,7 @@
 - Failed Services: coordinator, development-master, pm-daemon
 - Last Check: 2025-11-09T20:15:43Z
 
-**Recommendation**: Run `/Users/ryandahlberg/Projects/commit-relay/scripts/ensure-services.sh` to attempt service recovery
+**Recommendation**: Run `/Users/ryandahlberg/Projects/cortex/scripts/ensure-services.sh` to attempt service recovery
 
 ---
 
@@ -174,7 +174,7 @@ This task was part of the DDQD v5 MoE (Mixture of Experts) stress test suite:
 
 ## Conclusion
 
-Worker-documentation-031 successfully completed the repository cataloging task. The comprehensive documentation report provides detailed insights into the commit-relay system architecture, dependencies, components, and capabilities. The task execution demonstrates the effectiveness of the inventory master's documentation worker specialization.
+Worker-documentation-031 successfully completed the repository cataloging task. The comprehensive documentation report provides detailed insights into the cortex system architecture, dependencies, components, and capabilities. The task execution demonstrates the effectiveness of the inventory master's documentation worker specialization.
 
 **Task Status**: ✓ SUCCESS
 **Deliverables**: ✓ COMPLETE

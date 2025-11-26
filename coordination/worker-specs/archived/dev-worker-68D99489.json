@@ -10,7 +10,7 @@
     "type": "development",
     "priority": "high",
     "description": "PRIORITY 4: Fix PM Daemon - Investigate and resolve PM daemon stability issues. Current issue: PM daemon not staying running consistently, affecting project management automation. Investigation areas: 1) Check for missing dependencies or libraries required by pm-daemon.sh, 2) Review daemon startup scripts and initialization sequence, 3) Analyze crash logs and error messages in agents/logs/system/, 4) Check for configuration issues in coordination/pm-state.json, 5) Verify process monitoring and restart mechanisms, 6) Test daemon under various load conditions. Root cause analysis: Determine if issue is environment-related, code bug, resource exhaustion, or race condition. Implement fixes: Add proper error handling, improve logging, add health checks, implement auto-restart on failure. Validate: Ensure daemon stays running for 24+ hours under normal load.",
-    "repository": "ry-ops/commit-relay",
+    "repository": "ry-ops/cortex",
     "branch": "main",
     "requirements": []
   },
@@ -19,8 +19,8 @@
     "expertise_area": "",
     "skills_required": [],
     "knowledge_base_refs": {
-      "implementation_patterns": "/Users/ryandahlberg/commit-relay/scripts/../coordination/masters/development/knowledge-base/implementation-patterns.jsonl",
-      "architecture_docs": "/Users/ryandahlberg/commit-relay/scripts/../coordination/masters/development/knowledge-base/codebase-architecture.json"
+      "implementation_patterns": "/Users/ryandahlberg/cortex/scripts/../coordination/masters/development/knowledge-base/implementation-patterns.jsonl",
+      "architecture_docs": "/Users/ryandahlberg/cortex/scripts/../coordination/masters/development/knowledge-base/codebase-architecture.json"
     }
   },
   "resources": {

@@ -6,7 +6,7 @@ set -euo pipefail
 
 # Get script directory
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-COMMIT_RELAY_HOME="${COMMIT_RELAY_HOME:-$(cd "$SCRIPT_DIR/.." && pwd)}"
+CORTEX_HOME="${CORTEX_HOME:-$(cd "$SCRIPT_DIR/.." && pwd)}"
 
 # Load libraries
 source "$SCRIPT_DIR/lib/logging.sh"
@@ -21,7 +21,7 @@ if [ $# -lt 1 ]; then
 fi
 
 WORKER_ID="$1"
-WORKER_SPEC_PATH="$COMMIT_RELAY_HOME/coordination/worker-specs/active/${WORKER_ID}.json"
+WORKER_SPEC_PATH="$CORTEX_HOME/coordination/worker-specs/active/${WORKER_ID}.json"
 
 # Verify worker specification exists
 if [ ! -f "$WORKER_SPEC_PATH" ]; then
@@ -49,7 +49,7 @@ if [ "$STATUS" = "running" ]; then
 fi
 
 # Verify prompt template exists
-FULL_PROMPT_PATH="$COMMIT_RELAY_HOME/$PROMPT_TEMPLATE"
+FULL_PROMPT_PATH="$CORTEX_HOME/$PROMPT_TEMPLATE"
 if [ ! -f "$FULL_PROMPT_PATH" ]; then
     log_error "Prompt template not found: $FULL_PROMPT_PATH"
     exit 1
@@ -94,7 +94,7 @@ log_info ""
 
 # Launch Claude CLI in interactive mode with prompt
 # Workers need full tool access, not print mode
-claude "$(cat "$COMMIT_RELAY_HOME/$PROMPT_TEMPLATE")"
+claude "$(cat "$CORTEX_HOME/$PROMPT_TEMPLATE")"
 
 # Phase 3 Enhancement #17: Worker self-correction via reflection
 # After worker completes, perform validation before marking complete

@@ -1,5 +1,5 @@
 """
-Alert management for commit-relay monitoring.
+Alert management for cortex monitoring.
 
 Provides alerting based on health checks and anomaly detection.
 """

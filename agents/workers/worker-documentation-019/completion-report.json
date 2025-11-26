@@ -20,7 +20,7 @@
   ],
   "key_findings": {
     "repository_info": {
-      "name": "commit-relay",
+      "name": "cortex",
       "version": "1.0.0",
       "total_production_deps": 10,
       "total_dev_deps": 4,

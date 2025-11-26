@@ -1,5 +1,5 @@
 """
-Health resource client for commit-relay API.
+Health resource client for cortex API.
 
 Provides access to system health endpoints and health check utilities.
 """

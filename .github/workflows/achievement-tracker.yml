@@ -30,7 +30,7 @@ jobs:
       - name: Commit Progress Updates
         run: |
           git config user.name "Achievement Master"
-          git config user.email "achievement@commit-relay"
+          git config user.email "achievement@cortex"
           git add coordination/masters/achievement/knowledge-base/
           git commit -m "chore: Update achievement progress" || echo "No changes"
           git push || echo "Nothing to push"

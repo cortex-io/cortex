@@ -8,7 +8,7 @@ echo "Launcher Validation Test Suite"
 echo "=========================================="
 echo ""
 
-PROJECT_ROOT="/Users/ryandahlberg/commit-relay"
+PROJECT_ROOT="/Users/ryandahlberg/cortex"
 LAUNCHER="$PROJECT_ROOT/scripts/claude-worker-launcher-v2-FIXED.sh"
 TEST_RESULTS=()
 
@@ -53,7 +53,7 @@ TEST_TASK="task-test-launcher-validation"
 cat > /tmp/test-launcher-mock.sh << 'EOF'
 #!/bin/bash
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-PROJECT_ROOT="/Users/ryandahlberg/commit-relay"
+PROJECT_ROOT="/Users/ryandahlberg/cortex"
 WORKER_ID="$1"
 TASK_ID="$2"
 WORKER_TYPE="${3:-implementation-worker}"

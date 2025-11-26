@@ -4,7 +4,7 @@ Get started with the MoE Learning System in 5 minutes!
 
 ## Prerequisites
 
-- commit-relay installed and running
+- cortex installed and running
 - (Optional) Anthropic API key for LLM analysis
 
 ## Step 1: Configure LLM Access (Optional)
@@ -25,7 +25,7 @@ Without an API key, the system uses mock responses (good for testing).
 When a task completes, track its outcome:
 
 ```bash
-cd /path/to/commit-relay/llm-mesh/moe-learning
+cd /path/to/cortex/llm-mesh/moe-learning
 
 # Successful task
 ./moe-learn.sh track task-123 completed 0.9

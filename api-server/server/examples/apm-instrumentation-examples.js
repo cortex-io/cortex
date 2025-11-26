@@ -2,7 +2,7 @@
  * APM Instrumentation Usage Examples
  *
  * This file demonstrates how to use the custom APM instrumentation
- * functions throughout the commit-relay codebase.
+ * functions throughout the cortex codebase.
  */
 
 const {

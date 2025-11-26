@@ -6,7 +6,7 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 GATEWAY_DIR="$SCRIPT_DIR/../llm-mesh/gateway"
 
-echo "Starting Commit-Relay Agent Gateway..."
+echo "Starting Cortex Agent Gateway..."
 
 # Check Node.js
 if ! command -v node &> /dev/null; then

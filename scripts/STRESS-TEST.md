@@ -1,6 +1,6 @@
 # DDQD Stress Test
 
-**"God Mode" System Validation for Commit-Relay v4.0**
+**"God Mode" System Validation for Cortex v4.0**
 
 ## Overview
 
@@ -91,7 +91,7 @@ Open the dashboard during the test to watch real-time updates:
 
 ```bash
 # In another terminal
-cd /Users/ryandahlberg/commit-relay/dashboard
+cd /Users/ryandahlberg/cortex/dashboard
 npm start
 ```
 
@@ -299,7 +299,7 @@ pkill -f stress-test-ddqd
 
 **Solution**: Start the daemon:
 ```bash
-./scripts/start-commit-relay.sh
+./scripts/start-cortex.sh
 ```
 
 ### Dashboard Not Updating
@@ -332,7 +332,7 @@ TEST_DURATION=30 MAX_WORKERS=8 ./scripts/ddqd
 
 ```bash
 # Start all daemons
-./scripts/start-commit-relay.sh
+./scripts/start-cortex.sh
 
 # Start dashboard (in another terminal)
 cd dashboard && npm start

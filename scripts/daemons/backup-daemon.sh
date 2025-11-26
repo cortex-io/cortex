@@ -17,7 +17,7 @@ readonly PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 
 # Configuration
 readonly DAEMON_NAME="backup-daemon"
-readonly PID_FILE="${PID_FILE:-/tmp/commit-relay-backup-daemon.pid}"
+readonly PID_FILE="${PID_FILE:-/tmp/cortex-backup-daemon.pid}"
 readonly LOG_FILE="${LOG_FILE:-$PROJECT_ROOT/coordination/observability/backups/backup-daemon.log}"
 readonly BACKUPS_DIR="${BACKUPS_DIR:-$PROJECT_ROOT/coordination/backups}"
 readonly HOURLY_DIR="$BACKUPS_DIR/hourly"

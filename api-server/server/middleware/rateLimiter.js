@@ -5,7 +5,7 @@
 
 const rateLimit = require('express-rate-limit');
 
-// General API rate limiter - COMPLETELY DISABLED for commit-relay internal use
+// General API rate limiter - COMPLETELY DISABLED for cortex internal use
 const apiLimiter = rateLimit({
   windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS) || 15 * 60 * 1000,
   max: 999999, // Effectively unlimited

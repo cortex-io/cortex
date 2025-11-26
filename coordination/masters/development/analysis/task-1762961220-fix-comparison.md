@@ -14,9 +14,9 @@ This document shows the exact changes made to fix the critical worker launcher b
 
 ## Files Created
 
-1. **Fixed Script**: `/Users/ryandahlberg/commit-relay/scripts/claude-worker-launcher-v2-FIXED.sh`
-2. **Root Cause Analysis**: `/Users/ryandahlberg/commit-relay/coordination/masters/development/analysis/task-1762961220-root-cause-analysis.md`
-3. **This Comparison**: `/Users/ryandahlberg/commit-relay/coordination/masters/development/analysis/task-1762961220-fix-comparison.md`
+1. **Fixed Script**: `/Users/ryandahlberg/cortex/scripts/claude-worker-launcher-v2-FIXED.sh`
+2. **Root Cause Analysis**: `/Users/ryandahlberg/cortex/coordination/masters/development/analysis/task-1762961220-root-cause-analysis.md`
+3. **This Comparison**: `/Users/ryandahlberg/cortex/coordination/masters/development/analysis/task-1762961220-fix-comparison.md`
 
 ---
 
@@ -236,25 +236,25 @@ log "Task context loaded: $TASK_CONTEXT"  # Log context for debugging
 
 ### Step 1: Backup Current Script
 ```bash
-cp /Users/ryandahlberg/commit-relay/scripts/claude-worker-launcher-v2.sh \
-   /Users/ryandahlberg/commit-relay/scripts/claude-worker-launcher-v2.sh.backup-$(date +%Y%m%d)
+cp /Users/ryandahlberg/cortex/scripts/claude-worker-launcher-v2.sh \
+   /Users/ryandahlberg/cortex/scripts/claude-worker-launcher-v2.sh.backup-$(date +%Y%m%d)
 ```
 
 ### Step 2: Deploy Fixed Script
 ```bash
-cp /Users/ryandahlberg/commit-relay/scripts/claude-worker-launcher-v2-FIXED.sh \
-   /Users/ryandahlberg/commit-relay/scripts/claude-worker-launcher-v2.sh
+cp /Users/ryandahlberg/cortex/scripts/claude-worker-launcher-v2-FIXED.sh \
+   /Users/ryandahlberg/cortex/scripts/claude-worker-launcher-v2.sh
 ```
 
 ### Step 3: Verify Permissions
 ```bash
-chmod +x /Users/ryandahlberg/commit-relay/scripts/claude-worker-launcher-v2.sh
+chmod +x /Users/ryandahlberg/cortex/scripts/claude-worker-launcher-v2.sh
 ```
 
 ### Step 4: Test Deployment
 ```bash
 # Create test task file
-cat > /Users/ryandahlberg/commit-relay/coordination/tasks/task-test-launcher-fix.json << 'EOF'
+cat > /Users/ryandahlberg/cortex/coordination/tasks/task-test-launcher-fix.json << 'EOF'
 {
   "title": "Test Launcher Fix Deployment",
   "context": {
@@ -304,15 +304,15 @@ If issues are detected after deployment:
 
 ```bash
 # Restore backup
-cp /Users/ryandahlberg/commit-relay/scripts/claude-worker-launcher-v2.sh.backup-YYYYMMDD \
-   /Users/ryandahlberg/commit-relay/scripts/claude-worker-launcher-v2.sh
+cp /Users/ryandahlberg/cortex/scripts/claude-worker-launcher-v2.sh.backup-YYYYMMDD \
+   /Users/ryandahlberg/cortex/scripts/claude-worker-launcher-v2.sh
 
 # Verify restoration
-chmod +x /Users/ryandahlberg/commit-relay/scripts/claude-worker-launcher-v2.sh
+chmod +x /Users/ryandahlberg/cortex/scripts/claude-worker-launcher-v2.sh
 
 # Alert team
 echo "{\"alert\": \"launcher_fix_rolled_back\", \"timestamp\": \"$(date -u +%Y-%m-%dT%H:%M:%SZ)\"}" >> \
-  /Users/ryandahlberg/commit-relay/coordination/health-alerts.json
+  /Users/ryandahlberg/cortex/coordination/health-alerts.json
 ```
 
 ---
@@ -341,6 +341,6 @@ echo "{\"alert\": \"launcher_fix_rolled_back\", \"timestamp\": \"$(date -u +%Y-%
 ---
 
 **Files:**
-- Fixed script: `/Users/ryandahlberg/commit-relay/scripts/claude-worker-launcher-v2-FIXED.sh`
-- Root cause: `/Users/ryandahlberg/commit-relay/coordination/masters/development/analysis/task-1762961220-root-cause-analysis.md`
-- This comparison: `/Users/ryandahlberg/commit-relay/coordination/masters/development/analysis/task-1762961220-fix-comparison.md`
+- Fixed script: `/Users/ryandahlberg/cortex/scripts/claude-worker-launcher-v2-FIXED.sh`
+- Root cause: `/Users/ryandahlberg/cortex/coordination/masters/development/analysis/task-1762961220-root-cause-analysis.md`
+- This comparison: `/Users/ryandahlberg/cortex/coordination/masters/development/analysis/task-1762961220-fix-comparison.md`

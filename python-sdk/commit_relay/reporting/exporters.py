@@ -1,5 +1,5 @@
 """
-Data export utilities for commit-relay metrics.
+Data export utilities for cortex metrics.
 
 Provides export to various formats including CSV, JSON, and Excel.
 """
@@ -10,7 +10,7 @@ import json
 
 class DataExporter:
     """
-    Export commit-relay data to various formats.
+    Export cortex data to various formats.
 
     Example:
         >>> from commit_relay.reporting import DataExporter

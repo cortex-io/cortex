@@ -17,17 +17,17 @@ set -euo pipefail
 
 # Configuration
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-COMMIT_RELAY_HOME="${COMMIT_RELAY_HOME:-$(cd "$SCRIPT_DIR/../../.." && pwd)}"
+CORTEX_HOME="${CORTEX_HOME:-$(cd "$SCRIPT_DIR/../../.." && pwd)}"
 
 # Paths
-readonly PATTERNS_DIR="$COMMIT_RELAY_HOME/coordination/patterns"
-readonly KNOWLEDGE_BASE="$COMMIT_RELAY_HOME/coordination/knowledge-base"
+readonly PATTERNS_DIR="$CORTEX_HOME/coordination/patterns"
+readonly KNOWLEDGE_BASE="$CORTEX_HOME/coordination/knowledge-base"
 readonly LEARNED_PATTERNS="$KNOWLEDGE_BASE/learned-patterns/patterns-latest.json"
 readonly STRATEGY_HISTORY="$KNOWLEDGE_BASE/strategy-history"
-readonly CONTEXT_MANAGER_JS="$COMMIT_RELAY_HOME/lib/rag/context-manager.js"
+readonly CONTEXT_MANAGER_JS="$CORTEX_HOME/lib/rag/context-manager.js"
 
 # Source logging
-source "$COMMIT_RELAY_HOME/scripts/lib/logging.sh" 2>/dev/null || {
+source "$CORTEX_HOME/scripts/lib/logging.sh" 2>/dev/null || {
     log_info() { echo "[INFO] $1"; }
     log_warn() { echo "[WARN] $1"; }
     log_error() { echo "[ERROR] $1"; }

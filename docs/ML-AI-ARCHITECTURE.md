@@ -1,14 +1,14 @@
-# ML/AI Architecture for Commit-Relay
+# ML/AI Architecture for Cortex
 
 ## Overview
 
-This document outlines the integration of PyTorch and LangChain into commit-relay to create an intelligent, self-improving orchestration system.
+This document outlines the integration of PyTorch and LangChain into cortex to create an intelligent, self-improving orchestration system.
 
 ## Architecture Vision
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│                        Commit-Relay Core                         │
+│                        Cortex Core                         │
 ├─────────────────────────────────────────────────────────────────┤
 │                                                                   │
 │  ┌──────────────────────┐      ┌──────────────────────┐        │

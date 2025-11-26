@@ -6,10 +6,10 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-COMMIT_RELAY_HOME="${COMMIT_RELAY_HOME:-$(cd "$SCRIPT_DIR/../.." && pwd)}"
+CORTEX_HOME="${CORTEX_HOME:-$(cd "$SCRIPT_DIR/../.." && pwd)}"
 
-TOKEN_BUDGET_FILE="$COMMIT_RELAY_HOME/coordination/token-budget.json"
-TOKEN_LOCK_FILE="/tmp/commit-relay-token-budget.lock"
+TOKEN_BUDGET_FILE="$CORTEX_HOME/coordination/token-budget.json"
+TOKEN_LOCK_FILE="/tmp/cortex-token-budget.lock"
 
 # Acquire lock for atomic operations
 acquire_lock() {

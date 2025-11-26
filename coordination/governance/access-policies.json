@@ -100,7 +100,7 @@
     }
   },
   "role_assignments": {
-    "commit-relay-system": "system",
+    "cortex-system": "system",
     "default-user": "user",
     "coordinator-master": "system",
     "coordinator": "system",

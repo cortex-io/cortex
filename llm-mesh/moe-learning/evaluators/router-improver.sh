@@ -6,11 +6,11 @@ set -euo pipefail
 
 # Configuration
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-COMMIT_RELAY_HOME="${COMMIT_RELAY_HOME:-$(cd "$SCRIPT_DIR/../../.." && pwd)}"
+CORTEX_HOME="${CORTEX_HOME:-$(cd "$SCRIPT_DIR/../../.." && pwd)}"
 
 # Paths
 LEARNED_PATTERNS="$SCRIPT_DIR/../catalog/learned-patterns.json"
-ROUTING_PATTERNS="$COMMIT_RELAY_HOME/coordination/masters/coordinator/knowledge-base/routing-patterns.json"
+ROUTING_PATTERNS="$CORTEX_HOME/coordination/masters/coordinator/knowledge-base/routing-patterns.json"
 ROUTING_PATTERNS_BACKUP="$ROUTING_PATTERNS.backup-$(date +%Y%m%d-%H%M%S)"
 
 ##############################################################################

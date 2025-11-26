@@ -19,20 +19,20 @@ set -euo pipefail
 
 # Get script directory
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-COMMIT_RELAY_HOME="${COMMIT_RELAY_HOME:-$(cd "$SCRIPT_DIR/../.." && pwd)}"
+CORTEX_HOME="${CORTEX_HOME:-$(cd "$SCRIPT_DIR/../.." && pwd)}"
 
 # Daemon configuration
 DAEMON_NAME="security-scan-daemon"
 CHECK_INTERVAL="${CHECK_INTERVAL:-300}"  # 5 minutes default
 
 # Paths
-POLICY_PATH="$COMMIT_RELAY_HOME/coordination/config/security-scan-policy.json"
-SCHEDULE_PATH="$COMMIT_RELAY_HOME/coordination/metrics/security-scan-schedule.json"
-METRICS_PATH="$COMMIT_RELAY_HOME/coordination/metrics/security-scan-daemon-metrics.json"
-PID_FILE="$COMMIT_RELAY_HOME/coordination/pids/security-scan-daemon.pid"
-LOG_FILE="$COMMIT_RELAY_HOME/coordination/metrics/security-scan-daemon.jsonl"
-WORKER_POOL="$COMMIT_RELAY_HOME/coordination/worker-pool.json"
-SPAWN_WORKER="$COMMIT_RELAY_HOME/scripts/spawn-worker.sh"
+POLICY_PATH="$CORTEX_HOME/coordination/config/security-scan-policy.json"
+SCHEDULE_PATH="$CORTEX_HOME/coordination/metrics/security-scan-schedule.json"
+METRICS_PATH="$CORTEX_HOME/coordination/metrics/security-scan-daemon-metrics.json"
+PID_FILE="$CORTEX_HOME/coordination/pids/security-scan-daemon.pid"
+LOG_FILE="$CORTEX_HOME/coordination/metrics/security-scan-daemon.jsonl"
+WORKER_POOL="$CORTEX_HOME/coordination/worker-pool.json"
+SPAWN_WORKER="$CORTEX_HOME/scripts/spawn-worker.sh"
 
 # Ensure directories exist
 mkdir -p "$(dirname "$PID_FILE")"
@@ -127,7 +127,7 @@ init_policy() {
   },
   "repositories": [
     {
-      "name": "commit-relay",
+      "name": "cortex",
       "path": ".",
       "schedule": "daily",
       "priority": "high",

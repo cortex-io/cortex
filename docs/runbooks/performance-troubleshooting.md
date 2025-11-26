@@ -47,18 +47,18 @@ df -h $COMMIT_RELAY_HOME
 
 # Check open files
 lsof | wc -l
-lsof -p $(cat /tmp/commit-relay-worker.pid) | wc -l
+lsof -p $(cat /tmp/cortex-worker.pid) | wc -l
 ```
 
 ### 2. Process Analysis
 
 ```bash
 # Find resource-hungry processes
-ps aux | grep commit-relay | sort -k3 -rn | head -10  # CPU
-ps aux | grep commit-relay | sort -k4 -rn | head -10  # Memory
+ps aux | grep cortex | sort -k3 -rn | head -10  # CPU
+ps aux | grep cortex | sort -k4 -rn | head -10  # Memory
 
 # Check specific daemon
-DAEMON_PID=$(cat /tmp/commit-relay-worker.pid)
+DAEMON_PID=$(cat /tmp/cortex-worker.pid)
 ps -p $DAEMON_PID -o pid,ppid,%cpu,%mem,vsz,rss,etime,command
 ```
 
@@ -128,7 +128,7 @@ echo "Events: $(wc -l < $COMMIT_RELAY_HOME/coordination/dashboard-events.jsonl)"
 ./scripts/cleanup-zombie-workers.sh
 
 # Clear caches
-rm -rf /tmp/commit-relay-cache/*
+rm -rf /tmp/cortex-cache/*
 
 # Reduce concurrent workers
 jq '.max_concurrent_workers = 3' \

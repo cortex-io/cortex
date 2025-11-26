@@ -1,5 +1,5 @@
 """
-Metrics resource client for commit-relay API.
+Metrics resource client for cortex API.
 
 Provides access to metrics endpoints including current metrics snapshot,
 historical metrics, and time-series data export capabilities.

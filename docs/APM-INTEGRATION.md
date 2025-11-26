@@ -1,6 +1,6 @@
-# Elastic APM Integration for Commit-Relay
+# Elastic APM Integration for Cortex
 
-Complete guide for Elastic APM observability integration in the commit-relay system.
+Complete guide for Elastic APM observability integration in the cortex system.
 
 ## Overview
 
@@ -65,7 +65,7 @@ cp .env.example .env
 ELASTIC_APM_ENABLED=true
 
 # Service name in APM (identifies your service)
-ELASTIC_APM_SERVICE_NAME=commit-relay
+ELASTIC_APM_SERVICE_NAME=cortex
 
 # APM Server URL (get from Elastic Cloud deployment)
 ELASTIC_APM_SERVER_URL=https://your-deployment.apm.region.cloud.es.io:443
@@ -110,7 +110,7 @@ You should see:
 
 ```
 [APM] Elastic APM initialized successfully
-[APM]   Service: commit-relay
+[APM]   Service: cortex
 [APM]   Environment: production
 [APM]   Server: https://your-deployment.apm.region.cloud.es.io:443
 [APM]   Sample Rate: 1.0
@@ -304,7 +304,7 @@ addLabels({
 1. Go to Elastic Cloud → Your Deployment
 2. Click **Kibana**
 3. Navigate to **Observability** → **APM**
-4. Select **Services** → **commit-relay**
+4. Select **Services** → **cortex**
 
 ### 2. Key Views
 
@@ -562,7 +562,7 @@ class Worker {
 For issues or questions:
 1. Check Elastic APM agent logs
 2. Review [Troubleshooting Guide](https://www.elastic.co/guide/en/apm/agent/nodejs/current/troubleshooting.html)
-3. Open an issue in the commit-relay repository
+3. Open an issue in the cortex repository
 
 ---
 

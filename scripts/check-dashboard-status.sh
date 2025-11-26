@@ -69,22 +69,22 @@ check_file() {
     fi
 }
 
-check_file "Dashboard Events" "/Users/ryandahlberg/Projects/commit-relay/coordination/dashboard-events.jsonl"
-check_file "Task Queue" "/Users/ryandahlberg/Projects/commit-relay/coordination/task-queue.json"
-check_file "Worker Pool" "/Users/ryandahlberg/Projects/commit-relay/coordination/worker-pool.json"
-check_file "Health Alerts" "/Users/ryandahlberg/Projects/commit-relay/coordination/health-alerts.json"
-check_file "Event Buffer" "/Users/ryandahlberg/Projects/commit-relay/coordination/event-buffer.json"
+check_file "Dashboard Events" "/Users/ryandahlberg/Projects/cortex/coordination/dashboard-events.jsonl"
+check_file "Task Queue" "/Users/ryandahlberg/Projects/cortex/coordination/task-queue.json"
+check_file "Worker Pool" "/Users/ryandahlberg/Projects/cortex/coordination/worker-pool.json"
+check_file "Health Alerts" "/Users/ryandahlberg/Projects/cortex/coordination/health-alerts.json"
+check_file "Event Buffer" "/Users/ryandahlberg/Projects/cortex/coordination/event-buffer.json"
 
 echo ""
 echo "📈 SYSTEM METRICS:"
 echo "━━━━━━━━━━━━━━━━━━━━━"
 
 # Get task counts
-if [[ -f "/Users/ryandahlberg/Projects/commit-relay/coordination/task-queue.json" ]]; then
-    PENDING=$(jq '[.tasks[] | select(.status == "pending")] | length' /Users/ryandahlberg/Projects/commit-relay/coordination/task-queue.json 2>/dev/null || echo "0")
-    ASSIGNED=$(jq '[.tasks[] | select(.status == "assigned")] | length' /Users/ryandahlberg/Projects/commit-relay/coordination/task-queue.json 2>/dev/null || echo "0")
-    SPAWNED=$(jq '[.tasks[] | select(.status == "worker_spawned")] | length' /Users/ryandahlberg/Projects/commit-relay/coordination/task-queue.json 2>/dev/null || echo "0")
-    COMPLETED=$(jq '[.tasks[] | select(.status == "completed")] | length' /Users/ryandahlberg/Projects/commit-relay/coordination/task-queue.json 2>/dev/null || echo "0")
+if [[ -f "/Users/ryandahlberg/Projects/cortex/coordination/task-queue.json" ]]; then
+    PENDING=$(jq '[.tasks[] | select(.status == "pending")] | length' /Users/ryandahlberg/Projects/cortex/coordination/task-queue.json 2>/dev/null || echo "0")
+    ASSIGNED=$(jq '[.tasks[] | select(.status == "assigned")] | length' /Users/ryandahlberg/Projects/cortex/coordination/task-queue.json 2>/dev/null || echo "0")
+    SPAWNED=$(jq '[.tasks[] | select(.status == "worker_spawned")] | length' /Users/ryandahlberg/Projects/cortex/coordination/task-queue.json 2>/dev/null || echo "0")
+    COMPLETED=$(jq '[.tasks[] | select(.status == "completed")] | length' /Users/ryandahlberg/Projects/cortex/coordination/task-queue.json 2>/dev/null || echo "0")
 
     echo "Tasks:"
     echo "  Pending: $PENDING"
@@ -94,8 +94,8 @@ if [[ -f "/Users/ryandahlberg/Projects/commit-relay/coordination/task-queue.json
 fi
 
 # Get worker count
-if [[ -f "/Users/ryandahlberg/Projects/commit-relay/coordination/worker-pool.json" ]]; then
-    WORKERS=$(jq '.active_workers | length' /Users/ryandahlberg/Projects/commit-relay/coordination/worker-pool.json 2>/dev/null || echo "0")
+if [[ -f "/Users/ryandahlberg/Projects/cortex/coordination/worker-pool.json" ]]; then
+    WORKERS=$(jq '.active_workers | length' /Users/ryandahlberg/Projects/cortex/coordination/worker-pool.json 2>/dev/null || echo "0")
     echo "Active Workers: $WORKERS"
 fi
 

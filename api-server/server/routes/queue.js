@@ -47,9 +47,9 @@ function getRateLimiter() {
 }
 
 // Paths
-const COMMIT_RELAY_HOME = process.env.COMMIT_RELAY_HOME || path.join(__dirname, '../../..');
-const QUEUE_METRICS_PATH = path.join(COMMIT_RELAY_HOME, 'coordination/metrics/queue-metrics.jsonl');
-const RATE_LIMIT_METRICS_PATH = path.join(COMMIT_RELAY_HOME, 'coordination/metrics/rate-limit-metrics.jsonl');
+const CORTEX_HOME = process.env.CORTEX_HOME || path.join(__dirname, '../../..');
+const QUEUE_METRICS_PATH = path.join(CORTEX_HOME, 'coordination/metrics/queue-metrics.jsonl');
+const RATE_LIMIT_METRICS_PATH = path.join(CORTEX_HOME, 'coordination/metrics/rate-limit-metrics.jsonl');
 
 /**
  * GET /api/v1/queue/status
@@ -504,7 +504,7 @@ router.post('/rate-limiter/reset', async (req, res) => {
  */
 router.get('/config', async (req, res) => {
   try {
-    const configPath = path.join(COMMIT_RELAY_HOME, 'coordination/config/queue-policy.json');
+    const configPath = path.join(CORTEX_HOME, 'coordination/config/queue-policy.json');
 
     try {
       const content = await fs.readFile(configPath, 'utf-8');

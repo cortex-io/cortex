@@ -6,10 +6,10 @@
 set -e
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-COMMIT_RELAY_HOME="$(cd "$SCRIPT_DIR/../.." && pwd)"
-export COMMIT_RELAY_HOME
+CORTEX_HOME="$(cd "$SCRIPT_DIR/../.." && pwd)"
+export CORTEX_HOME
 
-source "$COMMIT_RELAY_HOME/scripts/lib/failure-pattern-detection.sh"
+source "$CORTEX_HOME/scripts/lib/failure-pattern-detection.sh"
 
 GREEN='\033[0;32m'
 RED='\033[0;31m'
@@ -38,17 +38,17 @@ test_fail() {
 
 setup_test_env() {
     # Create test directories
-    mkdir -p "$COMMIT_RELAY_HOME/coordination/patterns"
-    mkdir -p "$COMMIT_RELAY_HOME/coordination/events"
-    mkdir -p "$COMMIT_RELAY_HOME/coordination/worker-specs/zombie/$(date +%Y-%m-%d)"
+    mkdir -p "$CORTEX_HOME/coordination/patterns"
+    mkdir -p "$CORTEX_HOME/coordination/events"
+    mkdir -p "$CORTEX_HOME/coordination/worker-specs/zombie/$(date +%Y-%m-%d)"
 
     # Backup existing files
     [ -f "$PATTERN_DB" ] && mv "$PATTERN_DB" "${PATTERN_DB}.backup"
     [ -f "$PATTERN_INDEX" ] && mv "$PATTERN_INDEX" "${PATTERN_INDEX}.backup"
 
     # Create test event files
-    TEST_ZOMBIE_EVENTS="$COMMIT_RELAY_HOME/coordination/events/zombie-cleanup-events.jsonl"
-    TEST_RESTART_EVENTS="$COMMIT_RELAY_HOME/coordination/events/worker-restart-events.jsonl"
+    TEST_ZOMBIE_EVENTS="$CORTEX_HOME/coordination/events/zombie-cleanup-events.jsonl"
+    TEST_RESTART_EVENTS="$CORTEX_HOME/coordination/events/worker-restart-events.jsonl"
 
     # Create sample events
     cat > "$TEST_ZOMBIE_EVENTS" <<'EOFEVENTS'
@@ -64,7 +64,7 @@ EOFEVENTS
 EOFEVENTS
 
     # Create test worker specs
-    cat > "$COMMIT_RELAY_HOME/coordination/worker-specs/zombie/$(date +%Y-%m-%d)/test-worker-001.json" <<'EOFSPEC'
+    cat > "$CORTEX_HOME/coordination/worker-specs/zombie/$(date +%Y-%m-%d)/test-worker-001.json" <<'EOFSPEC'
 {
   "worker_id": "test-worker-001",
   "worker_type": "scan-worker",
@@ -78,7 +78,7 @@ cleanup_test_env() {
     # Remove test files
     rm -f "$TEST_ZOMBIE_EVENTS" "$TEST_RESTART_EVENTS"
     rm -f "$PATTERN_DB" "$PATTERN_INDEX"
-    rm -rf "$COMMIT_RELAY_HOME/coordination/worker-specs/zombie/$(date +%Y-%m-%d)/test-worker-"*
+    rm -rf "$CORTEX_HOME/coordination/worker-specs/zombie/$(date +%Y-%m-%d)/test-worker-"*
 
     # Restore backups
     [ -f "${PATTERN_DB}.backup" ] && mv "${PATTERN_DB}.backup" "$PATTERN_DB"
@@ -95,7 +95,7 @@ setup_test_env
 
 # Test 1
 test_start "Pattern detection library loads"
-if [ -f "$COMMIT_RELAY_HOME/scripts/lib/failure-pattern-detection.sh" ]; then
+if [ -f "$CORTEX_HOME/scripts/lib/failure-pattern-detection.sh" ]; then
     test_pass
 else
     test_fail "Library file not found"
@@ -237,7 +237,7 @@ fi
 test_start "emit_pattern_event creates event log"
 emit_pattern_event "pattern_detected" "test_pattern_001" '{"test": true}' 2>/dev/null
 
-PATTERN_EVENTS_LOG="$COMMIT_RELAY_HOME/coordination/events/failure-pattern-events.jsonl"
+PATTERN_EVENTS_LOG="$CORTEX_HOME/coordination/events/failure-pattern-events.jsonl"
 if [ -f "$PATTERN_EVENTS_LOG" ] && grep -q "pattern_detected" "$PATTERN_EVENTS_LOG"; then
     test_pass
 else

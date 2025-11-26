@@ -13,14 +13,14 @@ def main():
     """Demonstrate task creation with TaskManager."""
 
     print("=" * 70)
-    print("Commit-Relay: Programmatic Task Creation Demo")
+    print("Cortex: Programmatic Task Creation Demo")
     print("=" * 70)
     print()
 
     # Initialize task manager
     print("Initializing TaskManager...")
     manager = TaskManager(
-        commit_relay_home='/Users/ryandahlberg/commit-relay',
+        commit_relay_home='/Users/ryandahlberg/cortex',
         auto_commit=True
     )
     print("TaskManager initialized.")
@@ -51,7 +51,7 @@ def main():
 
     print("Creating development task...")
     task_id_2 = manager.create_development_task(
-        repository='ry-ops/commit-relay',
+        repository='ry-ops/cortex',
         branch='main',
         requirements=[
             'Add task scheduling system',
