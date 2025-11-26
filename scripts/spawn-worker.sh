@@ -14,6 +14,7 @@ source "$SCRIPT_DIR/lib/logging.sh"
 source "$SCRIPT_DIR/lib/coordination.sh"
 source "$SCRIPT_DIR/lib/access-check.sh"
 source "$SCRIPT_DIR/lib/goal-planner.sh"
+source "$SCRIPT_DIR/lib/identity-check.sh" 2>/dev/null || true  # Optional identity system
 
 # Color definitions for output formatting
 GREEN="\033[0;32m"
@@ -293,6 +294,21 @@ EOF
 )
 fi
 
+# Issue identity token for worker
+IDENTITY_TOKEN=""
+SPIFFE_ID=""
+if command -v issue_worker_token &> /dev/null; then
+    print_info "Issuing identity token for worker..."
+    IDENTITY_RESULT=$(issue_worker_token "$WORKER_ID" "$MASTER_AGENT" "$TASK_ID" 2>/dev/null || echo "{}")
+    if [ "$IDENTITY_RESULT" != "{}" ]; then
+        IDENTITY_TOKEN=$(echo "$IDENTITY_RESULT" | jq -r '.token // ""')
+        SPIFFE_ID=$(echo "$IDENTITY_RESULT" | jq -r '.spiffe_id // ""')
+        if [ -n "$IDENTITY_TOKEN" ]; then
+            print_success "Identity token issued: $SPIFFE_ID"
+        fi
+    fi
+fi
+
 # Create worker specification
 WORKER_SPEC_FILE="coordination/worker-specs/active/${WORKER_ID}.json"
 
@@ -349,6 +365,11 @@ cat > "$WORKER_SPEC_FILE" <<EOF
   "created_at": "$CREATED_AT",
   "task_id": "$TASK_ID",
   "status": "pending",
+  "identity": {
+    "spiffe_id": "${SPIFFE_ID:-}",
+    "token": "${IDENTITY_TOKEN:-}",
+    "trust_level": 50
+  },
   "scope": $SCOPE_JSON,
   "context": $CONTEXT_JSON,
   "goal_based_planning": {
