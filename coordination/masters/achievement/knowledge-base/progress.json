@@ -1,0 +1,56 @@
+{
+  "username": "ry-ops",
+  "timestamp": "2025-11-25T21:03:40.453Z",
+  "achievements": {
+    "pair_extraordinaire": {
+      "achievement_id": "pair_extraordinaire",
+      "count": 0,
+      "error": "GitHub API error (422): {\"message\":\"Validation Failed\",\"errors\":[{\"message\":\"The listed users cannot be searched either because the users do not exist or you do not have permission to view the users.\",\"resource\":\"Search\",\"field\":\"q\",\"code\":\"invalid\"}],\"documentation_url\":\"https://docs.github.com/v3/search/\",\"status\":\"422\"}"
+    },
+    "pull_shark": {
+      "achievement_id": "pull_shark",
+      "count": 0,
+      "error": "GitHub API error (422): {\"message\":\"Validation Failed\",\"errors\":[{\"message\":\"The listed users cannot be searched either because the users do not exist or you do not have permission to view the users.\",\"resource\":\"Search\",\"field\":\"q\",\"code\":\"invalid\"}],\"documentation_url\":\"https://docs.github.com/v3/search/\",\"status\":\"422\"}"
+    },
+    "starstruck": {
+      "achievement_id": "starstruck",
+      "count": 2,
+      "current_tier": "none",
+      "progress": {
+        "current": 2,
+        "next_tier": "bronze",
+        "next_requirement": 16,
+        "needed": 14,
+        "percentage": 12
+      },
+      "top_repo": {
+        "name": "ry-ops/unifi-mcp-server",
+        "stars": 2,
+        "url": "https://github.com/ry-ops/unifi-mcp-server"
+      }
+    },
+    "galaxy_brain": {
+      "achievement_id": "galaxy_brain",
+      "count": 0,
+      "current_tier": "none",
+      "progress": {
+        "current": 0,
+        "next_tier": "bronze",
+        "next_requirement": 2,
+        "percentage": 0
+      },
+      "note": "Requires GraphQL API implementation for discussions"
+    },
+    "quickdraw": {
+      "achievement_id": "quickdraw",
+      "count": 3,
+      "unlocked": true,
+      "fastest_close": "Data available"
+    }
+  },
+  "summary": {
+    "total_achievements": 5,
+    "unlocked": 2,
+    "in_progress": 1
+  }
+}
