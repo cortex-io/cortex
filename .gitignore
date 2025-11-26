@@ -34,3 +34,4 @@ secrets/
 *.key
 *.pem
 credentials.json
+.env.test
