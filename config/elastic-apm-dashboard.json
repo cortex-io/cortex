@@ -1,0 +1,228 @@
+{
+  "dashboard": {
+    "id": "cortex-routing-cascade",
+    "title": "Cortex Routing Cascade Metrics",
+    "description": "Real-time monitoring of hybrid routing cascade performance",
+    "version": "1.0.0",
+    "visualizations": [
+      {
+        "id": "cascade-distribution",
+        "title": "Routing Layer Distribution",
+        "type": "pie",
+        "query": {
+          "index": "apm-*",
+          "filter": {
+            "routing.method": ["keyword", "semantic", "rag_enhanced", "pytorch"]
+          },
+          "aggregation": {
+            "field": "routing.method",
+            "type": "terms"
+          }
+        },
+        "description": "Percentage of queries handled by each cascade layer",
+        "target": {
+          "layer_1_keyword": "30-40%",
+          "layer_2_semantic": "30-40%",
+          "layer_3_rag": "15-25%",
+          "layer_4_pytorch": "5-10%"
+        }
+      },
+      {
+        "id": "latency-by-layer",
+        "title": "Average Latency by Layer",
+        "type": "bar",
+        "query": {
+          "index": "apm-*",
+          "aggregation": {
+            "field": "routing.latency_ms",
+            "type": "avg",
+            "groupBy": "routing.method"
+          }
+        },
+        "description": "Average routing latency for each cascade layer",
+        "thresholds": {
+          "keyword": "< 1ms",
+          "semantic": "10-50ms",
+          "rag_enhanced": "50-150ms",
+          "pytorch": "100-300ms"
+        }
+      },
+      {
+        "id": "confidence-distribution",
+        "title": "Confidence Score Distribution",
+        "type": "histogram",
+        "query": {
+          "index": "apm-*",
+          "aggregation": {
+            "field": "routing.confidence",
+            "type": "histogram",
+            "interval": 0.1
+          }
+        },
+        "description": "Distribution of routing confidence scores",
+        "thresholds": {
+          "high": ">= 0.8",
+          "medium": "0.5-0.8",
+          "low": "< 0.5"
+        }
+      },
+      {
+        "id": "routing-timeline",
+        "title": "Routing Decisions Timeline",
+        "type": "line",
+        "query": {
+          "index": "apm-*",
+          "timeField": "@timestamp",
+          "aggregation": {
+            "type": "count",
+            "interval": "1m",
+            "groupBy": "routing.method"
+          }
+        },
+        "description": "Routing decisions over time, grouped by layer"
+      },
+      {
+        "id": "clarification-rate",
+        "title": "Clarification Rate",
+        "type": "metric",
+        "query": {
+          "index": "apm-*",
+          "aggregation": {
+            "filter": {
+              "routing.agent": "CLARIFY"
+            },
+            "type": "percentage"
+          }
+        },
+        "description": "Percentage of queries requiring clarification",
+        "threshold": {
+          "warning": "> 5%",
+          "critical": "> 10%"
+        }
+      },
+      {
+        "id": "agent-distribution",
+        "title": "Routed Agent Distribution",
+        "type": "pie",
+        "query": {
+          "index": "apm-*",
+          "aggregation": {
+            "field": "routing.agent",
+            "type": "terms",
+            "size": 10
+          }
+        },
+        "description": "Top 10 agents by routing frequency"
+      },
+      {
+        "id": "cascade-efficiency",
+        "title": "Cascade Exit Efficiency",
+        "type": "funnel",
+        "query": {
+          "index": "apm-*",
+          "stages": [
+            {
+              "name": "Layer 1 (Keyword)",
+              "filter": "routing.method:keyword"
+            },
+            {
+              "name": "Layer 2 (Semantic)",
+              "filter": "routing.method:semantic"
+            },
+            {
+              "name": "Layer 3 (RAG)",
+              "filter": "routing.method:rag_enhanced"
+            },
+            {
+              "name": "Layer 4 (PyTorch)",
+              "filter": "routing.method:pytorch"
+            }
+          ]
+        },
+        "description": "Queries falling through each cascade layer"
+      },
+      {
+        "id": "p95-latency",
+        "title": "P95 Latency",
+        "type": "metric",
+        "query": {
+          "index": "apm-*",
+          "aggregation": {
+            "field": "routing.latency_ms",
+            "type": "percentiles",
+            "percentile": 95
+          }
+        },
+        "description": "95th percentile routing latency",
+        "threshold": {
+          "good": "< 100ms",
+          "warning": "100-300ms",
+          "critical": "> 300ms"
+        }
+      }
+    ],
+    "filters": {
+      "time_range": "last 24 hours",
+      "service_name": "cortex-routing",
+      "event_type": "routing_decision"
+    },
+    "refresh_interval": "30s"
+  },
+  "alerts": [
+    {
+      "id": "high-clarification-rate",
+      "title": "High Clarification Rate",
+      "condition": {
+        "field": "routing.agent",
+        "operator": "equals",
+        "value": "CLARIFY",
+        "percentage": "> 5%",
+        "timeWindow": "5m"
+      },
+      "severity": "warning",
+      "action": {
+        "type": "notification",
+        "message": "Clarification rate exceeds 5% - routing cascade may need tuning"
+      }
+    },
+    {
+      "id": "high-latency-p95",
+      "title": "High P95 Latency",
+      "condition": {
+        "field": "routing.latency_ms",
+        "operator": "percentile",
+        "percentile": 95,
+        "value": "> 300",
+        "timeWindow": "5m"
+      },
+      "severity": "warning",
+      "action": {
+        "type": "notification",
+        "message": "P95 routing latency exceeds 300ms - investigate cascade performance"
+      }
+    },
+    {
+      "id": "cascade-layer-imbalance",
+      "title": "Cascade Layer Imbalance",
+      "condition": {
+        "field": "routing.method",
+        "operator": "percentage",
+        "value": "keyword",
+        "threshold": "< 20% or > 60%",
+        "timeWindow": "15m"
+      },
+      "severity": "info",
+      "action": {
+        "type": "notification",
+        "message": "Keyword layer handling unusual percentage of queries - check routing patterns"
+      }
+    }
+  ],
+  "setup_instructions": {
+    "1": "Import this dashboard JSON into Kibana",
+    "2": "Configure Elastic APM integration in .env file",
+    "3": "Set ELASTIC_APM_URL and ELASTIC_APM_TOKEN environment variables",
+    "4": "Enable telemetry: export ROUTING_CASCADE_ENABLED=true",
+    "5": "Dashboard will auto-populate as routing decisions are made"
+  }
+}
