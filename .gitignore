@@ -74,3 +74,9 @@ coordination/masters/*/metrics/
 coordination/tasks/pending/
 coordination/worker-specs/zombie/
 agents/logs/zombie-workers/
+
+# Routing cascade runtime files
+coordination/logs/
+llm-mesh/training-data/*.jsonl
+llm-mesh/training-data/*.py
+llm-mesh/models/*.pt
