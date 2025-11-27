@@ -60,17 +60,18 @@ const { sanitizeFilename, safeJoin, validateId, validateDateString } = require('
 const { ComplianceEngine, MetricsCollector } = require('../../lib/governance/compliance');
 
 // API Routes
-const usersRouter = require('./routes/users');
-const tracesRouter = require('./routes/traces');
-const complianceRouter = require('./routes/compliance');
-const llmCostsRouter = require('./routes/llm-costs');
-const workflowsRouter = require('./routes/workflows');
-const decisionsRouter = require('./routes/decisions');
-const llmHealthRouter = require('./routes/llm-health');
-const promptsRouter = require('../routes/prompts');
-const slaRouter = require('./routes/sla');
-const queueRouter = require('./routes/queue');
-const securityRouter = require('./routes/security');
+// TODO: Create these route files if needed
+// const usersRouter = require('./routes/users');
+// const tracesRouter = require('./routes/traces');
+// const complianceRouter = require('./routes/compliance');
+// const llmCostsRouter = require('./routes/llm-costs');
+// const workflowsRouter = require('./routes/workflows');
+// const decisionsRouter = require('./routes/decisions');
+// const llmHealthRouter = require('./routes/llm-health');
+// const promptsRouter = require('../routes/prompts');
+// const slaRouter = require('./routes/sla');
+// const queueRouter = require('./routes/queue');
+// const securityRouter = require('./routes/security');
 
 const app = express();
 const PORT = process.env.API_PORT || process.env.DASHBOARD_PORT || 5001;
@@ -134,17 +135,18 @@ app.use('/api', apiLimiter);
 app.use('/api', authMiddleware);
 
 // Mount API routers
-app.use('/api/users', usersRouter);
-app.use('/api/traces', tracesRouter);
-app.use('/api/compliance', complianceRouter);
-app.use('/api/llm-costs', llmCostsRouter);
-app.use('/api/v1/workflows', workflowsRouter);
-app.use('/api/decisions', decisionsRouter);
-app.use('/api/v1/llm', llmHealthRouter);
-app.use('/api/v1/prompts', promptsRouter);
-app.use('/api/v1/sla', slaRouter);
-app.use('/api/v1/queue', queueRouter);
-app.use('/api/v1/security', securityRouter);
+// TODO: Uncomment when route files are created
+// app.use('/api/users', usersRouter);
+// app.use('/api/traces', tracesRouter);
+// app.use('/api/compliance', complianceRouter);
+// app.use('/api/llm-costs', llmCostsRouter);
+// app.use('/api/v1/workflows', workflowsRouter);
+// app.use('/api/decisions', decisionsRouter);
+// app.use('/api/v1/llm', llmHealthRouter);
+// app.use('/api/v1/prompts', promptsRouter);
+// app.use('/api/v1/sla', slaRouter);
+// app.use('/api/v1/queue', queueRouter);
+// app.use('/api/v1/security', securityRouter);
 
 // Paths to coordination files
 const CORTEX_HOME = process.env.CORTEX_HOME || path.join(__dirname, '../..');
@@ -6810,22 +6812,23 @@ function calculateSecurityScore(findings) {
 // Error Handler Middleware with APM Integration
 // ============================================================================
 
-const { captureException } = require('./utils/apm-events');
+// TODO: Create utils/apm-events.js if APM integration needed
+// const { captureException } = require('./utils/apm-events');
 
 // Global error handler (must be last middleware)
 app.use((err, req, res, next) => {
-  // Capture exception in APM with context
-  captureException(err, {
-    operation: `${req.method} ${req.path}`,
-    metadata: {
-      request: {
-        method: req.method,
-        path: req.path,
-        query: req.query,
-        ip: req.ip
-      }
-    }
-  });
+  // TODO: Re-enable APM capture when apm-events module is available
+  // captureException(err, {
+  //   operation: `${req.method} ${req.path}`,
+  //   metadata: {
+  //     request: {
+  //       method: req.method,
+  //       path: req.path,
+  //       query: req.query,
+  //       ip: req.ip
+  //     }
+  //   }
+  // });
 
   // Log error
   console.error('Error:', err);

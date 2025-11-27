@@ -1,6 +1,15 @@
 #!/bin/bash
 # Governance Enforcement Layer
 # Provides pre-flight validation, hard budget limits, and audit trails
+#
+# CRITICAL POLICIES:
+# 1. Port Assignment: NEVER assign ports or create portals without explicit approval
+#    - Cortex must NEVER automatically assign ports (conflicts with other apps)
+#    - All port changes require human approval via critical task approval
+#    - Default Cortex API port: 9000 (do not change without permission)
+# 2. Token Budget: Hard limit at 95% of daily budget
+# 3. Dangerous Operations: Block destructive operations without approval
+# 4. Critical Tasks: Require human approval within 1-hour window
 
 set -euo pipefail
 
@@ -103,6 +112,13 @@ detect_dangerous_operations() {
         "destroy"
         "terminate"
         "shutdown"
+        "assign port"
+        "create portal"
+        "port:"
+        "listen on"
+        "app.listen"
+        "start server"
+        "expose port"
     )
     
     local detected=()
