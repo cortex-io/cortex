@@ -18,6 +18,7 @@ echo "━━━━━━━━━━━━━━━━━━━━━━━━�
 echo ""
 
 # Service definitions
+# Note: PM daemon functionality has been consolidated into worker-daemon
 SERVICE_NAMES=(
     "worker-daemon"
     "health-monitor"
@@ -25,7 +26,6 @@ SERVICE_NAMES=(
     "orchestrator"
     "coordinator"
     "development-master"
-    "pm-daemon"
 )
 
 SERVICE_SCRIPTS=(
@@ -35,7 +35,6 @@ SERVICE_SCRIPTS=(
     "task-orchestrator-daemon.sh"
     "run-coordinator-master.sh"
     "run-development-master.sh"
-    "pm-daemon.sh"
 )
 
 # Check if process is running

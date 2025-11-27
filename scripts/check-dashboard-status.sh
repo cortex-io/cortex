@@ -27,7 +27,6 @@ check_process "Worker Daemon" "worker-daemon.sh"
 check_process "Health Monitor" "health-monitor-daemon.sh"
 check_process "Metrics Snapshot" "metrics-snapshot-daemon.sh"
 check_process "Task Orchestrator" "task-orchestrator-daemon.sh"
-check_process "PM Daemon" "pm-daemon.sh"
 check_process "Dashboard Server" "node.*dashboard/server"
 
 echo ""
