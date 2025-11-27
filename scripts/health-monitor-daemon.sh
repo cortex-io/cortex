@@ -13,8 +13,9 @@ HEALTH_MONITOR_LOG="agents/logs/system/health-monitor.log"
 PID_FILE="/tmp/cortex-health-monitor.pid"
 
 # Component heartbeat files
-PM_DAEMON_STATE="coordination/pm-state.json"  # PM daemon uses pm-state.json for heartbeats
-PM_AGENT_HEARTBEAT="coordination/pm-agent-heartbeat.json"
+# Note: PM daemon has been consolidated into worker-daemon
+# PM state is now maintained at pm-state.json by worker-daemon
+PM_STATE="coordination/pm-state.json"  # PM subsystem within worker-daemon maintains this
 COORDINATOR_HEARTBEAT="coordination/coordinator-heartbeat.json"
 
 # Ensure directories exist
@@ -205,46 +206,44 @@ spawn_pm_agent() {
         "PM Daemon heartbeat stale, PM Agent spawned as backup"
 }
 
-# Check PM health
+# Check PM health (now part of worker-daemon)
 check_pm_health() {
     local age
 
-    # First check if PM daemon process is actually running via PID file
-    local pm_daemon_pid_file="/tmp/cortex-pm-daemon.pid"
-    local pm_daemon_running=false
+    # PM daemon functionality has been consolidated into worker-daemon
+    # Check if worker-daemon process is running via PID file
+    local worker_daemon_pid_file="/tmp/cortex-worker-daemon.pid"
+    local worker_daemon_running=false
 
-    if [ -f "$pm_daemon_pid_file" ]; then
-        local pm_pid
-        pm_pid=$(cat "$pm_daemon_pid_file" 2>/dev/null || echo "")
-        if [ -n "$pm_pid" ] && kill -0 "$pm_pid" 2>/dev/null; then
-            pm_daemon_running=true
-            log "PM Daemon process confirmed running (PID: $pm_pid)"
+    if [ -f "$worker_daemon_pid_file" ]; then
+        local worker_pid
+        worker_pid=$(cat "$worker_daemon_pid_file" 2>/dev/null || echo "")
+        if [ -n "$worker_pid" ] && kill -0 "$worker_pid" 2>/dev/null; then
+            worker_daemon_running=true
+            log "Worker daemon (with PM subsystem) confirmed running (PID: $worker_pid)"
         fi
     fi
 
-    # Check PM state file for freshness (uses last_loop timestamp)
-    if ! age=$(check_pm_state "$PM_DAEMON_STATE" "$HEARTBEAT_THRESHOLD"); then
-        log "WARNING: PM Daemon state is stale (age: ${age}s, threshold: ${HEARTBEAT_THRESHOLD}s)"
+    # Check PM state file for freshness (now maintained by worker-daemon)
+    if ! age=$(check_pm_state "$PM_STATE" "$HEARTBEAT_THRESHOLD"); then
+        log "WARNING: PM state is stale (age: ${age}s, threshold: ${HEARTBEAT_THRESHOLD}s)"
 
         # Only create alert if process is actually NOT running
-        if [ "$pm_daemon_running" = false ]; then
-            log "PM Daemon process NOT running, taking action"
-
-            # Check if PM Agent can cover
-            if check_heartbeat "$PM_AGENT_HEARTBEAT" "$HEARTBEAT_THRESHOLD"; then
-                log "PM Agent is healthy, no action needed"
-            else
-                log "PM Agent also unhealthy, spawning backup"
-                spawn_pm_agent
-            fi
+        if [ "$worker_daemon_running" = false ]; then
+            log "Worker daemon (PM subsystem) NOT running, creating alert"
+            create_health_alert \
+                "alert-pm-daemon-down" \
+                "pm_subsystem_failure" \
+                "high" \
+                "Worker daemon (with PM subsystem) not responding"
         else
-            log "PM Daemon process IS running - state file may be outdated but daemon is healthy"
+            log "Worker daemon process IS running - PM state may be updating slowly"
             # Resolve any false positive alerts
             resolve_health_alert "alert-pm-daemon-down" 2>/dev/null || true
         fi
     else
-        # PM Daemon healthy, resolve any alerts
-        log "PM Daemon healthy (state fresh, process running)"
+        # PM subsystem healthy, resolve any alerts
+        log "PM subsystem healthy (state fresh, worker-daemon running)"
         resolve_health_alert "alert-pm-daemon-down" 2>/dev/null || true
     fi
 }

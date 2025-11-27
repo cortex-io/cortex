@@ -17,10 +17,10 @@ PID_FILE="/tmp/${DAEMON_NAME}.pid"
 EVENTS_FILE="${CORTEX_HOME}/coordination/events/daemon-supervisor-events.jsonl"
 
 # Critical daemons to monitor (name:script pairs)
+# Note: PM daemon functionality has been consolidated into worker-daemon
 CRITICAL_DAEMONS=(
     "worker-daemon:worker-daemon.sh"
     "coordinator-daemon:coordinator-daemon.sh"
-    "pm-daemon:pm-daemon.sh"
     "heartbeat-monitor:daemons/heartbeat-monitor-daemon.sh"
     "handoff-processor:handoff-processor-daemon.sh"
 )
