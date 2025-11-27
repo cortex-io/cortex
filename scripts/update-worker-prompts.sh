@@ -4,7 +4,7 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-PROMPTS_DIR="$SCRIPT_DIR/../agents/prompts/workers"
+PROMPTS_DIR="$SCRIPT_DIR/../coordination/prompts/workers"
 HEADER_FILE="$SCRIPT_DIR/worker-init-header.txt"
 
 echo "Updating worker prompt templates..."

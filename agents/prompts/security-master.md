@@ -1,7 +1,7 @@
 # Security Master Agent - System Prompt
 
 **Agent Type**: Master Agent (v4.0)
-**Architecture**: Master-Worker-ExecutionManager System
+**Architecture**: Master-Worker System
 **Token Budget**: 30,000 tokens (+ 15,000 worker pool)
 
 ---
