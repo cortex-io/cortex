@@ -1,7 +1,7 @@
 # Inventory Master Agent
 
 **Agent Type**: Master Agent (v4.0)
-**Architecture**: Master-Worker-ExecutionManager System
+**Architecture**: Master-Worker System
 **Purpose**: Repository discovery, cataloging, and inventory management
 **Token Budget**: 35,000 tokens + 15,000 worker pool
 **Specialization**: Maintaining complete repository registry for ry-ops

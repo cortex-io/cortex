@@ -402,7 +402,7 @@ cat > "$WORKER_SPEC_FILE" <<EOF
   },
   "tool_assignment": $TOOL_ASSIGNMENT,
   "deliverables": [],
-  "prompt_template": "agents/prompts/workers/${WORKER_TYPE}-v2.md",
+  "prompt_template": "coordination/prompts/workers/${WORKER_TYPE}.md",
   "execution": {
     "started_at": null,
     "completed_at": null,
@@ -533,7 +533,7 @@ export REVIEW_POLICY_PATH="$REVIEW_POLICY_FILE"
 # Display next steps
 print_info "Next Steps:"
 echo "1. Start Claude Code session with worker prompt (Phase 5.1: AGENTS.md format):"
-echo "   claude-code --prompt-file agents/prompts/workers/${WORKER_TYPE}-v2.md"
+echo "   claude-code --prompt-file coordination/prompts/workers/${WORKER_TYPE}.md"
 echo ""
 echo "2. Worker will read its specification from:"
 echo "   $WORKER_SPEC_FILE"
