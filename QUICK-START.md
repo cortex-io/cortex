@@ -51,7 +51,8 @@ PYTORCH_ROUTING_ENABLED=false
 cd api-server
 npm start
 
-# Dashboard runs at: http://localhost:3000
+# Dashboard runs at: http://localhost:9000
+# Note: Port changed from 5001/3000 to 9000 to avoid conflicts
 ```
 
 ## 4. Run Your First Task
@@ -62,7 +63,7 @@ Create a simple test task:
 # The system should be watching the task queue
 # Add a task to coordination/task-queue.json or use the API
 
-curl -X POST http://localhost:3000/api/tasks \
+curl -X POST http://localhost:9000/api/tasks \
   -H "x-api-key: your-dashboard-api-key" \
   -H "Content-Type: application/json" \
   -d '{
@@ -75,7 +76,7 @@ curl -X POST http://localhost:3000/api/tasks \
 
 ## 5. Monitor Progress
 
-Open http://localhost:3000 in your browser to see:
+Open http://localhost:9000 in your browser to see:
 - Task queue status
 - Worker pool
 - System health
@@ -91,11 +92,13 @@ Open http://localhost:3000 in your browser to see:
 
 ### Dashboard won't start
 ```bash
-# Check if port 3000 is in use
-lsof -i :3000
+# Check if port 9000 is in use
+lsof -i :9000
 
 # Kill if needed
 kill -9 <PID>
+
+# See PORT-POLICY.md for port assignment rules
 ```
 
 ### Workers not spawning
