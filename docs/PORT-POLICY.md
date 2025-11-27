@@ -4,6 +4,8 @@
 
 **Cortex must NEVER assign ports or create portals without explicit human approval.**
 
+📋 **See [PORTS-REGISTRY.md](./PORTS-REGISTRY.md) for the complete list of all Cortex ports.**
+
 ## Why This Policy Exists
 
 Port conflicts with other applications can cause:
@@ -45,6 +47,7 @@ The governance layer (`scripts/lib/governance-enforcement.sh`) blocks any task t
    ```
 
 2. **Document the Change**:
+   - **REQUIRED**: Update `docs/PORTS-REGISTRY.md` (add to Active Ports and Change History)
    - Update this file with the new port assignment
    - Update `.env` file
    - Update any documentation referencing the old port
