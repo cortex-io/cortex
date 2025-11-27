@@ -1628,6 +1628,135 @@ app.get('/api/decisions/:taskId/explain', async (req, res) => {
 });
 
 /**
+ * GET /api/ml-validation - Get ML validation results
+ * Shows A/B test results, RAG effectiveness, PyTorch performance
+ */
+app.get('/api/ml-validation', async (req, res) => {
+  try {
+    const validationDir = path.join(process.cwd(), '../llm-mesh/validation');
+    const reportsDir = path.join(validationDir, 'reports');
+    const resultsDir = path.join(validationDir, 'results');
+
+    // Get latest A/B test summary
+    let latestSummary = null;
+    if (fsSync.existsSync(reportsDir)) {
+      const summaryFiles = fsSync.readdirSync(reportsDir)
+        .filter(f => f.startsWith('ab-test-summary-'))
+        .sort()
+        .reverse();
+
+      if (summaryFiles.length > 0) {
+        const summaryPath = path.join(reportsDir, summaryFiles[0]);
+        latestSummary = JSON.parse(fsSync.readFileSync(summaryPath, 'utf8'));
+      }
+    }
+
+    // Get recent test results
+    let recentResults = [];
+    if (fsSync.existsSync(resultsDir)) {
+      const resultFiles = fsSync.readdirSync(resultsDir)
+        .filter(f => f.startsWith('ab-test-'))
+        .sort()
+        .reverse()
+        .slice(0, 5);
+
+      for (const file of resultFiles) {
+        const filePath = path.join(resultsDir, file);
+        const content = fsSync.readFileSync(filePath, 'utf8');
+        const lines = content.trim().split('\n');
+
+        const results = lines.map(line => {
+          try {
+            return JSON.parse(line);
+          } catch (e) {
+            return null;
+          }
+        }).filter(r => r !== null);
+
+        recentResults.push({
+          file: file,
+          timestamp: file.replace('ab-test-', '').replace('.jsonl', ''),
+          test_count: results.length / 2, // Each test runs twice (keyword + semantic)
+          results: results
+        });
+      }
+    }
+
+    // Build response
+    const response = {
+      latest_summary: latestSummary,
+      recent_test_runs: recentResults.map(r => ({
+        file: r.file,
+        timestamp: r.timestamp,
+        test_count: r.test_count
+      })),
+      recommendations: latestSummary ? {
+        semantic_routing: latestSummary.winner === 'semantic'
+          ? 'Keep enabled - shows improvement'
+          : latestSummary.winner === 'keyword'
+          ? 'Consider disabling - degrades performance'
+          : 'No clear benefit - consider disabling to reduce complexity',
+        improvement_percentage: (latestSummary.improvement * 100).toFixed(2) + '%'
+      } : null,
+      validation_available: latestSummary !== null
+    };
+
+    res.json(response);
+  } catch (error) {
+    console.error('[ML Validation API] Error:', error);
+    res.status(500).json({ error: 'Failed to load validation results' });
+  }
+});
+
+/**
+ * POST /api/ml-validation/run - Trigger ML validation
+ */
+app.post('/api/ml-validation/run', async (req, res) => {
+  try {
+    const validatorScript = path.join(process.cwd(), '../llm-mesh/validation/ml-validator.sh');
+
+    if (!fsSync.existsSync(validatorScript)) {
+      return res.status(404).json({ error: 'ML validator script not found' });
+    }
+
+    // Run validation in background
+    const { spawn: spawnProc } = require('child_process');
+    const validator = spawnProc('bash', [validatorScript], {
+      cwd: path.dirname(validatorScript),
+      detached: false
+    });
+
+    let output = '';
+    let errorOutput = '';
+
+    validator.stdout.on('data', (data) => {
+      output += data.toString();
+    });
+
+    validator.stderr.on('data', (data) => {
+      errorOutput += data.toString();
+    });
+
+    validator.on('close', (code) => {
+      if (code === 0) {
+        console.log('[ML Validation] Completed successfully');
+      } else {
+        console.error('[ML Validation] Failed with code:', code);
+      }
+    });
+
+    res.json({
+      status: 'started',
+      message: 'ML validation running in background',
+      check_results_at: '/api/ml-validation'
+    });
+  } catch (error) {
+    console.error('[ML Validation API] Error starting validation:', error);
+    res.status(500).json({ error: 'Failed to start validation' });
+  }
+});
+
+/**
  * GET /api/activity-feed
  * Get activity feed for last 24 hours, grouped by hour
  */
