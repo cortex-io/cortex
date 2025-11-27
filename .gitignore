@@ -24,6 +24,19 @@ __pycache__/
 .venv/
 venv/
 
+# Test coverage reports
+coverage/
+.nyc_output/
+*.lcov
+
+# Docker (not using containerization)
+Dockerfile
+docker-compose*.yml
+.dockerignore
+
+# Cloned repositories
+repos/
+
 # Logs - keep directory structure but ignore large log files
 # (We want to commit daily summaries but not huge debug logs)
 *.log
