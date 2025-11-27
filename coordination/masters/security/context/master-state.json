@@ -225,14 +225,24 @@
       "status": "active"
     }
   ],
-  "completed_tasks": 1,
+  "completed_tasks": 2,
   "security_metrics": {
-    "vulnerabilities_found": 1,
-    "vulnerabilities_fixed": 0,
+    "vulnerabilities_found": 5,
+    "vulnerabilities_fixed": 4,
     "critical_count": 0,
-    "high_count": 0,
-    "last_scan": "2025-11-19T13:47:00Z"
+    "high_count": 3,
+    "medium_count": 0,
+    "low_count": 1,
+    "last_scan": "2025-11-26T18:00:00Z",
+    "repositories_scanned": ["ry-ops/cara", "ry-ops/DriveIQ"],
+    "remediation_success_rate": 1.0,
+    "sla_compliance": {
+      "critical": "100%",
+      "high": "100%",
+      "medium": "N/A",
+      "low": "100%"
+    }
   },
-  "last_run": "2025-11-19T13:47:00Z",
-  "last_started": "2025-11-19T07:45:08-0600"
+  "last_run": "2025-11-26T18:00:00Z",
+  "last_started": "2025-11-26T18:00:00Z"
 }

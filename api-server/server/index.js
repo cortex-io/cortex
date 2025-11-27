@@ -4,19 +4,14 @@
  * Cortex API Server
  * Real-time metrics and monitoring for the master-worker system
  *
- * Security Features (v2.0):
+ * Security Features:
  * - API key authentication
  * - Rate limiting
  * - Input validation
  * - Command injection protection
  * - Path traversal protection
  * - CORS restrictions
- * - Elastic APM observability (v3.0)
  */
-
-// CRITICAL: APM must be initialized BEFORE any other requires
-// This ensures full instrumentation of all modules
-const apm = require('../apm');
 
 // Load environment variables
 require('dotenv').config();

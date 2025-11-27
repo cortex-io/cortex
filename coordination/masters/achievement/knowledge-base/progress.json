@@ -1,33 +1,42 @@
 {
-  "username": "ry-ops",
-  "timestamp": "2025-11-25T21:03:40.453Z",
+  "timestamp": "2025-11-27T13:15:47.964Z",
   "achievements": {
     "pair_extraordinaire": {
       "achievement_id": "pair_extraordinaire",
       "count": 0,
-      "error": "GitHub API error (422): {\"message\":\"Validation Failed\",\"errors\":[{\"message\":\"The listed users cannot be searched either because the users do not exist or you do not have permission to view the users.\",\"resource\":\"Search\",\"field\":\"q\",\"code\":\"invalid\"}],\"documentation_url\":\"https://docs.github.com/v3/search/\",\"status\":\"422\"}"
+      "current_tier": "none",
+      "progress": {
+        "current": 0,
+        "next_tier": "default",
+        "next_requirement": 1,
+        "needed": 1,
+        "percentage": 0
+      }
     },
     "pull_shark": {
       "achievement_id": "pull_shark",
       "count": 0,
-      "error": "GitHub API error (422): {\"message\":\"Validation Failed\",\"errors\":[{\"message\":\"The listed users cannot be searched either because the users do not exist or you do not have permission to view the users.\",\"resource\":\"Search\",\"field\":\"q\",\"code\":\"invalid\"}],\"documentation_url\":\"https://docs.github.com/v3/search/\",\"status\":\"422\"}"
+      "current_tier": "none",
+      "progress": {
+        "current": 0,
+        "next_tier": "bronze",
+        "next_requirement": 2,
+        "needed": 2,
+        "percentage": 0
+      }
     },
     "starstruck": {
       "achievement_id": "starstruck",
-      "count": 2,
+      "count": 0,
       "current_tier": "none",
       "progress": {
-        "current": 2,
+        "current": 0,
         "next_tier": "bronze",
         "next_requirement": 16,
-        "needed": 14,
-        "percentage": 12
+        "needed": 16,
+        "percentage": 0
       },
-      "top_repo": {
-        "name": "ry-ops/unifi-mcp-server",
-        "stars": 2,
-        "url": "https://github.com/ry-ops/unifi-mcp-server"
-      }
+      "top_repo": null
     },
     "galaxy_brain": {
       "achievement_id": "galaxy_brain",
@@ -37,20 +46,40 @@
         "current": 0,
         "next_tier": "bronze",
         "next_requirement": 2,
+        "needed": 2,
         "percentage": 0
       },
-      "note": "Requires GraphQL API implementation for discussions"
+      "unlocked": false
     },
     "quickdraw": {
       "achievement_id": "quickdraw",
-      "count": 3,
-      "unlocked": true,
-      "fastest_close": "Data available"
+      "count": 0,
+      "unlocked": false,
+      "fastest_close": "N/A"
+    },
+    "yolo": {
+      "achievement_id": "yolo",
+      "count": 0,
+      "unlocked": false,
+      "current_tier": "none",
+      "progress": {
+        "current": 0,
+        "next_tier": "single",
+        "next_requirement": 1,
+        "needed": 1,
+        "percentage": 0
+      }
+    },
+    "public_sponsor": {
+      "achievement_id": "public_sponsor",
+      "count": 0,
+      "unlocked": false,
+      "note": "Requires GraphQL API with sponsorship access. Check manually at github.com/sponsors"
     }
   },
   "summary": {
-    "total_achievements": 5,
-    "unlocked": 2,
-    "in_progress": 1
+    "total_achievements": 7,
+    "unlocked": 0,
+    "in_progress": 0
   }
 }
