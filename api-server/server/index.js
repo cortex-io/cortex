@@ -1401,6 +1401,233 @@ app.get('/api/events', async (req, res) => {
 });
 
 /**
+ * GET /api/decisions - List recent routing decisions
+ * Decision Explainability: Makes agent decisions transparent
+ */
+app.get('/api/decisions', async (req, res) => {
+  try {
+    const limit = parseInt(req.query.limit) || 50;
+    const offset = parseInt(req.query.offset) || 0;
+
+    const ROUTING_LOG = path.join(process.cwd(), '../coordination/masters/coordinator/knowledge-base/routing-decisions.jsonl');
+
+    if (!fsSync.existsSync(ROUTING_LOG)) {
+      return res.json({ decisions: [], total: 0 });
+    }
+
+    const content = fsSync.readFileSync(ROUTING_LOG, 'utf8');
+    const lines = content.trim().split('\n').filter(line => line.trim());
+
+    const decisions = [];
+    for (let i = lines.length - 1; i >= 0 && decisions.length < limit + offset; i--) {
+      try {
+        const decision = JSON.parse(lines[i]);
+        decisions.push({
+          task_id: decision.task_id,
+          timestamp: decision.timestamp,
+          expert: decision.decision.primary_expert,
+          confidence: decision.decision.primary_confidence,
+          strategy: decision.decision.strategy,
+          routing_method: decision.routing_method || 'keyword'
+        });
+      } catch (parseError) {
+        continue;
+      }
+    }
+
+    const paginated = decisions.slice(offset, offset + limit);
+
+    res.json({
+      decisions: paginated,
+      total: lines.length,
+      limit,
+      offset
+    });
+  } catch (error) {
+    console.error('[Decisions API] Error listing decisions:', error);
+    res.status(500).json({ error: 'Failed to list decisions' });
+  }
+});
+
+/**
+ * GET /api/decisions/:taskId/explain - Get detailed reasoning for a routing decision
+ * Decision Explainability: Shows WHY Cortex chose a particular master
+ */
+app.get('/api/decisions/:taskId/explain', async (req, res) => {
+  try {
+    const taskId = req.params.taskId;
+
+    const ROUTING_LOG = path.join(process.cwd(), '../coordination/masters/coordinator/knowledge-base/routing-decisions.jsonl');
+    const ROUTING_PATTERNS = path.join(process.cwd(), '../coordination/masters/coordinator/knowledge-base/routing-patterns.json');
+
+    // Find the routing decision
+    let decision = null;
+    if (fsSync.existsSync(ROUTING_LOG)) {
+      const content = fsSync.readFileSync(ROUTING_LOG, 'utf8');
+      const lines = content.trim().split('\n').filter(line => line.trim());
+
+      for (let i = lines.length - 1; i >= 0; i--) {
+        try {
+          const d = JSON.parse(lines[i]);
+          if (d.task_id === taskId) {
+            decision = d;
+            break;
+          }
+        } catch (parseError) {
+          continue;
+        }
+      }
+    }
+
+    if (!decision) {
+      return res.status(404).json({ error: 'Decision not found for task ID: ' + taskId });
+    }
+
+    // Load routing patterns to analyze keywords
+    let patterns = null;
+    if (fsSync.existsSync(ROUTING_PATTERNS)) {
+      patterns = JSON.parse(fsSync.readFileSync(ROUTING_PATTERNS, 'utf8'));
+    }
+
+    // Get task description
+    let taskDescription = 'Unknown';
+    try {
+      const taskQueuePath = path.join(process.cwd(), '../coordination/task-queue.json');
+      if (fsSync.existsSync(taskQueuePath)) {
+        const taskQueue = JSON.parse(fsSync.readFileSync(taskQueuePath, 'utf8'));
+        const task = taskQueue.pending?.find(t => t.id === taskId) ||
+                     taskQueue.in_progress?.find(t => t.id === taskId) ||
+                     taskQueue.completed?.find(t => t.id === taskId);
+        if (task) {
+          taskDescription = task.description || task.title || taskDescription;
+        }
+      }
+    } catch (error) {
+      if (decision.decision?.explanation) {
+        taskDescription = decision.decision.explanation;
+      }
+    }
+
+    // Analyze keyword matches for each expert
+    const analyzeKeywords = (desc, expert) => {
+      if (!patterns || !patterns.experts || !patterns.experts[expert]) {
+        return { matched: [], total: 0, weight: 0 };
+      }
+
+      const expertPatterns = patterns.experts[expert];
+      const descLower = desc.toLowerCase();
+      const matched = [];
+      let totalWeight = 0;
+
+      if (expertPatterns.keywords) {
+        for (const keyword of expertPatterns.keywords) {
+          if (descLower.includes(keyword.toLowerCase())) {
+            const weight = expertPatterns.weights?.[keyword] || 1.0;
+            matched.push({ keyword, category: 'primary', weight });
+            totalWeight += weight;
+          }
+        }
+      }
+
+      return { matched, total: matched.length, weight: totalWeight };
+    };
+
+    // Build reasoning
+    const reasoning = {
+      task_id: decision.task_id,
+      timestamp: decision.timestamp,
+      task_description: taskDescription,
+      routing_method: decision.routing_method || 'keyword',
+      decision: {
+        expert: decision.decision.primary_expert,
+        confidence: decision.decision.primary_confidence,
+        strategy: decision.decision.strategy
+      },
+      expert_analysis: {},
+      reasoning_trail: [],
+      alternatives: []
+    };
+
+    // Analyze each expert
+    const experts = ['development', 'security', 'inventory'];
+    for (const expert of experts) {
+      const score = decision.decision.scores[expert] || 0;
+      const keywordAnalysis = analyzeKeywords(taskDescription, expert);
+
+      reasoning.expert_analysis[expert] = {
+        score: score,
+        score_percentage: Math.round(score * 100),
+        keywords_matched: keywordAnalysis.matched,
+        total_matches: keywordAnalysis.total,
+        total_weight: keywordAnalysis.weight.toFixed(2),
+        is_primary: expert === decision.decision.primary_expert
+      };
+    }
+
+    // Build reasoning trail
+    const primaryExpert = decision.decision.primary_expert;
+    const primaryAnalysis = reasoning.expert_analysis[primaryExpert];
+
+    reasoning.reasoning_trail.push({
+      step: 1,
+      action: 'Keyword Analysis',
+      description: 'Analyzed task description for expert-specific keywords',
+      confidence_impact: 0
+    });
+
+    if (primaryAnalysis.keywords_matched.length > 0) {
+      const topKeywords = primaryAnalysis.keywords_matched
+        .sort((a, b) => b.weight - a.weight)
+        .slice(0, 3)
+        .map(k => k.keyword);
+
+      reasoning.reasoning_trail.push({
+        step: 2,
+        action: 'Primary Keywords Detected',
+        description: `Found ${primaryAnalysis.total_matches} ${primaryExpert} keywords: ${topKeywords.join(', ')}`,
+        confidence_impact: primaryAnalysis.score
+      });
+    }
+
+    reasoning.reasoning_trail.push({
+      step: 3,
+      action: 'Confidence Scoring',
+      description: `development: ${(decision.decision.scores.development * 100).toFixed(1)}%, security: ${(decision.decision.scores.security * 100).toFixed(1)}%, inventory: ${(decision.decision.scores.inventory * 100).toFixed(1)}%`,
+      confidence_impact: decision.decision.primary_confidence
+    });
+
+    reasoning.reasoning_trail.push({
+      step: 4,
+      action: 'Final Decision',
+      description: `Routed to ${primaryExpert} master with ${(decision.decision.primary_confidence * 100).toFixed(1)}% confidence`,
+      confidence_impact: decision.decision.primary_confidence
+    });
+
+    // Add alternatives
+    for (const expert of experts) {
+      if (expert !== primaryExpert) {
+        const score = decision.decision.scores[expert] || 0;
+        if (score > 0) {
+          const analysis = reasoning.expert_analysis[expert];
+          reasoning.alternatives.push({
+            expert: expert,
+            confidence: score,
+            confidence_percentage: Math.round(score * 100),
+            keywords_matched: analysis.total_matches,
+            reason_not_chosen: `Lower confidence (${Math.round(score * 100)}% vs ${Math.round(decision.decision.primary_confidence * 100)}%)`
+          });
+        }
+      }
+    }
+
+    res.json(reasoning);
+  } catch (error) {
+    console.error('[Decisions API] Error explaining decision:', error);
+    res.status(500).json({ error: 'Failed to explain decision' });
+  }
+});
+
+/**
  * GET /api/activity-feed
  * Get activity feed for last 24 hours, grouped by hour
  */
