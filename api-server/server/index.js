@@ -855,6 +855,57 @@ app.get('/api/metrics/history', async (req, res) => {
 });
 
 /**
+ * GET /api/governance/enforcement - Get governance enforcement statistics
+ */
+app.get('/api/governance/enforcement', async (req, res) => {
+  try {
+    const overridesLog = path.join(process.cwd(), '../coordination/governance/overrides.jsonl');
+
+    let stats = {
+      total_blocks: 0,
+      total_overrides: 0,
+      enforcement_rate: 0,
+      recent_blocks: [],
+      recent_overrides: []
+    };
+
+    if (fsSync.existsSync(overridesLog)) {
+      const content = fsSync.readFileSync(overridesLog, 'utf8');
+      const lines = content.trim().split('\n').filter(l => l.trim());
+
+      const events = lines.map(line => {
+        try {
+          return JSON.parse(line);
+        } catch (e) {
+          return null;
+        }
+      }).filter(e => e !== null);
+
+      stats.total_blocks = events.filter(e => e.event === 'task_blocked').length;
+      stats.total_overrides = events.filter(e => e.event === 'governance_override').length;
+      stats.enforcement_rate = stats.total_blocks + stats.total_overrides > 0
+        ? stats.total_blocks / (stats.total_blocks + stats.total_overrides)
+        : 0;
+
+      stats.recent_blocks = events
+        .filter(e => e.event === 'task_blocked')
+        .slice(-10)
+        .reverse();
+
+      stats.recent_overrides = events
+        .filter(e => e.event === 'governance_override')
+        .slice(-10)
+        .reverse();
+    }
+
+    res.json(stats);
+  } catch (error) {
+    console.error('[Governance API] Error:', error);
+    res.status(500).json({ error: 'Failed to load governance stats' });
+  }
+});
+
+/**
  * GET /api/governance/compliance-report
  * Get comprehensive compliance report for all frameworks (GDPR, SOC2, Internal)
  */
