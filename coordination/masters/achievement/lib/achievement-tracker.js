@@ -38,7 +38,7 @@ class AchievementTracker {
   }
 
   /**
-   * Make authenticated GitHub API request
+   * Make authenticated GitHub API request with retry logic
    */
   async githubRequest(endpoint, options = {}) {
     const url = `${this.apiBase}${endpoint}`;
@@ -49,22 +49,56 @@ class AchievementTracker {
       ...options.headers
     };
 
-    try {
-      const response = await fetch(url, {
-        ...options,
-        headers
-      });
+    const maxRetries = 3;
+    let lastError;
 
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`GitHub API error (${response.status}): ${errorText}`);
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      try {
+        const response = await fetch(url, {
+          ...options,
+          headers
+        });
+
+        // Check rate limit
+        const remaining = response.headers.get('x-ratelimit-remaining');
+        if (remaining && parseInt(remaining) < 10) {
+          console.warn(`[Achievement Tracker] Low rate limit: ${remaining} requests remaining`);
+        }
+
+        if (!response.ok) {
+          // Handle rate limiting with exponential backoff
+          if (response.status === 429 || response.status === 403) {
+            const resetTime = response.headers.get('x-ratelimit-reset');
+            if (resetTime && attempt < maxRetries) {
+              const waitTime = Math.min(Math.pow(2, attempt) * 1000, 60000); // Max 1 minute
+              console.warn(`[Achievement Tracker] Rate limited. Waiting ${waitTime}ms before retry ${attempt}/${maxRetries}`);
+              await new Promise(resolve => setTimeout(resolve, waitTime));
+              continue;
+            }
+          }
+
+          // For 404 or 422, don't retry - resource doesn't exist or query is invalid
+          if (response.status === 404 || response.status === 422) {
+            return null; // Return null instead of throwing for missing resources
+          }
+
+          const errorText = await response.text();
+          throw new Error(`GitHub API error (${response.status}): ${errorText}`);
+        }
+
+        return await response.json();
+      } catch (error) {
+        lastError = error;
+        if (attempt < maxRetries) {
+          const waitTime = Math.pow(2, attempt) * 1000;
+          console.warn(`[Achievement Tracker] Request failed, retrying in ${waitTime}ms (${attempt}/${maxRetries})`);
+          await new Promise(resolve => setTimeout(resolve, waitTime));
+        }
       }
-
-      return await response.json();
-    } catch (error) {
-      console.error(`[Achievement Tracker] API request failed for ${endpoint}:`, error.message);
-      throw error;
     }
+
+    console.error(`[Achievement Tracker] API request failed for ${endpoint} after ${maxRetries} attempts:`, lastError.message);
+    return null; // Return null instead of throwing to allow other achievements to continue
   }
 
   /**
@@ -73,25 +107,40 @@ class AchievementTracker {
    */
   async trackPairExtraordinaire() {
     try {
-      // Search for merged PRs with co-authors
-      const query = `author:${this.username}+type:pr+is:merged`;
-      const searchResults = await this.githubRequest(`/search/issues?q=${encodeURIComponent(query)}&per_page=100`);
+      // Get user's repositories first
+      const repos = await this.githubRequest(`/users/${this.username}/repos?per_page=100&sort=updated`);
+
+      if (!repos || !Array.isArray(repos)) {
+        console.warn('[Achievement Tracker] No repositories found for Pair Extraordinaire');
+        return { achievement_id: 'pair_extraordinaire', count: 0 };
+      }
 
       let coauthoredCount = 0;
 
-      // For each PR, check commits for co-authors
-      for (const pr of searchResults.items || []) {
-        const [owner, repo] = pr.repository_url.split('/').slice(-2);
-        const commits = await this.githubRequest(`/repos/${owner}/${repo}/pulls/${pr.number}/commits`);
+      // For each repo, get merged PRs
+      for (const repo of repos) {
+        try {
+          const prs = await this.githubRequest(`/repos/${repo.full_name}/pulls?state=closed&per_page=100`);
 
-        // Check for Co-authored-by in commit messages
-        const hasCoauthor = commits.some(commit => {
-          const message = commit.commit.message || '';
-          return message.includes('Co-authored-by:') || message.includes('Co-Authored-By:');
-        });
+          for (const pr of prs) {
+            // Only count merged PRs by this user
+            if (!pr.merged_at || pr.user.login !== this.username) continue;
 
-        if (hasCoauthor) {
-          coauthoredCount++;
+            // Check commits for co-authors
+            const commits = await this.githubRequest(`/repos/${repo.full_name}/pulls/${pr.number}/commits`);
+
+            const hasCoauthor = commits.some(commit => {
+              const message = commit.commit.message || '';
+              return message.includes('Co-authored-by:') || message.includes('Co-Authored-By:');
+            });
+
+            if (hasCoauthor) {
+              coauthoredCount++;
+            }
+          }
+        } catch (repoError) {
+          // Skip repos we don't have access to
+          continue;
         }
       }
 
@@ -113,10 +162,29 @@ class AchievementTracker {
    */
   async trackPullShark() {
     try {
-      const query = `author:${this.username}+type:pr+is:merged`;
-      const searchResults = await this.githubRequest(`/search/issues?q=${encodeURIComponent(query)}&per_page=100`);
+      // Get user's repositories
+      const repos = await this.githubRequest(`/users/${this.username}/repos?per_page=100&sort=updated`);
 
-      const mergedCount = searchResults.total_count || 0;
+      if (!repos || !Array.isArray(repos)) {
+        console.warn('[Achievement Tracker] No repositories found for Pull Shark');
+        return { achievement_id: 'pull_shark', count: 0 };
+      }
+
+      let mergedCount = 0;
+
+      // For each repo, count merged PRs by this user
+      for (const repo of repos) {
+        try {
+          const prs = await this.githubRequest(`/repos/${repo.full_name}/pulls?state=closed&per_page=100`);
+
+          // Count PRs that were merged by this user
+          const mergedPRs = prs.filter(pr => pr.merged_at && pr.user.login === this.username);
+          mergedCount += mergedPRs.length;
+        } catch (repoError) {
+          // Skip repos we don't have access to
+          continue;
+        }
+      }
 
       return {
         achievement_id: 'pull_shark',
@@ -164,8 +232,63 @@ class AchievementTracker {
    */
   async trackGalaxyBrain() {
     try {
-      // Note: This requires GraphQL API for discussions
-      // For now, return placeholder
+      // GraphQL query to find accepted answers
+      const query = `
+        query($username: String!) {
+          user(login: $username) {
+            repositoryDiscussionComments(first: 100) {
+              nodes {
+                discussion {
+                  answer {
+                    author {
+                      login
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      `;
+
+      const response = await fetch('https://api.github.com/graphql', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${this.githubToken}`,
+          'Content-Type': 'application/json',
+          'User-Agent': 'cortex-achievement-tracker'
+        },
+        body: JSON.stringify({
+          query,
+          variables: { username: this.username }
+        })
+      });
+
+      const data = await response.json();
+
+      if (data.errors) {
+        throw new Error(`GraphQL error: ${JSON.stringify(data.errors)}`);
+      }
+
+      // Count accepted answers
+      let acceptedCount = 0;
+      const comments = data.data?.user?.repositoryDiscussionComments?.nodes || [];
+
+      for (const comment of comments) {
+        if (comment.discussion?.answer?.author?.login === this.username) {
+          acceptedCount++;
+        }
+      }
+
+      return {
+        achievement_id: 'galaxy_brain',
+        count: acceptedCount,
+        current_tier: this.calculateTier('galaxy_brain', acceptedCount),
+        progress: this.calculateProgress('galaxy_brain', acceptedCount),
+        unlocked: acceptedCount >= 2
+      };
+    } catch (error) {
+      console.error('[Achievement Tracker] Error tracking Galaxy Brain:', error.message);
       return {
         achievement_id: 'galaxy_brain',
         count: 0,
@@ -176,11 +299,9 @@ class AchievementTracker {
           next_requirement: 2,
           percentage: 0
         },
-        note: 'Requires GraphQL API implementation for discussions'
+        note: 'GraphQL API error - check token permissions',
+        error: error.message
       };
-    } catch (error) {
-      console.error('[Achievement Tracker] Error tracking Galaxy Brain:', error.message);
-      return { achievement_id: 'galaxy_brain', count: 0, error: error.message };
     }
   }
 
@@ -189,17 +310,26 @@ class AchievementTracker {
    */
   async trackQuickdraw() {
     try {
-      const issues = await this.githubRequest(`/search/issues?q=author:${this.username}+is:closed&per_page=100`);
-
+      const repos = await this.githubRequest(`/users/${this.username}/repos?per_page=100&sort=updated`);
       let quickdrawCount = 0;
 
-      for (const issue of issues.items || []) {
-        const created = new Date(issue.created_at);
-        const closed = new Date(issue.closed_at);
-        const diffMinutes = (closed - created) / 1000 / 60;
+      for (const repo of repos) {
+        try {
+          const issues = await this.githubRequest(`/repos/${repo.full_name}/issues?state=closed&creator=${this.username}&per_page=100`);
 
-        if (diffMinutes <= 5) {
-          quickdrawCount++;
+          for (const issue of issues) {
+            if (!issue.closed_at) continue;
+
+            const created = new Date(issue.created_at);
+            const closed = new Date(issue.closed_at);
+            const diffMinutes = (closed - created) / 1000 / 60;
+
+            if (diffMinutes <= 5) {
+              quickdrawCount++;
+            }
+          }
+        } catch (repoError) {
+          continue;
         }
       }
 
@@ -212,6 +342,69 @@ class AchievementTracker {
     } catch (error) {
       console.error('[Achievement Tracker] Error tracking Quickdraw:', error.message);
       return { achievement_id: 'quickdraw', count: 0, error: error.message };
+    }
+  }
+
+  /**
+   * Track YOLO achievement
+   * Count merged PRs without review
+   */
+  async trackYOLO() {
+    try {
+      const repos = await this.githubRequest(`/users/${this.username}/repos?per_page=100&sort=updated`);
+      let yoloCount = 0;
+
+      for (const repo of repos) {
+        try {
+          const prs = await this.githubRequest(`/repos/${repo.full_name}/pulls?state=closed&per_page=100`);
+
+          for (const pr of prs) {
+            // Only count merged PRs by this user
+            if (!pr.merged_at || pr.user.login !== this.username) continue;
+
+            // Check if PR had any reviews
+            const reviews = await this.githubRequest(`/repos/${repo.full_name}/pulls/${pr.number}/reviews`);
+
+            // YOLO = merged without any reviews
+            if (reviews.length === 0) {
+              yoloCount++;
+            }
+          }
+        } catch (repoError) {
+          continue;
+        }
+      }
+
+      return {
+        achievement_id: 'yolo',
+        count: yoloCount,
+        unlocked: yoloCount >= 1,
+        current_tier: this.calculateTier('yolo', yoloCount),
+        progress: this.calculateProgress('yolo', yoloCount)
+      };
+    } catch (error) {
+      console.error('[Achievement Tracker] Error tracking YOLO:', error.message);
+      return { achievement_id: 'yolo', count: 0, error: error.message };
+    }
+  }
+
+  /**
+   * Track Public Sponsor achievement
+   * Check if user is sponsoring others
+   */
+  async trackPublicSponsor() {
+    try {
+      // Note: Sponsorship data requires GraphQL and may have privacy restrictions
+      // For now, return placeholder
+      return {
+        achievement_id: 'public_sponsor',
+        count: 0,
+        unlocked: false,
+        note: 'Requires GraphQL API with sponsorship access. Check manually at github.com/sponsors'
+      };
+    } catch (error) {
+      console.error('[Achievement Tracker] Error tracking Public Sponsor:', error.message);
+      return { achievement_id: 'public_sponsor', count: 0, error: error.message };
     }
   }
 
@@ -307,6 +500,8 @@ class AchievementTracker {
       results.achievements.starstruck = await this.trackStarstruck();
       results.achievements.galaxy_brain = await this.trackGalaxyBrain();
       results.achievements.quickdraw = await this.trackQuickdraw();
+      results.achievements.yolo = await this.trackYOLO();
+      results.achievements.public_sponsor = await this.trackPublicSponsor();
 
       // Calculate summary
       results.summary = {
