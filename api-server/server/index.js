@@ -125,8 +125,7 @@ app.use(express.json({ limit: '1mb' }));
 // Security: Trust proxy (for rate limiting behind reverse proxy)
 app.set('trust proxy', 1);
 
-// Static files
-app.use(express.static(path.join(__dirname, '../public')));
+// Static files removed in Phase 2, Task 3 (dashboard cleanup)
 
 // Security: Apply rate limiting to all API routes
 app.use('/api', apiLimiter);

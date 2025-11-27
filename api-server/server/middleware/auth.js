@@ -8,8 +8,13 @@
 const crypto = require('crypto');
 
 const authMiddleware = (req, res, next) => {
-  // Skip authentication for health check and static files
-  if (req.path === '/api/health' || !req.path.startsWith('/api/')) {
+  // Skip authentication for health check (public endpoint)
+  if (req.path === '/api/health') {
+    return next();
+  }
+
+  // Skip authentication for non-API paths (removed in Phase 2, Task 3)
+  if (!req.path.startsWith('/api/')) {
     return next();
   }
 
