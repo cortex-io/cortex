@@ -220,3 +220,5 @@
     "severity": "warning"
   }
 }
+{"id":"evt-1764280413-16167","timestamp":"2025-11-27T15:53:33-06:00","type":"system_ERROR","data":"❌ FAIL: Run coordinator master with version validation","source":"automation"}
+{"id":"evt-1764280413-16167","timestamp":"2025-11-27T15:53:33-06:00","type":"system_ERROR","data":"Some tests failed ❌","source":"automation"}

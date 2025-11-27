@@ -404,8 +404,12 @@ get_prompt() {
     fi
 
     if [ -z "$version_id" ] || [ "$version_id" = "null" ]; then
-        # Fall back to template file
-        local template_file="${CORTEX_HOME}/agents/prompts/workers/${prompt_type}.md"
+        # Fall back to template file (v2: coordination/prompts structure)
+        local template_file="${CORTEX_HOME}/coordination/prompts/workers/${prompt_type}.md"
+        if [ ! -f "$template_file" ]; then
+            # Legacy fallback for backward compatibility
+            template_file="${CORTEX_HOME}/agents/prompts/workers/${prompt_type}.md"
+        fi
         if [ -f "$template_file" ]; then
             cat "$template_file"
         else

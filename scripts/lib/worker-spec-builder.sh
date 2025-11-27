@@ -422,7 +422,7 @@ build_worker_spec() {
     "max_retries": $max_retries
   },
   "deliverables": [],
-  "prompt_template": "agents/prompts/workers/${worker_type}.md",
+  "prompt_template": "coordination/prompts/workers/${worker_type}.md",
   "execution": {
     "started_at": null,
     "completed_at": null,

@@ -33,6 +33,7 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$SCRIPT_DIR/lib/logging.sh"
 source "$SCRIPT_DIR/lib/coordination.sh"
+source "$SCRIPT_DIR/lib/read-alias.sh"
 source "$SCRIPT_DIR/lib/em-spawning.sh"
 
 # Master identity
@@ -279,7 +280,7 @@ spawn_security_worker() {
 {
   "worker_id": "$worker_id",
   "worker_type": "$worker_type",
-  "prompt_template": "agents/prompts/workers/scan-worker.md",
+  "prompt_template": "coordination/prompts/workers/scan-worker.md",
   "parent_master": "$MASTER_ID",
   "task_id": "$task_id",
   "task_data": $task_data,
@@ -345,6 +346,15 @@ update_master_state() {
 # Main execution
 main() {
     log_section "Starting $MASTER_NAME"
+
+    # Validate master version
+    if ! validate_champion "security"; then
+        log_error "Champion version validation failed for security"
+        exit 1
+    fi
+    MASTER_VERSION=$(get_champion_version "security")
+    log_info "Running champion version: $MASTER_VERSION"
+
 
     # Initialize if needed
     if [ ! -f "$MASTER_CONTEXT_DIR/context/master-state.json" ]; then

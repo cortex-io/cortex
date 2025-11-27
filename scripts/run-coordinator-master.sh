@@ -33,6 +33,7 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$SCRIPT_DIR/lib/logging.sh"
 source "$SCRIPT_DIR/lib/coordination.sh"
+source "$SCRIPT_DIR/lib/read-alias.sh"
 
 # Master identity
 MASTER_ID="coordinator"
@@ -493,6 +494,15 @@ record_moe_routing_decision() {
 # Main execution
 main() {
     log_section "Starting $MASTER_NAME"
+
+    # Validate master version
+    if ! validate_champion "coordinator"; then
+        log_error "Champion version validation failed for coordinator"
+        exit 1
+    fi
+    MASTER_VERSION=$(get_champion_version "coordinator")
+    log_info "Running champion version: $MASTER_VERSION"
+
 
     # Initialize if needed
     if [ ! -f "$MASTER_CONTEXT_DIR/context/master-state.json" ]; then
