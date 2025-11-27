@@ -1,0 +1,16 @@
+{
+  "timestamp": "2025-11-27T08:18:47-0600",
+  "keyword_routing": {
+    "correct": 0,
+    "total": 5,
+    "accuracy": 0
+  },
+  "semantic_routing": {
+    "correct": 0,
+    "total": 5,
+    "accuracy": 0
+  },
+  "winner": "tie",
+  "improvement": 0,
+  "results_file": "/Users/ryandahlberg/Projects/cortex/llm-mesh/validation/results/ab-test-2025-11-27T08:18:47-0600.jsonl"
+}
