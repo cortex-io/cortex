@@ -59,17 +59,6 @@
       "investigation_notes": []
     },
     {
-      "id": "alert-dashboard-down",
-      "type": "dashboard_failure",
-      "severity": "medium",
-      "status": "active",
-      "message": "Dashboard server not responding on port 3000",
-      "created_at": "2025-11-26T08:09:25-0600",
-      "sla_minutes": 60,
-      "worker_id": null,
-      "investigation_notes": []
-    },
-    {
       "id": "alert-pm-daemon-down",
       "type": "pm_daemon_failure",
       "severity": "high",
