@@ -1,0 +1,23 @@
+{
+  "task_id": "development-009",
+  "master": "development",
+  "description": "Add comprehensive logging with structured log format (JSON)",
+  "complexity": "medium",
+  "expected_outcome": {
+    "should_implement_logger": true,
+    "should_use_json_format": true,
+    "should_add_context": true,
+    "should_configure_levels": true
+  },
+  "evaluation_criteria": [
+    "Implements structured logging library",
+    "Uses JSON log format",
+    "Includes contextual information (request_id, user_id)",
+    "Configures log levels (debug, info, warn, error)",
+    "Adds logging to key application points",
+    "Supports log aggregation (stdout for containers)",
+    "Documents logging conventions"
+  ],
+  "estimated_time_minutes": 40,
+  "tags": ["logging", "observability", "infrastructure"]
+}

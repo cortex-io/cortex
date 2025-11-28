@@ -1,0 +1,23 @@
+{
+  "task_id": "development-010",
+  "master": "development",
+  "description": "Implement health check endpoint with dependency status",
+  "complexity": "low",
+  "expected_outcome": {
+    "should_create_health_endpoint": true,
+    "should_check_dependencies": true,
+    "should_return_status": true,
+    "should_support_readiness": true
+  },
+  "evaluation_criteria": [
+    "Creates /health endpoint",
+    "Checks database connectivity",
+    "Checks external service dependencies",
+    "Returns structured health status",
+    "Implements liveness and readiness probes",
+    "Includes version information",
+    "Responds quickly (< 1s)"
+  ],
+  "estimated_time_minutes": 25,
+  "tags": ["health-check", "monitoring", "reliability"]
+}

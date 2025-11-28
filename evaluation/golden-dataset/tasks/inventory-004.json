@@ -1,0 +1,23 @@
+{
+  "task_id": "inventory-004",
+  "master": "inventory",
+  "description": "Create inventory of all configuration files and their purposes",
+  "complexity": "low",
+  "expected_outcome": {
+    "should_find_config_files": true,
+    "should_document_settings": true,
+    "should_identify_environment_vars": true,
+    "should_check_examples": true
+  },
+  "evaluation_criteria": [
+    "Finds all config files (.env, .json, .yaml, .toml)",
+    "Documents each config file's purpose",
+    "Lists all configuration keys",
+    "Identifies required vs optional settings",
+    "Checks for .example files",
+    "Validates config file formats",
+    "Generates configuration guide"
+  ],
+  "estimated_time_minutes": 20,
+  "tags": ["configuration", "documentation", "inventory"]
+}

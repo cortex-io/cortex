@@ -1,0 +1,22 @@
+{
+  "task_id": "development-007",
+  "master": "development",
+  "description": "Add input validation middleware using JSON schema",
+  "complexity": "low",
+  "expected_outcome": {
+    "should_create_middleware": true,
+    "should_define_schemas": true,
+    "should_validate_requests": true,
+    "should_return_clear_errors": true
+  },
+  "evaluation_criteria": [
+    "Creates validation middleware",
+    "Defines JSON schemas for endpoints",
+    "Validates request body, query params, headers",
+    "Returns clear validation error messages",
+    "Uses established validation library (ajv, joi)",
+    "Adds tests for validation scenarios"
+  ],
+  "estimated_time_minutes": 30,
+  "tags": ["validation", "api", "security"]
+}

@@ -1,0 +1,9 @@
+# Jupyter notebook dependencies (optional)
+jupyter>=1.0.0
+ipykernel>=6.0.0
+jupyter-server>=2.14.1
+jupyter-core>=5.8.0
+jupyterlab>=4.4.8
+ipython>=8.10.0
+fonttools>=4.43.0
+zipp>=3.19.1

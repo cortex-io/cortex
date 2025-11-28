@@ -1,0 +1,23 @@
+{
+  "task_id": "integration-001",
+  "master": "coordinator",
+  "description": "End-to-end workflow: Receive CVE alert, scan, fix, test, and deploy",
+  "complexity": "very-high",
+  "expected_outcome": {
+    "should_route_to_security": true,
+    "should_handoff_to_development": true,
+    "should_handoff_to_cicd": true,
+    "should_complete_workflow": true
+  },
+  "evaluation_criteria": [
+    "Coordinator routes CVE task to security master",
+    "Security master scans and identifies vulnerability",
+    "Handoff to development for fix implementation",
+    "Development implements and tests fix",
+    "Handoff to CI/CD for deployment",
+    "All handoffs preserve context",
+    "Workflow completes successfully"
+  ],
+  "estimated_time_minutes": 90,
+  "tags": ["integration", "workflow", "end-to-end"]
+}

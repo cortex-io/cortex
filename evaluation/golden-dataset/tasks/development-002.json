@@ -1,0 +1,23 @@
+{
+  "task_id": "development-002",
+  "master": "development",
+  "description": "Fix memory leak in worker cleanup process",
+  "complexity": "high",
+  "expected_outcome": {
+    "should_identify_leak_source": true,
+    "should_implement_fix": true,
+    "should_add_tests": true,
+    "should_verify_fix": true
+  },
+  "evaluation_criteria": [
+    "Identifies root cause of memory leak",
+    "Implements proper cleanup logic",
+    "Ensures event listeners are removed",
+    "Clears timers and intervals",
+    "Adds test to prevent regression",
+    "Verifies memory usage improvement",
+    "Documents the fix"
+  ],
+  "estimated_time_minutes": 60,
+  "tags": ["bug", "memory", "worker"]
+}

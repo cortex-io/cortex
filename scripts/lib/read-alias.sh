@@ -14,6 +14,19 @@
 
 set -euo pipefail
 
+# Source environment library (masters are shared across environments)
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+if [ -f "$SCRIPT_DIR/environment.sh" ]; then
+    source "$SCRIPT_DIR/environment.sh"
+fi
+
+# Masters directory is shared across environments
+if type get_masters_dir &>/dev/null; then
+    MASTERS_BASE=$(get_masters_dir)
+else
+    MASTERS_BASE="coordination/masters"
+fi
+
 # Get the version for a specific alias
 # Args: $1=master_id, $2=alias (champion|challenger|shadow)
 # Returns: version string (e.g., "v1.0.0") or empty if not set
@@ -21,7 +34,7 @@ get_master_version() {
     local master_id="$1"
     local alias_name="$2"
 
-    local aliases_file="coordination/masters/${master_id}/versions/aliases.json"
+    local aliases_file="${MASTERS_BASE}/${master_id}/versions/aliases.json"
 
     if [ ! -f "$aliases_file" ]; then
         echo "ERROR: Aliases file not found: $aliases_file" >&2
@@ -52,7 +65,7 @@ get_master_version_path() {
     fi
 
     local base_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
-    echo "${base_dir}/coordination/masters/${master_id}/versions/${version}"
+    echo "${base_dir}/${MASTERS_BASE}/${master_id}/versions/${version}"
 }
 
 # Get the champion (active production) version
@@ -83,7 +96,7 @@ version_exists() {
     local master_id="$1"
     local version="$2"
 
-    local version_dir="coordination/masters/${master_id}/versions/${version}"
+    local version_dir="${MASTERS_BASE}/${master_id}/versions/${version}"
 
     if [ -d "$version_dir" ]; then
         return 0
@@ -97,7 +110,7 @@ version_exists() {
 # Returns: list of version strings (one per line)
 get_available_versions() {
     local master_id="$1"
-    local versions_dir="coordination/masters/${master_id}/versions"
+    local versions_dir="${MASTERS_BASE}/${master_id}/versions"
 
     if [ ! -d "$versions_dir" ]; then
         return 1
@@ -116,7 +129,7 @@ get_alias_status() {
     local master_id="$1"
     local alias_name="$2"
 
-    local aliases_file="coordination/masters/${master_id}/versions/aliases.json"
+    local aliases_file="${MASTERS_BASE}/${master_id}/versions/aliases.json"
 
     if [ ! -f "$aliases_file" ]; then
         echo "unknown"
@@ -133,7 +146,7 @@ get_alias_info() {
     local master_id="$1"
     local alias_name="$2"
 
-    local aliases_file="coordination/masters/${master_id}/versions/aliases.json"
+    local aliases_file="${MASTERS_BASE}/${master_id}/versions/aliases.json"
 
     if [ ! -f "$aliases_file" ]; then
         echo "{\"error\": \"aliases file not found\"}"
@@ -149,7 +162,7 @@ get_alias_info() {
 get_all_aliases() {
     local master_id="$1"
 
-    local aliases_file="coordination/masters/${master_id}/versions/aliases.json"
+    local aliases_file="${MASTERS_BASE}/${master_id}/versions/aliases.json"
 
     if [ ! -f "$aliases_file" ]; then
         echo "{\"error\": \"aliases file not found\"}"
