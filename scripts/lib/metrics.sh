@@ -27,11 +27,25 @@ if [[ -z "${METRICS_LIB_LOADED:-}" ]]; then
     fi
 fi
 
-# Production metrics configuration
-readonly METRICS_PRODUCTION_DIR="${METRICS_PRODUCTION_DIR:-coordination/metrics/production}"
-readonly METRICS_ALERTS_DIR="${METRICS_ALERTS_DIR:-coordination/metrics/alerts}"
-readonly METRICS_AGGREGATES_DIR="${METRICS_AGGREGATES_DIR:-coordination/metrics/aggregates}"
-readonly METRICS_MASTER_DIR="${METRICS_MASTER_DIR:-coordination/metrics/masters}"
+# Source environment library for environment-aware paths
+if [ -f "$METRICS_SCRIPT_DIR/environment.sh" ]; then
+    source "$METRICS_SCRIPT_DIR/environment.sh"
+fi
+
+# Production metrics configuration (environment-aware)
+if type get_metrics_dir &>/dev/null; then
+    METRICS_BASE_DIR=$(get_metrics_dir)
+    readonly METRICS_PRODUCTION_DIR="${METRICS_PRODUCTION_DIR:-${METRICS_BASE_DIR}/production}"
+    readonly METRICS_ALERTS_DIR="${METRICS_ALERTS_DIR:-${METRICS_BASE_DIR}/alerts}"
+    readonly METRICS_AGGREGATES_DIR="${METRICS_AGGREGATES_DIR:-${METRICS_BASE_DIR}/aggregates}"
+    readonly METRICS_MASTER_DIR="${METRICS_MASTER_DIR:-${METRICS_BASE_DIR}/masters}"
+else
+    # Fallback for backwards compatibility
+    readonly METRICS_PRODUCTION_DIR="${METRICS_PRODUCTION_DIR:-coordination/metrics/production}"
+    readonly METRICS_ALERTS_DIR="${METRICS_ALERTS_DIR:-coordination/metrics/alerts}"
+    readonly METRICS_AGGREGATES_DIR="${METRICS_AGGREGATES_DIR:-coordination/metrics/aggregates}"
+    readonly METRICS_MASTER_DIR="${METRICS_MASTER_DIR:-coordination/metrics/masters}"
+fi
 
 # Initialize directories
 mkdir -p "$METRICS_PRODUCTION_DIR" "$METRICS_ALERTS_DIR" "$METRICS_AGGREGATES_DIR" "$METRICS_MASTER_DIR"

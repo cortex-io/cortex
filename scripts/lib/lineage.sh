@@ -16,9 +16,25 @@ set -euo pipefail
 # CONFIGURATION
 # ==============================================================================
 
-# Lineage storage directory
-LINEAGE_DIR="${CORTEX_HOME:-$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)}/coordination/lineage"
-LINEAGE_SCHEMA="${CORTEX_HOME:-$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)}/coordination/schemas/task-lineage.schema.json"
+# Source environment library
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+if [ -f "$SCRIPT_DIR/environment.sh" ]; then
+    source "$SCRIPT_DIR/environment.sh"
+fi
+
+# Lineage storage directory (environment-aware)
+if type get_lineage_dir &>/dev/null; then
+    LINEAGE_DIR=$(get_lineage_dir)
+else
+    # Fallback for backwards compatibility
+    LINEAGE_DIR="${CORTEX_HOME:-$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)}/coordination/lineage"
+fi
+
+# Schema is shared across environments
+if [ -z "${CORTEX_HOME:-}" ]; then
+    CORTEX_HOME="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+fi
+LINEAGE_SCHEMA="$CORTEX_HOME/coordination/schemas/task-lineage.schema.json"
 
 # Version
 LINEAGE_SCHEMA_VERSION="1.0.0"

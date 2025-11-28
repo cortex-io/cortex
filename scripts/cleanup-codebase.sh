@@ -29,9 +29,7 @@ find ./llm-mesh/scripts -type d -empty -delete 2>/dev/null || true
 find ./llm-mesh/lib -type d -empty -delete 2>/dev/null || true
 find ./scripts/lib/identity -type d -empty -delete 2>/dev/null || true
 
-# Remove old agentstudio test artifacts
-echo "🗑️  Removing old test artifacts..."
-rm -rf ./coordination/agentstudio/test-* 2>/dev/null || true
+# Agent Studio removed 2025-11-27 (see AGENT-STUDIO-EVALUATION.md)
 
 # Remove old worker logs (keeping last 7 days)
 echo "🗑️  Cleaning old worker logs (>7 days)..."

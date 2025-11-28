@@ -1,0 +1,22 @@
+{
+  "task_id": "security-002",
+  "master": "security",
+  "description": "Perform security audit on API authentication endpoints",
+  "complexity": "high",
+  "expected_outcome": {
+    "should_check_jwt_validation": true,
+    "should_check_rate_limiting": true,
+    "should_check_input_validation": true,
+    "should_identify_vulnerabilities": true
+  },
+  "evaluation_criteria": [
+    "Identifies authentication mechanisms in use",
+    "Checks for common auth vulnerabilities (OWASP)",
+    "Verifies JWT token validation",
+    "Checks rate limiting implementation",
+    "Tests input validation and sanitization",
+    "Provides prioritized remediation list"
+  ],
+  "estimated_time_minutes": 30,
+  "tags": ["audit", "authentication", "api-security"]
+}

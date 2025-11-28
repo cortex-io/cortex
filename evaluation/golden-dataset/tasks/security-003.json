@@ -1,0 +1,21 @@
+{
+  "task_id": "security-003",
+  "master": "security",
+  "description": "Scan codebase for hardcoded secrets and credentials",
+  "complexity": "medium",
+  "expected_outcome": {
+    "should_find_secrets": true,
+    "should_check_env_files": true,
+    "should_suggest_vault_solution": true,
+    "should_check_git_history": false
+  },
+  "evaluation_criteria": [
+    "Scans all relevant file types (js, py, sh, yaml, json)",
+    "Identifies API keys, passwords, tokens",
+    "Checks .env files and configuration",
+    "Suggests secrets management solution",
+    "Provides remediation steps"
+  ],
+  "estimated_time_minutes": 15,
+  "tags": ["secrets", "credentials", "security-scan"]
+}
