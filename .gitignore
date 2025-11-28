@@ -69,7 +69,13 @@ coordination/patterns/pattern-index.json
 coordination/governance/access-log.jsonl
 coordination/knowledge-base/learned-patterns/patterns-*.json
 coordination/knowledge-base/model-versions/
-coordination/masters/*/knowledge-base/
+# Ignore most master knowledge-bases except achievement (for GitHub Actions)
+coordination/masters/coordinator/knowledge-base/
+coordination/masters/security/knowledge-base/
+coordination/masters/development/knowledge-base/
+coordination/masters/cleanup/knowledge-base/
+coordination/masters/cicd/knowledge-base/
+coordination/masters/inventory/knowledge-base/
 coordination/masters/*/metrics/
 coordination/tasks/pending/
 coordination/worker-specs/zombie/
