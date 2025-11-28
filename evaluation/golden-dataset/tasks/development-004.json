@@ -1,0 +1,23 @@
+{
+  "task_id": "development-004",
+  "master": "development",
+  "description": "Optimize database query performance for worker metrics aggregation",
+  "complexity": "high",
+  "expected_outcome": {
+    "should_profile_queries": true,
+    "should_add_indexes": true,
+    "should_optimize_queries": true,
+    "should_measure_improvement": true
+  },
+  "evaluation_criteria": [
+    "Profiles existing query performance",
+    "Identifies slow queries",
+    "Adds appropriate database indexes",
+    "Optimizes query structure (joins, subqueries)",
+    "Considers caching strategy",
+    "Measures performance improvement",
+    "Documents optimization approach"
+  ],
+  "estimated_time_minutes": 55,
+  "tags": ["optimization", "database", "performance"]
+}

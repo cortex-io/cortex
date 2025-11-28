@@ -1,0 +1,20 @@
+{
+  "task_id": "security-004",
+  "master": "security",
+  "description": "Review file permissions and access controls in scripts directory",
+  "complexity": "low",
+  "expected_outcome": {
+    "should_check_execute_permissions": true,
+    "should_identify_overly_permissive": true,
+    "should_suggest_corrections": true
+  },
+  "evaluation_criteria": [
+    "Checks file permissions on shell scripts",
+    "Identifies overly permissive files (777, world-writable)",
+    "Verifies execute permissions on required scripts",
+    "Suggests appropriate permission levels",
+    "Considers security best practices"
+  ],
+  "estimated_time_minutes": 8,
+  "tags": ["permissions", "access-control", "filesystem"]
+}

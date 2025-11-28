@@ -1,0 +1,57 @@
+{
+  "version": "1.0.0",
+  "safe_to_remove": {
+    "exclude_patterns": [
+      "README",
+      "LICENSE",
+      "package.json",
+      ".gitignore",
+      ".gitkeep",
+      "/lib/",
+      "/config/",
+      "/docs/"
+    ],
+    "confidence_threshold": 0.95
+  },
+  "auto_fix": {
+    "enable_empty_directory_removal": true,
+    "enable_permission_fixes": true,
+    "enable_duplicate_removal": true,
+    "enable_gitignore_cleanup": true,
+    "enable_unreferenced_file_removal": false
+  },
+  "legacy_patterns": {
+    "api_endpoints": [
+      "localhost:3000",
+      "localhost:8080",
+      "localhost:9000",
+      "api/achievements",
+      "api/dashboard"
+    ],
+    "old_project_names": [
+      "commit-relay",
+      "api-server"
+    ],
+    "deprecated_systems": [
+      "worker-pool.json",
+      "dashboard-events",
+      "health-monitor"
+    ]
+  },
+  "priority_weights": {
+    "broken_references": 10,
+    "permission_issues": 9,
+    "legacy_api_calls": 8,
+    "unreferenced_files": 5,
+    "duplicate_files": 5,
+    "legacy_patterns": 4,
+    "dead_functions": 2,
+    "empty_directories": 1,
+    "gitignore_issues": 1
+  },
+  "reporting": {
+    "max_items_per_category": 50,
+    "include_file_sizes": true,
+    "include_recommendations": true
+  }
+}

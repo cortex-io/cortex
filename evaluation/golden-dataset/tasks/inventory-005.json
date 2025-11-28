@@ -1,0 +1,23 @@
+{
+  "task_id": "inventory-005",
+  "master": "inventory",
+  "description": "Generate test coverage report and identify untested code",
+  "complexity": "low",
+  "expected_outcome": {
+    "should_run_coverage": true,
+    "should_identify_gaps": true,
+    "should_generate_report": true,
+    "should_set_baseline": true
+  },
+  "evaluation_criteria": [
+    "Runs test coverage analysis",
+    "Generates coverage report (HTML/JSON)",
+    "Identifies files with < 80% coverage",
+    "Highlights uncovered critical paths",
+    "Calculates overall coverage percentage",
+    "Provides actionable recommendations",
+    "Establishes coverage baseline"
+  ],
+  "estimated_time_minutes": 15,
+  "tags": ["testing", "coverage", "quality"]
+}

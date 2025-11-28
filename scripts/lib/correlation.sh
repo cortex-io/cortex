@@ -30,10 +30,12 @@ generate_correlation_id() {
 # Returns: span ID string
 generate_span_id() {
     local operation="${1:-op}"
-    local timestamp=$(date +%s%3N 2>/dev/null || date +%s)
+    # Use seconds + nanoseconds for better precision on macOS
+    local timestamp=$(date +%s)
+    local nanos=$(echo $((RANDOM % 1000)) | awk '{printf "%03d", $1}')
     local random=$(openssl rand -hex 2 2>/dev/null || echo "$(printf '%04x' $RANDOM)")
 
-    echo "span-${timestamp}-${random}-${operation}"
+    echo "span-${timestamp}${nanos}-${random}-${operation}"
 }
 
 # Extract component name from correlation ID

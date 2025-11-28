@@ -1,0 +1,31 @@
+{
+  "task_id": "security-001",
+  "expected_findings": {
+    "vulnerable_package": "lodash",
+    "vulnerable_versions": ["<4.17.21"],
+    "cve_id": "CVE-2024-28849",
+    "severity": "high",
+    "fix_version": "4.17.21"
+  },
+  "expected_actions": [
+    "Scan package.json and package-lock.json",
+    "Identify lodash version in use",
+    "Check for transitive dependencies using lodash",
+    "Recommend upgrade to 4.17.21 or higher",
+    "Assess impact on application code",
+    "Provide remediation steps"
+  ],
+  "required_checks": {
+    "should_find_vulnerability": true,
+    "should_suggest_upgrade": true,
+    "should_identify_impact": true,
+    "should_check_transitive_deps": true,
+    "should_provide_remediation_steps": true
+  },
+  "success_criteria": {
+    "minimum_score": 3.0,
+    "critical_dimensions": ["correctness", "completeness"],
+    "must_identify_package": true,
+    "must_suggest_fix": true
+  }
+}
