@@ -53,8 +53,11 @@ find_unreferenced_files_v3() {
 
     echo "Step 3/3: Querying cache for unreferenced files..." >&2
 
-    local unreferenced=()
+    local unreferenced_temp="/tmp/unreferenced-v3-$$.txt"
+    : > "$unreferenced_temp"  # Clear temp file
+
     local checked=0
+    local unreferenced_count=0
 
     CACHE_DB="$CACHE_DIR/file-reference-cache.db"
 
@@ -65,11 +68,12 @@ find_unreferenced_files_v3() {
         local relative_path="${filepath#$PROJECT_ROOT/}"
 
         # Query cache (instant SQLite lookup!)
-        local ref_count=$(sqlite3 "$CACHE_DB" \
-            "SELECT COUNT(*) FROM references WHERE filename = '$filename';" 2>/dev/null || echo "0")
+        local is_referenced=$(sqlite3 "$CACHE_DB" \
+            "SELECT is_referenced FROM file_references WHERE filename = '$filename';" 2>/dev/null || echo "0")
 
-        if [[ $ref_count -eq 0 ]]; then
-            unreferenced+=("$relative_path")
+        if [[ "$is_referenced" != "1" ]]; then
+            echo "$relative_path" >> "$unreferenced_temp"
+            ((unreferenced_count++))
         fi
 
         # Progress indicator
@@ -81,22 +85,36 @@ find_unreferenced_files_v3() {
 
     rm -f "$temp_files"
 
-    echo "  Found ${#unreferenced[@]} unreferenced files (checked $checked)" >&2
+    echo "  Found $unreferenced_count unreferenced files (checked $checked)" >&2
 
-    # Generate JSON output
-    jq -n \
-        --arg timestamp "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
-        --argjson files "$(printf '%s\n' "${unreferenced[@]}" | jq -R . | jq -s .)" \
-        --arg method "v3-cache" \
-        '{
-            scan_type: "unreferenced_files",
-            timestamp: $timestamp,
-            count: ($files | length),
-            files: $files,
-            method: $method
-        }' > "$results_file"
+    # Generate JSON output by streaming from temp file
+    {
+        echo '{'
+        echo "  \"scan_type\": \"unreferenced_files\","
+        echo "  \"timestamp\": \"$(date -u +%Y-%m-%dT%H:%M:%SZ)\","
+        echo "  \"count\": $unreferenced_count,"
+        echo "  \"method\": \"v3-cache\","
+        echo '  "files": ['
 
-    echo "${#unreferenced[@]}"
+        # Stream files array
+        first=true
+        while IFS= read -r file; do
+            if [[ "$first" == "true" ]]; then
+                first=false
+            else
+                echo ","
+            fi
+            jq -Rn --arg f "$file" '$f' | tr -d '\n'
+        done < "$unreferenced_temp"
+
+        echo ''
+        echo '  ]'
+        echo '}'
+    } > "$results_file"
+
+    rm -f "$unreferenced_temp"
+
+    echo "$unreferenced_count"
 }
 
 # ==============================================================================

@@ -108,10 +108,10 @@ query_file_references() {
         return 1
     fi
 
-    sqlite3 "$CACHE_DB" "SELECT referenced_by FROM references WHERE filename = '$filename';" 2>/dev/null || true
+    sqlite3 "$CACHE_DB" "SELECT is_referenced FROM file_references WHERE filename = '$filename';" 2>/dev/null || echo "0"
 }
 
-count_file_references() {
+is_file_referenced() {
     local filename="$1"
 
     if ! cache_exists; then
@@ -119,7 +119,8 @@ count_file_references() {
         return
     fi
 
-    sqlite3 "$CACHE_DB" "SELECT COUNT(*) FROM references WHERE filename = '$filename';" 2>/dev/null || echo "0"
+    local result=$(sqlite3 "$CACHE_DB" "SELECT is_referenced FROM file_references WHERE filename = '$filename';" 2>/dev/null || echo "0")
+    [[ "$result" == "1" ]] && echo "1" || echo "0"
 }
 
 list_all_files() {
@@ -153,7 +154,7 @@ SELECT
     'Files: ' || COUNT(*) FROM files
 UNION ALL
 SELECT
-    'References: ' || COUNT(*) FROM references;
+    'Referenced files: ' || COUNT(*) FROM file_references WHERE is_referenced = 1;
 SQL
 }
 
@@ -178,10 +179,10 @@ main() {
             cache_info
             ;;
         query)
-            query_file_references "$2"
+            is_file_referenced "$2"
             ;;
-        count)
-            count_file_references "$2"
+        check)
+            is_file_referenced "$2"
             ;;
         list)
             list_all_files
@@ -197,8 +198,8 @@ main() {
             echo "  rebuild [workers] - Force rebuild cache"
             echo "  ensure           - Ensure cache exists and is fresh"
             echo "  status           - Show cache status and stats"
-            echo "  query <filename> - Query references for a file"
-            echo "  count <filename> - Count references for a file"
+            echo "  query <filename> - Check if file is referenced (1 or 0)"
+            echo "  check <filename> - Check if file is referenced (1 or 0)"
             echo "  list             - List all cached files"
             echo "  age              - Show cache age in hours"
             return 1
@@ -217,4 +218,4 @@ export -f cache_is_stale
 export -f cache_status
 export -f ensure_cache
 export -f query_file_references
-export -f count_file_references
+export -f is_file_referenced
