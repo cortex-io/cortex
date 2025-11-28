@@ -19,11 +19,48 @@ find_unreferenced_files() {
     local results_file="${2:-/tmp/unreferenced-files.json}"
 
     echo "Scanning for unreferenced files in $scan_dir..." >&2
-    echo "Step 1/2: Building reference index..." >&2
 
-    # Build reference index ONCE (O(n) instead of O(n²))
-    local temp_refs="/tmp/file-references-$$.txt"
-    grep -rh --no-filename \
+    # V2 Optimization: Use awk hash table instead of repeated greps
+    # This reduces 46K greps × 10M lines to 1 pass through 10M lines
+
+    echo "Step 1/3: Collecting file list..." >&2
+    local temp_files="/tmp/file-list-$$.txt"
+    find "$scan_dir" -type f \( -name "*.sh" -o -name "*.js" -o -name "*.py" \) 2>/dev/null | \
+        grep -vE '(node_modules|\.git|\.venv|__pycache__)' > "$temp_files"
+
+    local total=$(wc -l < "$temp_files" | tr -d ' ')
+    echo "  Found $total files to check" >&2
+
+    echo "Step 2/3: Streaming reference check (awk hash table)..." >&2
+
+    # Use awk to build hash table and check in ONE pass
+    local unreferenced_raw=$(awk '
+        BEGIN {
+            # Phase 1: Load all filenames into hash table
+            while ((getline filepath < "'"$temp_files"'") > 0) {
+                split(filepath, parts, "/")
+                filename = parts[length(parts)]
+                files[filename] = filepath
+            }
+            close("'"$temp_files"'")
+        }
+
+        # Phase 2: Stream through grep output, mark files as found
+        {
+            for (filename in files) {
+                if (index($0, filename) > 0) {
+                    delete files[filename]
+                }
+            }
+        }
+
+        END {
+            # Phase 3: Print unreferenced files
+            for (filename in files) {
+                print files[filename]
+            }
+        }
+    ' <(grep -rh --no-filename \
         --include="*.sh" \
         --include="*.js" \
         --include="*.py" \
@@ -32,42 +69,22 @@ find_unreferenced_files() {
         --exclude-dir=.git \
         --exclude-dir=.venv \
         --exclude-dir=__pycache__ \
-        "$PROJECT_ROOT" 2>/dev/null > "$temp_refs"
+        "$PROJECT_ROOT" 2>/dev/null))
 
-    echo "Step 2/2: Checking files against index..." >&2
+    echo "Step 3/3: Generating results..." >&2
 
+    # Convert to relative paths and build array
     local unreferenced=()
-    local total=0
-    local checked=0
-
-    # Count total files for progress
-    total=$(find "$scan_dir" -type f \( -name "*.sh" -o -name "*.js" -o -name "*.py" \) 2>/dev/null | wc -l | tr -d ' ')
-
-    # Check each file against the index (O(n))
     while IFS= read -r file; do
-        ((checked++))
-
-        local filename=$(basename "$file")
+        [[ -z "$file" ]] && continue
         local relative_path="${file#$PROJECT_ROOT/}"
-
-        # Skip if in excluded patterns
-        if echo "$relative_path" | grep -qE '(node_modules|\.git|\.venv|__pycache__)'; then
-            continue
-        fi
-
-        # Check if filename appears in the reference index
-        if ! grep -q "$filename" "$temp_refs"; then
-            unreferenced+=("$relative_path")
-        fi
-
-        # Progress indicator every 100 files
-        if (( checked % 100 == 0 )); then
-            echo "  Checked $checked/$total files..." >&2
-        fi
-    done < <(find "$scan_dir" -type f \( -name "*.sh" -o -name "*.js" -o -name "*.py" \) 2>/dev/null)
+        unreferenced+=("$relative_path")
+    done <<< "$unreferenced_raw"
 
     # Cleanup
-    rm -f "$temp_refs"
+    rm -f "$temp_files"
+
+    echo "  Found ${#unreferenced[@]} unreferenced files" >&2
 
     # Generate JSON output
     jq -n \
@@ -231,15 +248,41 @@ check_file_permissions() {
 scan_for_duplicates() {
     local scan_dir="${1:-$PROJECT_ROOT}"
     local results_file="${2:-/tmp/duplicate-files.json}"
+    local max_files="${3:-20000}"  # Safety limit
 
     echo "Scanning for duplicate files in $scan_dir..." >&2
-    echo "Step 1/3: Grouping files by size..." >&2
+
+    # Quick file count check
+    local file_count=$(find "$scan_dir" -type f \( -name "*.sh" -o -name "*.js" -o -name "*.py" -o -name "*.json" \) 2>/dev/null | wc -l | tr -d ' ')
+
+    if [[ $file_count -gt $max_files ]]; then
+        echo "  WARNING: $file_count files exceeds limit of $max_files" >&2
+        echo "  Skipping duplicate scan (would take too long)" >&2
+
+        jq -n \
+            --arg timestamp "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+            --arg reason "File count ($file_count) exceeds limit ($max_files)" \
+            '{
+                scan_type: "duplicate_files",
+                timestamp: $timestamp,
+                count: 0,
+                duplicates: [],
+                skipped: true,
+                reason: $reason
+            }' > "$results_file"
+
+        echo "0"
+        return 0
+    fi
+
+    echo "Step 1/3: Grouping $file_count files by size..." >&2
 
     local duplicates=()
 
     # Step 1: Group files by size (duplicates must have same size)
     declare -A size_groups
     local total=0
+    local processed=0
 
     while IFS= read -r file; do
         local relative_path="${file#$PROJECT_ROOT/}"
@@ -252,6 +295,12 @@ scan_for_duplicates() {
         local size=$(stat -f%z "$file" 2>/dev/null || stat -c%s "$file" 2>/dev/null)
         size_groups[$size]="${size_groups[$size]:-}$file"$'\n'
         ((total++))
+        ((processed++))
+
+        # Progress indicator
+        if (( processed % 1000 == 0 )); then
+            echo "  Grouped $processed files..." >&2
+        fi
     done < <(find "$scan_dir" -type f \( -name "*.sh" -o -name "*.js" -o -name "*.py" -o -name "*.json" \) 2>/dev/null)
 
     echo "Step 2/3: Identifying size groups with multiple files..." >&2
