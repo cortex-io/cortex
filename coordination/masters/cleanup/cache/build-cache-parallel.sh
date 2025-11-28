@@ -119,7 +119,7 @@ echo "Step 6: Merging results into cache database..." >&2
 CACHE_DB="$CACHE_DIR/file-reference-cache.db"
 rm -f "$CACHE_DB"
 
-# Create schema
+# Create schema (escape "references" as reserved SQL keyword)
 sqlite3 "$CACHE_DB" <<'SQL'
 CREATE TABLE files (
     filepath TEXT PRIMARY KEY,
@@ -128,10 +128,9 @@ CREATE TABLE files (
     last_modified TEXT
 );
 
-CREATE TABLE references (
-    filename TEXT NOT NULL,
-    referenced_by TEXT NOT NULL,
-    PRIMARY KEY (filename, referenced_by)
+CREATE TABLE file_references (
+    filename TEXT PRIMARY KEY,
+    is_referenced INTEGER DEFAULT 0
 );
 
 CREATE TABLE metadata (
@@ -140,23 +139,30 @@ CREATE TABLE metadata (
 );
 
 CREATE INDEX idx_filename ON files(filename);
-CREATE INDEX idx_references_filename ON references(filename);
+CREATE INDEX idx_file_references_filename ON file_references(filename);
 SQL
 
 # Import worker results
 for worker_output in "$CACHE_DIR"/worker-*.json; do
     [[ -f "$worker_output" ]] || continue
 
-    # Extract data and import into SQLite
+    echo "  Importing $(basename "$worker_output")..." >&2
+
+    # Extract files and import into SQLite
     jq -r '.files[] | "\(.filepath)|\(.filename)|\(.size_bytes)|\(.last_modified)"' "$worker_output" | \
     while IFS='|' read -r filepath filename size_bytes last_modified; do
-        sqlite3 "$CACHE_DB" "INSERT OR IGNORE INTO files VALUES ('$filepath', '$filename', $size_bytes, '$last_modified');"
+        # Escape single quotes in paths
+        filepath_escaped="${filepath//\'/\'\'}"
+        filename_escaped="${filename//\'/\'\'}"
+        sqlite3 "$CACHE_DB" "INSERT OR IGNORE INTO files VALUES ('$filepath_escaped', '$filename_escaped', $size_bytes, '$last_modified');"
     done
 
-    jq -r '.references[] | "\(.filename)|\(.referenced_by)"' "$worker_output" | \
-    while IFS='|' read -r filename referenced_by; do
-        sqlite3 "$CACHE_DB" "INSERT OR IGNORE INTO references VALUES ('$filename', '$referenced_by');"
-    done
+    # Extract references and import into SQLite
+    jq -r '.references[] | .filename' "$worker_output" 2>/dev/null | \
+    while IFS= read -r filename; do
+        filename_escaped="${filename//\'/\'\'}"
+        sqlite3 "$CACHE_DB" "INSERT OR REPLACE INTO file_references VALUES ('$filename_escaped', 1);"
+    done || true
 done
 
 # Add metadata
