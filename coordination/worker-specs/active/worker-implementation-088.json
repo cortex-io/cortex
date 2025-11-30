@@ -1,0 +1,64 @@
+{
+  "worker_id": "worker-implementation-088",
+  "worker_type": "implementation-worker",
+  "created_by": "development-master",
+  "execution_manager": null,
+  "created_at": "2025-11-30T13:05:36-0600",
+  "task_id": "obs-behavioral-monitoring-19-1764529532",
+  "status": "pending",
+  "identity": {
+    "spiffe_id": "spiffe://cortex/workers/worker-implementation-088",
+    "token": "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJzcGlmZmU6Ly9jb3J0ZXgvd29ya2Vycy93b3JrZXItaW1wbGVtZW50YXRpb24tMDg4IiwiYWdlbnRfaWQiOiJ3b3JrZXItaW1wbGVtZW50YXRpb24tMDg4Iiwicm9sZSI6IndvcmtlciIsInRydXN0X2xldmVsIjo1MCwiY2FwYWJpbGl0aWVzIjpbImRldmVsb3BtZW50OmltcGxlbWVudCIsImRldmVsb3BtZW50OnRlc3QiLCJ0YXNrczpyZWFkIiwiY29vcmRpbmF0aW9uOnJlYWQiLCJnb3Zlcm5hbmNlOnJlYWQiXSwibWV0YWRhdGEiOnt9LCJpYXQiOjE3NjQ1Mjk1MzcsImV4cCI6MTc2NDUzMzEzNywiYXVkIjoiY29ydGV4LWFnZW50cyIsImlzcyI6ImNvcnRleC1pZGVudGl0eS1zeXN0ZW0ifQ.Xc6AQYxMvJ14kg9ooD3NDKxAIvqov0mS5-HryC7gdEUhaEauy9QrWSMZwC-jPAy3gyzLiwmlpN8Ubyq2pPSam4fDUOcrA8oQ9rJCd1jxwQDXvOOaJz0xJU_FvCsTXFCEt3dPyqY39pcsY1crjh0RraFWw8C-QFXcll_H_RH9xikdOGGUxR6RYljG_G7sd7PJfrsuDQaiKBFMROeQlsagAAOsLyhwQheTAwzLgP4njyBmL20YR46I-vMQhpcO5Y1m5XhcKgvSbG3YHM974ZdjYAoVXg4OoGwoTi7RA2gEwtZY6IxsCpT0wlGGw2hxZvfZdgKKgJtDQ0c6f5lMTZTveA",
+    "trust_level": 50
+  },
+  "scope": {
+  "task_id": "observability-massive-parallel",
+  "pillar": "behavioral-monitoring",
+  "component": "Loop detection engine",
+  "component_id": "bm-comp-0",
+  "worker_number": 19,
+  "description": "Implement Loop detection engine as part of behavioral-monitoring pillar",
+  "autonomous": true,
+  "continuous": true,
+  "auto_heal": true
+},
+  "context": {
+  "parent_task": "obs-behavioral-monitoring-19-1764529532",
+  "priority": "critical",
+  "deadline": null
+},
+  "goal_based_planning": {
+    "enabled": true,
+    "strategy": "direct",
+    "goal_type": "feature-development",
+    "complexity": "low",
+    "strategy_plan_location": "coordination/knowledge-base/strategy-plans/worker-implementation-088-plan.json"
+  },
+  "resources": {
+    "token_budget": 10000,
+    "timeout_minutes": 45,
+    "max_retries": 1
+  },
+  "tool_assignment": {"worker_type":"implementation-worker","essential_tools":["Read","Write","Edit","Glob","Grep","Bash(git:*)","Bash"],"optional_tools":["WebFetch","WebSearch","TodoWrite"],"total_tools":10,"essential_clusters":["file_operations","code_search","version_control","code_execution"],"optional_clusters":["web_access","task_management"],"filtered":true,"rationale":"Needs file operations, search, git, and execution. Web access helpful for API docs."},
+  "deliverables": [],
+  "prompt_template": "coordination/prompts/workers/implementation-worker.md",
+  "execution": {
+    "started_at": null,
+    "completed_at": null,
+    "tokens_used": 0,
+    "duration_minutes": 0,
+    "session_id": null
+  },
+  "results": {
+    "status": null,
+    "output_location": null,
+    "summary": null,
+    "artifacts": []
+  },
+  "review": {
+    "enabled": true,
+    "min_cycles": 1,
+    "auto_approve_threshold": 0.95,
+    "history": []
+  }
+}
