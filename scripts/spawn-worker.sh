@@ -333,9 +333,13 @@ else
     print_warning "Goal-based planning failed, using direct strategy as fallback"
 fi
 
-# Pull latest state
-print_info "Pulling latest coordination state..."
-git pull origin main --quiet
+# Pull latest state (skip if SKIP_GIT_PULL=true for parallel spawning)
+if [ "${SKIP_GIT_PULL:-false}" != "true" ]; then
+    print_info "Pulling latest coordination state..."
+    git pull origin main --quiet
+else
+    print_info "Skipping git pull (parallel spawn mode)"
+fi
 
 # Generate worker ID
 WORKER_COUNT=$(jq '.active_workers | length' coordination/worker-pool.json)
@@ -534,52 +538,58 @@ if [ "$STRATEGY_PLAN" != "{}" ]; then
     fi
 fi
 
-# Update worker-pool.json
+# Update worker-pool.json with file locking for concurrent writes
 print_info "Updating worker pool..."
 
-# Add to active workers
+# Add to active workers (with exclusive lock to prevent race conditions)
 TMP_FILE=$(mktemp)
-jq --arg worker_id "$WORKER_ID" \
-   --arg worker_type "$WORKER_TYPE" \
-   --arg spawned_by "$MASTER_AGENT" \
-   --arg spawned_at "$CREATED_AT" \
-   --arg task_id "$TASK_ID" \
-   --argjson token_budget "$TOKEN_BUDGET" \
-   '.active_workers += [{
-     "worker_id": $worker_id,
-     "worker_type": $worker_type,
-     "spawned_by": $spawned_by,
-     "spawned_at": $spawned_at,
-     "status": "pending",
-     "task_id": $task_id,
-     "token_budget": $token_budget,
-     "tokens_used": 0,
-     "timeout_at": null,
-     "last_heartbeat": null,
-     "session_id": null
-   }] | .updated_at = $spawned_at | .stats.total_spawned_today += 1' \
-   coordination/worker-pool.json > "$TMP_FILE"
+(
+  flock -x 200  # Exclusive lock on FD 200
+  jq --arg worker_id "$WORKER_ID" \
+     --arg worker_type "$WORKER_TYPE" \
+     --arg spawned_by "$MASTER_AGENT" \
+     --arg spawned_at "$CREATED_AT" \
+     --arg task_id "$TASK_ID" \
+     --argjson token_budget "$TOKEN_BUDGET" \
+     '.active_workers += [{
+       "worker_id": $worker_id,
+       "worker_type": $worker_type,
+       "spawned_by": $spawned_by,
+       "spawned_at": $spawned_at,
+       "status": "pending",
+       "task_id": $task_id,
+       "token_budget": $token_budget,
+       "tokens_used": 0,
+       "timeout_at": null,
+       "last_heartbeat": null,
+       "session_id": null
+     }] | .updated_at = $spawned_at | .stats.total_spawned_today += 1' \
+     coordination/worker-pool.json > "$TMP_FILE"
 
-mv "$TMP_FILE" coordination/worker-pool.json
+  mv "$TMP_FILE" coordination/worker-pool.json
+) 200>/tmp/cortex-worker-pool.lock
 
 print_success "Worker pool updated"
 
-# Update token budget
+# Update token budget with file locking for concurrent writes
 print_info "Allocating token budget..."
 
 TMP_FILE=$(mktemp)
-jq --arg master "$MASTER_AGENT" \
-   --arg worker "$WORKER_ID" \
-   --argjson tokens "$TOKEN_BUDGET" \
-   --arg ts "$CREATED_AT" \
-   '.allocated = ((.allocated // 0) + $tokens) |
-    .in_use = ((.in_use // 0) + $tokens) |
-    .available = ((.available // 0) - $tokens) |
-    .allocations[$worker] = {master: $master, tokens: $tokens, allocated_at: $ts} |
-    .updated_at = $ts' \
-   coordination/token-budget.json > "$TMP_FILE"
+(
+  flock -x 201  # Exclusive lock on FD 201
+  jq --arg master "$MASTER_AGENT" \
+     --arg worker "$WORKER_ID" \
+     --argjson tokens "$TOKEN_BUDGET" \
+     --arg ts "$CREATED_AT" \
+     '.allocated = ((.allocated // 0) + $tokens) |
+      .in_use = ((.in_use // 0) + $tokens) |
+      .available = ((.available // 0) - $tokens) |
+      .allocations[$worker] = {master: $master, tokens: $tokens, allocated_at: $ts} |
+      .updated_at = $ts' \
+     coordination/token-budget.json > "$TMP_FILE"
 
-mv "$TMP_FILE" coordination/token-budget.json
+  mv "$TMP_FILE" coordination/token-budget.json
+) 201>/tmp/cortex-token-budget.lock
 
 print_success "Token budget allocated: $TOKEN_BUDGET tokens"
 
