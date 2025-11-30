@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # Asset Catalog Generator for Cortex
 # Creates comprehensive catalog of all coordination files, schemas, and scripts
 

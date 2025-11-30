@@ -1,9 +1,9 @@
 {
   "total_budget": 500000,
-  "allocated": 54000,
-  "in_use": 54000,
-  "available": 446000,
-  "updated_at": "2025-11-26T07:01:20-0600",
+  "allocated": 214000,
+  "in_use": 214000,
+  "available": 286000,
+  "updated_at": "2025-11-30T09:25:48-0600",
   "allocations": {
     "worker-scan-037": {
       "master": "security-master",
@@ -34,6 +34,56 @@
       "master": "development-master",
       "tokens": 10000,
       "allocated_at": "2025-11-26T07:01:20-0600"
+    },
+    "worker-implementation-043": {
+      "master": "development-master",
+      "tokens": 10000,
+      "allocated_at": "2025-11-29T14:52:28-0600"
+    },
+    "worker-implementation-048": {
+      "master": "development-master",
+      "tokens": 10000,
+      "allocated_at": "2025-11-30T08:32:24-0600"
+    },
+    "worker-implementation-049": {
+      "master": "inventory-master",
+      "tokens": 10000,
+      "allocated_at": "2025-11-30T08:32:25-0600"
+    },
+    "worker-implementation-050": {
+      "master": "development-master",
+      "tokens": 10000,
+      "allocated_at": "2025-11-30T08:32:27-0600"
+    },
+    "worker-implementation-051": {
+      "master": "inventory-master",
+      "tokens": 10000,
+      "allocated_at": "2025-11-30T08:32:29-0600"
+    },
+    "worker-implementation-052": {
+      "master": "development-master",
+      "tokens": 10000,
+      "allocated_at": "2025-11-30T08:34:20-0600"
+    },
+    "worker-implementation-054": {
+      "master": "development-master",
+      "tokens": 10000,
+      "allocated_at": "2025-11-30T08:34:22-0600"
+    },
+    "worker-implementation-056": {
+      "master": "development-master",
+      "tokens": 10000,
+      "allocated_at": "2025-11-30T08:34:23-0600"
+    },
+    "worker-implementation-057": {
+      "master": "development-master",
+      "tokens": 10000,
+      "allocated_at": "2025-11-30T09:10:47-0600"
+    },
+    "worker-implementation-058": {
+      "master": "development-master",
+      "tokens": 10000,
+      "allocated_at": "2025-11-30T09:25:48-0600"
     }
   },
   "reclamation_log": [

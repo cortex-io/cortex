@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # scripts/daemons/ingestion-daemon.sh
 # RAG ingestion daemon for scheduled connector runs
 # Part of cortex automation system

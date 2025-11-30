@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 #
 # Comprehensive Security Fix Application Script
 # Applies all identified security fixes across the codebase

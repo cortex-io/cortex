@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # RAG (Retrieval Augmented Generation) integration library
 # Provides bash functions for querying and indexing the RAG system
 

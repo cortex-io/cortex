@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # scripts/lib/zombie-cleanup.sh
 # Zombie Worker Cleanup Library - Phase 4.2
 # Automatic detection and cleanup of unresponsive workers

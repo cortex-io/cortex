@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # testing/unit/heartbeat.test.sh
 # Comprehensive test suite for Worker Heartbeat System
 # Phase 4.1 - Self-Healing Implementation

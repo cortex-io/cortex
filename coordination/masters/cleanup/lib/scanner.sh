@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # Cleanup Master - Core Scanner
 # Detects dead code, unreferenced files, and structural issues
 

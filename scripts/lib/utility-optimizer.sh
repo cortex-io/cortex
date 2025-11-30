@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # scripts/lib/utility-optimizer.sh
 # Utility-Based Master Optimization Library
 #

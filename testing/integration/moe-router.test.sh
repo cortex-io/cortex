@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # testing/integration/moe-router.test.sh
 # Integration tests for MoE Router
 # Validates routing logic, confidence scoring, and JSON output format

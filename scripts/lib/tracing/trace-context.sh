@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # Trace Context Propagation for Bash Scripts
 # Simplified OpenTelemetry context in shell
 

@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # scripts/lib/task-allocator.sh
 # Task Allocator Library - Phase 3 Item 24
 # Context-aware resource allocation with dynamic token budget based on task complexity

@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # testing/scripts/test-bypass-auditor.sh
 # Test suite for bypass auditing system
 #

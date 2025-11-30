@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 ################################################################################
 # Test Worker
 # Purpose: Write and execute tests for features and bug fixes

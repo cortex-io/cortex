@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # testing/scripts/test-pii-scanner.sh
 # Test suite for PII detection scanner
 #

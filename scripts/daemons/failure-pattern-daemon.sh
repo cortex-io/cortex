@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # scripts/daemons/failure-pattern-daemon.sh
 # Failure Pattern Detection Daemon - Phase 4.4 Self-Healing Implementation
 # Monitors failure events and detects recurring patterns

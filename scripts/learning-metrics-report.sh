@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # scripts/learning-metrics-report.sh
 # Learning Metrics Reporting Tool
 # Week 5: Q1 Implementation - Learning Agent

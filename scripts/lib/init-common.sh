@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # init-common.sh - Mandatory initialization for all cortex scripts
 # This file provides a single entry point for loading all core services
 # and enforcing core principles (observability, validation, governance, etc.)

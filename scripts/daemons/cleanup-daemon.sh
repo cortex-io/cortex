@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # Cleanup Master Daemon
 # Runs weekly cleanup scans and auto-fixes safe issues
 

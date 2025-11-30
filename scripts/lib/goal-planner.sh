@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # scripts/lib/goal-planner.sh
 # Goal-Based Worker Planning Library
 #

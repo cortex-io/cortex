@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # scripts/start-cortex.sh
 # Main startup script for Cortex system
 # Automatically detects and launches pending workers

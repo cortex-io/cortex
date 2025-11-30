@@ -1,0 +1,54 @@
+{
+  "worker_id": "worker-implementation-043",
+  "worker_type": "implementation-worker",
+  "created_by": "development-master",
+  "execution_manager": null,
+  "created_at": "2025-11-29T14:52:28-0600",
+  "task_id": "task-workflow-visualizer-1733000006",
+  "status": "pending",
+  "identity": {
+    "spiffe_id": "spiffe://cortex/workers/worker-implementation-043",
+    "token": "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJzcGlmZmU6Ly9jb3J0ZXgvd29ya2Vycy93b3JrZXItaW1wbGVtZW50YXRpb24tMDQzIiwiYWdlbnRfaWQiOiJ3b3JrZXItaW1wbGVtZW50YXRpb24tMDQzIiwicm9sZSI6IndvcmtlciIsInRydXN0X2xldmVsIjo1MCwiY2FwYWJpbGl0aWVzIjpbImRldmVsb3BtZW50OmltcGxlbWVudCIsImRldmVsb3BtZW50OnRlc3QiLCJ0YXNrczpyZWFkIiwiY29vcmRpbmF0aW9uOnJlYWQiLCJnb3Zlcm5hbmNlOnJlYWQiXSwibWV0YWRhdGEiOnt9LCJpYXQiOjE3NjQ0NDk1NDgsImV4cCI6MTc2NDQ1MzE0OCwiYXVkIjoiY29ydGV4LWFnZW50cyIsImlzcyI6ImNvcnRleC1pZGVudGl0eS1zeXN0ZW0ifQ.p_QSS94_Oo265-atDnR7q4rRqFBuilKNqaGUAVXD5d5nXWi1XNeJKughqK1s0s3XuhgS-086jE_0csOXtk2thKtfUYWDcKIXEi81NUoS3peD7lPHXae0N_J2ZDdOB6stUMvohkcozX7cNjSukbhTgNE5v7xMNhZqqfgZwARvPBebtRxnEKOJt_VXP_SAvOk2X8eTqXRAHkcgPGKrHoomHrHsHzLmADF5GZShtFHrk0CQG72cnuBEBTXP3UYhg6NAou2BPncETBjUXfcZyZiNmneGe37knbqB-9SV_hlDvFE0rVLA8mrH_20HiYSohfKApyMI-Feoa3wSePPoDG8VZg",
+    "trust_level": 50
+  },
+  "scope": {},
+  "context": {
+  "parent_task": "task-workflow-visualizer-1733000006",
+  "priority": "high",
+  "deadline": null
+},
+  "goal_based_planning": {
+    "enabled": true,
+    "strategy": "direct",
+    "goal_type": "feature-development",
+    "complexity": "low",
+    "strategy_plan_location": "coordination/knowledge-base/strategy-plans/worker-implementation-043-plan.json"
+  },
+  "resources": {
+    "token_budget": 10000,
+    "timeout_minutes": 45,
+    "max_retries": 1
+  },
+  "tool_assignment": {"worker_type":"implementation-worker","essential_tools":["Read","Write","Edit","Glob","Grep","Bash(git:*)","Bash"],"optional_tools":["WebFetch","WebSearch","TodoWrite"],"total_tools":10,"essential_clusters":["file_operations","code_search","version_control","code_execution"],"optional_clusters":["web_access","task_management"],"filtered":true,"rationale":"Needs file operations, search, git, and execution. Web access helpful for API docs."},
+  "deliverables": [],
+  "prompt_template": "coordination/prompts/workers/implementation-worker.md",
+  "execution": {
+    "started_at": null,
+    "completed_at": null,
+    "tokens_used": 0,
+    "duration_minutes": 0,
+    "session_id": null
+  },
+  "results": {
+    "status": null,
+    "output_location": null,
+    "summary": null,
+    "artifacts": []
+  },
+  "review": {
+    "enabled": true,
+    "min_cycles": 1,
+    "auto_approve_threshold": 0.95,
+    "history": []
+  }
+}

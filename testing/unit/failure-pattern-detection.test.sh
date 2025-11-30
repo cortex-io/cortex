@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # testing/unit/failure-pattern-detection.test.sh
 # Unit tests for Failure Pattern Detection System
 # Phase 4.4 - Self-Healing Implementation

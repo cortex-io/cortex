@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # Validate Hybrid Routing Performance
 # Analyzes routing decisions across all 5 layers
 

@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 # Test Script for Launcher Validation
 # Tests the fixed launcher without actually launching workers

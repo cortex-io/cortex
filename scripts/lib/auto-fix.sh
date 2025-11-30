@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # scripts/lib/auto-fix.sh
 # Auto-Fix Engine Library - Phase 4.5 Self-Healing Implementation
 # Automated remediation system for detected failure patterns

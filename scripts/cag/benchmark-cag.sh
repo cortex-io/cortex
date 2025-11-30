@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # scripts/cag/benchmark-cag.sh
 # Performance benchmark script for v5.0 Hybrid RAG+CAG
 

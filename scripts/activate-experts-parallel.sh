@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # Parallel Expert Activation Script
 # Activates multiple master agents in parallel based on MoE routing decisions
 

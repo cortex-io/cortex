@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # scripts/daemon-control.sh
 # Control script for cortex worker daemon
 # Usage: daemon-control.sh {start|stop|restart|status|install|uninstall}

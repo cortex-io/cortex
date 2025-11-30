@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # Simple incident logger for health alerts that exceed SLA
 
 ALERT_ID="${1}"

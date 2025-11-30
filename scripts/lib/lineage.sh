@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # scripts/lib/lineage.sh
 # Task Lineage Tracking Library
 # Provides complete observability of task lifecycle from creation to completion

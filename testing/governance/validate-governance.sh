@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # Validate Governance Controls
 # Comprehensive validation of MoE governance system including routing accuracy,
 # risk assessment, audit trails, and compliance monitoring

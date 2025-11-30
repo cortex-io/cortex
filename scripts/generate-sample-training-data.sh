@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # Generate Sample Training Data for PyTorch Model
 # Creates realistic sample data for demonstration and testing
 

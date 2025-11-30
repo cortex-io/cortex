@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # Routing Threshold Auto-Tuner
 # Automatically tunes confidence thresholds based on performance data
 

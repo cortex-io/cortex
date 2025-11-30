@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # scripts/lib/prompt-versioning.sh
 # Prompt Versioning and A/B Testing - Phase 4 Item 25
 #

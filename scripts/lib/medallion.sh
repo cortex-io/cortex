@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # Medallion Architecture for Cortex
 # Bronze (raw) → Silver (processed) → Gold (analytics)
 
