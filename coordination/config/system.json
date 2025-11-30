@@ -55,7 +55,7 @@
     "heartbeat_interval_seconds": 30,
     "health_check_interval_seconds": 180,
     "stale_heartbeat_threshold_seconds": 300,
-    "max_workers_per_master": 20,
+    "max_workers_per_master": 10000,
     "max_zombies_before_alert": 10,
     "token_budget_enforcement": true,
     "auto_restart_failed_daemons": true,
