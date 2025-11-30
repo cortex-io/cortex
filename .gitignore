@@ -86,3 +86,7 @@ coordination/logs/
 llm-mesh/training-data/*.jsonl
 llm-mesh/training-data/*.py
 llm-mesh/models/*.pt
+
+# OpenTelemetry runtime files
+coordination/observability/traces/*.jsonl
+coordination/observability/metrics/*.jsonl
