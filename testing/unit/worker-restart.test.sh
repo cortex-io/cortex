@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # testing/unit/worker-restart.test.sh
 # Unit tests for Worker Automatic Restart System
 # Phase 4.3 - Self-Healing Implementation

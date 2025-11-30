@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # Route Test Tasks Through MoE
 # Route governance test tasks through the MoE router to validate routing decisions
 # and observe governance controls in action

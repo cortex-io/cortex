@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # scripts/lib/agent-message-bus.sh
 # Agent Message Bus for Multi-Agent Coordination
 # Week 7: Q1 Implementation - Multi-Agent Coordination

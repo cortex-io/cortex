@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # Cache Manager
 # Manages cache lifecycle: build, refresh, validate
 

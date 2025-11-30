@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # Hierarchical Goal Decomposition
 # Phase 5 Item #59: Nested task hierarchies with parent-child relationships
 

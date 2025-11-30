@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # scripts/wizards/debug-helper.sh
 # Interactive troubleshooting wizard for Cortex
 # Part of Phase 5: Developer Experience

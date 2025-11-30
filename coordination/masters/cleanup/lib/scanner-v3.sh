@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # Cleanup Master - Scanner V3 (Cache-Aware)
 # Uses SQLite cache for instant lookups
 

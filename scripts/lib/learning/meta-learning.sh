@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # Meta-Learning for Cross-Task Optimization
 # Phase 5 Item #58: Extract meta-patterns that succeed across task types
 

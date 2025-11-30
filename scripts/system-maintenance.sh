@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # scripts/system-maintenance.sh
 # System Maintenance Script for cortex
 # Performs automated cleanup, archival, and optimization tasks

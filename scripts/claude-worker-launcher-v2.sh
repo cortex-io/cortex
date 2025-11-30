@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 # Claude Worker Launcher v2.2 - HEADLESS MODE
 # Enhanced launcher with TRUE headless execution (no Terminal.app)

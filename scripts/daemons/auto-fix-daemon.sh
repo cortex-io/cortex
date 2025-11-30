@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # scripts/daemons/auto-fix-daemon.sh
 # Auto-Fix Daemon - Phase 4.5 Self-Healing Implementation
 # Monitors failure patterns and applies automated fixes

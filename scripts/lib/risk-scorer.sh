@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # scripts/lib/risk-scorer.sh
 # Risk Scorer Library - Phase 3 Item 29
 # Scores tasks by risk and allocates resources accordingly

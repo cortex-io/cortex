@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # scripts/test-tracing.sh
 # Test distributed tracing functionality with example workflow
 

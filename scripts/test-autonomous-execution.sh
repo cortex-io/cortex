@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # scripts/test-autonomous-execution.sh
 # Test autonomous worker execution end-to-end
 # Part of Week 1: AGENT_ARCHITECTURE_FIX validation

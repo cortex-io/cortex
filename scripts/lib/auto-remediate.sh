@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # scripts/lib/auto-remediate.sh
 # Automated Remediation Library - Phase 3 Item 27
 # Links failure patterns to remediation playbooks for automatic execution

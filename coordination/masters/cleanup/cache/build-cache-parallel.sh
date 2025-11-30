@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # Parallel Cache Builder for Cleanup Master
 # Builds reference index using multiple workers
 
@@ -10,8 +10,8 @@ PROJECT_ROOT="$(cd "$SCRIPT_DIR/../../../.." && pwd)"
 CACHE_DIR="$SCRIPT_DIR"
 
 # Configuration
-WORKER_COUNT="${1:-4}"  # Default 4 workers
-MAX_WORKERS=8
+WORKER_COUNT="${1:-128}"  # Default 128 workers for MAXIMUM stress test
+MAX_WORKERS=128
 
 if [[ $WORKER_COUNT -gt $MAX_WORKERS ]]; then
     WORKER_COUNT=$MAX_WORKERS

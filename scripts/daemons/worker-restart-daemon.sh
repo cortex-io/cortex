@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # scripts/daemons/worker-restart-daemon.sh
 # Worker Restart Daemon - Phase 4.3 Self-Healing Implementation
 # Processes restart queue and executes scheduled worker restarts

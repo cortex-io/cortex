@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # scripts/lib/git-coordination.sh
 # Multi-file commit coordination and feature branch management
 # Used by CI/CD master to coordinate git operations across multiple workers

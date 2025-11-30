@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # Sparse Worker Pool Manager - MoE-Inspired Resource Management
 # Like MoE activating 1B/7B parameters, only spin up necessary workers
 

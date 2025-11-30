@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # scripts/wizards/daemon-control.sh
 # Interactive daemon management wizard
 # Part of Phase 5: Developer Experience

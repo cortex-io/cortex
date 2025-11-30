@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # scripts/daemons/freshness-daemon.sh
 # Knowledge Freshness Management Daemon
 # Runs periodic freshness checks and triggers re-indexing for stale content

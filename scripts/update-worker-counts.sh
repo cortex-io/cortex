@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # Update coordination files with actual worker counts
 
 ACTIVE=$(find coordination/worker-specs/active -name '*.json' 2>/dev/null | wc -l | tr -d ' ')

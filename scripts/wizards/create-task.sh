@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # scripts/wizards/create-task.sh
 # Interactive task creation wizard for Cortex
 # Part of Phase 5: Developer Experience

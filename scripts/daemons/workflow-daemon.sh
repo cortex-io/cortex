@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 # Workflow Daemon
 # Monitors and executes scheduled workflows based on cron triggers

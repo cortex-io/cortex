@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # scripts/lib/rag/query-optimizer.sh
 # RAG Query Optimizer - Phase 3 Item 35
 # Query expansion, rewriting, and result re-ranking for improved RAG retrieval

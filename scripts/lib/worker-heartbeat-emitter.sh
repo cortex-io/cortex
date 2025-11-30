@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # scripts/lib/worker-heartbeat-emitter.sh
 # Background heartbeat emitter for running workers
 # Phase 4.1 - Self-Healing Implementation

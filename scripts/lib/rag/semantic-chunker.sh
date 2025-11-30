@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # scripts/lib/rag/semantic-chunker.sh
 # Semantic Chunker - Phase 3 Item 36
 # Replaces fixed-size chunking with semantic boundary detection

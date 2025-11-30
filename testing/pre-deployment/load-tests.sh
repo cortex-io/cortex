@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # Pre-Deployment Load Tests
 # Performance validation under concurrent load
 

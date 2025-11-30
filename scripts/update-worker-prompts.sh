@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # Update all worker prompt templates with spec self-initialization instructions
 
 set -euo pipefail

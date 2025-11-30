@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # scripts/lib/correlation.sh
 # Correlation ID generation and propagation for distributed tracing
 

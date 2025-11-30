@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 # User Management API Test Script
 # Tests all CRUD operations for the new user management endpoints

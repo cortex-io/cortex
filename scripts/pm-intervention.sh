@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # scripts/pm-intervention.sh
 # PM intervention actions library
 # Provides functions for PM daemon to take corrective actions on workers

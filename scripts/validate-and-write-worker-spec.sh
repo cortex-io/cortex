@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # Validate and Write Worker Spec
 # Usage: validate-and-write-worker-spec.sh <worker_spec_json> <output_file>
 #

@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # scripts/examples/autonomous-worker-demo.sh
 # Demonstration of fully autonomous worker with automatic git workflow
 # This worker creates a simple test file, then automatically commits and pushes

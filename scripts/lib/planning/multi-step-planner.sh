@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # Multi-Step Planning with Replanning
 # Phase 5 Item #57: Re-evaluate plan on step failure, adjust remaining steps
 

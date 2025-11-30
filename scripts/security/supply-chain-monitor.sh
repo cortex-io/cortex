@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # Supply Chain Security Monitoring
 # Phase 5 Item #62: Track dependency provenance, verify signatures
 

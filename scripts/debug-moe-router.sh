@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # Debug MoE Router keyword matching
 
 TASK="Phase 1 validation of v5.0 Hybrid RAG+CAG: Scan cortex repository to validate CAG performance claims"

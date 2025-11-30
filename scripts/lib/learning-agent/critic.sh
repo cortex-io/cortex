@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # scripts/lib/learning-agent/critic.sh
 # Learning Agent: Critic Component
 # Week 5: Q1 Implementation - Learning Agent (Critic & Learner)

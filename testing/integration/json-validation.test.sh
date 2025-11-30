@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # Test Suite for JSON Validation and Repair Utilities
 # Tests both bash and Node.js implementations
 

@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # Create Governance Test Tasks
 # Generate test tasks with different risk levels to validate MoE routing and governance
 

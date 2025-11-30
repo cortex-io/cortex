@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # Governance Enforcement Layer
 # Provides pre-flight validation, hard budget limits, and audit trails
 #

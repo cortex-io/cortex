@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # PyTorch Training Data Collection Script
 # Collects and labels routing decisions for model training
 

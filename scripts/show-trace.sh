@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # scripts/show-trace.sh
 # Trace aggregation and viewer for distributed tracing
 

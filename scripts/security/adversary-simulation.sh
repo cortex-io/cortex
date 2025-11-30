@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # Adversary Simulation
 # Phase 5 Item #61: Controlled attack simulation to test detection/response
 

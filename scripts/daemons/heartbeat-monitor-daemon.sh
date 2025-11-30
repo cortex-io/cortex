@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # scripts/daemons/heartbeat-monitor-daemon.sh
 # Heartbeat Monitor Daemon - Phase 4.1 Self-Healing Implementation
 # Monitors worker heartbeats and detects failures automatically

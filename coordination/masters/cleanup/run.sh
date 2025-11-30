@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # Cleanup Master - Full Run
 # Complete cleanup with optional auto-fix
 

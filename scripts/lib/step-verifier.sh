@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # scripts/lib/step-verifier.sh
 # Step Verifier Library - Phase 3 Item 37
 # Verification criteria per step in task specifications

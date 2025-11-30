@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # Test Routing Cascade - Demonstration Script
 
 set -euo pipefail

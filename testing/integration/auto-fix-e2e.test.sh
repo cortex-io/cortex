@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # testing/integration/auto-fix-e2e.test.sh
 # End-to-End Integration Tests for Auto-Fix Framework
 # Phase 4.5 - Self-Healing Implementation

@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # scripts/daemons/observability-hub-daemon.sh
 # ObservabilityHub Daemon - Real-time event aggregation and correlation
 #

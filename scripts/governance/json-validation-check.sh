@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # Governance Compliance Check: JSON Validation
 # Validates all critical JSON files in the coordination system
 # Returns: 0 if all valid, 1 if validation errors found

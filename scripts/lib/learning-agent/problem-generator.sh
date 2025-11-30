@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # scripts/lib/learning-agent/problem-generator.sh
 # Learning Agent: Problem Generator Component
 # Week 6: Q1 Implementation - Problem Generator & Exploration

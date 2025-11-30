@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # scripts/lib/worker-restart.sh
 # Worker Automatic Restart Library - Phase 4.3
 # Intelligent restart logic for failed workers with retry policies

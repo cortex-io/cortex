@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 # Zombie Worker Cleanup Script
 # Detects and cleans up workers that failed to launch or are stuck

@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # Cleanup Master - Auto-Fix
 # Safely fixes common issues automatically
 

@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # Generate Health Report PDF
 # Shows current health alerts and incidents
 

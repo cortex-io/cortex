@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # scripts/start-worker.sh
 # Automatically start a pending worker in a new Claude Code session
 

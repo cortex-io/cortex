@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # scripts/worker-checkin.sh
 # Worker check-in helper for PM system
 # Provides simple function for workers to report progress

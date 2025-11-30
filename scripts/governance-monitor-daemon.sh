@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # Governance Monitoring Daemon
 # Continuously monitors governance health and generates alerts
 

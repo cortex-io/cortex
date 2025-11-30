@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # Cache Builder Worker
 # Processes a chunk of files and builds reference index
 

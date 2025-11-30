@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # scripts/lib/goal-decomposition.sh
 # Goal Decomposition with Verification Checkpoints - Phase 4 Item 23
 #

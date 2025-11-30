@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # scripts/lib/heartbeat.sh
 # Worker Heartbeat Library - Phase 4.1 Self-Healing Implementation
 # Provides heartbeat emission and health monitoring capabilities for workers

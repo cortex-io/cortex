@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # scripts/vector-db/query-similar-mock.sh
 # Mock implementation of vector similarity search
 # This demonstrates the concept - real implementation would use embeddings

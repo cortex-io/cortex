@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # scripts/lib/task-spec-builder.sh
 # Task Specification Builder - Safe task creation with validation
 #

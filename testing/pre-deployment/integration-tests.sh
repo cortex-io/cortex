@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # Pre-Deployment Integration Tests
 # End-to-end testing of Cortex system workflows
 

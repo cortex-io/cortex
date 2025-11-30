@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # scripts/templates/worker-completion-hook.sh
 # Template for worker completion with automatic git workflow
 # Copy this template and customize for specific worker types

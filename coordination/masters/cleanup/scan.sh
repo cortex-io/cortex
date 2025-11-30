@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # Cleanup Master - Quick Scan
 # Fast scan for cleanup opportunities
 

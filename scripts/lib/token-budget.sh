@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # scripts/lib/token-budget.sh
 # Token Budget Management Library
 # Provides atomic operations for token allocation, release, and tracking

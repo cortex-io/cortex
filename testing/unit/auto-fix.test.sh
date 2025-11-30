@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # testing/unit/auto-fix.test.sh
 # Unit tests for Auto-Fix Framework
 # Phase 4.5 - Self-Healing Implementation

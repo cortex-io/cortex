@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # scripts/lib/coordination.sh
 # Coordination file utilities for cortex
 

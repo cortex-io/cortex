@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # Validate Deployment - Orchestrates all pre-deployment checks
 # Run this before promoting any changes to production
 

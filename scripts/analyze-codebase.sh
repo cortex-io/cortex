@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # Analyze Cortex codebase for simplification opportunities
 
 CORTEX_HOME="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"

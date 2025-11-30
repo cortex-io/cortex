@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 #
 # archive-failed-workers.sh
 # Archives failed workers to a dated directory for audit and cleanup

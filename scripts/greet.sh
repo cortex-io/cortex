@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 #
 # Greeting script for cortex
 # Created by: worker-implementation-017

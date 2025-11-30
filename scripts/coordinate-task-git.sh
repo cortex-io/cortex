@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # scripts/coordinate-task-git.sh
 # CLI tool for coordinating git operations across multiple workers
 # Used by CI/CD master

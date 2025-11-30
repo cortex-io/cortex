@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # scripts/wizards/create-worker.sh
 # Interactive wizard for creating and spawning workers
 # Part of Phase 5: Developer Experience

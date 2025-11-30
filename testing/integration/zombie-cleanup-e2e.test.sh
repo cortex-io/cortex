@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # testing/integration/zombie-cleanup-e2e.test.sh
 # End-to-end integration test for Zombie Worker Cleanup System
 # Phase 4.2 - Self-Healing Implementation

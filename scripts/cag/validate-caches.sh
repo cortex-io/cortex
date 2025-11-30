@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # scripts/cag/validate-caches.sh
 # Validate CAG cache versions and detect stale caches
 

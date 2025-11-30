@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # Start Agent Gateway Server
 
 set -euo pipefail

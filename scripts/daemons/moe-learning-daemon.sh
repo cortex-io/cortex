@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # scripts/daemons/moe-learning-daemon.sh
 # Continuous MoE Learning Daemon
 # Runs learning cycles hourly for rapid model adaptation

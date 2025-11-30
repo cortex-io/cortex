@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # Pre-Deployment Readiness Checks
 # Validates deployment gates before promoting to production
 

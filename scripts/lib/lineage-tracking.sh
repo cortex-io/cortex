@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # Lineage Tracking Integration for Bash Scripts
 # Part of Phase 3: Automated Data Lineage & Audit Trails
 

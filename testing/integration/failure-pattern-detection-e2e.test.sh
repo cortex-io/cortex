@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # testing/integration/failure-pattern-detection-e2e.test.sh
 # End-to-End Integration Tests for Failure Pattern Detection
 # Phase 4.4 - Self-Healing Implementation

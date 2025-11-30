@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # Universal Event Emission Script
 # Single Source of Truth: coordination/dashboard-events.jsonl
 #

@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # scripts/daily-learning-scheduler.sh
 # Daily Learning Scheduler
 # Week 5: Q1 Implementation - Learning Agent

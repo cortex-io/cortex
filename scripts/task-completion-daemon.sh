@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 # Task Completion Daemon
 # Monitors worker status.json files and updates task queue when workers complete

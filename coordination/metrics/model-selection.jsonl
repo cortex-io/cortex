@@ -1,0 +1,170 @@
+{
+  "timestamp": "2025-11-29T14:51:19-0600",
+  "task_id": "task-test-001",
+  "model": "claude-sonnet-4",
+  "provider": "anthropic",
+  "tier": "balanced",
+  "complexity_score": 5,
+  "sensitivity_level": "none",
+  "reasoning": "Selected claude-sonnet-4 from balanced tier"
+}
+{
+  "timestamp": "2025-11-29T14:51:31-0600",
+  "task_id": "task-output-resolver-1733000005",
+  "model": "claude-sonnet-4",
+  "provider": "anthropic",
+  "tier": "balanced",
+  "complexity_score": 5,
+  "sensitivity_level": "none",
+  "reasoning": "Selected claude-sonnet-4 from balanced tier"
+}
+{
+  "timestamp": "2025-11-29T14:51:31-0600",
+  "task_id": "task-parallel-executor-1733000002",
+  "model": "claude-sonnet-4",
+  "provider": "anthropic",
+  "tier": "balanced",
+  "complexity_score": 5,
+  "sensitivity_level": "none",
+  "reasoning": "Selected claude-sonnet-4 from balanced tier"
+}
+{
+  "timestamp": "2025-11-29T14:51:31-0600",
+  "task_id": "task-step-runner-1733000004",
+  "model": "claude-sonnet-4",
+  "provider": "anthropic",
+  "tier": "balanced",
+  "complexity_score": 5,
+  "sensitivity_level": "none",
+  "reasoning": "Selected claude-sonnet-4 from balanced tier"
+}
+{
+  "timestamp": "2025-11-29T14:51:31-0600",
+  "task_id": "task-state-manager-1733000003",
+  "model": "claude-sonnet-4",
+  "provider": "anthropic",
+  "tier": "balanced",
+  "complexity_score": 5,
+  "sensitivity_level": "none",
+  "reasoning": "Selected claude-sonnet-4 from balanced tier"
+}
+{
+  "timestamp": "2025-11-29T14:51:31-0600",
+  "task_id": "task-trigger-system-1733000008",
+  "model": "claude-sonnet-4",
+  "provider": "anthropic",
+  "tier": "balanced",
+  "complexity_score": 5,
+  "sensitivity_level": "none",
+  "reasoning": "Selected claude-sonnet-4 from balanced tier"
+}
+{
+  "timestamp": "2025-11-29T14:51:34-0600",
+  "task_id": "task-cli-commands-1733000009",
+  "model": "claude-sonnet-4",
+  "provider": "anthropic",
+  "tier": "balanced",
+  "complexity_score": 5,
+  "sensitivity_level": "none",
+  "reasoning": "Selected claude-sonnet-4 from balanced tier"
+}
+{
+  "timestamp": "2025-11-29T14:51:34-0600",
+  "task_id": "task-main-executor-1733000007",
+  "model": "claude-sonnet-4",
+  "provider": "anthropic",
+  "tier": "balanced",
+  "complexity_score": 5,
+  "sensitivity_level": "none",
+  "reasoning": "Selected claude-sonnet-4 from balanced tier"
+}
+{
+  "timestamp": "2025-11-29T14:51:34-0600",
+  "task_id": "task-integration-tests-1733000010",
+  "model": "claude-sonnet-4",
+  "provider": "anthropic",
+  "tier": "balanced",
+  "complexity_score": 5,
+  "sensitivity_level": "none",
+  "reasoning": "Selected claude-sonnet-4 from balanced tier"
+}
+{
+  "timestamp": "2025-11-29T14:51:34-0600",
+  "task_id": "task-workflow-parser-1733000000",
+  "model": "claude-sonnet-4",
+  "provider": "anthropic",
+  "tier": "balanced",
+  "complexity_score": 5,
+  "sensitivity_level": "none",
+  "reasoning": "Selected claude-sonnet-4 from balanced tier"
+}
+{
+  "timestamp": "2025-11-29T14:51:34-0600",
+  "task_id": "task-workflow-visualizer-1733000006",
+  "model": "claude-sonnet-4",
+  "provider": "anthropic",
+  "tier": "balanced",
+  "complexity_score": 5,
+  "sensitivity_level": "none",
+  "reasoning": "Selected claude-sonnet-4 from balanced tier"
+}
+{
+  "timestamp": "2025-11-29T14:51:34-0600",
+  "task_id": "task-dependency-resolver-1733000001",
+  "model": "claude-sonnet-4",
+  "provider": "anthropic",
+  "tier": "balanced",
+  "complexity_score": 5,
+  "sensitivity_level": "none",
+  "reasoning": "Selected claude-sonnet-4 from balanced tier"
+}
+{
+  "timestamp": "2025-11-30T08:31:19-0600",
+  "task_id": "task-dashboard-aggregation",
+  "model": "claude-sonnet-4",
+  "provider": "anthropic",
+  "tier": "balanced",
+  "complexity_score": 5,
+  "sensitivity_level": "none",
+  "reasoning": "Selected claude-sonnet-4 from balanced tier"
+}
+{
+  "timestamp": "2025-11-30T08:31:54-0600",
+  "task_id": "task-metrics-collector",
+  "model": "claude-sonnet-4",
+  "provider": "anthropic",
+  "tier": "balanced",
+  "complexity_score": 5,
+  "sensitivity_level": "none",
+  "reasoning": "Selected claude-sonnet-4 from balanced tier"
+}
+{
+  "timestamp": "2025-11-30T08:31:56-0600",
+  "task_id": "task-metrics-schema",
+  "model": "claude-sonnet-4",
+  "provider": "anthropic",
+  "tier": "balanced",
+  "complexity_score": 5,
+  "sensitivity_level": "none",
+  "reasoning": "Selected claude-sonnet-4 from balanced tier"
+}
+{
+  "timestamp": "2025-11-30T08:31:57-0600",
+  "task_id": "task-health-monitor",
+  "model": "claude-sonnet-4",
+  "provider": "anthropic",
+  "tier": "balanced",
+  "complexity_score": 5,
+  "sensitivity_level": "none",
+  "reasoning": "Selected claude-sonnet-4 from balanced tier"
+}
+{
+  "timestamp": "2025-11-30T08:31:59-0600",
+  "task_id": "task-health-schema",
+  "model": "claude-sonnet-4",
+  "provider": "anthropic",
+  "tier": "balanced",
+  "complexity_score": 5,
+  "sensitivity_level": "none",
+  "reasoning": "Selected claude-sonnet-4 from balanced tier"
+}

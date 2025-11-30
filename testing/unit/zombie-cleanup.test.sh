@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # testing/unit/zombie-cleanup.test.sh
 # Unit tests for Zombie Worker Cleanup System
 # Phase 4.2 - Self-Healing Implementation
