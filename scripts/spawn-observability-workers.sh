@@ -60,8 +60,8 @@ spawn_worker() {
 EOF
 )
 
-  # Spawn worker in background
-  GOVERNANCE_BYPASS=true "$SPAWN_WORKER" \
+  # Spawn worker in background (skip git pull for parallel spawning)
+  SKIP_GIT_PULL=true GOVERNANCE_BYPASS=true "$SPAWN_WORKER" \
     --type implementation-worker \
     --task-id "$task_id" \
     --master development-master \
@@ -197,7 +197,21 @@ echo "  • Worker specs: ls -lt coordination/worker-specs/active/"
 echo "  • Spawn logs: ls -lt /tmp/cortex-obs-spawn-*.log"
 echo "  • Worker pool: cat coordination/worker-pool.json | jq '.active_workers'"
 echo ""
-echo "Next: Commit worker specs to git and let them run!"
+echo "════════════════════════════════════════════════════════════════"
+echo "Committing all worker spawns to git (batched)..."
+echo "════════════════════════════════════════════════════════════════"
+echo ""
+
+# Batch git operations - pull, commit, and push all changes at once
+cd "$CORTEX_ROOT"
+git pull origin main --quiet
+git add coordination/
+git commit -m "feat: Spawned $worker_count observability workers (batched parallel spawn)" --quiet
+git push origin main --quiet
+
+echo "✓ All $worker_count worker specs committed and pushed to GitHub"
+echo ""
+echo "SYSTEM READY: Workers are now running autonomously!"
 echo "════════════════════════════════════════════════════════════════"
 
 exit 0
