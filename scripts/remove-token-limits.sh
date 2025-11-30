@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # scripts/remove-token-limits.sh
 # Remove token limit constraints from master prompts and worker specs
 # CAG caching makes token budgets obsolete for the cortex system

@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 # Learning Task Monitor Daemon
 # Monitors MoE learning tasks for progress, deliverables, and stalls

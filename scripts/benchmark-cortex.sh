@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # Cortex Performance Benchmark Suite
 # Measures system performance across key operations
 

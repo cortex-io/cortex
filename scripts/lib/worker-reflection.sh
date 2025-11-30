@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # scripts/lib/worker-reflection.sh
 # Worker Self-Correction via Reflection
 # Phase 2 Enhancement #17

@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # Cleanup Master - Report Generator
 # Generates actionable cleanup reports
 

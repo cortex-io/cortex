@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # scripts/visualize-trace.sh
 # Timeline visualization for distributed traces
 

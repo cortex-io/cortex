@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # scripts/lib/prompt-manager.sh
 # Prompt Manager Library - Phase 3 Item 25
 # Prompt versioning and A/B testing with outcome tracking

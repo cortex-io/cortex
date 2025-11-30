@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # Routing Performance Dashboard
 # Real-time dashboard showing routing metrics across all 5 layers
 

@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # scripts/lib/worker-spec-builder.sh
 # Worker Specification Builder - Safe worker spec creation with validation
 #

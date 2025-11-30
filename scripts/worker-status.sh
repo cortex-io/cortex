@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # Worker Status Script - Monitor active workers
 
 set -e

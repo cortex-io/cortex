@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # scripts/lib/resource-allocation.sh
 # Context-Aware Resource Allocation - Phase 4 Item 24
 #

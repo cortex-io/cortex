@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # test-core-foundation.sh - Test the core principles foundation
 # This script validates that the core infrastructure is working correctly
 

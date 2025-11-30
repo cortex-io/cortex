@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # scripts/install-agents.sh
 # Install cortex agents to make them available in Claude Code
 

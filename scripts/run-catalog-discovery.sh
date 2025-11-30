@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 # Run Catalog Discovery
 # Automatically discover and register all data and AI assets

@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # testing/integration/heartbeat-system-e2e.test.sh
 # End-to-end integration test for Worker Heartbeat System
 # Phase 4.1 - Self-Healing Implementation

@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # Task Completion Hook - MoE Learning Integration
 # Called when a task completes to update memory/learning system
 

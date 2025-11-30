@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # scripts/lib/reasoning-validator.sh
 # Reasoning Trace Validator - Phase 3 Item 38
 # Validates logical consistency of reasoning traces before adding to training set

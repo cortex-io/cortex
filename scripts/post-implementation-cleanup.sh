@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # Post-Implementation Cleanup
 # Run this after major implementations or removals
 

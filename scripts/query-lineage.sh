@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # scripts/query-lineage.sh
 # Query and analyze task lineage data
 # Provides complete observability into task lifecycle and execution patterns

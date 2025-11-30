@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # Auto-Learning Daemon
 # Continuously learns from task outcomes and triggers fine-tuning when ready
 

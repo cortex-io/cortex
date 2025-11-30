@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # Pre-Deployment Smoke Tests
 # Quick validation suite for rapid feedback (<2 minutes)
 

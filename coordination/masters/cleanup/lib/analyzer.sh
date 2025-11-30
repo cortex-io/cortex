@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # Cleanup Master - Pattern Analyzer
 # Detects legacy patterns, broken references, and anti-patterns
 

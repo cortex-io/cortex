@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # scripts/lib/identity-check.sh
 # Bash wrapper for agent identity verification
 

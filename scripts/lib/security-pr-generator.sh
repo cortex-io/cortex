@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # scripts/lib/security-pr-generator.sh
 # Security PR Generator Library
 # Creates pull requests for security fixes including dependency updates and vulnerability remediations

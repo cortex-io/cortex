@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # File I/O Caching and Optimization Library
 # Reduces redundant file reads and improves performance
 

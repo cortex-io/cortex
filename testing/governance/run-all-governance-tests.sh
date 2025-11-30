@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # Run All Governance Tests
 # Master script to execute comprehensive governance testing suite
 

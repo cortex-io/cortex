@@ -222,3 +222,11 @@
 }
 {"id":"evt-1764280413-16167","timestamp":"2025-11-27T15:53:33-06:00","type":"system_ERROR","data":"❌ FAIL: Run coordinator master with version validation","source":"automation"}
 {"id":"evt-1764280413-16167","timestamp":"2025-11-27T15:53:33-06:00","type":"system_ERROR","data":"Some tests failed ❌","source":"automation"}
+{"id":"evt-1764449549-91327","timestamp":"2025-11-29T14:52:29-06:00","type":"system_ERROR","data":"Generated invalid JSON in worker specification","source":"automation"}
+{"id":"evt-1764449549-91307","timestamp":"2025-11-29T14:52:29-06:00","type":"system_ERROR","data":"Generated invalid JSON in worker specification","source":"automation"}
+{"id":"evt-1764449549-91331","timestamp":"2025-11-29T14:52:29-06:00","type":"system_ERROR","data":"Generated invalid JSON in worker specification","source":"automation"}
+{"id":"evt-1764449549-91323","timestamp":"2025-11-29T14:52:29-06:00","type":"system_ERROR","data":"Generated invalid JSON in worker specification","source":"automation"}
+{"id":"evt-1764513114-22310","timestamp":"2025-11-30T08:31:54-06:00","type":"system_ERROR","data":"Permission denied: null\ndevelopment-master cannot spawn workers","source":"automation"}
+{"id":"evt-1764513116-24612","timestamp":"2025-11-30T08:31:56-06:00","type":"system_ERROR","data":"Permission denied: null\ninventory-master cannot spawn workers","source":"automation"}
+{"id":"evt-1764513117-25655","timestamp":"2025-11-30T08:31:57-06:00","type":"system_ERROR","data":"Permission denied: null\ndevelopment-master cannot spawn workers","source":"automation"}
+{"id":"evt-1764513120-27950","timestamp":"2025-11-30T08:32:00-06:00","type":"system_ERROR","data":"Permission denied: null\ninventory-master cannot spawn workers","source":"automation"}

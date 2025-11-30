@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # testing/integration/worker-restart-e2e.test.sh
 # End-to-end integration test for Worker Automatic Restart System
 # Phase 4.3 - Self-Healing Implementation

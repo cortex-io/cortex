@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # scripts/lib/traced-logging.sh
 # Logging with distributed tracing correlation context
 

@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # scripts/worker-lifecycle-manager.sh
 # Enhanced worker lifecycle management to prevent zombies and handle completion
 # Part of Week 1: AGENT_ARCHITECTURE_FIX

@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # JSON Validation and Repair Utility
 # Provides validation and automatic repair for common JSON errors
 # Used by emit-event.sh and dashboard server to prevent malformed JSON

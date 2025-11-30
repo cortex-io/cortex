@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # Standardized Error Messages for Cortex
 # Provides consistent, actionable error reporting
 

@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # Access Control Helper Functions
 # Provides permission checking for all cortex scripts
 #

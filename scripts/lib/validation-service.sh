@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # validation-service.sh - Systematic validation for all cortex operations
 # Prevents the 2025-11-11 incident (malformed JSON paralysis) from ever happening again
 #

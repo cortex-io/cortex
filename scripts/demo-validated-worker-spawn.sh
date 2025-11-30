@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # demo-validated-worker-spawn.sh
 #
 # DEMONSTRATION: How Core Principles Foundation Prevents the 2025-11-11 Incident

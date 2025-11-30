@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # Test all dashboard GET endpoints
 
 echo "Testing Dashboard APIs..."

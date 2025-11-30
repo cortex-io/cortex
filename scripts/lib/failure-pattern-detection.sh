@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # scripts/lib/failure-pattern-detection.sh
 # Failure Pattern Detection Library - Phase 4.4
 # Analyzes worker failures to identify patterns and predict future failures

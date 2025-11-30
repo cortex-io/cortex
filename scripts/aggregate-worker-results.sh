@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 # Aggregate Worker Results Script
 # Used by Execution Managers to collect and synthesize outputs from multiple workers

@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # scripts/observers/run-git-ops.sh
 # Git-Ops Observer - Automatic GitHub synchronization
 # Part of Phase 1: Script-Triggered Automation

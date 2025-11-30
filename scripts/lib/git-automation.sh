@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # scripts/lib/git-automation.sh
 # Git automation library for cortex workers
 # Provides automatic commit, push, and PR creation capabilities

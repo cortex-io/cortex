@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # scripts/zombie-worker-recovery.sh
 # Recover zombie workers by cleaning them up and reclaiming token budgets
 # Part of Week 1: AGENT_ARCHITECTURE_FIX

@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # scripts/lib/logging.sh
 # Structured logging utilities for cortex
 

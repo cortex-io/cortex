@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # Test all governance API endpoints
 
 echo "Testing Governance API Endpoints..."

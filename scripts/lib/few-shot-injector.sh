@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # scripts/lib/few-shot-injector.sh
 # Few-shot example injector for agent prompts
 #

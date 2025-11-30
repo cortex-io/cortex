@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # A/B Testing Framework for Cortex
 # Enables controlled experiments with master versions and prompts
 

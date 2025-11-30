@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # scripts/load-test-workers.sh
 # Load test: Spawn 100 workers and monitor for 5 minutes
 #

@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # scripts/cag/load-cache.sh
 # CAG (Cache Augmented Generation) - Load static knowledge into master initialization
 # This script prepares static knowledge for pre-loading into model context

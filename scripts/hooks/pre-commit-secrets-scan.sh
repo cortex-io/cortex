@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # scripts/hooks/pre-commit-secrets-scan.sh
 # Pre-commit hook to scan for secrets and PII in staged files
 #

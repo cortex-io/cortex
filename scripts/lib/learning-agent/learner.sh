@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # scripts/lib/learning-agent/learner.sh
 # Learning Agent: Learner Component
 # Week 5: Q1 Implementation - Learning Agent (Critic & Learner)

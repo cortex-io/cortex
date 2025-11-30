@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # Routing Performance Analyzer
 # Analyzes routing decisions and provides insights for optimization
 

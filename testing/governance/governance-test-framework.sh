@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # Governance Test Framework
 # Comprehensive testing of MoE governance controls including risk assessment,
 # audit trails, approval workflows, and service recovery

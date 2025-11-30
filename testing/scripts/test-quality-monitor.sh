@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # testing/scripts/test-quality-monitor.sh
 # Test suite for data quality monitoring
 #
