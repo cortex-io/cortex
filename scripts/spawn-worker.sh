@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # scripts/spawn-worker.sh
 # Spawn individual worker agents for cortex
 # Part of Phase 1: Script-Triggered Automation
@@ -15,6 +15,12 @@ source "$SCRIPT_DIR/lib/coordination.sh"
 source "$SCRIPT_DIR/lib/access-check.sh"
 source "$SCRIPT_DIR/lib/goal-planner.sh"
 source "$SCRIPT_DIR/lib/identity-check.sh" 2>/dev/null || true  # Optional identity system
+
+# OpenTelemetry instrumentation (optional)
+OTEL_ENABLED="${OTEL_ENABLED:-true}"
+if [[ "$OTEL_ENABLED" == "true" ]] && [[ -f "$CORTEX_HOME/coordination/observability/otel-worker.sh" ]]; then
+    source "$CORTEX_HOME/coordination/observability/otel-worker.sh" 2>/dev/null || OTEL_ENABLED=false
+fi
 
 # Color definitions for output formatting
 GREEN="\033[0;32m"
@@ -46,6 +52,7 @@ OPTIONS:
     -p, --priority PRIORITY   Priority: critical|high|medium|low (default: medium)
     -s, --scope JSON          JSON scope object (optional)
     -c, --context JSON        JSON context object (optional)
+    --task-json FILE          Load task from JSON file (cortex-cli integration)
     --review-enabled BOOL     Enable quality review loops (default: from policy)
     --review-cycles NUM       Number of review cycles (default: from policy)
     -h, --help                Show this help message
@@ -90,6 +97,7 @@ CONTEXT_JSON=""
 EXECUTION_MANAGER=""
 REVIEW_ENABLED=""
 REVIEW_CYCLES=""
+TASK_JSON_FILE=""
 
 while [[ $# -gt 0 ]]; do
     case $1 in
@@ -134,6 +142,10 @@ while [[ $# -gt 0 ]]; do
             CONTEXT_JSON="$2"
             shift 2
             ;;
+        --task-json)
+            TASK_JSON_FILE="$2"
+            shift 2
+            ;;
         --review-enabled)
             REVIEW_ENABLED="$2"
             shift 2
@@ -151,6 +163,80 @@ while [[ $# -gt 0 ]]; do
             ;;
     esac
 done
+
+# Load task from JSON file if provided (Phase 3: cortex-cli integration)
+if [ -n "$TASK_JSON_FILE" ]; then
+    if [ ! -f "$TASK_JSON_FILE" ]; then
+        print_error "Task JSON file not found: $TASK_JSON_FILE"
+        exit 1
+    fi
+
+    # Extract task information from JSON
+    TASK_JSON=$(cat "$TASK_JSON_FILE")
+
+    # Override CLI parameters with JSON values
+    [ -z "$TASK_ID" ] && TASK_ID=$(echo "$TASK_JSON" | jq -r '.task_id // ""')
+    [ -z "$MASTER_AGENT" ] && MASTER_AGENT=$(echo "$TASK_JSON" | jq -r '.master // ""')
+    [ -z "$PRIORITY" ] && PRIORITY=$(echo "$TASK_JSON" | jq -r '.priority // "medium"')
+
+    # Extract template fields if present
+    TEMPLATE_FIELDS=$(echo "$TASK_JSON" | jq -r '.fields // {}' 2>/dev/null)
+
+    # Try to auto-determine worker type from template or description
+    if [ -z "$WORKER_TYPE" ]; then
+        TEMPLATE_ID=$(echo "$TASK_JSON" | jq -r '.template_id // ""')
+
+        case "$TEMPLATE_ID" in
+            security-scan)
+                WORKER_TYPE="scan-worker"
+                ;;
+            feature-implementation)
+                WORKER_TYPE="implementation-worker"
+                ;;
+            bug-fix)
+                WORKER_TYPE="fix-worker"
+                ;;
+            deployment)
+                WORKER_TYPE="pr-worker"  # Or deployment-worker if exists
+                ;;
+            documentation)
+                WORKER_TYPE="documentation-worker"
+                ;;
+            dependency-update)
+                WORKER_TYPE="implementation-worker"
+                ;;
+            *)
+                # Try to determine from description
+                DESCRIPTION=$(echo "$TASK_JSON" | jq -r '.description // ""' | tr '[:upper:]' '[:lower:]')
+                if [[ "$DESCRIPTION" =~ scan|vulnerability|cve ]]; then
+                    WORKER_TYPE="scan-worker"
+                elif [[ "$DESCRIPTION" =~ implement|feature ]]; then
+                    WORKER_TYPE="implementation-worker"
+                elif [[ "$DESCRIPTION" =~ fix|bug ]]; then
+                    WORKER_TYPE="fix-worker"
+                elif [[ "$DESCRIPTION" =~ document ]]; then
+                    WORKER_TYPE="documentation-worker"
+                elif [[ "$DESCRIPTION" =~ test ]]; then
+                    WORKER_TYPE="test-worker"
+                else
+                    WORKER_TYPE="analysis-worker"  # default
+                fi
+                ;;
+        esac
+
+        print_info "Auto-determined worker type: $WORKER_TYPE"
+    fi
+
+    # Extract repository if in template fields
+    if [ -z "$REPOSITORY" ] && [ "$TEMPLATE_FIELDS" != "{}" ]; then
+        REPOSITORY=$(echo "$TEMPLATE_FIELDS" | jq -r '.target_repository // .repository // ""')
+    fi
+
+    # Build scope from template fields
+    if [ -z "$SCOPE_JSON" ] && [ "$TEMPLATE_FIELDS" != "{}" ]; then
+        SCOPE_JSON="$TEMPLATE_FIELDS"
+    fi
+fi
 
 # Validate required arguments
 if [ -z "$WORKER_TYPE" ] || [ -z "$TASK_ID" ] || [ -z "$MASTER_AGENT" ]; then
@@ -257,6 +343,11 @@ WORKER_NUM=$(printf "%03d" $((WORKER_COUNT + 1)))
 WORKER_ID="worker-${WORKER_TYPE%-worker}-${WORKER_NUM}"
 
 print_info "Generating worker: $WORKER_ID"
+
+# OpenTelemetry: Start worker spawn trace
+if [[ "$OTEL_ENABLED" == "true" ]]; then
+    WORKER_SPAWN_SPAN=$(worker_started_hook "$WORKER_ID" "$WORKER_TYPE" "$TASK_ID" "" 2>/dev/null || echo "")
+fi
 
 # Generate timestamps
 CREATED_AT=$(date +"%Y-%m-%dT%H:%M:%S%z")
@@ -547,5 +638,10 @@ echo "   cd ~/cortex"
 echo "   git add ."
 echo "   git commit -m \"feat(\$MASTER_AGENT): spawned $WORKER_ID for $TASK_ID\""
 echo "   git push origin main"
+
+# OpenTelemetry: End worker spawn trace
+if [[ "$OTEL_ENABLED" == "true" ]]; then
+    worker_completed_hook "$WORKER_ID" 0 2>/dev/null || true
+fi
 
 exit 0
