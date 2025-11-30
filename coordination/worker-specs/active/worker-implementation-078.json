@@ -1,0 +1,64 @@
+{
+  "worker_id": "worker-implementation-078",
+  "worker_type": "implementation-worker",
+  "created_by": "development-master",
+  "execution_manager": null,
+  "created_at": "2025-11-30T13:05:32-0600",
+  "task_id": "obs-decision-tracing-41-1764529527",
+  "status": "pending",
+  "identity": {
+    "spiffe_id": "spiffe://cortex/workers/worker-implementation-078",
+    "token": "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJzcGlmZmU6Ly9jb3J0ZXgvd29ya2Vycy93b3JrZXItaW1wbGVtZW50YXRpb24tMDc4IiwiYWdlbnRfaWQiOiJ3b3JrZXItaW1wbGVtZW50YXRpb24tMDc4Iiwicm9sZSI6IndvcmtlciIsInRydXN0X2xldmVsIjo1MCwiY2FwYWJpbGl0aWVzIjpbImRldmVsb3BtZW50OmltcGxlbWVudCIsImRldmVsb3BtZW50OnRlc3QiLCJ0YXNrczpyZWFkIiwiY29vcmRpbmF0aW9uOnJlYWQiLCJnb3Zlcm5hbmNlOnJlYWQiXSwibWV0YWRhdGEiOnt9LCJpYXQiOjE3NjQ1Mjk1MzMsImV4cCI6MTc2NDUzMzEzMywiYXVkIjoiY29ydGV4LWFnZW50cyIsImlzcyI6ImNvcnRleC1pZGVudGl0eS1zeXN0ZW0ifQ.YK9ObE8ozoWqeusoTwI9BA8egXGCyilugBg7-AeBbZRJF7cfz1dMklqJpXJo9-C7SOSIY-F8E-zx8RqV_MXAAIuP2EhKAMdVI8-hwBEbZ_tknTX3gk_9F2z1bsv92-IIRX5TVwoigMWOOWVOEdZnc2SrteuYLeez-3KpYA2_e9-JyKeJjhEh5VVEq8sq6Dsikjjgt87AGdH5yC-9Bo7cJ2z701XYq9HT3VwdLON7FVsyf9yNo6cWzmapRMHBF6a8nTDOR3-23cfn5VxlZpXot1rjrF_XXR74kFP4UzFLktzpGWWIlinlOG1_sConBVO2dg-ABS8rlm3rtntKsjjIjA",
+    "trust_level": 50
+  },
+  "scope": {
+  "task_id": "observability-massive-parallel",
+  "pillar": "decision-tracing",
+  "component": "Decision event schema",
+  "component_id": "dt-comp-4",
+  "worker_number": 41,
+  "description": "Implement Decision event schema as part of decision-tracing pillar",
+  "autonomous": true,
+  "continuous": true,
+  "auto_heal": true
+},
+  "context": {
+  "parent_task": "obs-decision-tracing-41-1764529527",
+  "priority": "critical",
+  "deadline": null
+},
+  "goal_based_planning": {
+    "enabled": true,
+    "strategy": "direct",
+    "goal_type": "feature-development",
+    "complexity": "low",
+    "strategy_plan_location": "coordination/knowledge-base/strategy-plans/worker-implementation-078-plan.json"
+  },
+  "resources": {
+    "token_budget": 10000,
+    "timeout_minutes": 45,
+    "max_retries": 1
+  },
+  "tool_assignment": {"worker_type":"implementation-worker","essential_tools":["Read","Write","Edit","Glob","Grep","Bash(git:*)","Bash"],"optional_tools":["WebFetch","WebSearch","TodoWrite"],"total_tools":10,"essential_clusters":["file_operations","code_search","version_control","code_execution"],"optional_clusters":["web_access","task_management"],"filtered":true,"rationale":"Needs file operations, search, git, and execution. Web access helpful for API docs."},
+  "deliverables": [],
+  "prompt_template": "coordination/prompts/workers/implementation-worker.md",
+  "execution": {
+    "started_at": null,
+    "completed_at": null,
+    "tokens_used": 0,
+    "duration_minutes": 0,
+    "session_id": null
+  },
+  "results": {
+    "status": null,
+    "output_location": null,
+    "summary": null,
+    "artifacts": []
+  },
+  "review": {
+    "enabled": true,
+    "min_cycles": 1,
+    "auto_approve_threshold": 0.95,
+    "history": []
+  }
+}
