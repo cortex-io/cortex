@@ -230,3 +230,12 @@
 {"id":"evt-1764513116-24612","timestamp":"2025-11-30T08:31:56-06:00","type":"system_ERROR","data":"Permission denied: null\ninventory-master cannot spawn workers","source":"automation"}
 {"id":"evt-1764513117-25655","timestamp":"2025-11-30T08:31:57-06:00","type":"system_ERROR","data":"Permission denied: null\ndevelopment-master cannot spawn workers","source":"automation"}
 {"id":"evt-1764513120-27950","timestamp":"2025-11-30T08:32:00-06:00","type":"system_ERROR","data":"Permission denied: null\ninventory-master cannot spawn workers","source":"automation"}
+{"id":"evt-1764529531-40939","timestamp":"2025-11-30T13:05:31-06:00","type":"system_ERROR","data":"Generated invalid JSON in worker specification","source":"automation"}
+{"id":"evt-1764529531-41307","timestamp":"2025-11-30T13:05:31-06:00","type":"system_ERROR","data":"Generated invalid JSON in worker specification","source":"automation"}
+{"id":"evt-1764529533-43859","timestamp":"2025-11-30T13:05:33-06:00","type":"system_ERROR","data":"Generated invalid JSON in worker specification","source":"automation"}
+{"id":"evt-1764529533-43555","timestamp":"2025-11-30T13:05:33-06:00","type":"system_ERROR","data":"Generated invalid JSON in worker specification","source":"automation"}
+{"id":"evt-1764529537-48906","timestamp":"2025-11-30T13:05:37-06:00","type":"system_ERROR","data":"Generated invalid JSON in worker specification","source":"automation"}
+{"id":"evt-1764529548-69280","timestamp":"2025-11-30T13:05:48-06:00","type":"system_ERROR","data":"Generated invalid JSON in worker specification","source":"automation"}
+{"id":"evt-1764529548-68430","timestamp":"2025-11-30T13:05:48-06:00","type":"system_ERROR","data":"Generated invalid JSON in worker specification","source":"automation"}
+{"id":"evt-1764529549-74110","timestamp":"2025-11-30T13:05:49-06:00","type":"system_ERROR","data":"Generated invalid JSON in worker specification","source":"automation"}
+{"id":"evt-1764529549-75159","timestamp":"2025-11-30T13:05:49-06:00","type":"system_ERROR","data":"Generated invalid JSON in worker specification","source":"automation"}

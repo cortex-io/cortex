@@ -1,9 +1,9 @@
 {
   "total_budget": 500000,
-  "allocated": 214000,
-  "in_use": 214000,
-  "available": 286000,
-  "updated_at": "2025-11-30T09:25:48-0600",
+  "allocated": 1064000,
+  "in_use": 1064000,
+  "available": -564000,
+  "updated_at": "2025-11-30T13:05:49-0600",
   "allocations": {
     "worker-scan-037": {
       "master": "security-master",
@@ -84,6 +84,236 @@
       "master": "development-master",
       "tokens": 10000,
       "allocated_at": "2025-11-30T09:25:48-0600"
+    },
+    "worker-implementation-060": {
+      "master": "development-master",
+      "tokens": 10000,
+      "allocated_at": "2025-11-30T13:05:26-0600"
+    },
+    "worker-implementation-065": {
+      "master": "development-master",
+      "tokens": 10000,
+      "allocated_at": "2025-11-30T13:05:26-0600"
+    },
+    "worker-implementation-069": {
+      "master": "development-master",
+      "tokens": 10000,
+      "allocated_at": "2025-11-30T13:05:27-0600"
+    },
+    "worker-implementation-070": {
+      "master": "development-master",
+      "tokens": 10000,
+      "allocated_at": "2025-11-30T13:05:27-0600"
+    },
+    "worker-implementation-066": {
+      "master": "development-master",
+      "tokens": 10000,
+      "allocated_at": "2025-11-30T13:05:27-0600"
+    },
+    "worker-implementation-071": {
+      "master": "development-master",
+      "tokens": 10000,
+      "allocated_at": "2025-11-30T13:05:28-0600"
+    },
+    "worker-implementation-072": {
+      "master": "development-master",
+      "tokens": 10000,
+      "allocated_at": "2025-11-30T13:05:29-0600"
+    },
+    "worker-implementation-073": {
+      "master": "development-master",
+      "tokens": 10000,
+      "allocated_at": "2025-11-30T13:05:31-0600"
+    },
+    "worker-implementation-077": {
+      "master": "development-master",
+      "tokens": 10000,
+      "allocated_at": "2025-11-30T13:05:31-0600"
+    },
+    "worker-implementation-078": {
+      "master": "development-master",
+      "tokens": 10000,
+      "allocated_at": "2025-11-30T13:05:32-0600"
+    },
+    "worker-implementation-079": {
+      "master": "development-master",
+      "tokens": 10000,
+      "allocated_at": "2025-11-30T13:05:33-0600"
+    },
+    "worker-implementation-081": {
+      "master": "development-master",
+      "tokens": 10000,
+      "allocated_at": "2025-11-30T13:05:34-0600"
+    },
+    "worker-implementation-082": {
+      "master": "development-master",
+      "tokens": 10000,
+      "allocated_at": "2025-11-30T13:05:34-0600"
+    },
+    "worker-implementation-083": {
+      "master": "development-master",
+      "tokens": 10000,
+      "allocated_at": "2025-11-30T13:05:35-0600"
+    },
+    "worker-implementation-085": {
+      "master": "development-master",
+      "tokens": 10000,
+      "allocated_at": "2025-11-30T13:05:36-0600"
+    },
+    "worker-implementation-090": {
+      "master": "development-master",
+      "tokens": 10000,
+      "allocated_at": "2025-11-30T13:05:37-0600"
+    },
+    "worker-implementation-088": {
+      "master": "development-master",
+      "tokens": 10000,
+      "allocated_at": "2025-11-30T13:05:36-0600"
+    },
+    "worker-implementation-092": {
+      "master": "development-master",
+      "tokens": 10000,
+      "allocated_at": "2025-11-30T13:05:37-0600"
+    },
+    "worker-implementation-093": {
+      "master": "development-master",
+      "tokens": 10000,
+      "allocated_at": "2025-11-30T13:05:38-0600"
+    },
+    "worker-implementation-095": {
+      "master": "development-master",
+      "tokens": 10000,
+      "allocated_at": "2025-11-30T13:05:38-0600"
+    },
+    "worker-implementation-096": {
+      "master": "development-master",
+      "tokens": 10000,
+      "allocated_at": "2025-11-30T13:05:38-0600"
+    },
+    "worker-implementation-097": {
+      "master": "development-master",
+      "tokens": 10000,
+      "allocated_at": "2025-11-30T13:05:39-0600"
+    },
+    "worker-implementation-098": {
+      "master": "development-master",
+      "tokens": 10000,
+      "allocated_at": "2025-11-30T13:05:40-0600"
+    },
+    "worker-implementation-102": {
+      "master": "development-master",
+      "tokens": 10000,
+      "allocated_at": "2025-11-30T13:05:41-0600"
+    },
+    "worker-implementation-101": {
+      "master": "development-master",
+      "tokens": 10000,
+      "allocated_at": "2025-11-30T13:05:40-0600"
+    },
+    "worker-implementation-103": {
+      "master": "development-master",
+      "tokens": 10000,
+      "allocated_at": "2025-11-30T13:05:41-0600"
+    },
+    "worker-implementation-104": {
+      "master": "development-master",
+      "tokens": 10000,
+      "allocated_at": "2025-11-30T13:05:41-0600"
+    },
+    "worker-implementation-106": {
+      "master": "development-master",
+      "tokens": 10000,
+      "allocated_at": "2025-11-30T13:05:42-0600"
+    },
+    "worker-implementation-107": {
+      "master": "development-master",
+      "tokens": 10000,
+      "allocated_at": "2025-11-30T13:05:42-0600"
+    },
+    "worker-implementation-110": {
+      "master": "development-master",
+      "tokens": 10000,
+      "allocated_at": "2025-11-30T13:05:43-0600"
+    },
+    "worker-implementation-112": {
+      "master": "development-master",
+      "tokens": 10000,
+      "allocated_at": "2025-11-30T13:05:43-0600"
+    },
+    "worker-implementation-113": {
+      "master": "development-master",
+      "tokens": 10000,
+      "allocated_at": "2025-11-30T13:05:43-0600"
+    },
+    "worker-implementation-115": {
+      "master": "development-master",
+      "tokens": 10000,
+      "allocated_at": "2025-11-30T13:05:44-0600"
+    },
+    "worker-implementation-119": {
+      "master": "development-master",
+      "tokens": 10000,
+      "allocated_at": "2025-11-30T13:05:45-0600"
+    },
+    "worker-implementation-121": {
+      "master": "development-master",
+      "tokens": 10000,
+      "allocated_at": "2025-11-30T13:05:46-0600"
+    },
+    "worker-implementation-122": {
+      "master": "development-master",
+      "tokens": 10000,
+      "allocated_at": "2025-11-30T13:05:46-0600"
+    },
+    "worker-implementation-124": {
+      "master": "development-master",
+      "tokens": 10000,
+      "allocated_at": "2025-11-30T13:05:46-0600"
+    },
+    "worker-implementation-128": {
+      "master": "development-master",
+      "tokens": 10000,
+      "allocated_at": "2025-11-30T13:05:47-0600"
+    },
+    "worker-implementation-126": {
+      "master": "development-master",
+      "tokens": 10000,
+      "allocated_at": "2025-11-30T13:05:47-0600"
+    },
+    "worker-implementation-127": {
+      "master": "development-master",
+      "tokens": 10000,
+      "allocated_at": "2025-11-30T13:05:47-0600"
+    },
+    "worker-implementation-129": {
+      "master": "development-master",
+      "tokens": 10000,
+      "allocated_at": "2025-11-30T13:05:47-0600"
+    },
+    "worker-implementation-130": {
+      "master": "development-master",
+      "tokens": 10000,
+      "allocated_at": "2025-11-30T13:05:48-0600"
+    },
+    "worker-implementation-133": {
+      "master": "development-master",
+      "tokens": 10000,
+      "allocated_at": "2025-11-30T13:05:49-0600"
+    },
+    "worker-implementation-131": {
+      "master": "development-master",
+      "tokens": 10000,
+      "allocated_at": "2025-11-30T13:05:48-0600"
+    },
+    "worker-implementation-134": {
+      "master": "development-master",
+      "tokens": 10000,
+      "allocated_at": "2025-11-30T13:05:49-0600"
+    },
+    "worker-implementation-136": {
+      "master": "development-master",
+      "tokens": 10000,
+      "allocated_at": "2025-11-30T13:05:49-0600"
     }
   },
   "reclamation_log": [
