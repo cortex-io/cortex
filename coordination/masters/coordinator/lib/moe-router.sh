@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # MoE-Inspired Router for Cortex
 # Implements Mixture of Experts routing logic with confidence scoring
 
@@ -32,6 +32,11 @@ SEMANTIC_ROUTING_ENABLED="${SEMANTIC_ROUTING_ENABLED:-true}"
 SEMANTIC_CONFIDENCE_THRESHOLD="${SEMANTIC_CONFIDENCE_THRESHOLD:-0.6}"
 SEMANTIC_ROUTER_CLI="$CORTEX_HOME/lib/routing/semantic-router-cli.js"
 
+# Phase 3 Enhancement: NLP Task Classifier (3-layer hybrid architecture)
+NLP_CLASSIFIER_ENABLED="${NLP_CLASSIFIER_ENABLED:-true}"
+NLP_CLASSIFIER_SCRIPT="$CORTEX_HOME/coordination/masters/coordinator/lib/nlp-classifier.sh"
+NLP_CONFIDENCE_THRESHOLD="${NLP_CONFIDENCE_THRESHOLD:-0.7}"
+
 # Load access control (skip if in bypass mode or file doesn't exist)
 if [ "$GOVERNANCE_BYPASS" != "true" ] && [ -f "$CORTEX_HOME/scripts/lib/access-check.sh" ]; then
     source "$CORTEX_HOME/scripts/lib/access-check.sh"
@@ -40,6 +45,15 @@ else
     check_permission() {
         return 0  # Always allow in bypass mode
     }
+fi
+
+# OpenTelemetry instrumentation (optional)
+OTEL_ENABLED="${OTEL_ENABLED:-true}"
+if [[ "$OTEL_ENABLED" == "true" ]] && [[ -f "$CORTEX_HOME/coordination/observability/otel-span.sh" ]]; then
+    source "$CORTEX_HOME/coordination/observability/otel-context.sh" 2>/dev/null || OTEL_ENABLED=false
+    source "$CORTEX_HOME/coordination/observability/otel-span.sh" 2>/dev/null || OTEL_ENABLED=false
+    source "$CORTEX_HOME/coordination/observability/otel-exporter.sh" 2>/dev/null || OTEL_ENABLED=false
+    source "$CORTEX_HOME/coordination/observability/otel-metrics.sh" 2>/dev/null || OTEL_ENABLED=false
 fi
 
 # Ensure log directory exists
@@ -678,6 +692,72 @@ generate_routing_explanation() {
 }
 
 ##############################################################################
+# try_nlp_classifier: Attempt NLP classification using 3-layer hybrid architecture
+# Phase 3 Enhancement: Keyword + Pattern + Claude API fallback
+# Args:
+#   $1: task_id
+#   $2: task_description
+# Returns: JSON with routing result or empty string if failed/disabled
+##############################################################################
+try_nlp_classifier() {
+    local task_id="$1"
+    local task_description="$2"
+
+    # Check if NLP classifier is enabled
+    if [ "$NLP_CLASSIFIER_ENABLED" != "true" ]; then
+        return 0
+    fi
+
+    # Check if NLP classifier script exists
+    if [ ! -f "$NLP_CLASSIFIER_SCRIPT" ]; then
+        return 0
+    fi
+
+    # Call NLP classifier
+    local nlp_result=""
+    if nlp_result=$("$NLP_CLASSIFIER_SCRIPT" "$task_description" 2>/dev/null); then
+        # Parse confidence and recommended master
+        local confidence=$(echo "$nlp_result" | jq -r '.confidence // 0' 2>/dev/null)
+        local recommended_master=$(echo "$nlp_result" | jq -r '.recommended_master // ""' 2>/dev/null)
+        local method=$(echo "$nlp_result" | jq -r '.classification_method // "unknown"' 2>/dev/null)
+
+        # Map master to expert (coordinator-master -> cicd, etc.)
+        local expert=""
+        case "$recommended_master" in
+            security-master)
+                expert="security"
+                ;;
+            development-master)
+                expert="development"
+                ;;
+            inventory-master)
+                expert="inventory"
+                ;;
+            coordinator-master)
+                expert="cicd"
+                ;;
+        esac
+
+        # Only use NLP result if confidence meets threshold
+        if [ -n "$expert" ] && (( $(echo "$confidence >= $NLP_CONFIDENCE_THRESHOLD" | bc -l 2>/dev/null || echo 0) )); then
+            # Format result to match semantic routing format
+            local formatted_result=$(jq -n \
+                --arg expert "$expert" \
+                --arg master "$recommended_master" \
+                --argjson confidence "$confidence" \
+                --arg method "$method" \
+                '{expert: $expert, master: $master, confidence: $confidence, method: $method}')
+            echo "$formatted_result"
+            return 0
+        fi
+    fi
+
+    # Return empty string if NLP classification failed or confidence too low
+    echo ""
+    return 0
+}
+
+##############################################################################
 # try_semantic_routing: Attempt semantic routing using embedding-based matching
 # Phase 5.2 Enhancement: +7% accuracy improvement (94.5% vs 87.5%)
 # Args:
@@ -736,39 +816,85 @@ route_task_moe() {
         return 1
     }
 
-    # Phase 5.2: Try semantic routing first (94.5% accuracy vs 87.5% for keywords)
-    local semantic_result=$(try_semantic_routing "$task_id" "$task_description")
+    # Phase 3: Try NLP classifier first (3-layer hybrid: keywords -> patterns -> Claude API)
+    local nlp_result=$(try_nlp_classifier "$task_id" "$task_description")
+    local using_nlp="false"
     local using_semantic="false"
+    local routing_method="keyword"
     local dev_score=0
     local sec_score=0
     local inv_score=0
 
-    if [ -n "$semantic_result" ]; then
-        # Semantic routing succeeded with high confidence
-        local expert=$(echo "$semantic_result" | jq -r '.expert')
-        local confidence=$(echo "$semantic_result" | jq -r '.confidence')
+    if [ -n "$nlp_result" ]; then
+        # NLP classification succeeded with high confidence
+        local expert=$(echo "$nlp_result" | jq -r '.expert')
+        local confidence=$(echo "$nlp_result" | jq -r '.confidence')
+        local method=$(echo "$nlp_result" | jq -r '.method')
 
         # Convert to integer score for compatibility with rest of function
-        local sem_score=$(echo "scale=0; $confidence * 100" | bc 2>/dev/null || echo "60")
+        local nlp_score=$(echo "scale=0; $confidence * 100" | bc 2>/dev/null || echo "60")
 
         # Map to appropriate *_score variable
         case "$expert" in
             development)
-                dev_score=$sem_score
-                using_semantic="true"
+                dev_score=$nlp_score
+                using_nlp="true"
+                routing_method="nlp-$method"
                 ;;
             security)
-                sec_score=$sem_score
-                using_semantic="true"
+                sec_score=$nlp_score
+                using_nlp="true"
+                routing_method="nlp-$method"
                 ;;
             inventory)
-                inv_score=$sem_score
-                using_semantic="true"
+                inv_score=$nlp_score
+                using_nlp="true"
+                routing_method="nlp-$method"
+                ;;
+            cicd)
+                # CI/CD tasks go to coordinator, but we need to handle this differently
+                # For now, give it a boost to all experts equally for multi-expert routing
+                dev_score=$nlp_score
+                using_nlp="true"
+                routing_method="nlp-$method"
                 ;;
         esac
     fi
 
-    # If semantic routing didn't succeed, use keyword-based routing
+    # Phase 5.2: Try semantic routing if NLP didn't provide a result
+    if [ "$using_nlp" != "true" ]; then
+        local semantic_result=$(try_semantic_routing "$task_id" "$task_description")
+
+        if [ -n "$semantic_result" ]; then
+            # Semantic routing succeeded with high confidence
+            local expert=$(echo "$semantic_result" | jq -r '.expert')
+            local confidence=$(echo "$semantic_result" | jq -r '.confidence')
+
+            # Convert to integer score for compatibility with rest of function
+            local sem_score=$(echo "scale=0; $confidence * 100" | bc 2>/dev/null || echo "60")
+
+            # Map to appropriate *_score variable
+            case "$expert" in
+                development)
+                    dev_score=$sem_score
+                    using_semantic="true"
+                    routing_method="semantic"
+                    ;;
+                security)
+                    sec_score=$sem_score
+                    using_semantic="true"
+                    routing_method="semantic"
+                    ;;
+                inventory)
+                    inv_score=$sem_score
+                    using_semantic="true"
+                    routing_method="semantic"
+                    ;;
+            esac
+        fi
+    fi
+
+    # If NLP and semantic routing didn't succeed, use keyword-based routing
 
     # v5.0 CAG Enhancement: Extract task type for direct routing
     local task_type=""
@@ -809,8 +935,8 @@ route_task_moe() {
         esac
     fi
 
-    # Only run keyword-based scoring if semantic routing didn't provide a result
-    if [ "$using_semantic" != "true" ]; then
+    # Only run keyword-based scoring if NLP and semantic routing didn't provide a result
+    if [ "$using_nlp" != "true" ] && [ "$using_semantic" != "true" ]; then
         # Calculate confidence scores for all experts (keyword-based)
         dev_score=$(calculate_expert_score "$task_description" "development")
         sec_score=$(calculate_expert_score "$task_description" "security")
@@ -924,8 +1050,11 @@ route_task_moe() {
     fi
     local explanation=$(generate_routing_explanation "$task_description" "$primary_expert" "$primary_confidence" "$strategy" "$type_routed")
 
+    # Phase 3: Enhance explanation with NLP classifier info
+    if [ "$using_nlp" = "true" ]; then
+        explanation="$explanation (Phase 3: NLP classifier - $(echo "$routing_method" | cut -d'-' -f2) layer)"
     # Phase 5.2: Enhance explanation with semantic routing info
-    if [ "$using_semantic" = "true" ]; then
+    elif [ "$using_semantic" = "true" ]; then
         explanation="$explanation (Phase 5.2: Semantic routing via embeddings, +7% accuracy)"
     fi
 
@@ -934,9 +1063,8 @@ route_task_moe() {
     local sensitivity=$(detect_task_sensitivity "$task_description")
     local model_rec=$(get_model_recommendation "$task_description" "$complexity" "$sensitivity")
 
-    # Determine routing method
-    local routing_method="keyword"
-    if [ "$using_semantic" = "true" ]; then
+    # Update routing method if not already set by NLP
+    if [ "$routing_method" = "keyword" ] && [ "$using_semantic" = "true" ]; then
         routing_method="semantic"
     fi
 
@@ -1125,7 +1253,27 @@ if [ "${BASH_SOURCE[0]}" == "${0}" ]; then
     task_id="$1"
     task_description="$2"
 
+    # OpenTelemetry: Start routing span
+    routing_span=""
+    if [[ "$OTEL_ENABLED" == "true" ]]; then
+        routing_span=$(create_routing_span "$task_id" "$task_description" "pending" "0.0" "{}" 2>/dev/null || echo "")
+    fi
+
     routing_decision=$(route_task_moe "$task_id" "$task_description")
+
+    # OpenTelemetry: Record routing metrics
+    if [[ "$OTEL_ENABLED" == "true" && -n "$routing_decision" ]]; then
+        selected_master=$(echo "$routing_decision" | jq -r '.selected_expert // "unknown"')
+        confidence=$(echo "$routing_decision" | jq -r '.confidence // 0')
+        record_routing_confidence "$confidence" "$selected_master" "moe" 2>/dev/null || true
+
+        if [[ -n "$routing_span" ]]; then
+            routing_span=$(set_span_attribute "$routing_span" "cortex.routed_to" "$selected_master" 2>/dev/null || echo "$routing_span")
+            routing_span=$(set_span_attribute "$routing_span" "cortex.routing_confidence" "$confidence" 2>/dev/null || echo "$routing_span")
+            routing_span=$(end_span "$routing_span" "OK" 2>/dev/null || echo "$routing_span")
+            export_span "$routing_span" 2>/dev/null || true
+        fi
+    fi
 
     # Output compact JSON for machine consumption
     echo "$routing_decision"
