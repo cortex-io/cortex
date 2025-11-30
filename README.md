@@ -1,5 +1,7 @@
 # Cortex
 
+[![Security Scan](https://github.com/ry-ops/cortex/actions/workflows/security-scan.yml/badge.svg)](https://github.com/ry-ops/cortex/actions/workflows/security-scan.yml)
+
 Multi-agent AI system for autonomous GitHub repository management.
 
 ## What It Does
