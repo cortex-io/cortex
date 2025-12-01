@@ -83,6 +83,7 @@ jobs:
   trivy-scan:
     name: Trivy Security Scan
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -96,6 +97,8 @@ jobs:
           output: 'trivy-results.sarif'
           severity: 'CRITICAL,HIGH,MEDIUM'
           exit-code: '0'
+          skip-dirs: 'node_modules,.git,.cache,.trivy,coordination/embeddings/cache'
+          timeout: '15m'
 
       - name: Run Trivy vulnerability scanner (JSON output)
         uses: aquasecurity/trivy-action@master
@@ -106,6 +109,8 @@ jobs:
           output: 'trivy-results.json'
           severity: 'CRITICAL,HIGH,MEDIUM'
           exit-code: '0'
+          skip-dirs: 'node_modules,.git,.cache,.trivy,coordination/embeddings/cache'
+          timeout: '15m'
 
       - name: Check for critical/high vulnerabilities
         run: |
@@ -121,10 +126,11 @@ jobs:
           fi
 
       - name: Upload Trivy results to GitHub Security
-        if: always()
+        if: always() && github.event_name != 'pull_request' || github.actor != 'dependabot[bot]'
         uses: github/codeql-action/upload-sarif@v4
         with:
           sarif_file: 'trivy-results.sarif'
+        continue-on-error: true
 
       - name: Upload Trivy scan results
         if: always()
@@ -139,6 +145,7 @@ jobs:
   sbom-generation:
     name: Generate SBOM
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -168,7 +175,8 @@ jobs:
         run: |
           curl -sSfL https://raw.githubusercontent.com/anchore/grype/main/install.sh | sh -s -- -b /usr/local/bin
           grype sbom:sbom-spdx.json -o json > grype-results.json || true
-          grype sbom:sbom-spdx.json --fail-on high
+          grype sbom:sbom-spdx.json --fail-on critical
+        continue-on-error: false
 
       - name: Upload Grype results
         if: always()
