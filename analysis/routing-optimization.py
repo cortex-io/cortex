@@ -68,15 +68,15 @@ def __(routing_df, mo):
 
 
 @app.cell
-def __(routing_df, px):
+def __(routing_df, px, pl):
     # Routing distribution by master
     if 'master' in routing_df.columns and len(routing_df) > 0:
         master_counts = routing_df.group_by('master').agg(
-            pl.count().alias('count')
+            pl.len().alias('count')
         ).sort('count', descending=True)
 
         fig_distribution = px.bar(
-            master_counts.to_pandas(),
+            master_counts.to_dict(),
             x='master',
             y='count',
             title='Routing Distribution by Master',
@@ -106,16 +106,16 @@ def __(routing_df, px, pl):
     if 'timestamp' in routing_df.columns and 'confidence' in routing_df.columns and len(routing_df) > 0:
         # Parse timestamps and add date column
         confidence_trends = routing_df.with_columns(
-            pl.col('timestamp').str.to_datetime().alias('datetime')
+            pl.col('timestamp').str.to_datetime(format="%Y-%m-%dT%H:%M:%SZ", strict=False).alias('datetime')
         ).with_columns(
             pl.col('datetime').dt.date().alias('date')
         ).group_by(['date', 'master']).agg(
             pl.col('confidence').mean().alias('avg_confidence'),
-            pl.count().alias('count')
+            pl.len().alias('count')
         ).sort('date')
 
         fig_confidence = px.line(
-            confidence_trends.to_pandas(),
+            confidence_trends.to_dict(),
             x='date',
             y='avg_confidence',
             color='master',
@@ -218,16 +218,21 @@ def __(mo):
 
 
 @app.cell
-def __(mo, routing_df):
+def __(mo):
     # Export functionality
     export_button = mo.ui.button(label="Export Data as CSV")
+    return export_button,
 
+
+@app.cell
+def __(mo, export_button, routing_df):
     if export_button.value:
         csv_data = routing_df.write_csv()
         mo.download(csv_data, filename="routing-decisions.csv")
-
-    mo.md(f"{export_button}")
-    return export_button,
+        mo.md("✅ Export triggered")
+    else:
+        mo.md(f"{export_button}")
+    return
 
 
 if __name__ == "__main__":

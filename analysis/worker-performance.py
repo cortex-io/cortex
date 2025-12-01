@@ -83,17 +83,17 @@ def __(worker_df, mo, pl):
 
 
 @app.cell
-def __(worker_df, px, pl):
+def __(worker_df, px, pl, go):
     # Worker performance comparison
     if 'worker_id' in worker_df.columns and 'duration_ms' in worker_df.columns and len(worker_df) > 0:
         worker_stats = worker_df.group_by('worker_id').agg([
-            pl.count().alias('task_count'),
+            pl.len().alias('task_count'),
             pl.col('duration_ms').mean().alias('avg_duration'),
             pl.col('tokens_used').sum().alias('total_tokens')
         ]).sort('task_count', descending=True).head(10)
 
         fig_worker_perf = px.bar(
-            worker_stats.to_pandas(),
+            worker_stats.to_dict(),
             x='worker_id',
             y='avg_duration',
             title='Top 10 Workers by Average Duration',
@@ -119,20 +119,20 @@ def __(mo, fig_worker_perf):
 
 
 @app.cell
-def __(worker_df, px, pl):
+def __(worker_df, px, pl, go):
     # Token usage over time
     if 'timestamp' in worker_df.columns and 'tokens_used' in worker_df.columns and len(worker_df) > 0:
         token_timeline = worker_df.with_columns(
-            pl.col('timestamp').str.to_datetime().alias('datetime')
+            pl.col('timestamp').str.to_datetime(format="%Y-%m-%dT%H:%M:%S%z", strict=False).alias('datetime')
         ).with_columns(
             pl.col('datetime').dt.date().alias('date')
         ).group_by('date').agg(
             pl.col('tokens_used').sum().alias('total_tokens'),
-            pl.count().alias('task_count')
+            pl.len().alias('task_count')
         ).sort('date')
 
         fig_tokens = px.line(
-            token_timeline.to_pandas(),
+            token_timeline.to_dict(),
             x='date',
             y='total_tokens',
             title='Token Usage Over Time',
@@ -156,11 +156,11 @@ def __(mo, fig_tokens):
 
 
 @app.cell
-def __(worker_df, px, pl):
+def __(worker_df, px, pl, go):
     # Duration distribution
     if 'duration_ms' in worker_df.columns and len(worker_df) > 0:
         fig_duration_dist = px.histogram(
-            worker_df.to_pandas(),
+            worker_df.to_dict(),
             x='duration_ms',
             nbins=50,
             title='Task Duration Distribution',
