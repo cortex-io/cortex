@@ -1,0 +1,217 @@
+---
+title: "Cortex Weekly Summary"
+subtitle: "System Performance and Health Report"
+date: now
+format:
+  html:
+    code-fold: true
+    toc: true
+  pdf:
+    toc: true
+execute:
+  echo: false
+---
+
+## Executive Summary
+
+```{python}
+import polars as pl
+import json
+from pathlib import Path
+from datetime import datetime, timedelta
+from anthropic import Anthropic
+import os
+
+# Load week's events
+coordination_dir = Path("../coordination")
+task_events_file = coordination_dir / "events" / "task-events.jsonl"
+worker_events_file = coordination_dir / "events" / "worker-events.jsonl"
+
+# Date range for this week
+week_start = datetime.now() - timedelta(days=7)
+
+# Load task events if available
+if task_events_file.exists():
+    task_events = pl.read_ndjson(task_events_file)
+    task_events = task_events.with_columns(
+        pl.col('timestamp').str.to_datetime()
+    ).filter(
+        pl.col('timestamp') > week_start
+    )
+else:
+    task_events = pl.DataFrame()
+
+# Load worker events if available
+if worker_events_file.exists():
+    worker_events = pl.read_ndjson(worker_events_file)
+    worker_events = worker_events.with_columns(
+        pl.col('timestamp').str.to_datetime()
+    ).filter(
+        pl.col('timestamp') > week_start
+    )
+else:
+    worker_events = pl.DataFrame()
+
+# Calculate key metrics
+total_tasks = len(task_events) if len(task_events) > 0 else 0
+total_workers = len(worker_events) if len(worker_events) > 0 else 0
+
+completed_tasks = 0
+failed_tasks = 0
+if 'status' in task_events.columns and len(task_events) > 0:
+    completed_tasks = len(task_events.filter(pl.col('status') == 'completed'))
+    failed_tasks = len(task_events.filter(pl.col('status') == 'failed'))
+
+success_rate = (completed_tasks / total_tasks * 100) if total_tasks > 0 else 0
+
+# Generate AI summary
+client = Anthropic(api_key=os.getenv("ANTHROPIC_API_KEY", ""))
+
+ai_summary = "AI summary not available (ANTHROPIC_API_KEY not set)"
+
+if os.getenv("ANTHROPIC_API_KEY") and (len(task_events) > 0 or len(worker_events) > 0):
+    try:
+        summary_data = {
+            "total_tasks": total_tasks,
+            "completed_tasks": completed_tasks,
+            "failed_tasks": failed_tasks,
+            "success_rate": f"{success_rate:.1f}%",
+            "total_workers": total_workers
+        }
+
+        response = client.messages.create(
+            model="claude-sonnet-4",
+            max_tokens=512,
+            messages=[{
+                "role": "user",
+                "content": f"""Summarize this week's Cortex activity in 3-5 concise bullet points.
+Focus on key achievements, concerns, and trends.
+
+Weekly metrics:
+{json.dumps(summary_data, indent=2)}
+
+Be concise and executive-friendly."""
+            }]
+        )
+        ai_summary = response.content[0].text
+    except Exception as e:
+        ai_summary = f"Error generating AI summary: {str(e)}"
+
+print(ai_summary)
+```
+
+## Key Metrics
+
+```{python}
+import plotly.express as px
+import plotly.graph_objects as go
+
+# Display metrics
+print(f"""
+### This Week's Performance
+
+- **Total Tasks**: {total_tasks:,}
+- **Completed**: {completed_tasks:,}
+- **Failed**: {failed_tasks:,}
+- **Success Rate**: {success_rate:.1f}%
+- **Active Workers**: {total_workers:,}
+""")
+```
+
+## Task Completion Trends
+
+```{python}
+if len(task_events) > 0 and 'timestamp' in task_events.columns:
+    # Daily task counts
+    daily_tasks = task_events.with_columns(
+        pl.col('timestamp').dt.date().alias('date')
+    ).group_by('date').agg(
+        pl.count().alias('count')
+    ).sort('date')
+
+    fig = px.line(
+        daily_tasks.to_pandas(),
+        x='date',
+        y='count',
+        title='Daily Task Volume',
+        labels={'count': 'Number of Tasks', 'date': 'Date'}
+    )
+    fig.show()
+else:
+    print("*No task data available for the selected period*")
+```
+
+## Worker Performance
+
+```{python}
+if len(worker_events) > 0 and 'worker_id' in worker_events.columns:
+    # Top workers by activity
+    top_workers = worker_events.group_by('worker_id').agg(
+        pl.count().alias('activity_count')
+    ).sort('activity_count', descending=True).head(10)
+
+    fig = px.bar(
+        top_workers.to_pandas(),
+        x='worker_id',
+        y='activity_count',
+        title='Top 10 Most Active Workers',
+        labels={'activity_count': 'Activity Count', 'worker_id': 'Worker ID'}
+    )
+    fig.update_layout(xaxis_tickangle=-45)
+    fig.show()
+else:
+    print("*No worker data available for the selected period*")
+```
+
+## Issues and Concerns
+
+```{python}
+if failed_tasks > 0:
+    print(f"""
+### Failed Tasks Analysis
+
+- **Total Failures**: {failed_tasks}
+- **Failure Rate**: {(failed_tasks / total_tasks * 100):.1f}%
+
+#### Failure Patterns
+
+*Analysis of failure patterns would appear here based on failure-patterns.jsonl data*
+""")
+else:
+    print("✅ **No failed tasks this week!**")
+```
+
+## Recommendations
+
+```{python}
+# Generate AI recommendations
+if os.getenv("ANTHROPIC_API_KEY") and total_tasks > 0:
+    try:
+        reco_response = client.messages.create(
+            model="claude-sonnet-4",
+            max_tokens=512,
+            messages=[{
+                "role": "user",
+                "content": f"""Based on these weekly metrics, provide 3-4 specific, actionable recommendations:
+
+- Total tasks: {total_tasks}
+- Success rate: {success_rate:.1f}%
+- Failed tasks: {failed_tasks}
+
+Focus on optimization opportunities and potential improvements."""
+            }]
+        )
+        print(reco_response.content[0].text)
+    except Exception as e:
+        print(f"*Error generating recommendations: {str(e)}*")
+else:
+    print("""
+- Monitor task success rates and investigate failures
+- Review worker utilization and scale as needed
+- Continue tracking performance trends weekly
+""")
+```
+
+---
+
+*Report generated on {datetime.now().strftime('%Y-%m-%d %H:%M:%S')} by Cortex Event-Driven Architecture*
