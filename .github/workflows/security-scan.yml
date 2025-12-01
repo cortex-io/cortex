@@ -39,7 +39,7 @@ jobs:
 
       - name: Upload npm audit results
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: npm-audit-results
           path: npm-audit-results.json
@@ -74,7 +74,7 @@ jobs:
 
       - name: Upload pip audit results
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: pip-audit-results-${{ matrix.requirements }}
           path: pip-audit-${{ matrix.requirements }}.json
@@ -128,7 +128,7 @@ jobs:
 
       - name: Upload Trivy scan results
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: trivy-scan-results
           path: |
@@ -156,7 +156,7 @@ jobs:
           syft dir:. -o cyclonedx-json=sbom-cyclonedx.json
 
       - name: Upload SBOM artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: sbom-artifacts
           path: |
@@ -172,7 +172,7 @@ jobs:
 
       - name: Upload Grype results
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: grype-scan-results
           path: grype-results.json
