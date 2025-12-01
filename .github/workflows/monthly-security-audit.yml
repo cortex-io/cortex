@@ -28,6 +28,7 @@ jobs:
 
       - name: Install Python dependencies
         run: |
+          pip install jupyter pyyaml
           cd reports
           pip install polars anthropic plotly pandas
 
