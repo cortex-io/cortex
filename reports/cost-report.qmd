@@ -131,4 +131,7 @@ print("""
 
 ---
 
-*Cost report generated on {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}*
+```{python}
+from datetime import datetime
+print(f"*Cost report generated on {datetime.now().strftime('%Y-%m-%d %H:%M:%S')} by Cortex Event-Driven Architecture*")
+```
