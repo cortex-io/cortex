@@ -56,11 +56,28 @@ echo "  ✓ Observability event tracking"
 echo "  ✓ System stability"
 echo ""
 
-# Ensure ObservabilityHub is running
-if ! pgrep -f "observability-hub-daemon" > /dev/null; then
-    echo -e "${YELLOW}Starting ObservabilityHub daemon...${NC}"
-    ./scripts/daemons/observability-hub-daemon.sh start
-    sleep 2
+# Ensure ObservabilityHub is running (event-driven mode)
+# Instead of starting daemon directly, check if event processing is active
+if [ -f "$CORTEX_HOME/scripts/events/lib/event-logger.sh" ]; then
+    echo -e "${CYAN}Event-driven architecture enabled - using event emissions${NC}"
+
+    # Emit system start event to ensure observability is active
+    EVENT_JSON=$("$CORTEX_HOME/scripts/events/lib/event-logger.sh" --create \
+        "system.observability_check" \
+        "load-test-workers" \
+        '{"action": "ensure_active", "reason": "load_test_starting"}' \
+        "" \
+        "medium")
+
+    echo "$EVENT_JSON" | "$CORTEX_HOME/scripts/events/lib/event-logger.sh"
+    echo -e "${GREEN}Observability check event emitted${NC}"
+else
+    # Fallback to legacy daemon mode
+    if ! pgrep -f "observability-hub-daemon" > /dev/null; then
+        echo -e "${YELLOW}Starting ObservabilityHub daemon (legacy mode)...${NC}"
+        ./scripts/daemons/observability-hub-daemon.sh start
+        sleep 2
+    fi
 fi
 
 # Record start time
@@ -153,9 +170,12 @@ while [ $(date +%s) -lt $MONITOR_END ]; do
 
     echo -e "${CYAN}[Check $CHECKS] ${NC}Elapsed: ${ELAPSED}s | Remaining: ${REMAINING}s"
 
-    # Check ObservabilityHub status
-    if ./scripts/daemons/observability-hub-daemon.sh status 2>&1 | grep -q "RUNNING"; then
-        echo "  ✓ ObservabilityHub: Running"
+    # Check ObservabilityHub status (check event system instead of daemon)
+    if [ -f "$CORTEX_HOME/coordination/events/system-events.jsonl" ] && \
+       [ $(find "$CORTEX_HOME/coordination/events" -name "*.jsonl" -mmin -5 | wc -l) -gt 0 ]; then
+        echo "  ✓ Event System: Active (recent events detected)"
+    elif ./scripts/daemons/observability-hub-daemon.sh status 2>&1 | grep -q "RUNNING" 2>/dev/null; then
+        echo "  ✓ ObservabilityHub: Running (legacy mode)"
     else
         echo -e "  ${RED}✗ ObservabilityHub: Not running${NC}"
     fi

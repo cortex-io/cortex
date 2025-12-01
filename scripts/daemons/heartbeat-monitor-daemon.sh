@@ -1,5 +1,27 @@
 #!/usr/bin/env bash
 # scripts/daemons/heartbeat-monitor-daemon.sh
+#
+# ============================================================================
+# DEPRECATED: This daemon has been replaced by event-driven architecture
+# Status: DEPRECATED as of 2025-12-01
+# Replacement: scripts/events/handlers/on-worker-heartbeat.sh
+# Event Type: worker.heartbeat
+# Documentation: scripts/daemons/DEPRECATED.md
+# Migration: Workers emit heartbeat events that trigger handlers on-demand
+# ============================================================================
+#
+# WARNING: This script is deprecated and should not be used in new code.
+# It is maintained for compatibility only and will be removed in a future version.
+#
+# To migrate to the event-driven replacement:
+# 1. Stop this daemon if running: kill $(cat /tmp/cortex-heartbeat-monitor.pid)
+# 2. Start event dispatcher: ./scripts/events/event-dispatcher.sh
+# 3. Workers will automatically emit heartbeat events
+# 4. Handlers process events on-demand (no polling required)
+#
+# ============================================================================
+#
+# Original Description:
 # Heartbeat Monitor Daemon - Phase 4.1 Self-Healing Implementation
 # Monitors worker heartbeats and detects failures automatically
 #
