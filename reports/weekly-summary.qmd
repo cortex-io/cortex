@@ -6,8 +6,7 @@ format:
   html:
     code-fold: true
     toc: true
-  pdf:
-    toc: true
+    embed-resources: true
 execute:
   echo: false
 ---
