@@ -5,11 +5,13 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/../../.." && pwd)"
+
+# Source validator first (it sets its own EVENTS_DIR)
+source "$SCRIPT_DIR/event-validator.sh"
+
+# Override with correct paths after sourcing
 EVENTS_DIR="$PROJECT_ROOT/coordination/events"
 QUEUE_DIR="$EVENTS_DIR/queue"
-
-# Source validator
-source "$SCRIPT_DIR/event-validator.sh"
 
 # Log event to appropriate JSONL file
 log_event() {
@@ -132,16 +134,24 @@ create_event() {
 
 # Main execution
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
-    if [[ $# -eq 0 ]]; then
-        echo "Usage: $0 <event_json>" >&2
-        echo "   or: $0 --create <event_type> <source> <payload_json> [correlation_id] [priority]" >&2
-        exit 1
-    fi
-
-    if [[ "$1" == "--create" ]]; then
+    if [[ $# -ge 1 && "${1:-}" == "--create" ]]; then
         shift
         create_event "$@"
-    else
+    elif [[ $# -ge 1 ]]; then
         log_event "$1"
+    elif [[ ! -t 0 ]]; then
+        # Read from stdin if piped
+        event_json=$(cat)
+        if [[ -n "$event_json" ]]; then
+            log_event "$event_json"
+        else
+            echo "ERROR: Empty input from stdin" >&2
+            exit 1
+        fi
+    else
+        echo "Usage: $0 <event_json>" >&2
+        echo "   or: $0 --create <event_type> <source> <payload_json> [correlation_id] [priority]" >&2
+        echo "   or: echo '<event_json>' | $0" >&2
+        exit 1
     fi
 fi
