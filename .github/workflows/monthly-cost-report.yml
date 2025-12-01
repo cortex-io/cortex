@@ -7,9 +7,7 @@ on:
   workflow_dispatch:  # Allow manual triggering
 
 permissions:
-  contents: write
-  pages: write
-  id-token: write
+  contents: read
 
 jobs:
   cost-report:
@@ -42,33 +40,46 @@ jobs:
       - name: Upload cost report artifact
         uses: actions/upload-artifact@v4
         with:
-          name: monthly-cost-report
+          name: cost-report-${{ github.run_number }}
           path: |
             reports/_site/cost-report.html
             reports/cost-report.html
-            reports/cost-report.pdf
           retention-days: 365
 
-      - name: Deploy to GitHub Pages
-        uses: peaceiris/actions-gh-pages@v3
+      - name: Calculate total costs
+        id: costs
+        run: |
+          TOTAL_TOKENS=0
+          if [ -f coordination/worker-health-metrics.jsonl ]; then
+            TOTAL_TOKENS=$(jq -r '.tokens_used // 0' coordination/worker-health-metrics.jsonl 2>/dev/null | awk '{s+=$1} END {print s}' || echo "0")
+          fi
+          echo "total_tokens=$TOTAL_TOKENS" >> $GITHUB_OUTPUT
+
+      - name: Send email with cost report
+        uses: dawidd6/action-send-mail@v3
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./reports/_site
-          destination_dir: reports
+          server_address: ${{ secrets.MAIL_SERVER }}
+          server_port: ${{ secrets.MAIL_PORT }}
+          username: ${{ secrets.MAIL_USERNAME }}
+          password: ${{ secrets.MAIL_PASSWORD }}
+          subject: "Cortex Monthly Cost Report"
+          to: ryan@ry-ops.dev
+          from: Cortex Reports <${{ secrets.MAIL_USERNAME }}>
+          html_body: |
+            <h1>Cortex Monthly Cost Report</h1>
+            <p>Your monthly cost analysis report is attached.</p>
+            <h2>Quick Summary:</h2>
+            <ul>
+              <li>Total Tokens Used: ${{ steps.costs.outputs.total_tokens || 'N/A' }}</li>
+            </ul>
+            <p>Generated: $(date -u +"%Y-%m-%d %H:%M UTC")</p>
+            <p><em>This is an automated cost report from Cortex.</em></p>
+          attachments: reports/_site/cost-report.html
 
       - name: Create summary
         run: |
-          echo "## Monthly Cost Report Generated" >> $GITHUB_STEP_SUMMARY
+          echo "## 💰 Cost Report Generated & Emailed" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "Monthly cost analysis has been completed and published." >> $GITHUB_STEP_SUMMARY
+          echo "Cost report has been completed and emailed to ryan@ry-ops.dev" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "View report at: https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/reports/cost-report.html" >> $GITHUB_STEP_SUMMARY
-
-      - name: Calculate total costs
-        run: |
-          # Parse cost data from worker-health-metrics.jsonl or cost tracking files
-          if [ -f coordination/worker-health-metrics.jsonl ]; then
-            echo "Calculating token usage and costs from worker metrics..."
-            # This would calculate costs based on token usage
-            # Can be extended with actual cost calculation logic
-          fi
+          echo "**Total Tokens:** ${{ steps.costs.outputs.total_tokens || 'N/A' }}" >> $GITHUB_STEP_SUMMARY
