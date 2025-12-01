@@ -23,6 +23,15 @@ CORTEX_HOME="${CORTEX_HOME:-$(cd "$SCRIPT_DIR/../.." && pwd)}"
 # Load heartbeat library
 source "$CORTEX_HOME/scripts/lib/heartbeat.sh"
 
+# Load event logger if available
+EVENT_LOGGER="$CORTEX_HOME/scripts/events/lib/event-logger.sh"
+if [ -f "$EVENT_LOGGER" ]; then
+    source "$EVENT_LOGGER"
+    EVENTS_ENABLED=true
+else
+    EVENTS_ENABLED=false
+fi
+
 # Configuration
 WORKER_ID="${1:-}"
 WORKER_PID="${2:-}"
@@ -81,6 +90,39 @@ while true; do
         log_heartbeat "SUCCESS: Heartbeat #$HEARTBEAT_COUNT emitted successfully"
     else
         log_heartbeat "ERROR: Failed to emit heartbeat #$HEARTBEAT_COUNT"
+    fi
+
+    # Emit worker.heartbeat event (non-blocking)
+    if [ "$EVENTS_ENABLED" = true ]; then
+        (
+            WORKER_SPEC="$CORTEX_HOME/coordination/worker-specs/active/${WORKER_ID}.json"
+            if [ -f "$WORKER_SPEC" ]; then
+                WORKER_TYPE=$(jq -r '.worker_type' "$WORKER_SPEC" 2>/dev/null || echo "unknown")
+                TASK_ID=$(jq -r '.task_id' "$WORKER_SPEC" 2>/dev/null || echo "unknown")
+                STATUS=$(jq -r '.status' "$WORKER_SPEC" 2>/dev/null || echo "running")
+
+                EVENT_PAYLOAD=$(jq -n \
+                    --arg worker_id "$WORKER_ID" \
+                    --arg worker_type "$WORKER_TYPE" \
+                    --arg task_id "$TASK_ID" \
+                    --arg status "$STATUS" \
+                    --arg activity "$LAST_ACTIVITY" \
+                    --argjson count "$HEARTBEAT_COUNT" \
+                    '{
+                        worker_id: $worker_id,
+                        worker_type: $worker_type,
+                        task_id: $task_id,
+                        status: $status,
+                        activity: $activity,
+                        heartbeat_count: $count
+                    }')
+
+                EVENT_JSON=$("$EVENT_LOGGER" --create "worker.heartbeat" "worker-heartbeat-emitter" "$EVENT_PAYLOAD" "$TASK_ID" "low" 2>/dev/null)
+                if [ -n "$EVENT_JSON" ]; then
+                    "$EVENT_LOGGER" "$EVENT_JSON" 2>/dev/null || true
+                fi
+            fi
+        ) &
     fi
 
     # Sleep until next heartbeat

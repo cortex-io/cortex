@@ -1,5 +1,28 @@
 #!/usr/bin/env bash
 # scripts/daemons/moe-learning-daemon.sh
+#
+# ============================================================================
+# DEPRECATED: This daemon has been replaced by event-driven architecture
+# Status: DEPRECATED as of 2025-12-01
+# Replacement: scripts/events/handlers/on-routing-decision.sh
+# Event Type: routing.decision_made
+# Documentation: scripts/daemons/DEPRECATED.md
+# ============================================================================
+#
+# WARNING: This script is deprecated and should not be used in new code.
+# It is maintained for compatibility only and will be removed in a future version.
+#
+# To migrate to the event-driven replacement:
+# 1. Stop this daemon if running
+# 2. Start event dispatcher: ./scripts/events/event-dispatcher.sh
+# 3. Emit events instead of calling this daemon
+# 4. See DEPRECATED.md for migration instructions
+#
+# ============================================================================
+#
+# Original script follows below:
+#
+# scripts/daemons/moe-learning-daemon.sh
 # Continuous MoE Learning Daemon
 # Runs learning cycles hourly for rapid model adaptation
 #
