@@ -20,36 +20,43 @@ from pathlib import Path
 from datetime import datetime, timedelta
 from anthropic import Anthropic
 import os
+import pytz
 
 # Load month's security events
 coordination_dir = Path("../coordination")
 security_events_file = coordination_dir / "events" / "security-events.jsonl"
 security_results_file = coordination_dir / "security" / "scan-results.jsonl"
 
-# Date range for this month
-month_start = datetime.now() - timedelta(days=30)
+# Date range for this month (timezone-aware)
+month_start = datetime.now(pytz.UTC) - timedelta(days=30)
 
 # Load security events
 security_events = pl.DataFrame()
 if security_events_file.exists():
     security_events = pl.read_ndjson(security_events_file)
     if 'timestamp' in security_events.columns:
-        security_events = security_events.with_columns(
-            pl.col('timestamp').str.to_datetime()
-        ).filter(
-            pl.col('timestamp') > month_start
-        )
+        try:
+            security_events = security_events.with_columns(
+                pl.col('timestamp').str.to_datetime(format="%Y-%m-%dT%H:%M:%S%z", strict=False)
+            ).filter(
+                pl.col('timestamp') > month_start
+            )
+        except:
+            pass  # Skip filtering if timestamp parsing fails
 
 # Load scan results if available
 scan_results = pl.DataFrame()
 if security_results_file.exists():
     scan_results = pl.read_ndjson(security_results_file)
     if 'timestamp' in scan_results.columns:
-        scan_results = scan_results.with_columns(
-            pl.col('timestamp').str.to_datetime()
-        ).filter(
-            pl.col('timestamp') > month_start
-        )
+        try:
+            scan_results = scan_results.with_columns(
+                pl.col('timestamp').str.to_datetime(format="%Y-%m-%dT%H:%M:%S%z", strict=False)
+            ).filter(
+                pl.col('timestamp') > month_start
+            )
+        except:
+            pass  # Skip filtering if timestamp parsing fails
 
 # Calculate metrics
 total_scans = len(security_events) + len(scan_results)
