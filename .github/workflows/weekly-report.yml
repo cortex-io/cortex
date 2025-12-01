@@ -1,0 +1,62 @@
+name: Generate Weekly Report
+
+on:
+  schedule:
+    # Every Monday at 9 AM UTC
+    - cron: '0 9 * * MON'
+  workflow_dispatch:  # Allow manual triggering
+
+jobs:
+  generate-report:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Setup Quarto
+        uses: quarto-dev/quarto-actions/setup@v2
+
+      - name: Install Python dependencies
+        run: |
+          cd reports
+          pip install polars anthropic plotly pandas
+
+      - name: Render weekly report
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          cd reports
+          quarto render weekly-summary.qmd
+
+      - name: Render security audit
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          cd reports
+          quarto render security-audit.qmd
+
+      - name: Render cost report
+        run: |
+          cd reports
+          quarto render cost-report.qmd
+
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./reports/_site
+          destination_dir: reports
+
+      - name: Create summary comment
+        run: |
+          echo "## 📊 Weekly Report Generated" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Reports have been generated and deployed to GitHub Pages." >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "View reports at: https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/reports/" >> $GITHUB_STEP_SUMMARY
