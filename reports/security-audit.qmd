@@ -243,6 +243,9 @@ print("""
 
 ---
 
-*Security audit report generated on {datetime.now().strftime('%Y-%m-%d %H:%M:%S')} by Cortex Event-Driven Architecture*
-
-*This report is confidential and should be handled according to your organization's security policies.*
+```{python}
+from datetime import datetime
+print(f"*Security audit report generated on {datetime.now().strftime('%Y-%m-%d %H:%M:%S')} by Cortex Event-Driven Architecture*")
+print("")
+print("*This report is confidential and should be handled according to your organization's security policies.*")
+```
