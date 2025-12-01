@@ -447,10 +447,40 @@ grep "\[on-" /var/log/cortex-events.log | cut -d']' -f2 | cut -d'[' -f2 | sort |
 
 ---
 
+## Event Replay (Debugging & Testing)
+
+The event replay tool allows replaying archived events for debugging, testing, and recovery:
+
+```bash
+# Replay specific event
+./scripts/events/event-replay.sh --event-id evt_20251201_123456_abc123
+
+# Replay all events from a date
+./scripts/events/event-replay.sh --date 2025-12-01
+
+# Replay with filters
+./scripts/events/event-replay.sh --type "worker.*" --date 2025-12-01 --verbose
+
+# Dry run first
+./scripts/events/event-replay.sh --date 2025-12-01 --dry-run
+```
+
+**Features**:
+- Replay single event by ID
+- Replay all events from a specific date
+- Filter by type, source, priority, or correlation ID
+- Dry-run mode to preview without execution
+- Verbose mode for detailed debugging
+- Direct handler invocation or re-queue modes
+
+**Documentation**: See `/Users/ryandahlberg/Projects/cortex/docs/EVENT-REPLAY-GUIDE.md`
+
+---
+
 ## Future Enhancements
 
 - [ ] Redis Pub/Sub option for high-throughput scenarios
-- [ ] Event replay capability for debugging
+- [x] Event replay capability for debugging (COMPLETED 2025-12-01)
 - [ ] Dead letter queue for failed events
 - [ ] Event compression for long-term storage
 - [ ] Webhook support for external integrations

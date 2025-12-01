@@ -16,6 +16,15 @@ source "$SCRIPT_DIR/lib/access-check.sh"
 source "$SCRIPT_DIR/lib/goal-planner.sh"
 source "$SCRIPT_DIR/lib/identity-check.sh" 2>/dev/null || true  # Optional identity system
 
+# Load event logger
+EVENT_LOGGER="$SCRIPT_DIR/events/lib/event-logger.sh"
+if [ -f "$EVENT_LOGGER" ]; then
+    source "$EVENT_LOGGER"
+    EVENTS_ENABLED=true
+else
+    EVENTS_ENABLED=false
+fi
+
 # OpenTelemetry instrumentation (optional)
 OTEL_ENABLED="${OTEL_ENABLED:-true}"
 if [[ "$OTEL_ENABLED" == "true" ]] && [[ -f "$CORTEX_HOME/coordination/observability/otel-worker.sh" ]]; then
@@ -598,6 +607,33 @@ WORKER_LOG_DIR="agents/logs/workers/$(date +%Y-%m-%d)/${WORKER_ID}"
 mkdir -p "$WORKER_LOG_DIR"
 
 print_success "Worker log directory created: $WORKER_LOG_DIR"
+
+# Emit worker.started event (non-blocking)
+if [ "$EVENTS_ENABLED" = true ]; then
+    print_info "Emitting worker.started event..."
+    (
+        EVENT_PAYLOAD=$(jq -n \
+            --arg worker_id "$WORKER_ID" \
+            --arg worker_type "$WORKER_TYPE" \
+            --arg task_id "$TASK_ID" \
+            --arg master "$MASTER_AGENT" \
+            --argjson token_budget "$TOKEN_BUDGET" \
+            --arg strategy "$SELECTED_STRATEGY" \
+            '{
+                worker_id: $worker_id,
+                worker_type: $worker_type,
+                task_id: $task_id,
+                master_agent: $master,
+                token_budget: $token_budget,
+                strategy: $strategy
+            }')
+
+        EVENT_JSON=$("$EVENT_LOGGER" --create "worker.started" "spawn-worker" "$EVENT_PAYLOAD" "$TASK_ID" "medium" 2>/dev/null)
+        if [ -n "$EVENT_JSON" ]; then
+            "$EVENT_LOGGER" "$EVENT_JSON" 2>/dev/null || true
+        fi
+    ) &
+fi
 
 # Display summary
 echo ""

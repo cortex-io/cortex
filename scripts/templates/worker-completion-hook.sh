@@ -14,6 +14,15 @@ source "$CORTEX_HOME/scripts/lib/logging.sh"
 source "$CORTEX_HOME/scripts/lib/coordination.sh"
 source "$CORTEX_HOME/scripts/lib/git-automation.sh"
 
+# Load event logger
+EVENT_LOGGER="$CORTEX_HOME/scripts/events/lib/event-logger.sh"
+if [ -f "$EVENT_LOGGER" ]; then
+    source "$EVENT_LOGGER"
+    EVENTS_ENABLED=true
+else
+    EVENTS_ENABLED=false
+fi
+
 # Worker context (these should be set by the worker process)
 WORKER_ID="${WORKER_ID:-unknown-worker}"
 WORKER_TYPE="${WORKER_TYPE:-generic-worker}"
@@ -131,6 +140,39 @@ if [ -f "$WORKER_SPEC" ]; then
     mv "${WORKER_SPEC}.tmp" "$WORKER_SPEC"
 
     log_success "Worker status updated"
+
+    # Emit worker.completed event (non-blocking)
+    if [ "$EVENTS_ENABLED" = true ]; then
+        log_info "Emitting worker.completed event..."
+        (
+            TOKENS_USED=$(jq -r '.execution.tokens_used // 0' "$WORKER_SPEC")
+            DURATION=$(jq -r '.execution.duration_minutes // 0' "$WORKER_SPEC")
+
+            EVENT_PAYLOAD=$(jq -n \
+                --arg worker_id "$WORKER_ID" \
+                --arg worker_type "$WORKER_TYPE" \
+                --arg task_id "$TASK_ID" \
+                --argjson tokens_used "$TOKENS_USED" \
+                --argjson duration "$DURATION" \
+                --arg git_commit "${GIT_COMMIT_HASH:-}" \
+                --arg git_status "${GIT_STATUS:-skipped}" \
+                '{
+                    worker_id: $worker_id,
+                    worker_type: $worker_type,
+                    task_id: $task_id,
+                    tokens_used: $tokens_used,
+                    duration_minutes: $duration,
+                    git_commit: $git_commit,
+                    git_status: $git_status,
+                    status: "completed"
+                }')
+
+            EVENT_JSON=$("$EVENT_LOGGER" --create "worker.completed" "worker-completion-hook" "$EVENT_PAYLOAD" "$TASK_ID" "medium" 2>/dev/null)
+            if [ -n "$EVENT_JSON" ]; then
+                "$EVENT_LOGGER" "$EVENT_JSON" 2>/dev/null || true
+            fi
+        ) &
+    fi
 else
     log_warn "Worker spec not found: $WORKER_SPEC"
 fi

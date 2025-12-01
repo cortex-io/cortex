@@ -6,6 +6,11 @@ on:
     - cron: '0 9 * * MON'
   workflow_dispatch:  # Allow manual triggering
 
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
 jobs:
   generate-report:
     runs-on: ubuntu-latest
@@ -25,7 +30,7 @@ jobs:
       - name: Install Python dependencies
         run: |
           cd reports
-          pip install polars anthropic plotly pandas
+          pip install polars anthropic plotly pandas pytz
 
       - name: Render weekly report
         env:
@@ -45,6 +50,15 @@ jobs:
         run: |
           cd reports
           quarto render cost-report.qmd
+
+      - name: Upload report artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: weekly-reports
+          path: |
+            reports/_site/**
+            reports/*.html
+          retention-days: 90
 
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3

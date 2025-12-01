@@ -50,6 +50,9 @@ process_event() {
     # Determine handler based on event type
     local handler=""
     case "$event_type" in
+        worker.started)
+            handler="$HANDLERS_DIR/on-worker-started.sh"
+            ;;
         worker.completed)
             handler="$HANDLERS_DIR/on-worker-complete.sh"
             ;;
@@ -59,13 +62,22 @@ process_event() {
         worker.heartbeat)
             handler="$HANDLERS_DIR/on-worker-heartbeat.sh"
             ;;
+        task.created)
+            handler="$HANDLERS_DIR/on-task-created.sh"
+            ;;
+        task.assigned)
+            handler="$HANDLERS_DIR/on-task-assigned.sh"
+            ;;
         task.completed)
             handler="$HANDLERS_DIR/on-task-complete.sh"
             ;;
         task.failed)
             handler="$HANDLERS_DIR/on-task-failure.sh"
             ;;
-        security.scan_completed | security.vulnerability_found)
+        security.scan_completed)
+            handler="$HANDLERS_DIR/on-security-scan-completed.sh"
+            ;;
+        security.vulnerability_found)
             handler="$HANDLERS_DIR/on-security-alert.sh"
             ;;
         routing.decision_made)
@@ -74,11 +86,20 @@ process_event() {
         learning.pattern_detected)
             handler="$HANDLERS_DIR/on-learning-pattern.sh"
             ;;
+        learning.model_updated)
+            handler="$HANDLERS_DIR/on-learning-model-updated.sh"
+            ;;
         system.cleanup_needed)
             handler="$HANDLERS_DIR/on-cleanup-needed.sh"
             ;;
         system.health_alert)
             handler="$HANDLERS_DIR/on-health-alert.sh"
+            ;;
+        daemon.started)
+            handler="$HANDLERS_DIR/on-system-startup.sh"
+            ;;
+        daemon.stopped)
+            handler="$HANDLERS_DIR/on-system-shutdown.sh"
             ;;
         *)
             log "WARNING: No handler for event type: $event_type"

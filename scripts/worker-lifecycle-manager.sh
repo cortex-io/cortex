@@ -31,6 +31,15 @@ source "$SCRIPT_DIR/lib/learning-agent/critic.sh" 2>/dev/null || {
 }
 LEARNING_ENABLED="${LEARNING_ENABLED:-true}"
 
+# Load event logger
+EVENT_LOGGER="$SCRIPT_DIR/events/lib/event-logger.sh"
+if [ -f "$EVENT_LOGGER" ]; then
+    source "$EVENT_LOGGER"
+    EVENTS_ENABLED=true
+else
+    EVENTS_ENABLED=false
+fi
+
 cd "$CORTEX_HOME"
 
 LOG_FILE="agents/logs/system/worker-lifecycle-manager.log"
@@ -72,6 +81,36 @@ for spec_file in "$ACTIVE_DIR"/*.json; do
     if [ "$STATUS" = "completed" ]; then
         log_info "Moving completed worker to archive: $WORKER_ID"
 
+        # Emit worker.completed event (non-blocking)
+        if [ "$EVENTS_ENABLED" = true ]; then
+            (
+                WORKER_TYPE=$(jq -r '.worker_type' "$spec_file")
+                TASK_ID=$(jq -r '.task_id' "$spec_file")
+                TOKENS_USED=$(jq -r '.execution.tokens_used // 0' "$spec_file")
+                DURATION=$(jq -r '.execution.duration_minutes // 0' "$spec_file")
+
+                EVENT_PAYLOAD=$(jq -n \
+                    --arg worker_id "$WORKER_ID" \
+                    --arg worker_type "$WORKER_TYPE" \
+                    --arg task_id "$TASK_ID" \
+                    --argjson tokens_used "$TOKENS_USED" \
+                    --argjson duration "$DURATION" \
+                    '{
+                        worker_id: $worker_id,
+                        worker_type: $worker_type,
+                        task_id: $task_id,
+                        tokens_used: $tokens_used,
+                        duration_minutes: $duration,
+                        status: "completed"
+                    }')
+
+                EVENT_JSON=$("$EVENT_LOGGER" --create "worker.completed" "worker-lifecycle-manager" "$EVENT_PAYLOAD" "$TASK_ID" "medium" 2>/dev/null)
+                if [ -n "$EVENT_JSON" ]; then
+                    "$EVENT_LOGGER" "$EVENT_JSON" 2>/dev/null || true
+                fi
+            ) &
+        fi
+
         # Week 5: Learning Agent Integration - Evaluate completed worker
         if [ "$LEARNING_ENABLED" = true ]; then
             log_info "  Running critic evaluation on completed worker: $WORKER_ID"
@@ -100,6 +139,36 @@ for spec_file in "$ACTIVE_DIR"/*.json; do
     if [ "$STATUS" = "failed" ]; then
         log_info "Moving failed worker to failed archive: $WORKER_ID"
         TOKEN_BUDGET=$(jq -r '.resources.token_budget' "$spec_file")
+
+        # Emit worker.failed event (non-blocking)
+        if [ "$EVENTS_ENABLED" = true ]; then
+            (
+                WORKER_TYPE=$(jq -r '.worker_type' "$spec_file")
+                TASK_ID=$(jq -r '.task_id' "$spec_file")
+                TOKENS_USED=$(jq -r '.execution.tokens_used // 0' "$spec_file")
+                FAILURE_REASON=$(jq -r '.results.summary // "Unknown failure"' "$spec_file")
+
+                EVENT_PAYLOAD=$(jq -n \
+                    --arg worker_id "$WORKER_ID" \
+                    --arg worker_type "$WORKER_TYPE" \
+                    --arg task_id "$TASK_ID" \
+                    --argjson tokens_used "$TOKENS_USED" \
+                    --arg reason "$FAILURE_REASON" \
+                    '{
+                        worker_id: $worker_id,
+                        worker_type: $worker_type,
+                        task_id: $task_id,
+                        tokens_used: $tokens_used,
+                        failure_reason: $reason,
+                        status: "failed"
+                    }')
+
+                EVENT_JSON=$("$EVENT_LOGGER" --create "worker.failed" "worker-lifecycle-manager" "$EVENT_PAYLOAD" "$TASK_ID" "high" 2>/dev/null)
+                if [ -n "$EVENT_JSON" ]; then
+                    "$EVENT_LOGGER" "$EVENT_JSON" 2>/dev/null || true
+                fi
+            ) &
+        fi
 
         # Reclaim tokens
         if [ "$TOKEN_BUDGET" != "null" ] && [ "$TOKEN_BUDGET" -gt 0 ]; then

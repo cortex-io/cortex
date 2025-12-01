@@ -1,0 +1,74 @@
+name: Monthly Cost Report
+
+on:
+  schedule:
+    # Last day of each month at 11 AM UTC
+    - cron: '0 11 28-31 * *'
+  workflow_dispatch:  # Allow manual triggering
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+jobs:
+  cost-report:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Setup Quarto
+        uses: quarto-dev/quarto-actions/setup@v2
+
+      - name: Install Python dependencies
+        run: |
+          cd reports
+          pip install polars anthropic plotly pandas
+
+      - name: Render cost report
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          cd reports
+          quarto render cost-report.qmd
+
+      - name: Upload cost report artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: monthly-cost-report
+          path: |
+            reports/_site/cost-report.html
+            reports/cost-report.html
+            reports/cost-report.pdf
+          retention-days: 365
+
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./reports/_site
+          destination_dir: reports
+
+      - name: Create summary
+        run: |
+          echo "## Monthly Cost Report Generated" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Monthly cost analysis has been completed and published." >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "View report at: https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/reports/cost-report.html" >> $GITHUB_STEP_SUMMARY
+
+      - name: Calculate total costs
+        run: |
+          # Parse cost data from worker-health-metrics.jsonl or cost tracking files
+          if [ -f coordination/worker-health-metrics.jsonl ]; then
+            echo "Calculating token usage and costs from worker metrics..."
+            # This would calculate costs based on token usage
+            # Can be extended with actual cost calculation logic
+          fi
