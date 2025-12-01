@@ -86,9 +86,11 @@ print(f"""
 
 ```{python}
 # Generate AI security assessment
-client = Anthropic(api_key=os.getenv("ANTHROPIC_API_KEY", ""))
+api_key = os.getenv("ANTHROPIC_API_KEY", "")
+has_api_key = bool(api_key and len(api_key) > 10)
 
-if os.getenv("ANTHROPIC_API_KEY") and total_scans > 0:
+if has_api_key:
+    client = Anthropic(api_key=api_key)
     try:
         assessment_data = {
             "total_scans": total_scans,
@@ -119,7 +121,9 @@ Be professional and security-focused."""
     except Exception as e:
         print(f"*Error generating security assessment: {str(e)}*")
 else:
-    print("*AI security assessment not available (requires ANTHROPIC_API_KEY and scan data)*")
+    print("*AI security assessment not available.*")
+    print("")
+    print(f"- API Key configured: {'✅ Yes' if has_api_key else '❌ No (add ANTHROPIC_API_KEY secret)'}")
 ```
 
 ## Vulnerability Trends
