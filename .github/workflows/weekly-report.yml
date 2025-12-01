@@ -7,9 +7,7 @@ on:
   workflow_dispatch:  # Allow manual triggering
 
 permissions:
-  contents: write
-  pages: write
-  id-token: write
+  contents: read
 
 jobs:
   generate-report:
@@ -54,23 +52,45 @@ jobs:
       - name: Upload report artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: weekly-reports
+          name: weekly-reports-${{ github.run_number }}
           path: |
             reports/_site/**
             reports/*.html
           retention-days: 90
 
-      - name: Deploy to GitHub Pages
-        uses: peaceiris/actions-gh-pages@v3
+      - name: Send email with reports
+        uses: dawidd6/action-send-mail@v3
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./reports/_site
-          destination_dir: reports
+          server_address: ${{ secrets.MAIL_SERVER }}
+          server_port: ${{ secrets.MAIL_PORT }}
+          username: ${{ secrets.MAIL_USERNAME }}
+          password: ${{ secrets.MAIL_PASSWORD }}
+          subject: "Cortex Weekly Report - ${{ github.run_id }}"
+          to: ryan@ry-ops.dev
+          from: Cortex Reports <${{ secrets.MAIL_USERNAME }}>
+          html_body: |
+            <h1>Cortex Weekly Report</h1>
+            <p>Your weekly Cortex reports are attached.</p>
+            <h2>Reports Included:</h2>
+            <ul>
+              <li>Weekly Summary</li>
+              <li>Security Audit</li>
+              <li>Cost Report</li>
+            </ul>
+            <p>Generated: ${{ github.event.head_commit.timestamp || 'Manual trigger' }}</p>
+            <p><em>This is an automated message from Cortex.</em></p>
+          attachments: |
+            reports/_site/weekly-summary.html,
+            reports/_site/security-audit.html,
+            reports/_site/cost-report.html
 
-      - name: Create summary comment
+      - name: Create summary
         run: |
-          echo "## 📊 Weekly Report Generated" >> $GITHUB_STEP_SUMMARY
+          echo "## 📊 Weekly Report Generated & Emailed" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "Reports have been generated and deployed to GitHub Pages." >> $GITHUB_STEP_SUMMARY
+          echo "Reports have been generated and emailed to ryan@ry-ops.dev" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "View reports at: https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/reports/" >> $GITHUB_STEP_SUMMARY
+          echo "**Reports:**" >> $GITHUB_STEP_SUMMARY
+          echo "- Weekly Summary" >> $GITHUB_STEP_SUMMARY
+          echo "- Security Audit" >> $GITHUB_STEP_SUMMARY
+          echo "- Cost Report" >> $GITHUB_STEP_SUMMARY
