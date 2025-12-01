@@ -1,0 +1,28 @@
+project:
+  type: website
+  output-dir: _site
+
+website:
+  title: "Cortex Reports"
+  navbar:
+    left:
+      - text: "Weekly Summary"
+        href: weekly-summary.html
+      - text: "Security Audit"
+        href: security-audit.html
+      - text: "Cost Report"
+        href: cost-report.html
+
+format:
+  html:
+    theme: cosmo
+    toc: true
+    code-fold: true
+    code-tools: true
+  pdf:
+    documentclass: article
+    toc: true
+
+execute:
+  echo: false
+  warning: false
