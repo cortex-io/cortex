@@ -6,8 +6,7 @@ format:
   html:
     code-fold: true
     toc: true
-  pdf:
-    toc: true
+    embed-resources: true
 execute:
   echo: false
 ---
@@ -21,62 +20,117 @@ from pathlib import Path
 from datetime import datetime, timedelta
 from anthropic import Anthropic
 import os
+import pytz
 
 # Load week's events
 coordination_dir = Path("../coordination")
-task_events_file = coordination_dir / "events" / "task-events.jsonl"
-worker_events_file = coordination_dir / "events" / "worker-events.jsonl"
 
-# Date range for this week
-week_start = datetime.now() - timedelta(days=7)
+# Date range for this week (timezone-aware for comparison)
+week_start = datetime.now(pytz.UTC) - timedelta(days=7)
 
-# Load task events if available
-if task_events_file.exists():
-    task_events = pl.read_ndjson(task_events_file)
-    task_events = task_events.with_columns(
-        pl.col('timestamp').str.to_datetime()
+# Load all available event files
+event_files = [
+    "heartbeat-events.jsonl",
+    "worker-restart-events.jsonl",
+    "auto-fix-events.jsonl",
+    "failure-pattern-events.jsonl",
+    "daemon-supervisor-events.jsonl",
+    "zombie-cleanup-events.jsonl",
+    "learning-events.jsonl"
+]
+
+all_events = []
+event_schemas = {}
+
+for event_file in event_files:
+    event_path = coordination_dir / "events" / event_file
+    if event_path.exists() and event_path.stat().st_size > 0:
+        try:
+            df = pl.read_ndjson(event_path)
+            if len(df) > 0 and 'timestamp' in df.columns and 'event_type' in df.columns:
+                # Keep only common columns for concatenation
+                common_cols = ['timestamp', 'event_type']
+                if 'worker_id' in df.columns:
+                    common_cols.append('worker_id')
+                if 'task_id' in df.columns:
+                    common_cols.append('task_id')
+
+                # Select only existing columns
+                existing_cols = [col for col in common_cols if col in df.columns]
+                df_subset = df.select(existing_cols)
+                all_events.append(df_subset)
+                event_schemas[event_file] = len(df)
+        except Exception as e:
+            pass  # Skip files that can't be loaded
+
+# Combine all events with aligned schemas
+if all_events:
+    combined_events = pl.concat(all_events, how="diagonal")
+    combined_events = combined_events.with_columns(
+        pl.col('timestamp').str.strptime(pl.Datetime(time_zone='UTC'), '%Y-%m-%dT%H:%M:%S%z', strict=False)
     ).filter(
         pl.col('timestamp') > week_start
     )
+else:
+    combined_events = pl.DataFrame()
+
+# Separate worker-related events for analysis
+worker_events = combined_events.filter(
+    pl.col('event_type').is_in(['worker_presumed_dead', 'worker_restarted', 'worker_started', 'worker_completed'])
+) if len(combined_events) > 0 and 'event_type' in combined_events.columns else pl.DataFrame()
+
+# Load routing decisions as task proxy
+routing_file = coordination_dir / "routing" / "routing-decisions.jsonl"
+if routing_file.exists() and routing_file.stat().st_size > 0:
+    try:
+        task_events = pl.read_ndjson(routing_file)
+        if len(task_events) > 0 and 'timestamp' in task_events.columns:
+            task_events = task_events.with_columns(
+                pl.col('timestamp').str.strptime(pl.Datetime(time_zone='UTC'), '%Y-%m-%dT%H:%M:%SZ', strict=False)
+            ).filter(
+                pl.col('timestamp') > week_start
+            )
+        else:
+            task_events = pl.DataFrame()
+    except:
+        task_events = pl.DataFrame()
 else:
     task_events = pl.DataFrame()
 
-# Load worker events if available
-if worker_events_file.exists():
-    worker_events = pl.read_ndjson(worker_events_file)
-    worker_events = worker_events.with_columns(
-        pl.col('timestamp').str.to_datetime()
-    ).filter(
-        pl.col('timestamp') > week_start
-    )
-else:
-    worker_events = pl.DataFrame()
-
 # Calculate key metrics
 total_tasks = len(task_events) if len(task_events) > 0 else 0
-total_workers = len(worker_events) if len(worker_events) > 0 else 0
+total_events = len(combined_events) if len(combined_events) > 0 else 0
 
-completed_tasks = 0
-failed_tasks = 0
-if 'status' in task_events.columns and len(task_events) > 0:
-    completed_tasks = len(task_events.filter(pl.col('status') == 'completed'))
-    failed_tasks = len(task_events.filter(pl.col('status') == 'failed'))
+# Count worker-related events
+worker_dead_count = 0
+worker_restart_count = 0
+auto_fix_count = 0
 
-success_rate = (completed_tasks / total_tasks * 100) if total_tasks > 0 else 0
+if len(combined_events) > 0 and 'event_type' in combined_events.columns:
+    worker_dead_count = len(combined_events.filter(pl.col('event_type') == 'worker_presumed_dead'))
+    worker_restart_count = len(combined_events.filter(pl.col('event_type') == 'worker_restarted'))
+    auto_fix_count = len(combined_events.filter(pl.col('event_type').str.contains('auto_fix')))
+
+# Calculate success metrics based on worker health
+total_workers = worker_dead_count + worker_restart_count
+completed_tasks = worker_restart_count  # Workers that were successfully restarted
+failed_tasks = worker_dead_count - worker_restart_count  # Workers that died and weren't restarted
+success_rate = (worker_restart_count / worker_dead_count * 100) if worker_dead_count > 0 else 100
 
 # Generate AI summary
 client = Anthropic(api_key=os.getenv("ANTHROPIC_API_KEY", ""))
 
 ai_summary = "AI summary not available (ANTHROPIC_API_KEY not set)"
 
-if os.getenv("ANTHROPIC_API_KEY") and (len(task_events) > 0 or len(worker_events) > 0):
+if os.getenv("ANTHROPIC_API_KEY") and total_events > 0:
     try:
         summary_data = {
-            "total_tasks": total_tasks,
-            "completed_tasks": completed_tasks,
-            "failed_tasks": failed_tasks,
-            "success_rate": f"{success_rate:.1f}%",
-            "total_workers": total_workers
+            "total_events": total_events,
+            "routing_decisions": total_tasks,
+            "worker_failures": worker_dead_count,
+            "auto_restarts": worker_restart_count,
+            "auto_fixes": auto_fix_count,
+            "recovery_rate": f"{success_rate:.1f}%"
         }
 
         response = client.messages.create(
@@ -84,8 +138,8 @@ if os.getenv("ANTHROPIC_API_KEY") and (len(task_events) > 0 or len(worker_events
             max_tokens=512,
             messages=[{
                 "role": "user",
-                "content": f"""Summarize this week's Cortex activity in 3-5 concise bullet points.
-Focus on key achievements, concerns, and trends.
+                "content": f"""Summarize this week's Cortex autonomous system activity in 3-5 concise bullet points.
+Focus on system health, self-healing capabilities, and operational trends.
 
 Weekly metrics:
 {json.dumps(summary_data, indent=2)}
@@ -108,57 +162,108 @@ import plotly.graph_objects as go
 
 # Display metrics
 print(f"""
-### This Week's Performance
+### This Week's System Activity
 
-- **Total Tasks**: {total_tasks:,}
-- **Completed**: {completed_tasks:,}
-- **Failed**: {failed_tasks:,}
-- **Success Rate**: {success_rate:.1f}%
-- **Active Workers**: {total_workers:,}
+- **Total Events Processed**: {total_events:,}
+- **Routing Decisions**: {total_tasks:,}
+- **Worker Failures Detected**: {worker_dead_count:,}
+- **Automatic Restarts**: {worker_restart_count:,}
+- **Auto-Fix Events**: {auto_fix_count:,}
+- **Recovery Rate**: {success_rate:.1f}%
 """)
 ```
 
-## Task Completion Trends
+## Event Activity Trends
 
 ```{python}
-if len(task_events) > 0 and 'timestamp' in task_events.columns:
-    # Daily task counts
-    daily_tasks = task_events.with_columns(
+if len(combined_events) > 0 and 'timestamp' in combined_events.columns:
+    # Daily event counts by type
+    daily_events = combined_events.with_columns(
+        pl.col('timestamp').dt.date().alias('date')
+    ).group_by(['date', 'event_type']).agg(
+        pl.len().alias('count')
+    ).sort('date')
+
+    # Overall daily volume
+    daily_total = combined_events.with_columns(
         pl.col('timestamp').dt.date().alias('date')
     ).group_by('date').agg(
-        pl.count().alias('count')
+        pl.len().alias('count')
     ).sort('date')
 
     fig = px.line(
-        daily_tasks.to_pandas(),
+        daily_total.to_pandas(),
         x='date',
         y='count',
-        title='Daily Task Volume',
-        labels={'count': 'Number of Tasks', 'date': 'Date'}
+        title='Daily Event Volume',
+        labels={'count': 'Number of Events', 'date': 'Date'}
     )
     fig.show()
+
+    # Event type breakdown
+    event_type_counts = combined_events.group_by('event_type').agg(
+        pl.len().alias('count')
+    ).sort('count', descending=True)
+
+    fig2 = px.bar(
+        event_type_counts.to_pandas(),
+        x='event_type',
+        y='count',
+        title='Event Types Distribution',
+        labels={'count': 'Event Count', 'event_type': 'Event Type'}
+    )
+    fig2.update_layout(xaxis_tickangle=-45)
+    fig2.show()
 else:
-    print("*No task data available for the selected period*")
+    print("*No event data available for the selected period*")
 ```
 
-## Worker Performance
+## Worker Health Analysis
 
 ```{python}
-if len(worker_events) > 0 and 'worker_id' in worker_events.columns:
-    # Top workers by activity
-    top_workers = worker_events.group_by('worker_id').agg(
-        pl.count().alias('activity_count')
-    ).sort('activity_count', descending=True).head(10)
-
-    fig = px.bar(
-        top_workers.to_pandas(),
-        x='worker_id',
-        y='activity_count',
-        title='Top 10 Most Active Workers',
-        labels={'activity_count': 'Activity Count', 'worker_id': 'Worker ID'}
+if len(combined_events) > 0 and 'event_type' in combined_events.columns:
+    # Worker health events over time
+    worker_health = combined_events.filter(
+        pl.col('event_type').is_in(['worker_presumed_dead', 'worker_restarted', 'worker_started'])
     )
-    fig.update_layout(xaxis_tickangle=-45)
-    fig.show()
+
+    if len(worker_health) > 0:
+        health_by_day = worker_health.with_columns(
+            pl.col('timestamp').dt.date().alias('date')
+        ).group_by(['date', 'event_type']).agg(
+            pl.len().alias('count')
+        ).sort('date')
+
+        fig = px.line(
+            health_by_day.to_pandas(),
+            x='date',
+            y='count',
+            color='event_type',
+            title='Worker Health Events Over Time',
+            labels={'count': 'Event Count', 'date': 'Date', 'event_type': 'Event Type'}
+        )
+        fig.show()
+
+        # Worker failure analysis
+        if 'worker_id' in worker_health.columns:
+            worker_failures = worker_health.filter(
+                pl.col('event_type') == 'worker_presumed_dead'
+            ).group_by('worker_id').agg(
+                pl.len().alias('failure_count')
+            ).sort('failure_count', descending=True).head(10)
+
+            if len(worker_failures) > 0:
+                fig2 = px.bar(
+                    worker_failures.to_pandas(),
+                    x='worker_id',
+                    y='failure_count',
+                    title='Top 10 Workers by Failure Count',
+                    labels={'failure_count': 'Failures', 'worker_id': 'Worker ID'}
+                )
+                fig2.update_layout(xaxis_tickangle=-45)
+                fig2.show()
+    else:
+        print("*No worker health events in the selected period*")
 else:
     print("*No worker data available for the selected period*")
 ```
@@ -166,39 +271,55 @@ else:
 ## Issues and Concerns
 
 ```{python}
-if failed_tasks > 0:
+if worker_dead_count > 0:
+    unrecovered = worker_dead_count - worker_restart_count
+    recovery_pct = (worker_restart_count / worker_dead_count * 100) if worker_dead_count > 0 else 0
+
     print(f"""
-### Failed Tasks Analysis
+### Worker Failure Analysis
 
-- **Total Failures**: {failed_tasks}
-- **Failure Rate**: {(failed_tasks / total_tasks * 100):.1f}%
+- **Total Worker Failures**: {worker_dead_count:,}
+- **Auto-Recovered**: {worker_restart_count:,}
+- **Unrecovered**: {unrecovered:,}
+- **Recovery Rate**: {recovery_pct:.1f}%
 
-#### Failure Patterns
+#### Self-Healing Status
 
-*Analysis of failure patterns would appear here based on failure-patterns.jsonl data*
+{"⚠️ **System showing recovery issues - investigate unrecovered workers**" if recovery_pct < 80 else "✅ **Self-healing system performing well**"}
 """)
+
+    # Load failure pattern metrics if available
+    failure_metrics_file = Path("../coordination/metrics/failure-pattern-metrics.json")
+    if failure_metrics_file.exists():
+        with open(failure_metrics_file) as f:
+            failure_metrics = json.load(f)
+            if 'top_patterns' in failure_metrics:
+                print("\n#### Top Failure Patterns\n")
+                for pattern in failure_metrics['top_patterns'][:5]:
+                    print(f"- {pattern.get('pattern', 'Unknown')}: {pattern.get('count', 0)} occurrences")
 else:
-    print("✅ **No failed tasks this week!**")
+    print("✅ **No worker failures detected this week!**")
 ```
 
 ## Recommendations
 
 ```{python}
 # Generate AI recommendations
-if os.getenv("ANTHROPIC_API_KEY") and total_tasks > 0:
+if os.getenv("ANTHROPIC_API_KEY") and total_events > 0:
     try:
         reco_response = client.messages.create(
             model="claude-sonnet-4",
             max_tokens=512,
             messages=[{
                 "role": "user",
-                "content": f"""Based on these weekly metrics, provide 3-4 specific, actionable recommendations:
+                "content": f"""Based on these weekly Cortex autonomous system metrics, provide 3-4 specific, actionable recommendations:
 
-- Total tasks: {total_tasks}
-- Success rate: {success_rate:.1f}%
-- Failed tasks: {failed_tasks}
+- Total events: {total_events:,}
+- Worker failures: {worker_dead_count:,}
+- Auto-recovery rate: {success_rate:.1f}%
+- Auto-fixes applied: {auto_fix_count:,}
 
-Focus on optimization opportunities and potential improvements."""
+Focus on system reliability, self-healing improvements, and operational optimizations."""
             }]
         )
         print(reco_response.content[0].text)
@@ -206,12 +327,15 @@ Focus on optimization opportunities and potential improvements."""
         print(f"*Error generating recommendations: {str(e)}*")
 else:
     print("""
-- Monitor task success rates and investigate failures
-- Review worker utilization and scale as needed
-- Continue tracking performance trends weekly
+- Monitor worker health trends and investigate recurring failures
+- Review auto-recovery effectiveness and tune thresholds
+- Continue tracking system performance metrics weekly
+- Analyze failure patterns to improve resilience
 """)
 ```
 
 ---
 
-*Report generated on {datetime.now().strftime('%Y-%m-%d %H:%M:%S')} by Cortex Event-Driven Architecture*
+```{python}
+print(f"*Report generated on {datetime.now().strftime('%Y-%m-%d %H:%M:%S')} by Cortex Event-Driven Architecture*")
+```

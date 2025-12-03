@@ -54,14 +54,18 @@ handle_worker_heartbeat() {
         jq --arg worker "$worker_id" \
             --arg ts "$timestamp" \
             '
-            .workers |= map(
-                if .id == $worker then
-                    .last_heartbeat = $ts |
-                    .status = "healthy"
-                else
-                    .
-                end
-            )
+            if .active_workers then
+                .active_workers |= map(
+                    if .worker_id == $worker then
+                        .last_heartbeat = $ts |
+                        .status = "healthy"
+                    else
+                        .
+                    end
+                )
+            else
+                .
+            end
             ' "$pool_file" > "$temp_file"
 
         mv "$temp_file" "$pool_file"
@@ -83,12 +87,12 @@ handle_worker_heartbeat() {
                  last_heartbeat: (.[0].heartbeat_time // .[0].timestamp)
              }) |
              map(select(.last_heartbeat < $threshold)) |
-             .[].worker_id' 2>/dev/null || echo "[]")
+             map(.worker_id)' 2>/dev/null || echo "[]")
 
-        if [[ "$stale_workers" != "[]" && "$stale_workers" != "" ]]; then
+        if [[ "$stale_workers" != "[]" && "$stale_workers" != "" && "$stale_workers" != "null" ]]; then
             log "WARNING: Stale workers detected: $stale_workers"
 
-            # Create health alert event for stale workers
+            # Create and log health alert event for stale workers
             local alert_event
             alert_event=$("$PROJECT_ROOT/scripts/events/lib/event-logger.sh" --create \
                 "system.health_alert" \
@@ -103,7 +107,7 @@ handle_worker_heartbeat() {
                 "system" \
                 "high")
 
-            echo "$alert_event" | "$PROJECT_ROOT/scripts/events/lib/event-logger.sh"
+            "$PROJECT_ROOT/scripts/events/lib/event-logger.sh" "$alert_event"
             log "Health alert created for stale workers"
         fi
     fi

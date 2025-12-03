@@ -6,8 +6,7 @@ format:
   html:
     code-fold: true
     toc: true
-  pdf:
-    toc: true
+    embed-resources: true
 execute:
   echo: false
 ---
@@ -21,36 +20,43 @@ from pathlib import Path
 from datetime import datetime, timedelta
 from anthropic import Anthropic
 import os
+import pytz
 
 # Load month's security events
 coordination_dir = Path("../coordination")
 security_events_file = coordination_dir / "events" / "security-events.jsonl"
 security_results_file = coordination_dir / "security" / "scan-results.jsonl"
 
-# Date range for this month
-month_start = datetime.now() - timedelta(days=30)
+# Date range for this month (timezone-aware)
+month_start = datetime.now(pytz.UTC) - timedelta(days=30)
 
 # Load security events
 security_events = pl.DataFrame()
 if security_events_file.exists():
     security_events = pl.read_ndjson(security_events_file)
     if 'timestamp' in security_events.columns:
-        security_events = security_events.with_columns(
-            pl.col('timestamp').str.to_datetime()
-        ).filter(
-            pl.col('timestamp') > month_start
-        )
+        try:
+            security_events = security_events.with_columns(
+                pl.col('timestamp').str.to_datetime(format="%Y-%m-%dT%H:%M:%S%z", strict=False)
+            ).filter(
+                pl.col('timestamp') > month_start
+            )
+        except:
+            pass  # Skip filtering if timestamp parsing fails
 
 # Load scan results if available
 scan_results = pl.DataFrame()
 if security_results_file.exists():
     scan_results = pl.read_ndjson(security_results_file)
     if 'timestamp' in scan_results.columns:
-        scan_results = scan_results.with_columns(
-            pl.col('timestamp').str.to_datetime()
-        ).filter(
-            pl.col('timestamp') > month_start
-        )
+        try:
+            scan_results = scan_results.with_columns(
+                pl.col('timestamp').str.to_datetime(format="%Y-%m-%dT%H:%M:%S%z", strict=False)
+            ).filter(
+                pl.col('timestamp') > month_start
+            )
+        except:
+            pass  # Skip filtering if timestamp parsing fails
 
 # Calculate metrics
 total_scans = len(security_events) + len(scan_results)
@@ -80,9 +86,11 @@ print(f"""
 
 ```{python}
 # Generate AI security assessment
-client = Anthropic(api_key=os.getenv("ANTHROPIC_API_KEY", ""))
+api_key = os.getenv("ANTHROPIC_API_KEY", "")
+has_api_key = bool(api_key and len(api_key) > 10)
 
-if os.getenv("ANTHROPIC_API_KEY") and total_scans > 0:
+if has_api_key:
+    client = Anthropic(api_key=api_key)
     try:
         assessment_data = {
             "total_scans": total_scans,
@@ -113,7 +121,9 @@ Be professional and security-focused."""
     except Exception as e:
         print(f"*Error generating security assessment: {str(e)}*")
 else:
-    print("*AI security assessment not available (requires ANTHROPIC_API_KEY and scan data)*")
+    print("*AI security assessment not available.*")
+    print("")
+    print(f"- API Key configured: {'✅ Yes' if has_api_key else '❌ No (add ANTHROPIC_API_KEY secret)'}")
 ```
 
 ## Vulnerability Trends
@@ -237,6 +247,9 @@ print("""
 
 ---
 
-*Security audit report generated on {datetime.now().strftime('%Y-%m-%d %H:%M:%S')} by Cortex Event-Driven Architecture*
-
-*This report is confidential and should be handled according to your organization's security policies.*
+```{python}
+from datetime import datetime
+print(f"*Security audit report generated on {datetime.now().strftime('%Y-%m-%d %H:%M:%S')} by Cortex Event-Driven Architecture*")
+print("")
+print("*This report is confidential and should be handled according to your organization's security policies.*")
+```

@@ -158,31 +158,96 @@ start_daemon() {
         return 1
     fi
 
-    print_info "Starting $name..."
+    print_info "Starting $name... (via event emission)"
 
-    local daemon_script="$CORTEX_HOME/$script"
+    # Instead of starting daemon directly, emit appropriate event
+    # Map daemon to event type
+    local event_type=""
+    local event_source="daemon-control-wizard"
 
-    if [[ ! -f "$daemon_script" ]]; then
-        print_error "Daemon script not found: $daemon_script"
-        return 1
-    fi
+    case "$daemon_key" in
+        health)
+            event_type="system.daemon_start_requested"
+            ;;
+        pattern)
+            event_type="system.daemon_start_requested"
+            ;;
+        autofix)
+            event_type="system.daemon_start_requested"
+            ;;
+        restart)
+            event_type="system.daemon_start_requested"
+            ;;
+        *)
+            # For non-self-healing daemons, keep old behavior
+            local daemon_script="$CORTEX_HOME/$script"
 
-    # Start daemon in background
-    if bash "$daemon_script" > /dev/null 2>&1 & then
-        sleep 2  # Give daemon time to start
+            if [[ ! -f "$daemon_script" ]]; then
+                print_error "Daemon script not found: $daemon_script"
+                return 1
+            fi
 
-        IFS='|' read -r new_status new_pid <<< "$(get_daemon_status "$daemon_key")"
+            # Start daemon in background (legacy support)
+            if bash "$daemon_script" > /dev/null 2>&1 & then
+                sleep 2  # Give daemon time to start
 
-        if [[ "$new_status" == "running" ]]; then
-            print_success "$name started successfully (PID: $new_pid)"
+                IFS='|' read -r new_status new_pid <<< "$(get_daemon_status "$daemon_key")"
+
+                if [[ "$new_status" == "running" ]]; then
+                    print_success "$name started successfully (PID: $new_pid)"
+                    return 0
+                else
+                    print_error "$name failed to start"
+                    return 1
+                fi
+            else
+                print_error "Failed to execute $name"
+                return 1
+            fi
+            ;;
+    esac
+
+    # If event-based, emit daemon start event
+    if [[ -n "$event_type" ]]; then
+        local payload
+        payload=$(jq -n \
+            --arg daemon "$daemon_key" \
+            --arg name "$name" \
+            --arg script "$script" \
+            '{
+                daemon_type: $daemon,
+                daemon_name: $name,
+                daemon_script: $script,
+                action: "start"
+            }')
+
+        if [[ -f "$CORTEX_HOME/scripts/events/lib/event-logger.sh" ]]; then
+            local event_json
+            event_json=$("$CORTEX_HOME/scripts/events/lib/event-logger.sh" --create \
+                "$event_type" \
+                "$event_source" \
+                "$payload" \
+                "" \
+                "high")
+
+            echo "$event_json" | "$CORTEX_HOME/scripts/events/lib/event-logger.sh"
+
+            print_success "$name start request emitted as event (event-driven mode)"
+            print_info "Note: Event-driven architecture replaces direct daemon startup"
             return 0
         else
-            print_error "$name failed to start"
-            return 1
+            print_error "Event logger not found - falling back to legacy mode"
+            # Fallback to old behavior
+            local daemon_script="$CORTEX_HOME/$script"
+            if bash "$daemon_script" > /dev/null 2>&1 & then
+                sleep 2
+                print_success "$name started (legacy mode)"
+                return 0
+            else
+                print_error "Failed to start $name"
+                return 1
+            fi
         fi
-    else
-        print_error "Failed to execute $name"
-        return 1
     fi
 }
 

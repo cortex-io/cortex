@@ -12,6 +12,19 @@ HEARTBEAT_INTERVAL=120  # 2 minutes in seconds
 HEARTBEAT_PID_FILE=""
 WORKER_SPEC_FILE=""
 
+# Get script directory for event logger
+HEARTBEAT_SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+CORTEX_HOME_HB="${CORTEX_HOME:-$(cd "$HEARTBEAT_SCRIPT_DIR/../.." && pwd)}"
+
+# Load event logger if available
+EVENT_LOGGER_HB="$HEARTBEAT_SCRIPT_DIR/../events/lib/event-logger.sh"
+if [ -f "$EVENT_LOGGER_HB" ]; then
+    source "$EVENT_LOGGER_HB"
+    EVENTS_ENABLED_HB=true
+else
+    EVENTS_ENABLED_HB=false
+fi
+
 ###############################################################################
 # Start heartbeat background process
 ###############################################################################
@@ -44,6 +57,34 @@ start_heartbeat() {
 
                 if [ -f "${WORKER_SPEC_FILE}.tmp" ]; then
                     mv "${WORKER_SPEC_FILE}.tmp" "$WORKER_SPEC_FILE"
+                fi
+
+                # Emit worker.heartbeat event (non-blocking)
+                if [ "$EVENTS_ENABLED_HB" = true ]; then
+                    (
+                        local worker_type=$(jq -r '.worker_type' "$WORKER_SPEC_FILE" 2>/dev/null || echo "unknown")
+                        local task_id=$(jq -r '.task_id' "$WORKER_SPEC_FILE" 2>/dev/null || echo "unknown")
+                        local status=$(jq -r '.status' "$WORKER_SPEC_FILE" 2>/dev/null || echo "running")
+
+                        EVENT_PAYLOAD=$(jq -n \
+                            --arg worker_id "$worker_id" \
+                            --arg worker_type "$worker_type" \
+                            --arg task_id "$task_id" \
+                            --arg status "$status" \
+                            --arg timestamp "$current_time" \
+                            '{
+                                worker_id: $worker_id,
+                                worker_type: $worker_type,
+                                task_id: $task_id,
+                                status: $status,
+                                heartbeat_time: $timestamp
+                            }')
+
+                        EVENT_JSON=$("$EVENT_LOGGER_HB" --create "worker.heartbeat" "worker-heartbeat" "$EVENT_PAYLOAD" "$task_id" "low" 2>/dev/null)
+                        if [ -n "$EVENT_JSON" ]; then
+                            "$EVENT_LOGGER_HB" "$EVENT_JSON" 2>/dev/null || true
+                        fi
+                    ) &
                 fi
             fi
 

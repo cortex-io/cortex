@@ -6,6 +6,7 @@ format:
   html:
     code-fold: true
     toc: true
+    embed-resources: true
 execute:
   echo: false
 ---
@@ -16,32 +17,38 @@ execute:
 import polars as pl
 from pathlib import Path
 from datetime import datetime, timedelta
+import pytz
 
 # Load worker performance data for token usage
 coordination_dir = Path("../coordination")
 metrics_file = coordination_dir / "metrics" / "worker-performance.jsonl"
 
-# Date range for this month
-month_start = datetime.now() - timedelta(days=30)
+# Date range for this month (timezone-aware)
+month_start = datetime.now(pytz.UTC) - timedelta(days=30)
 
 metrics_df = pl.DataFrame()
 if metrics_file.exists():
     metrics_df = pl.read_ndjson(metrics_file)
     if 'timestamp' in metrics_df.columns:
-        metrics_df = metrics_df.with_columns(
-            pl.col('timestamp').str.to_datetime()
-        ).filter(
-            pl.col('timestamp') > month_start
-        )
+        try:
+            metrics_df = metrics_df.with_columns(
+                pl.col('timestamp').str.to_datetime(format="%Y-%m-%dT%H:%M:%S%z", strict=False)
+            ).filter(
+                pl.col('timestamp') > month_start
+            )
+        except:
+            pass  # Skip filtering if timestamp parsing fails
 
 # Calculate token usage
 total_tokens = 0
 if 'tokens_used' in metrics_df.columns and len(metrics_df) > 0:
-    total_tokens = metrics_df.select('tokens_used').sum()[0, 0]
+    total_tokens = metrics_df.select('tokens_used').sum()[0, 0] or 0
 
 # Estimate costs (rough estimates, adjust based on actual pricing)
 # Assuming average of $3 per 1M tokens (mix of input/output)
 estimated_cost = (total_tokens / 1_000_000) * 3
+task_count = len(metrics_df) if len(metrics_df) > 0 else 1  # Avoid division by zero
+cost_per_task = estimated_cost / task_count if task_count > 0 else 0
 
 print(f"""
 ### Monthly Cost Summary
@@ -49,8 +56,8 @@ print(f"""
 - **Total Tokens Used**: {total_tokens:,}
 - **Estimated Cost**: ${estimated_cost:.2f}
 - **Average Daily Cost**: ${estimated_cost / 30:.2f}
-- **Tasks Processed**: {len(metrics_df):,}
-- **Cost per Task**: ${estimated_cost / len(metrics_df):.4f} if len(metrics_df) > 0 else 0
+- **Tasks Processed**: {task_count:,}
+- **Cost per Task**: ${cost_per_task:.4f}
 """)
 ```
 
@@ -124,4 +131,7 @@ print("""
 
 ---
 
-*Cost report generated on {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}*
+```{python}
+from datetime import datetime
+print(f"*Cost report generated on {datetime.now().strftime('%Y-%m-%d %H:%M:%S')} by Cortex Event-Driven Architecture*")
+```
