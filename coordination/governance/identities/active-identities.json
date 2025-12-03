@@ -944,12 +944,45 @@
       "created_at": "2025-11-30T19:05:50.327Z",
       "last_seen": "2025-11-30T19:05:50.328Z",
       "status": "active"
+    },
+    "worker-implementation-147": {
+      "spiffe_id": "spiffe://cortex/workers/worker-implementation-147",
+      "role": "worker",
+      "trust_level": 50,
+      "capabilities": [
+        "development:implement",
+        "development:test",
+        "tasks:read",
+        "coordination:read",
+        "governance:read"
+      ],
+      "metadata": {},
+      "created_at": "2025-12-01T18:48:39.881Z",
+      "last_seen": "2025-12-01T18:48:39.882Z",
+      "status": "active"
+    },
+    "worker-scan-147": {
+      "spiffe_id": "spiffe://cortex/workers/worker-scan-147",
+      "role": "worker",
+      "trust_level": 50,
+      "capabilities": [
+        "security:scan",
+        "security:audit",
+        "tasks:read",
+        "coordination:read",
+        "governance:read",
+        "governance:audit"
+      ],
+      "metadata": {},
+      "created_at": "2025-12-01T18:48:36.338Z",
+      "last_seen": "2025-12-01T18:48:36.339Z",
+      "status": "active"
     }
   },
   "revoked": [],
   "statistics": {
-    "total_issued": 120,
-    "total_active": 120,
+    "total_issued": 126,
+    "total_active": 126,
     "total_revoked": 0
   }
 }

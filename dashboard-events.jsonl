@@ -168,3 +168,73 @@
     "strategy": "single_expert"
   }
 }
+{
+  "timestamp": "2025-12-01T12:50:18-0600",
+  "type": "moe_routing_decision",
+  "data": {
+    "task_id": "resumate-builder-core",
+    "expert": "inventory",
+    "confidence": 0.06,
+    "strategy": "single_expert_low_confidence"
+  }
+}
+{
+  "timestamp": "2025-12-01T12:50:21-0600",
+  "type": "moe_routing_decision",
+  "data": {
+    "task_id": "resumate-preview-engine",
+    "expert": "development",
+    "confidence": 0.90,
+    "strategy": "single_expert"
+  }
+}
+{
+  "timestamp": "2025-12-01T12:50:27-0600",
+  "type": "moe_routing_decision",
+  "data": {
+    "task_id": "resumate-templates-core",
+    "expert": "development",
+    "confidence": 0,
+    "strategy": "single_expert_low_confidence"
+  }
+}
+{
+  "timestamp": "2025-12-01T12:50:30-0600",
+  "type": "moe_routing_decision",
+  "data": {
+    "task_id": "resumate-ai-writer",
+    "expert": "development",
+    "confidence": 0.90,
+    "strategy": "single_expert"
+  }
+}
+{
+  "timestamp": "2025-12-01T12:50:34-0600",
+  "type": "moe_routing_decision",
+  "data": {
+    "task_id": "resumate-security-audit",
+    "expert": "security",
+    "confidence": 1.00,
+    "strategy": "single_expert"
+  }
+}
+{
+  "timestamp": "2025-12-01T12:50:37-0600",
+  "type": "moe_routing_decision",
+  "data": {
+    "task_id": "resumate-parser",
+    "expert": "development",
+    "confidence": 0.90,
+    "strategy": "single_expert"
+  }
+}
+{
+  "timestamp": "2025-12-03T11:44:02-0600",
+  "type": "moe_routing_decision",
+  "data": {
+    "task_id": "cleanup-analysis-001",
+    "expert": "inventory",
+    "confidence": 1.00,
+    "strategy": "single_expert"
+  }
+}

@@ -1,19 +1,19 @@
 {
-  "worker_id": "worker-implementation-057",
+  "worker_id": "worker-implementation-147",
   "worker_type": "implementation-worker",
   "created_by": "development-master",
   "execution_manager": null,
-  "created_at": "2025-11-30T09:10:47-0600",
-  "task_id": "task-github-blog-css-analysis",
+  "created_at": "2025-12-01T12:48:39-0600",
+  "task_id": "resumate-parser",
   "status": "pending",
   "identity": {
-    "spiffe_id": "spiffe://cortex/workers/worker-implementation-057",
-    "token": "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJzcGlmZmU6Ly9jb3J0ZXgvd29ya2Vycy93b3JrZXItaW1wbGVtZW50YXRpb24tMDU3IiwiYWdlbnRfaWQiOiJ3b3JrZXItaW1wbGVtZW50YXRpb24tMDU3Iiwicm9sZSI6IndvcmtlciIsInRydXN0X2xldmVsIjo1MCwiY2FwYWJpbGl0aWVzIjpbImRldmVsb3BtZW50OmltcGxlbWVudCIsImRldmVsb3BtZW50OnRlc3QiLCJ0YXNrczpyZWFkIiwiY29vcmRpbmF0aW9uOnJlYWQiLCJnb3Zlcm5hbmNlOnJlYWQiXSwibWV0YWRhdGEiOnt9LCJpYXQiOjE3NjQ1MTU0NDcsImV4cCI6MTc2NDUxOTA0NywiYXVkIjoiY29ydGV4LWFnZW50cyIsImlzcyI6ImNvcnRleC1pZGVudGl0eS1zeXN0ZW0ifQ.EK2EpHrEGrcCYUsDispMNn-7pEk3TvVaWTwpLZgslVaGTwHyIdOq9xXtje5SdOA5F7_AbwOGYMXLqJU9K_8mYteceROtcA-cliL-HN_28e29_sHBeGh5t46DnB-ITDc3j3qp9zAJmVEBkTQArmnDoWHJU61g47Z1X7a_kwISVBSopQGtU-CXH0Qx4shQeAtjDz3bqEidg3_8yOJS8bV936E4xC488r4KI3Ue2Ob8LV56qcAOr_5_5sWaS3atww9J4AA1xtb4jA2UacXpxE4R25HmgusdAbIB69ZR5uIrtYRJvBzOPTlBOt3D9Nx-S5s4OV6u5J0jMK5ydEN3xTqprw",
+    "spiffe_id": "spiffe://cortex/workers/worker-implementation-147",
+    "token": "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJzcGlmZmU6Ly9jb3J0ZXgvd29ya2Vycy93b3JrZXItaW1wbGVtZW50YXRpb24tMTQ3IiwiYWdlbnRfaWQiOiJ3b3JrZXItaW1wbGVtZW50YXRpb24tMTQ3Iiwicm9sZSI6IndvcmtlciIsInRydXN0X2xldmVsIjo1MCwiY2FwYWJpbGl0aWVzIjpbImRldmVsb3BtZW50OmltcGxlbWVudCIsImRldmVsb3BtZW50OnRlc3QiLCJ0YXNrczpyZWFkIiwiY29vcmRpbmF0aW9uOnJlYWQiLCJnb3Zlcm5hbmNlOnJlYWQiXSwibWV0YWRhdGEiOnt9LCJpYXQiOjE3NjQ2MTQ5MTksImV4cCI6MTc2NDYxODUxOSwiYXVkIjoiY29ydGV4LWFnZW50cyIsImlzcyI6ImNvcnRleC1pZGVudGl0eS1zeXN0ZW0ifQ.JD3W9k2TSbhXs-d0YzVjz8zut9A20JRBUiMpAXMMPCEC6sPC0mVPefSqYD-IzOKyhCQU6CTMYI1TiIjI-l0JoXGkak6O-EKJrKV5W-F4n8oiGvTAVeZZhoa1fEFdGaar3XjaBn8YxgQcNLXtNvsCENhJYHPOxmTDYAe7Kz8f88UMKAlr4q9z56O2u6elBSmfgF91JdCbOQcEnLJb3kGTUFMBLycztrSWh1F71qFWAfif8M4CayDeoj8bEo6Jwyjmx-St2QJsqIGM4uWXHHRjm10DOiElFre9WAYDn2NI93qsryVZm3W0g5N6vSPzCzpDlXCflIrajiP5SlRf53SG_A",
     "trust_level": 50
   },
   "scope": {},
   "context": {
-  "parent_task": "task-github-blog-css-analysis",
+  "parent_task": "resumate-parser",
   "priority": "high",
   "deadline": null
 },
@@ -22,7 +22,7 @@
     "strategy": "direct",
     "goal_type": "feature-development",
     "complexity": "low",
-    "strategy_plan_location": "coordination/knowledge-base/strategy-plans/worker-implementation-057-plan.json"
+    "strategy_plan_location": "coordination/knowledge-base/strategy-plans/worker-implementation-147-plan.json"
   },
   "resources": {
     "token_budget": 10000,
