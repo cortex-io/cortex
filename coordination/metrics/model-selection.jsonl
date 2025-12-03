@@ -168,3 +168,73 @@
   "sensitivity_level": "none",
   "reasoning": "Selected claude-sonnet-4 from balanced tier"
 }
+{
+  "timestamp": "2025-12-01T12:50:18-0600",
+  "task_id": "resumate-builder-core",
+  "model": "claude-sonnet-4",
+  "provider": "anthropic",
+  "tier": "balanced",
+  "complexity_score": 6,
+  "sensitivity_level": "none",
+  "reasoning": "Selected claude-sonnet-4 from balanced tier"
+}
+{
+  "timestamp": "2025-12-01T12:50:21-0600",
+  "task_id": "resumate-preview-engine",
+  "model": "claude-sonnet-4",
+  "provider": "anthropic",
+  "tier": "balanced",
+  "complexity_score": 5,
+  "sensitivity_level": "none",
+  "reasoning": "Selected claude-sonnet-4 from balanced tier"
+}
+{
+  "timestamp": "2025-12-01T12:50:27-0600",
+  "task_id": "resumate-templates-core",
+  "model": "claude-sonnet-4",
+  "provider": "anthropic",
+  "tier": "balanced",
+  "complexity_score": 5,
+  "sensitivity_level": "none",
+  "reasoning": "Selected claude-sonnet-4 from balanced tier"
+}
+{
+  "timestamp": "2025-12-01T12:50:30-0600",
+  "task_id": "resumate-ai-writer",
+  "model": "claude-sonnet-4",
+  "provider": "anthropic",
+  "tier": "balanced",
+  "complexity_score": 5,
+  "sensitivity_level": "none",
+  "reasoning": "Selected claude-sonnet-4 from balanced tier"
+}
+{
+  "timestamp": "2025-12-01T12:50:34-0600",
+  "task_id": "resumate-security-audit",
+  "model": "llama2-70b",
+  "provider": "ollama",
+  "tier": "local",
+  "complexity_score": 8,
+  "sensitivity_level": "high",
+  "reasoning": "Selected llama2-70b from local tier (forced local for high sensitivity)"
+}
+{
+  "timestamp": "2025-12-01T12:50:37-0600",
+  "task_id": "resumate-parser",
+  "model": "claude-sonnet-4",
+  "provider": "anthropic",
+  "tier": "balanced",
+  "complexity_score": 5,
+  "sensitivity_level": "none",
+  "reasoning": "Selected claude-sonnet-4 from balanced tier"
+}
+{
+  "timestamp": "2025-12-03T11:44:02-0600",
+  "task_id": "cleanup-analysis-001",
+  "model": "claude-sonnet-4",
+  "provider": "anthropic",
+  "tier": "balanced",
+  "complexity_score": 5,
+  "sensitivity_level": "low",
+  "reasoning": "Selected claude-sonnet-4 from balanced tier"
+}

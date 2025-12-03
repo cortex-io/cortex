@@ -15983,3 +15983,9 @@
 {"event_id":"e387dd8e-6def-463b-9563-9a9279d2cf8c","timestamp":"2025-11-30T19:05:47.174Z","actor":"development-master","permission":"worker-specs:write","namespace":"worker-specs","permitted":true,"reason":null}
 {"event_id":"98218b7e-3580-43cb-8efa-cfa9485356c3","timestamp":"2025-11-30T19:05:47.340Z","actor":"development-master","permission":"worker-specs:write","namespace":"worker-specs","permitted":true,"reason":null}
 {"event_id":"67effa20-f899-4ef8-88d9-c9db0d582fd1","timestamp":"2025-11-30T19:05:47.555Z","actor":"development-master","permission":"worker-specs:write","namespace":"worker-specs","permitted":true,"reason":null}
+{"event_id":"9eaa5ca5-293a-4407-ab80-735c0d99cee4","timestamp":"2025-12-01T18:48:24.721Z","actor":"development-master","permission":"worker-specs:write","namespace":"worker-specs","permitted":true,"reason":null}
+{"event_id":"c9635a02-b390-4e4c-a4b8-5248c13ac66c","timestamp":"2025-12-01T18:48:27.815Z","actor":"development-master","permission":"worker-specs:write","namespace":"worker-specs","permitted":true,"reason":null}
+{"event_id":"654ca899-1770-45f9-b323-0460fc5301c1","timestamp":"2025-12-01T18:48:30.331Z","actor":"development-master","permission":"worker-specs:write","namespace":"worker-specs","permitted":true,"reason":null}
+{"event_id":"eed46ea6-f872-4018-81a1-f7b0378365c5","timestamp":"2025-12-01T18:48:33.012Z","actor":"development-master","permission":"worker-specs:write","namespace":"worker-specs","permitted":true,"reason":null}
+{"event_id":"7200715e-387f-425a-8e0f-b8bf95462200","timestamp":"2025-12-01T18:48:35.557Z","actor":"security-master","permission":"worker-specs:write","namespace":"worker-specs","permitted":true,"reason":null}
+{"event_id":"f27681b5-1917-4481-9acd-541e0dbf1506","timestamp":"2025-12-01T18:48:39.115Z","actor":"development-master","permission":"worker-specs:write","namespace":"worker-specs","permitted":true,"reason":null}

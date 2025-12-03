@@ -1,30 +1,20 @@
 {
-  "worker_id": "worker-implementation-069",
+  "worker_id": "worker-implementation-147",
   "worker_type": "implementation-worker",
   "created_by": "development-master",
   "execution_manager": null,
-  "created_at": "2025-11-30T13:05:27-0600",
-  "task_id": "obs-decision-tracing-19-1764529524",
+  "created_at": "2025-12-01T12:48:39-0600",
+  "task_id": "resumate-parser",
   "status": "pending",
   "identity": {
-    "spiffe_id": "spiffe://cortex/workers/worker-implementation-069",
+    "spiffe_id": "spiffe://cortex/workers/worker-implementation-147",
     "token": "xxxxxx",
     "trust_level": 50
   },
-  "scope": {
-  "task_id": "observability-massive-parallel",
-  "pillar": "decision-tracing",
-  "component": "MoE router decision logger",
-  "component_id": "dt-comp-0",
-  "worker_number": 19,
-  "description": "Implement MoE router decision logger as part of decision-tracing pillar",
-  "autonomous": true,
-  "continuous": true,
-  "auto_heal": true
-},
+  "scope": {},
   "context": {
-  "parent_task": "obs-decision-tracing-19-1764529524",
-  "priority": "critical",
+  "parent_task": "resumate-parser",
+  "priority": "high",
   "deadline": null
 },
   "goal_based_planning": {
@@ -32,7 +22,7 @@
     "strategy": "direct",
     "goal_type": "feature-development",
     "complexity": "low",
-    "strategy_plan_location": "coordination/knowledge-base/strategy-plans/worker-implementation-069-plan.json"
+    "strategy_plan_location": "coordination/knowledge-base/strategy-plans/worker-implementation-147-plan.json"
   },
   "resources": {
     "token_budget": 10000,
