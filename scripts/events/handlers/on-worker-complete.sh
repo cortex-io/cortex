@@ -58,7 +58,7 @@ handle_worker_complete() {
     if [[ "$status" == "completed" && "$tokens" -gt 0 ]]; then
         log "Triggering auto-learning for successful completion"
 
-        # Create learning event
+        # Create and log learning event
         local learning_event
         learning_event=$("$PROJECT_ROOT/scripts/events/lib/event-logger.sh" --create \
             "learning.pattern_detected" \
@@ -78,9 +78,8 @@ handle_worker_complete() {
             "$task_id" \
             "medium")
 
-        # Log the learning event
-        echo "$learning_event" | "$PROJECT_ROOT/scripts/events/lib/event-logger.sh"
-        log "Learning event created"
+        "$PROJECT_ROOT/scripts/events/lib/event-logger.sh" "$learning_event"
+        log "Learning event created and logged"
     fi
 
     # Update worker pool state
@@ -93,14 +92,18 @@ handle_worker_complete() {
         jq --arg worker "$worker_id" \
             --arg ts "$(date -u +"%Y-%m-%dT%H:%M:%SZ")" \
             '
-            .workers |= map(
-                if .id == $worker then
-                    .status = "available" |
-                    .last_completed = $ts
-                else
-                    .
-                end
-            )
+            if .active_workers then
+                .active_workers |= map(
+                    if .worker_id == $worker then
+                        .status = "available" |
+                        .last_completed = $ts
+                    else
+                        .
+                    end
+                )
+            else
+                .
+            end
             ' "$pool_file" > "$temp_file"
 
         mv "$temp_file" "$pool_file"

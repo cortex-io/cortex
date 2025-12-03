@@ -1,5 +1,28 @@
 #!/usr/bin/env bash
 # scripts/daemons/observability-hub-daemon.sh
+#
+# ============================================================================
+# DEPRECATED: This daemon has been replaced by event-driven architecture
+# Status: DEPRECATED as of 2025-12-01
+# Replacement: scripts/events/handlers/Event logs + AI notebooks
+# Event Type: All event types
+# Documentation: scripts/daemons/DEPRECATED.md
+# ============================================================================
+#
+# WARNING: This script is deprecated and should not be used in new code.
+# It is maintained for compatibility only and will be removed in a future version.
+#
+# To migrate to the event-driven replacement:
+# 1. Stop this daemon if running
+# 2. Start event dispatcher: ./scripts/events/event-dispatcher.sh
+# 3. Emit events instead of calling this daemon
+# 4. See DEPRECATED.md for migration instructions
+#
+# ============================================================================
+#
+# Original script follows below:
+#
+# scripts/daemons/observability-hub-daemon.sh
 # ObservabilityHub Daemon - Real-time event aggregation and correlation
 #
 # Purpose:

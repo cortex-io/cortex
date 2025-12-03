@@ -90,11 +90,11 @@ def __(security_enriched, mo):
 
 
 @app.cell
-def __(security_enriched, px, pl):
+def __(security_enriched, px, pl, go):
     # Severity distribution
     if 'severity' in security_enriched.columns and len(security_enriched) > 0:
         severity_counts = security_enriched.group_by('severity').agg(
-            pl.count().alias('count')
+            pl.len().alias('count')
         ).sort('count', descending=True)
 
         color_map = {
@@ -105,7 +105,7 @@ def __(security_enriched, px, pl):
         }
 
         fig_severity = px.pie(
-            severity_counts.to_pandas(),
+            severity_counts.to_dict(),
             values='count',
             names='severity',
             title='Findings by Severity',
@@ -130,20 +130,20 @@ def __(mo, fig_severity):
 
 
 @app.cell
-def __(security_enriched, px, pl):
+def __(security_enriched, px, pl, go):
     # Findings over time
     if 'timestamp' in security_enriched.columns and 'finding_count' in security_enriched.columns and len(security_enriched) > 0:
         findings_timeline = security_enriched.with_columns(
-            pl.col('timestamp').str.to_datetime().alias('datetime')
+            pl.col('timestamp').str.to_datetime(format="%Y-%m-%dT%H:%M:%S%z", strict=False).alias('datetime')
         ).with_columns(
             pl.col('datetime').dt.date().alias('date')
         ).group_by('date').agg(
             pl.col('finding_count').sum().alias('total_findings'),
-            pl.count().alias('scan_count')
+            pl.len().alias('scan_count')
         ).sort('date')
 
         fig_timeline = px.line(
-            findings_timeline.to_pandas(),
+            findings_timeline.to_dict(),
             x='date',
             y='total_findings',
             title='Security Findings Over Time',
