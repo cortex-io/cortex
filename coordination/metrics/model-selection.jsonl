@@ -238,3 +238,23 @@
   "sensitivity_level": "low",
   "reasoning": "Selected claude-sonnet-4 from balanced tier"
 }
+{
+  "timestamp": "2025-12-03T11:52:35-0600",
+  "task_id": "cve-scan-cortex-001",
+  "model": "claude-opus-4",
+  "provider": "anthropic",
+  "tier": "powerful",
+  "complexity_score": 8,
+  "sensitivity_level": "none",
+  "reasoning": "Selected claude-opus-4 from powerful tier (high complexity score: 8)"
+}
+{
+  "timestamp": "2025-12-03T12:07:55-0600",
+  "task_id": "package-updates-001",
+  "model": "claude-sonnet-4",
+  "provider": "anthropic",
+  "tier": "balanced",
+  "complexity_score": 5,
+  "sensitivity_level": "none",
+  "reasoning": "Selected claude-sonnet-4 from balanced tier"
+}

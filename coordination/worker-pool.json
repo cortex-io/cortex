@@ -1897,6 +1897,19 @@
       "timeout_at": null,
       "last_heartbeat": null,
       "session_id": null
+    },
+    {
+      "worker_id": "worker-scan-147",
+      "worker_type": "scan-worker",
+      "spawned_by": "security-master",
+      "spawned_at": "2025-12-03T11:53:34-0600",
+      "status": "pending",
+      "task_id": "cve-scan-cortex-001",
+      "token_budget": 8000,
+      "tokens_used": 0,
+      "timeout_at": null,
+      "last_heartbeat": null,
+      "session_id": null
     }
   ],
   "completed_workers": [
@@ -1942,11 +1955,11 @@
   ],
   "failed_workers": [],
   "stats": {
-    "total_spawned_today": 161,
+    "total_spawned_today": 162,
     "total_completed_today": 3,
     "total_failed_today": 0,
     "success_rate": 7,
     "note": "Reset to clean state after power outage"
   },
-  "updated_at": "2025-11-30T13:05:49-0600"
+  "updated_at": "2025-12-03T11:53:34-0600"
 }
