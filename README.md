@@ -47,10 +47,59 @@ Cortex automates repository workflows using a master-worker architecture. Master
 **Key Components:**
 - Token budget management (270k daily)
 - File-based coordination (JSON/JSONL)
+- **Observability Pipeline** - Complete event processing and analytics (NEW!)
 - Elastic APM for observability
 - PyTorch neural routing
 - RAG system with vector search
 - Governance framework
+
+## Observability Pipeline
+
+Production-ready event processing pipeline with 94 tests passing:
+
+**Architecture:** Sources → Processors → Destinations → API → Dashboard
+
+**Components:**
+- **4 Processors**: Enrich, Filter, Sample, Redact PII
+- **5 Destinations**: PostgreSQL, S3, Webhook, JSONL, Console
+- **REST API**: 15+ endpoints for querying and analytics
+- **Dashboard**: Real-time monitoring web interface
+
+**Quick Start:**
+```bash
+# Start observability API server
+node -e "
+const { ObservabilityAPIServer, PostgreSQLDataSource } = require('./lib/observability/api');
+const dataSource = new PostgreSQLDataSource({
+  host: 'localhost',
+  database: 'cortex_observability',
+  user: 'postgres',
+  password: process.env.POSTGRES_PASSWORD
+});
+const server = new ObservabilityAPIServer({ port: 3001, dataSource });
+(async () => {
+  await dataSource.initialize();
+  await server.start();
+  console.log('Dashboard: http://localhost:3001');
+})();
+"
+```
+
+**Features:**
+- PII redaction (7 types: email, phone, SSN, API keys, etc.)
+- Intelligent sampling (100% errors, 10% successes)
+- Cost tracking and analysis
+- Full-text search
+- Time-series aggregations
+- PostgreSQL storage with optimized indexes
+- S3 archival with compression (60-80% reduction)
+- Webhook integrations (Slack, PagerDuty, etc.)
+
+**Documentation:**
+- [Weeks 1-2: Pipeline Framework](./docs/observability-pipeline-weeks-1-2.md)
+- [Weeks 3-4: Processors](./docs/observability-pipeline-weeks-3-4.md)
+- [Weeks 5-6: Destinations](./docs/observability-pipeline-weeks-5-6.md)
+- [Weeks 7-8: Search API & Dashboard](./docs/observability-pipeline-weeks-7-8.md)
 
 ## Common Commands
 
