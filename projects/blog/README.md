@@ -4,6 +4,26 @@ Engineering blog posts and technical updates from the Cortex team.
 
 ## Latest Posts
 
+### 2025-12-04: [Eight Weeks of Development in Three Hours: Building a Production Observability Pipeline with AI](./2025-12-04-eight-weeks-in-three-hours.md)
+
+Using Cortex with Claude Code, we implemented a complete, production-ready observability pipeline in ~3 hours that would traditionally take 6-8 weeks. A deep dive into the 80-100x productivity transformation and what it means for software development.
+
+**What we built:**
+- Complete data pipeline (Sources → Processors → Destinations → API → Dashboard)
+- 4 sophisticated processors (enrichment, filtering, sampling, PII redaction)
+- 5 destinations (PostgreSQL, S3, Webhooks, JSONL, Console)
+- REST API with 15+ endpoints and real-time web dashboard
+- 94 comprehensive tests, 9,253 lines of production code
+
+**Key Stats:**
+- Time: 6-8 weeks → 3 hours (80-100x faster)
+- Cost: $12k-16k → $200 (60-80x cheaper)
+- Quality: Production-ready with full test coverage
+
+[Read the full post →](./2025-12-04-eight-weeks-in-three-hours.md)
+
+---
+
 ### 2025-12-03: [Transforming Cortex: From Task Router to Autonomous AI Agent Platform](./2025-12-03-cortex-ai-agents-security-updates.md)
 
 A comprehensive look at our latest security enhancements and the new Cortex AI Agents System - featuring autonomous execution, advanced reasoning, multi-agent orchestration, and production-grade safety controls.
@@ -76,8 +96,9 @@ Content...
 
 ## Archive
 
+- [2025-12-04 - Eight Weeks of Development in Three Hours](./2025-12-04-eight-weeks-in-three-hours.md)
 - [2025-12-03 - Cortex AI Agents System Launch](./2025-12-03-cortex-ai-agents-security-updates.md)
 
 ---
 
-*Last updated: December 3, 2025*
+*Last updated: December 4, 2025*
