@@ -4,6 +4,27 @@ Engineering blog posts and technical updates from the Cortex team.
 
 ## Latest Posts
 
+### 2025-12-05: [Cortex Builds Cortex: Self-Optimization Through Meta-Execution](./2025-12-05-cortex-builds-cortex.md)
+
+We used Cortex to implement Cortex's own self-optimization framework. By submitting 16 development tasks across 5 parallel tracks, the AI agent system is now building the very capabilities that will make it smarter, faster, and more efficient. This is self-directed evolution in action.
+
+**What's being built:**
+- Adaptive timeout learning (40% efficiency improvement)
+- Dynamic task granularity (25-300 feature scaling, 30-40% token savings)
+- Parallel worker result analysis (waste detection & prevention)
+- Multi-instance coordination (seamless multi-terminal workflow)
+- Meta-learning intelligence (daily autonomous optimization)
+
+**Execution Model:**
+- 16 tasks across 5 parallel tracks
+- 11-13 workers estimated
+- 10-week timeline (compressed from 50 weeks sequential)
+- Zero human intervention until completion
+
+[Read the full post →](./2025-12-05-cortex-builds-cortex.md)
+
+---
+
 ### 2025-12-04: [Eight Weeks of Development in Three Hours: Building a Production Observability Pipeline with AI](./2025-12-04-eight-weeks-in-three-hours.md)
 
 Using Cortex with Claude Code, we implemented a complete, production-ready observability pipeline in ~3 hours that would traditionally take 6-8 weeks. A deep dive into the 80-100x productivity transformation and what it means for software development.
@@ -96,9 +117,10 @@ Content...
 
 ## Archive
 
+- [2025-12-05 - Cortex Builds Cortex: Self-Optimization Through Meta-Execution](./2025-12-05-cortex-builds-cortex.md)
 - [2025-12-04 - Eight Weeks of Development in Three Hours](./2025-12-04-eight-weeks-in-three-hours.md)
 - [2025-12-03 - Cortex AI Agents System Launch](./2025-12-03-cortex-ai-agents-security-updates.md)
 
 ---
 
-*Last updated: December 4, 2025*
+*Last updated: December 5, 2025*
