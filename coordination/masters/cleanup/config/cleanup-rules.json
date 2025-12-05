@@ -1,5 +1,97 @@
 {
-  "version": "1.0.0",
+  "version": "2.0.0",
+  "protected_executables": {
+    "description": "Executable files that should NEVER be removed - from Cortex inventory 2025-12-05",
+    "scripts": [
+      "scripts/cortex",
+      "scripts/coordination-daemon.js",
+      "scripts/auto-optimizer",
+      "scripts/emergence",
+      "scripts/healer",
+      "scripts/optimizer-pool",
+      "scripts/optimizer-profile",
+      "scripts/optimizer-scheduler",
+      "scripts/optimizer-tokens",
+      "scripts/predictor",
+      "scripts/daemon-control.sh",
+      "scripts/worker-pool-daemon.sh"
+    ],
+    "cleanup_master": [
+      "coordination/masters/cleanup/run.sh",
+      "coordination/masters/cleanup/report.sh",
+      "coordination/masters/cleanup/lib/scanner.sh",
+      "coordination/masters/cleanup/lib/analyzer.sh",
+      "coordination/masters/cleanup/lib/auto-fix.sh"
+    ],
+    "coordinator_master": [
+      "coordination/masters/coordinator/coordinator.sh",
+      "coordination/masters/coordinator/lib/core.sh",
+      "coordination/masters/coordinator/lib/moe.sh",
+      "coordination/masters/coordinator/lib/lifecycle.sh",
+      "coordination/masters/coordinator/lib/monitoring.sh"
+    ],
+    "security_master": [
+      "coordination/masters/security/run.sh",
+      "coordination/masters/security/lib/scanner.sh",
+      "coordination/masters/security/lib/reporter.sh"
+    ],
+    "other_masters": [
+      "coordination/masters/documentation/doc-master.sh",
+      "coordination/masters/health/health-checker.sh",
+      "coordination/masters/optimization/optimizer.sh",
+      "coordination/masters/testing/test-runner.sh"
+    ]
+  },
+  "protected_core_modules": {
+    "description": "Core JavaScript modules essential for Cortex operation",
+    "cortex_core": [
+      "lib/cortex-core/index.js"
+    ],
+    "coordination": [
+      "lib/coordination/daemon.js",
+      "lib/coordination/state-store.js",
+      "lib/coordination/message-bus.js",
+      "lib/coordination/client.js",
+      "lib/coordination/index.js"
+    ],
+    "worker_pool": [
+      "lib/worker-pool/pool-manager.js",
+      "lib/worker-pool/worker-process.js",
+      "lib/worker-pool/task-queue.js",
+      "lib/worker-pool/health-monitor.js",
+      "lib/worker-pool/fifo-channel.js",
+      "lib/worker-pool/index.js"
+    ],
+    "scheduler": [
+      "lib/scheduler/intelligent-scheduler.js",
+      "lib/scheduler/resource-predictor.js",
+      "lib/scheduler/feasibility-checker.js",
+      "lib/scheduler/priority-engine.js",
+      "lib/scheduler/ml-model.js",
+      "lib/scheduler/training-data.js",
+      "lib/scheduler/index.js"
+    ]
+  },
+  "protected_python_sdk": {
+    "description": "Python SDK modules for Cortex integration",
+    "files": [
+      "sdk/cortex/__init__.py",
+      "sdk/cortex/client.py",
+      "sdk/cortex/models.py",
+      "sdk/cortex/exceptions.py",
+      "sdk/cortex/async_client.py"
+    ]
+  },
+  "protected_analysis": {
+    "description": "Analysis dashboards and data intelligence",
+    "files": [
+      "analysis/cortex-dashboard.py",
+      "analysis/cost-report.py",
+      "analysis/security-report.py",
+      "analysis/data-intelligence/lakehouse.py",
+      "analysis/data-intelligence/ingestion.py"
+    ]
+  },
   "safe_to_remove": {
     "exclude_patterns": [
       "README",
@@ -9,7 +101,10 @@
       ".gitkeep",
       "/lib/",
       "/config/",
-      "/docs/"
+      "/docs/",
+      "/scripts/",
+      "/sdk/",
+      "/analysis/"
     ],
     "confidence_threshold": 0.95
   },
