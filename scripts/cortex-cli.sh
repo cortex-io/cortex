@@ -696,6 +696,30 @@ cmd_workflow_catalog() {
     done
 }
 
+# Show dashboard
+cmd_dashboard() {
+    local dashboard_script="${CORTEX_ROOT}/tui/dashboard.js"
+
+    if [[ ! -f "$dashboard_script" ]]; then
+        print_error "Dashboard script not found: $dashboard_script"
+        exit 1
+    fi
+
+    node "$dashboard_script"
+}
+
+# Show chat interface
+cmd_chat() {
+    local chat_script="${CORTEX_ROOT}/tui/chat.js"
+
+    if [[ ! -f "$chat_script" ]]; then
+        print_error "Chat script not found: $chat_script"
+        exit 1
+    fi
+
+    node "$chat_script"
+}
+
 # Show help
 cmd_help() {
     cat <<EOF
@@ -710,6 +734,10 @@ ${BOLD}TASK COMMANDS:${RESET}
   ${CYAN}list${RESET} [master] [status]     List all tasks (optionally filtered)
   ${CYAN}workers${RESET}                    Show active worker pool
   ${CYAN}masters${RESET}                    Show master capabilities
+
+${BOLD}TUI COMMANDS:${RESET}
+  ${CYAN}dashboard${RESET}                  Real-time ASCII dashboard
+  ${CYAN}chat${RESET}                       Conversational interface
 
 ${BOLD}WORKFLOW COMMANDS:${RESET}
   ${CYAN}workflow run${RESET} <file> [inputs] [options]
@@ -728,6 +756,10 @@ ${BOLD}TASK EXAMPLES:${RESET}
   cortex list "" pending
   cortex workers
   cortex masters
+
+${BOLD}TUI EXAMPLES:${RESET}
+  cortex dashboard              # Launch real-time system dashboard
+  cortex chat                   # Start conversational interface
 
 ${BOLD}WORKFLOW EXAMPLES:${RESET}
   cortex workflow catalog
@@ -770,6 +802,14 @@ main() {
 
         masters)
             cmd_masters
+            ;;
+
+        dashboard)
+            cmd_dashboard
+            ;;
+
+        chat)
+            cmd_chat
             ;;
 
         workflow)

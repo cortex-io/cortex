@@ -56,6 +56,7 @@ OPTIONS:
     -i, --task-id ID          Related task ID (required)
     -m, --master MASTER       Master agent spawning this worker (required)
     -r, --repo REPO           Repository (format: owner/repo)
+    -f, --feature-id ID       Feature ID from feature list (optional)
 # [DEPRECATED - CAG makes this obsolete]     -b, --budget TOKENS       Token budget (default: auto-determined by type)
     -d, --deadline TIMESTAMP  ISO-8601 deadline (optional)
     -p, --priority PRIORITY   Priority: critical|high|medium|low (default: medium)
@@ -98,6 +99,7 @@ WORKER_TYPE=""
 TASK_ID=""
 MASTER_AGENT=""
 REPOSITORY=""
+FEATURE_ID=""
 TOKEN_BUDGET=""
 DEADLINE=""
 PRIORITY="medium"
@@ -128,6 +130,10 @@ while [[ $# -gt 0 ]]; do
             ;;
         -r|--repo)
             REPOSITORY="$2"
+            shift 2
+            ;;
+        -f|--feature-id)
+            FEATURE_ID="$2"
             shift 2
             ;;
         -b|--budget)
@@ -413,6 +419,86 @@ if command -v issue_worker_token &> /dev/null; then
     fi
 fi
 
+# Enhancement: Load feature context and run init script if feature-based task
+FEATURE_CONTEXT=""
+FEATURE_LIST_FILE=""
+
+if [ -n "$FEATURE_ID" ]; then
+    print_info "Feature-based task detected: $FEATURE_ID"
+
+    # Look for feature list
+    FEATURE_LIST_FILE="coordination/feature-lists/${TASK_ID}-features.json"
+
+    if [ -f "$FEATURE_LIST_FILE" ]; then
+        print_info "Loading feature list: $FEATURE_LIST_FILE"
+
+        # Load feature-list-validator library
+        if [ -f "lib/feature-list-validator.sh" ]; then
+            source "lib/feature-list-validator.sh"
+
+            # Get feature details
+            FEATURE_JSON=$(get_feature "$FEATURE_LIST_FILE" "$FEATURE_ID")
+
+            if [ -n "$FEATURE_JSON" ]; then
+                print_success "Feature loaded: $(echo "$FEATURE_JSON" | jq -r '.description')"
+
+                # Extract feature context
+                FEATURE_CONTEXT=$(echo "$FEATURE_JSON" | jq '{
+                    feature_id,
+                    description,
+                    test_command,
+                    acceptance_criteria,
+                    dependencies,
+                    priority,
+                    estimated_minutes
+                }')
+
+                # Mark feature as in_progress
+                update_feature_status "$FEATURE_LIST_FILE" "$FEATURE_ID" "in_progress" "null"
+                print_info "Feature status updated to in_progress"
+
+                # Export feature list path for worker
+                export FEATURE_LIST="$FEATURE_LIST_FILE"
+            else
+                print_warning "Feature $FEATURE_ID not found in feature list"
+            fi
+        fi
+    else
+        print_warning "Feature list not found: $FEATURE_LIST_FILE"
+    fi
+
+    # Run init script if it exists
+    INIT_SCRIPT="coordination/workers/init-${TASK_ID}.sh"
+
+    if [ -f "$INIT_SCRIPT" ]; then
+        print_info "Running init script: $INIT_SCRIPT"
+
+        # Export worker ID for init script
+        export WORKER_ID="$WORKER_ID"
+
+        if chmod +x "$INIT_SCRIPT" && "$INIT_SCRIPT"; then
+            print_success "Init script completed successfully"
+        else
+            print_error "Init script failed - continuing anyway"
+        fi
+    else
+        print_info "No init script found (expected: $INIT_SCRIPT)"
+    fi
+fi
+
+# Load worker session management
+if [ -f "scripts/lib/worker-session.sh" ]; then
+    source "scripts/lib/worker-session.sh"
+
+    # Start worker session
+    print_info "Starting worker session..."
+    SESSION_FILE=$(start_worker_session "$WORKER_ID" "$TASK_ID" "${FEATURE_ID:-none}")
+
+    if [ -n "$SESSION_FILE" ]; then
+        print_success "Session started: $SESSION_FILE"
+    fi
+fi
+
 # Create worker specification
 WORKER_SPEC_FILE="coordination/worker-specs/active/${WORKER_ID}.json"
 
@@ -492,6 +578,8 @@ cat > "$WORKER_SPEC_FILE" <<EOF
   },
   "scope": $SCOPE_JSON,
   "context": $CONTEXT_JSON,
+  "feature": ${FEATURE_CONTEXT:-null},
+  "feature_list": $([ -n "$FEATURE_LIST_FILE" ] && echo "\"$FEATURE_LIST_FILE\"" || echo "null"),
   "goal_based_planning": {
     "enabled": true,
     "strategy": "$SELECTED_STRATEGY",
