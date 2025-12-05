@@ -36,7 +36,8 @@
     "minisearch": "^7.1.0",
     "openai": "^4.73.0",
     "postman-cli": "^1.26.0",
-    "tiktoken": "^1.0.17"
+    "tiktoken": "^1.0.17",
+    "ws": "^8.18.0"
   },
   "devDependencies": {
     "@types/jest": "^29.5.11",
