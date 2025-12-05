@@ -238,3 +238,163 @@
     "strategy": "single_expert"
   }
 }
+{
+  "timestamp": "2025-12-03T11:52:35-0600",
+  "type": "moe_routing_decision",
+  "data": {
+    "task_id": "cve-scan-cortex-001",
+    "expert": "security",
+    "confidence": 1.00,
+    "strategy": "single_expert"
+  }
+}
+{
+  "timestamp": "2025-12-03T12:07:55-0600",
+  "type": "moe_routing_decision",
+  "data": {
+    "task_id": "package-updates-001",
+    "expert": "inventory",
+    "confidence": 0.12,
+    "strategy": "single_expert_low_confidence"
+  }
+}
+{
+  "timestamp": "2025-12-03T12:11:59-0600",
+  "type": "moe_routing_decision",
+  "data": {
+    "task_id": "vuln-remediation-001",
+    "expert": "security",
+    "confidence": 0.88,
+    "strategy": "single_expert"
+  }
+}
+{
+  "timestamp": "2025-12-03T12:34:00-0600",
+  "type": "moe_routing_decision",
+  "data": {
+    "task_id": "data-intelligence-phase1-foundation",
+    "expert": "development",
+    "confidence": 0.90,
+    "strategy": "single_expert"
+  }
+}
+{
+  "timestamp": "2025-12-03T12:34:03-0600",
+  "type": "moe_routing_decision",
+  "data": {
+    "task_id": "data-intelligence-phase2-intelligence",
+    "expert": "development",
+    "confidence": 0.90,
+    "strategy": "single_expert"
+  }
+}
+{
+  "timestamp": "2025-12-03T12:34:06-0600",
+  "type": "moe_routing_decision",
+  "data": {
+    "task_id": "data-intelligence-phase3-scale",
+    "expert": "development",
+    "confidence": 0.90,
+    "strategy": "single_expert"
+  }
+}
+{
+  "timestamp": "2025-12-03T12:34:10-0600",
+  "type": "moe_routing_decision",
+  "data": {
+    "task_id": "data-intelligence-phase4-collaboration",
+    "expert": "development",
+    "confidence": 0.90,
+    "strategy": "single_expert"
+  }
+}
+{
+  "timestamp": "2025-12-03T12:34:14-0600",
+  "type": "moe_routing_decision",
+  "data": {
+    "task_id": "data-intelligence-integration",
+    "expert": "development",
+    "confidence": 0.90,
+    "strategy": "single_expert"
+  }
+}
+{
+  "timestamp": "2025-12-03T12:34:18-0600",
+  "type": "moe_routing_decision",
+  "data": {
+    "task_id": "data-intelligence-documentation",
+    "expert": "inventory",
+    "confidence": 1.00,
+    "strategy": "single_expert"
+  }
+}
+{
+  "timestamp": "2025-12-04T11:23:31-0600",
+  "type": "moe_routing_decision",
+  "data": {
+    "task_id": "linkedin-phase-1",
+    "expert": "development",
+    "confidence": 0.90,
+    "strategy": "single_expert"
+  }
+}
+{
+  "timestamp": "2025-12-04T11:23:36-0600",
+  "type": "moe_routing_decision",
+  "data": {
+    "task_id": "linkedin-phase-2",
+    "expert": "inventory",
+    "confidence": 0.32,
+    "strategy": "single_expert"
+  }
+}
+{
+  "timestamp": "2025-12-05T08:26:31-0600",
+  "type": "moe_routing_decision",
+  "data": {
+    "task_id": "self-opt-timeout-001",
+    "expert": "development",
+    "confidence": 0.90,
+    "strategy": "single_expert"
+  }
+}
+{
+  "timestamp": "2025-12-05T08:26:32-0600",
+  "type": "moe_routing_decision",
+  "data": {
+    "task_id": "self-opt-timeout-002",
+    "expert": "development",
+    "confidence": 0.90,
+    "strategy": "single_expert"
+  }
+}
+{
+  "timestamp": "2025-12-05T08:26:35-0600",
+  "type": "moe_routing_decision",
+  "data": {
+    "task_id": "self-opt-timeout-003",
+    "expert": "inventory",
+    "confidence": 0.32,
+    "strategy": "single_expert"
+  }
+}
+{
+  "timestamp": "2025-12-05T08:26:35-0600",
+  "type": "moe_routing_decision",
+  "data": {
+    "task_id": "self-opt-timeout-003",
+    "expert": "inventory",
+    "confidence": 0.32,
+    "strategy": "single_expert"
+  }
+}
+{
+  "timestamp": "2025-12-05T08:27:30-0600",
+  "type": "moe_routing_decision",
+  "data": {
+    "task_id": "self-opt-timeout-003",
+    "expert": "inventory",
+    "confidence": 0.32,
+    "strategy": "single_expert"
+  }
+}
