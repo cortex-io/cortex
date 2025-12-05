@@ -1,0 +1,168 @@
+<svg width="1200" height="630" viewBox="0 0 1200 630" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background gradient - deeper blues for meta concept -->
+  <defs>
+    <linearGradient id="bgGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#1a1a2e;stop-opacity:1" />
+      <stop offset="50%" style="stop-color:#16213e;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#0f3460;stop-opacity:1" />
+    </linearGradient>
+
+    <linearGradient id="accentGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#00d9ff;stop-opacity:0.4" />
+      <stop offset="100%" style="stop-color:#00ffcc;stop-opacity:0.4" />
+    </linearGradient>
+
+    <!-- Animated pulse for meta-learning -->
+    <radialGradient id="pulseGradient">
+      <stop offset="0%" style="stop-color:#00d9ff;stop-opacity:0.6" />
+      <stop offset="100%" style="stop-color:#00d9ff;stop-opacity:0" />
+    </radialGradient>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1200" height="630" fill="url(#bgGradient)"/>
+
+  <!-- Decorative neural network grid pattern -->
+  <g opacity="0.08">
+    <!-- Horizontal lines -->
+    <line x1="0" y1="100" x2="1200" y2="100" stroke="white" stroke-width="1"/>
+    <line x1="0" y1="200" x2="1200" y2="200" stroke="white" stroke-width="1"/>
+    <line x1="0" y1="300" x2="1200" y2="300" stroke="white" stroke-width="1"/>
+    <line x1="0" y1="400" x2="1200" y2="400" stroke="white" stroke-width="1"/>
+    <line x1="0" y1="500" x2="1200" y2="500" stroke="white" stroke-width="1"/>
+    <!-- Vertical lines -->
+    <line x1="200" y1="0" x2="200" y2="630" stroke="white" stroke-width="1"/>
+    <line x1="400" y1="0" x2="400" y2="630" stroke="white" stroke-width="1"/>
+    <line x1="600" y1="0" x2="600" y2="630" stroke="white" stroke-width="1"/>
+    <line x1="800" y1="0" x2="800" y2="630" stroke="white" stroke-width="1"/>
+    <line x1="1000" y1="0" x2="1000" y2="630" stroke="white" stroke-width="1"/>
+  </g>
+
+  <!-- Central meta-loop visualization -->
+  <g transform="translate(850, 315)">
+    <!-- Outer ring - representing self-improvement loop -->
+    <circle cx="0" cy="0" r="120" fill="none" stroke="#00d9ff" stroke-width="3" opacity="0.6" stroke-dasharray="10,5"/>
+
+    <!-- Middle ring - parallel tracks -->
+    <circle cx="0" cy="0" r="90" fill="none" stroke="#00ffcc" stroke-width="2" opacity="0.5" stroke-dasharray="8,4"/>
+
+    <!-- Inner core - the system itself -->
+    <circle cx="0" cy="0" r="60" fill="url(#pulseGradient)"/>
+
+    <!-- Central brain/core icon -->
+    <g opacity="0.9">
+      <!-- CPU-like core -->
+      <rect x="-35" y="-35" width="70" height="70" rx="8" fill="#00d9ff" opacity="0.3"/>
+      <rect x="-25" y="-25" width="50" height="50" rx="5" fill="white" opacity="0.9"/>
+
+      <!-- Neural network pattern inside -->
+      <circle cx="0" cy="0" r="15" fill="#0f3460"/>
+      <circle cx="-12" cy="-8" r="4" fill="#00d9ff"/>
+      <circle cx="12" cy="-8" r="4" fill="#00d9ff"/>
+      <circle cx="-12" cy="8" r="4" fill="#00ffcc"/>
+      <circle cx="12" cy="8" r="4" fill="#00ffcc"/>
+
+      <!-- Connecting lines -->
+      <line x1="-12" y1="-8" x2="0" y2="0" stroke="#00d9ff" stroke-width="1.5"/>
+      <line x1="12" y1="-8" x2="0" y2="0" stroke="#00d9ff" stroke-width="1.5"/>
+      <line x1="-12" y1="8" x2="0" y2="0" stroke="#00ffcc" stroke-width="1.5"/>
+      <line x1="12" y1="8" x2="0" y2="0" stroke="#00ffcc" stroke-width="1.5"/>
+    </g>
+  </g>
+
+  <!-- 5 Parallel tracks as orbital nodes -->
+  <g opacity="0.85">
+    <!-- Track A: Timeout Learning (top) -->
+    <g transform="translate(850, 165)">
+      <circle cx="0" cy="0" r="35" fill="#1a1a2e" stroke="#00d9ff" stroke-width="2.5"/>
+      <text x="0" y="8" text-anchor="middle" fill="#00d9ff" font-size="28">⏱️</text>
+    </g>
+    <text x="850" y="135" text-anchor="middle" fill="white" font-size="14" opacity="0.8">Track A</text>
+
+    <!-- Track B: Granularity (right) -->
+    <g transform="translate(970, 240)">
+      <circle cx="0" cy="0" r="35" fill="#1a1a2e" stroke="#00d9ff" stroke-width="2.5"/>
+      <text x="0" y="8" text-anchor="middle" fill="#00d9ff" font-size="28">📊</text>
+    </g>
+    <text x="1010" y="245" fill="white" font-size="14" opacity="0.8">Track B</text>
+
+    <!-- Track C: Result Analysis (bottom right) -->
+    <g transform="translate(970, 390)">
+      <circle cx="0" cy="0" r="35" fill="#1a1a2e" stroke="#00ffcc" stroke-width="2.5"/>
+      <text x="0" y="8" text-anchor="middle" fill="#00ffcc" font-size="28">🔍</text>
+    </g>
+    <text x="1010" y="395" fill="white" font-size="14" opacity="0.8">Track C</text>
+
+    <!-- Track D: Multi-Instance (bottom left) -->
+    <g transform="translate(730, 390)">
+      <circle cx="0" cy="0" r="35" fill="#1a1a2e" stroke="#00ffcc" stroke-width="2.5"/>
+      <text x="0" y="8" text-anchor="middle" fill="#00ffcc" font-size="28">🔄</text>
+    </g>
+    <text x="670" y="395" fill="white" font-size="14" opacity="0.8">Track D</text>
+
+    <!-- Track E: Meta-Learner (left) -->
+    <g transform="translate(730, 240)">
+      <circle cx="0" cy="0" r="35" fill="#1a1a2e" stroke="#00d9ff" stroke-width="2.5"/>
+      <text x="0" y="8" text-anchor="middle" fill="#00d9ff" font-size="28">🧠</text>
+    </g>
+    <text x="670" y="245" fill="white" font-size="14" opacity="0.8">Track E</text>
+  </g>
+
+  <!-- Connection lines from tracks to center -->
+  <g opacity="0.25">
+    <line x1="850" y1="200" x2="850" y2="255" stroke="#00d9ff" stroke-width="2"/>
+    <line x1="935" y1="258" x2="890" y2="290" stroke="#00d9ff" stroke-width="2"/>
+    <line x1="935" y1="372" x2="890" y2="340" stroke="#00ffcc" stroke-width="2"/>
+    <line x1="765" y1="372" x2="810" y2="340" stroke="#00ffcc" stroke-width="2"/>
+    <line x1="765" y1="258" x2="810" y2="290" stroke="#00d9ff" stroke-width="2"/>
+  </g>
+
+  <!-- Title -->
+  <text x="80" y="140" fill="white" font-size="64" font-weight="bold" font-family="Arial, sans-serif">
+    Cortex Builds
+  </text>
+  <text x="80" y="210" fill="#00d9ff" font-size="64" font-weight="bold" font-family="Arial, sans-serif">
+    Cortex
+  </text>
+
+  <!-- Subtitle -->
+  <text x="80" y="260" fill="white" font-size="28" font-family="Arial, sans-serif" opacity="0.9">
+    Self-Optimization Through
+  </text>
+  <text x="80" y="295" fill="white" font-size="28" font-family="Arial, sans-serif" opacity="0.9">
+    Meta-Execution
+  </text>
+
+  <!-- Key capabilities -->
+  <g transform="translate(80, 340)">
+    <text x="0" y="0" fill="#00ffcc" font-size="18" font-weight="bold">◆</text>
+    <text x="25" y="0" fill="white" font-size="18">16 Tasks Across 5 Parallel Tracks</text>
+
+    <text x="0" y="35" fill="#00ffcc" font-size="18" font-weight="bold">◆</text>
+    <text x="25" y="35" fill="white" font-size="18">Adaptive Learning & Optimization</text>
+
+    <text x="0" y="70" fill="#00ffcc" font-size="18" font-weight="bold">◆</text>
+    <text x="25" y="70" fill="white" font-size="18">Autonomous Meta-Intelligence</text>
+
+    <text x="0" y="105" fill="#00ffcc" font-size="18" font-weight="bold">◆</text>
+    <text x="25" y="105" fill="white" font-size="18">Zero Human Intervention Required</text>
+  </g>
+
+  <!-- Stats badge -->
+  <g transform="translate(80, 490)">
+    <rect x="0" y="0" width="380" height="70" rx="12" fill="#00d9ff" opacity="0.15"/>
+    <text x="20" y="30" fill="white" font-size="20" font-weight="bold">10 Week Timeline</text>
+    <text x="20" y="55" fill="#00ffcc" font-size="20" font-weight="bold">Parallel Execution Mode</text>
+  </g>
+
+  <!-- Bottom accent line -->
+  <rect x="0" y="620" width="1200" height="10" fill="url(#accentGradient)"/>
+
+  <!-- Logo/Brand -->
+  <text x="1140" y="605" text-anchor="end" fill="white" font-size="20" font-family="Arial, sans-serif" opacity="0.7">
+    CORTEX
+  </text>
+  <text x="1140" y="615" text-anchor="end" fill="#00d9ff" font-size="12" font-family="Arial, sans-serif" opacity="0.6">
+    SELF-OPTIMIZING AI
+  </text>
+</svg>
