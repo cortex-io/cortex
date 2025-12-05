@@ -4,11 +4,57 @@
 
 set -euo pipefail
 
-# Get project root
+# Get script directory and project root
+LIB_SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 if [[ -z "${PROJECT_ROOT:-}" ]]; then
-    LIB_SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
     PROJECT_ROOT="$(cd "$LIB_SCRIPT_DIR/../../../.." && pwd)"
 fi
+
+# Config file path
+CONFIG_FILE="${LIB_SCRIPT_DIR}/../config/cleanup-rules.json"
+
+# ==============================================================================
+# PROTECTED FILES HELPER
+# ==============================================================================
+
+# Load all protected files from config into a lookup file
+load_protected_files() {
+    local lookup_file="${1:-/tmp/protected-files-$$.txt}"
+
+    if [[ ! -f "$CONFIG_FILE" ]]; then
+        echo "Warning: Config file not found: $CONFIG_FILE" >&2
+        touch "$lookup_file"
+        echo "$lookup_file"
+        return
+    fi
+
+    # Extract all protected file paths from all sections
+    jq -r '
+        [
+            .protected_executables.scripts[]?,
+            .protected_executables.cleanup_master[]?,
+            .protected_executables.coordinator_master[]?,
+            .protected_executables.security_master[]?,
+            .protected_executables.other_masters[]?,
+            .protected_core_modules.cortex_core[]?,
+            .protected_core_modules.coordination[]?,
+            .protected_core_modules.worker_pool[]?,
+            .protected_core_modules.scheduler[]?,
+            .protected_python_sdk.files[]?,
+            .protected_analysis.files[]?
+        ] | .[]
+    ' "$CONFIG_FILE" 2>/dev/null | sort -u > "$lookup_file"
+
+    echo "$lookup_file"
+}
+
+# Check if a file is protected
+is_protected_file() {
+    local file="$1"
+    local lookup_file="$2"
+
+    grep -qxF "$file" "$lookup_file" 2>/dev/null
+}
 
 # ==============================================================================
 # DEAD CODE DETECTION
@@ -19,6 +65,11 @@ find_unreferenced_files() {
     local results_file="${2:-/tmp/unreferenced-files.json}"
 
     echo "Scanning for unreferenced files in $scan_dir..." >&2
+
+    # Load protected files list
+    local protected_files=$(load_protected_files "/tmp/protected-files-$$.txt")
+    local protected_count=$(wc -l < "$protected_files" | tr -d ' ')
+    echo "  Loaded $protected_count protected files from config" >&2
 
     # V2 Optimization: Use awk hash table instead of repeated greps
     # This reduces 46K greps × 10M lines to 1 pass through 10M lines
@@ -73,16 +124,26 @@ find_unreferenced_files() {
 
     echo "Step 3/3: Generating results..." >&2
 
-    # Convert to relative paths and build array
+    # Convert to relative paths and build array (excluding protected files)
     local unreferenced=()
+    local skipped_protected=0
     while IFS= read -r file; do
         [[ -z "$file" ]] && continue
         local relative_path="${file#$PROJECT_ROOT/}"
+
+        # Skip protected files
+        if is_protected_file "$relative_path" "$protected_files"; then
+            ((skipped_protected++))
+            continue
+        fi
+
         unreferenced+=("$relative_path")
     done <<< "$unreferenced_raw"
 
+    echo "  Skipped $skipped_protected protected files" >&2
+
     # Cleanup
-    rm -f "$temp_files"
+    rm -f "$temp_files" "$protected_files"
 
     echo "  Found ${#unreferenced[@]} unreferenced files" >&2
 
@@ -280,7 +341,9 @@ scan_for_duplicates() {
     local duplicates=()
 
     # Step 1: Group files by size (duplicates must have same size)
-    declare -A size_groups
+    # Bash 3.x compatible: Use temp file instead of associative array
+    local size_groups_file="/tmp/size-groups-$$.txt"
+    > "$size_groups_file"  # Create/clear file
     local total=0
     local processed=0
 
@@ -293,7 +356,7 @@ scan_for_duplicates() {
         fi
 
         local size=$(stat -f%z "$file" 2>/dev/null || stat -c%s "$file" 2>/dev/null)
-        size_groups[$size]="${size_groups[$size]:-}$file"$'\n'
+        echo "$size|$file" >> "$size_groups_file"
         ((total++))
         ((processed++))
 
@@ -306,46 +369,50 @@ scan_for_duplicates() {
     echo "Step 2/3: Identifying size groups with multiple files..." >&2
 
     # Step 2: Only hash files that have potential duplicates (same size)
-    local candidates=0
-    for size in "${!size_groups[@]}"; do
-        local file_list="${size_groups[$size]}"
-        local count=$(echo "$file_list" | grep -c '^' || echo 0)
-        if [[ $count -gt 1 ]]; then
-            ((candidates += count))
-        fi
-    done
+    # Find sizes that appear more than once
+    local candidate_sizes_file="/tmp/candidate-sizes-$$.txt"
+    awk -F'|' '{count[$1]++; if(count[$1]==2) print $1}' "$size_groups_file" | sort -u > "$candidate_sizes_file"
+    local candidates=$(awk -F'|' 'NR==FNR{sizes[$1]=1; next} $1 in sizes' "$candidate_sizes_file" "$size_groups_file" | wc -l | tr -d ' ')
 
     echo "Step 3/3: Computing hashes for $candidates/$total candidate files..." >&2
 
     # Step 3: Hash only the candidate files
-    declare -A file_hashes
+    # Bash 3.x compatible: Use temp file instead of associative array
+    local file_hashes_file="/tmp/file-hashes-$$.txt"
+    > "$file_hashes_file"  # Create/clear file
     local hashed=0
 
-    for size in "${!size_groups[@]}"; do
-        local file_list="${size_groups[$size]}"
-        local count=$(echo "$file_list" | grep -c '^' || echo 0)
+    # Process each candidate size group
+    while IFS= read -r size; do
+        [[ -z "$size" ]] && continue
 
-        # Only hash if multiple files have this size
-        if [[ $count -gt 1 ]]; then
-            while IFS= read -r file; do
-                [[ -z "$file" ]] && continue
+        # Get all files with this size
+        local files_with_size=$(grep "^$size|" "$size_groups_file" | cut -d'|' -f2-)
 
-                local relative_path="${file#$PROJECT_ROOT/}"
-                local hash=$(md5sum "$file" 2>/dev/null | cut -d' ' -f1 || md5 -q "$file" 2>/dev/null)
+        while IFS= read -r file; do
+            [[ -z "$file" ]] && continue
 
-                if [[ -n "${file_hashes[$hash]:-}" ]]; then
-                    duplicates+=("{\"hash\": \"$hash\", \"original\": \"${file_hashes[$hash]}\", \"duplicate\": \"$relative_path\"}")
-                else
-                    file_hashes[$hash]="$relative_path"
-                fi
+            local relative_path="${file#$PROJECT_ROOT/}"
+            local hash=$(md5sum "$file" 2>/dev/null | cut -d' ' -f1 || md5 -q "$file" 2>/dev/null)
 
-                ((hashed++))
-                if (( hashed % 50 == 0 )); then
-                    echo "  Hashed $hashed/$candidates files..." >&2
-                fi
-            done <<< "$file_list"
-        fi
-    done
+            # Check if hash already exists in our tracking file
+            local existing_file=$(grep "^$hash|" "$file_hashes_file" | cut -d'|' -f2- | head -1)
+
+            if [[ -n "$existing_file" ]]; then
+                duplicates+=("{\"hash\": \"$hash\", \"original\": \"$existing_file\", \"duplicate\": \"$relative_path\"}")
+            else
+                echo "$hash|$relative_path" >> "$file_hashes_file"
+            fi
+
+            ((hashed++))
+            if (( hashed % 50 == 0 )); then
+                echo "  Hashed $hashed/$candidates files..." >&2
+            fi
+        done <<< "$files_with_size"
+    done < "$candidate_sizes_file"
+
+    # Cleanup temp files
+    rm -f "$size_groups_file" "$candidate_sizes_file" "$file_hashes_file"
 
     # Generate JSON output
     if [[ ${#duplicates[@]} -gt 0 ]]; then
@@ -432,6 +499,8 @@ run_full_scan() {
 # EXPORTS
 # ==============================================================================
 
+export -f load_protected_files
+export -f is_protected_file
 export -f find_unreferenced_files
 export -f find_dead_functions
 export -f find_empty_directories
