@@ -1,0 +1,83 @@
+{
+  "worker_type": "social-publisher-worker",
+  "version": "1.0.0",
+  "description": "Autonomous worker for publishing blog posts to social media platforms via Buffer",
+  "capabilities": [
+    "blog_post_monitoring",
+    "content_extraction",
+    "tweet_generation",
+    "buffer_api_integration",
+    "thread_generation",
+    "scheduling"
+  ],
+  "platforms": {
+    "twitter": {
+      "enabled": true,
+      "max_tweet_length": 280,
+      "thread_support": true,
+      "media_support": true
+    },
+    "linkedin": {
+      "enabled": false,
+      "max_post_length": 3000
+    },
+    "bluesky": {
+      "enabled": false,
+      "max_post_length": 300
+    }
+  },
+  "triggers": {
+    "automatic": {
+      "enabled": true,
+      "watch_directory": "projects/blog",
+      "file_pattern": "*.md",
+      "ignore_patterns": ["README.md", "images/**"],
+      "check_interval_seconds": 300
+    },
+    "manual": {
+      "enabled": true,
+      "command": "scripts/social-publish.sh"
+    }
+  },
+  "publishing": {
+    "mode": "buffer",
+    "preview_before_publish": true,
+    "auto_schedule": false,
+    "default_delay_minutes": 0,
+    "duplicate_detection": true,
+    "status_tracking": true
+  },
+  "content_generation": {
+    "ai_powered": true,
+    "model": "claude-sonnet-4-5",
+    "strategies": [
+      "single_tweet",
+      "thread",
+      "thread_with_summary"
+    ],
+    "include_hashtags": true,
+    "include_link": true,
+    "max_hashtags": 3
+  },
+  "governance": {
+    "require_approval": false,
+    "log_all_publishes": true,
+    "rate_limits": {
+      "posts_per_hour": 10,
+      "posts_per_day": 50
+    }
+  },
+  "resource_limits": {
+    "max_concurrent_publishes": 1,
+    "timeout_seconds": 120,
+    "retry_attempts": 3,
+    "retry_delay_seconds": 60
+  },
+  "monitoring": {
+    "track_engagement": true,
+    "track_impressions": true,
+    "alert_on_failure": true
+  },
+  "created_at": "2025-12-04T00:00:00Z",
+  "updated_at": "2025-12-04T00:00:00Z"
+}

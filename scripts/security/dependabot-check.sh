@@ -31,7 +31,8 @@ check_gh_cli() {
 # Function to fetch Dependabot alerts
 fetch_dependabot_alerts() {
     local repo=$1
-    gh api "repos/$repo/dependabot/alerts" --jq '.' 2>/dev/null || {
+    # Only fetch open alerts (exclude fixed, dismissed)
+    gh api "repos/$repo/dependabot/alerts?state=open" --jq '.' 2>/dev/null || {
         echo -e "${RED}Error: Failed to fetch Dependabot alerts${NC}"
         echo "Make sure Dependabot is enabled for this repository"
         exit 1

@@ -1,0 +1,62 @@
+{
+  "version": "1.0.0",
+  "environment": "production",
+  "buffer": {
+    "api_base_url": "https://api.bufferapp.com/1",
+    "access_token_env": "BUFFER_ACCESS_TOKEN",
+    "profile_id_env": "BUFFER_PROFILE_ID",
+    "endpoints": {
+      "create_update": "/updates/create.json",
+      "get_profiles": "/profiles.json",
+      "get_update": "/updates/{id}.json",
+      "pending_updates": "/profiles/{id}/updates/pending.json"
+    },
+    "rate_limits": {
+      "requests_per_minute": 60,
+      "requests_per_hour": 600
+    }
+  },
+  "blog": {
+    "directory": "projects/blog",
+    "metadata_file": "projects/blog/.published.json",
+    "base_url": "https://yourdomain.com/blog",
+    "supported_formats": ["md", "markdown"],
+    "frontmatter_required": true
+  },
+  "content_generation": {
+    "default_strategy": "thread",
+    "min_thread_length": 3,
+    "max_thread_length": 10,
+    "call_to_action": true,
+    "link_placement": "last_tweet",
+    "emoji_usage": "moderate",
+    "tone": "professional_technical"
+  },
+  "publishing": {
+    "draft_directory": "coordination/social/drafts",
+    "log_directory": "coordination/social/logs",
+    "status_file": "coordination/social/publish-status.json",
+    "preview_file": "coordination/social/preview.txt",
+    "require_manual_approval": false,
+    "auto_schedule_time": null,
+    "timezone": "America/Chicago"
+  },
+  "hashtags": {
+    "default_tags": ["AI", "DevOps", "Engineering"],
+    "max_per_post": 3,
+    "auto_generate": true,
+    "from_blog_tags": true
+  },
+  "monitoring": {
+    "enabled": true,
+    "log_file": "coordination/social/activity.jsonl",
+    "track_metrics": true,
+    "alert_channels": ["dashboard", "log"]
+  },
+  "safety": {
+    "duplicate_window_hours": 168,
+    "content_validation": true,
+    "url_validation": true,
+    "max_retries": 3
+  }
+}
