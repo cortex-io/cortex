@@ -95,9 +95,7 @@ remove_duplicate_files() {
 
     local removed=0
 
-    # Group by hash
-    declare -A duplicates_by_hash
-
+    # Process duplicates from scan file (Bash 3.x compatible)
     while IFS= read -r dup; do
         local hash=$(echo "$dup" | jq -r '.hash')
         local original=$(echo "$dup" | jq -r '.original')
