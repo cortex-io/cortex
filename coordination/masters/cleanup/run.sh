@@ -166,6 +166,10 @@ run_cleanup_master() {
                 print_help
                 exit 0
                 ;;
+            --cleanup-only)
+                # Already in orchestration mode, just continue
+                shift
+                ;;
             *)
                 echo -e "${RED}Unknown option: $1${NC}"
                 print_help
