@@ -34,22 +34,14 @@ echo ""
 count_by_extension() {
     echo -e "${BLUE}Counting files by extension...${NC}"
 
-    declare -A counts
-    local total=0
-
-    while IFS= read -r file; do
-        local ext="${file##*.}"
-        if [[ "$ext" == "$file" ]]; then
-            ext="(no extension)"
-        fi
-        ((counts[$ext]++)) 2>/dev/null || counts[$ext]=1
-        ((total++))
-    done < <(find "$PROJECT_ROOT" -type f \
+    # Simple file count (avoid associative arrays for Bash 3.x compatibility)
+    local total
+    total=$(find "$PROJECT_ROOT" -type f \
         -not -path "*/node_modules/*" \
         -not -path "*/.git/*" \
         -not -path "*/venv/*" \
         -not -path "*/__pycache__/*" \
-        2>/dev/null)
+        2>/dev/null | wc -l | tr -d ' ')
 
     echo "  Total files: $total"
     echo "$total"
