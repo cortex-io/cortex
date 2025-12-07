@@ -1,0 +1,56 @@
+version: '3.8'
+
+# Cortex Docker Compose - Development Override
+# Use with: docker-compose -f docker-compose.yml -f docker-compose.dev.yml up
+
+services:
+  cortex:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: builder
+
+    # Development environment
+    environment:
+      - NODE_ENV=development
+      - LOG_LEVEL=debug
+      - DEBUG=cortex:*
+
+    # Mount source code for live development
+    volumes:
+      # Override with local source
+      - ./scripts:/app/scripts
+      - ./coordination:/app/coordination
+      - ./agents:/app/agents
+      - ./lib:/app/lib
+      - ./docs:/app/docs
+      # Node modules from container
+      - /app/node_modules
+
+    # Enable hot reload
+    command: bash -c "npm install && scripts/daemon-control.sh start && tail -f agents/logs/**/*.log"
+
+    # More verbose health check
+    healthcheck:
+      interval: 15s
+      timeout: 5s
+
+    # More generous resource limits for development
+    deploy:
+      resources:
+        limits:
+          cpus: '4.0'
+          memory: 8G
+        reservations:
+          cpus: '1.0'
+          memory: 2G
+
+    # Enable stdin/tty for interactive debugging
+    stdin_open: true
+    tty: true
+
+    # Development ports
+    ports:
+      - "3000:3000"
+      - "3001:3001"
+      - "9229:9229"  # Node.js debugger

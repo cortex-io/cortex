@@ -1,0 +1,187 @@
+name: Upstream Sync
+
+on:
+  # Scheduled sync - runs weekly on Monday at 2 AM UTC
+  schedule:
+    - cron: '0 2 * * 1'
+
+  # Manual trigger
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: 'Branch to sync (default: main)'
+        required: false
+        default: 'main'
+      create_pr:
+        description: 'Create PR for sync (true/false)'
+        required: false
+        default: 'true'
+
+env:
+  UPSTREAM_REPO: ry-ops/cortex
+  UPSTREAM_BRANCH: main
+
+jobs:
+  # ============================================================================
+  # Sync from Upstream Repository
+  # ============================================================================
+  sync:
+    name: Sync from Upstream
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+
+    steps:
+      - name: Checkout private fork
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Configure Git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Add upstream remote
+        run: |
+          git remote add upstream https://github.com/${{ env.UPSTREAM_REPO }}.git || true
+          git remote -v
+
+      - name: Fetch upstream changes
+        run: |
+          git fetch upstream ${{ env.UPSTREAM_BRANCH }}
+
+      - name: Check for conflicts
+        id: check_conflicts
+        run: |
+          # Create a temporary branch for testing merge
+          git checkout -b temp-sync-test
+
+          # Attempt merge to check for conflicts
+          if git merge upstream/${{ env.UPSTREAM_BRANCH }} --no-commit --no-ff; then
+            echo "conflicts=false" >> $GITHUB_OUTPUT
+            git merge --abort || true
+          else
+            echo "conflicts=true" >> $GITHUB_OUTPUT
+            git merge --abort || true
+          fi
+
+          # Cleanup temp branch
+          git checkout ${{ github.event.inputs.branch || 'main' }}
+          git branch -D temp-sync-test
+
+      - name: Create sync branch
+        id: create_branch
+        run: |
+          SYNC_BRANCH="upstream-sync-$(date +%Y%m%d-%H%M%S)"
+          echo "sync_branch=$SYNC_BRANCH" >> $GITHUB_OUTPUT
+
+          git checkout -b $SYNC_BRANCH
+          git merge upstream/${{ env.UPSTREAM_BRANCH }} --no-edit || true
+
+      - name: Detect changes
+        id: detect_changes
+        run: |
+          if git diff --quiet ${{ github.event.inputs.branch || 'main' }}; then
+            echo "has_changes=false" >> $GITHUB_OUTPUT
+          else
+            echo "has_changes=true" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Push sync branch
+        if: steps.detect_changes.outputs.has_changes == 'true'
+        run: |
+          git push origin ${{ steps.create_branch.outputs.sync_branch }}
+
+      - name: Create Pull Request
+        if: steps.detect_changes.outputs.has_changes == 'true' && (github.event.inputs.create_pr != 'false')
+        uses: repo-sync/pull-request@v2
+        with:
+          source_branch: ${{ steps.create_branch.outputs.sync_branch }}
+          destination_branch: ${{ github.event.inputs.branch || 'main' }}
+          pr_title: "Upstream sync from ${{ env.UPSTREAM_REPO }}"
+          pr_body: |
+            ## Upstream Sync
+
+            This PR synchronizes changes from the upstream repository.
+
+            **Upstream:** https://github.com/${{ env.UPSTREAM_REPO }}
+            **Branch:** ${{ env.UPSTREAM_BRANCH }}
+            **Sync Date:** $(date -u +"%Y-%m-%d %H:%M:%S UTC")
+
+            ### Status
+
+            - **Has Conflicts:** ${{ steps.check_conflicts.outputs.conflicts }}
+            - **Has Changes:** ${{ steps.detect_changes.outputs.has_changes }}
+
+            ### Review Checklist
+
+            - [ ] Review all changes from upstream
+            - [ ] Verify no conflicts with private fork customizations
+            - [ ] Test containerization still works
+            - [ ] Verify CI/CD pipelines pass
+            - [ ] Update documentation if needed
+
+            ### Merge Strategy
+
+            If there are conflicts:
+            1. Checkout this branch locally
+            2. Resolve conflicts manually
+            3. Preserve private fork customizations
+            4. Test thoroughly before merging
+
+            \`\`\`bash
+            git fetch origin ${{ steps.create_branch.outputs.sync_branch }}
+            git checkout ${{ steps.create_branch.outputs.sync_branch }}
+            # Resolve conflicts
+            git push origin ${{ steps.create_branch.outputs.sync_branch }}
+            \`\`\`
+          pr_label: "upstream-sync,automated"
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Create notification issue (if conflicts)
+        if: steps.check_conflicts.outputs.conflicts == 'true'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: '⚠️ Upstream Sync Has Conflicts',
+              body: `## Upstream Sync Conflict Detected
+
+              The automated upstream sync encountered conflicts that require manual resolution.
+
+              **Sync Branch:** ${{ steps.create_branch.outputs.sync_branch }}
+              **Upstream Repository:** https://github.com/${{ env.UPSTREAM_REPO }}
+
+              ### Action Required
+
+              1. Review the sync PR: #[PR_NUMBER]
+              2. Checkout the sync branch locally
+              3. Resolve conflicts manually
+              4. Test all functionality
+              5. Merge when ready
+
+              ### Commands
+
+              \`\`\`bash
+              git fetch origin ${{ steps.create_branch.outputs.sync_branch }}
+              git checkout ${{ steps.create_branch.outputs.sync_branch }}
+              git status
+              # Resolve conflicts in your editor
+              git add .
+              git commit -m "Resolve upstream sync conflicts"
+              git push origin ${{ steps.create_branch.outputs.sync_branch }}
+              \`\`\`
+
+              **Automated sync:** $(date -u +"%Y-%m-%d %H:%M:%S UTC")`,
+              labels: ['upstream-sync', 'needs-attention', 'conflicts']
+            })
+
+      - name: No changes notification
+        if: steps.detect_changes.outputs.has_changes == 'false'
+        run: |
+          echo "✅ No changes detected from upstream. Fork is up to date."

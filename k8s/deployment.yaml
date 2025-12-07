@@ -1,0 +1,196 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cortex
+  namespace: cortex
+  labels:
+    app.kubernetes.io/name: cortex
+    app.kubernetes.io/component: application
+    app.kubernetes.io/version: "2.0.0"
+spec:
+  replicas: 1  # Single instance for file-based coordination
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: cortex
+      app.kubernetes.io/component: application
+
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: cortex
+        app.kubernetes.io/component: application
+        app.kubernetes.io/version: "2.0.0"
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "3000"
+        prometheus.io/path: "/metrics"
+
+    spec:
+      # Security Context
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+
+      # Service Account
+      serviceAccountName: cortex
+
+      # Init Containers (optional)
+      initContainers:
+        - name: init-coordination
+          image: busybox:latest
+          command: ['sh', '-c', 'mkdir -p /app/coordination/tasks /app/coordination/events /app/coordination/metrics && chown -R 1000:1000 /app/coordination']
+          volumeMounts:
+            - name: cortex-coordination
+              mountPath: /app/coordination
+
+      # Main Container
+      containers:
+        - name: cortex
+          image: ghcr.io/ry-ops/cortex:latest
+          imagePullPolicy: IfNotPresent
+
+          # Security Context
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            runAsUser: 1000
+            capabilities:
+              drop:
+                - ALL
+
+          # Ports
+          ports:
+            - name: http
+              containerPort: 3000
+              protocol: TCP
+            - name: dashboard
+              containerPort: 3001
+              protocol: TCP
+
+          # Environment from ConfigMap
+          envFrom:
+            - configMapRef:
+                name: cortex-config
+
+          # Environment from Secrets
+          env:
+            - name: ANTHROPIC_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: cortex-secrets
+                  key: ANTHROPIC_API_KEY
+            - name: OPENAI_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: cortex-secrets
+                  key: OPENAI_API_KEY
+                  optional: true
+            - name: GITHUB_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: cortex-secrets
+                  key: GITHUB_TOKEN
+                  optional: true
+
+          # Resource Limits
+          resources:
+            requests:
+              cpu: 500m
+              memory: 1Gi
+            limits:
+              cpu: 2000m
+              memory: 4Gi
+
+          # Volume Mounts
+          volumeMounts:
+            - name: cortex-coordination
+              mountPath: /app/coordination
+            - name: cortex-logs
+              mountPath: /app/agents/logs
+            - name: cortex-data
+              mountPath: /app/data
+            - name: tmp
+              mountPath: /tmp
+            - name: app-tmp
+              mountPath: /app/coordination/tmp
+
+          # Liveness Probe
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 60
+            periodSeconds: 30
+            timeoutSeconds: 10
+            successThreshold: 1
+            failureThreshold: 3
+
+          # Readiness Probe
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
+            successThreshold: 1
+            failureThreshold: 3
+
+          # Startup Probe
+          startupProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            timeoutSeconds: 5
+            successThreshold: 1
+            failureThreshold: 12
+
+      # Volumes
+      volumes:
+        - name: cortex-coordination
+          persistentVolumeClaim:
+            claimName: cortex-coordination-pvc
+        - name: cortex-logs
+          persistentVolumeClaim:
+            claimName: cortex-logs-pvc
+        - name: cortex-data
+          persistentVolumeClaim:
+            claimName: cortex-data-pvc
+        - name: tmp
+          emptyDir: {}
+        - name: app-tmp
+          emptyDir: {}
+
+      # Pod Anti-Affinity (optional, for multi-replica setups)
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              podAffinityTerm:
+                labelSelector:
+                  matchExpressions:
+                    - key: app.kubernetes.io/name
+                      operator: In
+                      values:
+                        - cortex
+                topologyKey: kubernetes.io/hostname
+
+      # DNS Policy
+      dnsPolicy: ClusterFirst
+
+      # Restart Policy
+      restartPolicy: Always
+
+      # Termination Grace Period
+      terminationGracePeriodSeconds: 30

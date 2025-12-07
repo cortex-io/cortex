@@ -1,0 +1,112 @@
+version: '3.8'
+
+# Cortex Docker Compose Configuration
+# Production-ready containerized deployment with all services
+
+services:
+  # ============================================================================
+  # Main Cortex Service
+  # ============================================================================
+  cortex:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        - NODE_ENV=production
+    image: cortex:latest
+    container_name: cortex-main
+    restart: unless-stopped
+
+    # Environment configuration
+    env_file:
+      - .env
+    environment:
+      - NODE_ENV=production
+      - CORTEX_HOME=/app
+      - COORDINATION_DIR=/app/coordination
+      - LOG_LEVEL=${LOG_LEVEL:-info}
+      - PORT=3000
+      - DASHBOARD_PORT=3001
+      # Anthropic API (required)
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      # OpenAI API (optional)
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+      # MCP Server URLs (optional)
+      - N8N_MCP_URL=${N8N_MCP_URL:-}
+      - PROXMOX_MCP_URL=${PROXMOX_MCP_URL:-}
+
+    # Port mappings
+    ports:
+      - "${CORTEX_PORT:-3000}:3000"
+      - "${DASHBOARD_PORT:-3001}:3001"
+
+    # Volume mounts for persistence
+    volumes:
+      # Coordination data (persistent)
+      - cortex-coordination:/app/coordination
+      # Agent logs (persistent)
+      - cortex-logs:/app/agents/logs
+      # Application data (persistent)
+      - cortex-data:/app/data
+      # Configuration overrides (optional)
+      - ./config:/app/config:ro
+
+    # Health check
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+    # Resource limits
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 4G
+        reservations:
+          cpus: '0.5'
+          memory: 1G
+
+    # Networking
+    networks:
+      - cortex-network
+
+    # Logging
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+# ============================================================================
+# Named Volumes
+# ============================================================================
+volumes:
+  cortex-coordination:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${CORTEX_DATA_DIR:-./data}/coordination
+
+  cortex-logs:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${CORTEX_DATA_DIR:-./data}/logs
+
+  cortex-data:
+    driver: local
+
+# ============================================================================
+# Networks
+# ============================================================================
+networks:
+  cortex-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16

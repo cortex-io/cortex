@@ -1,0 +1,176 @@
+name: Docker Publish
+
+on:
+  push:
+    branches:
+      - main
+    tags:
+      - 'v*.*.*'
+  release:
+    types: [published]
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  # ============================================================================
+  # Build and Push Multi-Architecture Docker Images
+  # ============================================================================
+  build-push:
+    name: Build and Push Docker Image
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            # Set latest tag for main branch
+            type=raw,value=latest,enable={{is_default_branch}}
+            # Tag with version for releases
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=semver,pattern={{major}}
+            # Tag with git SHA
+            type=sha,prefix={{branch}}-
+            # Tag with branch name
+            type=ref,event=branch
+          labels: |
+            org.opencontainers.image.title=Cortex
+            org.opencontainers.image.description=Self-improving AI development orchestration
+            org.opencontainers.image.vendor=ry-ops
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./Dockerfile
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Generate artifact attestation
+        uses: actions/attest-build-provenance@v1
+        with:
+          subject-name: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          subject-digest: ${{ steps.build-push.outputs.digest }}
+          push-to-registry: true
+
+  # ============================================================================
+  # Security Scan After Push
+  # ============================================================================
+  post-push-scan:
+    name: Post-Push Security Scan
+    runs-on: ubuntu-latest
+    needs: build-push
+    permissions:
+      contents: read
+      security-events: write
+
+    steps:
+      - name: Log in to Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+
+      - name: Upload Trivy results
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: 'trivy-results.sarif'
+
+  # ============================================================================
+  # Create GitHub Release with Container Info
+  # ============================================================================
+  create-release-notes:
+    name: Create Release Notes
+    runs-on: ubuntu-latest
+    needs: build-push
+    if: startsWith(github.ref, 'refs/tags/v')
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Generate release notes
+        run: |
+          cat > release-notes.md << EOF
+          ## Docker Container Release
+
+          This release includes a production-ready Docker container image.
+
+          ### Pull the Image
+
+          \`\`\`bash
+          docker pull ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${GITHUB_REF_NAME}
+          \`\`\`
+
+          ### Quick Start
+
+          \`\`\`bash
+          # Using docker-compose
+          docker-compose up -d
+
+          # Or using docker run
+          docker run -d \\
+            -e ANTHROPIC_API_KEY=your-key \\
+            -v ./data/coordination:/app/coordination \\
+            -p 3000:3000 -p 3001:3001 \\
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${GITHUB_REF_NAME}
+          \`\`\`
+
+          ### Kubernetes Deployment
+
+          See \`k8s/\` directory for Kubernetes manifests.
+
+          ### Documentation
+
+          - [Containerization Strategy](docs/containerization/CONTAINERIZATION-STRATEGY.md)
+          - [Quick Start Guide](docs/containerization/QUICKSTART.md)
+          - [Troubleshooting](docs/containerization/TROUBLESHOOTING.md)
+          EOF
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          body_path: release-notes.md
+          files: |
+            docker-compose.yml
+            k8s/*.yaml
