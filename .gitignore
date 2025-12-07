@@ -29,10 +29,10 @@ coverage/
 .nyc_output/
 *.lcov
 
-# Docker (not using containerization)
-Dockerfile
-docker-compose*.yml
-.dockerignore
+# Docker - Now using containerization!
+# Commit Docker configs, but not runtime secrets
+k8s/secret.yaml
+data/
 
 # Cloned repositories
 repos/

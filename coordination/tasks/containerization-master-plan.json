@@ -1,0 +1,449 @@
+{
+  "initiative_id": "containerization-2025-12-07",
+  "title": "Cortex Containerization with Private Fork",
+  "objective": "Transform Cortex into a containerized application with private GitHub fork, Docker support, Kubernetes deployment, and upstream sync automation",
+  "created_at": "2025-12-07T19:37:22Z",
+  "priority": "high",
+  "complexity": 9,
+  "estimated_total_tokens": 45000,
+  "parallel_execution": true,
+  "moe_routing": {
+    "enabled": true,
+    "strategy": "pattern-based-parallel",
+    "confidence_threshold": 0.85
+  },
+  "tasks": [
+    {
+      "task_id": "containerization-inventory-001",
+      "title": "Analyze Cortex structure, dependencies, and configuration requirements",
+      "type": "inventory",
+      "description": "inventory: Comprehensive analysis of Cortex codebase structure. Analyze package.json dependencies, runtime requirements, configuration files, environment variables, volume mount requirements, port mappings, and external service dependencies (API keys, MCP servers). Identify files for .dockerignore. Document current architecture for containerization planning.",
+      "priority": "high",
+      "assigned_to": "inventory",
+      "estimated_tokens": 3500,
+      "dependencies": [],
+      "deliverables": [
+        "coordination/containerization/inventory-analysis.md",
+        "coordination/containerization/dependency-map.json",
+        "coordination/containerization/configuration-requirements.json"
+      ],
+      "acceptance_criteria": [
+        "Complete dependency analysis with versions",
+        "All environment variables documented",
+        "Port requirements identified",
+        "Volume mount points specified",
+        "External service dependencies mapped"
+      ],
+      "parallel_group": "phase-1-analysis",
+      "can_run_parallel": true
+    },
+    {
+      "task_id": "containerization-security-001",
+      "title": "Security scan of containerization requirements and secrets management",
+      "type": "security",
+      "description": "security: Analyze security requirements for containerized Cortex. Review secrets management strategy (API keys, tokens), Docker security best practices, vulnerability scanning setup, least-privilege user configuration, network security policies, secret injection methods (env vars vs. Docker secrets vs. k8s secrets), and compliance requirements. Generate security recommendations.",
+      "priority": "high",
+      "assigned_to": "security",
+      "estimated_tokens": 4000,
+      "dependencies": [],
+      "deliverables": [
+        "coordination/containerization/security-analysis.md",
+        "coordination/containerization/secrets-management-strategy.md",
+        "coordination/containerization/security-recommendations.json"
+      ],
+      "acceptance_criteria": [
+        "Secrets management strategy documented",
+        "Docker security best practices listed",
+        "Vulnerability scanning approach defined",
+        "Least-privilege user configuration specified",
+        "Network security policies documented"
+      ],
+      "parallel_group": "phase-1-analysis",
+      "can_run_parallel": true
+    },
+    {
+      "task_id": "containerization-dev-001",
+      "title": "Create multi-stage Dockerfile for Cortex",
+      "type": "development",
+      "description": "development: Create production-ready multi-stage Dockerfile for Cortex. Stage 1: Build stage with Node.js for dependencies. Stage 2: Runtime stage with minimal image. Include bash runtime for shell scripts, proper user configuration (non-root), health check, labels, and optimization for layer caching. Support both amd64 and arm64 architectures.",
+      "priority": "high",
+      "assigned_to": "development",
+      "estimated_tokens": 5000,
+      "dependencies": ["containerization-inventory-001", "containerization-security-001"],
+      "deliverables": [
+        "Dockerfile",
+        "docs/containerization/dockerfile-guide.md"
+      ],
+      "acceptance_criteria": [
+        "Multi-stage build with optimized layers",
+        "Non-root user configuration",
+        "Health check implemented",
+        "Multi-architecture support",
+        "Build successfully completes"
+      ],
+      "parallel_group": "phase-2-docker",
+      "can_run_parallel": false
+    },
+    {
+      "task_id": "containerization-dev-002",
+      "title": "Create .dockerignore for optimal build context",
+      "type": "development",
+      "description": "development: Create .dockerignore file based on inventory analysis. Exclude node_modules, logs, temporary files, .git, coordination runtime files, test coverage, and other unnecessary files. Optimize for minimal build context size while preserving required configuration files.",
+      "priority": "medium",
+      "assigned_to": "development",
+      "estimated_tokens": 2000,
+      "dependencies": ["containerization-inventory-001"],
+      "deliverables": [
+        ".dockerignore"
+      ],
+      "acceptance_criteria": [
+        "All unnecessary files excluded",
+        "Required config files included",
+        "Build context size minimized",
+        "Documentation comments included"
+      ],
+      "parallel_group": "phase-2-docker",
+      "can_run_parallel": true
+    },
+    {
+      "task_id": "containerization-dev-003",
+      "title": "Create docker-compose.yml for local development",
+      "type": "development",
+      "description": "development: Create comprehensive docker-compose.yml for local development and testing. Include Cortex service with volume mounts for development, environment variable configuration, port mappings, health checks, restart policies, and optional services (dashboard, monitoring). Support both development and production profiles.",
+      "priority": "high",
+      "assigned_to": "development",
+      "estimated_tokens": 4500,
+      "dependencies": ["containerization-dev-001", "containerization-inventory-001"],
+      "deliverables": [
+        "docker-compose.yml",
+        "docker-compose.dev.yml",
+        "docker-compose.prod.yml",
+        "docs/containerization/docker-compose-guide.md"
+      ],
+      "acceptance_criteria": [
+        "Development and production profiles",
+        "Proper volume mounts configured",
+        "Environment variables templated",
+        "Health checks implemented",
+        "Documentation complete"
+      ],
+      "parallel_group": "phase-2-docker",
+      "can_run_parallel": true
+    },
+    {
+      "task_id": "containerization-dev-004",
+      "title": "Create Kubernetes deployment manifest",
+      "type": "development",
+      "description": "development: Create Kubernetes Deployment manifest for Cortex. Include replica configuration, pod template with container spec, resource limits/requests, liveness/readiness probes, volume mounts for persistent data, init containers if needed, and deployment strategy (rolling update).",
+      "priority": "high",
+      "assigned_to": "development",
+      "estimated_tokens": 4000,
+      "dependencies": ["containerization-dev-001", "containerization-inventory-001"],
+      "deliverables": [
+        "k8s/deployment.yaml",
+        "docs/containerization/kubernetes-deployment-guide.md"
+      ],
+      "acceptance_criteria": [
+        "Deployment manifest with proper resources",
+        "Health probes configured",
+        "Rolling update strategy",
+        "Volume mounts for persistence",
+        "Multi-replica support"
+      ],
+      "parallel_group": "phase-3-kubernetes",
+      "can_run_parallel": true
+    },
+    {
+      "task_id": "containerization-dev-005",
+      "title": "Create Kubernetes Service manifest",
+      "type": "development",
+      "description": "development: Create Kubernetes Service manifest for Cortex. Define service type (ClusterIP/NodePort/LoadBalancer), port mappings, selectors, and optional ingress configuration for external access to dashboard and APIs.",
+      "priority": "high",
+      "assigned_to": "development",
+      "estimated_tokens": 3000,
+      "dependencies": ["containerization-dev-004"],
+      "deliverables": [
+        "k8s/service.yaml",
+        "k8s/ingress.yaml (optional)",
+        "docs/containerization/kubernetes-networking-guide.md"
+      ],
+      "acceptance_criteria": [
+        "Service manifest with proper selectors",
+        "Port mappings configured",
+        "Optional ingress for dashboard",
+        "Documentation complete"
+      ],
+      "parallel_group": "phase-3-kubernetes",
+      "can_run_parallel": true
+    },
+    {
+      "task_id": "containerization-dev-006",
+      "title": "Create Kubernetes ConfigMap manifest",
+      "type": "development",
+      "description": "development: Create Kubernetes ConfigMap for Cortex non-sensitive configuration. Include coordination paths, feature flags, system settings, and other configuration that doesn't contain secrets. Design for easy updates without container rebuilds.",
+      "priority": "medium",
+      "assigned_to": "development",
+      "estimated_tokens": 2500,
+      "dependencies": ["containerization-inventory-001"],
+      "deliverables": [
+        "k8s/configmap.yaml",
+        "docs/containerization/configuration-management.md"
+      ],
+      "acceptance_criteria": [
+        "All non-sensitive config included",
+        "Proper key-value structure",
+        "Documentation for updates",
+        "Environment variable mapping"
+      ],
+      "parallel_group": "phase-3-kubernetes",
+      "can_run_parallel": true
+    },
+    {
+      "task_id": "containerization-dev-007",
+      "title": "Create Kubernetes Secret manifest template",
+      "type": "development",
+      "description": "development: Create Kubernetes Secret manifest template for sensitive data (API keys, tokens). Provide template with placeholder values and documentation on proper secret creation using kubectl or external secret managers (AWS Secrets Manager, HashiCorp Vault). Include base64 encoding instructions.",
+      "priority": "high",
+      "assigned_to": "development",
+      "estimated_tokens": 3000,
+      "dependencies": ["containerization-security-001"],
+      "deliverables": [
+        "k8s/secret.yaml.template",
+        "docs/containerization/secrets-setup-guide.md",
+        "scripts/create-k8s-secrets.sh"
+      ],
+      "acceptance_criteria": [
+        "Secret template with all required keys",
+        "Documentation for secret creation",
+        "Helper script for base64 encoding",
+        "External secret manager integration docs"
+      ],
+      "parallel_group": "phase-3-kubernetes",
+      "can_run_parallel": true
+    },
+    {
+      "task_id": "containerization-cicd-001",
+      "title": "Create GitHub Actions workflow for Docker builds",
+      "type": "cicd",
+      "description": "cicd: Create comprehensive GitHub Actions workflow for automated Docker image builds. Include multi-stage build, multi-architecture support (amd64, arm64), automated testing, vulnerability scanning (Trivy), image tagging (semver, latest, sha), push to registry (GitHub Container Registry), and automated deployment triggers. Support both PR builds and release builds.",
+      "priority": "high",
+      "assigned_to": "cicd",
+      "estimated_tokens": 6000,
+      "dependencies": ["containerization-dev-001", "containerization-security-001"],
+      "deliverables": [
+        ".github/workflows/docker-build.yml",
+        ".github/workflows/docker-publish.yml",
+        "docs/containerization/ci-cd-pipeline.md"
+      ],
+      "acceptance_criteria": [
+        "Multi-architecture builds working",
+        "Automated testing integrated",
+        "Vulnerability scanning enabled",
+        "Proper image tagging strategy",
+        "GHCR push configured"
+      ],
+      "parallel_group": "phase-4-automation",
+      "can_run_parallel": true
+    },
+    {
+      "task_id": "containerization-dev-008",
+      "title": "Create private fork setup documentation",
+      "type": "development",
+      "description": "development: Create comprehensive documentation for setting up a private fork of Cortex. Include step-by-step instructions for: creating private fork on GitHub, configuring upstream remote, setting up branch protection, configuring secrets/variables, initial fork setup, and verification steps. Must emphasize PRIVATE repository creation.",
+      "priority": "high",
+      "assigned_to": "development",
+      "estimated_tokens": 4000,
+      "dependencies": [],
+      "deliverables": [
+        "docs/containerization/private-fork-setup.md",
+        "scripts/setup-private-fork.sh"
+      ],
+      "acceptance_criteria": [
+        "Step-by-step fork creation guide",
+        "Private repository emphasis",
+        "Upstream remote configuration",
+        "Branch protection setup",
+        "Automated setup script"
+      ],
+      "parallel_group": "phase-4-automation",
+      "can_run_parallel": true
+    },
+    {
+      "task_id": "containerization-cicd-002",
+      "title": "Create upstream sync automation workflow",
+      "type": "cicd",
+      "description": "cicd: Create GitHub Actions workflow for automated upstream synchronization from ry-ops/cortex to private fork. Include scheduled sync (weekly), conflict detection, automated PR creation for updates, manual trigger option, and notification system. Preserve private fork customizations while pulling upstream changes.",
+      "priority": "high",
+      "assigned_to": "cicd",
+      "estimated_tokens": 5000,
+      "dependencies": ["containerization-dev-008"],
+      "deliverables": [
+        ".github/workflows/upstream-sync.yml",
+        "docs/containerization/upstream-sync-guide.md",
+        "scripts/sync-upstream.sh"
+      ],
+      "acceptance_criteria": [
+        "Automated weekly sync",
+        "Conflict detection and reporting",
+        "PR creation for updates",
+        "Manual trigger support",
+        "Documentation complete"
+      ],
+      "parallel_group": "phase-4-automation",
+      "can_run_parallel": true
+    },
+    {
+      "task_id": "containerization-dev-009",
+      "title": "Create build and deployment automation scripts",
+      "type": "development",
+      "description": "development: Create helper scripts for local development and deployment. Include: build-docker.sh (local Docker build with tagging), run-docker.sh (local container run with proper config), deploy-k8s.sh (kubectl apply with validation), test-container.sh (container health verification), and cleanup.sh (remove containers/images).",
+      "priority": "medium",
+      "assigned_to": "development",
+      "estimated_tokens": 4500,
+      "dependencies": ["containerization-dev-001", "containerization-dev-004"],
+      "deliverables": [
+        "scripts/containerization/build-docker.sh",
+        "scripts/containerization/run-docker.sh",
+        "scripts/containerization/deploy-k8s.sh",
+        "scripts/containerization/test-container.sh",
+        "scripts/containerization/cleanup.sh",
+        "docs/containerization/scripts-guide.md"
+      ],
+      "acceptance_criteria": [
+        "All scripts executable and documented",
+        "Error handling implemented",
+        "Usage instructions in headers",
+        "Compatible with both Docker and k8s",
+        "Testing scripts functional"
+      ],
+      "parallel_group": "phase-5-tooling",
+      "can_run_parallel": true
+    },
+    {
+      "task_id": "containerization-dev-010",
+      "title": "Create comprehensive containerization strategy document",
+      "type": "development",
+      "description": "development: Create master containerization strategy document. Include: architecture overview, deployment options (Docker Compose vs Kubernetes), configuration management, secrets handling, scaling strategy, monitoring/observability, backup/restore procedures, disaster recovery, upgrade procedures, troubleshooting guide, and best practices. Consolidate all sub-documentation into cohesive guide.",
+      "priority": "high",
+      "assigned_to": "development",
+      "estimated_tokens": 6000,
+      "dependencies": [
+        "containerization-inventory-001",
+        "containerization-security-001",
+        "containerization-dev-001",
+        "containerization-dev-003",
+        "containerization-dev-004",
+        "containerization-cicd-001"
+      ],
+      "deliverables": [
+        "docs/containerization/CONTAINERIZATION-STRATEGY.md",
+        "docs/containerization/QUICKSTART.md",
+        "docs/containerization/TROUBLESHOOTING.md"
+      ],
+      "acceptance_criteria": [
+        "Complete architecture documentation",
+        "All deployment scenarios covered",
+        "Security best practices documented",
+        "Operational procedures defined",
+        "Quick-start guide for new users"
+      ],
+      "parallel_group": "phase-6-documentation",
+      "can_run_parallel": false
+    },
+    {
+      "task_id": "containerization-security-002",
+      "title": "Create container security scanning and hardening guide",
+      "type": "security",
+      "description": "security: Create comprehensive container security guide. Include: image scanning procedures (Trivy, Snyk), runtime security (AppArmor/SELinux profiles), network policies, secret rotation procedures, vulnerability remediation workflow, compliance checking, security monitoring, and incident response for containerized environments.",
+      "priority": "medium",
+      "assigned_to": "security",
+      "estimated_tokens": 5000,
+      "dependencies": ["containerization-cicd-001"],
+      "deliverables": [
+        "docs/containerization/security-hardening.md",
+        "k8s/network-policy.yaml",
+        "k8s/pod-security-policy.yaml",
+        "scripts/containerization/security-scan.sh"
+      ],
+      "acceptance_criteria": [
+        "Image scanning procedures documented",
+        "Runtime security policies created",
+        "Network policies defined",
+        "Vulnerability remediation workflow",
+        "Security monitoring setup"
+      ],
+      "parallel_group": "phase-6-documentation",
+      "can_run_parallel": true
+    }
+  ],
+  "parallel_execution_phases": {
+    "phase-1-analysis": {
+      "tasks": ["containerization-inventory-001", "containerization-security-001"],
+      "can_run_parallel": true,
+      "estimated_duration": "20 minutes",
+      "estimated_tokens": 7500
+    },
+    "phase-2-docker": {
+      "tasks": ["containerization-dev-001", "containerization-dev-002", "containerization-dev-003"],
+      "can_run_parallel": false,
+      "depends_on": ["phase-1-analysis"],
+      "estimated_duration": "30 minutes",
+      "estimated_tokens": 11500
+    },
+    "phase-3-kubernetes": {
+      "tasks": [
+        "containerization-dev-004",
+        "containerization-dev-005",
+        "containerization-dev-006",
+        "containerization-dev-007"
+      ],
+      "can_run_parallel": true,
+      "depends_on": ["phase-2-docker"],
+      "estimated_duration": "25 minutes",
+      "estimated_tokens": 12500
+    },
+    "phase-4-automation": {
+      "tasks": [
+        "containerization-cicd-001",
+        "containerization-dev-008",
+        "containerization-cicd-002"
+      ],
+      "can_run_parallel": true,
+      "depends_on": ["phase-2-docker"],
+      "estimated_duration": "30 minutes",
+      "estimated_tokens": 15000
+    },
+    "phase-5-tooling": {
+      "tasks": ["containerization-dev-009"],
+      "can_run_parallel": false,
+      "depends_on": ["phase-3-kubernetes"],
+      "estimated_duration": "15 minutes",
+      "estimated_tokens": 4500
+    },
+    "phase-6-documentation": {
+      "tasks": ["containerization-dev-010", "containerization-security-002"],
+      "can_run_parallel": true,
+      "depends_on": ["phase-5-tooling"],
+      "estimated_duration": "25 minutes",
+      "estimated_tokens": 11000
+    }
+  },
+  "total_estimated_duration": "145 minutes",
+  "success_criteria": [
+    "All Docker configuration files created and tested",
+    "All Kubernetes manifests created and validated",
+    "GitHub Actions workflows functional",
+    "Private fork setup documented",
+    "Upstream sync automation working",
+    "Security best practices implemented",
+    "Complete documentation delivered"
+  ],
+  "notes": [
+    "Maximum parallel execution using MoE routing",
+    "Private fork is CRITICAL requirement",
+    "Maintain upstream sync capability",
+    "Security-first approach throughout",
+    "Support both Docker Compose and Kubernetes",
+    "Multi-architecture support (amd64, arm64)"
+  ]
+}

@@ -1,0 +1,129 @@
+# .dockerignore for Cortex
+# Minimize Docker build context and exclude unnecessary files
+
+# Git files
+.git/
+.gitignore
+.gitattributes
+
+# CI/CD
+.github/
+.gitlab-ci.yml
+.travis.yml
+
+# Documentation (include only essential docs)
+*.md
+!README.md
+!docs/containerization/*.md
+
+# Editor configurations
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.editorconfig
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Node modules (will be installed in container)
+node_modules/
+npm-debug.log
+yarn-error.log
+
+# Test files and coverage
+coverage/
+.nyc_output/
+*.test.js
+*.test.sh
+testing/
+**/__tests__/
+**/*.spec.js
+jest.config.js
+
+# Build artifacts
+dist/
+build/
+*.tgz
+
+# Temporary files
+*.tmp
+*.bak
+*.log
+.env
+.env.local
+.env.*.local
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+*.py[cod]
+
+# Cloned repositories
+repos/
+
+# Runtime coordination files (will be created in container)
+coordination/events/*.jsonl
+coordination/metrics/*.json
+coordination/metrics/*.jsonl
+coordination/metrics/learning/*.jsonl
+coordination/history/
+coordination/memory/working/*.json
+coordination/orchestrator/state/*.json
+coordination/pm-activity.jsonl
+coordination/pm-state.json
+coordination/token-budget.json
+coordination/worker-pool.json
+coordination/workforce-streams.json
+coordination/dashboard-events.jsonl
+coordination/health-alerts.json
+coordination/patterns/failure-patterns.jsonl
+coordination/patterns/pattern-index.json
+coordination/governance/access-log.jsonl
+coordination/knowledge-base/learned-patterns/patterns-*.json
+coordination/knowledge-base/model-versions/
+coordination/masters/*/knowledge-base/
+coordination/masters/*/metrics/
+coordination/masters/*/scans/
+coordination/masters/*/output/
+coordination/masters/shared-data/
+coordination/tasks/pending/
+coordination/worker-specs/zombie/
+coordination/logs/
+coordination/observability/traces/*.jsonl
+coordination/observability/metrics/*.jsonl
+
+# Agent logs (will be created in container)
+agents/logs/
+agents/logs/zombie-workers/
+
+# Sensitive files
+secrets/
+*.key
+*.pem
+credentials.json
+.env.test
+*.env
+
+# Docker files (don't include other dockerfiles in build)
+Dockerfile*
+docker-compose*.yml
+.dockerignore
+
+# LLM training data
+llm-mesh/training-data/*.jsonl
+llm-mesh/training-data/*.py
+llm-mesh/models/*.pt
+
+# Large binary files
+*.zip
+*.tar.gz
+*.pdf
+*.png
+*.jpg
+*.jpeg
+*.gif
