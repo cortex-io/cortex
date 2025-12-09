@@ -29,6 +29,22 @@ Cortex automates repository workflows using a master-worker architecture. Master
 
 ## Architecture
 
+### Organizational Structure
+Cortex operates as **Cortex Holdings** - a multi-divisional organization using a construction company model:
+- **Executive Level**: Cortex Prime (meta-agent), COO (orchestrator)
+- **Shared Services**: Coordinator, Development, Security, Inventory, CI/CD
+- **Divisions**: 6 specialized divisions managing 20 repositories
+  - Infrastructure (Proxmox, UniFi, Cloudflare, Starlink)
+  - Containers (Talos)
+  - Workflows (n8n)
+  - Configuration (Microsoft Graph)
+  - Monitoring (Netdata, Grafana, CheckMK, Pulseway)
+  - Intelligence (AIANA)
+
+See [Cortex Holdings Structure](./coordination/divisions/README.md) for complete organizational details.
+
+### Technical Architecture
+
 **5 Master Agents:**
 - Coordinator - Routes tasks using MoE pattern matching
 - Development - Feature implementation, bug fixes
@@ -45,7 +61,7 @@ Cortex automates repository workflows using a master-worker architecture. Master
 - Monitoring: Dashboard Server
 
 **Key Components:**
-- Token budget management (270k daily)
+- Token budget management (200k daily)
 - File-based coordination (JSON/JSONL)
 - **Observability Pipeline** - Complete event processing and analytics (NEW!)
 - Elastic APM for observability
@@ -131,9 +147,14 @@ All agent communication happens through files in `coordination/`:
 
 ## Documentation
 
-- [Architecture Details](./docs/master-worker-architecture.md)
-- [API Reference](./docs/API-REFERENCE.md)
-- [Governance Framework](./docs/governance-framework.md)
+### Organizational
+- [Cortex Holdings Structure](./coordination/divisions/CORTEX_HOLDINGS.md) - Complete organizational chart
+- [Divisions Quick Reference](./coordination/divisions/README.md) - Construction company model
+
+### Technical
+- [Master-Worker Architecture](./docs/master-worker-architecture.md) - Technical architecture details
+- [API Reference](./docs/API-REFERENCE.md) - API documentation
+- [Governance Framework](./docs/governance-framework.md) - Policies and procedures
 - [Runbooks](./docs/) - Operational guides
 
 ## Monitoring
