@@ -1,0 +1,727 @@
+{
+  "version": "1.0.0",
+  "created_at": "2025-12-09T14:00:00Z",
+  "description": "Knowledge base for n8n-contractor: workflow patterns, best practices, and integration patterns",
+
+  "workflow_patterns": {
+    "etl_pipeline": {
+      "name": "ETL Pipeline",
+      "use_cases": [
+        "Data synchronization between systems",
+        "Scheduled data imports",
+        "Data warehouse loading",
+        "API to database sync"
+      ],
+      "core_nodes": [
+        "scheduleTrigger",
+        "httpRequest",
+        "function",
+        "postgres/mysql/mongodb",
+        "splitInBatches"
+      ],
+      "pattern": {
+        "extract": {
+          "description": "Pull data from source system",
+          "nodes": ["httpRequest", "database", "fileSystem"],
+          "considerations": [
+            "Use pagination for large datasets",
+            "Implement incremental sync with timestamps",
+            "Handle rate limiting with delays",
+            "Store cursor/offset for resume capability"
+          ]
+        },
+        "transform": {
+          "description": "Process and format data",
+          "nodes": ["function", "code", "set", "itemLists"],
+          "considerations": [
+            "Validate data types and required fields",
+            "Handle null/undefined values gracefully",
+            "Implement data cleansing rules",
+            "Map source schema to target schema",
+            "Add business logic and calculations"
+          ]
+        },
+        "load": {
+          "description": "Write data to target system",
+          "nodes": ["postgres", "mysql", "mongodb", "httpRequest"],
+          "considerations": [
+            "Use batch inserts for performance",
+            "Implement upsert logic for idempotency",
+            "Handle duplicate key conflicts",
+            "Maintain transactional integrity",
+            "Log failed records for retry"
+          ]
+        }
+      },
+      "error_handling": {
+        "strategy": "Checkpoint and retry",
+        "implementation": [
+          "Track last successful sync timestamp",
+          "Log failed items to error table",
+          "Implement exponential backoff for retries",
+          "Alert on repeated failures"
+        ]
+      },
+      "example_code": {
+        "extract_with_pagination": "const limit = 100;\nconst offset = $executionId * limit;\nconst response = await fetch(`${apiUrl}?limit=${limit}&offset=${offset}`);\nreturn response.data.map(item => ({json: item}));",
+        "transform_validation": "return items.map(item => {\n  if (!item.json.id || !item.json.email) {\n    throw new Error(`Invalid item: ${JSON.stringify(item)}`);\n  }\n  return {\n    json: {\n      user_id: item.json.id,\n      email: item.json.email.toLowerCase(),\n      created_at: new Date().toISOString()\n    }\n  };\n});",
+        "load_with_upsert": "INSERT INTO users (id, email, updated_at)\nVALUES ($1, $2, $3)\nON CONFLICT (id) DO UPDATE\nSET email = EXCLUDED.email, updated_at = EXCLUDED.updated_at;"
+      }
+    },
+
+    "webhook_processor": {
+      "name": "Webhook Event Processor",
+      "use_cases": [
+        "GitHub/GitLab webhooks",
+        "Payment provider notifications",
+        "Third-party integrations",
+        "Real-time event processing"
+      ],
+      "core_nodes": [
+        "webhook",
+        "function",
+        "switch",
+        "httpRequest",
+        "if"
+      ],
+      "pattern": {
+        "receive": {
+          "description": "Accept incoming webhook",
+          "security": [
+            "Validate webhook signatures (HMAC)",
+            "Verify source IP ranges",
+            "Implement rate limiting",
+            "Use HTTPS only"
+          ],
+          "webhook_config": {
+            "responseMode": "onReceived",
+            "authentication": "headerAuth",
+            "options": {
+              "rawBody": true
+            }
+          }
+        },
+        "validate": {
+          "description": "Verify payload integrity",
+          "checks": [
+            "Signature verification",
+            "Schema validation",
+            "Required field presence",
+            "Data type validation"
+          ],
+          "example_code": "const crypto = require('crypto');\nconst signature = $node['Webhook'].json.headers['x-hub-signature-256'];\nconst payload = $node['Webhook'].json.body;\nconst secret = $credentials.webhookSecret;\nconst computed = 'sha256=' + crypto.createHmac('sha256', secret).update(JSON.stringify(payload)).digest('hex');\nif (signature !== computed) {\n  throw new Error('Invalid signature');\n}\nreturn {json: payload};"
+        },
+        "route": {
+          "description": "Route to appropriate handler",
+          "methods": [
+            "Switch node by event type",
+            "IF nodes for conditions",
+            "Merge for parallel processing"
+          ]
+        },
+        "process": {
+          "description": "Handle the event",
+          "patterns": [
+            "Store in database for async processing",
+            "Trigger downstream workflows",
+            "Update external systems",
+            "Send notifications"
+          ]
+        }
+      },
+      "error_handling": {
+        "strategy": "Immediate response, async processing",
+        "implementation": [
+          "Return 200 OK immediately",
+          "Process in background",
+          "Store failed events in dead letter queue",
+          "Implement replay mechanism"
+        ]
+      }
+    },
+
+    "scheduled_automation": {
+      "name": "Scheduled Task Automation",
+      "use_cases": [
+        "Daily reports",
+        "Periodic cleanups",
+        "Monitoring checks",
+        "Recurring sync jobs"
+      ],
+      "core_nodes": [
+        "scheduleTrigger",
+        "cronTrigger",
+        "httpRequest",
+        "function"
+      ],
+      "pattern": {
+        "trigger": {
+          "cron_examples": {
+            "daily_9am": "0 9 * * *",
+            "hourly": "0 * * * *",
+            "every_15_min": "*/15 * * * *",
+            "weekdays_6pm": "0 18 * * 1-5",
+            "first_of_month": "0 0 1 * *"
+          },
+          "timezone_handling": "Always use UTC for cron, convert in code",
+          "overlap_prevention": "Use workflow execution mode: 'queue'"
+        },
+        "execution": {
+          "idempotency": "Design for safe reruns",
+          "concurrency": "Prevent overlapping executions",
+          "timeout": "Set appropriate execution timeouts"
+        }
+      },
+      "best_practices": [
+        "Add execution logging for audit trail",
+        "Implement health check notifications",
+        "Use distributed locks for critical jobs",
+        "Monitor execution duration trends"
+      ]
+    },
+
+    "bidirectional_sync": {
+      "name": "Bi-Directional Data Sync",
+      "use_cases": [
+        "CRM to marketing platform sync",
+        "Multi-system data consistency",
+        "Backup and disaster recovery",
+        "Hybrid cloud synchronization"
+      ],
+      "core_nodes": [
+        "httpRequest",
+        "function",
+        "merge",
+        "postgres"
+      ],
+      "pattern": {
+        "fetch_both": {
+          "description": "Retrieve data from both systems",
+          "parallel_execution": true,
+          "nodes": ["HTTP Request A", "HTTP Request B"]
+        },
+        "compare": {
+          "description": "Identify changes and conflicts",
+          "strategies": {
+            "timestamp_based": "Compare last_modified timestamps",
+            "checksum_based": "Hash content for change detection",
+            "version_based": "Use version numbers"
+          },
+          "example_code": "const systemA = $node['Fetch A'].json;\nconst systemB = $node['Fetch B'].json;\n\nconst changes = [];\nfor (const itemA of systemA) {\n  const itemB = systemB.find(b => b.id === itemA.id);\n  if (!itemB) {\n    changes.push({type: 'create_in_B', data: itemA});\n  } else if (new Date(itemA.updated_at) > new Date(itemB.updated_at)) {\n    changes.push({type: 'update_B', data: itemA});\n  } else if (new Date(itemB.updated_at) > new Date(itemA.updated_at)) {\n    changes.push({type: 'update_A', data: itemB});\n  }\n}\n\nreturn changes.map(c => ({json: c}));"
+        },
+        "conflict_resolution": {
+          "description": "Handle simultaneous updates",
+          "strategies": [
+            "Last-write-wins (timestamp)",
+            "Manual review queue",
+            "Business logic rules",
+            "Merge both changes"
+          ]
+        },
+        "apply_changes": {
+          "description": "Update both systems",
+          "considerations": [
+            "Atomic operations where possible",
+            "Transaction rollback on failure",
+            "Audit log of all changes",
+            "Notification on conflicts"
+          ]
+        }
+      },
+      "state_management": {
+        "sync_state_table": {
+          "fields": [
+            "entity_id",
+            "system_a_version",
+            "system_b_version",
+            "last_sync_at",
+            "conflict_status"
+          ]
+        }
+      }
+    },
+
+    "data_aggregation": {
+      "name": "Data Aggregation and Reporting",
+      "use_cases": [
+        "Analytics dashboards",
+        "KPI reporting",
+        "Data summarization",
+        "Multi-source data compilation"
+      ],
+      "core_nodes": [
+        "aggregate",
+        "function",
+        "merge",
+        "itemLists"
+      ],
+      "pattern": {
+        "collect": {
+          "description": "Gather data from multiple sources",
+          "parallel": true,
+          "example": "Fetch from API, Database, Files simultaneously"
+        },
+        "aggregate": {
+          "description": "Combine and summarize",
+          "operations": [
+            "SUM, AVG, COUNT, MIN, MAX",
+            "GROUP BY dimensions",
+            "Time-based bucketing",
+            "Custom aggregation functions"
+          ],
+          "example_code": "const grouped = {};\nfor (const item of items) {\n  const key = item.json.category;\n  if (!grouped[key]) {\n    grouped[key] = {category: key, total: 0, count: 0};\n  }\n  grouped[key].total += item.json.amount;\n  grouped[key].count++;\n}\n\nreturn Object.values(grouped).map(g => ({\n  json: {\n    ...g,\n    average: g.total / g.count\n  }\n}));"
+        },
+        "format": {
+          "description": "Prepare for destination",
+          "formats": [
+            "JSON for APIs",
+            "CSV for spreadsheets",
+            "HTML for emails",
+            "Markdown for documents"
+          ]
+        },
+        "deliver": {
+          "description": "Send to destination",
+          "destinations": [
+            "Email with attachment",
+            "Slack with charts",
+            "S3 for archival",
+            "Dashboard API"
+          ]
+        }
+      }
+    }
+  },
+
+  "node_recommendations": {
+    "by_use_case": {
+      "api_calls": {
+        "primary": "httpRequest",
+        "alternatives": ["curl", "graphQL"],
+        "tips": [
+          "Use predefined credentials for auth",
+          "Implement retry logic with exponential backoff",
+          "Set appropriate timeouts",
+          "Handle rate limiting with delay nodes"
+        ]
+      },
+      "data_transformation": {
+        "simple": "set",
+        "complex": "function",
+        "very_complex": "code",
+        "tips": [
+          "Use Set node for simple field mapping",
+          "Use Function for JavaScript logic",
+          "Use Code node for multi-step operations",
+          "Consider Item Lists for array operations"
+        ]
+      },
+      "conditional_logic": {
+        "primary": "if",
+        "multiple_conditions": "switch",
+        "tips": [
+          "Use IF for binary decisions",
+          "Use Switch for multiple routing paths",
+          "Combine with Merge for rejoining branches"
+        ]
+      },
+      "database_operations": {
+        "sql": ["postgres", "mysql", "mssql"],
+        "nosql": ["mongodb", "redis"],
+        "tips": [
+          "Use connection pooling",
+          "Implement prepared statements",
+          "Batch operations for performance",
+          "Use transactions for consistency"
+        ]
+      },
+      "notifications": {
+        "chat": ["slack", "discord", "telegram", "mattermost"],
+        "email": ["emailSend", "gmail", "sendGrid"],
+        "sms": ["twilio", "vonage"],
+        "tips": [
+          "Template messages with variables",
+          "Include context and actionable links",
+          "Implement throttling to avoid spam",
+          "Use rich formatting (markdown, attachments)"
+        ]
+      }
+    },
+
+    "performance_tips": {
+      "general": [
+        "Minimize node count in critical paths",
+        "Use native nodes over Function nodes when possible",
+        "Batch operations for bulk processing",
+        "Implement caching for repeated operations"
+      ],
+      "function_nodes": [
+        "Avoid synchronous blocking operations",
+        "Use async/await for I/O operations",
+        "Minimize external library imports",
+        "Cache computed values within execution"
+      ],
+      "http_requests": [
+        "Use connection keep-alive",
+        "Implement request pooling",
+        "Compress request/response payloads",
+        "Use CDN for static resources"
+      ],
+      "database": [
+        "Create indexes on query fields",
+        "Use LIMIT for large result sets",
+        "Implement cursor-based pagination",
+        "Batch INSERT/UPDATE operations"
+      ]
+    }
+  },
+
+  "error_handling_patterns": {
+    "retry_with_backoff": {
+      "description": "Exponential backoff for transient failures",
+      "implementation": {
+        "node": "function",
+        "code": "const maxRetries = 3;\nconst baseDelay = 1000;\nlet lastError;\n\nfor (let i = 0; i < maxRetries; i++) {\n  try {\n    const response = await fetch(url);\n    return [{json: response}];\n  } catch (error) {\n    lastError = error;\n    if (i < maxRetries - 1) {\n      const delay = baseDelay * Math.pow(2, i);\n      await new Promise(resolve => setTimeout(resolve, delay));\n    }\n  }\n}\n\nthrow new Error(`Failed after ${maxRetries} retries: ${lastError.message}`);"
+      },
+      "use_cases": [
+        "API rate limiting",
+        "Network timeouts",
+        "Temporary service unavailability"
+      ]
+    },
+
+    "circuit_breaker": {
+      "description": "Stop calling failing services",
+      "implementation": {
+        "state_storage": "Database or Redis",
+        "logic": "Track failure rate, open circuit if threshold exceeded",
+        "recovery": "Half-open state for testing recovery"
+      },
+      "use_cases": [
+        "Degraded external services",
+        "Cascading failures",
+        "Resource exhaustion"
+      ]
+    },
+
+    "dead_letter_queue": {
+      "description": "Store failed items for later processing",
+      "implementation": {
+        "storage": ["Database table", "S3 bucket", "Message queue"],
+        "retry_logic": "Separate workflow to process DLQ",
+        "alerting": "Notify when DLQ grows"
+      },
+      "schema": {
+        "id": "UUID",
+        "workflow_id": "string",
+        "execution_id": "string",
+        "failed_item": "JSON",
+        "error_message": "string",
+        "retry_count": "number",
+        "created_at": "timestamp"
+      }
+    },
+
+    "graceful_degradation": {
+      "description": "Continue operation with reduced functionality",
+      "patterns": [
+        "Use cached data if API fails",
+        "Skip non-critical steps on error",
+        "Provide default values for missing data",
+        "Log errors but don't halt execution"
+      ],
+      "example_code": "let enrichedData;\ntry {\n  const response = await fetch(enrichmentAPI);\n  enrichedData = response.data;\n} catch (error) {\n  console.error('Enrichment failed, using defaults:', error);\n  enrichedData = {source: 'default', enriched: false};\n}\n\nreturn [{json: {...item.json, ...enrichedData}}];"
+    },
+
+    "validation_patterns": {
+      "input_validation": {
+        "schema_validation": "Use JSON Schema or Zod",
+        "type_checking": "Validate data types",
+        "required_fields": "Check presence of mandatory fields",
+        "example_code": "const requiredFields = ['id', 'email', 'name'];\nfor (const field of requiredFields) {\n  if (!item.json[field]) {\n    throw new Error(`Missing required field: ${field}`);\n  }\n}\n\nif (!/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(item.json.email)) {\n  throw new Error(`Invalid email format: ${item.json.email}`);\n}\n\nreturn item;"
+      },
+      "business_rules": {
+        "description": "Validate business logic constraints",
+        "examples": [
+          "Order total matches line items",
+          "Date ranges are valid",
+          "Status transitions are allowed",
+          "Quantities are positive"
+        ]
+      }
+    }
+  },
+
+  "integration_patterns": {
+    "webhook_authentication": {
+      "hmac_signature": {
+        "description": "Verify webhook with HMAC signature",
+        "providers": ["GitHub", "Stripe", "Shopify"],
+        "code": "const crypto = require('crypto');\nconst signature = $node['Webhook'].json.headers['x-signature'];\nconst secret = $credentials.webhookSecret;\nconst payload = JSON.stringify($node['Webhook'].json.body);\nconst computed = crypto.createHmac('sha256', secret).update(payload).digest('hex');\n\nif (signature !== computed) {\n  throw new Error('Invalid webhook signature');\n}"
+      },
+      "bearer_token": {
+        "description": "Simple token authentication",
+        "code": "const token = $node['Webhook'].json.headers['authorization']?.replace('Bearer ', '');\nif (token !== $credentials.apiToken) {\n  throw new Error('Unauthorized');\n}"
+      },
+      "ip_whitelist": {
+        "description": "Restrict to known source IPs",
+        "code": "const allowedIPs = ['192.168.1.1', '10.0.0.1'];\nconst sourceIP = $node['Webhook'].json.headers['x-forwarded-for'] || $node['Webhook'].json.headers['x-real-ip'];\nif (!allowedIPs.includes(sourceIP)) {\n  throw new Error('IP not whitelisted');\n}"
+      }
+    },
+
+    "rate_limiting": {
+      "token_bucket": {
+        "description": "Allow bursts up to bucket size",
+        "implementation": "Redis counter with TTL"
+      },
+      "sliding_window": {
+        "description": "Count requests in rolling time window",
+        "implementation": "Redis sorted set with timestamps"
+      },
+      "fixed_window": {
+        "description": "Simple per-minute/hour limits",
+        "code": "const redis = require('redis');\nconst client = redis.createClient();\nconst key = `rate_limit:${userId}:${Math.floor(Date.now() / 60000)}`;\nconst count = await client.incr(key);\nawait client.expire(key, 60);\n\nif (count > 100) {\n  throw new Error('Rate limit exceeded');\n}"
+      }
+    },
+
+    "polling_patterns": {
+      "simple_poll": {
+        "description": "Check for changes on schedule",
+        "nodes": ["scheduleTrigger", "httpRequest", "function"],
+        "tips": [
+          "Store last check timestamp",
+          "Use If node to skip if no changes",
+          "Implement exponential backoff on errors"
+        ]
+      },
+      "long_polling": {
+        "description": "Wait for changes with timeout",
+        "implementation": "HTTP request with long timeout parameter"
+      },
+      "cursor_based": {
+        "description": "Use cursor for pagination",
+        "code": "let cursor = await db.get('last_cursor');\nconst response = await fetch(`${url}?cursor=${cursor}`);\nawait db.set('last_cursor', response.next_cursor);\nreturn response.items;"
+      }
+    },
+
+    "state_management": {
+      "execution_context": {
+        "description": "State within single execution",
+        "methods": ["Node parameters", "$node variable", "Static variables"]
+      },
+      "persistent_state": {
+        "description": "State across executions",
+        "storage": ["Database", "Redis", "Static data", "File system"],
+        "example": "// Store in database\nconst lastRun = await db.query('SELECT last_sync_at FROM sync_state WHERE id = $1', [syncId]);\n// ... process ...\nawait db.query('UPDATE sync_state SET last_sync_at = $1 WHERE id = $2', [new Date(), syncId]);"
+      },
+      "distributed_locks": {
+        "description": "Prevent concurrent execution",
+        "redis_lock": "SET key value NX EX 60",
+        "database_lock": "SELECT ... FOR UPDATE"
+      }
+    },
+
+    "async_processing": {
+      "fire_and_forget": {
+        "description": "Trigger workflow without waiting",
+        "method": "Webhook with responseMode: onReceived"
+      },
+      "callback_pattern": {
+        "description": "Process async, then callback",
+        "flow": "Receive -> Return 202 -> Process -> POST to callback URL"
+      },
+      "status_polling": {
+        "description": "Client polls for completion",
+        "flow": "Return job_id -> Client polls /status/:job_id"
+      }
+    }
+  },
+
+  "security_best_practices": {
+    "credential_management": [
+      "Never hardcode credentials in workflows",
+      "Use n8n credential system for all secrets",
+      "Rotate credentials regularly",
+      "Use least privilege access",
+      "Audit credential usage"
+    ],
+    "input_validation": [
+      "Validate all webhook inputs",
+      "Sanitize user-provided data",
+      "Use parameterized queries for SQL",
+      "Implement schema validation",
+      "Check data types and ranges"
+    ],
+    "data_protection": [
+      "Encrypt sensitive data at rest",
+      "Use HTTPS for all external calls",
+      "Mask PII in logs",
+      "Implement data retention policies",
+      "Comply with GDPR/CCPA requirements"
+    ],
+    "access_control": [
+      "Implement webhook authentication",
+      "Use API keys with proper scopes",
+      "Implement rate limiting",
+      "Log all access attempts",
+      "Monitor for suspicious activity"
+    ]
+  },
+
+  "monitoring_and_observability": {
+    "execution_logging": {
+      "what_to_log": [
+        "Execution start/end times",
+        "Input parameters",
+        "Key decision points",
+        "External API calls",
+        "Error messages and stack traces"
+      ],
+      "where_to_log": [
+        "n8n execution logs",
+        "External logging service (Datadog, Splunk)",
+        "Database table for analytics",
+        "Cloud storage for archival"
+      ]
+    },
+    "metrics_to_track": {
+      "performance": [
+        "Execution duration (p50, p95, p99)",
+        "Node execution times",
+        "API response times",
+        "Database query times"
+      ],
+      "reliability": [
+        "Success rate",
+        "Error rate by type",
+        "Retry count",
+        "Timeout occurrences"
+      ],
+      "business": [
+        "Items processed",
+        "Data sync lag",
+        "Alert counts by severity",
+        "Cost per execution"
+      ]
+    },
+    "alerting": {
+      "critical_alerts": [
+        "Workflow failure rate > 5%",
+        "Execution duration > 10x baseline",
+        "Dead letter queue size > 100",
+        "Critical data sync lag > 1 hour"
+      ],
+      "warning_alerts": [
+        "Error rate increase > 50%",
+        "Execution duration increase > 2x",
+        "API rate limit approaching",
+        "Disk space low"
+      ],
+      "alert_destinations": [
+        "PagerDuty for critical",
+        "Slack for warnings",
+        "Email for summaries",
+        "Dashboard for metrics"
+      ]
+    }
+  },
+
+  "testing_strategies": {
+    "unit_testing": {
+      "description": "Test individual function nodes",
+      "approach": "Extract function code to separate files and test with Jest/Mocha"
+    },
+    "integration_testing": {
+      "description": "Test entire workflow with mock data",
+      "approach": "Use Manual trigger with test payloads"
+    },
+    "end_to_end_testing": {
+      "description": "Test with real external systems",
+      "approach": "Use staging environment with real integrations"
+    },
+    "test_data": {
+      "positive_cases": "Valid data that should succeed",
+      "negative_cases": "Invalid data that should fail gracefully",
+      "edge_cases": "Boundary conditions, null values, large datasets",
+      "error_simulation": "Network failures, API errors, timeouts"
+    }
+  },
+
+  "deployment_patterns": {
+    "environment_promotion": {
+      "environments": ["development", "staging", "production"],
+      "workflow": "Dev -> Staging (test) -> Production (deploy)",
+      "configuration": "Use environment-specific credentials and variables"
+    },
+    "version_control": {
+      "export_workflows": "Export to JSON and commit to git",
+      "backup_strategy": "Daily exports to S3/cloud storage",
+      "rollback_procedure": "Import previous version from git"
+    },
+    "blue_green_deployment": {
+      "description": "Run old and new versions simultaneously",
+      "switch": "Route traffic to new version after validation",
+      "rollback": "Route back to old version if issues"
+    }
+  },
+
+  "common_mistakes": {
+    "anti_patterns": [
+      {
+        "mistake": "Not handling errors",
+        "solution": "Add error branches and logging to all critical paths"
+      },
+      {
+        "mistake": "Hardcoding credentials",
+        "solution": "Use n8n credential manager"
+      },
+      {
+        "mistake": "Not implementing retries",
+        "solution": "Add retry logic with exponential backoff for API calls"
+      },
+      {
+        "mistake": "Processing entire dataset in memory",
+        "solution": "Use Split In Batches node for large datasets"
+      },
+      {
+        "mistake": "No monitoring or alerting",
+        "solution": "Add execution logging and failure notifications"
+      },
+      {
+        "mistake": "Generic node names",
+        "solution": "Use descriptive names that explain purpose"
+      },
+      {
+        "mistake": "Ignoring webhook security",
+        "solution": "Implement signature verification and rate limiting"
+      },
+      {
+        "mistake": "Not validating inputs",
+        "solution": "Add schema validation at entry points"
+      }
+    ]
+  },
+
+  "reusable_code_snippets": {
+    "retry_logic": "async function retryOperation(fn, maxRetries = 3, baseDelay = 1000) {\n  for (let i = 0; i < maxRetries; i++) {\n    try {\n      return await fn();\n    } catch (error) {\n      if (i === maxRetries - 1) throw error;\n      const delay = baseDelay * Math.pow(2, i);\n      await new Promise(resolve => setTimeout(resolve, delay));\n    }\n  }\n}",
+
+    "batch_processor": "const batchSize = 100;\nconst results = [];\n\nfor (let i = 0; i < items.length; i += batchSize) {\n  const batch = items.slice(i, i + batchSize);\n  const batchResults = await processBatch(batch);\n  results.push(...batchResults);\n}\n\nreturn results.map(r => ({json: r}));",
+
+    "rate_limiter": "const rateLimit = 10; // requests per second\nconst delay = 1000 / rateLimit;\n\nfor (const item of items) {\n  await processItem(item);\n  await new Promise(resolve => setTimeout(resolve, delay));\n}",
+
+    "error_logger": "try {\n  // Operation\n} catch (error) {\n  await fetch('https://logging-service.com/log', {\n    method: 'POST',\n    body: JSON.stringify({\n      workflow_id: $workflow.id,\n      execution_id: $executionId,\n      error: error.message,\n      stack: error.stack,\n      timestamp: new Date().toISOString()\n    })\n  });\n  throw error; // Re-throw to trigger error handling\n}",
+
+    "pagination_handler": "const allData = [];\nlet page = 1;\nlet hasMore = true;\n\nwhile (hasMore) {\n  const response = await fetch(`${url}?page=${page}&limit=100`);\n  allData.push(...response.data);\n  hasMore = response.has_more;\n  page++;\n}\n\nreturn allData.map(item => ({json: item}));",
+
+    "deduplication": "const seen = new Set();\nconst unique = [];\n\nfor (const item of items) {\n  const key = item.json.id; // or use hash of multiple fields\n  if (!seen.has(key)) {\n    seen.add(key);\n    unique.push(item);\n  }\n}\n\nreturn unique;",
+
+    "date_utilities": "function formatDate(date) {\n  return new Date(date).toISOString().split('T')[0];\n}\n\nfunction addDays(date, days) {\n  const result = new Date(date);\n  result.setDate(result.getDate() + days);\n  return result;\n}\n\nfunction isBusinessDay(date) {\n  const day = new Date(date).getDay();\n  return day !== 0 && day !== 6;\n}"
+  },
+
+  "learning_outcomes": {
+    "successful_patterns": [],
+    "failed_approaches": [],
+    "optimization_insights": [],
+    "integration_learnings": []
+  }
+}
