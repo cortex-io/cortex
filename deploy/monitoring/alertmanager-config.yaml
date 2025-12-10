@@ -1,0 +1,186 @@
+global:
+  resolve_timeout: 5m
+  slack_api_url: 'https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK'
+
+# Templates for alert messages
+templates:
+  - '/etc/alertmanager/templates/*.tmpl'
+
+# Route configuration
+route:
+  receiver: 'default'
+  group_by: ['alertname', 'component', 'severity']
+  group_wait: 30s
+  group_interval: 5m
+  repeat_interval: 4h
+
+  # Child routes
+  routes:
+    # Critical alerts to PagerDuty
+    - match:
+        severity: critical
+      receiver: 'pagerduty'
+      continue: true
+      group_wait: 10s
+      repeat_interval: 1h
+
+    # Warning alerts to Slack
+    - match:
+        severity: warning
+      receiver: 'slack-warnings'
+      continue: true
+
+    # Core component alerts
+    - match:
+        component: meta-agent
+      receiver: 'slack-core'
+      continue: true
+
+    # Master alerts
+    - match:
+        component: master
+      receiver: 'slack-masters'
+
+    # Worker alerts
+    - match:
+        component: worker
+      receiver: 'slack-workers'
+
+    # MCP server alerts
+    - match:
+        component: mcp
+      receiver: 'slack-mcp'
+
+    # Contractor alerts
+    - match:
+        component: contractor
+      receiver: 'slack-contractors'
+
+# Inhibition rules (suppress alerts based on other alerts)
+inhibit_rules:
+  # Suppress worker alerts if master is down
+  - source_match:
+      component: master
+      alertname: MasterAgentDown
+    target_match:
+      component: worker
+    equal: ['parent_master']
+
+  # Suppress high error rate if service is down
+  - source_match_re:
+      alertname: '.+Down'
+    target_match_re:
+      alertname: '.+HighErrorRate'
+    equal: ['component']
+
+  # Suppress resource alerts if pod is restarting
+  - source_match:
+      alertname: PodRestartLoop
+    target_match_re:
+      alertname: 'High(CPU|Memory)Usage'
+    equal: ['pod']
+
+# Receiver configurations
+receivers:
+  - name: 'default'
+    slack_configs:
+      - channel: '#cortex-alerts'
+        title: 'Cortex Alert'
+        text: |
+          {{ range .Alerts }}
+          *Alert:* {{ .Labels.alertname }}
+          *Severity:* {{ .Labels.severity }}
+          *Component:* {{ .Labels.component }}
+          *Description:* {{ .Annotations.description }}
+          *Summary:* {{ .Annotations.summary }}
+          {{ end }}
+        send_resolved: true
+
+  - name: 'pagerduty'
+    pagerduty_configs:
+      - service_key: 'YOUR_PAGERDUTY_SERVICE_KEY'
+        description: '{{ .CommonAnnotations.summary }}'
+        severity: '{{ .CommonLabels.severity }}'
+        details:
+          firing: '{{ .Alerts.Firing | len }}'
+          resolved: '{{ .Alerts.Resolved | len }}'
+          component: '{{ .CommonLabels.component }}'
+
+  - name: 'slack-core'
+    slack_configs:
+      - channel: '#cortex-core'
+        color: '{{ if eq .Status "firing" }}danger{{ else }}good{{ end }}'
+        title: '[{{ .Status | toUpper }}] Cortex Core Alert'
+        text: |
+          {{ range .Alerts }}
+          *Alert:* {{ .Labels.alertname }}
+          *Component:* {{ .Labels.component }}
+          *Description:* {{ .Annotations.description }}
+          {{ end }}
+        send_resolved: true
+
+  - name: 'slack-masters'
+    slack_configs:
+      - channel: '#cortex-masters'
+        color: '{{ if eq .Status "firing" }}danger{{ else }}good{{ end }}'
+        title: '[{{ .Status | toUpper }}] Master Agent Alert'
+        text: |
+          {{ range .Alerts }}
+          *Alert:* {{ .Labels.alertname }}
+          *Master Type:* {{ .Labels.master_type }}
+          *Description:* {{ .Annotations.description }}
+          {{ end }}
+        send_resolved: true
+
+  - name: 'slack-workers'
+    slack_configs:
+      - channel: '#cortex-workers'
+        color: '{{ if eq .Status "firing" }}warning{{ else }}good{{ end }}'
+        title: '[{{ .Status | toUpper }}] Worker Agent Alert'
+        text: |
+          {{ range .Alerts }}
+          *Alert:* {{ .Labels.alertname }}
+          *Worker Type:* {{ .Labels.worker_type }}
+          *Description:* {{ .Annotations.description }}
+          {{ end }}
+        send_resolved: true
+
+  - name: 'slack-mcp'
+    slack_configs:
+      - channel: '#cortex-mcp'
+        color: '{{ if eq .Status "firing" }}danger{{ else }}good{{ end }}'
+        title: '[{{ .Status | toUpper }}] MCP Server Alert'
+        text: |
+          {{ range .Alerts }}
+          *Alert:* {{ .Labels.alertname }}
+          *MCP Type:* {{ .Labels.mcp_type }}
+          *Description:* {{ .Annotations.description }}
+          {{ end }}
+        send_resolved: true
+
+  - name: 'slack-contractors'
+    slack_configs:
+      - channel: '#cortex-contractors'
+        color: '{{ if eq .Status "firing" }}warning{{ else }}good{{ end }}'
+        title: '[{{ .Status | toUpper }}] Contractor Alert'
+        text: |
+          {{ range .Alerts }}
+          *Alert:* {{ .Labels.alertname }}
+          *Contractor:* {{ .Labels.contractor_type }}
+          *Description:* {{ .Annotations.description }}
+          {{ end }}
+        send_resolved: true
+
+  - name: 'slack-warnings'
+    slack_configs:
+      - channel: '#cortex-warnings'
+        color: 'warning'
+        title: '[WARNING] Cortex Alert'
+        text: |
+          {{ range .Alerts }}
+          *Alert:* {{ .Labels.alertname }}
+          *Severity:* {{ .Labels.severity }}
+          *Component:* {{ .Labels.component }}
+          *Description:* {{ .Annotations.description }}
+          {{ end }}
+        send_resolved: true

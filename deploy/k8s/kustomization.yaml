@@ -1,0 +1,128 @@
+---
+# Kustomization file for cortex base deployment
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+metadata:
+  name: cortex-base
+  annotations:
+    description: "Kustomize base configuration for Cortex platform"
+
+# Namespace for all resources
+namespace: cortex
+
+# Common labels applied to all resources
+commonLabels:
+  app.kubernetes.io/name: cortex
+  app.kubernetes.io/instance: cortex
+  app.kubernetes.io/part-of: cortex-platform
+  app.kubernetes.io/managed-by: kustomize
+
+# Common annotations applied to all resources
+commonAnnotations:
+  cortex.ry-ops.io/version: "2.0.0"
+  cortex.ry-ops.io/deployment-method: "kustomize"
+
+# Resources to include
+resources:
+- namespace.yaml
+- rbac.yaml
+- configmap.yaml
+- secret.yaml
+- pvc.yaml
+- deployment.yaml
+- service.yaml
+- ingress.yaml
+- pdb.yaml
+- hpa.yaml
+
+# Images to use (can be overridden in overlays)
+images:
+- name: ghcr.io/ry-ops/cortex
+  newTag: "2.0.0"
+
+# ConfigMap generator (alternative to static configmap.yaml)
+# configMapGenerator:
+# - name: cortex-config
+#   literals:
+#   - NODE_ENV=production
+#   - MAX_WORKERS=10000
+#   - WORKER_TIMEOUT_MINUTES=45
+
+# Secret generator (use with care - prefer external secret management)
+# secretGenerator:
+# - name: cortex-secrets
+#   literals:
+#   - anthropic-api-key=REPLACE_ME
+#   - api-key=REPLACE_ME
+
+# Replicas (can be overridden in overlays)
+replicas:
+- name: cortex
+  count: 3
+
+# Resource name prefix (optional)
+# namePrefix: cortex-
+
+# Resource name suffix (optional)
+# nameSuffix: -v2
+
+# Patches for customization
+patches:
+# Example: patch deployment with additional environment variable
+# - patch: |-
+#     - op: add
+#       path: /spec/template/spec/containers/0/env/-
+#       value:
+#         name: CUSTOM_VAR
+#         value: "custom-value"
+#   target:
+#     kind: Deployment
+#     name: cortex
+
+# Example: patch service with LoadBalancer type
+# - patch: |-
+#     - op: replace
+#       path: /spec/type
+#       value: LoadBalancer
+#   target:
+#     kind: Service
+#     name: cortex
+
+# Strategic merge patches
+# patchesStrategicMerge:
+# - deployment-patch.yaml
+
+# JSON 6902 patches
+# patchesJson6902:
+# - target:
+#     group: apps
+#     version: v1
+#     kind: Deployment
+#     name: cortex
+#   path: deployment-patch.json
+
+# Variables for replacement
+vars:
+- name: CORTEX_VERSION
+  objref:
+    kind: Deployment
+    name: cortex
+    apiVersion: apps/v1
+  fieldref:
+    fieldpath: spec.template.metadata.labels.app\.kubernetes\.io/version
+
+# Configurations
+configurations:
+# - kustomizeconfig.yaml
+
+# Generators (for more complex scenarios)
+# generators:
+# - secret-generator.yaml
+
+# Transformers
+# transformers:
+# - name-transformer.yaml
+
+# Build metadata
+buildMetadata: [managedByLabel]
