@@ -1,0 +1,151 @@
+Cortex Monitoring Stack - Directory Structure
+==============================================
+
+deploy/monitoring/
+├── README.md                           # Comprehensive documentation
+├── QUICKSTART.md                       # Quick start guide
+├── .structure.txt                      # This file
+│
+├── prometheus/                         # Prometheus configuration
+│   ├── prometheus-config.yaml          # Main config with scrape jobs
+│   ├── alerting-rules.yaml            # Alert rules (75+ alerts)
+│   └── recording-rules.yaml           # Performance aggregations
+│
+├── grafana/                           # Grafana configuration
+│   ├── datasources.yaml               # Prometheus/Loki/Tempo datasources
+│   ├── dashboard-provider.yaml        # Dashboard provisioning config
+│   └── dashboards/                    # Pre-built dashboards
+│       ├── cortex-overview.json           # Main system dashboard (15 panels)
+│       ├── mcp-servers.json               # MCP metrics (14 panels)
+│       └── contractor-performance.json    # Contractor analytics (17 panels)
+│
+├── servicemonitor.yaml                # ServiceMonitor CRDs (4 monitors)
+├── podmonitor.yaml                    # PodMonitor CRDs (4 monitors)
+│
+├── alertmanager-config.yaml           # AlertManager routing/receivers
+├── docker-compose.yaml                # Local deployment stack
+│
+├── deploy-k8s.sh                      # Kubernetes deployment script
+├── deploy-local.sh                    # Local Docker deployment script
+└── verify-deployment.sh               # Verification/health check script
+
+Monitoring Coverage
+===================
+
+Components Monitored:
+  - Cortex Core (meta-agent)
+  - Master Agents (coordinator, development, security, cicd, inventory)
+  - Worker Agents (all types)
+  - MCP Servers (all types)
+  - Contractors (infrastructure, n8n, talos)
+  - Dashboard/API Services
+  - Kubernetes Infrastructure
+
+Metrics Categories:
+  - Request latency & throughput (p50/p95/p99)
+  - Error rates by component
+  - Resource utilization (CPU, memory, network)
+  - Agent token consumption & budget
+  - Task completion rates & success ratios
+  - Worker spawn/failure metrics
+  - MCP tool call performance
+  - Contractor specialization effectiveness
+  - Task queue depths & handoff metrics
+
+Alert Severity Levels:
+  - Critical: Service down, complete failure
+  - Warning: High error rate, resource pressure
+  - Info: Long-running tasks, efficiency metrics
+
+Dashboard Panels:
+  - Cortex Overview: 15 panels (system health, requests, latency, workers, tasks, tokens, resources)
+  - MCP Servers: 14 panels (status, requests, latency, tool calls, connections, heatmaps)
+  - Contractor Performance: 17 panels (status, tasks, latency, effectiveness, resource usage)
+
+Recording Rules:
+  - 1m intervals: Real-time monitoring
+  - 5m intervals: Standard dashboards
+  - Performance aggregations by component type
+
+Deployment Options
+==================
+
+Local (Docker Compose):
+  - 6 containers (Prometheus, Grafana, AlertManager, Node Exporter, cAdvisor, mock)
+  - Persistent volumes for data
+  - Network: cortex-monitoring bridge
+  - Ports: 9090 (Prometheus), 3000 (Grafana), 9093 (AlertManager)
+
+Kubernetes:
+  - StatefulSet for Prometheus (50Gi storage, 15d retention)
+  - Deployment for AlertManager
+  - Deployment for Grafana (LoadBalancer service)
+  - ServiceAccount with RBAC
+  - ConfigMaps for all configurations
+  - ServiceMonitors for service discovery
+  - PodMonitors for dynamic workloads
+
+Quick Commands
+==============
+
+Local Deployment:
+  ./deploy-local.sh deploy        # Deploy stack
+  ./deploy-local.sh stop          # Stop stack
+  ./deploy-local.sh restart       # Restart stack
+  ./deploy-local.sh logs [svc]    # View logs
+  ./verify-deployment.sh local    # Verify health
+
+Kubernetes Deployment:
+  ./deploy-k8s.sh                           # Deploy to k8s
+  ./verify-deployment.sh kubernetes         # Verify health
+  kubectl port-forward -n cortex svc/grafana 3000:3000
+
+Access URLs (Local):
+  Prometheus:   http://localhost:9090
+  Grafana:      http://localhost:3000 (admin/admin)
+  AlertManager: http://localhost:9093
+
+Key Features
+============
+
+1. Comprehensive Metrics:
+   - 50+ metric types across all components
+   - Pre-aggregated recording rules for performance
+   - Custom metrics for cortex-specific operations
+
+2. Intelligent Alerting:
+   - 75+ pre-configured alerts
+   - Alert inhibition rules (suppress cascading alerts)
+   - Multi-channel routing (Slack, PagerDuty)
+   - Severity-based escalation
+
+3. Rich Dashboards:
+   - 46 total panels across 3 dashboards
+   - Real-time updates (30s refresh)
+   - Template variables for filtering
+   - Alert annotations on graphs
+   - Heatmaps for duration analysis
+
+4. Production-Ready:
+   - RBAC for Kubernetes
+   - Persistent storage
+   - Resource limits
+   - Health checks
+   - Multi-environment support
+
+5. Observability Integration:
+   - Prometheus for metrics
+   - Loki for logs (ready to integrate)
+   - Tempo for traces (ready to integrate)
+   - AlertManager for notifications
+
+File Sizes:
+===========
+prometheus-config.yaml:        ~12 KB (scrape configs for all components)
+alerting-rules.yaml:          ~14 KB (75+ alert rules)
+recording-rules.yaml:         ~10 KB (performance aggregations)
+cortex-overview.json:         ~18 KB (15 panels, comprehensive)
+mcp-servers.json:             ~16 KB (14 panels, MCP-specific)
+contractor-performance.json:  ~20 KB (17 panels, analytics)
+servicemonitor.yaml:           ~4 KB (4 ServiceMonitors)
+podmonitor.yaml:               ~4 KB (4 PodMonitors)

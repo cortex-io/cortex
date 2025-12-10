@@ -1,0 +1,259 @@
+# Values for Proxmox MCP Server
+# This file overrides the default values in mcp-server/values.yaml
+
+nameOverride: "proxmox-mcp"
+fullnameOverride: "proxmox-mcp"
+
+mcpServer:
+  name: "proxmox-mcp"
+  type: "infrastructure-management"
+  version: "1.0.0"
+
+image:
+  repository: ghcr.io/cortex/proxmox-mcp-server
+  pullPolicy: IfNotPresent
+  tag: "latest"
+
+replicaCount: 2
+
+resources:
+  limits:
+    cpu: 1000m
+    memory: 512Mi
+  requests:
+    cpu: 100m
+    memory: 128Mi
+
+# Enable KEDA autoscaling for Proxmox operations
+keda:
+  enabled: true
+  minReplicaCount: 1
+  maxReplicaCount: 5
+  pollingInterval: 30
+  cooldownPeriod: 300
+  triggers:
+    # Scale based on API request rate
+    - type: prometheus
+      metadata:
+        serverAddress: http://prometheus-operated.monitoring.svc.cluster.local:9090
+        metricName: proxmox_api_requests_rate
+        threshold: '50'
+        query: sum(rate(http_requests_total{job="proxmox-mcp",status=~"2.."}[2m]))
+    # Scale based on VM operation queue
+    - type: prometheus
+      metadata:
+        serverAddress: http://prometheus-operated.monitoring.svc.cluster.local:9090
+        metricName: proxmox_operation_queue_depth
+        threshold: '20'
+        query: proxmox_operation_queue_length{job="proxmox-mcp"}
+    # CPU-based scaling
+    - type: cpu
+      metricType: Utilization
+      metadata:
+        value: "75"
+
+# Pod Disruption Budget
+podDisruptionBudget:
+  enabled: true
+  minAvailable: 1
+
+service:
+  enabled: true
+  type: ClusterIP
+  port: 8080
+  targetPort: 8080
+  annotations:
+    prometheus.io/scrape: "true"
+    prometheus.io/port: "8080"
+    prometheus.io/path: "/metrics"
+
+# ConfigMap for Proxmox configuration
+configMap:
+  enabled: true
+  data:
+    PROXMOX_API_ENDPOINT: "https://proxmox.cortex.local:8006/api2/json"
+    PROXMOX_MCP_PORT: "8080"
+    LOG_LEVEL: "info"
+    LOG_FORMAT: "json"
+    METRICS_ENABLED: "true"
+    METRICS_PORT: "8080"
+    # Proxmox operation settings
+    OPERATION_TIMEOUT: "600"
+    CONNECTION_TIMEOUT: "30"
+    MAX_CONCURRENT_OPERATIONS: "10"
+    # Cache settings
+    CACHE_TTL: "300"
+    CACHE_ENABLED: "true"
+    # VM operation settings
+    VM_START_TIMEOUT: "300"
+    VM_STOP_TIMEOUT: "180"
+    VM_SNAPSHOT_TIMEOUT: "300"
+    # SSL verification
+    SSL_VERIFY: "true"
+
+# Secret for Proxmox credentials (base64 encoded)
+secret:
+  enabled: true
+  data:
+    PROXMOX_API_TOKEN_ID: "" # Add base64 encoded API token ID (e.g., user@pam!tokenid)
+    PROXMOX_API_TOKEN_SECRET: "" # Add base64 encoded API token secret
+    PROXMOX_API_USER: "" # Alternative: base64 encoded username
+    PROXMOX_API_PASSWORD: "" # Alternative: base64 encoded password
+    PROXMOX_CA_CERT: "" # Optional: base64 encoded custom CA certificate
+
+envFrom:
+  - configMapRef:
+      name: proxmox-mcp-config
+  - secretRef:
+      name: proxmox-mcp-secret
+
+# Additional volumes for Proxmox configuration
+volumes:
+  - name: proxmox-config
+    emptyDir: {}
+  - name: cache
+    emptyDir: {}
+
+volumeMounts:
+  - name: proxmox-config
+    mountPath: /etc/proxmox
+    readOnly: false
+  - name: cache
+    mountPath: /tmp/cache
+    readOnly: false
+
+livenessProbe:
+  enabled: true
+  httpGet:
+    path: /health
+    port: 8080
+  initialDelaySeconds: 30
+  periodSeconds: 30
+  timeoutSeconds: 5
+  successThreshold: 1
+  failureThreshold: 3
+
+readinessProbe:
+  enabled: true
+  httpGet:
+    path: /ready
+    port: 8080
+  initialDelaySeconds: 15
+  periodSeconds: 10
+  timeoutSeconds: 3
+  successThreshold: 1
+  failureThreshold: 3
+
+startupProbe:
+  enabled: true
+  httpGet:
+    path: /health
+    port: 8080
+  initialDelaySeconds: 0
+  periodSeconds: 10
+  timeoutSeconds: 3
+  successThreshold: 1
+  failureThreshold: 30
+
+podLabels:
+  cortex.ai/component: "infrastructure-management"
+  cortex.ai/mcp-server: "proxmox"
+
+podAnnotations:
+  prometheus.io/scrape: "true"
+  prometheus.io/port: "8080"
+  prometheus.io/path: "/metrics"
+
+# Service Account
+serviceAccount:
+  create: true
+  annotations: {}
+  name: "proxmox-mcp"
+
+# Node affinity for infrastructure nodes
+affinity:
+  podAntiAffinity:
+    preferredDuringSchedulingIgnoredDuringExecution:
+      - weight: 100
+        podAffinityTerm:
+          labelSelector:
+            matchExpressions:
+              - key: app.kubernetes.io/name
+                operator: In
+                values:
+                  - proxmox-mcp
+          topologyKey: kubernetes.io/hostname
+
+# Lifecycle hooks for graceful shutdown
+lifecycle:
+  preStop:
+    exec:
+      command: ["/bin/sh", "-c", "sleep 15"]
+
+# Service Monitor for Prometheus
+serviceMonitor:
+  enabled: true
+  interval: 30s
+  scrapeTimeout: 10s
+  labels:
+    release: prometheus
+
+# Ingress (typically internal only)
+ingress:
+  enabled: false
+
+# Security context
+securityContext:
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop:
+    - ALL
+  readOnlyRootFilesystem: true
+  runAsNonRoot: true
+  runAsUser: 65534
+
+podSecurityContext:
+  runAsNonRoot: true
+  runAsUser: 65534
+  fsGroup: 65534
+  seccompProfile:
+    type: RuntimeDefault
+
+# Priority class for infrastructure operations
+priorityClassName: "system-cluster-critical"
+
+# Network policy to restrict access
+networkPolicy:
+  enabled: true
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    - from:
+      - namespaceSelector:
+          matchLabels:
+            cortex.ai/allowed: "true"
+      ports:
+      - protocol: TCP
+        port: 8080
+  egress:
+    # Allow DNS
+    - to:
+      - namespaceSelector: {}
+      ports:
+      - protocol: TCP
+        port: 53
+      - protocol: UDP
+        port: 53
+    # Allow Proxmox API (adjust IP range as needed)
+    - to:
+      - namespaceSelector: {}
+      ports:
+      - protocol: TCP
+        port: 8006
+    # Allow HTTPS for Proxmox
+    - to:
+      - namespaceSelector: {}
+      ports:
+      - protocol: TCP
+        port: 443

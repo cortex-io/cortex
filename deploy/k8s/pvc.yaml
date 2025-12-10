@@ -1,0 +1,78 @@
+---
+# PersistentVolumeClaim for cortex data storage
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: cortex-data
+  namespace: cortex
+  labels:
+    app.kubernetes.io/name: cortex
+    app.kubernetes.io/instance: cortex
+    app.kubernetes.io/component: storage
+    app.kubernetes.io/part-of: cortex-platform
+  annotations:
+    description: "Persistent storage for cortex application data, logs, and repositories"
+spec:
+  # Access mode
+  accessModes:
+  - ReadWriteOnce
+
+  # Storage class (adjust based on your Talos cluster storage backend)
+  # Common options: local-path, longhorn, nfs-client, ceph-rbd
+  storageClassName: local-path
+
+  # Resources
+  resources:
+    requests:
+      storage: 50Gi
+
+  # Volume mode
+  volumeMode: Filesystem
+
+  # Optional: selector for specific PV
+  # selector:
+  #   matchLabels:
+  #     app.kubernetes.io/name: cortex
+
+---
+# Optional: PersistentVolume for manual provisioning
+# Uncomment if you want to manually provision storage
+#
+# apiVersion: v1
+# kind: PersistentVolume
+# metadata:
+#   name: cortex-data-pv
+#   labels:
+#     app.kubernetes.io/name: cortex
+#     app.kubernetes.io/component: storage
+# spec:
+#   capacity:
+#     storage: 50Gi
+#   volumeMode: Filesystem
+#   accessModes:
+#   - ReadWriteOnce
+#   persistentVolumeReclaimPolicy: Retain
+#   storageClassName: local-path
+#
+#   # Local path storage (Talos-specific)
+#   local:
+#     path: /var/lib/cortex
+#   nodeAffinity:
+#     required:
+#       nodeSelectorTerms:
+#       - matchExpressions:
+#         - key: kubernetes.io/hostname
+#           operator: In
+#           values:
+#           - worker-node-1
+#
+#   # Or NFS storage
+#   # nfs:
+#   #   server: nfs-server.example.com
+#   #   path: /exports/cortex
+#
+#   # Or Longhorn (recommended for Talos)
+#   # csi:
+#   #   driver: driver.longhorn.io
+#   #   volumeHandle: cortex-data-volume
+#   #   fsType: ext4

@@ -1,0 +1,239 @@
+global:
+  scrape_interval: 15s
+  scrape_timeout: 10s
+  evaluation_interval: 15s
+  external_labels:
+    cluster: cortex
+    environment: production
+
+# Alertmanager configuration
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets:
+            - alertmanager:9093
+      timeout: 10s
+      api_version: v2
+
+# Load rules
+rule_files:
+  - /etc/prometheus/alerting-rules.yaml
+  - /etc/prometheus/recording-rules.yaml
+
+# Scrape configurations
+scrape_configs:
+  # Prometheus self-monitoring
+  - job_name: prometheus
+    static_configs:
+      - targets:
+          - localhost:9090
+        labels:
+          instance: prometheus
+          service: monitoring
+
+  # Cortex meta-agent and coordination layer
+  - job_name: cortex-core
+    scrape_interval: 10s
+    static_configs:
+      - targets:
+          - cortex-core:8080
+        labels:
+          component: meta-agent
+          tier: core
+    metric_relabel_configs:
+      - source_labels: [__name__]
+        regex: cortex_.*
+        action: keep
+
+  # Master agents (coordinator, development, security, cicd, inventory)
+  - job_name: cortex-masters
+    scrape_interval: 15s
+    kubernetes_sd_configs:
+      - role: pod
+        namespaces:
+          names:
+            - cortex
+    relabel_configs:
+      - source_labels: [__meta_kubernetes_pod_label_app]
+        regex: cortex-master
+        action: keep
+      - source_labels: [__meta_kubernetes_pod_label_master_type]
+        target_label: master_type
+      - source_labels: [__meta_kubernetes_pod_name]
+        target_label: pod
+      - source_labels: [__meta_kubernetes_namespace]
+        target_label: namespace
+      - source_labels: [__address__]
+        target_label: __address__
+        regex: ([^:]+)(?::\d+)?
+        replacement: $1:8080
+    metric_relabel_configs:
+      - source_labels: [__name__]
+        regex: (cortex_master_.*|cortex_worker_.*|cortex_task_.*)
+        action: keep
+
+  # Worker agents (spawned by masters)
+  - job_name: cortex-workers
+    scrape_interval: 10s
+    kubernetes_sd_configs:
+      - role: pod
+        namespaces:
+          names:
+            - cortex
+    relabel_configs:
+      - source_labels: [__meta_kubernetes_pod_label_app]
+        regex: cortex-worker
+        action: keep
+      - source_labels: [__meta_kubernetes_pod_label_worker_type]
+        target_label: worker_type
+      - source_labels: [__meta_kubernetes_pod_label_parent_master]
+        target_label: parent_master
+      - source_labels: [__meta_kubernetes_pod_name]
+        target_label: pod
+      - source_labels: [__address__]
+        target_label: __address__
+        regex: ([^:]+)(?::\d+)?
+        replacement: $1:8080
+
+  # MCP servers
+  - job_name: mcp-servers
+    scrape_interval: 15s
+    kubernetes_sd_configs:
+      - role: pod
+        namespaces:
+          names:
+            - cortex
+    relabel_configs:
+      - source_labels: [__meta_kubernetes_pod_label_app]
+        regex: mcp-server
+        action: keep
+      - source_labels: [__meta_kubernetes_pod_label_mcp_type]
+        target_label: mcp_type
+      - source_labels: [__meta_kubernetes_pod_annotation_mcp_capabilities]
+        target_label: capabilities
+      - source_labels: [__meta_kubernetes_pod_name]
+        target_label: pod
+      - source_labels: [__address__]
+        target_label: __address__
+        regex: ([^:]+)(?::\d+)?
+        replacement: $1:9090
+    metric_relabel_configs:
+      - source_labels: [__name__]
+        regex: mcp_.*
+        action: keep
+
+  # Contractors (specialized external agents)
+  - job_name: cortex-contractors
+    scrape_interval: 20s
+    static_configs:
+      - targets:
+          - infrastructure-contractor:8080
+        labels:
+          contractor_type: infrastructure
+          specialization: kubernetes
+      - targets:
+          - n8n-contractor:8080
+        labels:
+          contractor_type: n8n
+          specialization: workflow-automation
+      - targets:
+          - talos-contractor:8080
+        labels:
+          contractor_type: talos
+          specialization: os-management
+    metric_relabel_configs:
+      - source_labels: [__name__]
+        regex: contractor_.*
+        action: keep
+
+  # Dashboard and API services
+  - job_name: cortex-dashboard
+    scrape_interval: 15s
+    static_configs:
+      - targets:
+          - cortex-dashboard:3000
+        labels:
+          component: dashboard
+          tier: presentation
+
+  # Node exporters for system metrics
+  - job_name: node-exporter
+    scrape_interval: 30s
+    kubernetes_sd_configs:
+      - role: node
+    relabel_configs:
+      - source_labels: [__address__]
+        regex: ([^:]+)(?::\d+)?
+        replacement: $1:9100
+        target_label: __address__
+      - source_labels: [__meta_kubernetes_node_name]
+        target_label: node
+
+  # cAdvisor for container metrics
+  - job_name: cadvisor
+    scrape_interval: 30s
+    kubernetes_sd_configs:
+      - role: node
+    relabel_configs:
+      - source_labels: [__address__]
+        regex: ([^:]+)(?::\d+)?
+        replacement: $1:4194
+        target_label: __address__
+      - source_labels: [__meta_kubernetes_node_name]
+        target_label: node
+    metric_relabel_configs:
+      - source_labels: [container_label_io_kubernetes_pod_name]
+        target_label: pod
+      - source_labels: [container_label_io_kubernetes_container_name]
+        target_label: container
+
+  # Kubernetes API server
+  - job_name: kubernetes-apiservers
+    kubernetes_sd_configs:
+      - role: endpoints
+    scheme: https
+    tls_config:
+      ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+    bearer_token_file: /var/run/secrets/kubernetes.io/serviceaccount/token
+    relabel_configs:
+      - source_labels: [__meta_kubernetes_namespace, __meta_kubernetes_service_name, __meta_kubernetes_endpoint_port_name]
+        action: keep
+        regex: default;kubernetes;https
+
+  # Kubernetes controller manager
+  - job_name: kube-controller-manager
+    honor_labels: true
+    kubernetes_sd_configs:
+      - role: endpoints
+    relabel_configs:
+      - source_labels: [__meta_kubernetes_service_label_component]
+        regex: kube-controller-manager
+        action: keep
+
+  # Kubernetes scheduler
+  - job_name: kube-scheduler
+    honor_labels: true
+    kubernetes_sd_configs:
+      - role: endpoints
+    relabel_configs:
+      - source_labels: [__meta_kubernetes_service_label_component]
+        regex: kube-scheduler
+        action: keep
+
+  # Blackbox exporter for endpoint monitoring
+  - job_name: blackbox
+    metrics_path: /probe
+    params:
+      module: [http_2xx]
+    static_configs:
+      - targets:
+          - https://cortex-dashboard:3000/health
+          - https://cortex-core:8080/health
+          - https://mcp-registry:8080/health
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: __param_target
+      - source_labels: [__param_target]
+        target_label: instance
+      - target_label: __address__
+        replacement: blackbox-exporter:9115

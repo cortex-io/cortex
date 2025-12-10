@@ -1,0 +1,326 @@
+groups:
+  # Cortex Core Alerts
+  - name: cortex_core
+    interval: 30s
+    rules:
+      - alert: CortexMetaAgentDown
+        expr: up{job="cortex-core"} == 0
+        for: 2m
+        labels:
+          severity: critical
+          component: meta-agent
+        annotations:
+          summary: "Cortex meta-agent is down"
+          description: "The cortex meta-agent has been down for more than 2 minutes."
+
+      - alert: CortexHighErrorRate
+        expr: rate(cortex_requests_total{status="error"}[5m]) / rate(cortex_requests_total[5m]) > 0.05
+        for: 5m
+        labels:
+          severity: warning
+          component: core
+        annotations:
+          summary: "High error rate in cortex core"
+          description: "Error rate is {{ $value | humanizePercentage }} over the last 5 minutes."
+
+      - alert: CortexHighLatency
+        expr: histogram_quantile(0.95, rate(cortex_request_duration_seconds_bucket[5m])) > 5
+        for: 5m
+        labels:
+          severity: warning
+          component: core
+        annotations:
+          summary: "High request latency in cortex"
+          description: "95th percentile latency is {{ $value }}s over the last 5 minutes."
+
+  # Master Agent Alerts
+  - name: cortex_masters
+    interval: 30s
+    rules:
+      - alert: MasterAgentDown
+        expr: up{job="cortex-masters"} == 0
+        for: 3m
+        labels:
+          severity: critical
+          component: master
+        annotations:
+          summary: "Master agent {{ $labels.master_type }} is down"
+          description: "Master agent {{ $labels.master_type }} on pod {{ $labels.pod }} has been down for more than 3 minutes."
+
+      - alert: MasterWorkerSpawnFailure
+        expr: rate(cortex_master_worker_spawn_failures_total[10m]) > 0.1
+        for: 5m
+        labels:
+          severity: warning
+          component: master
+        annotations:
+          summary: "Master {{ $labels.master_type }} failing to spawn workers"
+          description: "Master {{ $labels.master_type }} has {{ $value }} worker spawn failures per second."
+
+      - alert: MasterTaskBacklog
+        expr: cortex_master_task_queue_length > 50
+        for: 10m
+        labels:
+          severity: warning
+          component: master
+        annotations:
+          summary: "Large task backlog for master {{ $labels.master_type }}"
+          description: "Master {{ $labels.master_type }} has {{ $value }} tasks in queue."
+
+      - alert: MasterMemoryPressure
+        expr: cortex_master_memory_usage_bytes / cortex_master_memory_limit_bytes > 0.9
+        for: 5m
+        labels:
+          severity: warning
+          component: master
+        annotations:
+          summary: "Master {{ $labels.master_type }} experiencing memory pressure"
+          description: "Master {{ $labels.master_type }} is using {{ $value | humanizePercentage }} of memory limit."
+
+  # Worker Agent Alerts
+  - name: cortex_workers
+    interval: 30s
+    rules:
+      - alert: HighWorkerFailureRate
+        expr: rate(cortex_worker_task_failures_total[10m]) / rate(cortex_worker_task_completions_total[10m]) > 0.2
+        for: 5m
+        labels:
+          severity: warning
+          component: worker
+        annotations:
+          summary: "High worker failure rate for {{ $labels.worker_type }}"
+          description: "Worker type {{ $labels.worker_type }} has {{ $value | humanizePercentage }} failure rate."
+
+      - alert: WorkerTokenExhaustion
+        expr: cortex_worker_tokens_remaining / cortex_worker_tokens_allocated < 0.1
+        for: 2m
+        labels:
+          severity: warning
+          component: worker
+        annotations:
+          summary: "Worker {{ $labels.pod }} running low on tokens"
+          description: "Worker {{ $labels.pod }} has only {{ $value | humanizePercentage }} of tokens remaining."
+
+      - alert: WorkerStuck
+        expr: time() - cortex_worker_last_activity_timestamp > 1800
+        for: 5m
+        labels:
+          severity: warning
+          component: worker
+        annotations:
+          summary: "Worker {{ $labels.pod }} appears stuck"
+          description: "Worker {{ $labels.pod }} has not reported activity for {{ $value }}s."
+
+      - alert: TooManyActiveWorkers
+        expr: count(cortex_worker_status{status="active"}) by (parent_master) > 20
+        for: 10m
+        labels:
+          severity: warning
+          component: worker
+        annotations:
+          summary: "Too many active workers for master {{ $labels.parent_master }}"
+          description: "Master {{ $labels.parent_master }} has {{ $value }} active workers."
+
+  # MCP Server Alerts
+  - name: mcp_servers
+    interval: 30s
+    rules:
+      - alert: MCPServerDown
+        expr: up{job="mcp-servers"} == 0
+        for: 3m
+        labels:
+          severity: critical
+          component: mcp
+        annotations:
+          summary: "MCP server {{ $labels.mcp_type }} is down"
+          description: "MCP server {{ $labels.mcp_type }} on pod {{ $labels.pod }} has been down for more than 3 minutes."
+
+      - alert: MCPHighRequestLatency
+        expr: histogram_quantile(0.95, rate(mcp_request_duration_seconds_bucket[5m])) > 2
+        for: 5m
+        labels:
+          severity: warning
+          component: mcp
+        annotations:
+          summary: "High latency for MCP server {{ $labels.mcp_type }}"
+          description: "95th percentile latency is {{ $value }}s for MCP server {{ $labels.mcp_type }}."
+
+      - alert: MCPConnectionPoolExhausted
+        expr: mcp_connection_pool_active / mcp_connection_pool_size > 0.9
+        for: 5m
+        labels:
+          severity: warning
+          component: mcp
+        annotations:
+          summary: "MCP server {{ $labels.mcp_type }} connection pool nearly exhausted"
+          description: "Connection pool is {{ $value | humanizePercentage }} utilized."
+
+      - alert: MCPToolCallFailures
+        expr: rate(mcp_tool_call_failures_total[10m]) > 0.5
+        for: 5m
+        labels:
+          severity: warning
+          component: mcp
+        annotations:
+          summary: "High tool call failure rate for MCP server {{ $labels.mcp_type }}"
+          description: "MCP server {{ $labels.mcp_type }} has {{ $value }} tool call failures per second."
+
+  # Contractor Alerts
+  - name: cortex_contractors
+    interval: 30s
+    rules:
+      - alert: ContractorDown
+        expr: up{job="cortex-contractors"} == 0
+        for: 5m
+        labels:
+          severity: warning
+          component: contractor
+        annotations:
+          summary: "Contractor {{ $labels.contractor_type }} is down"
+          description: "Contractor {{ $labels.contractor_type }} has been down for more than 5 minutes."
+
+      - alert: ContractorHighErrorRate
+        expr: rate(contractor_requests_total{status="error"}[10m]) / rate(contractor_requests_total[10m]) > 0.1
+        for: 5m
+        labels:
+          severity: warning
+          component: contractor
+        annotations:
+          summary: "High error rate for contractor {{ $labels.contractor_type }}"
+          description: "Contractor {{ $labels.contractor_type }} has {{ $value | humanizePercentage }} error rate."
+
+      - alert: ContractorSlowResponse
+        expr: histogram_quantile(0.95, rate(contractor_request_duration_seconds_bucket[10m])) > 10
+        for: 5m
+        labels:
+          severity: warning
+          component: contractor
+        annotations:
+          summary: "Slow response from contractor {{ $labels.contractor_type }}"
+          description: "95th percentile latency is {{ $value }}s for contractor {{ $labels.contractor_type }}."
+
+  # Resource Utilization Alerts
+  - name: cortex_resources
+    interval: 60s
+    rules:
+      - alert: HighCPUUsage
+        expr: rate(container_cpu_usage_seconds_total{namespace="cortex"}[5m]) > 0.9
+        for: 10m
+        labels:
+          severity: warning
+          component: infrastructure
+        annotations:
+          summary: "High CPU usage for {{ $labels.pod }}"
+          description: "Pod {{ $labels.pod }} is using {{ $value | humanizePercentage }} CPU."
+
+      - alert: HighMemoryUsage
+        expr: container_memory_usage_bytes{namespace="cortex"} / container_spec_memory_limit_bytes > 0.9
+        for: 10m
+        labels:
+          severity: warning
+          component: infrastructure
+        annotations:
+          summary: "High memory usage for {{ $labels.pod }}"
+          description: "Pod {{ $labels.pod }} is using {{ $value | humanizePercentage }} of memory limit."
+
+      - alert: PodRestartLoop
+        expr: rate(kube_pod_container_status_restarts_total{namespace="cortex"}[15m]) > 0
+        for: 5m
+        labels:
+          severity: warning
+          component: infrastructure
+        annotations:
+          summary: "Pod {{ $labels.pod }} is restarting"
+          description: "Pod {{ $labels.pod }} has restarted {{ $value }} times in the last 15 minutes."
+
+  # Task Performance Alerts
+  - name: cortex_tasks
+    interval: 30s
+    rules:
+      - alert: TaskCompletionRateDropping
+        expr: rate(cortex_task_completions_total[15m]) < 0.5
+        for: 10m
+        labels:
+          severity: warning
+          component: coordination
+        annotations:
+          summary: "Task completion rate is low"
+          description: "Only {{ $value }} tasks completing per second."
+
+      - alert: TaskQueueGrowth
+        expr: delta(cortex_task_queue_length[10m]) > 20
+        for: 5m
+        labels:
+          severity: warning
+          component: coordination
+        annotations:
+          summary: "Task queue growing rapidly"
+          description: "Task queue has grown by {{ $value }} tasks in 10 minutes."
+
+      - alert: LongRunningTask
+        expr: time() - cortex_task_start_timestamp > 3600
+        for: 5m
+        labels:
+          severity: info
+          component: coordination
+        annotations:
+          summary: "Task {{ $labels.task_id }} running for over 1 hour"
+          description: "Task {{ $labels.task_id }} has been running for {{ $value | humanizeDuration }}."
+
+  # Dashboard and API Alerts
+  - name: cortex_dashboard
+    interval: 30s
+    rules:
+      - alert: DashboardDown
+        expr: up{job="cortex-dashboard"} == 0
+        for: 2m
+        labels:
+          severity: warning
+          component: dashboard
+        annotations:
+          summary: "Cortex dashboard is down"
+          description: "The cortex dashboard has been down for more than 2 minutes."
+
+      - alert: DashboardHighLatency
+        expr: histogram_quantile(0.95, rate(http_request_duration_seconds_bucket{job="cortex-dashboard"}[5m])) > 3
+        for: 5m
+        labels:
+          severity: warning
+          component: dashboard
+        annotations:
+          summary: "High latency on cortex dashboard"
+          description: "95th percentile latency is {{ $value }}s."
+
+  # Token Budget Alerts
+  - name: cortex_tokens
+    interval: 30s
+    rules:
+      - alert: HighTokenConsumptionRate
+        expr: rate(cortex_tokens_consumed_total[10m]) > 1000
+        for: 5m
+        labels:
+          severity: warning
+          component: core
+        annotations:
+          summary: "High token consumption rate"
+          description: "Consuming {{ $value }} tokens per second."
+
+      - alert: TokenBudgetExhaustion
+        expr: cortex_tokens_remaining / cortex_tokens_budget < 0.1
+        for: 5m
+        labels:
+          severity: critical
+          component: core
+        annotations:
+          summary: "Token budget nearly exhausted"
+          description: "Only {{ $value | humanizePercentage }} of token budget remaining."
+
+      - alert: WorkerTokenInefficiency
+        expr: cortex_worker_tokens_consumed / cortex_worker_tokens_allocated > 0.95
+        for: 2m
+        labels:
+          severity: info
+          component: worker
+        annotations:
+          summary: "Worker {{ $labels.pod }} using allocated tokens efficiently"
+          description: "Worker has used {{ $value | humanizePercentage }} of allocated tokens."

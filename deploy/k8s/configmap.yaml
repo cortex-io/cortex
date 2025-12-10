@@ -1,0 +1,40 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: cortex-config
+  namespace: cortex
+  labels:
+    app.kubernetes.io/name: cortex
+    app.kubernetes.io/instance: cortex
+    app.kubernetes.io/component: configuration
+    app.kubernetes.io/part-of: cortex-platform
+  annotations:
+    description: "Cortex application configuration"
+data:
+  # Application environment
+  NODE_ENV: "production"
+
+  # CORS configuration
+  ALLOWED_ORIGINS: "https://cortex.example.com,https://cortex-dashboard.example.com"
+
+  # Worker configuration
+  MAX_WORKERS: "10000"
+  WORKER_TIMEOUT_MINUTES: "45"
+  WORKER_TOKEN_BUDGET: "10000"
+
+  # Logging configuration
+  DEBUG: "false"
+
+  # Metrics configuration
+  METRICS_RETENTION_DAYS: "30"
+
+  # Git configuration
+  GIT_AUTHOR_NAME: "Cortex Bot"
+  GIT_AUTHOR_EMAIL: "cortex@ry-ops.io"
+
+  # Performance tuning
+  NODE_OPTIONS: "--max-old-space-size=3072 --max-http-header-size=16384"
+
+  # Timezone
+  TZ: "UTC"

@@ -1,0 +1,195 @@
+---
+# Ingress for HTTP/WebSocket traffic
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: cortex
+  namespace: cortex
+  labels:
+    app.kubernetes.io/name: cortex
+    app.kubernetes.io/instance: cortex
+    app.kubernetes.io/component: ingress
+    app.kubernetes.io/part-of: cortex-platform
+  annotations:
+    # Ingress class
+    kubernetes.io/ingress.class: "nginx"
+
+    # SSL/TLS configuration
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+
+    # NGINX-specific annotations
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/backend-protocol: "HTTP"
+
+    # WebSocket support
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "3600"
+    nginx.ingress.kubernetes.io/websocket-services: "cortex"
+
+    # CORS headers
+    nginx.ingress.kubernetes.io/enable-cors: "true"
+    nginx.ingress.kubernetes.io/cors-allow-origin: "https://cortex.example.com,https://cortex-dashboard.example.com"
+    nginx.ingress.kubernetes.io/cors-allow-methods: "GET, POST, PUT, DELETE, OPTIONS"
+    nginx.ingress.kubernetes.io/cors-allow-credentials: "true"
+
+    # Rate limiting
+    nginx.ingress.kubernetes.io/limit-rps: "100"
+    nginx.ingress.kubernetes.io/limit-connections: "50"
+
+    # Client body size (for large uploads)
+    nginx.ingress.kubernetes.io/proxy-body-size: "50m"
+
+    # Security headers
+    nginx.ingress.kubernetes.io/configuration-snippet: |
+      more_set_headers "X-Frame-Options: DENY";
+      more_set_headers "X-Content-Type-Options: nosniff";
+      more_set_headers "X-XSS-Protection: 1; mode=block";
+      more_set_headers "Referrer-Policy: strict-origin-when-cross-origin";
+      more_set_headers "Permissions-Policy: accelerometer=(), camera=(), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), payment=(), usb=()";
+
+    # Cloudflare Tunnel annotations (if using Cloudflare)
+    external-dns.alpha.kubernetes.io/cloudflare-proxied: "true"
+    external-dns.alpha.kubernetes.io/hostname: "cortex.example.com"
+spec:
+  tls:
+  - hosts:
+    - cortex.example.com
+    secretName: cortex-tls
+  rules:
+  - host: cortex.example.com
+    http:
+      paths:
+      # API endpoints
+      - path: /api
+        pathType: Prefix
+        backend:
+          service:
+            name: cortex
+            port:
+              name: http
+      # WebSocket endpoint
+      - path: /ws
+        pathType: Prefix
+        backend:
+          service:
+            name: cortex
+            port:
+              name: websocket
+      # Dashboard
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: cortex
+            port:
+              name: dashboard
+
+---
+# Ingress for dashboard (separate domain if needed)
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: cortex-dashboard
+  namespace: cortex
+  labels:
+    app.kubernetes.io/name: cortex
+    app.kubernetes.io/instance: cortex
+    app.kubernetes.io/component: ingress
+    app.kubernetes.io/part-of: cortex-platform
+  annotations:
+    kubernetes.io/ingress.class: "nginx"
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/backend-protocol: "HTTP"
+    nginx.ingress.kubernetes.io/enable-cors: "true"
+    nginx.ingress.kubernetes.io/cors-allow-origin: "https://cortex-dashboard.example.com"
+    nginx.ingress.kubernetes.io/proxy-body-size: "10m"
+    external-dns.alpha.kubernetes.io/cloudflare-proxied: "true"
+    external-dns.alpha.kubernetes.io/hostname: "cortex-dashboard.example.com"
+spec:
+  tls:
+  - hosts:
+    - cortex-dashboard.example.com
+    secretName: cortex-dashboard-tls
+  rules:
+  - host: cortex-dashboard.example.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: cortex
+            port:
+              name: dashboard
+
+---
+# Alternative: Cloudflare Tunnel (Argo Tunnel) configuration
+# This is an alternative to traditional Ingress if using Cloudflare Tunnel
+# Uncomment if using cloudflared sidecar pattern
+#
+# apiVersion: v1
+# kind: ConfigMap
+# metadata:
+#   name: cloudflared-config
+#   namespace: cortex
+# data:
+#   config.yaml: |
+#     tunnel: TUNNEL_ID
+#     credentials-file: /etc/cloudflared/credentials.json
+#     ingress:
+#       - hostname: cortex.example.com
+#         service: http://cortex.cortex.svc.cluster.local:9500
+#         originRequest:
+#           noTLSVerify: true
+#       - hostname: ws.cortex.example.com
+#         service: http://cortex.cortex.svc.cluster.local:9501
+#         originRequest:
+#           noTLSVerify: true
+#       - hostname: dashboard.cortex.example.com
+#         service: http://cortex.cortex.svc.cluster.local:3004
+#         originRequest:
+#           noTLSVerify: true
+#       - service: http_status:404
+#
+# ---
+# apiVersion: apps/v1
+# kind: Deployment
+# metadata:
+#   name: cloudflared
+#   namespace: cortex
+# spec:
+#   replicas: 2
+#   selector:
+#     matchLabels:
+#       app: cloudflared
+#   template:
+#     metadata:
+#       labels:
+#         app: cloudflared
+#     spec:
+#       containers:
+#       - name: cloudflared
+#         image: cloudflare/cloudflared:latest
+#         args:
+#         - tunnel
+#         - --config
+#         - /etc/cloudflared/config.yaml
+#         - run
+#         volumeMounts:
+#         - name: config
+#           mountPath: /etc/cloudflared
+#           readOnly: true
+#         - name: credentials
+#           mountPath: /etc/cloudflared/credentials.json
+#           subPath: credentials.json
+#           readOnly: true
+#       volumes:
+#       - name: config
+#         configMap:
+#           name: cloudflared-config
+#       - name: credentials
+#         secret:
+#           secretName: cloudflared-credentials

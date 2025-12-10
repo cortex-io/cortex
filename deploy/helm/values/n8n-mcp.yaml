@@ -1,0 +1,202 @@
+# Values for n8n MCP Server
+# This file overrides the default values in mcp-server/values.yaml
+
+nameOverride: "n8n-mcp"
+fullnameOverride: "n8n-mcp"
+
+mcpServer:
+  name: "n8n-mcp"
+  type: "workflow-automation"
+  version: "1.0.0"
+
+image:
+  repository: ghcr.io/cortex/n8n-mcp-server
+  pullPolicy: IfNotPresent
+  tag: "latest"
+
+replicaCount: 2
+
+resources:
+  limits:
+    cpu: 2000m
+    memory: 1Gi
+  requests:
+    cpu: 200m
+    memory: 256Mi
+
+# Enable KEDA autoscaling for n8n workloads
+keda:
+  enabled: true
+  minReplicaCount: 2
+  maxReplicaCount: 10
+  pollingInterval: 30
+  cooldownPeriod: 300
+  triggers:
+    # Scale based on HTTP request rate from Prometheus
+    - type: prometheus
+      metadata:
+        serverAddress: http://prometheus-operated.monitoring.svc.cluster.local:9090
+        metricName: n8n_http_requests_rate
+        threshold: '100'
+        query: sum(rate(http_requests_total{job="n8n-mcp",status=~"2.."}[2m]))
+    # Scale based on workflow queue depth
+    - type: prometheus
+      metadata:
+        serverAddress: http://prometheus-operated.monitoring.svc.cluster.local:9090
+        metricName: n8n_workflow_queue_depth
+        threshold: '50'
+        query: n8n_workflow_queue_length{job="n8n-mcp"}
+    # Fallback CPU-based scaling
+    - type: cpu
+      metricType: Utilization
+      metadata:
+        value: "70"
+
+# Pod Disruption Budget for high availability
+podDisruptionBudget:
+  enabled: true
+  minAvailable: 1
+
+service:
+  enabled: true
+  type: ClusterIP
+  port: 8080
+  targetPort: 8080
+  annotations:
+    prometheus.io/scrape: "true"
+    prometheus.io/port: "8080"
+    prometheus.io/path: "/metrics"
+
+# ConfigMap for n8n configuration
+configMap:
+  enabled: true
+  data:
+    N8N_HOST: "n8n.cortex.local"
+    N8N_PORT: "8080"
+    N8N_PROTOCOL: "https"
+    N8N_METRICS: "true"
+    EXECUTIONS_MODE: "queue"
+    QUEUE_BULL_REDIS_HOST: "redis-master.database.svc.cluster.local"
+    QUEUE_BULL_REDIS_PORT: "6379"
+    DB_TYPE: "postgresdb"
+    DB_POSTGRESDB_HOST: "postgresql.database.svc.cluster.local"
+    DB_POSTGRESDB_PORT: "5432"
+    DB_POSTGRESDB_DATABASE: "n8n"
+    N8N_LOG_LEVEL: "info"
+    N8N_LOG_OUTPUT: "json"
+
+# Secret for n8n credentials (base64 encoded)
+secret:
+  enabled: true
+  data:
+    N8N_ENCRYPTION_KEY: "" # Add base64 encoded encryption key
+    DB_POSTGRESDB_USER: "" # Add base64 encoded database user
+    DB_POSTGRESDB_PASSWORD: "" # Add base64 encoded database password
+    QUEUE_BULL_REDIS_PASSWORD: "" # Add base64 encoded redis password
+
+envFrom:
+  - configMapRef:
+      name: n8n-mcp-config
+  - secretRef:
+      name: n8n-mcp-secret
+
+livenessProbe:
+  enabled: true
+  httpGet:
+    path: /healthz
+    port: 8080
+  initialDelaySeconds: 60
+  periodSeconds: 30
+  timeoutSeconds: 5
+  successThreshold: 1
+  failureThreshold: 3
+
+readinessProbe:
+  enabled: true
+  httpGet:
+    path: /healthz
+    port: 8080
+  initialDelaySeconds: 30
+  periodSeconds: 10
+  timeoutSeconds: 3
+  successThreshold: 1
+  failureThreshold: 3
+
+startupProbe:
+  enabled: true
+  httpGet:
+    path: /healthz
+    port: 8080
+  initialDelaySeconds: 0
+  periodSeconds: 10
+  timeoutSeconds: 3
+  successThreshold: 1
+  failureThreshold: 30
+
+# Volume for n8n data persistence
+volumes:
+  - name: n8n-data
+    emptyDir: {}
+  - name: n8n-files
+    emptyDir: {}
+
+volumeMounts:
+  - name: n8n-data
+    mountPath: /home/node/.n8n
+  - name: n8n-files
+    mountPath: /files
+
+podLabels:
+  cortex.ai/component: "workflow-automation"
+  cortex.ai/mcp-server: "n8n"
+
+podAnnotations:
+  prometheus.io/scrape: "true"
+  prometheus.io/port: "8080"
+  prometheus.io/path: "/metrics"
+
+# Node affinity for workflow nodes
+affinity:
+  podAntiAffinity:
+    preferredDuringSchedulingIgnoredDuringExecution:
+      - weight: 100
+        podAffinityTerm:
+          labelSelector:
+            matchExpressions:
+              - key: app.kubernetes.io/name
+                operator: In
+                values:
+                  - n8n-mcp
+          topologyKey: kubernetes.io/hostname
+
+# Lifecycle hooks for graceful shutdown
+lifecycle:
+  preStop:
+    exec:
+      command: ["/bin/sh", "-c", "sleep 15"]
+
+# Service Monitor for Prometheus
+serviceMonitor:
+  enabled: true
+  interval: 30s
+  scrapeTimeout: 10s
+  labels:
+    release: prometheus
+
+# Ingress for external access
+ingress:
+  enabled: true
+  className: "nginx"
+  annotations:
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/proxy-body-size: "16m"
+  hosts:
+    - host: n8n-mcp.cortex.local
+      paths:
+        - path: /
+          pathType: Prefix
+  tls:
+    - secretName: n8n-mcp-tls
+      hosts:
+        - n8n-mcp.cortex.local

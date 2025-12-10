@@ -1,0 +1,230 @@
+# Values for Talos MCP Server
+# This file overrides the default values in mcp-server/values.yaml
+
+nameOverride: "talos-mcp"
+fullnameOverride: "talos-mcp"
+
+mcpServer:
+  name: "talos-mcp"
+  type: "kubernetes-management"
+  version: "1.0.0"
+
+image:
+  repository: ghcr.io/cortex/talos-mcp-server
+  pullPolicy: IfNotPresent
+  tag: "latest"
+
+replicaCount: 2
+
+resources:
+  limits:
+    cpu: 1000m
+    memory: 512Mi
+  requests:
+    cpu: 100m
+    memory: 128Mi
+
+# Enable KEDA autoscaling for Talos operations
+keda:
+  enabled: true
+  minReplicaCount: 1
+  maxReplicaCount: 5
+  pollingInterval: 30
+  cooldownPeriod: 300
+  triggers:
+    # Scale based on API request rate
+    - type: prometheus
+      metadata:
+        serverAddress: http://prometheus-operated.monitoring.svc.cluster.local:9090
+        metricName: talos_api_requests_rate
+        threshold: '50'
+        query: sum(rate(http_requests_total{job="talos-mcp",status=~"2.."}[2m]))
+    # Scale based on Talos operation queue
+    - type: prometheus
+      metadata:
+        serverAddress: http://prometheus-operated.monitoring.svc.cluster.local:9090
+        metricName: talos_operation_queue_depth
+        threshold: '10'
+        query: talos_operation_queue_length{job="talos-mcp"}
+    # CPU-based scaling
+    - type: cpu
+      metricType: Utilization
+      metadata:
+        value: "75"
+
+# Pod Disruption Budget
+podDisruptionBudget:
+  enabled: true
+  minAvailable: 1
+
+service:
+  enabled: true
+  type: ClusterIP
+  port: 8080
+  targetPort: 8080
+  annotations:
+    prometheus.io/scrape: "true"
+    prometheus.io/port: "8080"
+    prometheus.io/path: "/metrics"
+
+# ConfigMap for Talos configuration
+configMap:
+  enabled: true
+  data:
+    TALOS_API_ENDPOINT: "https://talos.cortex.local:50000"
+    TALOS_MCP_PORT: "8080"
+    LOG_LEVEL: "info"
+    LOG_FORMAT: "json"
+    METRICS_ENABLED: "true"
+    METRICS_PORT: "8080"
+    # Talos operation timeouts
+    OPERATION_TIMEOUT: "300"
+    CONNECTION_TIMEOUT: "30"
+    # Cache settings
+    CACHE_TTL: "300"
+    CACHE_ENABLED: "true"
+
+# Secret for Talos credentials (base64 encoded)
+secret:
+  enabled: true
+  data:
+    TALOS_API_TOKEN: "" # Add base64 encoded Talos API token
+    TALOS_CLIENT_CERT: "" # Add base64 encoded client certificate
+    TALOS_CLIENT_KEY: "" # Add base64 encoded client key
+    TALOS_CA_CERT: "" # Add base64 encoded CA certificate
+
+envFrom:
+  - configMapRef:
+      name: talos-mcp-config
+  - secretRef:
+      name: talos-mcp-secret
+
+# Additional volumes for Talos certificates
+volumes:
+  - name: talos-config
+    emptyDir: {}
+  - name: talos-certs
+    secret:
+      secretName: talos-mcp-secret
+      items:
+        - key: TALOS_CLIENT_CERT
+          path: client.crt
+        - key: TALOS_CLIENT_KEY
+          path: client.key
+        - key: TALOS_CA_CERT
+          path: ca.crt
+
+volumeMounts:
+  - name: talos-config
+    mountPath: /etc/talos
+    readOnly: false
+  - name: talos-certs
+    mountPath: /etc/talos/certs
+    readOnly: true
+
+livenessProbe:
+  enabled: true
+  httpGet:
+    path: /health
+    port: 8080
+  initialDelaySeconds: 30
+  periodSeconds: 30
+  timeoutSeconds: 5
+  successThreshold: 1
+  failureThreshold: 3
+
+readinessProbe:
+  enabled: true
+  httpGet:
+    path: /ready
+    port: 8080
+  initialDelaySeconds: 15
+  periodSeconds: 10
+  timeoutSeconds: 3
+  successThreshold: 1
+  failureThreshold: 3
+
+startupProbe:
+  enabled: true
+  httpGet:
+    path: /health
+    port: 8080
+  initialDelaySeconds: 0
+  periodSeconds: 10
+  timeoutSeconds: 3
+  successThreshold: 1
+  failureThreshold: 30
+
+podLabels:
+  cortex.ai/component: "kubernetes-management"
+  cortex.ai/mcp-server: "talos"
+
+podAnnotations:
+  prometheus.io/scrape: "true"
+  prometheus.io/port: "8080"
+  prometheus.io/path: "/metrics"
+
+# Service Account with necessary RBAC permissions
+serviceAccount:
+  create: true
+  annotations:
+    # Add any cloud provider specific annotations here
+  name: "talos-mcp"
+
+# Node affinity for infrastructure nodes
+affinity:
+  podAntiAffinity:
+    preferredDuringSchedulingIgnoredDuringExecution:
+      - weight: 100
+        podAffinityTerm:
+          labelSelector:
+            matchExpressions:
+              - key: app.kubernetes.io/name
+                operator: In
+                values:
+                  - talos-mcp
+          topologyKey: kubernetes.io/hostname
+
+# Lifecycle hooks for graceful shutdown
+lifecycle:
+  preStop:
+    exec:
+      command: ["/bin/sh", "-c", "sleep 10"]
+
+# Service Monitor for Prometheus
+serviceMonitor:
+  enabled: true
+  interval: 30s
+  scrapeTimeout: 10s
+  labels:
+    release: prometheus
+
+# Ingress (typically not exposed externally)
+ingress:
+  enabled: false
+
+# Security context - restrictive for infrastructure management
+securityContext:
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop:
+    - ALL
+  readOnlyRootFilesystem: true
+  runAsNonRoot: true
+  runAsUser: 65534  # nobody user
+
+podSecurityContext:
+  runAsNonRoot: true
+  runAsUser: 65534
+  fsGroup: 65534
+  seccompProfile:
+    type: RuntimeDefault
+
+# Priority class for critical infrastructure operations
+priorityClassName: "system-cluster-critical"
+
+# Tolerations for running on control plane nodes if needed
+tolerations:
+  - key: "node-role.kubernetes.io/control-plane"
+    operator: "Exists"
+    effect: "NoSchedule"

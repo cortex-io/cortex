@@ -88,6 +88,52 @@ Explains:
 
 **Use this** when requesting production access.
 
+### 6. [rollback-plans.md](./rollback-plans.md)
+**Rollback procedures and safety net**
+
+Provides:
+- Required rollback documentation for all union operations
+- Rollback plan templates with real examples
+- Automatic rollback trigger definitions
+- Rollback verification procedures
+- Partial rollback strategies
+- Rollback testing requirements
+- Time-bound SLAs by certification level
+- Rollback failure escalation procedures
+- Post-rollback validation checklists
+- Rollback metrics and reporting
+
+**Use this** to create and execute rollback plans.
+
+### 7. [rollback-plans.json](./rollback-plans.json)
+**Rollback schemas and configurations**
+
+Defines:
+- Rollback plan schema and required fields
+- Trigger definitions for automatic rollback
+- Verification checklist templates
+- Rollback SLAs by level and operation type
+- Automation level requirements
+- Partial rollback scenario patterns
+- Example rollback plans (K8s, Terraform, Database, N8N)
+
+**Use this** for rollback automation and validation.
+
+### 8. [rollback-plans-quick-reference.md](./rollback-plans-quick-reference.md)
+**Fast rollback reference guide**
+
+Quick access to:
+- Rollback checklist by level
+- Common rollback commands (K8s, Terraform, DB, N8N)
+- Automatic trigger thresholds
+- Rollback time SLAs
+- Verification scripts
+- Partial rollback scenarios
+- Escalation procedures
+- Testing requirements
+
+**Use this** for quick rollback execution and reference.
+
 ## Quick Start
 
 ### For Masters
@@ -309,12 +355,15 @@ Track system effectiveness:
 
 ```
 worker-certification/
-├── README.md                      # This file - system overview
-├── WORKER_CERTIFICATION.md        # Complete guide (11KB)
-├── union-requirements.json        # Union rules (16KB)
-├── non-union-guidelines.json      # Non-union rules (15KB)
-├── certification-checker.md       # Analysis agent prompt (14KB)
-└── permit-system.md              # Authorization system (20KB)
+├── README.md                            # This file - system overview
+├── WORKER_CERTIFICATION.md              # Complete guide (11KB)
+├── union-requirements.json              # Union rules (16KB)
+├── non-union-guidelines.json            # Non-union rules (15KB)
+├── certification-checker.md             # Analysis agent prompt (14KB)
+├── permit-system.md                     # Authorization system (20KB)
+├── rollback-plans.md                    # Rollback procedures (30KB)
+├── rollback-plans.json                  # Rollback schemas (31KB)
+└── rollback-plans-quick-reference.md    # Quick rollback guide (9KB)
 ```
 
 ## Philosophy
@@ -331,6 +380,7 @@ worker-certification/
 - **Rule Clarification**: See union-requirements.json or non-union-guidelines.json
 - **Task Analysis**: Use certification-checker.md framework
 - **Permit Issues**: Consult permit-system.md
+- **Rollback Planning**: Use rollback-plans.md template and rollback-plans.json schema
 
 ## Conclusion
 

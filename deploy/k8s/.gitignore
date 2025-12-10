@@ -1,0 +1,24 @@
+# Kubernetes secrets - NEVER commit actual secrets!
+secret.yaml.local
+*-secrets.yaml
+sealed-secret.yaml.local
+
+# Backup files
+backups/
+*.backup
+*.bak
+
+# Temporary files
+*.tmp
+*.swp
+*~
+
+# Local development overrides
+local/
+*.local.yaml
+
+# Helm chart if generated
+charts/
+
+# Generated manifests
+generated/
