@@ -1,0 +1,34 @@
+---
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: cortex-staging
+
+namePrefix: staging-
+
+commonLabels:
+  environment: staging
+  tier: testing
+
+resources:
+- ../../
+
+replicas:
+- name: cortex
+  count: 2
+
+images:
+- name: ghcr.io/ry-ops/cortex
+  newTag: staging
+
+configMapGenerator:
+- name: cortex-config
+  behavior: merge
+  literals:
+  - NODE_ENV=staging
+  - DEBUG=true
+  - MAX_WORKERS=1000
+
+patchesStrategicMerge:
+- deployment-patch.yaml
+- ingress-patch.yaml

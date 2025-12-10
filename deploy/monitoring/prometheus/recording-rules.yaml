@@ -1,0 +1,333 @@
+groups:
+  # Performance aggregations
+  - name: cortex_performance_1m
+    interval: 60s
+    rules:
+      # Request rate aggregations
+      - record: cortex:requests:rate1m
+        expr: rate(cortex_requests_total[1m])
+
+      - record: cortex:requests:rate5m
+        expr: rate(cortex_requests_total[5m])
+
+      - record: cortex:requests:rate15m
+        expr: rate(cortex_requests_total[15m])
+
+      # Error rate aggregations
+      - record: cortex:errors:rate1m
+        expr: rate(cortex_requests_total{status="error"}[1m])
+
+      - record: cortex:errors:rate5m
+        expr: rate(cortex_requests_total{status="error"}[5m])
+
+      - record: cortex:error_ratio:rate5m
+        expr: |
+          rate(cortex_requests_total{status="error"}[5m])
+          /
+          rate(cortex_requests_total[5m])
+
+      # Latency percentiles
+      - record: cortex:latency:p50
+        expr: histogram_quantile(0.50, rate(cortex_request_duration_seconds_bucket[5m]))
+
+      - record: cortex:latency:p95
+        expr: histogram_quantile(0.95, rate(cortex_request_duration_seconds_bucket[5m]))
+
+      - record: cortex:latency:p99
+        expr: histogram_quantile(0.99, rate(cortex_request_duration_seconds_bucket[5m]))
+
+  # Master agent aggregations
+  - name: cortex_masters_1m
+    interval: 60s
+    rules:
+      # Task processing rates by master type
+      - record: cortex_master:tasks_processed:rate5m
+        expr: rate(cortex_master_tasks_processed_total[5m])
+
+      - record: cortex_master:tasks_completed:rate5m
+        expr: rate(cortex_master_tasks_completed_total[5m])
+
+      - record: cortex_master:tasks_failed:rate5m
+        expr: rate(cortex_master_tasks_failed_total[5m])
+
+      # Success rate by master
+      - record: cortex_master:success_ratio:rate5m
+        expr: |
+          rate(cortex_master_tasks_completed_total[5m])
+          /
+          rate(cortex_master_tasks_processed_total[5m])
+
+      # Worker spawn metrics
+      - record: cortex_master:workers_spawned:rate5m
+        expr: rate(cortex_master_workers_spawned_total[5m])
+
+      - record: cortex_master:worker_spawn_failures:rate5m
+        expr: rate(cortex_master_worker_spawn_failures_total[5m])
+
+      # Active workers by master type
+      - record: cortex_master:active_workers:count
+        expr: count(cortex_worker_status{status="active"}) by (parent_master)
+
+      # Task queue depth by master
+      - record: cortex_master:task_queue_depth:avg
+        expr: avg(cortex_master_task_queue_length) by (master_type)
+
+  # Worker agent aggregations
+  - name: cortex_workers_1m
+    interval: 60s
+    rules:
+      # Task completion rates by worker type
+      - record: cortex_worker:tasks_completed:rate5m
+        expr: rate(cortex_worker_task_completions_total[5m])
+
+      - record: cortex_worker:tasks_failed:rate5m
+        expr: rate(cortex_worker_task_failures_total[5m])
+
+      # Success rate by worker type
+      - record: cortex_worker:success_ratio:rate5m
+        expr: |
+          rate(cortex_worker_task_completions_total[5m])
+          /
+          (rate(cortex_worker_task_completions_total[5m]) + rate(cortex_worker_task_failures_total[5m]))
+
+      # Token consumption by worker type
+      - record: cortex_worker:tokens_consumed:rate5m
+        expr: rate(cortex_worker_tokens_consumed_total[5m])
+
+      - record: cortex_worker:tokens_remaining:avg
+        expr: avg(cortex_worker_tokens_remaining) by (worker_type)
+
+      # Token efficiency (tokens consumed per task)
+      - record: cortex_worker:tokens_per_task:rate5m
+        expr: |
+          rate(cortex_worker_tokens_consumed_total[5m])
+          /
+          rate(cortex_worker_task_completions_total[5m])
+
+      # Worker duration metrics
+      - record: cortex_worker:duration:p50
+        expr: histogram_quantile(0.50, rate(cortex_worker_task_duration_seconds_bucket[5m]))
+
+      - record: cortex_worker:duration:p95
+        expr: histogram_quantile(0.95, rate(cortex_worker_task_duration_seconds_bucket[5m]))
+
+  # MCP server aggregations
+  - name: mcp_servers_1m
+    interval: 60s
+    rules:
+      # Request rates by MCP type
+      - record: mcp:requests:rate5m
+        expr: rate(mcp_requests_total[5m])
+
+      - record: mcp:errors:rate5m
+        expr: rate(mcp_requests_total{status="error"}[5m])
+
+      - record: mcp:error_ratio:rate5m
+        expr: |
+          rate(mcp_requests_total{status="error"}[5m])
+          /
+          rate(mcp_requests_total[5m])
+
+      # Latency by MCP type
+      - record: mcp:latency:p50
+        expr: histogram_quantile(0.50, rate(mcp_request_duration_seconds_bucket[5m]))
+
+      - record: mcp:latency:p95
+        expr: histogram_quantile(0.95, rate(mcp_request_duration_seconds_bucket[5m]))
+
+      - record: mcp:latency:p99
+        expr: histogram_quantile(0.99, rate(mcp_request_duration_seconds_bucket[5m]))
+
+      # Tool call metrics
+      - record: mcp:tool_calls:rate5m
+        expr: rate(mcp_tool_calls_total[5m])
+
+      - record: mcp:tool_call_failures:rate5m
+        expr: rate(mcp_tool_call_failures_total[5m])
+
+      - record: mcp:tool_call_success_ratio:rate5m
+        expr: |
+          (rate(mcp_tool_calls_total[5m]) - rate(mcp_tool_call_failures_total[5m]))
+          /
+          rate(mcp_tool_calls_total[5m])
+
+      # Connection pool utilization
+      - record: mcp:connection_pool_utilization:avg
+        expr: |
+          avg(mcp_connection_pool_active / mcp_connection_pool_size) by (mcp_type)
+
+  # Contractor aggregations
+  - name: cortex_contractors_1m
+    interval: 60s
+    rules:
+      # Request rates by contractor type
+      - record: contractor:requests:rate5m
+        expr: rate(contractor_requests_total[5m])
+
+      - record: contractor:errors:rate5m
+        expr: rate(contractor_requests_total{status="error"}[5m])
+
+      - record: contractor:error_ratio:rate5m
+        expr: |
+          rate(contractor_requests_total{status="error"}[5m])
+          /
+          rate(contractor_requests_total[5m])
+
+      # Latency by contractor type
+      - record: contractor:latency:p50
+        expr: histogram_quantile(0.50, rate(contractor_request_duration_seconds_bucket[5m]))
+
+      - record: contractor:latency:p95
+        expr: histogram_quantile(0.95, rate(contractor_request_duration_seconds_bucket[5m]))
+
+      # Task completion metrics
+      - record: contractor:tasks_completed:rate5m
+        expr: rate(contractor_tasks_completed_total[5m])
+
+      - record: contractor:tasks_failed:rate5m
+        expr: rate(contractor_tasks_failed_total[5m])
+
+      - record: contractor:success_ratio:rate5m
+        expr: |
+          rate(contractor_tasks_completed_total[5m])
+          /
+          (rate(contractor_tasks_completed_total[5m]) + rate(contractor_tasks_failed_total[5m]))
+
+      # Specialization effectiveness (avg task completion time by specialization)
+      - record: contractor:specialization_effectiveness:avg_duration
+        expr: |
+          avg(contractor_task_duration_seconds) by (contractor_type, specialization)
+
+  # Token budget aggregations
+  - name: cortex_tokens_1m
+    interval: 60s
+    rules:
+      # Overall token consumption
+      - record: cortex:tokens_consumed:rate1m
+        expr: rate(cortex_tokens_consumed_total[1m])
+
+      - record: cortex:tokens_consumed:rate5m
+        expr: rate(cortex_tokens_consumed_total[5m])
+
+      - record: cortex:tokens_consumed:rate15m
+        expr: rate(cortex_tokens_consumed_total[15m])
+
+      # Token consumption by component
+      - record: cortex:tokens_consumed_by_component:rate5m
+        expr: sum(rate(cortex_tokens_consumed_total[5m])) by (component)
+
+      # Token budget utilization
+      - record: cortex:token_budget_utilization
+        expr: |
+          (cortex_tokens_budget - cortex_tokens_remaining)
+          /
+          cortex_tokens_budget
+
+      # Tokens per request
+      - record: cortex:tokens_per_request:rate5m
+        expr: |
+          rate(cortex_tokens_consumed_total[5m])
+          /
+          rate(cortex_requests_total[5m])
+
+      # Token efficiency by master
+      - record: cortex_master:tokens_per_completed_task:rate5m
+        expr: |
+          rate(cortex_master_tokens_consumed_total[5m])
+          /
+          rate(cortex_master_tasks_completed_total[5m])
+
+  # Resource utilization aggregations
+  - name: cortex_resources_5m
+    interval: 300s
+    rules:
+      # CPU utilization by component
+      - record: cortex:cpu_utilization:avg
+        expr: |
+          avg(rate(container_cpu_usage_seconds_total{namespace="cortex"}[5m])) by (pod, container)
+
+      - record: cortex:cpu_utilization_by_type:avg
+        expr: |
+          avg(rate(container_cpu_usage_seconds_total{namespace="cortex"}[5m])) by (app, master_type, worker_type)
+
+      # Memory utilization by component
+      - record: cortex:memory_utilization:avg
+        expr: |
+          avg(container_memory_usage_bytes{namespace="cortex"} / container_spec_memory_limit_bytes) by (pod, container)
+
+      - record: cortex:memory_utilization_by_type:avg
+        expr: |
+          avg(container_memory_usage_bytes{namespace="cortex"} / container_spec_memory_limit_bytes) by (app, master_type, worker_type)
+
+      # Network I/O
+      - record: cortex:network_receive:rate5m
+        expr: rate(container_network_receive_bytes_total{namespace="cortex"}[5m])
+
+      - record: cortex:network_transmit:rate5m
+        expr: rate(container_network_transmit_bytes_total{namespace="cortex"}[5m])
+
+  # Task performance aggregations
+  - name: cortex_tasks_5m
+    interval: 300s
+    rules:
+      # Task completion rates
+      - record: cortex:tasks_completed:rate5m
+        expr: rate(cortex_task_completions_total[5m])
+
+      - record: cortex:tasks_failed:rate5m
+        expr: rate(cortex_task_failures_total[5m])
+
+      - record: cortex:task_success_ratio:rate5m
+        expr: |
+          rate(cortex_task_completions_total[5m])
+          /
+          (rate(cortex_task_completions_total[5m]) + rate(cortex_task_failures_total[5m]))
+
+      # Task duration percentiles
+      - record: cortex:task_duration:p50
+        expr: histogram_quantile(0.50, rate(cortex_task_duration_seconds_bucket[5m]))
+
+      - record: cortex:task_duration:p95
+        expr: histogram_quantile(0.95, rate(cortex_task_duration_seconds_bucket[5m]))
+
+      - record: cortex:task_duration:p99
+        expr: histogram_quantile(0.99, rate(cortex_task_duration_seconds_bucket[5m]))
+
+      # Task queue metrics
+      - record: cortex:task_queue_depth:total
+        expr: sum(cortex_task_queue_length)
+
+      - record: cortex:task_queue_depth:by_priority
+        expr: sum(cortex_task_queue_length) by (priority)
+
+      # Task throughput by type
+      - record: cortex:task_throughput:rate5m
+        expr: sum(rate(cortex_task_completions_total[5m])) by (task_type)
+
+  # Handoff coordination metrics
+  - name: cortex_handoffs_1m
+    interval: 60s
+    rules:
+      # Handoff rates
+      - record: cortex:handoffs_created:rate5m
+        expr: rate(cortex_handoffs_created_total[5m])
+
+      - record: cortex:handoffs_completed:rate5m
+        expr: rate(cortex_handoffs_completed_total[5m])
+
+      - record: cortex:handoffs_failed:rate5m
+        expr: rate(cortex_handoffs_failed_total[5m])
+
+      # Handoff duration
+      - record: cortex:handoff_duration:p50
+        expr: histogram_quantile(0.50, rate(cortex_handoff_duration_seconds_bucket[5m]))
+
+      - record: cortex:handoff_duration:p95
+        expr: histogram_quantile(0.95, rate(cortex_handoff_duration_seconds_bucket[5m]))
+
+      # Handoff success by master pair
+      - record: cortex:handoff_success_ratio:rate5m
+        expr: |
+          rate(cortex_handoffs_completed_total[5m])
+          /
+          rate(cortex_handoffs_created_total[5m])
