@@ -4,10 +4,17 @@ on:
   push:
     branches:
       - main
+      - docker-container
     tags:
       - 'v*.*.*'
   release:
     types: [published]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Tag for the image (default: latest)'
+        required: false
+        default: 'latest'
 
 env:
   REGISTRY: ghcr.io
