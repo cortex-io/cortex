@@ -1,0 +1,39 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: development-config
+  namespace: cortex
+  labels:
+    app: cortex
+    component: config
+    master-type: development
+data:
+  MASTER_TYPE: "development"
+  COORDINATION_DIR: "/app/coordination"
+  HANDOFF_CHECK_INTERVAL: "30"
+  LOG_LEVEL: "info"
+  METRICS_ENABLED: "true"
+  PROMETHEUS_PORT: "9090"
+
+  # Development master specific
+  WORKER_SPAWN_ENABLED: "true"
+  MAX_CONCURRENT_WORKERS: "50"
+  WORKER_TOKEN_ALLOCATION: "15000"
+  WORKER_TIME_LIMIT_MINUTES: "60"
+
+  # Worker types managed by development master
+  WORKER_TYPES: "implementation-worker,bug-fixer,refactorer,optimizer"
+
+  # Knowledge base paths
+  KB_IMPLEMENTATION_PATTERNS: "/app/coordination/masters/development/knowledge-base/implementation-patterns.jsonl"
+  KB_BUG_FIX_STRATEGIES: "/app/coordination/masters/development/knowledge-base/bug-fix-strategies.json"
+  KB_ARCHITECTURE: "/app/coordination/masters/development/knowledge-base/codebase-architecture.json"
+  KB_REFACTORING: "/app/coordination/masters/development/knowledge-base/refactoring-techniques.json"
+
+  # RAG configuration
+  RAG_ENABLED: "true"
+  RAG_TOP_K: "5"
+
+  # Task queue
+  TASK_QUEUE_BACKEND: "file"
+  TASK_QUEUE_PATH: "/app/coordination/task-queue"

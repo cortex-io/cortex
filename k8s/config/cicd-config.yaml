@@ -1,0 +1,54 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: cicd-config
+  namespace: cortex
+  labels:
+    app: cortex
+    component: config
+    master-type: cicd
+data:
+  MASTER_TYPE: "cicd"
+  COORDINATION_DIR: "/app/coordination"
+  HANDOFF_CHECK_INTERVAL: "30"
+  LOG_LEVEL: "info"
+  METRICS_ENABLED: "true"
+  PROMETHEUS_PORT: "9090"
+
+  # CI/CD master specific
+  WORKER_SPAWN_ENABLED: "true"
+  MAX_CONCURRENT_WORKERS: "20"
+  WORKER_TOKEN_ALLOCATION: "10000"
+  WORKER_TIME_LIMIT_MINUTES: "30"
+
+  # Worker types managed by CI/CD master
+  WORKER_TYPES: "build-worker,test-worker,deploy-worker,dashboard-updater"
+
+  # Pipeline configuration
+  PIPELINE_ENABLED: "true"
+  AUTO_DEPLOY_ENABLED: "false"
+  REQUIRE_TESTS_PASS: "true"
+  REQUIRE_SECURITY_SCAN: "true"
+
+  # Dashboard deployment
+  DASHBOARD_AUTO_UPDATE: "true"
+  DASHBOARD_DEPLOYMENT_PATH: "/app/coordination/dashboard"
+  DASHBOARD_BUILD_COMMAND: "npm run build"
+
+  # Knowledge base paths
+  KB_BUILD_PATTERNS: "/app/coordination/masters/cicd/knowledge-base/build-patterns.jsonl"
+  KB_DEPLOYMENT_STRATEGIES: "/app/coordination/masters/cicd/knowledge-base/deployment-strategies.json"
+  KB_TEST_STRATEGIES: "/app/coordination/masters/cicd/knowledge-base/test-strategies.json"
+
+  # RAG configuration
+  RAG_ENABLED: "true"
+  RAG_TOP_K: "5"
+
+  # Task queue
+  TASK_QUEUE_BACKEND: "file"
+  TASK_QUEUE_PATH: "/app/coordination/task-queue"
+
+  # Build configuration
+  BUILD_TIMEOUT_SECONDS: "600"
+  TEST_TIMEOUT_SECONDS: "300"
+  DEPLOY_TIMEOUT_SECONDS: "180"

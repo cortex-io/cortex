@@ -1,0 +1,107 @@
+#cloud-config
+# Cortex K3s VM Cloud-Init Configuration
+# Variables to be substituted: HOSTNAME, IP_ADDRESS, GATEWAY, NETMASK, SSH_PUBLIC_KEY
+
+hostname: ${HOSTNAME}
+fqdn: ${HOSTNAME}.local
+
+# User configuration
+users:
+  - name: cortex
+    groups: sudo
+    shell: /bin/bash
+    sudo: ['ALL=(ALL) NOPASSWD:ALL']
+    ssh_authorized_keys:
+      - ${SSH_PUBLIC_KEY}
+  - name: root
+    ssh_authorized_keys:
+      - ${SSH_PUBLIC_KEY}
+
+# Disable password authentication
+ssh_pwauth: false
+disable_root: false
+
+# Package management
+package_update: true
+package_upgrade: true
+packages:
+  - curl
+  - wget
+  - apt-transport-https
+  - ca-certificates
+  - software-properties-common
+  - gnupg
+  - lsb-release
+  - net-tools
+  - jq
+  - htop
+  - vim
+  - git
+
+# Network configuration
+write_files:
+  - path: /etc/netplan/50-cloud-init.yaml
+    permissions: '0644'
+    content: |
+      network:
+        version: 2
+        ethernets:
+          eth0:
+            dhcp4: false
+            addresses:
+              - ${IP_ADDRESS}/${CIDR_PREFIX}
+            gateway4: ${GATEWAY}
+            nameservers:
+              addresses:
+                - 8.8.8.8
+                - 1.1.1.1
+              search:
+                - local
+
+  - path: /etc/sysctl.d/99-k3s.conf
+    permissions: '0644'
+    content: |
+      # K3s kernel parameters
+      net.bridge.bridge-nf-call-iptables = 1
+      net.bridge.bridge-nf-call-ip6tables = 1
+      net.ipv4.ip_forward = 1
+      vm.max_map_count = 262144
+      fs.inotify.max_user_instances = 8192
+      fs.inotify.max_user_watches = 524288
+
+  - path: /etc/modules-load.d/k3s.conf
+    permissions: '0644'
+    content: |
+      overlay
+      br_netfilter
+
+# Run commands on first boot
+runcmd:
+  # Apply network configuration
+  - netplan apply
+
+  # Load kernel modules
+  - modprobe overlay
+  - modprobe br_netfilter
+  - sysctl --system
+
+  # Disable swap (required for K3s)
+  - swapoff -a
+  - sed -i '/ swap / s/^/#/' /etc/fstab
+
+  # Enable unattended security updates
+  - apt-get install -y unattended-upgrades
+  - dpkg-reconfigure -plow unattended-upgrades
+
+  # Set timezone
+  - timedatectl set-timezone UTC
+
+  # Signal completion
+  - touch /var/lib/cloud/instance/boot-finished
+  - echo "Cloud-init completed at $(date)" > /var/log/cortex-init-complete.log
+
+# Power state - reboot after cloud-init completes
+power_state:
+  mode: reboot
+  timeout: 300
+  condition: true

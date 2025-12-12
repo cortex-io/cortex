@@ -1,0 +1,186 @@
+name: Manual Rollback
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to rollback'
+        required: true
+        type: choice
+        options:
+          - production
+          - staging
+          - dev
+      target_version:
+        description: 'Target version (e.g., v1.2.3) or leave empty for previous'
+        required: false
+        type: string
+      restore_state:
+        description: 'Restore coordination state from backup'
+        required: false
+        type: boolean
+        default: false
+      reason:
+        description: 'Reason for rollback'
+        required: true
+        type: string
+
+jobs:
+  rollback:
+    name: Rollback ${{ inputs.environment }}
+    runs-on: ubuntu-latest
+    environment:
+      name: ${{ inputs.environment }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up kubectl
+        uses: azure/setup-kubectl@v3
+
+      - name: Configure kubectl context
+        run: |
+          mkdir -p $HOME/.kube
+          echo "${{ secrets.KUBE_CONFIG_DATA }}" | base64 -d > $HOME/.kube/config
+          chmod 600 $HOME/.kube/config
+
+      - name: Determine namespace
+        id: namespace
+        run: |
+          case "${{ inputs.environment }}" in
+            production)
+              echo "namespace=cortex" >> $GITHUB_OUTPUT
+              ;;
+            staging)
+              echo "namespace=cortex-staging" >> $GITHUB_OUTPUT
+              ;;
+            dev)
+              echo "namespace=cortex-dev" >> $GITHUB_OUTPUT
+              ;;
+          esac
+
+      - name: Get current state
+        run: |
+          echo "=== Current Deployment State ==="
+          echo "Environment: ${{ inputs.environment }}"
+          echo "Namespace: ${{ steps.namespace.outputs.namespace }}"
+          echo "Reason: ${{ inputs.reason }}"
+          echo ""
+
+          for deployment in cortex-coordinator cortex-development-master cortex-cicd-master; do
+            if kubectl get deployment $deployment -n ${{ steps.namespace.outputs.namespace }} > /dev/null 2>&1; then
+              echo "Deployment: $deployment"
+              kubectl get deployment $deployment -n ${{ steps.namespace.outputs.namespace }} \
+                -o jsonpath='  Image: {.spec.template.spec.containers[0].image}{"\n"}'
+              kubectl rollout history deployment/$deployment -n ${{ steps.namespace.outputs.namespace }} | tail -3
+              echo ""
+            fi
+          done
+
+      - name: Execute rollback
+        run: |
+          chmod +x scripts/deploy/rollback.sh
+
+          ROLLBACK_CMD="NAMESPACE=${{ steps.namespace.outputs.namespace }} ./scripts/deploy/rollback.sh"
+
+          if [ -n "${{ inputs.target_version }}" ]; then
+            ROLLBACK_CMD="$ROLLBACK_CMD --to-version ${{ inputs.target_version }}"
+          fi
+
+          if [ "${{ inputs.restore_state }}" == "true" ]; then
+            ROLLBACK_CMD="$ROLLBACK_CMD --restore-state"
+          fi
+
+          echo "Executing: $ROLLBACK_CMD"
+          eval $ROLLBACK_CMD
+
+      - name: Verify rollback
+        run: |
+          echo "=== Verifying Rollback ==="
+
+          # Wait for all deployments to stabilize
+          sleep 10
+
+          # Check deployment status
+          for deployment in cortex-coordinator cortex-development-master cortex-cicd-master; do
+            if kubectl get deployment $deployment -n ${{ steps.namespace.outputs.namespace }} > /dev/null 2>&1; then
+              kubectl rollout status deployment/$deployment -n ${{ steps.namespace.outputs.namespace }} --timeout=5m
+            fi
+          done
+
+          # Check pod health
+          kubectl get pods -n ${{ steps.namespace.outputs.namespace }} -l app=cortex
+
+      - name: Run smoke tests
+        run: |
+          echo "Running post-rollback smoke tests..."
+
+          COORDINATOR_POD=$(kubectl get pod -n ${{ steps.namespace.outputs.namespace }} \
+            -l component=coordinator -o jsonpath='{.items[0].metadata.name}')
+
+          if [ -n "$COORDINATOR_POD" ]; then
+            # Test 1: Check coordination files
+            kubectl exec -n ${{ steps.namespace.outputs.namespace }} $COORDINATOR_POD -- \
+              ls /app/coordination/status.json
+
+            # Test 2: Check logs for errors
+            ERROR_COUNT=$(kubectl logs -n ${{ steps.namespace.outputs.namespace }} $COORDINATOR_POD --tail=100 | \
+              grep -i "error\|fatal" | wc -l || echo 0)
+
+            if [ $ERROR_COUNT -gt 5 ]; then
+              echo "Warning: Found $ERROR_COUNT errors in logs"
+            else
+              echo "✓ Logs look healthy"
+            fi
+          fi
+
+      - name: Create rollback report
+        if: always()
+        run: |
+          cat > /tmp/rollback-report.md <<EOF
+          # Rollback Report
+
+          **Environment:** ${{ inputs.environment }}
+          **Namespace:** ${{ steps.namespace.outputs.namespace }}
+          **Target Version:** ${{ inputs.target_version || 'previous' }}
+          **State Restored:** ${{ inputs.restore_state }}
+          **Reason:** ${{ inputs.reason }}
+          **Initiated By:** ${{ github.actor }}
+          **Workflow Run:** https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
+
+          ## Current State
+
+          $(kubectl get deployments -n ${{ steps.namespace.outputs.namespace }} -l app=cortex)
+
+          ## Pod Status
+
+          $(kubectl get pods -n ${{ steps.namespace.outputs.namespace }} -l app=cortex)
+
+          ---
+          *Generated at $(date -u +%Y-%m-%dT%H:%M:%SZ)*
+          EOF
+
+          cat /tmp/rollback-report.md
+
+      - name: Create incident issue
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const report = fs.readFileSync('/tmp/rollback-report.md', 'utf8');
+
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: `🔄 Rollback Executed - ${{ inputs.environment }}`,
+              body: report,
+              labels: ['rollback', 'incident', '${{ inputs.environment }}']
+            });
+
+      - name: Notify on failure
+        if: failure()
+        run: |
+          echo "❌ Rollback failed!"
+          echo "Manual intervention required."
+          echo "Check logs at: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"

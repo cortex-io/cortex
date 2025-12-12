@@ -77,17 +77,46 @@
       "default_branch": "main",
       "description": "A Model Context Protocol (MCP) server that provides seamless integration with the n8n API. Manage your n8n workflows, executions, and credentials through natural language using Claude AI.",
       "forks": 0,
-      "health_status": "pending_catalog",
+      "health_status": "active",
       "is_archived": false,
       "language": "Python",
-      "last_cataloged": "2025-11-01T19:25:45Z",
-      "last_commit": "2025-10-31T19:20:53Z",
+      "last_cataloged": "2025-12-07T00:00:00Z",
+      "last_commit": "2025-12-03T18:04:29Z",
       "name": "ry-ops/n8n-mcp-server",
-      "open_issues": 0,
-      "stars": 0,
+      "open_issues": 5,
+      "stars": 1,
       "status": "active",
       "url": "https://github.com/ry-ops/n8n-mcp-server",
-      "visibility": "public"
+      "visibility": "public",
+      "project_type": "mcp-server",
+      "tech_stack": {
+        "language": "Python",
+        "version": "3.10+",
+        "framework": "MCP",
+        "package_manager": "uv",
+        "key_dependencies": ["mcp>=1.0.0", "n8n-api-client"]
+      },
+      "features": [
+        "Workflow management (list, create, update, delete, activate/deactivate)",
+        "Workflow execution with monitoring",
+        "Execution history and filtering",
+        "Credential management",
+        "Workflow tag management",
+        "13 tools across workflow and execution operations"
+      ],
+      "cortex_integration": {
+        "security_scanning": true,
+        "dependency_monitoring": true,
+        "automated_updates": false,
+        "integrated_at": "2025-12-07T00:00:00Z",
+        "local_clone": false,
+        "security_considerations": [
+          "API keys stored in environment variables only",
+          "Keys grant full n8n instance access",
+          "Regular key rotation recommended",
+          "Secrets detection monitoring enabled"
+        ]
+      }
     },
     {
       "created_at": "2025-10-29T21:23:30Z",
@@ -313,19 +342,36 @@
     {
       "created_at": "2025-10-02T15:56:10Z",
       "default_branch": "main",
-      "description": "",
+      "description": "Model Context Protocol server enabling Claude to interact with Proxmox Virtual Environment infrastructure through natural language commands",
       "forks": 0,
-      "health_status": "pending_catalog",
+      "health_status": "active",
       "is_archived": false,
       "language": "Python",
-      "last_cataloged": "2025-11-01T19:25:45Z",
+      "last_cataloged": "2025-12-06T12:32:00Z",
       "last_commit": "2025-10-05T20:08:56Z",
       "name": "ry-ops/proxmox-mcp-server",
       "open_issues": 0,
       "stars": 0,
       "status": "active",
       "url": "https://github.com/ry-ops/proxmox-mcp-server",
-      "visibility": "public"
+      "visibility": "public",
+      "local_path": "/Users/ryandahlberg/Projects/proxmox-mcp-server",
+      "project_type": "mcp-server",
+      "tech_stack": {
+        "language": "Python",
+        "version": "3.10+",
+        "framework": "MCP",
+        "package_manager": "uv",
+        "key_dependencies": ["mcp>=1.0.0", "httpx>=0.27.0"]
+      },
+      "cortex_integration": {
+        "security_scanning": true,
+        "dependency_monitoring": true,
+        "automated_updates": false,
+        "integrated_at": "2025-12-06T00:00:00Z",
+        "local_clone": true,
+        "last_pulled": "2025-12-06T12:32:00Z"
+      }
     },
     {
       "created_at": "2025-10-01T16:45:28Z",

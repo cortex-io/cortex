@@ -1,0 +1,201 @@
+---
+# Blue/Green Deployment Service
+# This service can switch between blue and green deployments by updating the selector
+apiVersion: v1
+kind: Service
+metadata:
+  name: cortex-coordinator-bg
+  namespace: cortex
+  labels:
+    app: cortex
+    component: coordinator
+    deployment-strategy: blue-green
+spec:
+  type: ClusterIP
+  selector:
+    app: cortex
+    component: coordinator
+    version: blue  # Switch to 'green' for traffic switch
+  ports:
+  - name: http
+    port: 8080
+    targetPort: 8080
+    protocol: TCP
+  - name: metrics
+    port: 9090
+    targetPort: 9090
+    protocol: TCP
+  sessionAffinity: ClientIP
+  sessionAffinityConfig:
+    clientIP:
+      timeoutSeconds: 10800  # 3 hours
+
+---
+# Blue Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cortex-coordinator-blue
+  namespace: cortex
+  labels:
+    app: cortex
+    component: coordinator
+    version: blue
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: cortex
+      component: coordinator
+      version: blue
+  template:
+    metadata:
+      labels:
+        app: cortex
+        component: coordinator
+        version: blue
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "9090"
+        prometheus.io/path: "/metrics"
+    spec:
+      serviceAccountName: cortex-sa
+      containers:
+      - name: coordinator
+        image: ghcr.io/ryandahlberg/cortex:latest
+        imagePullPolicy: Always
+        env:
+        - name: DEPLOYMENT_COLOR
+          value: "blue"
+        - name: ANTHROPIC_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: cortex-secrets
+              key: anthropic-api-key
+        - name: LOG_LEVEL
+          value: "info"
+        ports:
+        - name: http
+          containerPort: 8080
+        - name: metrics
+          containerPort: 9090
+        volumeMounts:
+        - name: coordination-data
+          mountPath: /app/coordination
+        - name: config
+          mountPath: /app/config
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "250m"
+          limits:
+            memory: "2Gi"
+            cpu: "1000m"
+        livenessProbe:
+          exec:
+            command:
+            - test
+            - -f
+            - /app/coordination/status.json
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          exec:
+            command:
+            - test
+            - -f
+            - /app/coordination/status.json
+          initialDelaySeconds: 10
+          periodSeconds: 5
+      volumes:
+      - name: coordination-data
+        persistentVolumeClaim:
+          claimName: cortex-coordination-pvc
+      - name: config
+        configMap:
+          name: cortex-config
+
+---
+# Green Deployment (initially scaled to 0)
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cortex-coordinator-green
+  namespace: cortex
+  labels:
+    app: cortex
+    component: coordinator
+    version: green
+spec:
+  replicas: 0  # Scaled up during deployment
+  selector:
+    matchLabels:
+      app: cortex
+      component: coordinator
+      version: green
+  template:
+    metadata:
+      labels:
+        app: cortex
+        component: coordinator
+        version: green
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "9090"
+        prometheus.io/path: "/metrics"
+    spec:
+      serviceAccountName: cortex-sa
+      containers:
+      - name: coordinator
+        image: ghcr.io/ryandahlberg/cortex:latest
+        imagePullPolicy: Always
+        env:
+        - name: DEPLOYMENT_COLOR
+          value: "green"
+        - name: ANTHROPIC_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: cortex-secrets
+              key: anthropic-api-key
+        - name: LOG_LEVEL
+          value: "info"
+        ports:
+        - name: http
+          containerPort: 8080
+        - name: metrics
+          containerPort: 9090
+        volumeMounts:
+        - name: coordination-data
+          mountPath: /app/coordination
+        - name: config
+          mountPath: /app/config
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "250m"
+          limits:
+            memory: "2Gi"
+            cpu: "1000m"
+        livenessProbe:
+          exec:
+            command:
+            - test
+            - -f
+            - /app/coordination/status.json
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          exec:
+            command:
+            - test
+            - -f
+            - /app/coordination/status.json
+          initialDelaySeconds: 10
+          periodSeconds: 5
+      volumes:
+      - name: coordination-data
+        persistentVolumeClaim:
+          claimName: cortex-coordination-pvc
+      - name: config
+        configMap:
+          name: cortex-config

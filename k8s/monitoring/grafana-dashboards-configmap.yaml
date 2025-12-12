@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-dashboards
+  namespace: monitoring
+  labels:
+    app: grafana
+    grafana_dashboard: "1"
+binaryData:
+  # Dashboards are stored as separate files and mounted as a volume
+  # This ConfigMap references them for auto-loading

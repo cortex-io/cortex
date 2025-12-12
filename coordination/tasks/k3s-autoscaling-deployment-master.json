@@ -1,0 +1,398 @@
+{
+  "mission_id": "k3s-autoscaling-deployment-001",
+  "mission_title": "Deploy Production-Ready Auto-Scaling Cortex on K3s/Proxmox",
+  "mission_type": "multi_master_orchestration",
+  "priority": "critical",
+  "status": "in_progress",
+  "created_at": "2025-12-07T00:00:00Z",
+  "created_by": "coordinator-master",
+  "complexity": 10,
+  "estimated_duration": "4-6 hours",
+
+  "mission_overview": {
+    "objective": "Create complete production-ready Kubernetes deployment of Cortex with auto-scaling workers, full observability, and automated deployment pipeline on Proxmox infrastructure",
+    "success_criteria": [
+      "K3s cluster running on Proxmox VMs (110, 111, 112)",
+      "Cortex masters deployed (1 replica each, stateful)",
+      "Cortex workers auto-scaling (0-50 replicas based on queue depth)",
+      "Prometheus collecting metrics with /metrics endpoint",
+      "Grafana dashboards showing real-time scaling",
+      "KEDA scaling workers based on task queue depth",
+      "Scale-to-zero working when idle",
+      "Complete documentation and runbooks",
+      "Security hardening implemented",
+      "One-command deployment working"
+    ]
+  },
+
+  "infrastructure_details": {
+    "proxmox": {
+      "host": "10.88.140.151",
+      "gateway": "10.88.140.144",
+      "subnet": "/27",
+      "api_token": "root@pam!n8n",
+      "existing_containers": [104, 105]
+    },
+    "k3s_cluster": {
+      "control_plane": {
+        "vm_id": 110,
+        "ip": "10.88.140.152/27",
+        "hostname": "cortex-k3s-control",
+        "specs": {"cpu": 4, "memory": "8G", "disk": "40G"}
+      },
+      "workers": [
+        {
+          "vm_id": 111,
+          "ip": "10.88.140.153/27",
+          "hostname": "cortex-k3s-worker-01",
+          "specs": {"cpu": 4, "memory": "8G", "disk": "40G"}
+        },
+        {
+          "vm_id": 112,
+          "ip": "10.88.140.154/27",
+          "hostname": "cortex-k3s-worker-02",
+          "specs": {"cpu": 4, "memory": "8G", "disk": "40G"}
+        }
+      ]
+    },
+    "container_registry": {
+      "image": "ghcr.io/ry-ops/cortex-docker:latest",
+      "auth_type": "github_secrets"
+    }
+  },
+
+  "moe_routing_plan": {
+    "coordinator": {
+      "role": "orchestrator",
+      "responsibilities": [
+        "Overall mission coordination",
+        "Task dependency management",
+        "Inter-master handoffs",
+        "Progress tracking and reporting"
+      ]
+    },
+    "development": {
+      "role": "primary_executor",
+      "tasks": [
+        "Implement Cortex /metrics endpoint",
+        "Create K8s manifests for masters and workers",
+        "Build Prometheus ServiceMonitor configs",
+        "Develop KEDA ScaledObject definitions",
+        "Create deployment automation scripts",
+        "Implement health check endpoints"
+      ],
+      "estimated_effort": "60%"
+    },
+    "infrastructure": {
+      "role": "infrastructure_automation",
+      "tasks": [
+        "Proxmox VM creation via API",
+        "Cloud-init configuration templates",
+        "K3s cluster installation automation",
+        "Network configuration scripts",
+        "VM lifecycle management"
+      ],
+      "estimated_effort": "25%",
+      "note": "Create virtual infrastructure-master or use development-master"
+    },
+    "security": {
+      "role": "hardening_and_compliance",
+      "tasks": [
+        "RBAC configuration audit",
+        "Network policy enforcement",
+        "Secret rotation strategy",
+        "Container security scanning",
+        "TLS/mTLS configuration"
+      ],
+      "estimated_effort": "10%"
+    },
+    "cicd": {
+      "role": "automation_pipeline",
+      "tasks": [
+        "GitHub Actions workflow for K8s deployment",
+        "Blue/green deployment strategy",
+        "Automated testing pipeline",
+        "Rollback procedures"
+      ],
+      "estimated_effort": "5%"
+    }
+  },
+
+  "execution_phases": {
+    "phase_1": {
+      "name": "Infrastructure Deployment",
+      "parallel": true,
+      "tasks": [
+        {
+          "task_id": "infra-001",
+          "title": "Create Proxmox VM creation and management scripts",
+          "assigned_to": "development",
+          "deliverables": [
+            "scripts/proxmox/create-vm.sh",
+            "scripts/proxmox/configure-network.sh",
+            "scripts/proxmox/cloud-init-template.yaml"
+          ]
+        },
+        {
+          "task_id": "infra-002",
+          "title": "Create K3s cluster installation automation",
+          "assigned_to": "development",
+          "deliverables": [
+            "scripts/k3s/install-control-plane.sh",
+            "scripts/k3s/join-worker.sh",
+            "scripts/k3s/verify-cluster.sh"
+          ]
+        },
+        {
+          "task_id": "infra-003",
+          "title": "Deploy VMs and bootstrap K3s cluster",
+          "assigned_to": "development",
+          "dependencies": ["infra-001", "infra-002"],
+          "deliverables": [
+            "Deployed VMs 110, 111, 112",
+            "Running K3s cluster",
+            "kubectl access configured"
+          ]
+        }
+      ]
+    },
+    "phase_2": {
+      "name": "Monitoring & Metrics Implementation",
+      "parallel": true,
+      "dependencies": ["phase_1"],
+      "tasks": [
+        {
+          "task_id": "metrics-001",
+          "title": "Implement Cortex /metrics endpoint with Prometheus exporter",
+          "assigned_to": "development",
+          "deliverables": [
+            "dashboard/server/metrics-exporter.js",
+            "lib/observability/prometheus-metrics.sh",
+            "Metrics schema documentation"
+          ],
+          "metrics_schema": {
+            "cortex_task_queue_depth": "Gauge - Current task queue depth by type",
+            "cortex_active_workers": "Gauge - Active workers by type",
+            "cortex_master_health": "Gauge - Master health status (0/1)",
+            "cortex_task_duration_seconds": "Histogram - Task completion time",
+            "cortex_moe_routing_confidence": "Gauge - MoE routing confidence score"
+          }
+        },
+        {
+          "task_id": "metrics-002",
+          "title": "Deploy Prometheus stack on K3s",
+          "assigned_to": "development",
+          "deliverables": [
+            "k8s/monitoring/prometheus-deployment.yaml",
+            "k8s/monitoring/prometheus-config.yaml",
+            "k8s/monitoring/servicemonitor-cortex.yaml"
+          ]
+        },
+        {
+          "task_id": "metrics-003",
+          "title": "Deploy Grafana with Cortex dashboards",
+          "assigned_to": "development",
+          "deliverables": [
+            "k8s/monitoring/grafana-deployment.yaml",
+            "k8s/monitoring/grafana-dashboards.yaml",
+            "dashboards/grafana/cortex-autoscaling.json",
+            "dashboards/grafana/cortex-masters.json",
+            "dashboards/grafana/cortex-workers.json"
+          ]
+        }
+      ]
+    },
+    "phase_3": {
+      "name": "Auto-Scaling Configuration",
+      "sequential": true,
+      "dependencies": ["phase_2"],
+      "tasks": [
+        {
+          "task_id": "scaling-001",
+          "title": "Install and configure KEDA operator",
+          "assigned_to": "development",
+          "deliverables": [
+            "k8s/keda/keda-install.yaml",
+            "k8s/keda/keda-config.yaml"
+          ]
+        },
+        {
+          "task_id": "scaling-002",
+          "title": "Create worker deployment manifests with KEDA ScaledObjects",
+          "assigned_to": "development",
+          "deliverables": [
+            "k8s/workers/implementation-worker-deployment.yaml",
+            "k8s/workers/security-worker-deployment.yaml",
+            "k8s/workers/analysis-worker-deployment.yaml",
+            "k8s/workers/scan-worker-deployment.yaml",
+            "k8s/keda/scaledobject-implementation.yaml",
+            "k8s/keda/scaledobject-security.yaml",
+            "k8s/keda/scaledobject-analysis.yaml",
+            "k8s/keda/scaledobject-scan.yaml"
+          ]
+        },
+        {
+          "task_id": "scaling-003",
+          "title": "Create master deployment manifests (stateful)",
+          "assigned_to": "development",
+          "deliverables": [
+            "k8s/masters/coordinator-statefulset.yaml",
+            "k8s/masters/development-statefulset.yaml",
+            "k8s/masters/security-statefulset.yaml",
+            "k8s/masters/cicd-statefulset.yaml",
+            "k8s/masters/inventory-statefulset.yaml"
+          ]
+        }
+      ]
+    },
+    "phase_4": {
+      "name": "Cortex Deployment",
+      "sequential": true,
+      "dependencies": ["phase_3"],
+      "tasks": [
+        {
+          "task_id": "deploy-001",
+          "title": "Deploy Cortex masters to K3s cluster",
+          "assigned_to": "development",
+          "deliverables": [
+            "Deployed coordinator master (1 replica)",
+            "Deployed specialist masters (1 replica each)",
+            "Master health validation"
+          ]
+        },
+        {
+          "task_id": "deploy-002",
+          "title": "Deploy Cortex workers with auto-scaling",
+          "assigned_to": "development",
+          "deliverables": [
+            "Deployed worker deployments (initial 0 replicas)",
+            "KEDA ScaledObjects active",
+            "Auto-scaling triggers configured"
+          ]
+        },
+        {
+          "task_id": "deploy-003",
+          "title": "Validate auto-scaling behavior",
+          "assigned_to": "development",
+          "deliverables": [
+            "Scale-to-zero verification",
+            "Queue-based scale-up test",
+            "Load test report",
+            "Metrics validation"
+          ]
+        }
+      ]
+    },
+    "phase_5": {
+      "name": "Security Hardening & Documentation",
+      "parallel": true,
+      "dependencies": ["phase_4"],
+      "tasks": [
+        {
+          "task_id": "security-001",
+          "title": "Implement security hardening and RBAC",
+          "assigned_to": "security",
+          "deliverables": [
+            "k8s/security/rbac.yaml",
+            "k8s/security/network-policies.yaml",
+            "k8s/security/pod-security-policies.yaml",
+            "Security audit report"
+          ]
+        },
+        {
+          "task_id": "docs-001",
+          "title": "Create comprehensive documentation",
+          "assigned_to": "development",
+          "deliverables": [
+            "docs/deployment/k3s-deployment-guide.md",
+            "docs/deployment/architecture-diagram.md",
+            "docs/deployment/troubleshooting.md",
+            "docs/deployment/disaster-recovery.md",
+            "docs/deployment/scaling-behavior.md"
+          ]
+        },
+        {
+          "task_id": "cicd-001",
+          "title": "Create CI/CD automation pipeline",
+          "assigned_to": "cicd",
+          "deliverables": [
+            ".github/workflows/k8s-deploy.yml",
+            "scripts/deploy/one-command-deploy.sh",
+            "scripts/deploy/rollback.sh",
+            "scripts/deploy/health-check.sh"
+          ]
+        }
+      ]
+    }
+  },
+
+  "deliverables_summary": {
+    "scripts": [
+      "scripts/proxmox/create-vm.sh",
+      "scripts/proxmox/configure-network.sh",
+      "scripts/k3s/install-control-plane.sh",
+      "scripts/k3s/join-worker.sh",
+      "scripts/deploy/one-command-deploy.sh",
+      "scripts/deploy/rollback.sh"
+    ],
+    "k8s_manifests": [
+      "k8s/masters/coordinator-statefulset.yaml",
+      "k8s/masters/development-statefulset.yaml",
+      "k8s/masters/security-statefulset.yaml",
+      "k8s/workers/implementation-worker-deployment.yaml",
+      "k8s/workers/security-worker-deployment.yaml",
+      "k8s/keda/scaledobject-*.yaml",
+      "k8s/monitoring/prometheus-deployment.yaml",
+      "k8s/monitoring/grafana-deployment.yaml",
+      "k8s/security/rbac.yaml",
+      "k8s/security/network-policies.yaml"
+    ],
+    "documentation": [
+      "docs/deployment/k3s-deployment-guide.md",
+      "docs/deployment/architecture-diagram.md",
+      "docs/deployment/troubleshooting.md",
+      "docs/deployment/scaling-behavior.md"
+    ],
+    "dashboards": [
+      "dashboards/grafana/cortex-autoscaling.json",
+      "dashboards/grafana/cortex-masters.json",
+      "dashboards/grafana/cortex-workers.json"
+    ]
+  },
+
+  "constraints": {
+    "use_existing_image": "ghcr.io/ry-ops/cortex-docker:latest",
+    "no_cloud_dependencies": "Proxmox only, no AWS/GCP/Azure",
+    "maintain_compatibility": "All existing Cortex features must work",
+    "cost_optimization": "Scale to zero when idle",
+    "token_budget": "Stay within 200k token budget via efficient coordination"
+  },
+
+  "success_validation": {
+    "infrastructure": [
+      "3 VMs running on Proxmox (110, 111, 112)",
+      "K3s cluster healthy with all nodes ready",
+      "kubectl access working from control plane"
+    ],
+    "monitoring": [
+      "Prometheus scraping Cortex metrics",
+      "Grafana dashboards accessible",
+      "All metrics endpoints responding"
+    ],
+    "autoscaling": [
+      "Workers scale from 0 to N based on queue depth",
+      "Workers scale back to 0 when idle",
+      "KEDA triggers responding to Prometheus metrics"
+    ],
+    "security": [
+      "RBAC configured and tested",
+      "Network policies enforced",
+      "No critical security findings"
+    ],
+    "automation": [
+      "One-command deployment successful",
+      "Rollback procedure tested",
+      "Health checks passing"
+    ]
+  }
+}

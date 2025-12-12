@@ -1,0 +1,105 @@
+---
+# Network Policy for Cortex Masters
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: cortex-masters-netpol
+  namespace: cortex
+  labels:
+    app.kubernetes.io/name: cortex
+    app.kubernetes.io/component: network-security
+  annotations:
+    description: "Allow masters to coordinate with each other, receive worker requests, and export metrics"
+    security.policy: "master-coordination"
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/component: master
+  policyTypes:
+    - Ingress
+    - Egress
+
+  ingress:
+    # Allow from workers
+    - from:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/component: worker
+      ports:
+        - protocol: TCP
+          port: 8080
+
+    # Allow from other masters (coordination)
+    - from:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/component: master
+      ports:
+        - protocol: TCP
+          port: 8080
+
+    # Allow from coordinator
+    - from:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: cortex-coordinator
+      ports:
+        - protocol: TCP
+          port: 8080
+
+    # Allow Prometheus scraping
+    - from:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: prometheus
+      ports:
+        - protocol: TCP
+          port: 9090  # metrics port
+
+  egress:
+    # Allow to other masters
+    - to:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/component: master
+      ports:
+        - protocol: TCP
+          port: 8080
+
+    # Allow to workers
+    - to:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/component: worker
+      ports:
+        - protocol: TCP
+          port: 8080
+
+    # Allow DNS resolution
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: kube-system
+        - podSelector:
+            matchLabels:
+              k8s-app: kube-dns
+      ports:
+        - protocol: UDP
+          port: 53
+
+    # Allow to Kubernetes API server
+    - to:
+        - namespaceSelector: {}
+          podSelector:
+            matchLabels:
+              component: apiserver
+      ports:
+        - protocol: TCP
+          port: 6443
+
+    # Allow HTTPS to external APIs (GitHub, Anthropic)
+    - to:
+        - namespaceSelector: {}
+      ports:
+        - protocol: TCP
+          port: 443

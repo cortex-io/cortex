@@ -1,0 +1,91 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: scan-worker
+  namespace: cortex
+  labels:
+    app: cortex
+    component: worker
+    worker-type: scan
+spec:
+  replicas: 0  # KEDA will manage this - scale to zero by default
+  selector:
+    matchLabels:
+      app: cortex
+      component: worker
+      worker-type: scan
+  template:
+    metadata:
+      labels:
+        app: cortex
+        component: worker
+        worker-type: scan
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "9090"
+        prometheus.io/path: "/metrics"
+    spec:
+      serviceAccountName: cortex
+      terminationGracePeriodSeconds: 300  # 5 minutes to finish current task
+      containers:
+      - name: scan-worker
+        image: ghcr.io/ry-ops/cortex-docker:latest
+        imagePullPolicy: Always
+        command: ["/bin/bash", "-c"]
+        args:
+        - |
+          echo "Starting Scan Worker..."
+          export CORTEX_MODE=worker
+          export CORTEX_TYPE=scan
+          exec node /app/lib/workers/worker-mode.js
+        env:
+        - name: CORTEX_MODE
+          value: "worker"
+        - name: CORTEX_TYPE
+          value: "scan"
+        - name: WORKER_TYPE
+          value: "scan-worker"
+        - name: NODE_ENV
+          value: "production"
+        - name: ANTHROPIC_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: cortex-secrets
+              key: anthropic-api-key
+        - name: TASK_QUEUE_ENDPOINT
+          value: "http://task-queue-service:8080"
+        - name: PROMETHEUS_PUSHGATEWAY
+          value: "http://prometheus-pushgateway:9091"
+        resources:
+          requests:
+            cpu: 250m
+            memory: 512Mi
+          limits:
+            cpu: 1000m
+            memory: 2Gi
+        volumeMounts:
+        - name: coordination
+          mountPath: /app/coordination
+        livenessProbe:
+          exec:
+            command:
+            - /bin/bash
+            - -c
+            - pgrep -f worker-mode.js
+          initialDelaySeconds: 30
+          periodSeconds: 30
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          exec:
+            command:
+            - /bin/bash
+            - -c
+            - pgrep -f worker-mode.js
+          initialDelaySeconds: 10
+          periodSeconds: 15
+          timeoutSeconds: 5
+      volumes:
+      - name: coordination
+        persistentVolumeClaim:
+          claimName: cortex-coordination

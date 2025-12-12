@@ -1,0 +1,210 @@
+version: '3.8'
+
+services:
+  dependency-track-apiserver:
+    image: dependencytrack/apiserver:4.11.4
+    container_name: dtrack-apiserver
+    ports:
+      - "8081:8080"
+    environment:
+      # Database Configuration
+      - ALPINE_DATABASE_MODE=external
+      - ALPINE_DATABASE_URL=jdbc:postgresql://postgres:5432/dtrack
+      - ALPINE_DATABASE_DRIVER=org.postgresql.Driver
+      - ALPINE_DATABASE_USERNAME=dtrack
+      - ALPINE_DATABASE_PASSWORD=dtrack
+      - ALPINE_DATABASE_POOL_ENABLED=true
+      - ALPINE_DATABASE_POOL_MAX_SIZE=20
+      - ALPINE_DATABASE_POOL_MIN_IDLE=10
+
+      # API Server Configuration
+      - ALPINE_API_KEY_HEADER=X-Api-Key
+      - ALPINE_CORS_ENABLED=true
+      - ALPINE_CORS_ALLOW_ORIGIN=*
+      - ALPINE_CORS_ALLOW_METHODS=GET,POST,PUT,DELETE,OPTIONS
+      - ALPINE_CORS_ALLOW_HEADERS=Origin,Content-Type,Authorization,X-Requested-With,Accept,X-Api-Key
+
+      # Worker Configuration
+      - ALPINE_WORKER_THREADS=4
+      - ALPINE_WORKER_POOL_DRAIN_TIMEOUT_DURATION=PT60S
+
+      # Data Source Configuration
+      - ALPINE_DATA_DIRECTORY=/data
+
+      # Vulnerability Analysis Configuration
+      - VULNERABILITY_SOURCE_NVD_ENABLED=true
+      - VULNERABILITY_SOURCE_NVD_FEEDS_URL=https://services.nvd.nist.gov/rest/json/cves/2.0
+      - VULNERABILITY_SOURCE_GITHUB_ADVISORIES_ENABLED=true
+      - VULNERABILITY_SOURCE_OSSINDEX_ENABLED=true
+
+      # CISA KEV Integration
+      - KEV_ENABLED=true
+      - KEV_URL=https://www.cisa.gov/sites/default/files/feeds/known_exploited_vulnerabilities.json
+
+      # EPSS Integration
+      - EPSS_ENABLED=true
+      - EPSS_URL=https://api.first.org/data/v1/epss
+
+      # Metrics & Monitoring
+      - ALPINE_METRICS_ENABLED=true
+      - ALPINE_METRICS_AUTH_USERNAME=metrics
+      - ALPINE_METRICS_AUTH_PASSWORD=metrics123
+
+      # Logging
+      - LOGGING_LEVEL=INFO
+      - ALPINE_LOG_LEVEL=INFO
+
+      # Memory Settings
+      - JAVA_OPTS=-Xmx4096m -Xms2048m
+
+      # Scheduled Task Configuration
+      - TASK_SCHEDULER_INITIAL_DELAY=PT60S
+      - TASK_SCHEDULER_POLLING_INTERVAL=PT6H
+
+      # BOM Validation
+      - BOM_VALIDATION_ENABLED=true
+      - BOM_VALIDATION_MODE=ENABLED
+
+      # Vulnerability Analyzer
+      - VULNERABILITY_ANALYSIS_ENABLED=true
+
+      # Portfolio Metrics Update Frequency
+      - PORTFOLIO_METRICS_UPDATE_CRON=0 */6 * * *
+
+      # Notification Settings
+      - NOTIFICATION_LEVEL=INFORMATIONAL
+      - NOTIFICATION_PUBLISHER_DEFAULT_TEMPLATE_ENABLED=true
+
+      # Search Configuration
+      - ALPINE_SEARCH_INDEXES_CONSISTENCY_CHECK_ENABLED=true
+      - ALPINE_SEARCH_INDEXES_DELTA_SYNC_ENABLED=true
+    volumes:
+      - dtrack-data:/data
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8080/api/version"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 120s
+    networks:
+      - dtrack-network
+
+  dependency-track-frontend:
+    image: dependencytrack/frontend:4.11.4
+    container_name: dtrack-frontend
+    ports:
+      - "8082:8080"
+    environment:
+      - API_BASE_URL=http://localhost:8081
+      - OIDC_ISSUER=
+      - OIDC_CLIENT_ID=
+      - OIDC_SCOPE=openid profile email
+      - OIDC_FLOW=implicit
+    depends_on:
+      - dependency-track-apiserver
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8080/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    networks:
+      - dtrack-network
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: dtrack-postgres
+    environment:
+      - POSTGRES_DB=dtrack
+      - POSTGRES_USER=dtrack
+      - POSTGRES_PASSWORD=dtrack
+      - POSTGRES_INITDB_ARGS=-E UTF8
+      - PGDATA=/var/lib/postgresql/data/pgdata
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./init-db:/docker-entrypoint-initdb.d
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U dtrack"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - dtrack-network
+    command:
+      - postgres
+      - -c
+      - max_connections=200
+      - -c
+      - shared_buffers=256MB
+      - -c
+      - effective_cache_size=1GB
+      - -c
+      - maintenance_work_mem=64MB
+      - -c
+      - checkpoint_completion_target=0.9
+      - -c
+      - wal_buffers=16MB
+      - -c
+      - default_statistics_target=100
+
+  # Optional: Prometheus for metrics collection
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: dtrack-prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus-data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/usr/share/prometheus/console_libraries'
+      - '--web.console.templates=/usr/share/prometheus/consoles'
+      - '--storage.tsdb.retention.time=30d'
+    restart: unless-stopped
+    networks:
+      - dtrack-network
+    profiles:
+      - monitoring
+
+  # Optional: Grafana for visualization
+  grafana:
+    image: grafana/grafana:latest
+    container_name: dtrack-grafana
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_INSTALL_PLUGINS=
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./grafana/provisioning:/etc/grafana/provisioning
+    depends_on:
+      - prometheus
+    restart: unless-stopped
+    networks:
+      - dtrack-network
+    profiles:
+      - monitoring
+
+volumes:
+  dtrack-data:
+    driver: local
+  postgres-data:
+    driver: local
+  prometheus-data:
+    driver: local
+  grafana-data:
+    driver: local
+
+networks:
+  dtrack-network:
+    driver: bridge

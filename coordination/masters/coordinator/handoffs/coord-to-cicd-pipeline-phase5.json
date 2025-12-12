@@ -1,0 +1,227 @@
+{
+  "handoff_id": "coord-to-cicd-pipeline-phase5-20251207",
+  "from_master": "coordinator",
+  "to_master": "cicd",
+  "mission_id": "k3s-autoscaling-deployment-001",
+  "phase": "phase_5_cicd",
+  "created_at": "2025-12-07T00:00:00Z",
+  "status": "pending_pickup",
+  "priority": "medium",
+  "dependencies": ["phase_4_deployment"],
+  "parallel_with": ["security-hardening", "documentation"],
+
+  "task_bundle": {
+    "bundle_name": "CI/CD Automation Pipeline",
+    "tasks": [
+      {
+        "task_id": "cicd-001",
+        "title": "Create GitHub Actions workflow for K8s deployment",
+        "type": "pipeline_development",
+        "complexity": 8,
+        "deliverables": [
+          {
+            "file": ".github/workflows/k8s-deploy.yml",
+            "description": "Automated K8s deployment workflow",
+            "triggers": [
+              "Push to main branch (auto-deploy to production)",
+              "Pull request (deploy to staging environment)",
+              "Manual workflow_dispatch with environment selection"
+            ],
+            "jobs": [
+              {
+                "name": "build-and-push",
+                "steps": [
+                  "Checkout code",
+                  "Build Docker image",
+                  "Run security scan (Trivy)",
+                  "Push to ghcr.io/ry-ops/cortex-docker:${{ github.sha }}",
+                  "Tag as :latest if main branch"
+                ]
+              },
+              {
+                "name": "deploy-to-k3s",
+                "steps": [
+                  "Configure kubectl with K3s context",
+                  "Update image tag in manifests",
+                  "Apply K8s manifests (kubectl apply -f k8s/)",
+                  "Wait for rollout to complete",
+                  "Run smoke tests",
+                  "Notify deployment status"
+                ],
+                "secrets_required": [
+                  "KUBE_CONFIG_DATA (base64 kubeconfig)",
+                  "ANTHROPIC_API_KEY",
+                  "PROXMOX_TOKEN_VALUE"
+                ]
+              },
+              {
+                "name": "rollback-on-failure",
+                "condition": "if: failure()",
+                "steps": [
+                  "Rollback to previous deployment",
+                  "Notify team of failure",
+                  "Create incident issue"
+                ]
+              }
+            ]
+          },
+          {
+            "file": ".github/workflows/k8s-staging.yml",
+            "description": "Staging environment workflow",
+            "requirements": [
+              "Deploy to separate namespace: cortex-staging",
+              "Use smaller resource limits",
+              "Run integration tests",
+              "Auto-cleanup after 24 hours"
+            ]
+          }
+        ]
+      },
+      {
+        "task_id": "cicd-002",
+        "title": "Implement blue/green deployment strategy",
+        "type": "deployment_strategy",
+        "complexity": 7,
+        "deliverables": [
+          {
+            "file": "scripts/deploy/blue-green-deploy.sh",
+            "description": "Blue/green deployment orchestration",
+            "requirements": [
+              "Deploy new version to 'green' environment",
+              "Run validation tests on green",
+              "Switch Service selector to green pods",
+              "Monitor for 5 minutes",
+              "If successful, tear down blue environment",
+              "If failed, rollback to blue immediately"
+            ]
+          },
+          {
+            "file": "k8s/deployment-strategies/blue-green-service.yaml",
+            "description": "Service manifest for blue/green",
+            "requirements": [
+              "Service with selector: version={{ blue|green }}",
+              "Script to update selector",
+              "Zero-downtime switching"
+            ]
+          }
+        ]
+      },
+      {
+        "task_id": "cicd-003",
+        "title": "Create automated testing pipeline",
+        "type": "testing_automation",
+        "complexity": 6,
+        "deliverables": [
+          {
+            "file": "scripts/test/integration-tests.sh",
+            "description": "Integration test suite",
+            "tests": [
+              "Deploy test task to queue",
+              "Verify worker scales up",
+              "Verify task completion",
+              "Verify metrics are recorded",
+              "Verify Prometheus scraping",
+              "Verify Grafana queries work",
+              "Test scale-to-zero after cooldown"
+            ]
+          },
+          {
+            "file": "scripts/test/performance-tests.sh",
+            "description": "Performance and load testing",
+            "tests": [
+              "Spawn 100 concurrent tasks",
+              "Measure time-to-scale",
+              "Measure task throughput",
+              "Monitor resource utilization",
+              "Test max replicas limit",
+              "Generate performance report"
+            ]
+          },
+          {
+            "file": ".github/workflows/integration-tests.yml",
+            "description": "Automated testing workflow",
+            "requirements": [
+              "Run on PR creation",
+              "Deploy to test environment",
+              "Execute all tests",
+              "Comment results on PR",
+              "Block merge if tests fail"
+            ]
+          }
+        ]
+      },
+      {
+        "task_id": "cicd-004",
+        "title": "Create rollback and disaster recovery automation",
+        "type": "automation",
+        "complexity": 6,
+        "deliverables": [
+          {
+            "file": "scripts/deploy/rollback.sh",
+            "description": "Automated rollback script",
+            "requirements": [
+              "Accept revision number or 'previous'",
+              "kubectl rollout undo for all deployments",
+              "Restore coordination state from backup",
+              "Verify health after rollback",
+              "Log rollback event"
+            ]
+          },
+          {
+            "file": "scripts/deploy/backup-coordination-state.sh",
+            "description": "Backup coordination files",
+            "requirements": [
+              "Tar coordination PVC contents",
+              "Upload to S3 or Proxmox backup storage",
+              "Retention: 30 days",
+              "Automated daily via CronJob"
+            ]
+          },
+          {
+            "file": "k8s/cronjobs/backup-cronjob.yaml",
+            "description": "K8s CronJob for backups",
+            "requirements": [
+              "Schedule: 0 2 * * * (daily at 2 AM)",
+              "Mount coordination PVC",
+              "Run backup script",
+              "Report status to monitoring"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+
+  "context": {
+    "deployment_strategies": {
+      "rolling_update": "Default for StatefulSets (masters)",
+      "blue_green": "Optional for zero-downtime worker updates",
+      "canary": "Future enhancement - gradual rollout"
+    },
+    "github_secrets": {
+      "KUBE_CONFIG_DATA": "Base64 encoded kubeconfig from K3s control plane",
+      "ANTHROPIC_API_KEY": "Claude API key",
+      "PROXMOX_TOKEN_VALUE": "Proxmox API token value",
+      "GRAFANA_ADMIN_PASSWORD": "Grafana admin password",
+      "GHCR_TOKEN": "GitHub Container Registry PAT"
+    },
+    "testing_environments": {
+      "production": "cortex namespace on main K3s cluster",
+      "staging": "cortex-staging namespace with reduced resources",
+      "ephemeral": "Temporary namespaces for PR testing (auto-cleanup)"
+    }
+  },
+
+  "routing_reason": "CI/CD pipeline development and deployment automation - cicd-master specialization",
+  "expected_outcome": "Fully automated deployment pipeline with testing, rollback, and blue/green support",
+  "handoff_back_trigger": "GitHub Actions workflows created, deployment strategies implemented, testing automated",
+
+  "validation_checklist": [
+    "GitHub Actions workflow successfully deploys to K3s",
+    "Smoke tests run automatically after deployment",
+    "Rollback script successfully reverts to previous version",
+    "Blue/green deployment switches without downtime",
+    "Integration tests pass in CI",
+    "Backup CronJob runs successfully"
+  ]
+}

@@ -1,0 +1,68 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: cortex-staging
+
+# Base resources
+resources:
+  - ../../namespace.yaml
+  - ../../serviceaccount.yaml
+  - ../../configmap.yaml
+  - ../../pvc.yaml
+  - ../../deployment.yaml
+  - ../../service.yaml
+  - ../../network-policy.yaml
+
+# Staging-specific configuration
+namePrefix: staging-
+
+# Labels for staging environment
+commonLabels:
+  environment: staging
+  managed-by: kustomize
+
+# Image transformations
+images:
+  - name: ghcr.io/ryandahlberg/cortex
+    newTag: staging-latest
+
+# Replicas - moderate for staging
+replicas:
+  - name: cortex-coordinator
+    count: 1
+  - name: cortex-development-master
+    count: 1
+  - name: cortex-cicd-master
+    count: 1
+  - name: cortex-security-master
+    count: 1
+
+# Resource limits - production-like but smaller
+patches:
+  - patch: |-
+      - op: replace
+        path: /spec/template/spec/containers/0/resources/limits/memory
+        value: "1.5Gi"
+      - op: replace
+        path: /spec/template/spec/containers/0/resources/limits/cpu
+        value: "750m"
+      - op: replace
+        path: /spec/template/spec/containers/0/resources/requests/memory
+        value: "512Mi"
+      - op: replace
+        path: /spec/template/spec/containers/0/resources/requests/cpu
+        value: "250m"
+    target:
+      kind: Deployment
+      labelSelector: app=cortex
+
+# ConfigMap overrides for staging
+configMapGenerator:
+  - name: cortex-config
+    behavior: merge
+    literals:
+      - LOG_LEVEL=info
+      - WORKER_MAX_REPLICAS=10
+      - WORKER_COOLDOWN_SECONDS=120
+      - ENABLE_DEBUG_MODE=false
+      - ENABLE_METRICS=true

@@ -1,0 +1,224 @@
+
+═══════════════════════════════════════════════════════════════════════════════
+                   CORTEX PHASE 3: KEDA AUTO-SCALING ARCHITECTURE
+═══════════════════════════════════════════════════════════════════════════════
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                           EXTERNAL ACCESS                                    │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                              │
+│  NodePort 30001                   NodePort 30030                            │
+│  ┌──────────────┐                ┌──────────────┐                          │
+│  │  Cortex API  │                │  Dashboard   │                          │
+│  └──────┬───────┘                └──────┬───────┘                          │
+│         │                                │                                  │
+└─────────┼────────────────────────────────┼──────────────────────────────────┘
+          │                                │
+┌─────────┼────────────────────────────────┼──────────────────────────────────┐
+│         │         KUBERNETES NAMESPACE: cortex                │              │
+├─────────┼────────────────────────────────┼──────────────────────────────────┤
+│         │                                │                                  │
+│         ▼                                ▼                                  │
+│  ┌──────────────────────────────────────────────────────────────┐          │
+│  │                    SERVICES LAYER                             │          │
+│  ├───────────────────────────────────────────────────────────────┤          │
+│  │  cortex-masters (headless)    │  cortex-api (NodePort)       │          │
+│  │  cortex-dashboard (NodePort)  │  task-queue-service (ClusterIP) │       │
+│  └──────────────────────────────────────────────────────────────┘          │
+│                                                                              │
+│  ┌──────────────────────────────────────────────────────────────┐          │
+│  │                    MASTER LAYER (StatefulSets)                │          │
+│  ├───────────────────────────────────────────────────────────────┤          │
+│  │                                                                │          │
+│  │  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐          │          │
+│  │  │ Coordinator │  │ Development │  │  Security   │          │          │
+│  │  │   Master    │  │   Master    │  │   Master    │          │          │
+│  │  │  (1 replica)│  │  (1 replica)│  │  (1 replica)│          │          │
+│  │  └─────────────┘  └─────────────┘  └─────────────┘          │          │
+│  │                                                                │          │
+│  │  ┌─────────────┐  ┌─────────────┐                            │          │
+│  │  │   CI/CD     │  │  Inventory  │                            │          │
+│  │  │   Master    │  │   Master    │                            │          │
+│  │  │  (1 replica)│  │  (1 replica)│                            │          │
+│  │  └─────────────┘  └─────────────┘                            │          │
+│  │                                                                │          │
+│  │  Each master has:                                             │          │
+│  │  • 10GB persistent volume (RWO)                              │          │
+│  │  • Shared 50GB coordination volume (RWX)                     │          │
+│  │  • CPU: 500m-2000m, Memory: 1Gi-4Gi                          │          │
+│  │  • Pod anti-affinity (prefer different nodes)               │          │
+│  └──────────────────────────────────────────────────────────────┘          │
+│                                                                              │
+│  ┌──────────────────────────────────────────────────────────────┐          │
+│  │                  KEDA AUTO-SCALING LAYER                      │          │
+│  ├───────────────────────────────────────────────────────────────┤          │
+│  │                                                                │          │
+│  │  ┌──────────────────────────────────────────────────┐        │          │
+│  │  │         KEDA ScaledObjects                       │        │          │
+│  │  ├──────────────────────────────────────────────────┤        │          │
+│  │  │                                                   │        │          │
+│  │  │  Implementation Worker Scaler                    │        │          │
+│  │  │  Security Worker Scaler                          │        │          │
+│  │  │  Analysis Worker Scaler                          │        │          │
+│  │  │  Scan Worker Scaler                              │        │          │
+│  │  │                                                   │        │          │
+│  │  │  Config:                                          │        │          │
+│  │  │  • Min: 0, Max: 50 replicas                      │        │          │
+│  │  │  • Poll: 15s, Cooldown: 300s                     │        │          │
+│  │  │  • Trigger: cortex_task_queue_depth > 0          │        │          │
+│  │  │  • Threshold: 2 tasks per worker                 │        │          │
+│  │  └──────────────────────────────────────────────────┘        │          │
+│  │                         │                                     │          │
+│  │                         ▼                                     │          │
+│  │  ┌──────────────────────────────────────────────────┐        │          │
+│  │  │      Horizontal Pod Autoscalers (HPA)            │        │          │
+│  │  │      (Created and managed by KEDA)               │        │          │
+│  │  └──────────────────────────────────────────────────┘        │          │
+│  └──────────────────────────────────────────────────────────────┘          │
+│                         │                                                    │
+│                         ▼                                                    │
+│  ┌──────────────────────────────────────────────────────────────┐          │
+│  │                  WORKER LAYER (Deployments)                   │          │
+│  ├───────────────────────────────────────────────────────────────┤          │
+│  │                                                                │          │
+│  │  Implementation Workers (0-50 replicas)                       │          │
+│  │  ┌──────┐ ┌──────┐ ┌──────┐           ┌──────┐              │          │
+│  │  │ Pod  │ │ Pod  │ │ Pod  │    ...    │ Pod  │              │          │
+│  │  └──────┘ └──────┘ └──────┘           └──────┘              │          │
+│  │                                                                │          │
+│  │  Security Workers (0-50 replicas)                             │          │
+│  │  ┌──────┐ ┌──────┐ ┌──────┐           ┌──────┐              │          │
+│  │  │ Pod  │ │ Pod  │ │ Pod  │    ...    │ Pod  │              │          │
+│  │  └──────┘ └──────┘ └──────┘           └──────┘              │          │
+│  │                                                                │          │
+│  │  Analysis Workers (0-50 replicas)                             │          │
+│  │  ┌──────┐ ┌──────┐ ┌──────┐           ┌──────┐              │          │
+│  │  │ Pod  │ │ Pod  │ │ Pod  │    ...    │ Pod  │              │          │
+│  │  └──────┘ └──────┘ └──────┘           └──────┘              │          │
+│  │                                                                │          │
+│  │  Scan Workers (0-50 replicas)                                 │          │
+│  │  ┌──────┐ ┌──────┐ ┌──────┐           ┌──────┐              │          │
+│  │  │ Pod  │ │ Pod  │ │ Pod  │    ...    │ Pod  │              │          │
+│  │  └──────┘ └──────┘ └──────┘           └──────┘              │          │
+│  │                                                                │          │
+│  │  Each worker has:                                             │          │
+│  │  • CPU: 250m-1000m, Memory: 512Mi-2Gi                        │          │
+│  │  • Shared coordination volume (RWX)                          │          │
+│  │  • Graceful shutdown: 300s timeout                           │          │
+│  │  • Stateless (can be terminated anytime)                     │          │
+│  └──────────────────────────────────────────────────────────────┘          │
+│                                                                              │
+│  ┌──────────────────────────────────────────────────────────────┐          │
+│  │                    STORAGE LAYER                              │          │
+│  ├───────────────────────────────────────────────────────────────┤          │
+│  │                                                                │          │
+│  │  ┌────────────────────────┐  ┌────────────────────────┐      │          │
+│  │  │ cortex-coordination    │  │ cortex-task-queue      │      │          │
+│  │  │ PVC (50Gi, RWX)        │  │ PVC (20Gi, RWX)        │      │          │
+│  │  └────────────────────────┘  └────────────────────────┘      │          │
+│  │                                                                │          │
+│  │  ┌────────────────────────────────────────────────────┐      │          │
+│  │  │ Master Persistent Volumes (10Gi each, RWO)         │      │          │
+│  │  │ • coordinator-master-state-0                       │      │          │
+│  │  │ • development-master-state-0                       │      │          │
+│  │  │ • security-master-state-0                          │      │          │
+│  │  │ • cicd-master-state-0                              │      │          │
+│  │  │ • inventory-master-state-0                         │      │          │
+│  │  └────────────────────────────────────────────────────┘      │          │
+│  └──────────────────────────────────────────────────────────────┘          │
+│                                                                              │
+│  ┌──────────────────────────────────────────────────────────────┐          │
+│  │                  CONFIGURATION LAYER                          │          │
+│  ├───────────────────────────────────────────────────────────────┤          │
+│  │  ConfigMaps:                                                  │          │
+│  │  • coordinator-config                                         │          │
+│  │  • development-config                                         │          │
+│  │  • security-config                                            │          │
+│  │  • cicd-config                                                │          │
+│  │  • inventory-config                                           │          │
+│  │                                                                │          │
+│  │  Secrets:                                                     │          │
+│  │  • cortex-secrets (ANTHROPIC_API_KEY, etc.)                  │          │
+│  └──────────────────────────────────────────────────────────────┘          │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+┌──────────────────────────────────────────────────────────────────────────────┐
+│                          KEDA NAMESPACE                                       │
+├──────────────────────────────────────────────────────────────────────────────┤
+│  ┌────────────────┐  ┌──────────────────────┐  ┌───────────────────┐       │
+│  │ KEDA Operator  │  │ KEDA Metrics Server  │  │ KEDA Webhooks     │       │
+│  └────────────────┘  └──────────────────────┘  └───────────────────┘       │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+┌──────────────────────────────────────────────────────────────────────────────┐
+│                      PROMETHEUS INTEGRATION                                   │
+├──────────────────────────────────────────────────────────────────────────────┤
+│  Metrics:                                                                     │
+│  • cortex_task_queue_depth{type="implementation"}                           │
+│  • cortex_task_queue_depth{type="security"}                                 │
+│  • cortex_task_queue_depth{type="analysis"}                                 │
+│  • cortex_task_queue_depth{type="scan"}                                     │
+│                                                                               │
+│  KEDA queries Prometheus every 15 seconds to determine worker count         │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+═══════════════════════════════════════════════════════════════════════════════
+                         SCALING BEHAVIOR
+═══════════════════════════════════════════════════════════════════════════════
+
+SCALE-UP (Aggressive):
+  0 tasks → 0 workers (scale-to-zero)
+  Tasks appear → Workers spawn immediately
+  0→10→20→40→50 in ~60 seconds
+  Policy: 100% increase every 15s OR +10 pods (whichever is higher)
+
+SCALE-DOWN (Gradual):
+  No tasks for 5 minutes → Start scale-down
+  40→20→10→5→0 over 4 minutes
+  Policy: 50% decrease every 60s OR -5 pods (whichever is lower)
+
+═══════════════════════════════════════════════════════════════════════════════
+                         DATA FLOW
+═══════════════════════════════════════════════════════════════════════════════
+
+1. Task Creation:
+   User/System → Coordinator Master → Task Queue (file system)
+
+2. Prometheus Detection:
+   Task Queue → Prometheus scrapes → cortex_task_queue_depth metric
+
+3. KEDA Scaling Decision:
+   Prometheus ← KEDA polls (every 15s)
+   KEDA → HPA → Scale worker deployment
+
+4. Worker Processing:
+   Worker spawns → Claims task (atomic rename)
+   Worker → Processes task → Records result
+   Worker → Exits (or waits for next task)
+
+5. Scale-to-Zero:
+   No tasks for 5 min → KEDA cooldown expires
+   KEDA → HPA → Scale to 0 replicas
+
+═══════════════════════════════════════════════════════════════════════════════
+                         HIGH AVAILABILITY
+═══════════════════════════════════════════════════════════════════════════════
+
+Masters:
+  • Pod anti-affinity (prefer different nodes)
+  • Automatic restart on failure
+  • Persistent state (10GB per master)
+  • Shared coordination volume
+
+Workers:
+  • Stateless (can restart on any node)
+  • Graceful shutdown (finish task before exit)
+  • Automatic replacement by deployment
+  • Scale based on demand
+
+Storage:
+  • PersistentVolumes with Retain policy
+  • ReadWriteMany for shared coordination
+  • ReadWriteOnce for master state
+
+═══════════════════════════════════════════════════════════════════════════════

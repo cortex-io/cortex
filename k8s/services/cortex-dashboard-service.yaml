@@ -1,0 +1,23 @@
+# Service for Cortex Dashboard (if running as separate pod)
+# For now, dashboard is served by coordinator master
+apiVersion: v1
+kind: Service
+metadata:
+  name: cortex-dashboard
+  namespace: cortex
+  labels:
+    app: cortex
+    component: service
+    service-type: dashboard
+spec:
+  type: NodePort
+  selector:
+    app: cortex
+    component: master
+    master-type: coordinator  # Dashboard served by coordinator
+  ports:
+  - name: http
+    port: 3000
+    targetPort: 3000
+    nodePort: 30030  # Dashboard access via <node-ip>:30030
+    protocol: TCP

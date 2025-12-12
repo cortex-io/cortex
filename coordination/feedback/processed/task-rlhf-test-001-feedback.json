@@ -1,0 +1,72 @@
+{
+  "feedback_request_id": "fbr-20251212143043",
+  "task_id": "task-rlhf-test-001",
+  "task_title": "Security scan test",
+  "expert_assigned": "security",
+  "routing_confidence": 0.75,
+  "outcome_status": "success",
+  "created_at": "2025-12-12T14:30:43-0600",
+  "feedback_status": "completed",
+  "questions": {
+    "routing_quality": {
+      "question": "Was the task routed to the correct expert?",
+      "options": [
+        "✅ Correct expert (boost confidence)",
+        "⚠️ Acceptable but not ideal (neutral)",
+        "❌ Wrong expert (penalize routing)"
+      ],
+      "answer": 2,
+      "impact": "routing_learning"
+    },
+    "outcome_quality": {
+      "question": "Did the task outcome meet your expectations?",
+      "options": [
+        "🌟 Excellent - exceeded expectations",
+        "✅ Good - met expectations",
+        "⚠️ Acceptable - some issues",
+        "❌ Poor - did not meet needs"
+      ],
+      "answer": 3,
+      "impact": "quality_metrics"
+    },
+    "task_difficulty": {
+      "question": "How would you rate the task complexity?",
+      "options": [
+        "Simple (1-3)",
+        "Moderate (4-6)",
+        "Complex (7-9)",
+        "Very Complex (10)"
+      ],
+      "answer": 5,
+      "impact": "complexity_calibration"
+    },
+    "would_retry": {
+      "question": "Would you route this type of task the same way again?",
+      "options": [
+        "Yes, same expert",
+        "Yes, but different expert",
+        "No, needs decomposition",
+        "No, needs human intervention"
+      ],
+      "answer": "Yes, same expert",
+      "impact": "routing_policy"
+    }
+  },
+  "open_feedback": {
+    "question": "Any additional comments or suggestions?",
+    "answer": "Excellent work"
+  },
+  "completed_at": "2025-12-12T14:30:56-0600",
+  "learning_update": {
+    "expert": "security",
+    "routing_feedback": 1.0,
+    "quality_feedback": 1.0,
+    "complexity_calibration": 5,
+    "learning_signals": {
+      "boost_routing": true,
+      "penalize_routing": false,
+      "update_complexity_model": true,
+      "update_quality_expectations": true
+    }
+  }
+}

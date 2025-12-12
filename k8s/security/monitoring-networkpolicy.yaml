@@ -1,0 +1,120 @@
+---
+# Network Policy for Prometheus Monitoring
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: cortex-prometheus-netpol
+  namespace: cortex
+  labels:
+    app.kubernetes.io/name: prometheus
+    app.kubernetes.io/component: network-security
+  annotations:
+    description: "Allow Prometheus to scrape all Cortex pods and allow Grafana access"
+    security.policy: "monitoring-access"
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: prometheus
+  policyTypes:
+    - Ingress
+    - Egress
+
+  ingress:
+    # Allow Grafana to query Prometheus
+    - from:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: grafana
+      ports:
+        - protocol: TCP
+          port: 9090
+
+    # Allow from NodePort (external access)
+    - from:
+        - namespaceSelector: {}
+      ports:
+        - protocol: TCP
+          port: 9090
+
+  egress:
+    # Allow scraping all Cortex pods
+    - to:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/part-of: cortex-automation
+      ports:
+        - protocol: TCP
+          port: 9090
+
+    # Allow DNS
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: kube-system
+        - podSelector:
+            matchLabels:
+              k8s-app: kube-dns
+      ports:
+        - protocol: UDP
+          port: 53
+
+    # Allow Kubernetes API access for service discovery
+    - to:
+        - namespaceSelector: {}
+          podSelector:
+            matchLabels:
+              component: apiserver
+      ports:
+        - protocol: TCP
+          port: 6443
+
+---
+# Network Policy for Grafana
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: cortex-grafana-netpol
+  namespace: cortex
+  labels:
+    app.kubernetes.io/name: grafana
+    app.kubernetes.io/component: network-security
+  annotations:
+    description: "Allow Grafana to query Prometheus and accept external traffic"
+    security.policy: "dashboard-access"
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: grafana
+  policyTypes:
+    - Ingress
+    - Egress
+
+  ingress:
+    # Allow external access via NodePort
+    - from:
+        - namespaceSelector: {}
+      ports:
+        - protocol: TCP
+          port: 3000
+
+  egress:
+    # Allow to Prometheus
+    - to:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: prometheus
+      ports:
+        - protocol: TCP
+          port: 9090
+
+    # Allow DNS
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: kube-system
+        - podSelector:
+            matchLabels:
+              k8s-app: kube-dns
+      ports:
+        - protocol: UDP
+          port: 53

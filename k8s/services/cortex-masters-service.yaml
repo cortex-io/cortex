@@ -1,0 +1,25 @@
+# Headless service for StatefulSet pod discovery
+# Allows masters to communicate via DNS: <master-name>-<ordinal>.cortex-masters.cortex.svc.cluster.local
+apiVersion: v1
+kind: Service
+metadata:
+  name: cortex-masters
+  namespace: cortex
+  labels:
+    app: cortex
+    component: service
+    service-type: headless
+spec:
+  clusterIP: None  # Headless service
+  selector:
+    app: cortex
+    component: master
+  ports:
+  - name: http
+    port: 8080
+    targetPort: 8080
+    protocol: TCP
+  - name: metrics
+    port: 9090
+    targetPort: 9090
+    protocol: TCP

@@ -1,0 +1,49 @@
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: implementation-worker-scaler
+  namespace: cortex
+  labels:
+    app: cortex
+    component: autoscaler
+    worker-type: implementation
+spec:
+  scaleTargetRef:
+    name: implementation-worker
+  minReplicaCount: 0  # Scale to zero when no tasks
+  maxReplicaCount: 50  # Maximum 50 workers
+  pollingInterval: 15  # Check every 15 seconds
+  cooldownPeriod: 300  # 5 minutes before scale to zero
+  advanced:
+    restoreToOriginalReplicaCount: false
+    horizontalPodAutoscalerConfig:
+      name: implementation-worker-hpa
+      behavior:
+        scaleUp:
+          stabilizationWindowSeconds: 0  # Scale up immediately
+          policies:
+          - type: Percent
+            value: 100  # Double capacity every 15s
+            periodSeconds: 15
+          - type: Pods
+            value: 10  # Or add 10 pods, whichever is higher
+            periodSeconds: 15
+          selectPolicy: Max
+        scaleDown:
+          stabilizationWindowSeconds: 60  # Wait 60s before scaling down
+          policies:
+          - type: Percent
+            value: 50  # Remove 50% of pods
+            periodSeconds: 60
+          - type: Pods
+            value: 5  # Or remove 5 pods, whichever is lower
+            periodSeconds: 60
+          selectPolicy: Min
+  triggers:
+  - type: prometheus
+    metadata:
+      serverAddress: http://prometheus:9090
+      metricName: cortex_task_queue_depth_implementation
+      threshold: '2'  # 2 tasks per worker
+      query: |
+        sum(cortex_task_queue_depth{type="implementation"}) or vector(0)

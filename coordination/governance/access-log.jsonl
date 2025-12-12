@@ -16175,3 +16175,4 @@
 {"event_id":"8ae38912-268f-4a01-a95c-09d6281f76be","timestamp":"2025-12-05T13:37:04.762Z","actor":"coordinator-master","permission":"task-queue:read","namespace":"task-queue","permitted":true,"reason":null}
 {"event_id":"3ceec10c-1982-4f95-b081-b84b6bcd8107","timestamp":"2025-12-05T13:37:04.762Z","actor":"coordinator-master","permission":"task-queue:read","namespace":"task-queue","permitted":true,"reason":null}
 {"event_id":"3b3e3fae-4cbb-4cfb-aad2-302f1920031c","timestamp":"2025-12-05T13:37:04.763Z","actor":"coordinator-master","permission":"metastore:admin","namespace":"metastore","permitted":false,"reason":"permission_denied"}
+{"event_id":"8dd8b4b9-829f-4b5b-a14f-efd3b5ba2852","timestamp":"2025-12-06T18:27:45.449Z","actor":"security-master","permission":"worker-specs:write","namespace":"worker-specs","permitted":true,"reason":null}

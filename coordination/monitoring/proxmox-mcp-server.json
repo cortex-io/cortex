@@ -1,0 +1,80 @@
+{
+  "repository": "ry-ops/proxmox-mcp-server",
+  "monitoring_config": {
+    "enabled": true,
+    "integrated_at": "2025-12-06T12:30:00-06:00",
+    "health_checks": {
+      "dependency_health": {
+        "enabled": true,
+        "frequency": "daily",
+        "check_types": ["outdated", "security_advisories", "deprecated"]
+      },
+      "code_quality": {
+        "enabled": true,
+        "frequency": "on_commit",
+        "metrics": ["complexity", "coverage", "maintainability"]
+      },
+      "security_posture": {
+        "enabled": true,
+        "frequency": "daily",
+        "scans": ["vulnerabilities", "secrets", "misconfigurations"]
+      }
+    },
+    "alerts": {
+      "channels": ["dashboard", "events"],
+      "severity_thresholds": {
+        "critical": "immediate",
+        "high": "within_1_hour",
+        "medium": "within_24_hours",
+        "low": "weekly_summary"
+      }
+    },
+    "observability": {
+      "event_tracking": true,
+      "metrics_collection": true,
+      "log_aggregation": false,
+      "dashboard_widget": {
+        "enabled": true,
+        "display_name": "Proxmox MCP Server",
+        "priority": "normal"
+      }
+    }
+  },
+  "automation_policies": {
+    "auto_dependency_updates": {
+      "enabled": false,
+      "strategy": "manual_review",
+      "update_types": ["patch", "minor"],
+      "exclude_major": true
+    },
+    "auto_security_fixes": {
+      "enabled": false,
+      "strategy": "create_pr",
+      "severity_threshold": "high",
+      "require_tests": true
+    },
+    "auto_documentation": {
+      "enabled": true,
+      "update_on": ["api_changes", "new_features"],
+      "formats": ["markdown", "api_docs"]
+    }
+  },
+  "integration_points": {
+    "github_webhooks": {
+      "push": "trigger_quality_check",
+      "pull_request": "trigger_security_scan",
+      "release": "trigger_full_audit"
+    },
+    "cortex_apis": {
+      "security_api": "http://localhost:3000/api/security/scan",
+      "observability_api": "http://localhost:3001/api/events",
+      "dashboard_api": "http://localhost:3000/api/dashboard"
+    }
+  },
+  "reporting": {
+    "daily_health_summary": true,
+    "weekly_trends_report": true,
+    "monthly_audit_report": true,
+    "reports_location": "coordination/reports/proxmox-mcp-server/"
+  }
+}

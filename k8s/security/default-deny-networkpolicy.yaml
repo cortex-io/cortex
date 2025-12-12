@@ -1,0 +1,21 @@
+---
+# Default Deny All Ingress and Egress in cortex namespace
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny-all
+  namespace: cortex
+  labels:
+    app.kubernetes.io/name: cortex
+    app.kubernetes.io/component: network-security
+  annotations:
+    description: "Default deny all ingress and egress traffic - explicit allows required"
+    security.policy: "deny-by-default"
+spec:
+  podSelector: {}
+  policyTypes:
+    - Ingress
+    - Egress
+  # Empty ingress/egress = deny all
+  ingress: []
+  egress: []

@@ -1,0 +1,49 @@
+{
+  "task_id": "n8n-security-scan-001",
+  "task_type": "security_scan",
+  "priority": "high",
+  "status": "pending",
+  "assigned_master": "security-master",
+  "repository": {
+    "name": "ry-ops/n8n-mcp-server",
+    "url": "https://github.com/ry-ops/n8n-mcp-server",
+    "language": "Python",
+    "package_manager": "uv",
+    "default_branch": "main"
+  },
+  "scan_config": {
+    "scan_types": [
+      "dependency_vulnerabilities",
+      "secrets_detection",
+      "static_analysis",
+      "api_key_exposure"
+    ],
+    "tools": [
+      "pip-audit",
+      "bandit",
+      "safety",
+      "gitleaks",
+      "trufflehog"
+    ],
+    "severity_threshold": "medium",
+    "include_dependencies": true,
+    "focus_areas": [
+      "API key management",
+      "n8n credential handling",
+      "Environment variable security",
+      "Dependency vulnerabilities"
+    ]
+  },
+  "created_at": "2025-12-07T00:00:00-06:00",
+  "created_by": "cortex-integration",
+  "deliverables": {
+    "vulnerability_report": "coordination/security/reports/n8n-mcp-server-scan.json",
+    "summary_report": "coordination/security/reports/n8n-mcp-server-summary.md",
+    "secrets_scan_report": "coordination/security/reports/n8n-mcp-server-secrets.json"
+  },
+  "security_notes": {
+    "api_keys": "n8n API keys grant full instance access - critical to monitor for exposure",
+    "credential_storage": "Verify .env files are properly gitignored",
+    "key_rotation": "Recommend regular API key rotation policy"
+  }
+}

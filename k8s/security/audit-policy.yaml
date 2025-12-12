@@ -1,0 +1,189 @@
+---
+# Kubernetes Audit Policy for Cortex
+# This policy defines what events should be logged by the Kubernetes API server
+#
+# Installation:
+# 1. Copy this file to K3s config: /var/lib/rancher/k3s/server/audit-policy.yaml
+# 2. Edit K3s config: /etc/rancher/k3s/config.yaml
+#    kube-apiserver-arg:
+#      - audit-policy-file=/var/lib/rancher/k3s/server/audit-policy.yaml
+#      - audit-log-path=/var/log/kubernetes/audit.log
+#      - audit-log-maxage=30
+#      - audit-log-maxbackup=10
+#      - audit-log-maxsize=100
+# 3. Restart K3s: systemctl restart k3s
+
+apiVersion: audit.k8s.io/v1
+kind: Policy
+# Omit managed fields from audit logs (reduces verbosity)
+omitManagedFields: true
+omitStages:
+  - "RequestReceived"
+
+rules:
+  # --- SECURITY-CRITICAL EVENTS (Always log at RequestResponse level) ---
+
+  # 1. Secret access (critical for security)
+  - level: RequestResponse
+    verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+    resources:
+      - group: ""
+        resources: ["secrets"]
+    namespaces: ["cortex"]
+    omitStages:
+      - "RequestReceived"
+
+  # 2. RBAC changes (critical for access control)
+  - level: RequestResponse
+    verbs: ["create", "update", "patch", "delete"]
+    resources:
+      - group: "rbac.authorization.k8s.io"
+        resources: ["roles", "rolebindings", "clusterroles", "clusterrolebindings"]
+    omitStages:
+      - "RequestReceived"
+
+  # 3. ServiceAccount token creation (potential privilege escalation)
+  - level: RequestResponse
+    verbs: ["create"]
+    resources:
+      - group: ""
+        resources: ["serviceaccounts/token"]
+    namespaces: ["cortex"]
+
+  # 4. Pod exec/attach commands (potential container escape)
+  - level: RequestResponse
+    verbs: ["create"]
+    resources:
+      - group: ""
+        resources: ["pods/exec", "pods/attach", "pods/portforward"]
+    namespaces: ["cortex"]
+
+  # 5. ConfigMap modifications in cortex namespace (coordination data)
+  - level: RequestResponse
+    verbs: ["create", "update", "patch", "delete"]
+    resources:
+      - group: ""
+        resources: ["configmaps"]
+    namespaces: ["cortex"]
+
+  # 6. Deployment and StatefulSet scaling (resource manipulation)
+  - level: RequestResponse
+    verbs: ["update", "patch"]
+    resources:
+      - group: "apps"
+        resources: ["deployments", "statefulsets", "deployments/scale", "statefulsets/scale"]
+    namespaces: ["cortex"]
+
+  # 7. Network policy changes (segmentation controls)
+  - level: RequestResponse
+    verbs: ["create", "update", "patch", "delete"]
+    resources:
+      - group: "networking.k8s.io"
+        resources: ["networkpolicies"]
+    namespaces: ["cortex"]
+
+  # 8. Pod Security Policy/Admission (security controls)
+  - level: RequestResponse
+    verbs: ["create", "update", "patch", "delete"]
+    resources:
+      - group: "policy"
+        resources: ["podsecuritypolicies"]
+
+  # 9. Certificate signing requests (credential generation)
+  - level: RequestResponse
+    verbs: ["create", "update", "patch", "delete", "approve"]
+    resources:
+      - group: "certificates.k8s.io"
+        resources: ["certificatesigningrequests", "certificatesigningrequests/approval"]
+
+  # --- OPERATIONAL EVENTS (Log at Metadata level) ---
+
+  # 10. Pod lifecycle events
+  - level: Metadata
+    verbs: ["create", "update", "patch", "delete"]
+    resources:
+      - group: ""
+        resources: ["pods"]
+    namespaces: ["cortex"]
+
+  # 11. Service modifications
+  - level: Metadata
+    verbs: ["create", "update", "patch", "delete"]
+    resources:
+      - group: ""
+        resources: ["services"]
+    namespaces: ["cortex"]
+
+  # 12. Ingress modifications
+  - level: Metadata
+    verbs: ["create", "update", "patch", "delete"]
+    resources:
+      - group: "networking.k8s.io"
+        resources: ["ingresses"]
+    namespaces: ["cortex"]
+
+  # 13. PersistentVolumeClaim operations
+  - level: Metadata
+    verbs: ["create", "update", "patch", "delete"]
+    resources:
+      - group: ""
+        resources: ["persistentvolumeclaims"]
+    namespaces: ["cortex"]
+
+  # --- AUTHENTICATION & AUTHORIZATION (Metadata level) ---
+
+  # 14. Authentication failures
+  - level: Metadata
+    verbs: ["*"]
+    userGroups: ["system:unauthenticated"]
+
+  # 15. Authorization failures
+  - level: Metadata
+    verbs: ["*"]
+    resources:
+      - group: "*"
+        resources: ["*"]
+    namespaces: ["cortex"]
+    omitStages:
+      - "RequestReceived"
+
+  # --- EXCLUDED EVENTS (Don't log, reduce noise) ---
+
+  # 16. Exclude read-only requests for non-sensitive resources
+  - level: None
+    verbs: ["get", "list", "watch"]
+    resources:
+      - group: ""
+        resources: ["events", "nodes", "namespaces", "endpoints"]
+
+  # 17. Exclude system components (reduce noise)
+  - level: None
+    users:
+      - "system:kube-proxy"
+      - "system:kube-scheduler"
+      - "system:kube-controller-manager"
+      - "system:node"
+    verbs: ["get", "list", "watch"]
+
+  # 18. Exclude health checks and metrics
+  - level: None
+    nonResourceURLs:
+      - "/healthz*"
+      - "/readyz*"
+      - "/livez*"
+      - "/version"
+      - "/metrics"
+
+  # 19. Exclude lease operations (reduce noise from leader election)
+  - level: None
+    verbs: ["get", "update"]
+    resources:
+      - group: "coordination.k8s.io"
+        resources: ["leases"]
+
+  # --- DEFAULT RULE (Catch-all for anything not explicitly defined) ---
+
+  # 20. Log all other requests at Metadata level (for forensics)
+  - level: Metadata
+    omitStages:
+      - "RequestReceived"

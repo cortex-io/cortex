@@ -1,0 +1,43 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: cortex-task-queue
+  namespace: cortex
+  labels:
+    app: cortex
+    component: storage
+    storage-type: task-queue
+spec:
+  accessModes:
+    - ReadWriteMany  # Multiple pods need read/write access
+  storageClassName: local-path
+  resources:
+    requests:
+      storage: 20Gi
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: cortex-task-queue-pv
+  labels:
+    app: cortex
+    component: storage
+    storage-type: task-queue
+spec:
+  capacity:
+    storage: 20Gi
+  accessModes:
+    - ReadWriteMany
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: local-path
+  hostPath:
+    path: /var/lib/cortex/task-queue
+    type: DirectoryOrCreate
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+      - matchExpressions:
+        - key: kubernetes.io/hostname
+          operator: In
+          values:
+          - node1  # Change to your node name, or remove for single-node clusters

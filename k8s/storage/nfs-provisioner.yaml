@@ -1,0 +1,107 @@
+# Optional NFS Provisioner for true ReadWriteMany support
+# Deploy this if you need proper RWX storage in K3s
+# Alternative: Use Longhorn for production deployments
+
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: nfs-provisioner
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: nfs-provisioner
+  namespace: nfs-provisioner
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: nfs-provisioner-runner
+rules:
+  - apiGroups: [""]
+    resources: ["persistentvolumes"]
+    verbs: ["get", "list", "watch", "create", "delete"]
+  - apiGroups: [""]
+    resources: ["persistentvolumeclaims"]
+    verbs: ["get", "list", "watch", "update"]
+  - apiGroups: ["storage.k8s.io"]
+    resources: ["storageclasses"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: [""]
+    resources: ["events"]
+    verbs: ["create", "update", "patch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: run-nfs-provisioner
+subjects:
+  - kind: ServiceAccount
+    name: nfs-provisioner
+    namespace: nfs-provisioner
+roleRef:
+  kind: ClusterRole
+  name: nfs-provisioner-runner
+  apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nfs-provisioner
+  namespace: nfs-provisioner
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: nfs-provisioner
+  template:
+    metadata:
+      labels:
+        app: nfs-provisioner
+    spec:
+      serviceAccountName: nfs-provisioner
+      containers:
+      - name: nfs-provisioner
+        image: k8s.gcr.io/sig-storage/nfs-subdir-external-provisioner:v4.0.2
+        volumeMounts:
+        - name: nfs-root
+          mountPath: /persistentvolumes
+        env:
+        - name: PROVISIONER_NAME
+          value: nfs-provisioner
+        - name: NFS_SERVER
+          value: YOUR_NFS_SERVER_IP  # Change this
+        - name: NFS_PATH
+          value: /exported/path  # Change this
+      volumes:
+      - name: nfs-root
+        nfs:
+          server: YOUR_NFS_SERVER_IP  # Change this
+          path: /exported/path  # Change this
+---
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: nfs-client
+provisioner: nfs-provisioner
+parameters:
+  archiveOnDelete: "false"
+---
+# Instructions for using this NFS provisioner:
+#
+# 1. Deploy an NFS server (can be on the same host):
+#    sudo apt-get install nfs-kernel-server
+#    sudo mkdir -p /srv/nfs/cortex
+#    sudo chown nobody:nogroup /srv/nfs/cortex
+#    echo "/srv/nfs/cortex *(rw,sync,no_subtree_check,no_root_squash)" | sudo tee -a /etc/exports
+#    sudo exportfs -a
+#    sudo systemctl restart nfs-kernel-server
+#
+# 2. Update NFS_SERVER and NFS_PATH in this file
+#
+# 3. Deploy: kubectl apply -f nfs-provisioner.yaml
+#
+# 4. Update PVCs to use storageClassName: nfs-client
+#
+# Alternative for production: Use Longhorn
+#   kubectl apply -f https://raw.githubusercontent.com/longhorn/longhorn/master/deploy/longhorn.yaml

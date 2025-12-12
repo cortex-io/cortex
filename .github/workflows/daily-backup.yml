@@ -1,0 +1,111 @@
+name: Daily Backup
+
+on:
+  schedule:
+    - cron: '0 2 * * *'  # Daily at 2 AM UTC
+  workflow_dispatch:
+
+env:
+  NAMESPACE: cortex
+  RETENTION_DAYS: 30
+
+jobs:
+  backup:
+    name: Backup Cortex State
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up kubectl
+        uses: azure/setup-kubectl@v3
+
+      - name: Configure kubectl context
+        run: |
+          mkdir -p $HOME/.kube
+          echo "${{ secrets.KUBE_CONFIG_DATA }}" | base64 -d > $HOME/.kube/config
+          chmod 600 $HOME/.kube/config
+
+      - name: Run backup script
+        run: |
+          chmod +x scripts/backup/backup-cortex-state.sh
+          NAMESPACE=${{ env.NAMESPACE }} \
+          RETENTION_DAYS=${{ env.RETENTION_DAYS }} \
+          ./scripts/backup/backup-cortex-state.sh
+
+      - name: Upload backup artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: cortex-backup-${{ github.run_id }}
+          path: /tmp/cortex-backups/cortex-backup-*.tar.gz
+          retention-days: 30
+
+      - name: Upload to S3 (if configured)
+        if: ${{ secrets.AWS_S3_BUCKET != '' }}
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          S3_BUCKET: ${{ secrets.AWS_S3_BUCKET }}
+        run: |
+          aws s3 sync /tmp/cortex-backups \
+            s3://$S3_BUCKET/cortex-backups/ \
+            --exclude "*" \
+            --include "cortex-backup-*.tar.gz"
+
+      - name: Verify backup
+        run: |
+          BACKUP_FILE=$(ls -t /tmp/cortex-backups/cortex-backup-*.tar.gz | head -1)
+
+          if [ -f "$BACKUP_FILE" ]; then
+            echo "Backup created: $BACKUP_FILE"
+            echo "Size: $(du -h $BACKUP_FILE | cut -f1)"
+
+            # Verify archive integrity
+            tar tzf "$BACKUP_FILE" > /dev/null
+            echo "✓ Backup archive is valid"
+          else
+            echo "❌ No backup file found!"
+            exit 1
+          fi
+
+      - name: Create backup report
+        if: always()
+        run: |
+          BACKUP_FILE=$(ls -t /tmp/cortex-backups/cortex-backup-*.tar.gz 2>/dev/null | head -1 || echo "none")
+          BACKUP_SIZE=$(du -h "$BACKUP_FILE" 2>/dev/null | cut -f1 || echo "0")
+          STATUS="${{ job.status }}"
+
+          cat > /tmp/backup-report.md <<EOF
+          # Cortex Backup Report
+
+          **Date:** $(date -u +%Y-%m-%d)
+          **Status:** $STATUS
+          **Namespace:** ${{ env.NAMESPACE }}
+          **Backup File:** $(basename $BACKUP_FILE)
+          **Size:** $BACKUP_SIZE
+          **Retention:** ${{ env.RETENTION_DAYS }} days
+
+          ## Workflow
+          [View run](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})
+
+          ---
+          *Automated backup via GitHub Actions*
+          EOF
+
+          cat /tmp/backup-report.md
+
+      - name: Notify on failure
+        if: failure()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: '❌ Daily Backup Failed',
+              body: 'The automated daily backup failed.\n\n' +
+                    'Check the [workflow run](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}) for details.',
+              labels: ['backup', 'incident', 'automated']
+            });

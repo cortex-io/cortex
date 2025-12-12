@@ -1,0 +1,52 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: inventory-config
+  namespace: cortex
+  labels:
+    app: cortex
+    component: config
+    master-type: inventory
+data:
+  MASTER_TYPE: "inventory"
+  COORDINATION_DIR: "/app/coordination"
+  HANDOFF_CHECK_INTERVAL: "30"
+  LOG_LEVEL: "info"
+  METRICS_ENABLED: "true"
+  PROMETHEUS_PORT: "9090"
+
+  # Inventory master specific
+  WORKER_SPAWN_ENABLED: "true"
+  MAX_CONCURRENT_WORKERS: "10"
+  WORKER_TOKEN_ALLOCATION: "10000"
+  WORKER_TIME_LIMIT_MINUTES: "30"
+
+  # Worker types managed by inventory master
+  WORKER_TYPES: "documentation-worker,inventory-scanner,knowledge-updater"
+
+  # Inventory configuration
+  INVENTORY_PATH: "/app/coordination/repository-inventory.json"
+  INVENTORY_UPDATE_INTERVAL: "300"
+  AUTO_DOCUMENTATION: "true"
+
+  # Documentation paths
+  DOCS_OUTPUT_PATH: "/app/docs"
+  DOCS_FORMAT: "markdown"
+  DOCS_AUTO_COMMIT: "false"
+
+  # Knowledge base paths
+  KB_DOCUMENTATION_PATTERNS: "/app/coordination/masters/inventory/knowledge-base/documentation-patterns.jsonl"
+  KB_INVENTORY_SCHEMA: "/app/coordination/masters/inventory/knowledge-base/inventory-schema.json"
+
+  # RAG configuration
+  RAG_ENABLED: "true"
+  RAG_TOP_K: "5"
+
+  # Task queue
+  TASK_QUEUE_BACKEND: "file"
+  TASK_QUEUE_PATH: "/app/coordination/task-queue"
+
+  # Scanning configuration
+  SCAN_INTERVAL_SECONDS: "600"
+  SCAN_INCLUDE_PATTERNS: "**/*.js,**/*.sh,**/*.json,**/*.yaml"
+  SCAN_EXCLUDE_PATTERNS: "node_modules/**,.*/**,.git/**"

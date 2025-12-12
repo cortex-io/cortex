@@ -271,3 +271,5 @@ development","task_title":"Integrate timeout learning with worker spawning"}}
 {"timestamp":"2025-12-05T08:26:35-0600","type":"coordinator_stopped","data":{"pid":46651}}
 {"timestamp":"2025-12-05T08:27:26-0600","type":"coordinator_started","data":{"pid":52867}}
 {"timestamp":"2025-12-05T08:27:30-0600","type":"coordinator_stopped","data":{"pid":52867}}
+{"id":"evt-1765047546-56794","timestamp":"2025-12-06T12:59:06-06:00","type":"system_ERROR","data":"Failed to copy deployment script","source":"automation"}
+{"id":"evt-1765047558-57494","timestamp":"2025-12-06T12:59:18-06:00","type":"system_ERROR","data":"Failed to copy deployment script","source":"automation"}

@@ -1,0 +1,22 @@
+# Task Queue Service
+# Provides task queue endpoint for workers
+apiVersion: v1
+kind: Service
+metadata:
+  name: task-queue-service
+  namespace: cortex
+  labels:
+    app: cortex
+    component: service
+    service-type: task-queue
+spec:
+  type: ClusterIP
+  selector:
+    app: cortex
+    component: master
+    master-type: coordinator  # Coordinator manages task queue
+  ports:
+  - name: http
+    port: 8080
+    targetPort: 8080
+    protocol: TCP

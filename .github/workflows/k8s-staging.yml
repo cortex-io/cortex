@@ -1,0 +1,165 @@
+name: Deploy to Staging
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'k8s/**'
+      - 'agents/**'
+      - 'scripts/**'
+      - 'Dockerfile'
+  workflow_dispatch:
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+  NAMESPACE: cortex-staging
+
+jobs:
+  deploy-staging:
+    name: Deploy to Staging Environment
+    runs-on: ubuntu-latest
+    environment:
+      name: staging
+      url: https://staging.cortex.ryops.io
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build staging image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:staging-${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Set up kubectl
+        uses: azure/setup-kubectl@v3
+
+      - name: Configure kubectl context
+        run: |
+          mkdir -p $HOME/.kube
+          echo "${{ secrets.KUBE_CONFIG_DATA }}" | base64 -d > $HOME/.kube/config
+          chmod 600 $HOME/.kube/config
+
+      - name: Create staging namespace
+        run: |
+          kubectl create namespace ${{ env.NAMESPACE }} --dry-run=client -o yaml | kubectl apply -f -
+
+      - name: Create staging secrets
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          kubectl create secret generic cortex-secrets \
+            --from-literal=anthropic-api-key="$ANTHROPIC_API_KEY" \
+            --namespace=${{ env.NAMESPACE }} \
+            --dry-run=client -o yaml | kubectl apply -f -
+
+      - name: Update manifests for staging
+        run: |
+          export NEW_IMAGE="${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:staging-${{ github.sha }}"
+
+          # Create staging-specific manifests
+          cp k8s/deployment.yaml k8s/deployment-staging.yaml
+
+          # Update image
+          sed -i "s|image: ghcr.io/.*|image: $NEW_IMAGE|g" k8s/deployment-staging.yaml
+
+          # Reduce resource limits for staging
+          sed -i 's/memory: "2Gi"/memory: "1Gi"/g' k8s/deployment-staging.yaml
+          sed -i 's/cpu: "1000m"/cpu: "500m"/g' k8s/deployment-staging.yaml
+
+          # Reduce replicas
+          sed -i 's/replicas: 1/replicas: 1/g' k8s/deployment-staging.yaml
+
+      - name: Deploy to staging
+        run: |
+          kubectl apply -f k8s/serviceaccount.yaml -n ${{ env.NAMESPACE }}
+          kubectl apply -f k8s/configmap.yaml -n ${{ env.NAMESPACE }}
+          kubectl apply -f k8s/pvc.yaml -n ${{ env.NAMESPACE }}
+          kubectl apply -f k8s/deployment-staging.yaml -n ${{ env.NAMESPACE }}
+          kubectl apply -f k8s/service.yaml -n ${{ env.NAMESPACE }}
+
+      - name: Wait for rollout
+        run: |
+          kubectl rollout status deployment/cortex-coordinator -n ${{ env.NAMESPACE }} --timeout=5m || true
+          kubectl rollout status deployment/cortex-development-master -n ${{ env.NAMESPACE }} --timeout=5m || true
+
+      - name: Run integration tests
+        run: |
+          echo "Running staging integration tests..."
+
+          # Wait for pods to be ready
+          kubectl wait --for=condition=ready pod -l app=cortex -n ${{ env.NAMESPACE }} --timeout=3m
+
+          # Test coordinator endpoint
+          COORDINATOR_POD=$(kubectl get pod -n ${{ env.NAMESPACE }} -l component=coordinator -o jsonpath='{.items[0].metadata.name}')
+
+          kubectl exec -n ${{ env.NAMESPACE }} $COORDINATOR_POD -- ls /app/coordination/status.json
+
+          echo "Staging tests passed!"
+
+      - name: Get staging status
+        if: always()
+        run: |
+          echo "=== Staging Deployment ==="
+          kubectl get pods -n ${{ env.NAMESPACE }}
+          kubectl get svc -n ${{ env.NAMESPACE }}
+
+      - name: Comment on PR
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const namespace = '${{ env.NAMESPACE }}';
+            const sha = '${{ github.sha }}';
+
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body: `## Staging Deployment Successful\n\n` +
+                    `**Environment:** ${namespace}\n` +
+                    `**Commit:** ${sha}\n` +
+                    `**Image:** ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:staging-${sha}\n\n` +
+                    `✅ Integration tests passed\n` +
+                    `🔗 [View workflow run](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})`
+            });
+
+  cleanup-old-staging:
+    name: Cleanup Old Staging Deployments
+    runs-on: ubuntu-latest
+    needs: deploy-staging
+    if: success()
+
+    steps:
+      - name: Set up kubectl
+        uses: azure/setup-kubectl@v3
+
+      - name: Configure kubectl context
+        run: |
+          mkdir -p $HOME/.kube
+          echo "${{ secrets.KUBE_CONFIG_DATA }}" | base64 -d > $HOME/.kube/config
+          chmod 600 $HOME/.kube/config
+
+      - name: Delete old staging images
+        run: |
+          # Keep only last 5 staging images
+          echo "Cleaning up old staging images..."
+
+          # This would typically call GHCR API to delete old images
+          # Skipping for now as it requires additional permissions

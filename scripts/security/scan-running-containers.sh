@@ -1,0 +1,220 @@
+#!/bin/bash
+# Scan Running Containers in Kubernetes
+# Requires: kubectl, trivy
+#
+# Usage: ./scan-running-containers.sh [namespace]
+
+set -euo pipefail
+
+NAMESPACE="${1:-cortex}"
+REPORT_DIR="/Users/ryandahlberg/Projects/cortex/security/reports"
+
+# Colors
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
+NC='\033[0m'
+
+echo -e "${BLUE}Cortex Container Security Scanner${NC}"
+echo "=================================="
+echo "Namespace: $NAMESPACE"
+echo "Report directory: $REPORT_DIR"
+echo ""
+
+# Check dependencies
+command -v kubectl >/dev/null 2>&1 || {
+  echo -e "${RED}ERROR: kubectl is not installed${NC}"
+  exit 1
+}
+
+command -v trivy >/dev/null 2>&1 || {
+  echo -e "${YELLOW}WARNING: trivy is not installed. Installing...${NC}"
+  if [[ "$OSTYPE" == "darwin"* ]]; then
+    brew install aquasecurity/trivy/trivy
+  elif [[ "$OSTYPE" == "linux-gnu"* ]]; then
+    wget -qO - https://aquasecurity.github.io/trivy-repo/deb/public.key | sudo apt-key add -
+    echo "deb https://aquasecurity.github.io/trivy-repo/deb $(lsb_release -sc) main" | sudo tee -a /etc/apt/sources.list.d/trivy.list
+    sudo apt-get update
+    sudo apt-get install trivy
+  else
+    echo -e "${RED}ERROR: Unsupported OS. Install trivy manually.${NC}"
+    exit 1
+  fi
+}
+
+# Create report directory
+mkdir -p "$REPORT_DIR"
+
+# Get all pods in namespace
+PODS=$(kubectl get pods -n "$NAMESPACE" -o jsonpath='{.items[*].metadata.name}')
+
+if [ -z "$PODS" ]; then
+  echo -e "${YELLOW}No pods found in namespace $NAMESPACE${NC}"
+  exit 0
+fi
+
+echo -e "${GREEN}Found pods:${NC}"
+for pod in $PODS; do
+  echo "  - $pod"
+done
+echo ""
+
+# Scan each pod
+TOTAL_CRITICAL=0
+TOTAL_HIGH=0
+TOTAL_MEDIUM=0
+
+for POD in $PODS; do
+  echo -e "${BLUE}Scanning pod: $POD${NC}"
+  echo "----------------------------"
+
+  # Get container images in pod
+  IMAGES=$(kubectl get pod "$POD" -n "$NAMESPACE" -o jsonpath='{.spec.containers[*].image}')
+
+  for IMAGE in $IMAGES; do
+    echo -e "  Image: ${YELLOW}$IMAGE${NC}"
+
+    # Scan image
+    REPORT_FILE="$REPORT_DIR/scan-$(echo "$POD-$IMAGE" | tr '/:' '--').json"
+
+    trivy image \
+      --format json \
+      --severity CRITICAL,HIGH,MEDIUM \
+      --output "$REPORT_FILE" \
+      "$IMAGE" || true
+
+    # Parse results
+    if [ -f "$REPORT_FILE" ]; then
+      CRITICAL=$(jq '[.Results[]?.Vulnerabilities[]? | select(.Severity=="CRITICAL")] | length' "$REPORT_FILE")
+      HIGH=$(jq '[.Results[]?.Vulnerabilities[]? | select(.Severity=="HIGH")] | length' "$REPORT_FILE")
+      MEDIUM=$(jq '[.Results[]?.Vulnerabilities[]? | select(.Severity=="MEDIUM")] | length' "$REPORT_FILE")
+
+      TOTAL_CRITICAL=$((TOTAL_CRITICAL + CRITICAL))
+      TOTAL_HIGH=$((TOTAL_HIGH + HIGH))
+      TOTAL_MEDIUM=$((TOTAL_MEDIUM + MEDIUM))
+
+      echo -e "    ${RED}Critical: $CRITICAL${NC}"
+      echo -e "    ${YELLOW}High: $HIGH${NC}"
+      echo -e "    ${GREEN}Medium: $MEDIUM${NC}"
+    fi
+  done
+  echo ""
+done
+
+# Generate summary report
+SUMMARY_FILE="$REPORT_DIR/scan-summary-$(date +%Y%m%d-%H%M%S).md"
+
+cat > "$SUMMARY_FILE" <<EOF
+# Container Security Scan Summary
+
+**Namespace:** $NAMESPACE
+**Scan Date:** $(date -u)
+**Scanned Pods:** $(echo "$PODS" | wc -w)
+
+## Vulnerability Summary
+
+| Severity | Count |
+|----------|-------|
+| Critical | $TOTAL_CRITICAL |
+| High     | $TOTAL_HIGH |
+| Medium   | $TOTAL_MEDIUM |
+
+## Detailed Results
+
+EOF
+
+for POD in $PODS; do
+  IMAGES=$(kubectl get pod "$POD" -n "$NAMESPACE" -o jsonpath='{.spec.containers[*].image}')
+
+  cat >> "$SUMMARY_FILE" <<EOF
+### Pod: \`$POD\`
+
+**Images:**
+EOF
+
+  for IMAGE in $IMAGES; do
+    REPORT_FILE="$REPORT_DIR/scan-$(echo "$POD-$IMAGE" | tr '/:' '--').json"
+
+    if [ -f "$REPORT_FILE" ]; then
+      CRITICAL=$(jq '[.Results[]?.Vulnerabilities[]? | select(.Severity=="CRITICAL")] | length' "$REPORT_FILE")
+      HIGH=$(jq '[.Results[]?.Vulnerabilities[]? | select(.Severity=="HIGH")] | length' "$REPORT_FILE")
+      MEDIUM=$(jq '[.Results[]?.Vulnerabilities[]? | select(.Severity=="MEDIUM")] | length' "$REPORT_FILE")
+
+      cat >> "$SUMMARY_FILE" <<EOF
+- \`$IMAGE\`
+  - Critical: $CRITICAL
+  - High: $HIGH
+  - Medium: $MEDIUM
+
+EOF
+    fi
+  done
+done
+
+cat >> "$SUMMARY_FILE" <<EOF
+
+## Recommendations
+
+EOF
+
+if [ $TOTAL_CRITICAL -gt 0 ]; then
+  cat >> "$SUMMARY_FILE" <<EOF
+**CRITICAL:** $TOTAL_CRITICAL critical vulnerabilities found. Immediate action required!
+
+1. Review critical CVEs in detailed reports
+2. Update base images to latest secure versions
+3. Apply security patches
+4. Consider rebuilding and redeploying containers
+
+EOF
+fi
+
+if [ $TOTAL_HIGH -gt 0 ]; then
+  cat >> "$SUMMARY_FILE" <<EOF
+**HIGH:** $TOTAL_HIGH high vulnerabilities found. Schedule remediation within 24 hours.
+
+EOF
+fi
+
+cat >> "$SUMMARY_FILE" <<EOF
+
+## Next Steps
+
+1. Review individual scan reports in: \`$REPORT_DIR\`
+2. Update vulnerable packages in Dockerfile
+3. Rebuild container images
+4. Redeploy to Kubernetes cluster
+5. Re-scan to verify fixes
+
+---
+
+*Generated by Cortex Security Master*
+EOF
+
+# Final summary
+echo ""
+echo -e "${BLUE}========================================${NC}"
+echo -e "${BLUE}         SCAN COMPLETE${NC}"
+echo -e "${BLUE}========================================${NC}"
+echo ""
+echo -e "Total vulnerabilities found:"
+echo -e "  ${RED}Critical: $TOTAL_CRITICAL${NC}"
+echo -e "  ${YELLOW}High: $TOTAL_HIGH${NC}"
+echo -e "  ${GREEN}Medium: $TOTAL_MEDIUM${NC}"
+echo ""
+echo -e "Summary report: ${GREEN}$SUMMARY_FILE${NC}"
+echo -e "Detailed reports: ${GREEN}$REPORT_DIR${NC}"
+echo ""
+
+# Exit code based on findings
+if [ $TOTAL_CRITICAL -gt 0 ]; then
+  echo -e "${RED}FAIL: Critical vulnerabilities found!${NC}"
+  exit 1
+elif [ $TOTAL_HIGH -gt 0 ]; then
+  echo -e "${YELLOW}WARNING: High vulnerabilities found${NC}"
+  exit 0
+else
+  echo -e "${GREEN}PASS: No critical or high vulnerabilities${NC}"
+  exit 0
+fi

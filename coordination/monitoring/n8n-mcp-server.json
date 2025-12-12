@@ -1,0 +1,118 @@
+{
+  "repository": "ry-ops/n8n-mcp-server",
+  "monitoring_config": {
+    "enabled": true,
+    "integrated_at": "2025-12-07T00:00:00-06:00",
+    "health_checks": {
+      "dependency_health": {
+        "enabled": true,
+        "frequency": "daily",
+        "check_types": ["outdated", "security_advisories", "deprecated"],
+        "focus_packages": ["n8n-api-client", "mcp"]
+      },
+      "code_quality": {
+        "enabled": true,
+        "frequency": "on_commit",
+        "metrics": ["complexity", "coverage", "maintainability"],
+        "tools": ["ruff", "pytest"]
+      },
+      "security_posture": {
+        "enabled": true,
+        "frequency": "daily",
+        "scans": ["vulnerabilities", "secrets", "misconfigurations", "api_key_exposure"],
+        "critical_files": [".env", "*.env.*", "config/*.json"]
+      },
+      "api_integration_health": {
+        "enabled": true,
+        "frequency": "hourly",
+        "check_n8n_compatibility": true,
+        "monitor_api_changes": true
+      }
+    },
+    "alerts": {
+      "channels": ["dashboard", "events"],
+      "severity_thresholds": {
+        "critical": "immediate",
+        "high": "within_1_hour",
+        "medium": "within_24_hours",
+        "low": "weekly_summary"
+      },
+      "special_alerts": {
+        "api_key_exposure": "critical",
+        "credential_leak": "critical",
+        "n8n_breaking_changes": "high"
+      }
+    },
+    "observability": {
+      "event_tracking": true,
+      "metrics_collection": true,
+      "log_aggregation": false,
+      "dashboard_widget": {
+        "enabled": true,
+        "display_name": "n8n MCP Server",
+        "priority": "normal",
+        "show_metrics": [
+          "security_score",
+          "dependency_health",
+          "open_issues",
+          "last_commit"
+        ]
+      }
+    }
+  },
+  "automation_policies": {
+    "auto_dependency_updates": {
+      "enabled": false,
+      "strategy": "manual_review",
+      "update_types": ["patch", "minor"],
+      "exclude_major": true,
+      "critical_dependencies": ["n8n-api-client", "mcp"]
+    },
+    "auto_security_fixes": {
+      "enabled": false,
+      "strategy": "create_pr",
+      "severity_threshold": "high",
+      "require_tests": true,
+      "auto_rotate_keys": false
+    },
+    "auto_documentation": {
+      "enabled": true,
+      "update_on": ["api_changes", "new_features", "tool_updates"],
+      "formats": ["markdown", "api_docs"]
+    }
+  },
+  "integration_points": {
+    "github_webhooks": {
+      "push": "trigger_quality_check",
+      "pull_request": "trigger_security_scan",
+      "release": "trigger_full_audit",
+      "issues": "track_n8n_compatibility"
+    },
+    "cortex_apis": {
+      "security_api": "http://localhost:3000/api/security/scan",
+      "observability_api": "http://localhost:3001/api/events",
+      "dashboard_api": "http://localhost:3000/api/dashboard"
+    },
+    "n8n_integration": {
+      "monitor_workflow_changes": true,
+      "track_execution_patterns": false,
+      "alert_on_breaking_changes": true
+    }
+  },
+  "reporting": {
+    "daily_health_summary": true,
+    "weekly_trends_report": true,
+    "monthly_audit_report": true,
+    "reports_location": "coordination/reports/n8n-mcp-server/",
+    "special_reports": {
+      "api_key_rotation_reminder": "monthly",
+      "n8n_compatibility_check": "weekly"
+    }
+  },
+  "security_notes": {
+    "api_keys": "Monitor for exposure - keys grant full n8n instance access",
+    "credential_management": "Verify .env files excluded from git",
+    "key_rotation": "Monthly rotation recommended for production instances",
+    "monitoring_focus": "API key exposure, credential leaks, dependency vulnerabilities"
+  }
+}

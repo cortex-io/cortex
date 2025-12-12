@@ -1,0 +1,250 @@
+{
+  "handoff_id": "coord-to-dev-metrics-phase2-20251207",
+  "from_master": "coordinator",
+  "to_master": "development",
+  "mission_id": "k3s-autoscaling-deployment-001",
+  "phase": "phase_2_monitoring",
+  "created_at": "2025-12-07T00:00:00Z",
+  "status": "pending_pickup",
+  "priority": "critical",
+  "dependencies": ["phase_1_infrastructure"],
+
+  "task_bundle": {
+    "bundle_name": "Cortex Metrics & Prometheus/Grafana Monitoring Stack",
+    "tasks": [
+      {
+        "task_id": "metrics-001",
+        "title": "Implement Cortex /metrics endpoint with Prometheus exporter",
+        "type": "feature_development",
+        "complexity": 8,
+        "deliverables": [
+          {
+            "file": "dashboard/server/metrics-exporter.js",
+            "description": "Express middleware to expose Prometheus metrics",
+            "requirements": [
+              "Use prom-client npm package",
+              "Expose /metrics endpoint on port 3000",
+              "Implement all required metrics (see metrics_schema)",
+              "Update metrics from coordination files every 15 seconds",
+              "Include default Node.js metrics (heap, cpu, etc.)"
+            ],
+            "metrics_schema": {
+              "cortex_task_queue_depth": {
+                "type": "Gauge",
+                "help": "Current task queue depth by type",
+                "labels": ["type"],
+                "source": "coordination/task-queue.json",
+                "calculation": "Count tasks by type where status != 'completed'"
+              },
+              "cortex_active_workers": {
+                "type": "Gauge",
+                "help": "Currently active workers by type",
+                "labels": ["type", "status"],
+                "source": "coordination/worker-pool.json",
+                "calculation": "Count workers where status == 'running'"
+              },
+              "cortex_master_health": {
+                "type": "Gauge",
+                "help": "Master health status (1=healthy, 0=unhealthy)",
+                "labels": ["master"],
+                "source": "coordination/masters/*/context/master-state.json",
+                "calculation": "Check last_heartbeat < 60s ago"
+              },
+              "cortex_task_duration_seconds": {
+                "type": "Histogram",
+                "help": "Task completion time in seconds",
+                "labels": ["type", "status"],
+                "source": "coordination/task-queue.json",
+                "calculation": "completed_at - assigned_at",
+                "buckets": [1, 5, 10, 30, 60, 120, 300, 600]
+              },
+              "cortex_moe_routing_confidence": {
+                "type": "Gauge",
+                "help": "MoE routing confidence score",
+                "labels": ["from_master", "to_master"],
+                "source": "coordination/masters/coordinator/knowledge-base/routing-decisions.jsonl",
+                "calculation": "Latest routing confidence by master pair"
+              },
+              "cortex_worker_spawn_rate": {
+                "type": "Counter",
+                "help": "Total worker spawns",
+                "labels": ["type"]
+              },
+              "cortex_task_success_rate": {
+                "type": "Gauge",
+                "help": "Task success rate (0-1)",
+                "labels": ["type"],
+                "calculation": "successful_tasks / total_tasks (last 1h)"
+              }
+            }
+          },
+          {
+            "file": "lib/observability/prometheus-metrics.sh",
+            "description": "Bash library to update metrics from shell scripts",
+            "requirements": [
+              "Functions to increment counters",
+              "Functions to set gauge values",
+              "Write to metrics temp file for collection",
+              "Thread-safe updates using file locks"
+            ]
+          },
+          {
+            "file": "docs/metrics-schema.md",
+            "description": "Complete metrics documentation",
+            "requirements": [
+              "Document all metrics with examples",
+              "Include PromQL query examples",
+              "Document label values",
+              "Include alerting rule recommendations"
+            ]
+          }
+        ]
+      },
+      {
+        "task_id": "metrics-002",
+        "title": "Deploy Prometheus stack on K3s",
+        "type": "k8s_deployment",
+        "complexity": 7,
+        "deliverables": [
+          {
+            "file": "k8s/monitoring/prometheus-deployment.yaml",
+            "description": "Prometheus deployment manifest",
+            "requirements": [
+              "Use prometheus:v2.48.0 image",
+              "PVC for data persistence (20Gi)",
+              "ConfigMap for prometheus.yml",
+              "Service with ClusterIP",
+              "Resource limits: 500m CPU, 2Gi memory",
+              "Scrape interval: 15s"
+            ]
+          },
+          {
+            "file": "k8s/monitoring/prometheus-config.yaml",
+            "description": "Prometheus configuration",
+            "requirements": [
+              "Scrape job for cortex-masters",
+              "Scrape job for cortex-workers",
+              "Kubernetes service discovery",
+              "Relabeling rules for pod metadata",
+              "Recording rules for aggregations",
+              "Alert rules for critical conditions"
+            ]
+          },
+          {
+            "file": "k8s/monitoring/servicemonitor-cortex.yaml",
+            "description": "ServiceMonitor for Prometheus Operator (optional)",
+            "requirements": [
+              "Monitor cortex service on port 3000",
+              "Scrape /metrics endpoint",
+              "Include pod labels",
+              "30s scrape interval"
+            ]
+          },
+          {
+            "file": "k8s/monitoring/prometheus-rbac.yaml",
+            "description": "RBAC for Prometheus to discover services",
+            "requirements": [
+              "ServiceAccount for Prometheus",
+              "ClusterRole to list/watch services, pods, endpoints",
+              "ClusterRoleBinding"
+            ]
+          }
+        ]
+      },
+      {
+        "task_id": "metrics-003",
+        "title": "Deploy Grafana with pre-configured Cortex dashboards",
+        "type": "k8s_deployment",
+        "complexity": 7,
+        "deliverables": [
+          {
+            "file": "k8s/monitoring/grafana-deployment.yaml",
+            "description": "Grafana deployment",
+            "requirements": [
+              "Use grafana/grafana:10.2.0 image",
+              "PVC for data (5Gi)",
+              "ConfigMap for datasources (Prometheus)",
+              "ConfigMap for dashboard provisioning",
+              "Service with NodePort 30002",
+              "Admin password from secret"
+            ]
+          },
+          {
+            "file": "k8s/monitoring/grafana-dashboards-configmap.yaml",
+            "description": "ConfigMap with dashboard JSON",
+            "requirements": [
+              "Include all 3 dashboards as JSON",
+              "Auto-provision on startup",
+              "Set Prometheus as datasource"
+            ]
+          },
+          {
+            "file": "dashboards/grafana/cortex-autoscaling.json",
+            "description": "Auto-scaling dashboard",
+            "panels": [
+              "Task queue depth by type (time series)",
+              "Active workers by type (gauge)",
+              "Worker scaling events (annotations)",
+              "Scale-up/down triggers (graph)",
+              "KEDA scaler metrics",
+              "Resource utilization (CPU, memory)"
+            ]
+          },
+          {
+            "file": "dashboards/grafana/cortex-masters.json",
+            "description": "Master status dashboard",
+            "panels": [
+              "Master health (status panel)",
+              "Routing decisions (table)",
+              "MoE confidence scores (heatmap)",
+              "Master-to-master handoffs (sankey)",
+              "Coordination file updates (counter)"
+            ]
+          },
+          {
+            "file": "dashboards/grafana/cortex-workers.json",
+            "description": "Worker performance dashboard",
+            "panels": [
+              "Task completion rate (graph)",
+              "Task duration distribution (histogram)",
+              "Worker success rate by type (gauge)",
+              "Failed tasks (table)",
+              "Worker spawn/termination events (timeline)"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+
+  "context": {
+    "existing_dashboard": {
+      "location": "dashboard/server/index.js",
+      "current_port": 3000,
+      "note": "Add /metrics endpoint to existing Express server"
+    },
+    "prometheus_operator": {
+      "use_operator": false,
+      "reason": "Keep it simple - direct Prometheus deployment",
+      "alternative": "Can add Prometheus Operator later if needed"
+    },
+    "grafana_defaults": {
+      "admin_user": "admin",
+      "admin_password": "Use k8s secret",
+      "datasource_name": "Cortex-Prometheus",
+      "dashboard_folder": "Cortex"
+    }
+  },
+
+  "routing_reason": "Metrics implementation and monitoring stack deployment - development-master core competency",
+  "expected_outcome": "Cortex exposing Prometheus metrics, Prometheus scraping successfully, Grafana dashboards showing real-time data",
+  "handoff_back_trigger": "Metrics endpoint live, Prometheus deployed, Grafana accessible with working dashboards",
+
+  "validation_checklist": [
+    "curl http://cortex-service:3000/metrics returns Prometheus format",
+    "All custom metrics present in output",
+    "Prometheus UI shows cortex targets as UP",
+    "Grafana dashboards load without errors",
+    "Graphs display real data from Prometheus"
+  ]
+}

@@ -1,0 +1,125 @@
+Phase 3: KEDA Auto-Scaling - Complete File Manifest
+====================================================
+
+KUBERNETES MANIFESTS (23 files)
+================================
+
+Masters (5 StatefulSets):
+  /Users/ryandahlberg/Projects/cortex/k8s/masters/coordinator-master-statefulset.yaml
+  /Users/ryandahlberg/Projects/cortex/k8s/masters/development-master-statefulset.yaml
+  /Users/ryandahlberg/Projects/cortex/k8s/masters/security-master-statefulset.yaml
+  /Users/ryandahlberg/Projects/cortex/k8s/masters/cicd-master-statefulset.yaml
+  /Users/ryandahlberg/Projects/cortex/k8s/masters/inventory-master-statefulset.yaml
+
+Workers (4 Deployments):
+  /Users/ryandahlberg/Projects/cortex/k8s/workers/implementation-worker-deployment.yaml
+  /Users/ryandahlberg/Projects/cortex/k8s/workers/security-worker-deployment.yaml
+  /Users/ryandahlberg/Projects/cortex/k8s/workers/analysis-worker-deployment.yaml
+  /Users/ryandahlberg/Projects/cortex/k8s/workers/scan-worker-deployment.yaml
+
+KEDA ScaledObjects (4):
+  /Users/ryandahlberg/Projects/cortex/k8s/autoscaling/implementation-worker-scaledobject.yaml
+  /Users/ryandahlberg/Projects/cortex/k8s/autoscaling/security-worker-scaledobject.yaml
+  /Users/ryandahlberg/Projects/cortex/k8s/autoscaling/analysis-worker-scaledobject.yaml
+  /Users/ryandahlberg/Projects/cortex/k8s/autoscaling/scan-worker-scaledobject.yaml
+
+ConfigMaps (5):
+  /Users/ryandahlberg/Projects/cortex/k8s/config/coordinator-config.yaml
+  /Users/ryandahlberg/Projects/cortex/k8s/config/development-config.yaml
+  /Users/ryandahlberg/Projects/cortex/k8s/config/security-config.yaml
+  /Users/ryandahlberg/Projects/cortex/k8s/config/cicd-config.yaml
+  /Users/ryandahlberg/Projects/cortex/k8s/config/inventory-config.yaml
+
+Storage (3):
+  /Users/ryandahlberg/Projects/cortex/k8s/storage/cortex-coordination-pvc.yaml
+  /Users/ryandahlberg/Projects/cortex/k8s/storage/cortex-task-queue-pvc.yaml
+  /Users/ryandahlberg/Projects/cortex/k8s/storage/nfs-provisioner.yaml
+
+Services (4):
+  /Users/ryandahlberg/Projects/cortex/k8s/services/cortex-masters-service.yaml
+  /Users/ryandahlberg/Projects/cortex/k8s/services/cortex-api-service.yaml
+  /Users/ryandahlberg/Projects/cortex/k8s/services/cortex-dashboard-service.yaml
+  /Users/ryandahlberg/Projects/cortex/k8s/services/task-queue-service.yaml
+
+CORTEX APPLICATION CODE (3 files)
+==================================
+
+Entry Point:
+  /Users/ryandahlberg/Projects/cortex/index.js
+
+Master Mode:
+  /Users/ryandahlberg/Projects/cortex/lib/masters/master-mode.js
+
+Worker Mode:
+  /Users/ryandahlberg/Projects/cortex/lib/workers/worker-mode.js
+
+DEPLOYMENT SCRIPTS (5 files)
+=============================
+
+KEDA Installation:
+  /Users/ryandahlberg/Projects/cortex/scripts/k3s/install-keda.sh
+
+Autoscaling Deployment:
+  /Users/ryandahlberg/Projects/cortex/scripts/autoscaling/deploy-masters.sh
+  /Users/ryandahlberg/Projects/cortex/scripts/autoscaling/deploy-workers.sh
+  /Users/ryandahlberg/Projects/cortex/scripts/autoscaling/deploy-keda.sh
+
+Testing:
+  /Users/ryandahlberg/Projects/cortex/scripts/autoscaling/test-autoscaling.sh
+
+DOCUMENTATION (2 files)
+========================
+
+Deployment Guide:
+  /Users/ryandahlberg/Projects/cortex/docs/k8s/phase3-autoscaling-deployment-guide.md
+
+Summary:
+  /Users/ryandahlberg/Projects/cortex/PHASE3-AUTOSCALING-SUMMARY.md
+
+COORDINATION FILES (1 file)
+============================
+
+Handoff to Coordinator:
+  /Users/ryandahlberg/Projects/cortex/coordination/masters/development/handoffs/to-coordinator-dev-to-coord-scaling-phase3-20251207-145208.json
+
+====================================================
+TOTAL FILES CREATED: 36
+====================================================
+
+DEPLOYMENT QUICK START
+======================
+
+1. Install KEDA:
+   ./scripts/k3s/install-keda.sh
+
+2. Deploy Masters:
+   ./scripts/autoscaling/deploy-masters.sh
+
+3. Deploy Workers:
+   ./scripts/autoscaling/deploy-workers.sh
+
+4. Deploy KEDA ScaledObjects:
+   ./scripts/autoscaling/deploy-keda.sh
+
+5. Test Auto-Scaling:
+   ./scripts/autoscaling/test-autoscaling.sh
+
+VERIFICATION
+============
+
+Check StatefulSets:
+  kubectl get statefulsets -n cortex
+
+Check Deployments:
+  kubectl get deployments -n cortex
+
+Check ScaledObjects:
+  kubectl get scaledobjects -n cortex
+
+Check HPAs:
+  kubectl get hpa -n cortex
+
+Watch Worker Scaling:
+  kubectl get pods -n cortex -l component=worker -w
+
+====================================================
