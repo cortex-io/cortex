@@ -1,0 +1,156 @@
+---
+# Role for Cortex Masters - Read/Write coordination data
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: cortex-master-role
+  namespace: cortex
+  labels:
+    app.kubernetes.io/name: cortex
+    app.kubernetes.io/component: rbac
+  annotations:
+    description: "Role for Cortex masters to manage coordination ConfigMaps and read Secrets"
+rules:
+  # ConfigMaps for coordination state
+  - apiGroups: [""]
+    resources: ["configmaps"]
+    verbs: ["get", "list", "watch", "create", "update", "patch"]
+    resourceNames:
+      - cortex-coordination
+      - cortex-master-state
+      - cortex-task-queue
+      - cortex-knowledge-base
+
+  # Allow creating new ConfigMaps for dynamic coordination
+  - apiGroups: [""]
+    resources: ["configmaps"]
+    verbs: ["create"]
+
+  # Secrets - read-only for API keys
+  - apiGroups: [""]
+    resources: ["secrets"]
+    verbs: ["get", "list"]
+    resourceNames:
+      - cortex-secrets
+      - anthropic-api-key
+      - github-token
+
+  # Events for logging
+  - apiGroups: [""]
+    resources: ["events"]
+    verbs: ["create", "patch"]
+
+---
+# Role for Cortex Workers - Read-only coordination data
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: cortex-worker-role
+  namespace: cortex
+  labels:
+    app.kubernetes.io/name: cortex
+    app.kubernetes.io/component: rbac
+  annotations:
+    description: "Role for Cortex workers with minimal read-only permissions"
+rules:
+  # ConfigMaps - read-only for task fetching
+  - apiGroups: [""]
+    resources: ["configmaps"]
+    verbs: ["get", "list", "watch"]
+    resourceNames:
+      - cortex-coordination
+      - cortex-task-queue
+
+  # Secrets - read-only for API keys
+  - apiGroups: [""]
+    resources: ["secrets"]
+    verbs: ["get"]
+    resourceNames:
+      - cortex-secrets
+      - anthropic-api-key
+      - github-token
+
+  # Allow creating ConfigMaps for task results
+  - apiGroups: [""]
+    resources: ["configmaps"]
+    verbs: ["create", "update", "patch"]
+
+  # Events for logging
+  - apiGroups: [""]
+    resources: ["events"]
+    verbs: ["create"]
+
+---
+# Role for Cortex Coordinator - Full resource management
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: cortex-coordinator-role
+  namespace: cortex
+  labels:
+    app.kubernetes.io/name: cortex
+    app.kubernetes.io/component: rbac
+  annotations:
+    description: "Role for Cortex coordinator with full Cortex resource management"
+rules:
+  # Full ConfigMap access
+  - apiGroups: [""]
+    resources: ["configmaps"]
+    verbs: ["*"]
+
+  # Full Secret access (needed for dynamic secret creation)
+  - apiGroups: [""]
+    resources: ["secrets"]
+    verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+
+  # Pod management for worker scaling
+  - apiGroups: [""]
+    resources: ["pods"]
+    verbs: ["get", "list", "watch", "delete"]
+
+  # Deployment scaling
+  - apiGroups: ["apps"]
+    resources: ["deployments", "statefulsets"]
+    verbs: ["get", "list", "watch", "patch", "update"]
+
+  # Deployment scale subresource
+  - apiGroups: ["apps"]
+    resources: ["deployments/scale", "statefulsets/scale"]
+    verbs: ["get", "update", "patch"]
+
+  # Events
+  - apiGroups: [""]
+    resources: ["events"]
+    verbs: ["*"]
+
+  # Services
+  - apiGroups: [""]
+    resources: ["services"]
+    verbs: ["get", "list", "watch"]
+
+---
+# ClusterRole for Prometheus - Metrics scraping
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: cortex-prometheus-scraper
+  labels:
+    app.kubernetes.io/name: prometheus
+    app.kubernetes.io/component: monitoring
+  annotations:
+    description: "ClusterRole for Prometheus to discover and scrape Cortex pods"
+rules:
+  # Service discovery
+  - apiGroups: [""]
+    resources: ["nodes", "nodes/proxy", "services", "endpoints", "pods"]
+    verbs: ["get", "list", "watch"]
+
+  # Ingress discovery
+  - apiGroups: ["networking.k8s.io"]
+    resources: ["ingresses"]
+    verbs: ["get", "list", "watch"]
+
+  # Read ConfigMaps for service discovery
+  - apiGroups: [""]
+    resources: ["configmaps"]
+    verbs: ["get"]

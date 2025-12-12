@@ -1,0 +1,188 @@
+{
+  "handoff_id": "coord-to-security-hardening-phase5-20251207",
+  "from_master": "coordinator",
+  "to_master": "security",
+  "mission_id": "k3s-autoscaling-deployment-001",
+  "phase": "phase_5_security",
+  "created_at": "2025-12-07T00:00:00Z",
+  "status": "pending_pickup",
+  "priority": "high",
+  "dependencies": ["phase_4_deployment"],
+
+  "task_bundle": {
+    "bundle_name": "Security Hardening and RBAC Configuration",
+    "tasks": [
+      {
+        "task_id": "security-001",
+        "title": "Implement Kubernetes RBAC policies",
+        "type": "security_configuration",
+        "complexity": 7,
+        "deliverables": [
+          {
+            "file": "k8s/security/rbac.yaml",
+            "description": "RBAC configuration for Cortex",
+            "requirements": [
+              "ServiceAccount for cortex-master",
+              "ServiceAccount for cortex-worker",
+              "Role for masters: read/write coordination ConfigMaps/Secrets",
+              "Role for workers: read coordination ConfigMaps",
+              "ClusterRole for Prometheus: list/watch pods, services, endpoints",
+              "RoleBindings and ClusterRoleBindings",
+              "Principle of least privilege"
+            ]
+          },
+          {
+            "file": "k8s/security/pod-security-standards.yaml",
+            "description": "Pod Security Standards enforcement",
+            "requirements": [
+              "Enforce restricted Pod Security Standard",
+              "No privileged containers",
+              "No host network/PID/IPC",
+              "Read-only root filesystem where possible",
+              "Non-root user (UID 1000)",
+              "Drop all capabilities",
+              "SeccompProfile: RuntimeDefault"
+            ]
+          }
+        ]
+      },
+      {
+        "task_id": "security-002",
+        "title": "Implement network policies",
+        "type": "security_configuration",
+        "complexity": 6,
+        "deliverables": [
+          {
+            "file": "k8s/security/network-policies.yaml",
+            "description": "Network segmentation policies",
+            "requirements": [
+              "Default deny all ingress",
+              "Allow masters to communicate with each other",
+              "Allow workers to read from masters",
+              "Allow Prometheus to scrape all pods",
+              "Allow Grafana to query Prometheus",
+              "Deny external ingress except NodePort services",
+              "Document policy intent with annotations"
+            ]
+          }
+        ]
+      },
+      {
+        "task_id": "security-003",
+        "title": "Container image security scanning",
+        "type": "security_audit",
+        "complexity": 5,
+        "deliverables": [
+          {
+            "file": "security/reports/cortex-docker-image-scan.md",
+            "description": "Container vulnerability scan report",
+            "requirements": [
+              "Scan ghcr.io/ry-ops/cortex-docker:latest with Trivy",
+              "Report critical and high vulnerabilities",
+              "Check for secrets in image layers",
+              "Verify base image is up-to-date",
+              "Recommend fixes for findings"
+            ]
+          }
+        ]
+      },
+      {
+        "task_id": "security-004",
+        "title": "Secrets management audit",
+        "type": "security_audit",
+        "complexity": 6,
+        "deliverables": [
+          {
+            "file": "docs/security/secrets-management.md",
+            "description": "Secrets management strategy",
+            "requirements": [
+              "Document secret rotation procedures",
+              "Recommend external secrets operator (e.g., External Secrets Operator)",
+              "Document encryption at rest (K8s secrets are base64, not encrypted)",
+              "Recommend Sealed Secrets or Vault for production",
+              "Audit existing secrets for compliance"
+            ]
+          },
+          {
+            "file": "k8s/security/sealed-secrets-setup.yaml",
+            "description": "Sealed Secrets installation (optional)",
+            "requirements": [
+              "Install Sealed Secrets controller",
+              "Create SealedSecret for ANTHROPIC_API_KEY",
+              "Document sealing procedure",
+              "Note: Optional enhancement for production"
+            ]
+          }
+        ]
+      },
+      {
+        "task_id": "security-005",
+        "title": "Create security audit checklist",
+        "type": "documentation",
+        "complexity": 4,
+        "deliverables": [
+          {
+            "file": "docs/security/security-audit-checklist.md",
+            "description": "Comprehensive security checklist",
+            "requirements": [
+              "Pod security standards enforcement",
+              "RBAC least privilege verification",
+              "Network policy effectiveness",
+              "Secret encryption and rotation",
+              "Image vulnerability scanning",
+              "Audit logging enabled",
+              "TLS for all external communication",
+              "Regular security updates"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+
+  "context": {
+    "security_standards": {
+      "pod_security": "restricted (highest security)",
+      "rbac_model": "Role-based with least privilege",
+      "network_segmentation": "Default deny with explicit allow",
+      "secrets_encryption": "At-rest encryption via K8s EncryptionConfiguration (optional)"
+    },
+    "compliance_requirements": {
+      "cis_kubernetes": "Follow CIS Kubernetes Benchmark",
+      "owasp": "Address OWASP Kubernetes Top 10",
+      "nist": "Align with NIST 800-190 container security"
+    },
+    "threat_model": {
+      "internal_threats": [
+        "Compromised worker pod accessing sensitive coordination data",
+        "Lateral movement between pods",
+        "Privilege escalation"
+      ],
+      "external_threats": [
+        "Unauthorized API access",
+        "DDoS on exposed services",
+        "Container vulnerability exploitation"
+      ],
+      "mitigations": [
+        "RBAC limits worker access",
+        "Network policies prevent lateral movement",
+        "Pod security standards prevent privilege escalation",
+        "NodePort services use authentication",
+        "Rate limiting on API endpoints"
+      ]
+    }
+  },
+
+  "routing_reason": "Security hardening and compliance - security-master specialization",
+  "expected_outcome": "Production-grade security configuration with RBAC, network policies, and vulnerability scanning",
+  "handoff_back_trigger": "Security manifests created, audit complete, no critical findings",
+
+  "validation_checklist": [
+    "RBAC policies applied and tested",
+    "Network policies block unauthorized traffic",
+    "Pod security standards enforced",
+    "Container scan shows no critical CVEs",
+    "Secrets are encrypted (or Sealed Secrets used)",
+    "Security audit checklist 100% complete"
+  ]
+}

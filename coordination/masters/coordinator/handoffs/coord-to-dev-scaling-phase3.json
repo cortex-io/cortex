@@ -1,0 +1,300 @@
+{
+  "handoff_id": "coord-to-dev-scaling-phase3-20251207",
+  "from_master": "coordinator",
+  "to_master": "development",
+  "mission_id": "k3s-autoscaling-deployment-001",
+  "phase": "phase_3_autoscaling",
+  "created_at": "2025-12-07T00:00:00Z",
+  "status": "pending_pickup",
+  "priority": "critical",
+  "dependencies": ["phase_2_monitoring"],
+
+  "task_bundle": {
+    "bundle_name": "KEDA Auto-Scaling with Prometheus Triggers",
+    "tasks": [
+      {
+        "task_id": "scaling-001",
+        "title": "Install and configure KEDA operator",
+        "type": "k8s_deployment",
+        "complexity": 5,
+        "deliverables": [
+          {
+            "file": "k8s/keda/keda-install.sh",
+            "description": "Script to install KEDA via Helm",
+            "requirements": [
+              "Install Helm if not present",
+              "Add KEDA Helm repo: helm repo add kedacore https://kedacore.github.io/charts",
+              "Install KEDA: helm install keda kedacore/keda --namespace keda --create-namespace",
+              "Verify KEDA operator is running",
+              "Check KEDA metrics server is healthy"
+            ]
+          },
+          {
+            "file": "k8s/keda/keda-config.yaml",
+            "description": "KEDA configuration (if needed)",
+            "requirements": [
+              "Configure Prometheus scaler address",
+              "Set default polling interval: 30s",
+              "Configure cooldown period: 300s"
+            ]
+          }
+        ]
+      },
+      {
+        "task_id": "scaling-002",
+        "title": "Create worker deployment manifests with resource limits",
+        "type": "k8s_manifests",
+        "complexity": 8,
+        "deliverables": [
+          {
+            "file": "k8s/workers/implementation-worker-deployment.yaml",
+            "description": "Implementation worker deployment",
+            "requirements": [
+              "Deployment with 0 initial replicas",
+              "Container: ghcr.io/ry-ops/cortex-docker:latest",
+              "Command: ['./scripts/spawn-worker.sh', '--type', 'implementation-worker']",
+              "Resource requests: 250m CPU, 512Mi memory",
+              "Resource limits: 1000m CPU, 2Gi memory",
+              "Shared PVC for coordination files (ReadWriteMany)",
+              "Environment variables from ConfigMap",
+              "Liveness/readiness probes"
+            ]
+          },
+          {
+            "file": "k8s/workers/security-worker-deployment.yaml",
+            "description": "Security worker deployment",
+            "requirements": [
+              "Same as implementation worker",
+              "Command: ['./scripts/spawn-worker.sh', '--type', 'scan-worker']",
+              "Labels: worker-type=security"
+            ]
+          },
+          {
+            "file": "k8s/workers/analysis-worker-deployment.yaml",
+            "description": "Analysis worker deployment",
+            "requirements": [
+              "Same as implementation worker",
+              "Command: ['./scripts/spawn-worker.sh', '--type', 'analysis-worker']",
+              "Labels: worker-type=analysis"
+            ]
+          },
+          {
+            "file": "k8s/workers/scan-worker-deployment.yaml",
+            "description": "Scan worker deployment",
+            "requirements": [
+              "Same as implementation worker",
+              "Command: ['./scripts/spawn-worker.sh', '--type', 'scan-worker']",
+              "Labels: worker-type=scan"
+            ]
+          }
+        ]
+      },
+      {
+        "task_id": "scaling-003",
+        "title": "Create KEDA ScaledObjects for queue-based scaling",
+        "type": "k8s_manifests",
+        "complexity": 9,
+        "deliverables": [
+          {
+            "file": "k8s/keda/scaledobject-implementation.yaml",
+            "description": "ScaledObject for implementation workers",
+            "requirements": {
+              "apiVersion": "keda.sh/v1alpha1",
+              "kind": "ScaledObject",
+              "spec": {
+                "scaleTargetRef": {
+                  "name": "implementation-worker"
+                },
+                "minReplicaCount": 0,
+                "maxReplicaCount": 50,
+                "pollingInterval": 30,
+                "cooldownPeriod": 300,
+                "triggers": [
+                  {
+                    "type": "prometheus",
+                    "metadata": {
+                      "serverAddress": "http://prometheus:9090",
+                      "metricName": "cortex_task_queue_depth",
+                      "query": "cortex_task_queue_depth{type=\"implementation\"}",
+                      "threshold": "1"
+                    }
+                  }
+                ],
+                "advanced": {
+                  "horizontalPodAutoscalerConfig": {
+                    "behavior": {
+                      "scaleDown": {
+                        "stabilizationWindowSeconds": 300,
+                        "policies": [
+                          {
+                            "type": "Percent",
+                            "value": 50,
+                            "periodSeconds": 60
+                          }
+                        ]
+                      },
+                      "scaleUp": {
+                        "stabilizationWindowSeconds": 0,
+                        "policies": [
+                          {
+                            "type": "Percent",
+                            "value": 100,
+                            "periodSeconds": 15
+                          }
+                        ]
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "file": "k8s/keda/scaledobject-security.yaml",
+            "description": "ScaledObject for security workers",
+            "requirements": "Same structure, query: cortex_task_queue_depth{type=\"security\"}"
+          },
+          {
+            "file": "k8s/keda/scaledobject-analysis.yaml",
+            "description": "ScaledObject for analysis workers",
+            "requirements": "Same structure, query: cortex_task_queue_depth{type=\"analysis\"}"
+          },
+          {
+            "file": "k8s/keda/scaledobject-scan.yaml",
+            "description": "ScaledObject for scan workers",
+            "requirements": "Same structure, query: cortex_task_queue_depth{type=\"scan\"}"
+          }
+        ]
+      },
+      {
+        "task_id": "scaling-004",
+        "title": "Create master StatefulSet manifests (stateful, single replica)",
+        "type": "k8s_manifests",
+        "complexity": 7,
+        "deliverables": [
+          {
+            "file": "k8s/masters/coordinator-statefulset.yaml",
+            "description": "Coordinator master StatefulSet",
+            "requirements": [
+              "StatefulSet with 1 replica (not scalable)",
+              "Container: ghcr.io/ry-ops/cortex-docker:latest",
+              "Command: ['./scripts/run-coordinator-master.sh']",
+              "Resource requests: 500m CPU, 1Gi memory",
+              "Resource limits: 2000m CPU, 4Gi memory",
+              "PVC for master state (RWO, 5Gi)",
+              "Anti-affinity to prevent co-location",
+              "Service for master communication"
+            ]
+          },
+          {
+            "file": "k8s/masters/development-statefulset.yaml",
+            "description": "Development master StatefulSet",
+            "requirements": "Same as coordinator, command: ['./scripts/run-development-master.sh']"
+          },
+          {
+            "file": "k8s/masters/security-statefulset.yaml",
+            "description": "Security master StatefulSet",
+            "requirements": "Same as coordinator, command: ['./scripts/run-security-master.sh']"
+          },
+          {
+            "file": "k8s/masters/cicd-statefulset.yaml",
+            "description": "CI/CD master StatefulSet",
+            "requirements": "Same as coordinator, command: ['./scripts/run-cicd-master.sh']"
+          },
+          {
+            "file": "k8s/masters/inventory-statefulset.yaml",
+            "description": "Inventory master StatefulSet",
+            "requirements": "Same as coordinator, command: ['./scripts/run-inventory-master.sh']"
+          }
+        ]
+      },
+      {
+        "task_id": "scaling-005",
+        "title": "Create shared PVC for coordination files (ReadWriteMany)",
+        "type": "k8s_manifests",
+        "complexity": 6,
+        "deliverables": [
+          {
+            "file": "k8s/storage/coordination-pvc.yaml",
+            "description": "PVC for shared coordination directory",
+            "requirements": [
+              "accessMode: ReadWriteMany (required for multi-pod access)",
+              "storage: 20Gi",
+              "storageClass: Use NFS or similar RWX-capable storage",
+              "mountPath: /app/coordination in all pods"
+            ]
+          },
+          {
+            "file": "k8s/storage/nfs-provisioner.yaml",
+            "description": "NFS provisioner for RWX storage (if not available)",
+            "requirements": [
+              "Deploy NFS server pod",
+              "Create StorageClass for NFS",
+              "Configure PV/PVC provisioning",
+              "Note: This is K3s-specific, use local-path by default"
+            ]
+          },
+          {
+            "file": "docs/storage-options.md",
+            "description": "Documentation on storage choices",
+            "requirements": [
+              "Explain ReadWriteMany requirement",
+              "Document NFS setup for K3s",
+              "Alternative: HostPath with NodeAffinity (single node)",
+              "Production recommendation: Use Longhorn or NFS"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+
+  "context": {
+    "keda_scaling_logic": {
+      "scale_up": {
+        "condition": "cortex_task_queue_depth > 0",
+        "action": "Spawn workers immediately (100% increase per 15s)",
+        "max_workers": 50
+      },
+      "scale_down": {
+        "condition": "cortex_task_queue_depth == 0 for 5 minutes",
+        "action": "Scale down 50% per minute",
+        "min_workers": 0
+      },
+      "scale_to_zero": {
+        "enabled": true,
+        "cooldown": "5 minutes after last task",
+        "benefit": "Cost savings when idle"
+      }
+    },
+    "storage_challenge": {
+      "issue": "K3s default storage (local-path) is ReadWriteOnce",
+      "requirement": "Coordination files need ReadWriteMany for multi-pod access",
+      "solutions": [
+        "Option 1: Deploy NFS server in cluster (simple, but single point of failure)",
+        "Option 2: Use Longhorn (distributed storage, production-ready)",
+        "Option 3: HostPath with NodeAffinity (pin all pods to one node)",
+        "Recommended": "Start with HostPath+NodeAffinity for POC, add Longhorn for production"
+      ]
+    },
+    "anti_affinity_strategy": {
+      "masters": "Prefer different nodes (soft anti-affinity)",
+      "workers": "No anti-affinity (pack tightly for resource efficiency)",
+      "reason": "Masters need high availability, workers are ephemeral"
+    }
+  },
+
+  "routing_reason": "K8s manifest creation and KEDA configuration - development-master expertise",
+  "expected_outcome": "KEDA installed, worker deployments ready to scale 0-50, masters deployed as StatefulSets with 1 replica each",
+  "handoff_back_trigger": "All manifests created, KEDA ScaledObjects configured, ready for deployment testing",
+
+  "validation_checklist": [
+    "KEDA operator running in keda namespace",
+    "Worker deployments created with 0 replicas",
+    "ScaledObjects created and READY",
+    "Master StatefulSets created with 1/1 ready",
+    "Shared coordination PVC bound and mounted",
+    "kubectl get scaledobjects shows all 4 workers",
+    "kubectl get hpa shows KEDA-managed HPAs"
+  ]
+}

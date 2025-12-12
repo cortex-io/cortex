@@ -1,0 +1,51 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: cortex-coordination
+  namespace: cortex
+  labels:
+    app: cortex
+    component: storage
+    storage-type: coordination
+spec:
+  accessModes:
+    - ReadWriteMany  # Multiple pods need read/write access
+  storageClassName: local-path  # K3s default - may need NFS for true RWX
+  resources:
+    requests:
+      storage: 50Gi
+---
+# Note: K3s local-path storage is actually ReadWriteOnce
+# For true ReadWriteMany, you need to either:
+# 1. Deploy NFS provisioner (see nfs-provisioner.yaml)
+# 2. Use Longhorn (distributed storage)
+# 3. Use HostPath with NodeAffinity (all pods on same node)
+#
+# For POC, we'll use a workaround with hostPath and NodeAffinity
+# For production, use Longhorn or NFS
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: cortex-coordination-pv
+  labels:
+    app: cortex
+    component: storage
+    storage-type: coordination
+spec:
+  capacity:
+    storage: 50Gi
+  accessModes:
+    - ReadWriteMany
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: local-path
+  hostPath:
+    path: /var/lib/cortex/coordination
+    type: DirectoryOrCreate
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+      - matchExpressions:
+        - key: kubernetes.io/hostname
+          operator: In
+          values:
+          - node1  # Change to your node name, or remove for single-node clusters

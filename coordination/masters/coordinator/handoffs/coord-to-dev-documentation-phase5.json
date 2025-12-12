@@ -1,0 +1,182 @@
+{
+  "handoff_id": "coord-to-dev-documentation-phase5-20251207",
+  "from_master": "coordinator",
+  "to_master": "development",
+  "mission_id": "k3s-autoscaling-deployment-001",
+  "phase": "phase_5_documentation",
+  "created_at": "2025-12-07T00:00:00Z",
+  "status": "pending_pickup",
+  "priority": "medium",
+  "dependencies": ["phase_4_deployment"],
+  "parallel_with": ["security-hardening", "cicd-pipeline"],
+
+  "task_bundle": {
+    "bundle_name": "Comprehensive Documentation and Runbooks",
+    "tasks": [
+      {
+        "task_id": "docs-001",
+        "title": "Create deployment guide and architecture documentation",
+        "type": "documentation",
+        "complexity": 6,
+        "deliverables": [
+          {
+            "file": "docs/deployment/k3s-autoscaling-deployment-guide.md",
+            "description": "Complete deployment guide",
+            "sections": [
+              "Prerequisites (Proxmox access, kubectl, helm)",
+              "Quick Start (one-command deployment)",
+              "Step-by-Step Deployment",
+              "Configuration Options",
+              "Verification Steps",
+              "Troubleshooting",
+              "Rollback Procedures"
+            ]
+          },
+          {
+            "file": "docs/deployment/architecture-diagram.md",
+            "description": "ASCII architecture diagram",
+            "requirements": [
+              "Show Proxmox VMs (110, 111, 112)",
+              "Show K3s control plane and workers",
+              "Show Cortex masters and workers",
+              "Show monitoring stack (Prometheus, Grafana)",
+              "Show KEDA auto-scaling flow",
+              "Show network topology (/27 subnet)",
+              "Include data flow diagrams"
+            ]
+          },
+          {
+            "file": "docs/deployment/scaling-behavior.md",
+            "description": "Auto-scaling behavior documentation",
+            "requirements": [
+              "Explain KEDA scaling triggers",
+              "Document scaling policies (up/down)",
+              "Explain scale-to-zero behavior",
+              "Provide scaling metrics and thresholds",
+              "Include example scenarios",
+              "Performance benchmarks"
+            ]
+          }
+        ]
+      },
+      {
+        "task_id": "docs-002",
+        "title": "Create operational runbooks",
+        "type": "documentation",
+        "complexity": 7,
+        "deliverables": [
+          {
+            "file": "docs/runbooks/troubleshooting-guide.md",
+            "description": "Troubleshooting runbook",
+            "sections": [
+              "Pods Not Starting (check PVC, secrets, images)",
+              "Auto-Scaling Not Working (check KEDA, metrics, ScaledObjects)",
+              "Prometheus Not Scraping (check ServiceMonitor, endpoints)",
+              "Grafana Dashboards Empty (check datasource, queries)",
+              "Workers Stuck at 0 Replicas (check queue depth, KEDA logs)",
+              "Masters Unhealthy (check coordination PVC, network policies)",
+              "Common kubectl commands",
+              "Log investigation procedures"
+            ]
+          },
+          {
+            "file": "docs/runbooks/disaster-recovery.md",
+            "description": "Disaster recovery procedures",
+            "sections": [
+              "Backup Procedures (PVC snapshots, config backups)",
+              "Recovery Scenarios (node failure, PVC loss, cluster rebuild)",
+              "Coordination State Recovery",
+              "Metrics Data Recovery",
+              "RTO/RPO targets",
+              "Testing DR procedures"
+            ]
+          },
+          {
+            "file": "docs/runbooks/maintenance-procedures.md",
+            "description": "Routine maintenance",
+            "sections": [
+              "Updating Cortex Image",
+              "Scaling Master Resources",
+              "Adding Worker Types",
+              "Updating Prometheus/Grafana",
+              "Certificate Rotation",
+              "Log Rotation and Cleanup",
+              "Monitoring Health Checks"
+            ]
+          }
+        ]
+      },
+      {
+        "task_id": "docs-003",
+        "title": "Create monitoring and alerting documentation",
+        "type": "documentation",
+        "complexity": 5,
+        "deliverables": [
+          {
+            "file": "docs/monitoring/grafana-dashboards-guide.md",
+            "description": "Dashboard usage guide",
+            "requirements": [
+              "Explain each dashboard panel",
+              "Provide interpretation guidelines",
+              "Document alerting thresholds",
+              "Include screenshot placeholders",
+              "PromQL query examples"
+            ]
+          },
+          {
+            "file": "docs/monitoring/prometheus-queries.md",
+            "description": "Useful Prometheus queries",
+            "requirements": [
+              "Queue depth by type",
+              "Worker scaling rate",
+              "Task success rate",
+              "Master health status",
+              "Resource utilization",
+              "KEDA scaler activity",
+              "Alerting rule examples"
+            ]
+          },
+          {
+            "file": "docs/monitoring/alerting-setup.md",
+            "description": "Alerting configuration guide",
+            "requirements": [
+              "AlertManager setup (optional)",
+              "Alert rules for critical conditions",
+              "Integration with Slack/PagerDuty",
+              "Escalation procedures",
+              "On-call runbook references"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+
+  "context": {
+    "documentation_audience": {
+      "deployment_guide": "DevOps engineers deploying Cortex",
+      "runbooks": "SREs and on-call engineers",
+      "monitoring_docs": "Observability team and dashb oard users",
+      "architecture_diagrams": "Technical leadership and architects"
+    },
+    "ascii_art_requirements": {
+      "tool": "Use asciiflow.com or similar",
+      "max_width": "80 characters",
+      "include_legends": "Explain symbols and connections",
+      "format": "Markdown code blocks with ```"
+    }
+  },
+
+  "routing_reason": "Technical documentation creation - development-master writing expertise",
+  "expected_outcome": "Complete documentation suite covering deployment, operations, troubleshooting, and monitoring",
+  "handoff_back_trigger": "All documentation files created and reviewed for accuracy",
+
+  "validation_checklist": [
+    "Deployment guide tested by following steps exactly",
+    "Architecture diagram accurately represents system",
+    "Troubleshooting guide covers all common issues",
+    "Runbooks reference correct kubectl commands",
+    "Monitoring docs include working PromQL queries",
+    "All docs formatted correctly in Markdown"
+  ]
+}

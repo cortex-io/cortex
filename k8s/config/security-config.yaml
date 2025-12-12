@@ -1,0 +1,48 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: security-config
+  namespace: cortex
+  labels:
+    app: cortex
+    component: config
+    master-type: security
+data:
+  MASTER_TYPE: "security"
+  COORDINATION_DIR: "/app/coordination"
+  HANDOFF_CHECK_INTERVAL: "30"
+  LOG_LEVEL: "info"
+  METRICS_ENABLED: "true"
+  PROMETHEUS_PORT: "9090"
+
+  # Security master specific
+  WORKER_SPAWN_ENABLED: "true"
+  MAX_CONCURRENT_WORKERS: "50"
+  WORKER_TOKEN_ALLOCATION: "15000"
+  WORKER_TIME_LIMIT_MINUTES: "60"
+
+  # Worker types managed by security master
+  WORKER_TYPES: "vulnerability-scanner,penetration-tester,compliance-checker,secret-scanner"
+
+  # Security scanning configuration
+  SCAN_SEVERITY_THRESHOLD: "medium"
+  AUTO_REMEDIATION_ENABLED: "true"
+  VULNERABILITY_DB_PATH: "/app/coordination/masters/security/knowledge-base/vulnerability-database.json"
+
+  # Knowledge base paths
+  KB_VULNERABILITY_PATTERNS: "/app/coordination/masters/security/knowledge-base/vulnerability-patterns.jsonl"
+  KB_REMEDIATION_STRATEGIES: "/app/coordination/masters/security/knowledge-base/remediation-strategies.json"
+  KB_COMPLIANCE_RULES: "/app/coordination/masters/security/knowledge-base/compliance-rules.json"
+
+  # RAG configuration
+  RAG_ENABLED: "true"
+  RAG_TOP_K: "5"
+
+  # Task queue
+  TASK_QUEUE_BACKEND: "file"
+  TASK_QUEUE_PATH: "/app/coordination/task-queue"
+
+  # Security policies
+  ENFORCE_CODE_SIGNING: "false"
+  ENFORCE_DEPENDENCY_SCANNING: "true"
+  ENFORCE_SECRET_SCANNING: "true"

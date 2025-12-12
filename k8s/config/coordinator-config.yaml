@@ -1,0 +1,37 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: coordinator-config
+  namespace: cortex
+  labels:
+    app: cortex
+    component: config
+    master-type: coordinator
+data:
+  MASTER_TYPE: "coordinator"
+  COORDINATION_DIR: "/app/coordination"
+  HANDOFF_CHECK_INTERVAL: "30"
+  TASK_ROUTING_ENABLED: "true"
+  MOE_ROUTING_ENABLED: "true"
+  LOG_LEVEL: "info"
+  METRICS_ENABLED: "true"
+  PROMETHEUS_PORT: "9090"
+
+  # Coordinator-specific settings
+  COORDINATOR_MODE: "orchestration"
+  MAX_CONCURRENT_HANDOFFS: "10"
+  HANDOFF_TIMEOUT_SECONDS: "3600"
+
+  # Master endpoints
+  DEVELOPMENT_MASTER_ENDPOINT: "http://development-master-0.cortex-masters:8080"
+  SECURITY_MASTER_ENDPOINT: "http://security-master-0.cortex-masters:8080"
+  CICD_MASTER_ENDPOINT: "http://cicd-master-0.cortex-masters:8080"
+  INVENTORY_MASTER_ENDPOINT: "http://inventory-master-0.cortex-masters:8080"
+
+  # Task queue configuration
+  TASK_QUEUE_BACKEND: "file"
+  TASK_QUEUE_PATH: "/app/coordination/task-queue"
+
+  # Dashboard configuration
+  DASHBOARD_UPDATE_INTERVAL: "60"
+  DASHBOARD_PATH: "/app/coordination/dashboard"

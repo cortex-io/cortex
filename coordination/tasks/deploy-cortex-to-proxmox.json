@@ -1,0 +1,99 @@
+{
+  "task_id": "deploy-cortex-to-proxmox-001",
+  "task_type": "infrastructure_deployment",
+  "priority": "high",
+  "status": "pending",
+  "assigned_master": "development-master",
+  "created_at": "2025-12-06T13:00:00-06:00",
+  "created_by": "user",
+  "description": "Deploy Cortex as LXC container on Proxmox server",
+  "task_data": {
+    "deployment_type": "lxc_container",
+    "target_infrastructure": {
+      "platform": "proxmox",
+      "host": "10.88.140.151",
+      "node": "pve01",
+      "auth": {
+        "user": "root@pam",
+        "token_name": "cortex-automation",
+        "token_value_env": "PROXMOX_TOKEN_VALUE"
+      }
+    },
+    "container_config": {
+      "ctid": 101,
+      "hostname": "cortex",
+      "template": "debian-13-standard_13.0-1_amd64.tar.zst",
+      "resources": {
+        "memory": 4096,
+        "swap": 2048,
+        "cores": 4,
+        "disk_size": "20G",
+        "storage": "local-lvm"
+      },
+      "network": {
+        "bridge": "vmbr0",
+        "ip": "10.88.140.159/24",
+        "gateway": "10.88.140.1",
+        "dns": "8.8.8.8"
+      },
+      "password": "changeme123"
+    },
+    "installation_steps": [
+      {
+        "step": 1,
+        "name": "copy_deployment_script",
+        "method": "scp",
+        "source": "/Users/ryandahlberg/Projects/proxmox-mcp-server/deploy-cortex-lxc.sh",
+        "destination": "root@10.88.140.151:/root/deploy-cortex-lxc.sh"
+      },
+      {
+        "step": 2,
+        "name": "make_executable",
+        "method": "ssh",
+        "command": "chmod +x /root/deploy-cortex-lxc.sh"
+      },
+      {
+        "step": 3,
+        "name": "execute_deployment",
+        "method": "ssh",
+        "command": "/root/deploy-cortex-lxc.sh",
+        "expected_duration": "600s",
+        "monitor_output": true
+      },
+      {
+        "step": 4,
+        "name": "verify_container",
+        "method": "api",
+        "endpoint": "/nodes/pve01/lxc/101/status/current",
+        "expected_status": "running"
+      },
+      {
+        "step": 5,
+        "name": "start_cortex_dashboard",
+        "method": "ssh",
+        "command": "pct exec 101 -- systemctl start cortex-dashboard"
+      },
+      {
+        "step": 6,
+        "name": "verify_dashboard",
+        "method": "http",
+        "url": "http://10.88.140.159:3000",
+        "expected_status": 200
+      }
+    ],
+    "rollback_plan": {
+      "on_failure": "destroy_container",
+      "snapshot_before": true
+    },
+    "monitoring": {
+      "track_progress": true,
+      "log_output": true,
+      "send_notifications": true
+    }
+  },
+  "deliverables": {
+    "deployment_log": "coordination/logs/cortex-deployment-001.log",
+    "container_info": "coordination/infrastructure/cortex-lxc-101.json",
+    "access_instructions": "coordination/docs/cortex-deployment-access.md"
+  }
+}

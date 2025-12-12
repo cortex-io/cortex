@@ -422,8 +422,8 @@
       "title": "Build timeout analytics and reporting",
       "type": "development",
       "description": "development: Create lib/learning/timeout-analytics.sh with functions: analyze_timeout_accuracy(), generate_timeout_report(), identify_problematic_patterns(). Create CLI tool cortex-ctl.sh timeout-stats command.",
-      "priority": "medium",
-      "status": "pending",
+      "priority": "high",
+      "status": "assigned",
       "created_at": "2025-12-05T08:23:22-0600",
       "created_by": "self-optimization-initiative",
       "context": {
@@ -447,7 +447,10 @@
         ],
         "self_optimization": true,
         "parallel_track": true
-      }
+      },
+      "assigned_to": "development",
+      "assigned_by": "cortex-evolution-initiative",
+      "assigned_at": "2025-12-12T20:28:21-0600"
     },
     {
       "id": "self-opt-granularity-001",
@@ -455,7 +458,7 @@
       "type": "development",
       "description": "development: Create lib/learning/granularity-optimizer.sh with functions: record_decomposition(), should_decompose(), recommend_subtask_count(), calculate_efficiency_score(). Database at coordination/knowledge-base/granularity-decisions.jsonl.",
       "priority": "high",
-      "status": "pending",
+      "status": "assigned",
       "created_at": "2025-12-05T08:23:22-0600",
       "created_by": "self-optimization-initiative",
       "context": {
@@ -477,7 +480,10 @@
         ],
         "self_optimization": true,
         "parallel_track": true
-      }
+      },
+      "assigned_to": "development",
+      "assigned_by": "cortex-evolution-initiative",
+      "assigned_at": "2025-12-12T20:28:21-0600"
     },
     {
       "id": "self-opt-granularity-002",
@@ -485,7 +491,7 @@
       "type": "development",
       "description": "development: Modify coordination/masters/initializer/lib/feature-decomposer.sh to use granularity optimizer. Query for optimal feature count before decomposition. Record outcomes after execution. Implement adaptive scaling: complexity 1-3 → 25-50 features, 4-6 → 50-150, 7+ → 150-300.",
       "priority": "high",
-      "status": "pending",
+      "status": "assigned",
       "created_at": "2025-12-05T08:23:22-0600",
       "created_by": "self-optimization-initiative",
       "context": {
@@ -508,15 +514,18 @@
         ],
         "self_optimization": true,
         "parallel_track": true
-      }
+      },
+      "assigned_to": "development",
+      "assigned_by": "cortex-evolution-initiative",
+      "assigned_at": "2025-12-12T20:28:21-0600"
     },
     {
       "id": "self-opt-granularity-003",
       "title": "Build feedback loop from worker outcomes",
       "type": "development",
       "description": "development: Create lib/learning/outcome-tracker.sh that captures worker completion times, success rates, and coordination overhead per decomposition. Feed back into granularity optimizer to improve recommendations over time.",
-      "priority": "medium",
-      "status": "pending",
+      "priority": "high",
+      "status": "assigned",
       "created_at": "2025-12-05T08:23:22-0600",
       "created_by": "self-optimization-initiative",
       "context": {
@@ -538,7 +547,10 @@
         ],
         "self_optimization": true,
         "parallel_track": true
-      }
+      },
+      "assigned_to": "development",
+      "assigned_by": "cortex-evolution-initiative",
+      "assigned_at": "2025-12-12T20:28:21-0600"
     },
     {
       "id": "self-opt-result-001",
@@ -546,7 +558,7 @@
       "type": "development",
       "description": "development: Create lib/coordination/result-analyzer.sh with functions: analyze_parallel_results(), compare_text_similarity(), calculate_waste_score(), detect_redundancy(). Use Jaccard similarity for text comparison. Database at coordination/knowledge-base/result-analysis.jsonl.",
       "priority": "high",
-      "status": "pending",
+      "status": "assigned",
       "created_at": "2025-12-05T08:23:22-0600",
       "created_by": "self-optimization-initiative",
       "context": {
@@ -568,7 +580,10 @@
         ],
         "self_optimization": true,
         "parallel_track": true
-      }
+      },
+      "assigned_to": "development",
+      "assigned_by": "cortex-evolution-initiative",
+      "assigned_at": "2025-12-12T20:28:21-0600"
     },
     {
       "id": "self-opt-result-002",
@@ -576,7 +591,7 @@
       "type": "development",
       "description": "development: Modify coordination/masters/coordinator/lib/moe-router.sh to check historical waste before routing to parallel experts. If task type has high waste history (>0.6), prefer single expert routing. Add waste feedback to routing decisions.",
       "priority": "high",
-      "status": "pending",
+      "status": "assigned",
       "created_at": "2025-12-05T08:23:22-0600",
       "created_by": "self-optimization-initiative",
       "context": {
@@ -599,15 +614,18 @@
         ],
         "self_optimization": true,
         "parallel_track": true
-      }
+      },
+      "assigned_to": "development",
+      "assigned_by": "cortex-evolution-initiative",
+      "assigned_at": "2025-12-12T20:28:21-0600"
     },
     {
       "id": "self-opt-result-003",
       "title": "Build intelligent result aggregation",
       "type": "development",
       "description": "development: Create lib/coordination/aggregation.sh with merge strategies: consensus (majority vote), best-quality (highest confidence), union (combine all), intersection (common elements). Auto-select strategy based on task type and historical success.",
-      "priority": "medium",
-      "status": "pending",
+      "priority": "high",
+      "status": "assigned",
       "created_at": "2025-12-05T08:23:22-0600",
       "created_by": "self-optimization-initiative",
       "context": {
@@ -631,7 +649,10 @@
         ],
         "self_optimization": true,
         "parallel_track": true
-      }
+      },
+      "assigned_to": "development",
+      "assigned_by": "cortex-evolution-initiative",
+      "assigned_at": "2025-12-12T20:28:21-0600"
     },
     {
       "id": "self-opt-instance-001",
@@ -639,7 +660,7 @@
       "type": "development",
       "description": "development: Create lib/coordination/instance-registry.sh with functions: register_instance(), update_heartbeat(), get_active_instances(), cleanup_dead_instances(). Use file-based coordination at coordination/instances/. Each instance has JSON descriptor with heartbeat.",
       "priority": "high",
-      "status": "pending",
+      "status": "assigned",
       "created_at": "2025-12-05T08:23:22-0600",
       "created_by": "self-optimization-initiative",
       "context": {
@@ -661,7 +682,10 @@
         ],
         "self_optimization": true,
         "parallel_track": true
-      }
+      },
+      "assigned_to": "development",
+      "assigned_by": "cortex-evolution-initiative",
+      "assigned_at": "2025-12-12T20:28:21-0600"
     },
     {
       "id": "self-opt-instance-002",
@@ -669,7 +693,7 @@
       "type": "development",
       "description": "development: Add claim_task() and release_task() functions using mkdir for atomic locks at coordination/tasks/locks/. Integrate with coordinator daemon to prevent duplicate task assignment across instances.",
       "priority": "high",
-      "status": "pending",
+      "status": "assigned",
       "created_at": "2025-12-05T08:23:22-0600",
       "created_by": "self-optimization-initiative",
       "context": {
@@ -693,15 +717,18 @@
         ],
         "self_optimization": true,
         "parallel_track": true
-      }
+      },
+      "assigned_to": "development",
+      "assigned_by": "cortex-evolution-initiative",
+      "assigned_at": "2025-12-12T20:28:21-0600"
     },
     {
       "id": "self-opt-instance-003",
       "title": "Build unified control interface",
       "type": "development",
       "description": "development: Create scripts/cortex-ctl.sh with commands: status (show instances), stats (learning metrics), optimize (run meta-learner), instances (list active). Enhance with instance-aware commands.",
-      "priority": "medium",
-      "status": "pending",
+      "priority": "high",
+      "status": "assigned",
       "created_at": "2025-12-05T08:23:22-0600",
       "created_by": "self-optimization-initiative",
       "context": {
@@ -725,7 +752,10 @@
         ],
         "self_optimization": true,
         "parallel_track": true
-      }
+      },
+      "assigned_to": "development",
+      "assigned_by": "cortex-evolution-initiative",
+      "assigned_at": "2025-12-12T20:28:21-0600"
     },
     {
       "id": "self-opt-meta-001",
@@ -733,7 +763,7 @@
       "type": "development",
       "description": "development: Create lib/learning/meta-learner.sh with functions: run_meta_learning(), synthesize_insights(), generate_recommendations(), analyze_timeout_patterns(), analyze_granularity_efficiency(), analyze_waste_patterns(). Aggregates data from all learning systems.",
       "priority": "high",
-      "status": "pending",
+      "status": "assigned",
       "created_at": "2025-12-05T08:23:22-0600",
       "created_by": "self-optimization-initiative",
       "context": {
@@ -755,7 +785,10 @@
         ],
         "self_optimization": true,
         "parallel_track": true
-      }
+      },
+      "assigned_to": "development",
+      "assigned_by": "cortex-evolution-initiative",
+      "assigned_at": "2025-12-12T20:28:21-0600"
     },
     {
       "id": "self-opt-meta-002",
@@ -763,7 +796,7 @@
       "type": "development",
       "description": "development: Create lib/learning/policy-optimizer.sh with functions: update_routing_parameters(), update_timeout_parameters(), update_granularity_parameters(), validate_parameter_changes(). Auto-tune system parameters based on meta-insights. Require approval for changes >10%.",
       "priority": "high",
-      "status": "pending",
+      "status": "assigned",
       "created_at": "2025-12-05T08:23:22-0600",
       "created_by": "self-optimization-initiative",
       "context": {
@@ -787,15 +820,18 @@
         ],
         "self_optimization": true,
         "parallel_track": true
-      }
+      },
+      "assigned_to": "development",
+      "assigned_by": "cortex-evolution-initiative",
+      "assigned_at": "2025-12-12T20:28:21-0600"
     },
     {
       "id": "self-opt-meta-003",
       "title": "Build meta-learner daemon",
       "type": "development",
       "description": "development: Create scripts/daemons/meta-learner-daemon.sh that runs daily at 2 AM. Executes run_meta_learning(), applies optimizations, generates reports. Add to daemon control system.",
-      "priority": "medium",
-      "status": "pending",
+      "priority": "high",
+      "status": "assigned",
       "created_at": "2025-12-05T08:23:22-0600",
       "created_by": "self-optimization-initiative",
       "context": {
@@ -819,15 +855,18 @@
         ],
         "self_optimization": true,
         "parallel_track": true
-      }
+      },
+      "assigned_to": "development",
+      "assigned_by": "cortex-evolution-initiative",
+      "assigned_at": "2025-12-12T20:28:21-0600"
     },
     {
       "id": "self-opt-meta-004",
       "title": "Build meta-learning dashboard",
       "type": "development",
       "description": "development: Create eui-dashboard/src/components/learning/ with MetaLearningViz.tsx, OptimizationHistory.tsx, PredictiveAnalytics.tsx. Add API endpoints at dashboard/server/learning-api.js. Show system improvements over time.",
-      "priority": "medium",
-      "status": "pending",
+      "priority": "high",
+      "status": "assigned",
       "created_at": "2025-12-05T08:23:22-0600",
       "created_by": "self-optimization-initiative",
       "context": {
@@ -852,7 +891,10 @@
         ],
         "self_optimization": true,
         "parallel_track": true
-      }
+      },
+      "assigned_to": "development",
+      "assigned_by": "cortex-evolution-initiative",
+      "assigned_at": "2025-12-12T20:28:21-0600"
     }
   ],
   "stats": {
@@ -863,7 +905,10 @@
     "removed_spawned": 1,
     "total_removed": 14,
     "note": "Nuclear cleanup on 2025-12-04",
-    "self_optimization_tasks": 16
+    "self_optimization_tasks": 16,
+    "total_pending": 0,
+    "total_assigned": 16,
+    "evolution_activated": "2025-12-12 20:28:21"
   },
-  "updated_at": "2025-12-05T08:23:22-0600"
+  "updated_at": "2025-12-12T20:28:21-0600"
 }

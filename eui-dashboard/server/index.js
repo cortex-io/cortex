@@ -3,6 +3,7 @@ import cors from 'cors'
 import fs from 'fs'
 import path from 'path'
 import { fileURLToPath } from 'url'
+import { metricsHandler } from './metrics-exporter.js'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
@@ -13,6 +14,9 @@ const PORT = 3004
 
 app.use(cors())
 app.use(express.json())
+
+// Prometheus metrics endpoint
+app.get('/metrics', metricsHandler)
 
 // Helper to read JSON files
 const readJSON = (filePath) => {

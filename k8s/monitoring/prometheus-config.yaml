@@ -1,0 +1,292 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: prometheus-config
+  namespace: monitoring
+  labels:
+    app: prometheus
+data:
+  prometheus.yml: |
+    global:
+      scrape_interval: 15s
+      evaluation_interval: 15s
+      external_labels:
+        cluster: 'cortex-k3s'
+        environment: 'production'
+
+    # Alerting configuration
+    alerting:
+      alertmanagers:
+        - static_configs:
+            - targets: []
+              # - alertmanager:9093
+
+    # Load rules once and periodically evaluate them
+    rule_files:
+      - /etc/prometheus/rules/*.yml
+
+    # Scrape configurations
+    scrape_configs:
+      # Prometheus self-monitoring
+      - job_name: 'prometheus'
+        static_configs:
+          - targets: ['localhost:9090']
+
+      # Cortex Masters - scrape all master services
+      - job_name: 'cortex-masters'
+        scrape_interval: 15s
+        kubernetes_sd_configs:
+          - role: service
+            namespaces:
+              names:
+                - cortex
+        relabel_configs:
+          - source_labels: [__meta_kubernetes_service_label_component]
+            regex: master
+            action: keep
+          - source_labels: [__meta_kubernetes_service_label_app]
+            regex: cortex
+            action: keep
+          - source_labels: [__meta_kubernetes_service_label_master_type]
+            target_label: master
+          - source_labels: [__meta_kubernetes_service_name]
+            target_label: service
+          - source_labels: [__meta_kubernetes_namespace]
+            target_label: namespace
+
+      # Cortex Workers - scrape all worker services
+      - job_name: 'cortex-workers'
+        scrape_interval: 15s
+        kubernetes_sd_configs:
+          - role: pod
+            namespaces:
+              names:
+                - cortex
+        relabel_configs:
+          - source_labels: [__meta_kubernetes_pod_label_component]
+            regex: worker
+            action: keep
+          - source_labels: [__meta_kubernetes_pod_label_app]
+            regex: cortex
+            action: keep
+          - source_labels: [__meta_kubernetes_pod_label_worker_type]
+            target_label: worker_type
+          - source_labels: [__meta_kubernetes_pod_name]
+            target_label: pod
+          - source_labels: [__meta_kubernetes_namespace]
+            target_label: namespace
+          - source_labels: [__meta_kubernetes_pod_ip]
+            target_label: __address__
+            replacement: $1:3000
+
+      # Cortex Dashboard API (EUI Dashboard)
+      - job_name: 'cortex-dashboard'
+        scrape_interval: 15s
+        static_configs:
+          - targets: ['cortex-dashboard.cortex.svc.cluster.local:3004']
+            labels:
+              service: cortex-dashboard
+              component: api
+
+      # K3s Node Exporter
+      - job_name: 'node-exporter'
+        scrape_interval: 30s
+        kubernetes_sd_configs:
+          - role: node
+        relabel_configs:
+          - source_labels: [__address__]
+            regex: '(.*):10250'
+            replacement: '${1}:9100'
+            target_label: __address__
+          - source_labels: [__meta_kubernetes_node_name]
+            target_label: node
+
+      # K3s Metrics (API Server, Scheduler, Controller Manager)
+      - job_name: 'kubernetes-apiservers'
+        scrape_interval: 30s
+        kubernetes_sd_configs:
+          - role: endpoints
+        scheme: https
+        tls_config:
+          ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+        bearer_token_file: /var/run/secrets/kubernetes.io/serviceaccount/token
+        relabel_configs:
+          - source_labels: [__meta_kubernetes_namespace, __meta_kubernetes_service_name, __meta_kubernetes_endpoint_port_name]
+            action: keep
+            regex: default;kubernetes;https
+
+      # Kubernetes Pods (generic discovery)
+      - job_name: 'kubernetes-pods'
+        scrape_interval: 30s
+        kubernetes_sd_configs:
+          - role: pod
+        relabel_configs:
+          - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_scrape]
+            action: keep
+            regex: true
+          - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_path]
+            action: replace
+            target_label: __metrics_path__
+            regex: (.+)
+          - source_labels: [__address__, __meta_kubernetes_pod_annotation_prometheus_io_port]
+            action: replace
+            regex: ([^:]+)(?::\d+)?;(\d+)
+            replacement: $1:$2
+            target_label: __address__
+          - action: labelmap
+            regex: __meta_kubernetes_pod_label_(.+)
+          - source_labels: [__meta_kubernetes_namespace]
+            action: replace
+            target_label: kubernetes_namespace
+          - source_labels: [__meta_kubernetes_pod_name]
+            action: replace
+            target_label: kubernetes_pod_name
+
+  # Recording rules for aggregations
+  rules.yml: |
+    groups:
+      - name: cortex_aggregations
+        interval: 30s
+        rules:
+          # Task queue aggregations
+          - record: cortex:task_queue_depth:total
+            expr: sum(cortex_task_queue_depth)
+
+          - record: cortex:task_queue_depth:by_type
+            expr: sum(cortex_task_queue_depth) by (type)
+
+          # Worker aggregations
+          - record: cortex:active_workers:total
+            expr: sum(cortex_active_workers)
+
+          - record: cortex:active_workers:by_type
+            expr: sum(cortex_active_workers) by (type)
+
+          # Task success rate (1 hour window)
+          - record: cortex:task_success_rate:1h
+            expr: |
+              sum(rate(cortex_task_completion_total{status="success"}[1h])) by (type)
+              /
+              sum(rate(cortex_task_completion_total[1h])) by (type)
+
+          # Master availability
+          - record: cortex:masters:available
+            expr: sum(cortex_master_health)
+
+          - record: cortex:masters:total
+            expr: count(cortex_master_health)
+
+  # Alert rules
+  alerts.yml: |
+    groups:
+      - name: cortex_critical
+        interval: 30s
+        rules:
+          # Master health alerts
+          - alert: CortexMasterUnhealthy
+            expr: cortex_master_health == 0
+            for: 5m
+            labels:
+              severity: critical
+              component: master
+            annotations:
+              summary: "Cortex master {{ $labels.master }} is unhealthy"
+              description: "Master {{ $labels.master }} has been unhealthy for more than 5 minutes."
+
+          - alert: CortexMultipleMastersDown
+            expr: sum(cortex_master_health) < 3
+            for: 2m
+            labels:
+              severity: critical
+              component: master
+            annotations:
+              summary: "Multiple Cortex masters are down"
+              description: "{{ $value }} masters are currently healthy. At least 3 required."
+
+          # Task queue alerts
+          - alert: CortexTaskQueueBacklog
+            expr: cortex_task_queue_depth > 100
+            for: 10m
+            labels:
+              severity: warning
+              component: task_queue
+            annotations:
+              summary: "Task queue backlog detected"
+              description: "Task queue depth for {{ $labels.type }} is {{ $value }}, exceeding threshold of 100 for 10 minutes."
+
+          - alert: CortexOldTasksInQueue
+            expr: cortex_task_queue_age_seconds > 3600
+            for: 5m
+            labels:
+              severity: warning
+              component: task_queue
+            annotations:
+              summary: "Old tasks in queue"
+              description: "Tasks of type {{ $labels.type }} have been waiting for {{ $value }} seconds (>1 hour)."
+
+          # Worker alerts
+          - alert: CortexNoActiveWorkers
+            expr: cortex:active_workers:total == 0 and cortex:task_queue_depth:total > 0
+            for: 5m
+            labels:
+              severity: critical
+              component: workers
+            annotations:
+              summary: "No active workers with pending tasks"
+              description: "No workers are active but {{ $value }} tasks are pending."
+
+          - alert: CortexWorkerSpawnFailures
+            expr: rate(cortex_worker_termination_total{reason="spawn_failure"}[5m]) > 0.1
+            for: 5m
+            labels:
+              severity: warning
+              component: workers
+            annotations:
+              summary: "High worker spawn failure rate"
+              description: "Worker spawn failure rate is {{ $value }}/sec for type {{ $labels.type }}."
+
+          # Token budget alerts
+          - alert: CortexLowTokenBudget
+            expr: cortex_token_budget_available < 50000
+            for: 5m
+            labels:
+              severity: warning
+              component: token_budget
+            annotations:
+              summary: "Low token budget"
+              description: "Only {{ $value }} tokens remaining in budget."
+
+          - alert: CortexTokenBudgetExhausted
+            expr: cortex_token_budget_available == 0
+            for: 1m
+            labels:
+              severity: critical
+              component: token_budget
+            annotations:
+              summary: "Token budget exhausted"
+              description: "Token budget is completely exhausted. System cannot process new tasks."
+
+      - name: cortex_performance
+        interval: 1m
+        rules:
+          # Task duration alerts
+          - alert: CortexSlowTaskExecution
+            expr: histogram_quantile(0.95, rate(cortex_task_duration_seconds_bucket[10m])) > 600
+            for: 10m
+            labels:
+              severity: warning
+              component: performance
+            annotations:
+              summary: "Slow task execution detected"
+              description: "95th percentile task duration for {{ $labels.type }} is {{ $value }}s (>10 minutes)."
+
+          # Success rate alerts
+          - alert: CortexLowSuccessRate
+            expr: cortex_task_success_rate < 0.5
+            for: 15m
+            labels:
+              severity: warning
+              component: quality
+            annotations:
+              summary: "Low task success rate"
+              description: "Task success rate for {{ $labels.type }} is {{ $value }} (<50%)."

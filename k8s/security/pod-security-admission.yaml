@@ -1,0 +1,35 @@
+---
+# Cortex Namespace with Pod Security Standards
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: cortex
+  labels:
+    # Enforce restricted Pod Security Standard (highest security level)
+    pod-security.kubernetes.io/enforce: restricted
+    pod-security.kubernetes.io/enforce-version: latest
+
+    # Audit mode - log violations
+    pod-security.kubernetes.io/audit: restricted
+    pod-security.kubernetes.io/audit-version: latest
+
+    # Warn mode - show warnings to users
+    pod-security.kubernetes.io/warn: restricted
+    pod-security.kubernetes.io/warn-version: latest
+
+    # Identification labels
+    app.kubernetes.io/name: cortex
+    app.kubernetes.io/part-of: cortex-automation
+    environment: production
+  annotations:
+    description: "Cortex automation namespace with restricted Pod Security Standards"
+    security.standards: "CIS Kubernetes Benchmark compliant"
+    pod-security.info: |
+      Restricted Pod Security Standard enforces:
+      - runAsNonRoot: true
+      - No privileged containers
+      - No host namespaces (hostNetwork, hostPID, hostIPC)
+      - seccompProfile: RuntimeDefault or Localhost
+      - allowPrivilegeEscalation: false
+      - capabilities: drop ALL
+      - readOnlyRootFilesystem: true (recommended)

@@ -398,3 +398,13 @@
   "sensitivity_level": "none",
   "reasoning": "Selected claude-sonnet-4 from balanced tier"
 }
+{
+  "timestamp": "2025-12-12T14:34:44-0600",
+  "task_id": "wazuh-version-fix-1765571682",
+  "model": "claude-sonnet-4",
+  "provider": "anthropic",
+  "tier": "balanced",
+  "complexity_score": 5,
+  "sensitivity_level": "none",
+  "reasoning": "Selected claude-sonnet-4 from balanced tier"
+}

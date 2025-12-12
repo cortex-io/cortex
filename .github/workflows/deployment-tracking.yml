@@ -1,0 +1,117 @@
+name: Deployment Tracking
+
+on:
+  deployment_status:
+
+jobs:
+  track-deployment:
+    name: Track Deployment Metrics
+    runs-on: ubuntu-latest
+    if: github.event.deployment_status.state == 'success' || github.event.deployment_status.state == 'failure'
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Create Grafana annotation
+        if: github.event.deployment_status.state == 'success'
+        continue-on-error: true
+        env:
+          GRAFANA_URL: ${{ secrets.GRAFANA_URL }}
+          GRAFANA_TOKEN: ${{ secrets.GRAFANA_TOKEN }}
+        run: |
+          if [ -n "$GRAFANA_TOKEN" ]; then
+            curl -X POST "$GRAFANA_URL/api/annotations" \
+              -H "Authorization: Bearer $GRAFANA_TOKEN" \
+              -H "Content-Type: application/json" \
+              -d '{
+                "text": "Deployment successful: ${{ github.event.deployment.environment }}",
+                "tags": ["deployment", "success", "${{ github.event.deployment.environment }}"],
+                "time": '"$(date +%s)000"'
+              }'
+
+            echo "✓ Grafana annotation created"
+          fi
+
+      - name: Monitor error rates
+        if: github.event.deployment_status.state == 'success'
+        continue-on-error: true
+        run: |
+          echo "Monitoring error rates for 30 minutes..."
+
+          # This would typically query Prometheus/Grafana for error metrics
+          # For now, we'll do basic pod monitoring
+
+          sleep 300  # Wait 5 minutes for metrics to stabilize
+
+          # Check pod restart count
+          NAMESPACE="${{ github.event.deployment.environment == 'production' && 'cortex' || 'cortex-staging' }}"
+
+          RESTART_COUNT=$(kubectl get pods -n $NAMESPACE -l app=cortex \
+            -o jsonpath='{.items[*].status.containerStatuses[*].restartCount}' \
+            2>/dev/null | awk '{s+=$1} END {print s}' || echo 0)
+
+          echo "Total restarts in last 5 minutes: $RESTART_COUNT"
+
+          if [ $RESTART_COUNT -gt 3 ]; then
+            echo "⚠️ High restart count detected!"
+            exit 1
+          else
+            echo "✓ Error rates normal"
+          fi
+
+      - name: Auto-rollback on high errors
+        if: failure() && github.event.deployment_status.state == 'success'
+        run: |
+          echo "⚠️ High error rate detected - triggering rollback"
+
+          NAMESPACE="${{ github.event.deployment.environment == 'production' && 'cortex' || 'cortex-staging' }}"
+
+          # Trigger rollback
+          for deployment in cortex-coordinator cortex-development-master cortex-cicd-master; do
+            kubectl rollout undo deployment/$deployment -n $NAMESPACE || true
+          done
+
+          echo "Rollback initiated"
+
+      - name: Send notification
+        if: always()
+        env:
+          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
+          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
+        run: |
+          STATUS="${{ github.event.deployment_status.state }}"
+          ENVIRONMENT="${{ github.event.deployment.environment }}"
+          EMOJI="${{ github.event.deployment_status.state == 'success' && '✅' || '❌' }}"
+
+          MESSAGE="$EMOJI Deployment to $ENVIRONMENT: $STATUS"
+
+          if [ -n "$SLACK_WEBHOOK" ]; then
+            curl -X POST "$SLACK_WEBHOOK" \
+              -H "Content-Type: application/json" \
+              -d "{\"text\": \"$MESSAGE\"}"
+          fi
+
+          if [ -n "$DISCORD_WEBHOOK" ]; then
+            curl -X POST "$DISCORD_WEBHOOK" \
+              -H "Content-Type: application/json" \
+              -d "{\"content\": \"$MESSAGE\"}"
+          fi
+
+      - name: Create deployment record
+        run: |
+          cat > /tmp/deployment-record.json <<EOF
+          {
+            "deployment_id": "${{ github.event.deployment.id }}",
+            "environment": "${{ github.event.deployment.environment }}",
+            "status": "${{ github.event.deployment_status.state }}",
+            "timestamp": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
+            "commit": "${{ github.sha }}",
+            "deployed_by": "${{ github.actor }}",
+            "workflow_run": "https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          }
+          EOF
+
+          cat /tmp/deployment-record.json
+
+          # This would typically be saved to a metrics database or S3

@@ -1,0 +1,202 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to release (e.g., v1.2.3)'
+        required: true
+        type: string
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  create-release:
+    name: Create Release
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      packages: write
+
+    outputs:
+      version: ${{ steps.get_version.outputs.version }}
+      upload_url: ${{ steps.create_release.outputs.upload_url }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Get version
+        id: get_version
+        run: |
+          if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+            VERSION="${{ inputs.version }}"
+          else
+            VERSION=${GITHUB_REF#refs/tags/}
+          fi
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "Version: $VERSION"
+
+      - name: Generate changelog
+        id: changelog
+        run: |
+          # Get previous tag
+          PREV_TAG=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo "")
+
+          if [ -z "$PREV_TAG" ]; then
+            echo "No previous tag found, generating full changelog"
+            CHANGELOG=$(git log --pretty=format:"- %s (%h)" --no-merges)
+          else
+            echo "Previous tag: $PREV_TAG"
+            CHANGELOG=$(git log ${PREV_TAG}..HEAD --pretty=format:"- %s (%h)" --no-merges)
+          fi
+
+          # Save changelog to file
+          cat > /tmp/changelog.md <<EOF
+          ## What's Changed
+
+          $CHANGELOG
+
+          **Full Changelog**: https://github.com/${{ github.repository }}/compare/${PREV_TAG}...${{ steps.get_version.outputs.version }}
+          EOF
+
+          cat /tmp/changelog.md
+
+      - name: Build multi-arch image
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push release image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: |
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.get_version.outputs.version }}
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Create GitHub Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ steps.get_version.outputs.version }}
+          release_name: Release ${{ steps.get_version.outputs.version }}
+          body_path: /tmp/changelog.md
+          draft: false
+          prerelease: false
+
+      - name: Update K8s manifests
+        run: |
+          # Update image tag in deployment manifest
+          sed -i "s|image: ghcr.io/.*/cortex:.*|image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.get_version.outputs.version }}|g" k8s/deployment.yaml
+
+          # Commit changes
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          git add k8s/deployment.yaml
+          git commit -m "chore: Update deployment manifest to ${{ steps.get_version.outputs.version }}" || echo "No changes to commit"
+          git push origin HEAD:main || echo "Failed to push manifest updates"
+
+  deploy-production:
+    name: Deploy to Production
+    needs: create-release
+    runs-on: ubuntu-latest
+    environment:
+      name: production
+      url: https://cortex.ryops.io
+    if: ${{ !contains(needs.create-release.outputs.version, 'beta') && !contains(needs.create-release.outputs.version, 'alpha') }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up kubectl
+        uses: azure/setup-kubectl@v3
+
+      - name: Configure kubectl context
+        run: |
+          mkdir -p $HOME/.kube
+          echo "${{ secrets.KUBE_CONFIG_DATA }}" | base64 -d > $HOME/.kube/config
+          chmod 600 $HOME/.kube/config
+
+      - name: Deploy to production
+        run: |
+          # Update deployment with new version
+          kubectl set image deployment/cortex-coordinator \
+            coordinator=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ needs.create-release.outputs.version }} \
+            -n cortex
+
+          kubectl set image deployment/cortex-development-master \
+            master=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ needs.create-release.outputs.version }} \
+            -n cortex
+
+          kubectl set image deployment/cortex-cicd-master \
+            master=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ needs.create-release.outputs.version }} \
+            -n cortex
+
+      - name: Wait for rollout
+        run: |
+          kubectl rollout status deployment/cortex-coordinator -n cortex --timeout=10m
+          kubectl rollout status deployment/cortex-development-master -n cortex --timeout=10m
+          kubectl rollout status deployment/cortex-cicd-master -n cortex --timeout=10m
+
+      - name: Verify deployment
+        run: |
+          echo "=== Deployment Status ==="
+          kubectl get deployments -n cortex -l app=cortex
+          echo ""
+          kubectl get pods -n cortex -l app=cortex
+
+      - name: Create Grafana annotation
+        continue-on-error: true
+        env:
+          GRAFANA_URL: ${{ secrets.GRAFANA_URL }}
+          GRAFANA_TOKEN: ${{ secrets.GRAFANA_TOKEN }}
+        run: |
+          if [ -n "$GRAFANA_TOKEN" ]; then
+            curl -X POST "$GRAFANA_URL/api/annotations" \
+              -H "Authorization: Bearer $GRAFANA_TOKEN" \
+              -H "Content-Type: application/json" \
+              -d '{
+                "text": "Release deployed: ${{ needs.create-release.outputs.version }}",
+                "tags": ["release", "production", "cortex"],
+                "time": '"$(date +%s)000"'
+              }'
+          fi
+
+      - name: Comment on release
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const release = await github.rest.repos.getReleaseByTag({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              tag: '${{ needs.create-release.outputs.version }}'
+            });
+
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: release.data.id,
+              body: '✅ Successfully deployed to production!\n\n' +
+                    'Deployment verified and healthy.'
+            });

@@ -1,0 +1,170 @@
+{
+  "handoff_id": "coord-to-dev-deployment-phase4-20251207",
+  "from_master": "coordinator",
+  "to_master": "development",
+  "mission_id": "k3s-autoscaling-deployment-001",
+  "phase": "phase_4_deployment",
+  "created_at": "2025-12-07T00:00:00Z",
+  "status": "pending_pickup",
+  "priority": "critical",
+  "dependencies": ["phase_3_autoscaling"],
+
+  "task_bundle": {
+    "bundle_name": "Deploy Cortex to K3s and Validate Auto-Scaling",
+    "tasks": [
+      {
+        "task_id": "deploy-001",
+        "title": "Create deployment orchestration script",
+        "type": "orchestration",
+        "complexity": 7,
+        "deliverables": [
+          {
+            "file": "scripts/deploy/deploy-cortex-k3s.sh",
+            "description": "One-command deployment script",
+            "requirements": [
+              "Check K3s cluster is healthy",
+              "Create cortex namespace",
+              "Deploy secrets (ANTHROPIC_API_KEY, etc.)",
+              "Deploy ConfigMap with environment config",
+              "Deploy shared coordination PVC",
+              "Deploy monitoring stack (Prometheus, Grafana)",
+              "Deploy KEDA operator",
+              "Deploy master StatefulSets",
+              "Deploy worker Deployments (0 replicas)",
+              "Deploy KEDA ScaledObjects",
+              "Wait for all pods to be Ready",
+              "Run smoke tests",
+              "Print access URLs and credentials"
+            ]
+          },
+          {
+            "file": "scripts/deploy/create-secrets.sh",
+            "description": "Create K8s secrets from environment",
+            "requirements": [
+              "Read ANTHROPIC_API_KEY from env",
+              "Read GITHUB_TOKEN from env (optional)",
+              "Create secret: kubectl create secret generic cortex-secrets",
+              "Validate secrets exist before deployment"
+            ]
+          }
+        ]
+      },
+      {
+        "task_id": "deploy-002",
+        "title": "Implement auto-scaling validation tests",
+        "type": "testing",
+        "complexity": 8,
+        "deliverables": [
+          {
+            "file": "scripts/deploy/test-autoscaling.sh",
+            "description": "End-to-end auto-scaling test",
+            "requirements": [
+              "Test 1: Verify scale-to-zero (all workers at 0 replicas)",
+              "Test 2: Add task to queue, verify worker scales up",
+              "Test 3: Monitor KEDA metrics during scale-up",
+              "Test 4: Verify task completion",
+              "Test 5: Verify scale-down after cooldown period",
+              "Test 6: Load test with 100 concurrent tasks",
+              "Test 7: Verify max replicas limit (50)",
+              "Test 8: Measure time-to-scale (target: <30s)",
+              "Generate test report"
+            ]
+          },
+          {
+            "file": "scripts/deploy/smoke-tests.sh",
+            "description": "Basic health checks",
+            "requirements": [
+              "Check all master pods are Running",
+              "Check Prometheus is scraping targets",
+              "Check Grafana is accessible",
+              "Check KEDA operator is healthy",
+              "Check /metrics endpoint is responding",
+              "Verify coordination PVC is mounted",
+              "Test API endpoints return 200",
+              "Exit with status code 0 if all pass"
+            ]
+          }
+        ]
+      },
+      {
+        "task_id": "deploy-003",
+        "title": "Create monitoring and observability integration",
+        "type": "integration",
+        "complexity": 6,
+        "deliverables": [
+          {
+            "file": "scripts/deploy/setup-grafana-datasource.sh",
+            "description": "Configure Grafana datasource via API",
+            "requirements": [
+              "Wait for Grafana to be ready",
+              "Add Prometheus as datasource via API",
+              "Import dashboard JSON files",
+              "Set default dashboard",
+              "Create API key for external access"
+            ]
+          },
+          {
+            "file": "docs/deployment/access-urls.md",
+            "description": "Document all access URLs",
+            "requirements": [
+              "Grafana: http://10.88.140.152:30002",
+              "Prometheus: http://10.88.140.152:30003",
+              "Cortex Dashboard: http://10.88.140.152:30001",
+              "K8s Dashboard (if deployed): http://10.88.140.152:30004",
+              "Include default credentials",
+              "Include kubectl config instructions"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+
+  "context": {
+    "deployment_order": [
+      "1. Namespace (cortex)",
+      "2. Secrets (cortex-secrets)",
+      "3. ConfigMap (cortex-config)",
+      "4. Storage (coordination PVC)",
+      "5. Monitoring (Prometheus, Grafana)",
+      "6. KEDA (operator)",
+      "7. Masters (coordinator, development, security, cicd, inventory)",
+      "8. Workers (implementation, security, analysis, scan)",
+      "9. KEDA ScaledObjects",
+      "10. Validation tests"
+    ],
+    "secrets_required": {
+      "ANTHROPIC_API_KEY": "Required for Claude API",
+      "GITHUB_TOKEN": "Optional for GitHub integrations",
+      "GRAFANA_ADMIN_PASSWORD": "Generate random password"
+    },
+    "configmap_values": {
+      "LOG_LEVEL": "info",
+      "COORDINATION_DIR": "/app/coordination",
+      "WORKER_TIMEOUT": "300",
+      "MAX_WORKERS": "50",
+      "PROMETHEUS_ENABLED": "true"
+    },
+    "smoke_test_endpoints": [
+      "http://cortex:3000/health",
+      "http://cortex:3000/metrics",
+      "http://prometheus:9090/-/healthy",
+      "http://grafana:3000/api/health"
+    ]
+  },
+
+  "routing_reason": "Deployment orchestration and testing - development-master automation expertise",
+  "expected_outcome": "Cortex fully deployed and operational on K3s with validated auto-scaling behavior",
+  "handoff_back_trigger": "Deployment successful, smoke tests passing, auto-scaling validated",
+
+  "validation_checklist": [
+    "kubectl get pods -n cortex shows all masters Running (1/1)",
+    "kubectl get pods -n cortex shows workers at 0/0 (scaled to zero)",
+    "Prometheus targets show all cortex pods as UP",
+    "Grafana dashboards load with real data",
+    "Auto-scaling test completes successfully",
+    "Workers scale up when task added to queue",
+    "Workers scale down to 0 after cooldown",
+    "Metrics show correct values in Prometheus"
+  ]
+}

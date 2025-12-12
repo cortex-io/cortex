@@ -49,6 +49,27 @@ secrets/
 credentials.json
 .env.test
 
+# SECURITY NOTE: The following tokens are ALREADY EXPOSED in git history and need rotation:
+#
+# Proxmox API Tokens (EXPOSED - ROTATE THESE):
+#   - Token Value: 8d1d247d-7798-4c02-b4a1-9ec74b90f5d9 (cortex-automation)
+#     Found in: scripts/install-cortex-105.sh, scripts/install-cortex-104.sh,
+#               scripts/remote-install-in-101.sh
+#   - Token Value: b8cc165f-0153-43bb-a48a-5d7459587ca7 (root@pam!n8n)
+#     Found in: scripts/deploy/bootstrap-k3s-cluster.sh
+#   - Also in: docs/deployment/MISSION-EXECUTION-PLAN.md,
+#              docs/deployment/k3s-deployment-file-tree.md
+#
+# n8n API Key:
+#   - Not stored in repo (recommended: store in macOS Keychain)
+#   - Retrieve with: security find-generic-password -a n8n -s cortex -w
+#
+# Action Required:
+#   1. Rotate Proxmox tokens in Proxmox UI
+#   2. Update scripts to use environment variables: $PROXMOX_TOKEN_VALUE
+#   3. Store new tokens in .env (already gitignored)
+#   4. See docs/security/SECRETS-ROTATION.md for rotation procedures
+
 # Runtime coordination files (state, metrics, events)
 coordination/events/*.jsonl
 coordination/metrics/*.json

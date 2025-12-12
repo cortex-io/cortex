@@ -1,0 +1,89 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: cortex
+
+# Base resources
+resources:
+  - ../../namespace.yaml
+  - ../../serviceaccount.yaml
+  - ../../configmap.yaml
+  - ../../pvc.yaml
+  - ../../deployment.yaml
+  - ../../service.yaml
+  - ../../network-policy.yaml
+  - ../../ingress.yaml
+
+# Production configuration - no prefix
+# namePrefix: ""
+
+# Labels for production environment
+commonLabels:
+  environment: production
+  managed-by: kustomize
+  monitoring: enabled
+
+# Image transformations
+images:
+  - name: ghcr.io/ryandahlberg/cortex
+    newTag: latest
+
+# Replicas - full production scale
+replicas:
+  - name: cortex-coordinator
+    count: 1
+  - name: cortex-development-master
+    count: 1
+  - name: cortex-cicd-master
+    count: 1
+  - name: cortex-security-master
+    count: 1
+  - name: cortex-inventory-master
+    count: 1
+
+# Resource limits - full production resources
+patches:
+  - patch: |-
+      - op: replace
+        path: /spec/template/spec/containers/0/resources/limits/memory
+        value: "2Gi"
+      - op: replace
+        path: /spec/template/spec/containers/0/resources/limits/cpu
+        value: "1000m"
+      - op: replace
+        path: /spec/template/spec/containers/0/resources/requests/memory
+        value: "512Mi"
+      - op: replace
+        path: /spec/template/spec/containers/0/resources/requests/cpu
+        value: "250m"
+    target:
+      kind: Deployment
+      labelSelector: app=cortex
+
+  # Add Prometheus annotations
+  - patch: |-
+      - op: add
+        path: /spec/template/metadata/annotations/prometheus.io~1scrape
+        value: "true"
+      - op: add
+        path: /spec/template/metadata/annotations/prometheus.io~1port
+        value: "9090"
+      - op: add
+        path: /spec/template/metadata/annotations/prometheus.io~1path
+        value: "/metrics"
+    target:
+      kind: Deployment
+      labelSelector: app=cortex
+
+# ConfigMap overrides for production
+configMapGenerator:
+  - name: cortex-config
+    behavior: merge
+    literals:
+      - LOG_LEVEL=info
+      - WORKER_MAX_REPLICAS=50
+      - WORKER_COOLDOWN_SECONDS=300
+      - ENABLE_DEBUG_MODE=false
+      - ENABLE_METRICS=true
+      - ENABLE_ALERTS=true
+      - BACKUP_ENABLED=true

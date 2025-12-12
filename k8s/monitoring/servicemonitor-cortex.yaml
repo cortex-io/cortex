@@ -1,0 +1,64 @@
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: cortex-masters
+  namespace: monitoring
+  labels:
+    app: cortex
+    component: master
+spec:
+  selector:
+    matchLabels:
+      app: cortex
+      component: master
+  namespaceSelector:
+    matchNames:
+      - cortex
+  endpoints:
+    - port: http
+      interval: 15s
+      path: /metrics
+      scheme: http
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: cortex-workers
+  namespace: monitoring
+  labels:
+    app: cortex
+    component: worker
+spec:
+  selector:
+    matchLabels:
+      app: cortex
+      component: worker
+  namespaceSelector:
+    matchNames:
+      - cortex
+  endpoints:
+    - port: http
+      interval: 15s
+      path: /metrics
+      scheme: http
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: cortex-dashboard
+  namespace: monitoring
+  labels:
+    app: cortex
+    component: dashboard
+spec:
+  selector:
+    matchLabels:
+      app: cortex-dashboard
+  namespaceSelector:
+    matchNames:
+      - cortex
+  endpoints:
+    - port: api
+      interval: 15s
+      path: /metrics
+      scheme: http

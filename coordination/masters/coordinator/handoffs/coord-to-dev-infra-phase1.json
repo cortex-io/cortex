@@ -1,0 +1,178 @@
+{
+  "handoff_id": "coord-to-dev-infra-phase1-20251207",
+  "from_master": "coordinator",
+  "to_master": "development",
+  "mission_id": "k3s-autoscaling-deployment-001",
+  "phase": "phase_1_infrastructure",
+  "created_at": "2025-12-07T00:00:00Z",
+  "status": "pending_pickup",
+  "priority": "critical",
+
+  "task_bundle": {
+    "bundle_name": "Proxmox Infrastructure & K3s Cluster Bootstrap",
+    "tasks": [
+      {
+        "task_id": "infra-001",
+        "title": "Create Proxmox VM creation and management scripts",
+        "type": "script_development",
+        "complexity": 7,
+        "deliverables": [
+          {
+            "file": "scripts/proxmox/create-vm.sh",
+            "description": "Script to create VMs via Proxmox API with cloud-init",
+            "requirements": [
+              "Accept parameters: vm_id, hostname, ip, cpu, memory, disk",
+              "Use Proxmox API with token auth from env PROXMOX_TOKEN_VALUE",
+              "Configure cloud-init with SSH keys and network config",
+              "Support Ubuntu 22.04 cloud image",
+              "Validate VM creation and return status"
+            ]
+          },
+          {
+            "file": "scripts/proxmox/configure-network.sh",
+            "description": "Configure network for /27 subnet with gateway 10.88.140.144",
+            "requirements": [
+              "Validate IP range 10.88.140.152-154",
+              "Configure static IPs with proper gateway",
+              "Set DNS to 8.8.8.8 or 1.1.1.1",
+              "Verify connectivity before proceeding"
+            ]
+          },
+          {
+            "file": "scripts/proxmox/cloud-init-template.yaml",
+            "description": "Cloud-init template for VM initialization",
+            "requirements": [
+              "Install required packages: curl, wget, apt-transport-https",
+              "Configure SSH access with public key",
+              "Set hostname and network config",
+              "Disable password authentication",
+              "Enable unattended security updates"
+            ]
+          }
+        ]
+      },
+      {
+        "task_id": "infra-002",
+        "title": "Create K3s cluster installation automation",
+        "type": "script_development",
+        "complexity": 8,
+        "deliverables": [
+          {
+            "file": "scripts/k3s/install-control-plane.sh",
+            "description": "Install K3s control plane on VM 110",
+            "requirements": [
+              "Install K3s with --write-kubeconfig-mode 644",
+              "Disable Traefik (we'll use our own ingress)",
+              "Configure for Flannel CNI",
+              "Export K3s token for worker joins",
+              "Verify apiserver health",
+              "Generate kubeconfig for external access"
+            ]
+          },
+          {
+            "file": "scripts/k3s/join-worker.sh",
+            "description": "Join worker nodes to K3s cluster",
+            "requirements": [
+              "Accept parameters: worker_ip, control_plane_ip, k3s_token",
+              "Install K3s in agent mode",
+              "Configure node labels for worker type",
+              "Verify node join successful",
+              "Wait for node Ready status"
+            ]
+          },
+          {
+            "file": "scripts/k3s/verify-cluster.sh",
+            "description": "Verify K3s cluster health",
+            "requirements": [
+              "Check all nodes are Ready",
+              "Verify system pods running",
+              "Test kubectl connectivity",
+              "Validate CoreDNS is healthy",
+              "Output cluster status report"
+            ]
+          }
+        ]
+      },
+      {
+        "task_id": "infra-003",
+        "title": "Create orchestration script for VM deployment and K3s bootstrap",
+        "type": "orchestration",
+        "complexity": 6,
+        "dependencies": ["infra-001", "infra-002"],
+        "deliverables": [
+          {
+            "file": "scripts/deploy/bootstrap-k3s-cluster.sh",
+            "description": "End-to-end cluster deployment orchestration",
+            "requirements": [
+              "Create 3 VMs on Proxmox (110, 111, 112)",
+              "Wait for cloud-init completion on all VMs",
+              "Install K3s control plane on VM 110",
+              "Join workers 111 and 112 to cluster",
+              "Verify cluster health",
+              "Export kubeconfig to local machine",
+              "Print access instructions"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+
+  "context": {
+    "proxmox_api": {
+      "host": "10.88.140.151",
+      "port": 8006,
+      "node": "pve",
+      "auth": {
+        "token_id": "root@pam!n8n",
+        "token_secret_env": "PROXMOX_TOKEN_VALUE",
+        "value": "b8cc165f-0153-43bb-a48a-5d7459587ca7"
+      }
+    },
+    "vm_specifications": {
+      "control_plane": {
+        "vm_id": 110,
+        "hostname": "cortex-k3s-control",
+        "ip": "10.88.140.152",
+        "netmask": "255.255.255.224",
+        "gateway": "10.88.140.144",
+        "cpu": 4,
+        "memory": 8192,
+        "disk": "40G",
+        "storage": "local-lvm"
+      },
+      "workers": [
+        {
+          "vm_id": 111,
+          "hostname": "cortex-k3s-worker-01",
+          "ip": "10.88.140.153",
+          "netmask": "255.255.255.224",
+          "gateway": "10.88.140.144",
+          "cpu": 4,
+          "memory": 8192,
+          "disk": "40G",
+          "storage": "local-lvm"
+        },
+        {
+          "vm_id": 112,
+          "hostname": "cortex-k3s-worker-02",
+          "ip": "10.88.140.154",
+          "netmask": "255.255.255.224",
+          "gateway": "10.88.140.144",
+          "cpu": 4,
+          "memory": 8192,
+          "disk": "40G",
+          "storage": "local-lvm"
+        }
+      ]
+    },
+    "ubuntu_image": {
+      "url": "https://cloud-images.ubuntu.com/jammy/current/jammy-server-cloudimg-amd64.img",
+      "storage_location": "local:iso"
+    }
+  },
+
+  "routing_reason": "Infrastructure automation and K8s cluster management - development-master specialization",
+  "expected_outcome": "Complete K3s cluster running on Proxmox with 3 nodes ready for Cortex deployment",
+  "handoff_back_trigger": "All scripts created and cluster bootstrapped successfully"
+}

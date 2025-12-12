@@ -1,0 +1,64 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: cortex-dev
+
+# Base resources
+resources:
+  - ../../namespace.yaml
+  - ../../serviceaccount.yaml
+  - ../../configmap.yaml
+  - ../../pvc.yaml
+  - ../../deployment.yaml
+  - ../../service.yaml
+
+# Dev-specific configuration
+namePrefix: dev-
+
+# Labels for dev environment
+commonLabels:
+  environment: dev
+  managed-by: kustomize
+
+# Image transformations
+images:
+  - name: ghcr.io/ryandahlberg/cortex
+    newTag: dev-latest
+
+# Replicas patch - minimal for dev
+replicas:
+  - name: cortex-coordinator
+    count: 1
+  - name: cortex-development-master
+    count: 1
+  - name: cortex-cicd-master
+    count: 1
+
+# Resource limits - reduced for dev
+patches:
+  - patch: |-
+      - op: replace
+        path: /spec/template/spec/containers/0/resources/limits/memory
+        value: "1Gi"
+      - op: replace
+        path: /spec/template/spec/containers/0/resources/limits/cpu
+        value: "500m"
+      - op: replace
+        path: /spec/template/spec/containers/0/resources/requests/memory
+        value: "256Mi"
+      - op: replace
+        path: /spec/template/spec/containers/0/resources/requests/cpu
+        value: "100m"
+    target:
+      kind: Deployment
+      labelSelector: app=cortex
+
+# ConfigMap overrides for dev
+configMapGenerator:
+  - name: cortex-config
+    behavior: merge
+    literals:
+      - LOG_LEVEL=debug
+      - WORKER_MAX_REPLICAS=1
+      - WORKER_COOLDOWN_SECONDS=60
+      - ENABLE_DEBUG_MODE=true

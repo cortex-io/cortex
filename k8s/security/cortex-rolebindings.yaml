@@ -1,0 +1,82 @@
+---
+# RoleBinding for Cortex Masters
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: cortex-master-rolebinding
+  namespace: cortex
+  labels:
+    app.kubernetes.io/name: cortex
+    app.kubernetes.io/component: rbac
+  annotations:
+    description: "Binds cortex-master-sa to cortex-master-role"
+subjects:
+  - kind: ServiceAccount
+    name: cortex-master-sa
+    namespace: cortex
+roleRef:
+  kind: Role
+  name: cortex-master-role
+  apiGroup: rbac.authorization.k8s.io
+
+---
+# RoleBinding for Cortex Workers
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: cortex-worker-rolebinding
+  namespace: cortex
+  labels:
+    app.kubernetes.io/name: cortex
+    app.kubernetes.io/component: rbac
+  annotations:
+    description: "Binds cortex-worker-sa to cortex-worker-role"
+subjects:
+  - kind: ServiceAccount
+    name: cortex-worker-sa
+    namespace: cortex
+roleRef:
+  kind: Role
+  name: cortex-worker-role
+  apiGroup: rbac.authorization.k8s.io
+
+---
+# RoleBinding for Cortex Coordinator
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: cortex-coordinator-rolebinding
+  namespace: cortex
+  labels:
+    app.kubernetes.io/name: cortex
+    app.kubernetes.io/component: rbac
+  annotations:
+    description: "Binds cortex-coordinator-sa to cortex-coordinator-role"
+subjects:
+  - kind: ServiceAccount
+    name: cortex-coordinator-sa
+    namespace: cortex
+roleRef:
+  kind: Role
+  name: cortex-coordinator-role
+  apiGroup: rbac.authorization.k8s.io
+
+---
+# ClusterRoleBinding for Prometheus
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: cortex-prometheus-scraper-binding
+  labels:
+    app.kubernetes.io/name: prometheus
+    app.kubernetes.io/component: monitoring
+  annotations:
+    description: "Binds cortex-prometheus-sa to cortex-prometheus-scraper ClusterRole"
+subjects:
+  - kind: ServiceAccount
+    name: cortex-prometheus-sa
+    namespace: cortex
+roleRef:
+  kind: ClusterRole
+  name: cortex-prometheus-scraper
+  apiGroup: rbac.authorization.k8s.io

@@ -1,0 +1,111 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: development-master
+  namespace: cortex
+  labels:
+    app: cortex
+    component: master
+    master-type: development
+spec:
+  serviceName: cortex-masters
+  replicas: 1  # Always 1 - never scale
+  selector:
+    matchLabels:
+      app: cortex
+      component: master
+      master-type: development
+  template:
+    metadata:
+      labels:
+        app: cortex
+        component: master
+        master-type: development
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "9090"
+        prometheus.io/path: "/metrics"
+    spec:
+      serviceAccountName: cortex
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            podAffinityTerm:
+              labelSelector:
+                matchExpressions:
+                - key: component
+                  operator: In
+                  values:
+                  - master
+              topologyKey: kubernetes.io/hostname
+      containers:
+      - name: development-master
+        image: ghcr.io/ry-ops/cortex-docker:latest
+        imagePullPolicy: Always
+        command: ["/bin/bash", "-c"]
+        args:
+        - |
+          echo "Starting Development Master..."
+          export CORTEX_MODE=master
+          export CORTEX_TYPE=development
+          exec /app/scripts/run-development-master.sh
+        env:
+        - name: CORTEX_MODE
+          value: "master"
+        - name: CORTEX_TYPE
+          value: "development"
+        - name: NODE_ENV
+          value: "production"
+        - name: ANTHROPIC_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: cortex-secrets
+              key: anthropic-api-key
+        envFrom:
+        - configMapRef:
+            name: development-config
+        resources:
+          requests:
+            cpu: 500m
+            memory: 1Gi
+          limits:
+            cpu: 2000m
+            memory: 4Gi
+        volumeMounts:
+        - name: coordination
+          mountPath: /app/coordination
+        - name: master-state
+          mountPath: /app/coordination/masters/development/context
+        livenessProbe:
+          exec:
+            command:
+            - /bin/bash
+            - -c
+            - test -f /app/coordination/masters/development/context/master-state.json
+          initialDelaySeconds: 30
+          periodSeconds: 60
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          exec:
+            command:
+            - /bin/bash
+            - -c
+            - test -f /app/coordination/masters/development/context/master-state.json
+          initialDelaySeconds: 10
+          periodSeconds: 30
+          timeoutSeconds: 5
+      volumes:
+      - name: coordination
+        persistentVolumeClaim:
+          claimName: cortex-coordination
+  volumeClaimTemplates:
+  - metadata:
+      name: master-state
+    spec:
+      accessModes: ["ReadWriteOnce"]
+      storageClassName: local-path
+      resources:
+        requests:
+          storage: 10Gi
