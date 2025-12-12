@@ -1,0 +1,46 @@
+{
+  "name": "@cortex/coordinator-agent",
+  "version": "1.0.0",
+  "description": "Cortex Coordinator Agent - Task routing, contractor selection, and PM spawning",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "dev": "ts-node src/index.ts",
+    "start": "node dist/index.js",
+    "test": "jest",
+    "lint": "eslint src/**/*.ts",
+    "format": "prettier --write \"src/**/*.ts\"",
+    "route": "ts-node src/cli.ts route",
+    "spawn-pm": "ts-node src/cli.ts spawn-pm",
+    "status": "ts-node src/cli.ts status",
+    "process-queue": "ts-node src/cli.ts process-queue"
+  },
+  "keywords": [
+    "cortex",
+    "coordinator",
+    "task-routing",
+    "load-balancing",
+    "project-management"
+  ],
+  "author": "Cortex Holdings",
+  "license": "MIT",
+  "dependencies": {
+    "uuid": "^9.0.1"
+  },
+  "devDependencies": {
+    "@types/node": "^20.10.0",
+    "@types/uuid": "^9.0.7",
+    "@typescript-eslint/eslint-plugin": "^6.13.0",
+    "@typescript-eslint/parser": "^6.13.0",
+    "eslint": "^8.54.0",
+    "jest": "^29.7.0",
+    "prettier": "^3.1.0",
+    "ts-jest": "^29.1.1",
+    "ts-node": "^10.9.1",
+    "typescript": "^5.3.2"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
