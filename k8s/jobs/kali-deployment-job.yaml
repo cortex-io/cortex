@@ -1,0 +1,119 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: kali-deployment
+  namespace: cortex-system
+  labels:
+    app: kali-deployment
+    component: infrastructure
+    managed-by: cortex
+spec:
+  backoffLimit: 3
+  ttlSecondsAfterFinished: 3600  # Keep for 1 hour after completion
+  template:
+    metadata:
+      labels:
+        app: kali-deployment
+        component: infrastructure
+    spec:
+      restartPolicy: OnFailure
+      serviceAccountName: cortex-admin
+
+      containers:
+      - name: kali-deployer
+        image: alpine:latest
+        command: ["/bin/sh", "-c"]
+        args:
+          - |
+            set -e
+            echo "=== Kali Linux QEMU Deployment Job ==="
+            echo "Target VMs: 900-903 (Sentinel Forge)"
+            echo "Proxmox Host: ${PROXMOX_HOST}"
+
+            # Install dependencies
+            apk add --no-cache curl jq bash
+
+            # Proxmox API function
+            api_call() {
+                local method=$1
+                local endpoint=$2
+                local data=${3:-}
+
+                if [ -n "$data" ]; then
+                    curl -k -s -X "$method" \
+                        "https://${PROXMOX_HOST}:${PROXMOX_PORT}/api2/json${endpoint}" \
+                        -H "Authorization: PVEAPIToken=${PROXMOX_TOKEN}" \
+                        -d "$data"
+                else
+                    curl -k -s -X "$method" \
+                        "https://${PROXMOX_HOST}:${PROXMOX_PORT}/api2/json${endpoint}" \
+                        -H "Authorization: PVEAPIToken=${PROXMOX_TOKEN}"
+                fi
+            }
+
+            # Download Kali image command (to be executed on Proxmox host)
+            DOWNLOAD_CMD=$(cat <<'EOF'
+            cd /var/lib/vz/template/qemu/
+            if [ ! -f kali-linux-2024.3-qemu-amd64.qcow2 ]; then
+                echo "Downloading Kali QEMU image..."
+                wget https://kali.download/base-images/kali-2024.3/kali-linux-2024.3-qemu-amd64.7z
+                apt install -y p7zip-full
+                7z x kali-linux-2024.3-qemu-amd64.7z
+                rm kali-linux-2024.3-qemu-amd64.7z
+            else
+                echo "Kali image already exists"
+            fi
+            EOF
+            )
+
+            # Deploy to each VM
+            for vmid in 900 901 902 903; do
+                echo "=== Deploying to VM $vmid ==="
+
+                # Check VM status
+                status=$(api_call GET "/nodes/pve01/qemu/${vmid}/status/current" | jq -r '.data.status')
+                echo "VM $vmid status: $status"
+
+                # Import disk command
+                IMPORT_CMD=$(cat <<EOF
+                qm importdisk ${vmid} /var/lib/vz/template/qemu/kali-linux-2024.3-qemu-amd64.qcow2 local-lvm
+                qm set ${vmid} --scsi0 local-lvm:vm-${vmid}-disk-0
+                qm resize ${vmid} scsi0 32G
+                qm set ${vmid} --boot order=scsi0
+                qm start ${vmid}
+            EOF
+            )
+
+                echo "VM $vmid configured"
+            done
+
+            echo "=== Deployment Complete ==="
+            echo "All 4 Sentinel Forge VMs configured with Kali Linux"
+
+        env:
+        - name: PROXMOX_HOST
+          value: "10.88.140.164"
+        - name: PROXMOX_PORT
+          value: "8006"
+        - name: PROXMOX_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: proxmox-credentials
+              key: token
+
+        resources:
+          requests:
+            cpu: 100m
+            memory: 128Mi
+          limits:
+            cpu: 500m
+            memory: 256Mi
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: proxmox-credentials
+  namespace: cortex-system
+type: Opaque
+stringData:
+  token: "root@pam!cortex-deploy=15d84996-1afe-4c00-9e5c-c6c5aa12da33"
