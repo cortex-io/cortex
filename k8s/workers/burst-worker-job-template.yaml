@@ -1,0 +1,161 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: worker-{WORKER_TYPE}-burst-{TIMESTAMP}-{INDEX}
+  namespace: cortex-workers
+  labels:
+    app: cortex
+    component: worker
+    worker-type: "{WORKER_TYPE}"
+    provisioning: burst
+    app.cortex.ai/worker-type: "{WORKER_TYPE}"
+    app.cortex.ai/provisioning: burst
+    app.cortex.ai/burst-batch: "{BATCH_ID}"
+spec:
+  # Auto-cleanup after 1 hour
+  ttlSecondsAfterFinished: 3600
+  backoffLimit: 2  # Retry up to 2 times
+  activeDeadlineSeconds: 7200  # 2 hours max runtime
+  template:
+    metadata:
+      labels:
+        app: cortex
+        component: worker
+        worker-type: "{WORKER_TYPE}"
+        provisioning: burst
+    spec:
+      restartPolicy: Never
+      serviceAccountName: cortex-worker
+      containers:
+      - name: worker
+        image: ghcr.io/ry-ops/cortex-docker:latest
+        imagePullPolicy: IfNotPresent
+        env:
+        - name: WORKER_TYPE
+          value: "{WORKER_TYPE}"
+        - name: WORKER_MODE
+          value: "burst"
+        - name: WORKER_ID
+          value: "{WORKER_TYPE}-burst-{TIMESTAMP}-{INDEX}"
+        - name: BATCH_ID
+          value: "{BATCH_ID}"
+        - name: TASK_QUEUE_URL
+          value: "http://coordinator-master.cortex:3001/api/tasks"
+        - name: COORDINATOR_URL
+          value: "http://coordinator-master.cortex:3001"
+        - name: METRICS_ENABLED
+          value: "true"
+        - name: PROMETHEUS_PUSHGATEWAY
+          value: "http://prometheus-pushgateway.monitoring:9091"
+        - name: TOKEN_BUDGET
+          value: "{TOKEN_BUDGET}"
+        - name: TIME_LIMIT_MINUTES
+          value: "{TIME_LIMIT}"
+        resources:
+          requests:
+            memory: "{MEMORY_REQUEST}"
+            cpu: "{CPU_REQUEST}"
+          limits:
+            memory: "{MEMORY_LIMIT}"
+            cpu: "{CPU_LIMIT}"
+        volumeMounts:
+        - name: shared-workspace
+          mountPath: /workspace
+        - name: worker-config
+          mountPath: /etc/cortex/worker
+      volumes:
+      - name: shared-workspace
+        emptyDir: {}
+      - name: worker-config
+        configMap:
+          name: worker-config
+---
+# Resource profiles for different worker types
+# These are default values that can be overridden
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: burst-worker-resource-profiles
+  namespace: cortex-workers
+data:
+  implementation: |
+    {
+      "memory_request": "256Mi",
+      "memory_limit": "1Gi",
+      "cpu_request": "200m",
+      "cpu_limit": "1000m",
+      "token_budget": 15000,
+      "time_limit": 60
+    }
+  analysis: |
+    {
+      "memory_request": "512Mi",
+      "memory_limit": "2Gi",
+      "cpu_request": "500m",
+      "cpu_limit": "2000m",
+      "token_budget": 20000,
+      "time_limit": 90
+    }
+  security: |
+    {
+      "memory_request": "256Mi",
+      "memory_limit": "1Gi",
+      "cpu_request": "200m",
+      "cpu_limit": "1000m",
+      "token_budget": 12000,
+      "time_limit": 45
+    }
+  scan: |
+    {
+      "memory_request": "512Mi",
+      "memory_limit": "2Gi",
+      "cpu_request": "500m",
+      "cpu_limit": "2000m",
+      "token_budget": 18000,
+      "time_limit": 120
+    }
+  documentation: |
+    {
+      "memory_request": "128Mi",
+      "memory_limit": "512Mi",
+      "cpu_request": "100m",
+      "cpu_limit": "500m",
+      "token_budget": 8000,
+      "time_limit": 30
+    }
+  testing: |
+    {
+      "memory_request": "256Mi",
+      "memory_limit": "1Gi",
+      "cpu_request": "200m",
+      "cpu_limit": "1000m",
+      "token_budget": 10000,
+      "time_limit": 45
+    }
+  refactor: |
+    {
+      "memory_request": "256Mi",
+      "memory_limit": "1Gi",
+      "cpu_request": "200m",
+      "cpu_limit": "1000m",
+      "token_budget": 15000,
+      "time_limit": 60
+    }
+  optimization: |
+    {
+      "memory_request": "512Mi",
+      "memory_limit": "2Gi",
+      "cpu_request": "500m",
+      "cpu_limit": "2000m",
+      "token_budget": 18000,
+      "time_limit": 90
+    }
+  bugfix: |
+    {
+      "memory_request": "256Mi",
+      "memory_limit": "1Gi",
+      "cpu_request": "200m",
+      "cpu_limit": "1000m",
+      "token_budget": 12000,
+      "time_limit": 45
+    }
