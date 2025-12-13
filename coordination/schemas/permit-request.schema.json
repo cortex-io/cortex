@@ -1,0 +1,191 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://cortex.ai/schemas/permit-request.schema.json",
+  "title": "Cortex Union Permit Request",
+  "description": "Schema for union permit requests in Cortex governance system",
+  "type": "object",
+  "required": [
+    "permit_type",
+    "requester",
+    "resource",
+    "justification"
+  ],
+  "properties": {
+    "permit_id": {
+      "type": "string",
+      "description": "Unique permit identifier (auto-generated)",
+      "pattern": "^permit-[a-z0-9-]+$"
+    },
+    "permit_type": {
+      "type": "string",
+      "description": "Type of permit being requested",
+      "enum": [
+        "EMERGENCY_CHANGE",
+        "PRODUCTION_DEPLOYMENT",
+        "SECURITY_PATCH",
+        "CONFIGURATION_CHANGE",
+        "DATABASE_MIGRATION",
+        "INFRASTRUCTURE_CHANGE"
+      ]
+    },
+    "requester": {
+      "type": "object",
+      "description": "Entity requesting the permit",
+      "required": ["type", "id"],
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": ["master", "worker", "human"]
+        },
+        "id": {
+          "type": "string",
+          "description": "Master ID, Worker ID, or Human username"
+        },
+        "spiffe_id": {
+          "type": "string",
+          "description": "SPIFFE identity if applicable",
+          "pattern": "^spiffe://cortex/"
+        }
+      }
+    },
+    "resource": {
+      "type": "object",
+      "description": "Resource to be modified",
+      "required": ["type", "identifier"],
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": [
+            "deployment",
+            "configmap",
+            "secret",
+            "service",
+            "database",
+            "code",
+            "infrastructure"
+          ]
+        },
+        "identifier": {
+          "type": "string",
+          "description": "Resource identifier (deployment name, file path, etc)"
+        },
+        "namespace": {
+          "type": "string",
+          "description": "Kubernetes namespace if applicable"
+        },
+        "environment": {
+          "type": "string",
+          "enum": ["development", "staging", "production"],
+          "description": "Target environment"
+        }
+      }
+    },
+    "justification": {
+      "type": "string",
+      "description": "Reason for the change",
+      "minLength": 20,
+      "maxLength": 1000
+    },
+    "change_description": {
+      "type": "string",
+      "description": "Detailed description of the change"
+    },
+    "rollback_plan_id": {
+      "type": "string",
+      "description": "Reference to rollback plan",
+      "pattern": "^rollback-[a-z0-9-]+$"
+    },
+    "tests_passed": {
+      "type": "boolean",
+      "description": "Whether tests have passed"
+    },
+    "security_scan_passed": {
+      "type": "boolean",
+      "description": "Whether security scans have passed"
+    },
+    "requested_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Timestamp when permit was requested"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "approved",
+        "denied",
+        "expired",
+        "revoked",
+        "consumed"
+      ],
+      "description": "Current permit status"
+    },
+    "approved_by": {
+      "type": "array",
+      "description": "List of approvers",
+      "items": {
+        "type": "object",
+        "properties": {
+          "approver_id": {
+            "type": "string"
+          },
+          "approved_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "signature": {
+            "type": "string",
+            "description": "Cryptographic signature of approval"
+          }
+        }
+      }
+    },
+    "denied_by": {
+      "type": "object",
+      "description": "Denial information",
+      "properties": {
+        "denier_id": {
+          "type": "string"
+        },
+        "denied_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "reason": {
+          "type": "string"
+        }
+      }
+    },
+    "expires_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When permit expires"
+    },
+    "consumed_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When permit was used"
+    },
+    "metadata": {
+      "type": "object",
+      "description": "Additional metadata",
+      "properties": {
+        "task_id": {
+          "type": "string"
+        },
+        "project_id": {
+          "type": "string"
+        },
+        "incident_id": {
+          "type": "string"
+        },
+        "cvss_score": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 10,
+          "description": "CVSS score for security patches"
+        }
+      }
+    }
+  }
+}

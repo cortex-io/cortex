@@ -1,0 +1,319 @@
+{
+  "schema_version": "1.0",
+  "updated_at": "2025-12-13T00:00:00Z",
+  "certifications": {
+    "javascript_proficiency": {
+      "name": "JavaScript Proficiency",
+      "description": "Core JavaScript programming skills",
+      "level": "intermediate",
+      "renewal_period_days": 90,
+      "validation_criteria": {
+        "successful_tasks": 10,
+        "error_rate": "<10%",
+        "code_quality_score": ">7.0"
+      }
+    },
+    "git_operations": {
+      "name": "Git Operations",
+      "description": "Git version control and collaboration",
+      "level": "intermediate",
+      "renewal_period_days": 90,
+      "validation_criteria": {
+        "successful_commits": 20,
+        "merge_conflicts_resolved": 5,
+        "error_rate": "<5%"
+      }
+    },
+    "testing_fundamentals": {
+      "name": "Testing Fundamentals",
+      "description": "Unit and integration testing",
+      "level": "intermediate",
+      "renewal_period_days": 90,
+      "validation_criteria": {
+        "tests_written": 50,
+        "test_coverage": ">80%",
+        "successful_test_runs": 30
+      }
+    },
+    "kubernetes_basics": {
+      "name": "Kubernetes Basics",
+      "description": "Basic Kubernetes operations",
+      "level": "basic",
+      "renewal_period_days": 120,
+      "validation_criteria": {
+        "successful_deployments": 10,
+        "pod_management_tasks": 20,
+        "error_rate": "<15%"
+      }
+    },
+    "docker_fundamentals": {
+      "name": "Docker Fundamentals",
+      "description": "Container building and management",
+      "level": "basic",
+      "renewal_period_days": 120,
+      "validation_criteria": {
+        "containers_built": 15,
+        "successful_deployments": 10,
+        "error_rate": "<15%"
+      }
+    },
+    "security_scanning": {
+      "name": "Security Scanning",
+      "description": "Vulnerability detection and scanning",
+      "level": "advanced",
+      "renewal_period_days": 60,
+      "validation_criteria": {
+        "scans_completed": 30,
+        "vulnerabilities_found": 50,
+        "false_positive_rate": "<20%"
+      },
+      "union_only": true
+    },
+    "vulnerability_remediation": {
+      "name": "Vulnerability Remediation",
+      "description": "Security vulnerability fixing",
+      "level": "advanced",
+      "renewal_period_days": 60,
+      "validation_criteria": {
+        "vulnerabilities_fixed": 20,
+        "fix_success_rate": ">90%",
+        "reintroduction_rate": "<5%"
+      },
+      "union_only": true
+    },
+    "secrets_management": {
+      "name": "Secrets Management",
+      "description": "Handling sensitive credentials securely",
+      "level": "advanced",
+      "renewal_period_days": 60,
+      "validation_criteria": {
+        "secrets_managed": 25,
+        "exposure_incidents": 0,
+        "rotation_compliance": ">95%"
+      },
+      "union_only": true
+    },
+    "compliance_awareness": {
+      "name": "Compliance Awareness",
+      "description": "Security compliance and regulations",
+      "level": "advanced",
+      "renewal_period_days": 60,
+      "validation_criteria": {
+        "compliance_checks": 40,
+        "violations": 0,
+        "audit_readiness_score": ">8.0"
+      },
+      "union_only": true
+    },
+    "production_deployment": {
+      "name": "Production Deployment",
+      "description": "Safe production deployment practices",
+      "level": "advanced",
+      "renewal_period_days": 60,
+      "validation_criteria": {
+        "successful_deployments": 15,
+        "rollback_rate": "<10%",
+        "zero_downtime_deployments": 10
+      },
+      "union_only": true
+    },
+    "incident_response": {
+      "name": "Incident Response",
+      "description": "Handling production incidents",
+      "level": "advanced",
+      "renewal_period_days": 60,
+      "validation_criteria": {
+        "incidents_resolved": 10,
+        "mttr_average": "<30min",
+        "recurrence_rate": "<5%"
+      },
+      "union_only": true
+    }
+  },
+  "worker_types": {
+    "implementation-worker": {
+      "description": "General feature implementation",
+      "union_status": "non-union",
+      "required_certifications": [
+        "javascript_proficiency",
+        "git_operations",
+        "testing_fundamentals"
+      ],
+      "optional_certifications": [
+        "kubernetes_basics",
+        "docker_fundamentals"
+      ],
+      "permit_requirements": {
+        "production": true,
+        "staging": false,
+        "development": false
+      }
+    },
+    "security-scan-worker": {
+      "description": "Security vulnerability scanning",
+      "union_status": "union",
+      "required_certifications": [
+        "javascript_proficiency",
+        "security_scanning",
+        "compliance_awareness"
+      ],
+      "optional_certifications": [
+        "vulnerability_remediation"
+      ],
+      "permit_requirements": {
+        "production": true,
+        "staging": true,
+        "development": false
+      }
+    },
+    "security-fix-worker": {
+      "description": "Security vulnerability remediation",
+      "union_status": "union",
+      "required_certifications": [
+        "javascript_proficiency",
+        "security_scanning",
+        "vulnerability_remediation",
+        "secrets_management",
+        "compliance_awareness"
+      ],
+      "optional_certifications": [
+        "incident_response"
+      ],
+      "permit_requirements": {
+        "production": true,
+        "staging": true,
+        "development": false
+      }
+    },
+    "production-deploy-worker": {
+      "description": "Production deployment specialist",
+      "union_status": "union",
+      "required_certifications": [
+        "javascript_proficiency",
+        "git_operations",
+        "testing_fundamentals",
+        "kubernetes_basics",
+        "production_deployment"
+      ],
+      "optional_certifications": [
+        "incident_response",
+        "security_scanning"
+      ],
+      "permit_requirements": {
+        "production": true,
+        "staging": true,
+        "development": false
+      }
+    },
+    "test-worker": {
+      "description": "Testing and QA",
+      "union_status": "non-union",
+      "required_certifications": [
+        "javascript_proficiency",
+        "testing_fundamentals"
+      ],
+      "optional_certifications": [
+        "git_operations"
+      ],
+      "permit_requirements": {
+        "production": false,
+        "staging": false,
+        "development": false
+      }
+    },
+    "documentation-worker": {
+      "description": "Documentation generation",
+      "union_status": "non-union",
+      "required_certifications": [
+        "javascript_proficiency"
+      ],
+      "optional_certifications": [
+        "git_operations"
+      ],
+      "permit_requirements": {
+        "production": false,
+        "staging": false,
+        "development": false
+      }
+    },
+    "analysis-worker": {
+      "description": "Code analysis and metrics",
+      "union_status": "non-union",
+      "required_certifications": [
+        "javascript_proficiency"
+      ],
+      "optional_certifications": [
+        "testing_fundamentals",
+        "security_scanning"
+      ],
+      "permit_requirements": {
+        "production": false,
+        "staging": false,
+        "development": false
+      }
+    },
+    "catalog-worker": {
+      "description": "Repository cataloging",
+      "union_status": "non-union",
+      "required_certifications": [
+        "javascript_proficiency",
+        "git_operations"
+      ],
+      "optional_certifications": [],
+      "permit_requirements": {
+        "production": false,
+        "staging": false,
+        "development": false
+      }
+    },
+    "pr-worker": {
+      "description": "Pull request creation",
+      "union_status": "non-union",
+      "required_certifications": [
+        "javascript_proficiency",
+        "git_operations"
+      ],
+      "optional_certifications": [
+        "testing_fundamentals"
+      ],
+      "permit_requirements": {
+        "production": true,
+        "staging": false,
+        "development": false
+      }
+    },
+    "review-worker": {
+      "description": "Code review",
+      "union_status": "non-union",
+      "required_certifications": [
+        "javascript_proficiency",
+        "testing_fundamentals"
+      ],
+      "optional_certifications": [
+        "security_scanning"
+      ],
+      "permit_requirements": {
+        "production": false,
+        "staging": false,
+        "development": false
+      }
+    }
+  },
+  "certification_levels": {
+    "basic": {
+      "description": "Entry level certification",
+      "tasks_required": 5,
+      "success_rate": 0.8
+    },
+    "intermediate": {
+      "description": "Standard operational certification",
+      "tasks_required": 10,
+      "success_rate": 0.85
+    },
+    "advanced": {
+      "description": "Expert level certification (union workers)",
+      "tasks_required": 20,
+      "success_rate": 0.9
+    }
+  }
+}
