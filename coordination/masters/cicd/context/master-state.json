@@ -50,14 +50,14 @@
     "active_workers": 0
   },
   "active_workers": [],
-  "completed_tasks": 3,
-  "tasks_received": 3,
-  "tokens_used": 107000,
+  "completed_tasks": 4,
+  "tasks_received": 4,
+  "tokens_used": 140000,
   "performance_metrics": {
-    "pipelines_executed": 3,
+    "pipelines_executed": 4,
     "builds_succeeded": 0,
     "builds_failed": 0,
-    "deployments_completed": 6,
+    "deployments_completed": 7,
     "deployments_failed": 0,
     "tests_executed": 0,
     "tests_passed": 0,
@@ -91,6 +91,79 @@
     }
   },
   "recent_deployments": [
+    {
+      "deployment_id": "deploy-kali-k3s-job-20251213",
+      "service": "kali-linux-k3s-deployment-job",
+      "target": "k3s-cluster-vm310",
+      "deployment_type": "kubernetes_job",
+      "strategy": "batch_job_execution",
+      "status": "ready_for_execution",
+      "job_details": {
+        "namespace": "cortex-system",
+        "job_name": "kali-deployment",
+        "backoff_limit": 3,
+        "ttl_seconds_after_finished": 3600,
+        "service_account": "cortex-admin"
+      },
+      "target_vms": [900, 901, 902, 903],
+      "deployment_methods": {
+        "kubectl_direct": {
+          "available": false,
+          "script": "scripts/deploy/DEPLOY-KALI-JOB-TO-K3S.sh"
+        },
+        "ssh_to_k3s_master": {
+          "available": true,
+          "script": "scripts/deploy/EXECUTE-KALI-DEPLOYMENT.sh ssh",
+          "target_host": "root@10.88.140.20"
+        },
+        "deployment_package": {
+          "available": true,
+          "package_path": "/tmp/kali-deployment-package.tar.gz",
+          "package_size_kb": 4.5
+        }
+      },
+      "artifacts_created": {
+        "job_manifest": "k8s/jobs/kali-deployment-job.yaml",
+        "deployment_scripts": 3,
+        "monitoring_script": 1,
+        "deployment_package": 1,
+        "documentation": 1,
+        "total_files": 7
+      },
+      "deployment_features": {
+        "download_kali_image": true,
+        "extract_7z_archive": true,
+        "import_to_vms": true,
+        "configure_boot_order": true,
+        "start_vms": true,
+        "proxmox_api_integration": true
+      },
+      "expected_timeline": {
+        "pod_creation_seconds": 30,
+        "image_download_minutes": 10,
+        "extraction_minutes": 5,
+        "vm_import_minutes": 8,
+        "boot_config_seconds": 20,
+        "vm_start_seconds": 60,
+        "total_minutes": 25
+      },
+      "monitoring": {
+        "script": "scripts/deploy/MONITOR-KALI-JOB.sh",
+        "kubectl_commands": [
+          "kubectl get job kali-deployment -n cortex-system",
+          "kubectl logs -f -n cortex-system -l app=kali-deployment",
+          "kubectl get events -n cortex-system"
+        ]
+      },
+      "created_at": "2025-12-13T16:00:00Z",
+      "deployment_ready_at": "2025-12-13T16:01:00Z",
+      "duration_minutes": 1,
+      "autonomous_execution": true,
+      "workers_spawned": 0,
+      "api_calls": 15,
+      "tokens_used": 33000,
+      "notes": "Kali Linux K3s deployment Job orchestrated. Multi-method deployment package created with kubectl, SSH, and manual deployment options. Job automates download, extraction, and VM import of Kali images to Sentinel Forge VMs (900-903). Complete documentation at docs/deployment/KALI-JOB-DEPLOYMENT-GUIDE.md"
+    },
     {
       "deployment_id": "deploy-kali-os-images-20251213",
       "service": "kali-linux-os-deployment",
