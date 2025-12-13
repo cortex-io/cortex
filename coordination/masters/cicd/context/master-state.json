@@ -50,26 +50,26 @@
     "active_workers": 0
   },
   "active_workers": [],
-  "completed_tasks": 1,
-  "tasks_received": 1,
-  "tokens_used": 45880,
+  "completed_tasks": 2,
+  "tasks_received": 2,
+  "tokens_used": 56750,
   "performance_metrics": {
-    "pipelines_executed": 1,
+    "pipelines_executed": 2,
     "builds_succeeded": 0,
     "builds_failed": 0,
-    "deployments_completed": 1,
+    "deployments_completed": 5,
     "deployments_failed": 0,
     "tests_executed": 0,
     "tests_passed": 0,
     "tests_failed": 0,
     "releases_published": 0,
     "rollbacks_executed": 0,
-    "avg_pipeline_duration_minutes": 25,
+    "avg_pipeline_duration_minutes": 14,
     "avg_build_duration_minutes": 0,
-    "avg_deployment_duration_minutes": 25,
+    "avg_deployment_duration_minutes": 3,
     "success_rate": 1.0,
     "deployment_success_rate": 1.0,
-    "mean_time_to_deploy_minutes": 25,
+    "mean_time_to_deploy_minutes": 3,
     "mean_time_to_recovery_minutes": 0,
     "change_failure_rate": 0
   },
@@ -91,6 +91,66 @@
     }
   },
   "recent_deployments": [
+    {
+      "deployment_id": "deploy-sentinel-forge-20251213",
+      "service": "sentinel-forge-security-lab",
+      "target": "proxmox-pve01",
+      "deployment_type": "infrastructure",
+      "strategy": "direct_api",
+      "status": "deployed",
+      "vms_deployed": [
+        {
+          "vm_id": 900,
+          "hostname": "red-kali-server",
+          "role": "red-team",
+          "ip": "10.88.150.2",
+          "status": "running"
+        },
+        {
+          "vm_id": 901,
+          "hostname": "blue-kali-server",
+          "role": "blue-team",
+          "ip": "10.88.150.3",
+          "status": "running"
+        },
+        {
+          "vm_id": 902,
+          "hostname": "purple-kali-server",
+          "role": "purple-team",
+          "ip": "10.88.150.4",
+          "status": "running"
+        },
+        {
+          "vm_id": 903,
+          "hostname": "green-kali-server",
+          "role": "green-team",
+          "ip": "10.88.150.5",
+          "status": "running"
+        }
+      ],
+      "network_config": {
+        "vlan": 150,
+        "subnet": "10.88.150.0/29",
+        "gateway": "10.88.150.1"
+      },
+      "resources_allocated": {
+        "total_vcpu": 8,
+        "total_memory_gb": 16,
+        "total_storage_gb": 128
+      },
+      "artifacts_created": {
+        "deployment_script": 1,
+        "documentation": 2,
+        "inventory_updates": 1
+      },
+      "created_at": "2025-12-13T15:10:00Z",
+      "completed_at": "2025-12-13T15:14:00Z",
+      "duration_minutes": 3,
+      "autonomous_execution": true,
+      "workers_spawned": 0,
+      "api_calls": 28,
+      "notes": "4 Kali Linux VMs deployed via Proxmox API for Sentinel Forge security testing lab. All VMs running on VLAN 150. Next: OS installation and tool configuration."
+    },
     {
       "deployment_id": "deploy-resource-manager-20251213",
       "service": "cortex-resource-manager",
