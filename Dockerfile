@@ -50,18 +50,17 @@ RUN apk add --no-cache \
     git \
     && rm -rf /var/cache/apk/*
 
-# Create non-root user for security (use different IDs to avoid conflicts with node image)
-RUN addgroup -g 1001 cortex && \
-    adduser -D -u 1001 -G cortex -s /bin/sh cortex
+# Create non-root user for security
+# Use the existing node user (UID/GID 1000) from node:20-alpine base image
 
 # Set working directory
 WORKDIR /app
 
 # Copy node_modules from builder stage
-COPY --from=builder --chown=cortex:cortex /app/node_modules ./node_modules
+COPY --from=builder --chown=node:node /app/node_modules ./node_modules
 
 # Copy application code
-COPY --chown=cortex:cortex . .
+COPY --chown=node:node . .
 
 # Create required directories with proper permissions
 RUN mkdir -p \
@@ -74,7 +73,7 @@ RUN mkdir -p \
     /app/coordination/observability \
     /app/agents/logs \
     /app/data \
-    && chown -R cortex:cortex /app
+    && chown -R node:node /app
 
 # Environment variables with sensible defaults
 ENV NODE_ENV=production \
@@ -92,7 +91,7 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
     CMD curl -f http://localhost:${PORT}/health || exit 1
 
 # Switch to non-root user
-USER cortex
+USER node
 
 # Volume mount points for persistence
 VOLUME ["/app/coordination", "/app/agents/logs", "/app/data"]
