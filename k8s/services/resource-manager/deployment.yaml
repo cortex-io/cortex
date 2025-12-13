@@ -1,0 +1,159 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cortex-resource-manager
+  namespace: cortex-system
+  labels:
+    app: cortex-resource-manager
+    component: infrastructure
+    version: v1.0.0
+spec:
+  replicas: 1
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 0
+      maxSurge: 1
+  selector:
+    matchLabels:
+      app: cortex-resource-manager
+  template:
+    metadata:
+      labels:
+        app: cortex-resource-manager
+        component: infrastructure
+        version: v1.0.0
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8080"
+        prometheus.io/path: "/metrics"
+    spec:
+      serviceAccountName: cortex-resource-manager
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        fsGroup: 1000
+        seccompProfile:
+          type: RuntimeDefault
+
+      containers:
+      - name: resource-manager
+        image: ghcr.io/ry-ops/cortex-resource-manager:latest
+        imagePullPolicy: Always
+
+        ports:
+        - name: mcp
+          containerPort: 8080
+          protocol: TCP
+        - name: metrics
+          containerPort: 9090
+          protocol: TCP
+
+        env:
+        - name: TOTAL_CPU
+          valueFrom:
+            configMapKeyRef:
+              name: cortex-resource-manager-config
+              key: TOTAL_CPU
+        - name: TOTAL_MEMORY
+          valueFrom:
+            configMapKeyRef:
+              name: cortex-resource-manager-config
+              key: TOTAL_MEMORY
+        - name: TOTAL_WORKERS
+          valueFrom:
+            configMapKeyRef:
+              name: cortex-resource-manager-config
+              key: TOTAL_WORKERS
+        - name: MCP_NAMESPACE
+          valueFrom:
+            configMapKeyRef:
+              name: cortex-resource-manager-config
+              key: MCP_NAMESPACE
+        - name: LOG_LEVEL
+          valueFrom:
+            configMapKeyRef:
+              name: cortex-resource-manager-config
+              key: LOG_LEVEL
+        - name: PYTHONUNBUFFERED
+          value: "1"
+
+        resources:
+          requests:
+            cpu: 250m
+            memory: 256Mi
+          limits:
+            cpu: 500m
+            memory: 512Mi
+
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          runAsNonRoot: true
+          runAsUser: 1000
+          capabilities:
+            drop:
+            - ALL
+
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: mcp
+            scheme: HTTP
+          initialDelaySeconds: 10
+          periodSeconds: 30
+          timeoutSeconds: 5
+          successThreshold: 1
+          failureThreshold: 3
+
+        readinessProbe:
+          httpGet:
+            path: /ready
+            port: mcp
+            scheme: HTTP
+          initialDelaySeconds: 5
+          periodSeconds: 10
+          timeoutSeconds: 5
+          successThreshold: 1
+          failureThreshold: 3
+
+        startupProbe:
+          httpGet:
+            path: /health
+            port: mcp
+            scheme: HTTP
+          initialDelaySeconds: 0
+          periodSeconds: 5
+          timeoutSeconds: 5
+          successThreshold: 1
+          failureThreshold: 30
+
+        volumeMounts:
+        - name: tmp
+          mountPath: /tmp
+        - name: cache
+          mountPath: /app/.cache
+
+      volumes:
+      - name: tmp
+        emptyDir: {}
+      - name: cache
+        emptyDir: {}
+
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            podAffinityTerm:
+              labelSelector:
+                matchExpressions:
+                - key: app
+                  operator: In
+                  values:
+                  - cortex-resource-manager
+              topologyKey: kubernetes.io/hostname
+
+      tolerations:
+      - key: node-role.kubernetes.io/control-plane
+        operator: Exists
+        effect: NoSchedule

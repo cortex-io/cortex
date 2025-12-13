@@ -1,0 +1,231 @@
+---
+# Security Scan Task Creation Playbook
+# Automates creation of security scan tasks for repositories
+# Time savings: ~12 minutes per scan (from 15 min to 3 min)
+# ROI Score: 93
+
+- name: Create Security Scan Task for Repository
+  hosts: localhost
+  connection: local
+  gather_facts: yes
+
+  vars_prompt:
+    - name: repo_name
+      prompt: "Enter repository name (e.g., unifi-mcp-server)"
+      private: no
+
+    - name: repo_org
+      prompt: "Enter GitHub organization (default: ry-ops)"
+      private: no
+      default: "ry-ops"
+
+    - name: repo_language
+      prompt: "Enter primary language (Python/TypeScript/Go/Rust)"
+      private: no
+
+    - name: package_manager
+      prompt: "Enter package manager (uv/npm/cargo/go mod)"
+      private: no
+
+    - name: scan_priority
+      prompt: "Enter scan priority (low/medium/high/critical)"
+      private: no
+      default: "high"
+
+    - name: has_api_keys
+      prompt: "Does repository use API keys? (yes/no)"
+      private: no
+      default: "no"
+
+  vars:
+    cortex_root: "/Users/ryandahlberg/Projects/cortex"
+    tasks_dir: "{{ cortex_root }}/coordination/tasks"
+    security_reports_dir: "{{ cortex_root }}/coordination/security/reports"
+    timestamp: "{{ ansible_date_time.iso8601 }}"
+    task_id: "{{ repo_name }}-security-scan-{{ ansible_date_time.epoch }}"
+    repo_url: "https://github.com/{{ repo_org }}/{{ repo_name }}"
+
+  tasks:
+    - name: Display scan configuration
+      debug:
+        msg:
+          - "=========================================="
+          - "Security Scan Task Creation"
+          - "=========================================="
+          - "Repository: {{ repo_org }}/{{ repo_name }}"
+          - "Language: {{ repo_language }}"
+          - "Package Manager: {{ package_manager }}"
+          - "Priority: {{ scan_priority }}"
+          - "API Keys: {{ has_api_keys }}"
+          - "=========================================="
+
+    - name: Validate scan priority
+      assert:
+        that:
+          - scan_priority in ['low', 'medium', 'high', 'critical']
+        fail_msg: "Priority must be one of: low, medium, high, critical"
+
+    - name: Set language-specific scan tools
+      set_fact:
+        scan_tools: >-
+          {{
+            {
+              'Python': ['pip-audit', 'bandit', 'safety', 'gitleaks', 'trufflehog'],
+              'TypeScript': ['npm audit', 'eslint-plugin-security', 'gitleaks', 'trufflehog'],
+              'Go': ['govulncheck', 'gosec', 'gitleaks', 'trufflehog'],
+              'Rust': ['cargo-audit', 'cargo-deny', 'gitleaks', 'trufflehog']
+            }[repo_language]
+          }}
+
+    - name: Set scan types
+      set_fact:
+        scan_types_list:
+          - "dependency_vulnerabilities"
+          - "secrets_detection"
+          - "static_analysis"
+
+    - name: Add API key exposure scan if needed
+      set_fact:
+        scan_types_list: "{{ scan_types_list + ['api_key_exposure'] }}"
+      when: has_api_keys == "yes"
+
+    - name: Set focus areas
+      set_fact:
+        focus_areas_base:
+          - "Dependency vulnerabilities"
+          - "Code quality issues"
+          - "Security best practices"
+
+    - name: Add API-specific focus areas
+      set_fact:
+        focus_areas_final: "{{ focus_areas_base + ['API key management', 'Credential handling', 'Environment variable security'] }}"
+      when: has_api_keys == "yes"
+
+    - name: Use base focus areas
+      set_fact:
+        focus_areas_final: "{{ focus_areas_base }}"
+      when: has_api_keys == "no"
+
+    - name: Ensure security reports directory exists
+      file:
+        path: "{{ security_reports_dir }}"
+        state: directory
+        mode: '0755'
+
+    - name: Create security scan task
+      copy:
+        content: |
+          {
+            "task_id": "{{ task_id }}",
+            "task_type": "security_scan",
+            "priority": "{{ scan_priority }}",
+            "status": "pending",
+            "assigned_master": "security-master",
+            "repository": {
+              "name": "{{ repo_org }}/{{ repo_name }}",
+              "url": "{{ repo_url }}",
+              "language": "{{ repo_language }}",
+              "package_manager": "{{ package_manager }}",
+              "default_branch": "main"
+            },
+            "scan_config": {
+              "scan_types": {{ scan_types_list | to_json }},
+              "tools": {{ scan_tools | to_json }},
+              "severity_threshold": "medium",
+              "include_dependencies": true,
+              "focus_areas": {{ focus_areas_final | to_json }}
+            },
+            "created_at": "{{ timestamp }}",
+            "created_by": "ansible-automation",
+            "deliverables": {
+              "vulnerability_report": "coordination/security/reports/{{ repo_name }}-scan.json",
+              "summary_report": "coordination/security/reports/{{ repo_name }}-summary.md",
+              "secrets_scan_report": "coordination/security/reports/{{ repo_name }}-secrets.json"
+            }{% if has_api_keys == "yes" %},
+            "security_notes": {
+              "api_keys": "API keys grant privileged access - critical to monitor for exposure",
+              "credential_storage": "Verify .env files are properly gitignored",
+              "key_rotation": "Recommend regular API key rotation policy"
+            }{% endif %}
+
+          }
+        dest: "{{ tasks_dir }}/{{ repo_name }}-security-scan.json"
+        mode: '0644'
+
+    - name: Log security scan task creation to dashboard
+      lineinfile:
+        path: "{{ cortex_root }}/coordination/dashboard-events.jsonl"
+        line: '{"timestamp":"{{ timestamp }}","event_type":"security_scan_task_created","severity":"info","component":"security-master","message":"Security scan task created for {{ repo_name }}","source":"ansible-automation","task_id":"{{ task_id }}","repository":"{{ repo_org }}/{{ repo_name }}","priority":"{{ scan_priority }}"}'
+        create: yes
+
+    - name: Display creation summary
+      debug:
+        msg:
+          - "=========================================="
+          - "Security Scan Task Created"
+          - "=========================================="
+          - "Task ID: {{ task_id }}"
+          - "Repository: {{ repo_org }}/{{ repo_name }}"
+          - "Priority: {{ scan_priority }}"
+          - "Scan Types: {{ scan_types_list | join(', ') }}"
+          - "Tools: {{ scan_tools | join(', ') }}"
+          - ""
+          - "Files Created:"
+          - "  - {{ tasks_dir }}/{{ repo_name }}-security-scan.json"
+          - ""
+          - "Deliverables will be saved to:"
+          - "  - {{ security_reports_dir }}/{{ repo_name }}-scan.json"
+          - "  - {{ security_reports_dir }}/{{ repo_name }}-summary.md"
+          - "  - {{ security_reports_dir }}/{{ repo_name }}-secrets.json"
+          - ""
+          - "Next Steps:"
+          - "  1. Review scan configuration"
+          - "  2. Assign to Security Master for execution"
+          - "  3. Monitor scan progress in dashboard"
+          - "=========================================="
+
+    - name: Create scan task summary file
+      copy:
+        content: |
+          # Security Scan Task: {{ repo_name }}
+
+          **Task ID**: {{ task_id }}
+          **Created**: {{ timestamp }}
+          **Priority**: {{ scan_priority }}
+          **Repository**: {{ repo_org }}/{{ repo_name }}
+
+          ## Scan Configuration
+          - **Language**: {{ repo_language }}
+          - **Package Manager**: {{ package_manager }}
+          - **Scan Types**: {{ scan_types_list | join(', ') }}
+          - **Tools**: {{ scan_tools | join(', ') }}
+          {% if has_api_keys == "yes" %}
+          - **API Keys**: Required - Enhanced security monitoring enabled
+          {% endif %}
+
+          ## Focus Areas
+          {% for area in focus_areas_final %}
+          - {{ area }}
+          {% endfor %}
+
+          ## Deliverables
+          1. Vulnerability Report: `{{ repo_name }}-scan.json`
+          2. Summary Report: `{{ repo_name }}-summary.md`
+          3. Secrets Scan Report: `{{ repo_name }}-secrets.json`
+
+          ## Execution
+          - **Status**: Pending
+          - **Assigned To**: Security Master
+          - **Severity Threshold**: Medium
+
+          ## Next Steps
+          1. Security Master will execute scan
+          2. Results will be saved to coordination/security/reports/
+          3. Dashboard will be updated with findings
+          4. Alerts will be generated for high/critical findings
+
+          ---
+          *Generated by Cortex Ansible Automation*
+        dest: "{{ cortex_root }}/automation/ansible/playbooks/scan-summaries/{{ repo_name }}-{{ ansible_date_time.date }}.md"
+
+...

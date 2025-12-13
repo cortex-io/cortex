@@ -1,0 +1,8 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: cortex-system
+  labels:
+    name: cortex-system
+    component: infrastructure
+    managed-by: cortex-cicd

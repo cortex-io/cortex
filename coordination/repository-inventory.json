@@ -1009,16 +1009,62 @@
         "wazuh_rules": "complete",
         "documentation": "complete",
         "vm_templates": "pending",
-        "proxmox_deployment": "pending",
-        "overall_status": "pre-deployment",
+        "proxmox_deployment": "deployed",
+        "overall_status": "deployed",
         "ready_for_deployment": true,
-        "prerequisites": [
-          "Proxmox VM templates",
-          "Wazuh SIEM access",
-          "n8n instance",
-          "VLAN configuration"
+        "deployed_at": "2025-12-13T15:13:26Z",
+        "deployed_by": "cortex-cicd-master",
+        "deployment_method": "proxmox-api-autonomous",
+        "deployed_vms": [
+          {
+            "vm_id": 900,
+            "hostname": "red-kali-server",
+            "role": "Offensive/Red Team operations",
+            "ip": "10.88.150.2",
+            "status": "running",
+            "specs": "2 vCPU, 4GB RAM, 32GB disk"
+          },
+          {
+            "vm_id": 901,
+            "hostname": "blue-kali-server",
+            "role": "Defensive/Blue Team operations",
+            "ip": "10.88.150.3",
+            "status": "running",
+            "specs": "2 vCPU, 4GB RAM, 32GB disk"
+          },
+          {
+            "vm_id": 902,
+            "hostname": "purple-kali-server",
+            "role": "Purple Team/Control/Coordination",
+            "ip": "10.88.150.4",
+            "status": "running",
+            "specs": "2 vCPU, 4GB RAM, 32GB disk"
+          },
+          {
+            "vm_id": 903,
+            "hostname": "green-kali-server",
+            "role": "Honeypot/Deception network",
+            "ip": "10.88.150.5",
+            "status": "running",
+            "specs": "2 vCPU, 4GB RAM, 32GB disk"
+          }
         ],
-        "estimated_deployment_time": "1-2 days"
+        "network_config": {
+          "vlan": 150,
+          "subnet": "10.88.150.0/29",
+          "gateway": "10.88.150.1",
+          "bridge": "vmbr0"
+        },
+        "next_steps": [
+          "Install Kali Linux OS on all 4 VMs",
+          "Configure static IPs (10.88.150.2-5)",
+          "Install role-specific security tools",
+          "Configure QEMU guest agent",
+          "Upload and attach Kali Linux ISO",
+          "Security hardening and firewall setup"
+        ],
+        "documentation_path": "/Users/ryandahlberg/Projects/cortex/docs/deployment/SENTINEL-FORGE-INFRASTRUCTURE.md",
+        "estimated_completion_time": "4-6 hours"
       },
       "cortex_integration": {
         "security_scanning": true,

@@ -1,0 +1,107 @@
+{
+  "repository": "{{ mcp_repo_org }}/{{ mcp_repo_name }}",
+  "monitoring_config": {
+    "enabled": true,
+    "integrated_at": "{{ timestamp }}",
+    "automation": "ansible",
+    "health_checks": {
+      "mcp_server_availability": {
+        "enabled": true,
+        "frequency": "5min",
+        "check_types": ["repository", "dependencies", "api"],
+        "timeout_threshold": "15s"
+      },
+      "dependency_health": {
+        "enabled": true,
+        "frequency": "daily",
+        "check_types": ["outdated", "security_advisories", "deprecated"],
+        "package_manager": "{{ mcp_package_manager }}"{% if mcp_language == "Python" %},
+        "python_version_compatibility": ">=3.10"{% endif %}
+      },
+      "security_posture": {
+        "enabled": true,
+        "frequency": "daily",
+        "scans": ["vulnerabilities", "secrets", "api_keys"]{% if api_keys_required == "yes" %},
+        "critical_files": ["secrets.env", "*.env.*", "config/*.json"]{% endif %}
+      }{% if agent_card_check.stat.exists %},
+      "a2a_protocol_compliance": {
+        "enabled": true,
+        "frequency": "on_commit",
+        "validate_agent_card": true,
+        "verify_safety_requirements": true
+      }{% endif %}
+    },
+    "alerts": {
+      "channels": ["dashboard", "events"],
+      "severity_thresholds": {
+        "critical": "immediate",
+        "high": "within_5_min",
+        "medium": "within_1_hour",
+        "low": "daily_summary"
+      }{% if api_keys_required == "yes" %},
+      "special_alerts": {
+        "api_key_exposure": "critical",
+        "credential_leak": "critical"
+      }{% endif %}
+    },
+    "observability": {
+      "event_tracking": true,
+      "metrics_collection": true,
+      "log_aggregation": false,
+      "dashboard_widget": {
+        "enabled": true,
+        "display_name": "{{ mcp_primary_function }}",
+        "priority": "high",
+        "show_metrics": [
+          "server_status",
+          "health_score",
+          "last_commit"
+        ]
+      }
+    }
+  },
+  "automation_policies": {
+    "auto_dependency_updates": {
+      "enabled": false,
+      "strategy": "manual_review"
+    },
+    "auto_security_fixes": {
+      "enabled": false,
+      "strategy": "create_pr"
+    },
+    "auto_documentation": {
+      "enabled": true,
+      "update_on": ["api_changes", "new_features"]
+    }
+  },
+  "integration_points": {
+    "github_webhooks": {
+      "push": "trigger_quality_check",
+      "pull_request": "trigger_security_scan",
+      "release": "trigger_full_audit"
+    },
+    "cortex_apis": {
+      "security_api": "http://localhost:3000/api/security/scan",
+      "observability_api": "http://localhost:3001/api/events",
+      "dashboard_api": "http://localhost:3000/api/dashboard"
+    }
+  },
+  "reporting": {
+    "daily_health_summary": true,
+    "weekly_trends_report": true,
+    "monthly_audit_report": true,
+    "reports_location": "coordination/reports/{{ mcp_repo_name }}/"
+  }{% if api_keys_required == "yes" %},
+  "security_notes": {
+    "api_keys": "Monitor for exposure - API keys grant privileged access",
+    "credential_management": "Verify secrets.env excluded from git",
+    "monitoring_focus": "API key exposure, credential leaks, TLS misconfigurations"
+  }{% endif %}{% if agent_card_check.stat.exists %},
+  "a2a_protocol": {
+    "agent_card_location": "agent-card.json",
+    "protocol_version": "1.0",
+    "skills_count": {{ skills_count }},
+    "prompts_count": {{ prompts_count }},
+    "validate_compliance": true
+  }{% endif %}
+}
