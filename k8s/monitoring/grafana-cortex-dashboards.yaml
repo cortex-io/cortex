@@ -1,0 +1,648 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-cortex-dashboards
+  namespace: monitoring
+  labels:
+    grafana_dashboard: "1"
+data:
+  cortex-overview.json: |
+    {
+      "dashboard": {
+        "title": "Cortex Overview",
+        "tags": ["cortex", "overview"],
+        "timezone": "browser",
+        "schemaVersion": 36,
+        "version": 1,
+        "refresh": "30s",
+        "panels": [
+          {
+            "title": "Master Health Status",
+            "type": "stat",
+            "gridPos": {"h": 6, "w": 6, "x": 0, "y": 0},
+            "targets": [
+              {
+                "expr": "count(up{job=\"cortex-masters\"} == 1)",
+                "legendFormat": "Healthy Masters"
+              }
+            ],
+            "options": {
+              "colorMode": "value",
+              "graphMode": "area",
+              "reduceOptions": {"calcs": ["lastNotNull"]}
+            },
+            "fieldConfig": {
+              "defaults": {
+                "thresholds": {
+                  "steps": [
+                    {"value": 0, "color": "red"},
+                    {"value": 3, "color": "yellow"},
+                    {"value": 5, "color": "green"}
+                  ]
+                }
+              }
+            }
+          },
+          {
+            "title": "Active Workers",
+            "type": "stat",
+            "gridPos": {"h": 6, "w": 6, "x": 6, "y": 0},
+            "targets": [
+              {
+                "expr": "sum(cortex_workers_active)",
+                "legendFormat": "Active Workers"
+              }
+            ],
+            "options": {
+              "colorMode": "value",
+              "graphMode": "area"
+            }
+          },
+          {
+            "title": "Tasks in Queue",
+            "type": "stat",
+            "gridPos": {"h": 6, "w": 6, "x": 12, "y": 0},
+            "targets": [
+              {
+                "expr": "sum(cortex_task_queue_depth)",
+                "legendFormat": "Queued Tasks"
+              }
+            ],
+            "options": {
+              "colorMode": "value",
+              "graphMode": "area"
+            },
+            "fieldConfig": {
+              "defaults": {
+                "thresholds": {
+                  "steps": [
+                    {"value": 0, "color": "green"},
+                    {"value": 20, "color": "yellow"},
+                    {"value": 50, "color": "red"}
+                  ]
+                }
+              }
+            }
+          },
+          {
+            "title": "Task Throughput (tasks/min)",
+            "type": "stat",
+            "gridPos": {"h": 6, "w": 6, "x": 18, "y": 0},
+            "targets": [
+              {
+                "expr": "sum(rate(cortex_task_completions_total[5m])) * 60",
+                "legendFormat": "Tasks/min"
+              }
+            ],
+            "options": {
+              "colorMode": "value",
+              "graphMode": "area"
+            }
+          },
+          {
+            "title": "Worker Activity by Type",
+            "type": "timeseries",
+            "gridPos": {"h": 8, "w": 12, "x": 0, "y": 6},
+            "targets": [
+              {
+                "expr": "sum(cortex_workers_active) by (worker_type)",
+                "legendFormat": "{{worker_type}}"
+              }
+            ],
+            "options": {
+              "legend": {"displayMode": "table", "placement": "right"}
+            }
+          },
+          {
+            "title": "Task Queue Depth by Worker Type",
+            "type": "timeseries",
+            "gridPos": {"h": 8, "w": 12, "x": 12, "y": 6},
+            "targets": [
+              {
+                "expr": "cortex_task_queue_depth",
+                "legendFormat": "{{worker_type}}"
+              }
+            ],
+            "options": {
+              "legend": {"displayMode": "table", "placement": "right"}
+            }
+          },
+          {
+            "title": "Master Uptime",
+            "type": "table",
+            "gridPos": {"h": 8, "w": 12, "x": 0, "y": 14},
+            "targets": [
+              {
+                "expr": "up{job=\"cortex-masters\"}",
+                "legendFormat": "{{master_id}}",
+                "format": "table",
+                "instant": true
+              }
+            ],
+            "transformations": [
+              {"id": "organize", "options": {"renameByName": {"Value": "Status"}}}
+            ]
+          },
+          {
+            "title": "Task Success Rate (5m)",
+            "type": "gauge",
+            "gridPos": {"h": 8, "w": 12, "x": 12, "y": 14},
+            "targets": [
+              {
+                "expr": "sum(rate(cortex_task_completions_total{status=\"success\"}[5m])) / sum(rate(cortex_task_completions_total[5m]))",
+                "legendFormat": "Success Rate"
+              }
+            ],
+            "fieldConfig": {
+              "defaults": {
+                "unit": "percentunit",
+                "thresholds": {
+                  "steps": [
+                    {"value": 0, "color": "red"},
+                    {"value": 0.8, "color": "yellow"},
+                    {"value": 0.95, "color": "green"}
+                  ]
+                }
+              }
+            }
+          }
+        ]
+      }
+    }
+
+  cortex-token-usage.json: |
+    {
+      "dashboard": {
+        "title": "Cortex Token Usage & Cost",
+        "tags": ["cortex", "tokens", "cost"],
+        "timezone": "browser",
+        "schemaVersion": 36,
+        "version": 1,
+        "refresh": "1m",
+        "panels": [
+          {
+            "title": "Total Token Budget Utilization",
+            "type": "gauge",
+            "gridPos": {"h": 8, "w": 12, "x": 0, "y": 0},
+            "targets": [
+              {
+                "expr": "sum(cortex_token_budget_used) / sum(cortex_token_budget_total)",
+                "legendFormat": "Total Utilization"
+              }
+            ],
+            "fieldConfig": {
+              "defaults": {
+                "unit": "percentunit",
+                "max": 1,
+                "thresholds": {
+                  "steps": [
+                    {"value": 0, "color": "green"},
+                    {"value": 0.7, "color": "yellow"},
+                    {"value": 0.9, "color": "red"}
+                  ]
+                }
+              }
+            }
+          },
+          {
+            "title": "Estimated Daily Cost",
+            "type": "stat",
+            "gridPos": {"h": 8, "w": 12, "x": 12, "y": 0},
+            "targets": [
+              {
+                "expr": "sum(increase(cortex_api_cost_usd[24h]))",
+                "legendFormat": "Daily Cost (USD)"
+              }
+            ],
+            "fieldConfig": {
+              "defaults": {
+                "unit": "currencyUSD",
+                "decimals": 2
+              }
+            },
+            "options": {
+              "colorMode": "value",
+              "graphMode": "area"
+            }
+          },
+          {
+            "title": "Token Budget by Master",
+            "type": "timeseries",
+            "gridPos": {"h": 8, "w": 12, "x": 0, "y": 8},
+            "targets": [
+              {
+                "expr": "cortex_token_budget_utilization",
+                "legendFormat": "{{master}}"
+              }
+            ],
+            "options": {
+              "legend": {"displayMode": "table", "placement": "right"}
+            },
+            "fieldConfig": {
+              "defaults": {
+                "unit": "percentunit",
+                "max": 1
+              }
+            }
+          },
+          {
+            "title": "Token Usage Rate (tokens/min)",
+            "type": "timeseries",
+            "gridPos": {"h": 8, "w": 12, "x": 12, "y": 8},
+            "targets": [
+              {
+                "expr": "sum(rate(cortex_tokens_consumed_total[5m])) by (master) * 60",
+                "legendFormat": "{{master}}"
+              }
+            ],
+            "options": {
+              "legend": {"displayMode": "table", "placement": "right"}
+            }
+          },
+          {
+            "title": "API Requests by Model",
+            "type": "timeseries",
+            "gridPos": {"h": 8, "w": 12, "x": 0, "y": 16},
+            "targets": [
+              {
+                "expr": "sum(rate(cortex_api_requests_total[5m])) by (model)",
+                "legendFormat": "{{model}}"
+              }
+            ],
+            "options": {
+              "legend": {"displayMode": "table", "placement": "right"}
+            }
+          },
+          {
+            "title": "Cost Breakdown by Master",
+            "type": "piechart",
+            "gridPos": {"h": 8, "w": 12, "x": 12, "y": 16},
+            "targets": [
+              {
+                "expr": "sum(increase(cortex_api_cost_usd[24h])) by (master)",
+                "legendFormat": "{{master}}"
+              }
+            ],
+            "options": {
+              "legend": {"displayMode": "table", "placement": "right"}
+            }
+          },
+          {
+            "title": "Token Budget Status",
+            "type": "table",
+            "gridPos": {"h": 8, "w": 24, "x": 0, "y": 24},
+            "targets": [
+              {
+                "expr": "cortex_token_budget_used",
+                "legendFormat": "{{master}}",
+                "format": "table",
+                "instant": true
+              },
+              {
+                "expr": "cortex_token_budget_total",
+                "legendFormat": "{{master}}",
+                "format": "table",
+                "instant": true
+              },
+              {
+                "expr": "cortex_token_budget_utilization",
+                "legendFormat": "{{master}}",
+                "format": "table",
+                "instant": true
+              }
+            ],
+            "transformations": [
+              {"id": "merge"},
+              {"id": "organize", "options": {"renameByName": {"master": "Master", "Value #A": "Used", "Value #B": "Total", "Value #C": "Utilization"}}}
+            ]
+          }
+        ]
+      }
+    }
+
+  cortex-mcp-servers.json: |
+    {
+      "dashboard": {
+        "title": "Cortex MCP Servers",
+        "tags": ["cortex", "mcp", "integrations"],
+        "timezone": "browser",
+        "schemaVersion": 36,
+        "version": 1,
+        "refresh": "30s",
+        "panels": [
+          {
+            "title": "MCP Server Status",
+            "type": "stat",
+            "gridPos": {"h": 6, "w": 24, "x": 0, "y": 0},
+            "targets": [
+              {
+                "expr": "up{job=\"cortex-mcp-servers\"}",
+                "legendFormat": "{{server}}"
+              }
+            ],
+            "options": {
+              "colorMode": "background",
+              "graphMode": "none",
+              "orientation": "horizontal"
+            },
+            "fieldConfig": {
+              "defaults": {
+                "mappings": [
+                  {"type": "value", "value": 1, "text": "UP"},
+                  {"type": "value", "value": 0, "text": "DOWN"}
+                ],
+                "thresholds": {
+                  "steps": [
+                    {"value": 0, "color": "red"},
+                    {"value": 1, "color": "green"}
+                  ]
+                }
+              }
+            }
+          },
+          {
+            "title": "Request Rate by MCP Server",
+            "type": "timeseries",
+            "gridPos": {"h": 8, "w": 12, "x": 0, "y": 6},
+            "targets": [
+              {
+                "expr": "sum(rate(cortex_mcp_requests_total[5m])) by (server)",
+                "legendFormat": "{{server}}"
+              }
+            ],
+            "options": {
+              "legend": {"displayMode": "table", "placement": "right"}
+            }
+          },
+          {
+            "title": "Error Rate by MCP Server",
+            "type": "timeseries",
+            "gridPos": {"h": 8, "w": 12, "x": 12, "y": 6},
+            "targets": [
+              {
+                "expr": "sum(rate(cortex_mcp_errors_total[5m])) by (server)",
+                "legendFormat": "{{server}}"
+              }
+            ],
+            "options": {
+              "legend": {"displayMode": "table", "placement": "right"}
+            },
+            "fieldConfig": {
+              "defaults": {
+                "color": {"mode": "palette-classic", "fixedColor": "red"}
+              }
+            }
+          },
+          {
+            "title": "Request Latency (95th percentile)",
+            "type": "timeseries",
+            "gridPos": {"h": 8, "w": 12, "x": 0, "y": 14},
+            "targets": [
+              {
+                "expr": "histogram_quantile(0.95, rate(cortex_mcp_request_duration_seconds_bucket[5m]))",
+                "legendFormat": "{{server}}"
+              }
+            ],
+            "options": {
+              "legend": {"displayMode": "table", "placement": "right"}
+            },
+            "fieldConfig": {
+              "defaults": {
+                "unit": "s"
+              }
+            }
+          },
+          {
+            "title": "Request Latency (50th percentile)",
+            "type": "timeseries",
+            "gridPos": {"h": 8, "w": 12, "x": 12, "y": 14},
+            "targets": [
+              {
+                "expr": "histogram_quantile(0.50, rate(cortex_mcp_request_duration_seconds_bucket[5m]))",
+                "legendFormat": "{{server}}"
+              }
+            ],
+            "options": {
+              "legend": {"displayMode": "table", "placement": "right"}
+            },
+            "fieldConfig": {
+              "defaults": {
+                "unit": "s"
+              }
+            }
+          },
+          {
+            "title": "Active MCP Server Replicas",
+            "type": "bargauge",
+            "gridPos": {"h": 8, "w": 12, "x": 0, "y": 22},
+            "targets": [
+              {
+                "expr": "count(up{job=\"cortex-mcp-servers\"} == 1) by (server)",
+                "legendFormat": "{{server}}"
+              }
+            ],
+            "options": {
+              "orientation": "horizontal",
+              "displayMode": "basic"
+            }
+          },
+          {
+            "title": "MCP Server Availability (24h)",
+            "type": "stat",
+            "gridPos": {"h": 8, "w": 12, "x": 12, "y": 22},
+            "targets": [
+              {
+                "expr": "avg_over_time(up{job=\"cortex-mcp-servers\"}[24h])",
+                "legendFormat": "{{server}}"
+              }
+            ],
+            "options": {
+              "colorMode": "background",
+              "orientation": "horizontal"
+            },
+            "fieldConfig": {
+              "defaults": {
+                "unit": "percentunit",
+                "thresholds": {
+                  "steps": [
+                    {"value": 0, "color": "red"},
+                    {"value": 0.95, "color": "yellow"},
+                    {"value": 0.99, "color": "green"}
+                  ]
+                }
+              }
+            }
+          }
+        ]
+      }
+    }
+
+  cortex-worker-performance.json: |
+    {
+      "dashboard": {
+        "title": "Cortex Worker Performance",
+        "tags": ["cortex", "workers", "performance"],
+        "timezone": "browser",
+        "schemaVersion": 36,
+        "version": 1,
+        "refresh": "30s",
+        "panels": [
+          {
+            "title": "Worker Success Rate (5m)",
+            "type": "timeseries",
+            "gridPos": {"h": 8, "w": 12, "x": 0, "y": 0},
+            "targets": [
+              {
+                "expr": "sum(rate(cortex_worker_completions_total{status=\"success\"}[5m])) by (worker_type) / sum(rate(cortex_worker_completions_total[5m])) by (worker_type)",
+                "legendFormat": "{{worker_type}}"
+              }
+            ],
+            "options": {
+              "legend": {"displayMode": "table", "placement": "right"}
+            },
+            "fieldConfig": {
+              "defaults": {
+                "unit": "percentunit",
+                "max": 1
+              }
+            }
+          },
+          {
+            "title": "Worker Failure Rate (5m)",
+            "type": "timeseries",
+            "gridPos": {"h": 8, "w": 12, "x": 12, "y": 0},
+            "targets": [
+              {
+                "expr": "sum(rate(cortex_worker_failures_total[5m])) by (worker_type)",
+                "legendFormat": "{{worker_type}}"
+              }
+            ],
+            "options": {
+              "legend": {"displayMode": "table", "placement": "right"}
+            }
+          },
+          {
+            "title": "Average Task Duration by Worker Type",
+            "type": "timeseries",
+            "gridPos": {"h": 8, "w": 12, "x": 0, "y": 8},
+            "targets": [
+              {
+                "expr": "avg(cortex_worker_task_duration_seconds) by (worker_type)",
+                "legendFormat": "{{worker_type}}"
+              }
+            ],
+            "options": {
+              "legend": {"displayMode": "table", "placement": "right"}
+            },
+            "fieldConfig": {
+              "defaults": {
+                "unit": "s"
+              }
+            }
+          },
+          {
+            "title": "Worker CPU Usage",
+            "type": "timeseries",
+            "gridPos": {"h": 8, "w": 12, "x": 12, "y": 8},
+            "targets": [
+              {
+                "expr": "sum(rate(container_cpu_usage_seconds_total{namespace=\"cortex-workers\"}[5m])) by (pod)",
+                "legendFormat": "{{pod}}"
+              }
+            ],
+            "options": {
+              "legend": {"displayMode": "list", "placement": "bottom"}
+            },
+            "fieldConfig": {
+              "defaults": {
+                "unit": "percentunit"
+              }
+            }
+          },
+          {
+            "title": "Worker Memory Usage",
+            "type": "timeseries",
+            "gridPos": {"h": 8, "w": 12, "x": 0, "y": 16},
+            "targets": [
+              {
+                "expr": "sum(container_memory_working_set_bytes{namespace=\"cortex-workers\"}) by (pod)",
+                "legendFormat": "{{pod}}"
+              }
+            ],
+            "options": {
+              "legend": {"displayMode": "list", "placement": "bottom"}
+            },
+            "fieldConfig": {
+              "defaults": {
+                "unit": "bytes"
+              }
+            }
+          },
+          {
+            "title": "Worker Autoscaling Activity",
+            "type": "timeseries",
+            "gridPos": {"h": 8, "w": 12, "x": 12, "y": 16},
+            "targets": [
+              {
+                "expr": "sum(cortex_workers_active) by (worker_type)",
+                "legendFormat": "{{worker_type}}"
+              }
+            ],
+            "options": {
+              "legend": {"displayMode": "table", "placement": "right"}
+            }
+          },
+          {
+            "title": "Task Completions (rate)",
+            "type": "stat",
+            "gridPos": {"h": 6, "w": 8, "x": 0, "y": 24},
+            "targets": [
+              {
+                "expr": "sum(rate(cortex_task_completions_total[5m])) * 60",
+                "legendFormat": "Completions/min"
+              }
+            ],
+            "options": {
+              "colorMode": "value",
+              "graphMode": "area"
+            }
+          },
+          {
+            "title": "Active Workers",
+            "type": "stat",
+            "gridPos": {"h": 6, "w": 8, "x": 8, "y": 24},
+            "targets": [
+              {
+                "expr": "sum(cortex_workers_active)",
+                "legendFormat": "Active"
+              }
+            ],
+            "options": {
+              "colorMode": "value",
+              "graphMode": "area"
+            }
+          },
+          {
+            "title": "Average Task Duration",
+            "type": "stat",
+            "gridPos": {"h": 6, "w": 8, "x": 16, "y": 24},
+            "targets": [
+              {
+                "expr": "avg(cortex_worker_task_duration_seconds)",
+                "legendFormat": "Avg Duration"
+              }
+            ],
+            "options": {
+              "colorMode": "value",
+              "graphMode": "area"
+            },
+            "fieldConfig": {
+              "defaults": {
+                "unit": "s"
+              }
+            }
+          }
+        ]
+      }
+    }

@@ -1,0 +1,234 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: alertmanager-config
+  namespace: monitoring
+data:
+  alertmanager.yml: |
+    global:
+      resolve_timeout: 5m
+      # Configure your notification channels here
+      # slack_api_url: 'https://hooks.slack.com/services/YOUR/WEBHOOK/URL'
+      # pagerduty_url: 'https://events.pagerduty.com/v2/enqueue'
+
+    # Notification templates
+    templates:
+      - '/etc/alertmanager/templates/*.tmpl'
+
+    # Routing tree for alerts
+    route:
+      group_by: ['alertname', 'cluster', 'service']
+      group_wait: 10s
+      group_interval: 10s
+      repeat_interval: 12h
+      receiver: 'default'
+
+      # Child routes
+      routes:
+        # Critical alerts - immediate notification
+        - match:
+            severity: critical
+          receiver: 'critical-alerts'
+          continue: true
+
+        # Master-related alerts
+        - match:
+            component: master
+          receiver: 'master-alerts'
+
+        # Worker-related alerts
+        - match:
+            component: worker
+          receiver: 'worker-alerts'
+
+        # MCP server alerts
+        - match:
+            component: mcp-server
+          receiver: 'mcp-alerts'
+
+    # Inhibition rules - suppress certain alerts when others are firing
+    inhibit_rules:
+      # Inhibit worker alerts if master is down
+      - source_match:
+          alertname: 'MasterDown'
+        target_match:
+          component: 'worker'
+        equal: ['cluster']
+
+      # Inhibit low-severity alerts if critical alerts are firing
+      - source_match:
+          severity: 'critical'
+        target_match:
+          severity: 'warning'
+        equal: ['alertname', 'cluster', 'service']
+
+    # Notification receivers
+    receivers:
+      - name: 'default'
+        # Default receiver (webhook, email, etc.)
+        webhook_configs:
+          - url: 'http://cortex-dashboard.cortex-system.svc.cluster.local/api/alerts'
+            send_resolved: true
+
+      - name: 'critical-alerts'
+        # Critical alerts - multiple channels
+        webhook_configs:
+          - url: 'http://cortex-dashboard.cortex-system.svc.cluster.local/api/alerts/critical'
+            send_resolved: true
+        # Uncomment and configure for Slack
+        # slack_configs:
+        #   - channel: '#cortex-critical'
+        #     title: 'Critical Alert: {{ .GroupLabels.alertname }}'
+        #     text: '{{ range .Alerts }}{{ .Annotations.summary }}{{ end }}'
+        # Uncomment and configure for PagerDuty
+        # pagerduty_configs:
+        #   - service_key: 'YOUR_PAGERDUTY_SERVICE_KEY'
+
+      - name: 'master-alerts'
+        webhook_configs:
+          - url: 'http://cortex-dashboard.cortex-system.svc.cluster.local/api/alerts/master'
+            send_resolved: true
+
+      - name: 'worker-alerts'
+        webhook_configs:
+          - url: 'http://cortex-dashboard.cortex-system.svc.cluster.local/api/alerts/worker'
+            send_resolved: true
+
+      - name: 'mcp-alerts'
+        webhook_configs:
+          - url: 'http://cortex-dashboard.cortex-system.svc.cluster.local/api/alerts/mcp'
+            send_resolved: true
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: alertmanager-templates
+  namespace: monitoring
+data:
+  default.tmpl: |
+    {{ define "cortex.title" }}
+    [{{ .Status | toUpper }}{{ if eq .Status "firing" }}:{{ .Alerts.Firing | len }}{{ end }}] {{ .GroupLabels.alertname }}
+    {{ end }}
+
+    {{ define "cortex.text" }}
+    {{ range .Alerts }}
+    *Alert:* {{ .Labels.alertname }}
+    *Severity:* {{ .Labels.severity }}
+    *Summary:* {{ .Annotations.summary }}
+    *Description:* {{ .Annotations.description }}
+    *Details:*
+      {{ range .Labels.SortedPairs }} • *{{ .Name }}:* `{{ .Value }}`
+      {{ end }}
+    {{ end }}
+    {{ end }}
+
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: alertmanager-pvc
+  namespace: monitoring
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 5Gi
+  storageClassName: local-path
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: alertmanager
+  namespace: monitoring
+  labels:
+    app: alertmanager
+    app.kubernetes.io/name: alertmanager
+    app.kubernetes.io/component: monitoring
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: alertmanager
+  template:
+    metadata:
+      labels:
+        app: alertmanager
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "9093"
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65534
+        fsGroup: 65534
+      containers:
+      - name: alertmanager
+        image: prom/alertmanager:v0.26.0
+        imagePullPolicy: IfNotPresent
+        args:
+          - '--config.file=/etc/alertmanager/alertmanager.yml'
+          - '--storage.path=/alertmanager'
+          - '--web.listen-address=:9093'
+          - '--cluster.listen-address='
+        ports:
+        - name: web
+          containerPort: 9093
+          protocol: TCP
+        resources:
+          requests:
+            memory: 256Mi
+            cpu: 100m
+          limits:
+            memory: 512Mi
+            cpu: 200m
+        volumeMounts:
+        - name: config
+          mountPath: /etc/alertmanager
+        - name: templates
+          mountPath: /etc/alertmanager/templates
+        - name: storage
+          mountPath: /alertmanager
+        livenessProbe:
+          httpGet:
+            path: /-/healthy
+            port: web
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /-/ready
+            port: web
+          initialDelaySeconds: 10
+          periodSeconds: 5
+      volumes:
+      - name: config
+        configMap:
+          name: alertmanager-config
+      - name: templates
+        configMap:
+          name: alertmanager-templates
+      - name: storage
+        persistentVolumeClaim:
+          claimName: alertmanager-pvc
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: alertmanager
+  namespace: monitoring
+  labels:
+    app: alertmanager
+spec:
+  type: ClusterIP
+  ports:
+  - name: web
+    port: 9093
+    targetPort: 9093
+    protocol: TCP
+  selector:
+    app: alertmanager

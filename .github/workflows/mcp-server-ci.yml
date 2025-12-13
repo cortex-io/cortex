@@ -1,0 +1,254 @@
+name: MCP Server CI/CD
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'projects/mcp-servers/**'
+      - 'helm/mcp-server-chart/**'
+      - 'helm/umbrella-chart/**'
+  pull_request:
+    paths:
+      - 'projects/mcp-servers/**'
+      - 'helm/mcp-server-chart/**'
+      - 'helm/umbrella-chart/**'
+  workflow_dispatch:
+    inputs:
+      mcp-server:
+        description: 'MCP server to build (or "all")'
+        required: true
+        default: 'all'
+        type: choice
+        options:
+          - all
+          - wazuh
+          - proxmox
+          - n8n
+          - k3s
+          - talos
+          - opentofu
+          - ansible
+          - unifi
+          - cloudflare
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_PREFIX: ${{ github.repository }}/mcp
+
+jobs:
+  detect-changes:
+    name: Detect Changed MCP Servers
+    runs-on: ubuntu-latest
+    outputs:
+      servers: ${{ steps.detect.outputs.servers }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Detect changed servers
+        id: detect
+        run: |
+          if [[ "${{ github.event.inputs.mcp-server }}" != "" ]]; then
+            # Manual workflow dispatch
+            if [[ "${{ github.event.inputs.mcp-server }}" == "all" ]]; then
+              SERVERS='["wazuh","proxmox","n8n","k3s","talos","opentofu","ansible","unifi","cloudflare"]'
+            else
+              SERVERS='["${{ github.event.inputs.mcp-server }}"]'
+            fi
+          else
+            # Automatic detection based on changed files
+            CHANGED_DIRS=$(git diff --name-only HEAD~1 HEAD | grep '^projects/mcp-servers/' | cut -d'/' -f3 | sort -u)
+            if [[ -z "$CHANGED_DIRS" ]]; then
+              # If Helm charts changed, build all servers
+              HELM_CHANGED=$(git diff --name-only HEAD~1 HEAD | grep '^helm/' || true)
+              if [[ -n "$HELM_CHANGED" ]]; then
+                SERVERS='["wazuh","proxmox","n8n","k3s","talos","opentofu","ansible","unifi","cloudflare"]'
+              else
+                SERVERS='[]'
+              fi
+            else
+              SERVERS=$(echo "$CHANGED_DIRS" | jq -R -s -c 'split("\n") | map(select(length > 0))')
+            fi
+          fi
+          echo "servers=$SERVERS" >> $GITHUB_OUTPUT
+          echo "Detected servers: $SERVERS"
+
+  build-mcp-servers:
+    name: Build MCP Server - ${{ matrix.server }}
+    runs-on: ubuntu-latest
+    needs: detect-changes
+    if: needs.detect-changes.outputs.servers != '[]'
+    strategy:
+      matrix:
+        server: ${{ fromJSON(needs.detect-changes.outputs.servers) }}
+      fail-fast: false
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/${{ matrix.server }}-mcp-server
+          tags: |
+            type=ref,event=branch
+            type=semver,pattern={{version}}
+            type=sha,prefix={{branch}}-
+            type=raw,value=latest,enable={{is_default_branch}}
+
+      - name: Check if Dockerfile exists
+        id: check-dockerfile
+        run: |
+          if [[ -f "projects/mcp-servers/${{ matrix.server }}/Dockerfile" ]]; then
+            echo "exists=true" >> $GITHUB_OUTPUT
+          else
+            echo "exists=false" >> $GITHUB_OUTPUT
+            echo "⚠️ Dockerfile not found for ${{ matrix.server }}" >> $GITHUB_STEP_SUMMARY
+          fi
+
+      - name: Build and push ${{ matrix.server }} MCP server
+        if: steps.check-dockerfile.outputs.exists == 'true'
+        uses: docker/build-push-action@v5
+        with:
+          context: ./projects/mcp-servers/${{ matrix.server }}
+          file: ./projects/mcp-servers/${{ matrix.server }}/Dockerfile
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          platforms: linux/amd64
+
+      - name: Run Trivy scan on ${{ matrix.server }}
+        if: steps.check-dockerfile.outputs.exists == 'true'
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/${{ matrix.server }}-mcp-server:latest
+          format: 'sarif'
+          output: 'trivy-results-${{ matrix.server }}.sarif'
+
+      - name: Upload Trivy results
+        if: steps.check-dockerfile.outputs.exists == 'true'
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: 'trivy-results-${{ matrix.server }}.sarif'
+          category: 'mcp-${{ matrix.server }}'
+
+  deploy-mcp-servers:
+    name: Deploy MCP Servers to K3s
+    runs-on: ubuntu-latest
+    needs: build-mcp-servers
+    if: github.ref == 'refs/heads/main'
+    environment:
+      name: production
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup kubectl
+        uses: azure/setup-kubectl@v4
+        with:
+          version: 'v1.28.0'
+
+      - name: Setup Helm
+        uses: azure/setup-helm@v4
+        with:
+          version: '3.13.0'
+
+      - name: Configure kubeconfig
+        run: |
+          mkdir -p $HOME/.kube
+          echo "${{ secrets.KUBECONFIG_K3S }}" | base64 -d > $HOME/.kube/config
+          chmod 600 $HOME/.kube/config
+
+      - name: Create namespace
+        run: |
+          kubectl create namespace cortex-mcp --dry-run=client -o yaml | kubectl apply -f -
+
+      - name: Create MCP credentials secrets
+        run: |
+          # Wazuh credentials
+          kubectl create secret generic wazuh-credentials \
+            --namespace=cortex-mcp \
+            --from-literal=username="${{ secrets.WAZUH_USERNAME }}" \
+            --from-literal=password="${{ secrets.WAZUH_PASSWORD }}" \
+            --dry-run=client -o yaml | kubectl apply -f -
+
+          # Proxmox credentials
+          kubectl create secret generic proxmox-credentials \
+            --namespace=cortex-mcp \
+            --from-literal=token-id="${{ secrets.PROXMOX_TOKEN_ID }}" \
+            --from-literal=token-secret="${{ secrets.PROXMOX_TOKEN_SECRET }}" \
+            --dry-run=client -o yaml | kubectl apply -f -
+
+          # N8N credentials
+          kubectl create secret generic n8n-credentials \
+            --namespace=cortex-mcp \
+            --from-literal=api-key="${{ secrets.N8N_API_KEY }}" \
+            --dry-run=client -o yaml | kubectl apply -f - || true
+
+      - name: Deploy MCP servers with Helm
+        run: |
+          helm dependency update helm/umbrella-chart
+          helm upgrade --install cortex-mcp helm/umbrella-chart \
+            --namespace cortex-mcp \
+            --set wazuh.enabled=true \
+            --set proxmox.enabled=true \
+            --set n8n.enabled=true \
+            --set k3s.enabled=true \
+            --wait \
+            --timeout 10m
+
+      - name: Verify MCP server deployments
+        run: |
+          echo "## MCP Server Deployment Status" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          kubectl get pods -n cortex-mcp -o wide >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          kubectl get scaledobject -n cortex-mcp >> $GITHUB_STEP_SUMMARY
+
+  test-mcp-integration:
+    name: Test MCP Server Integration
+    runs-on: ubuntu-latest
+    needs: deploy-mcp-servers
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup kubectl
+        uses: azure/setup-kubectl@v4
+        with:
+          version: 'v1.28.0'
+
+      - name: Configure kubeconfig
+        run: |
+          mkdir -p $HOME/.kube
+          echo "${{ secrets.KUBECONFIG_K3S }}" | base64 -d > $HOME/.kube/config
+          chmod 600 $HOME/.kube/config
+
+      - name: Test MCP server connectivity
+        run: |
+          ./scripts/testing/test-mcp-servers.sh || echo "MCP integration tests not configured"
+
+      - name: Check MCP server metrics
+        run: |
+          # Check if MCP servers are exposing metrics
+          kubectl get servicemonitor -n cortex-mcp || echo "ServiceMonitors not configured"

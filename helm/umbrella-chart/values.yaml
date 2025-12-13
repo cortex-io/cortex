@@ -1,0 +1,320 @@
+# Umbrella Chart Values - Cortex MCP Servers
+# Configure all 9 MCP server integrations
+
+# Global settings
+global:
+  namespace: cortex-mcp
+  imageRegistry: ghcr.io/ry-ops/cortex
+  imagePullPolicy: Always
+
+# Wazuh MCP Server (Security SIEM Integration)
+wazuh:
+  enabled: true
+  mcpServer:
+    name: wazuh-mcp-server
+    image:
+      repository: ghcr.io/ry-ops/cortex/wazuh-mcp-server
+      tag: latest
+    env:
+      - name: WAZUH_API_URL
+        value: "https://10.88.140.202:55000"
+      - name: WAZUH_API_USER
+        valueFrom:
+          secretKeyRef:
+            name: wazuh-credentials
+            key: username
+      - name: WAZUH_API_PASSWORD
+        valueFrom:
+          secretKeyRef:
+            name: wazuh-credentials
+            key: password
+    resources:
+      requests:
+        cpu: 250m
+        memory: 512Mi
+      limits:
+        cpu: 1000m
+        memory: 2Gi
+  autoscaling:
+    enabled: true
+    minReplicas: 0
+    maxReplicas: 5
+    metric:
+      type: prometheus
+      serverAddress: http://prometheus.monitoring.svc.cluster.local:9090
+      metricName: cortex_mcp_requests_total
+      query: 'sum(rate(cortex_mcp_requests_total{server="wazuh"}[1m]))'
+      threshold: "10"
+
+# Proxmox MCP Server (Virtualization Platform)
+proxmox:
+  enabled: true
+  mcpServer:
+    name: proxmox-mcp-server
+    image:
+      repository: ghcr.io/ry-ops/cortex/proxmox-mcp-server
+      tag: latest
+    env:
+      - name: PROXMOX_API_URL
+        value: "https://10.88.140.101:8006"
+      - name: PROXMOX_API_TOKEN_ID
+        valueFrom:
+          secretKeyRef:
+            name: proxmox-credentials
+            key: token-id
+      - name: PROXMOX_API_TOKEN_SECRET
+        valueFrom:
+          secretKeyRef:
+            name: proxmox-credentials
+            key: token-secret
+    resources:
+      requests:
+        cpu: 250m
+        memory: 512Mi
+      limits:
+        cpu: 1000m
+        memory: 2Gi
+  autoscaling:
+    enabled: true
+    minReplicas: 0
+    maxReplicas: 3
+    metric:
+      type: prometheus
+      serverAddress: http://prometheus.monitoring.svc.cluster.local:9090
+      metricName: cortex_mcp_requests_total
+      query: 'sum(rate(cortex_mcp_requests_total{server="proxmox"}[1m]))'
+      threshold: "5"
+
+# N8N MCP Server (Workflow Automation)
+n8n:
+  enabled: true
+  mcpServer:
+    name: n8n-mcp-server
+    image:
+      repository: ghcr.io/ry-ops/cortex/n8n-mcp-server
+      tag: latest
+    env:
+      - name: N8N_API_URL
+        value: "https://n8n.example.com"
+      - name: N8N_API_KEY
+        valueFrom:
+          secretKeyRef:
+            name: n8n-credentials
+            key: api-key
+    resources:
+      requests:
+        cpu: 250m
+        memory: 512Mi
+      limits:
+        cpu: 1000m
+        memory: 2Gi
+  autoscaling:
+    enabled: true
+    minReplicas: 0
+    maxReplicas: 3
+    metric:
+      type: prometheus
+      serverAddress: http://prometheus.monitoring.svc.cluster.local:9090
+      metricName: cortex_mcp_requests_total
+      query: 'sum(rate(cortex_mcp_requests_total{server="n8n"}[1m]))'
+      threshold: "5"
+
+# K3s MCP Server (Kubernetes Management)
+k3s:
+  enabled: true
+  mcpServer:
+    name: k3s-mcp-server
+    image:
+      repository: ghcr.io/ry-ops/cortex/k3s-mcp-server
+      tag: latest
+    env:
+      - name: K3S_API_URL
+        value: "https://10.88.145.180:6443"
+      - name: KUBECONFIG
+        value: "/etc/k3s/kubeconfig"
+    volumeMounts:
+      - name: kubeconfig
+        mountPath: /etc/k3s
+        readOnly: true
+    volumes:
+      - name: kubeconfig
+        secret:
+          secretName: k3s-kubeconfig
+    resources:
+      requests:
+        cpu: 250m
+        memory: 512Mi
+      limits:
+        cpu: 1000m
+        memory: 2Gi
+  autoscaling:
+    enabled: true
+    minReplicas: 0
+    maxReplicas: 5
+    metric:
+      type: prometheus
+      serverAddress: http://prometheus.monitoring.svc.cluster.local:9090
+      metricName: cortex_mcp_requests_total
+      query: 'sum(rate(cortex_mcp_requests_total{server="k3s"}[1m]))'
+      threshold: "10"
+
+# Talos MCP Server (Talos Linux Management)
+talos:
+  enabled: false  # Enable when Talos cluster is available
+  mcpServer:
+    name: talos-mcp-server
+    image:
+      repository: ghcr.io/ry-ops/cortex/talos-mcp-server
+      tag: latest
+    env:
+      - name: TALOS_API_URL
+        value: "https://talos-control-plane:6443"
+      - name: TALOSCONFIG
+        value: "/etc/talos/talosconfig"
+    volumeMounts:
+      - name: talosconfig
+        mountPath: /etc/talos
+        readOnly: true
+    volumes:
+      - name: talosconfig
+        secret:
+          secretName: talos-config
+    resources:
+      requests:
+        cpu: 250m
+        memory: 512Mi
+      limits:
+        cpu: 1000m
+        memory: 2Gi
+  autoscaling:
+    enabled: true
+    minReplicas: 0
+    maxReplicas: 3
+
+# OpenTofu MCP Server (Infrastructure as Code)
+opentofu:
+  enabled: false  # Enable when needed
+  mcpServer:
+    name: opentofu-mcp-server
+    image:
+      repository: ghcr.io/ry-ops/cortex/opentofu-mcp-server
+      tag: latest
+    env:
+      - name: WORKSPACE_DIR
+        value: "/workspace"
+    volumeMounts:
+      - name: workspace
+        mountPath: /workspace
+    volumes:
+      - name: workspace
+        emptyDir: {}
+    resources:
+      requests:
+        cpu: 500m
+        memory: 1Gi
+      limits:
+        cpu: 2000m
+        memory: 4Gi
+  autoscaling:
+    enabled: true
+    minReplicas: 0
+    maxReplicas: 3
+
+# Ansible MCP Server (Configuration Management)
+ansible:
+  enabled: false  # Enable when needed
+  mcpServer:
+    name: ansible-mcp-server
+    image:
+      repository: ghcr.io/ry-ops/cortex/ansible-mcp-server
+      tag: latest
+    env:
+      - name: ANSIBLE_PLAYBOOK_DIR
+        value: "/playbooks"
+    volumeMounts:
+      - name: playbooks
+        mountPath: /playbooks
+      - name: inventory
+        mountPath: /inventory
+    volumes:
+      - name: playbooks
+        configMap:
+          name: ansible-playbooks
+      - name: inventory
+        configMap:
+          name: ansible-inventory
+    resources:
+      requests:
+        cpu: 250m
+        memory: 512Mi
+      limits:
+        cpu: 1000m
+        memory: 2Gi
+  autoscaling:
+    enabled: true
+    minReplicas: 0
+    maxReplicas: 3
+
+# Unifi MCP Server (Network Management)
+unifi:
+  enabled: false  # Enable when Unifi controller is available
+  mcpServer:
+    name: unifi-mcp-server
+    image:
+      repository: ghcr.io/ry-ops/cortex/unifi-mcp-server
+      tag: latest
+    env:
+      - name: UNIFI_URL
+        value: "https://unifi-controller:8443"
+      - name: UNIFI_USERNAME
+        valueFrom:
+          secretKeyRef:
+            name: unifi-credentials
+            key: username
+      - name: UNIFI_PASSWORD
+        valueFrom:
+          secretKeyRef:
+            name: unifi-credentials
+            key: password
+    resources:
+      requests:
+        cpu: 250m
+        memory: 512Mi
+      limits:
+        cpu: 500m
+        memory: 1Gi
+  autoscaling:
+    enabled: true
+    minReplicas: 0
+    maxReplicas: 2
+
+# Cloudflare MCP Server (DNS/CDN Management)
+cloudflare:
+  enabled: false  # Enable when needed
+  mcpServer:
+    name: cloudflare-mcp-server
+    image:
+      repository: ghcr.io/ry-ops/cortex/cloudflare-mcp-server
+      tag: latest
+    env:
+      - name: CLOUDFLARE_API_TOKEN
+        valueFrom:
+          secretKeyRef:
+            name: cloudflare-credentials
+            key: api-token
+      - name: CLOUDFLARE_ZONE_ID
+        valueFrom:
+          secretKeyRef:
+            name: cloudflare-credentials
+            key: zone-id
+    resources:
+      requests:
+        cpu: 250m
+        memory: 256Mi
+      limits:
+        cpu: 500m
+        memory: 512Mi
+  autoscaling:
+    enabled: true
+    minReplicas: 0
+    maxReplicas: 2

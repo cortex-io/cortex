@@ -1,0 +1,15 @@
+{{- if .Values.configMap.create }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Values.configMap.name | default (printf "%s-config" .Values.mcpServer.name) }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: {{ .Values.mcpServer.name }}
+    app.kubernetes.io/name: {{ .Values.mcpServer.name }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+data:
+  {{- range $key, $value := .Values.configMap.data }}
+  {{ $key }}: {{ $value | quote }}
+  {{- end }}
+{{- end }}

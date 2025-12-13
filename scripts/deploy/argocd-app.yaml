@@ -1,0 +1,198 @@
+---
+# ArgoCD Application for Cortex Platform
+# Deploys Cortex to K3s cluster using GitOps
+
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: cortex
+  namespace: argocd
+  labels:
+    app.kubernetes.io/name: cortex
+    app.kubernetes.io/managed-by: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+
+  # Source repository
+  source:
+    repoURL: https://github.com/ry-ops/cortex.git
+    targetRevision: main
+    path: k8s/cortex-k3s
+
+    # Kustomize configuration
+    kustomize:
+      version: v5.0.0
+      namePrefix: ""
+      nameSuffix: ""
+      commonLabels:
+        app.kubernetes.io/managed-by: argocd
+
+  # Destination cluster
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: cortex-system
+
+  # Sync policy
+  syncPolicy:
+    automated:
+      prune: true        # Delete resources not in Git
+      selfHeal: true     # Auto-sync when cluster state differs from Git
+      allowEmpty: false
+
+    syncOptions:
+      - CreateNamespace=true
+      - PrunePropagationPolicy=foreground
+      - PruneLast=true
+
+    retry:
+      limit: 5
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 3m
+
+  # Ignore differences for certain fields
+  ignoreDifferences:
+    - group: apps
+      kind: Deployment
+      jsonPointers:
+        - /spec/replicas  # Allow manual scaling
+
+---
+# ArgoCD Application for MCP Servers
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: cortex-mcp-servers
+  namespace: argocd
+  labels:
+    app.kubernetes.io/name: cortex-mcp
+    app.kubernetes.io/managed-by: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+
+  source:
+    repoURL: https://github.com/ry-ops/cortex.git
+    targetRevision: main
+    path: helm/umbrella-chart
+
+    # Helm configuration
+    helm:
+      releaseName: cortex-mcp
+      valueFiles:
+        - values.yaml
+      parameters:
+        - name: wazuh.enabled
+          value: "true"
+        - name: proxmox.enabled
+          value: "true"
+        - name: n8n.enabled
+          value: "true"
+        - name: k3s.enabled
+          value: "true"
+
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: cortex-mcp
+
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+      allowEmpty: false
+
+    syncOptions:
+      - CreateNamespace=true
+
+    retry:
+      limit: 5
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 3m
+
+---
+# ArgoCD Application for Monitoring Stack
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: cortex-monitoring
+  namespace: argocd
+  labels:
+    app.kubernetes.io/name: cortex-monitoring
+    app.kubernetes.io/managed-by: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+
+  source:
+    repoURL: https://github.com/ry-ops/cortex.git
+    targetRevision: main
+    path: k8s/monitoring
+
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: monitoring
+
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+
+    syncOptions:
+      - CreateNamespace=true
+
+    retry:
+      limit: 5
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 3m
+
+---
+# ArgoCD AppProject (optional - for multi-tenancy)
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: cortex-project
+  namespace: argocd
+spec:
+  description: Cortex Autonomous AI Platform
+
+  # Source repositories
+  sourceRepos:
+    - https://github.com/ry-ops/cortex.git
+
+  # Destination clusters
+  destinations:
+    - namespace: cortex-system
+      server: https://kubernetes.default.svc
+    - namespace: cortex-mcp
+      server: https://kubernetes.default.svc
+    - namespace: cortex-workers
+      server: https://kubernetes.default.svc
+    - namespace: monitoring
+      server: https://kubernetes.default.svc
+
+  # Cluster resource whitelist
+  clusterResourceWhitelist:
+    - group: ''
+      kind: Namespace
+    - group: 'rbac.authorization.k8s.io'
+      kind: ClusterRole
+    - group: 'rbac.authorization.k8s.io'
+      kind: ClusterRoleBinding
+
+  # Namespace resource whitelist (allow all in project namespaces)
+  namespaceResourceWhitelist:
+    - group: '*'
+      kind: '*'
+
+  # Orphaned resources (what to do with resources not in Git)
+  orphanedResources:
+    warn: true

@@ -1,0 +1,94 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.mcpServer.name }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: {{ .Values.mcpServer.name }}
+    app.kubernetes.io/name: {{ .Values.mcpServer.name }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
+    app.kubernetes.io/managed-by: {{ .Release.Service }}
+    {{- with .Values.mcpServer.podLabels }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+spec:
+  {{- if not .Values.autoscaling.enabled }}
+  replicas: 1
+  {{- end }}
+  selector:
+    matchLabels:
+      app: {{ .Values.mcpServer.name }}
+  template:
+    metadata:
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
+        {{- with .Values.mcpServer.podAnnotations }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      labels:
+        app: {{ .Values.mcpServer.name }}
+        {{- with .Values.mcpServer.podLabels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+    spec:
+      {{- if .Values.mcpServer.serviceAccount.create }}
+      serviceAccountName: {{ .Values.mcpServer.serviceAccount.name | default .Values.mcpServer.name }}
+      {{- end }}
+      {{- with .Values.mcpServer.podSecurityContext }}
+      securityContext:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+      - name: mcp-server
+        image: "{{ .Values.mcpServer.image.repository }}:{{ .Values.mcpServer.image.tag }}"
+        imagePullPolicy: {{ .Values.mcpServer.image.pullPolicy }}
+        {{- with .Values.mcpServer.securityContext }}
+        securityContext:
+          {{- toYaml . | nindent 10 }}
+        {{- end }}
+        ports:
+        - name: http
+          containerPort: {{ .Values.mcpServer.service.targetPort }}
+          protocol: TCP
+        - name: metrics
+          containerPort: 9090
+          protocol: TCP
+        {{- with .Values.mcpServer.env }}
+        env:
+          {{- toYaml . | nindent 10 }}
+        {{- end }}
+        {{- with .Values.mcpServer.envFrom }}
+        envFrom:
+          {{- toYaml . | nindent 10 }}
+        {{- end }}
+        {{- with .Values.mcpServer.livenessProbe }}
+        livenessProbe:
+          {{- toYaml . | nindent 10 }}
+        {{- end }}
+        {{- with .Values.mcpServer.readinessProbe }}
+        readinessProbe:
+          {{- toYaml . | nindent 10 }}
+        {{- end }}
+        resources:
+          {{- toYaml .Values.mcpServer.resources | nindent 10 }}
+        {{- with .Values.mcpServer.volumeMounts }}
+        volumeMounts:
+          {{- toYaml . | nindent 10 }}
+        {{- end }}
+      {{- with .Values.mcpServer.volumes }}
+      volumes:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.mcpServer.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.mcpServer.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.mcpServer.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}

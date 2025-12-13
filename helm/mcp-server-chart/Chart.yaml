@@ -1,0 +1,15 @@
+apiVersion: v2
+name: mcp-server
+description: A Helm chart for deploying MCP (Model Context Protocol) servers in Cortex
+type: application
+version: 1.0.0
+appVersion: "1.0.0"
+keywords:
+  - mcp
+  - cortex
+  - ai
+  - integration
+home: https://github.com/ry-ops/cortex
+maintainers:
+  - name: Cortex Team
+    email: cortex@example.com

@@ -1,0 +1,35 @@
+{{- if and .Values.hpa.enabled (not .Values.autoscaling.enabled) }}
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: {{ .Values.mcpServer.name }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: {{ .Values.mcpServer.name }}
+    app.kubernetes.io/name: {{ .Values.mcpServer.name }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: {{ .Values.mcpServer.name }}
+  minReplicas: {{ .Values.hpa.minReplicas }}
+  maxReplicas: {{ .Values.hpa.maxReplicas }}
+  metrics:
+  {{- if .Values.hpa.targetCPUUtilizationPercentage }}
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: {{ .Values.hpa.targetCPUUtilizationPercentage }}
+  {{- end }}
+  {{- if .Values.hpa.targetMemoryUtilizationPercentage }}
+  - type: Resource
+    resource:
+      name: memory
+      target:
+        type: Utilization
+        averageUtilization: {{ .Values.hpa.targetMemoryUtilizationPercentage }}
+  {{- end }}
+{{- end }}
