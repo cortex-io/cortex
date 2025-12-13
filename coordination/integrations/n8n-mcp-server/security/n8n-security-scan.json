@@ -1,0 +1,181 @@
+{
+  "task_id": "n8n-mcp-server-security-scan",
+  "task_type": "security_scan",
+  "priority": "high",
+  "target": {
+    "name": "n8n-mcp-server",
+    "repository": "https://github.com/ry-ops/n8n-mcp-server",
+    "local_path": "/Users/ryandahlberg/Projects/n8n-mcp-server",
+    "type": "python_package",
+    "container_image": "ghcr.io/ry-ops/n8n-mcp-server:latest"
+  },
+  "scan_configuration": {
+    "enabled_scanners": [
+      "dependency_check",
+      "code_analysis",
+      "container_scan",
+      "secrets_detection",
+      "api_security"
+    ],
+    "dependency_check": {
+      "enabled": true,
+      "tools": ["safety", "bandit"],
+      "fail_on": ["critical", "high"],
+      "check_types": [
+        "known_vulnerabilities",
+        "outdated_dependencies",
+        "license_compliance"
+      ]
+    },
+    "code_analysis": {
+      "enabled": true,
+      "tools": ["bandit", "ruff"],
+      "patterns": [
+        "hardcoded_credentials",
+        "sql_injection",
+        "command_injection",
+        "insecure_random",
+        "unsafe_yaml_load"
+      ],
+      "excluded_paths": [
+        "tests/*",
+        "*.pyc",
+        "__pycache__/*"
+      ]
+    },
+    "container_scan": {
+      "enabled": true,
+      "tools": ["trivy"],
+      "image": "ghcr.io/ry-ops/n8n-mcp-server:latest",
+      "severity_threshold": "HIGH",
+      "scan_layers": true,
+      "scan_config": true
+    },
+    "secrets_detection": {
+      "enabled": true,
+      "tools": ["detect-secrets"],
+      "patterns": [
+        "api_keys",
+        "private_keys",
+        "passwords",
+        "tokens",
+        "connection_strings"
+      ],
+      "excluded_files": [
+        ".env.example",
+        "tests/*"
+      ]
+    },
+    "api_security": {
+      "enabled": true,
+      "checks": [
+        "authentication_required",
+        "rate_limiting",
+        "input_validation",
+        "error_handling",
+        "ssl_tls_enforcement"
+      ],
+      "n8n_api_checks": {
+        "api_key_rotation": true,
+        "key_exposure_check": true,
+        "rate_limit_check": true
+      }
+    }
+  },
+  "schedule": {
+    "frequency": "daily",
+    "time": "02:00",
+    "timezone": "UTC",
+    "on_commit": true,
+    "on_pr": true
+  },
+  "notifications": {
+    "enabled": true,
+    "channels": [
+      "dashboard_events",
+      "security_log"
+    ],
+    "notify_on": [
+      "critical_vulnerability",
+      "high_severity",
+      "scan_failure"
+    ]
+  },
+  "reporting": {
+    "formats": ["json", "markdown"],
+    "output_dir": "coordination/integrations/n8n-mcp-server/security/reports",
+    "include": [
+      "executive_summary",
+      "vulnerability_details",
+      "remediation_steps",
+      "compliance_status"
+    ],
+    "retention_days": 90
+  },
+  "remediation": {
+    "auto_update": {
+      "enabled": false,
+      "dependency_types": ["patch", "minor"],
+      "create_pr": true,
+      "require_tests": true
+    },
+    "alert_thresholds": {
+      "critical": {
+        "count": 0,
+        "action": "immediate_notification"
+      },
+      "high": {
+        "count": 5,
+        "action": "daily_summary"
+      },
+      "medium": {
+        "count": 10,
+        "action": "weekly_summary"
+      }
+    }
+  },
+  "integration": {
+    "cortex_masters": {
+      "security_master": {
+        "handoff_on": ["critical", "high"],
+        "auto_assign": true
+      },
+      "development_master": {
+        "handoff_on": ["remediation_required"],
+        "create_tasks": true
+      }
+    },
+    "dashboard": {
+      "update_metrics": true,
+      "widget_id": "n8n-security-status"
+    }
+  },
+  "compliance": {
+    "frameworks": [
+      "OWASP_Top_10",
+      "CIS_Docker_Benchmark",
+      "Python_Security_Best_Practices"
+    ],
+    "custom_policies": [
+      {
+        "id": "n8n-api-key-security",
+        "description": "Ensure n8n API keys are never committed to repository",
+        "check": "secrets_detection",
+        "severity": "critical"
+      },
+      {
+        "id": "dependency-freshness",
+        "description": "All dependencies must be less than 6 months old",
+        "check": "dependency_check",
+        "severity": "medium"
+      }
+    ]
+  },
+  "metadata": {
+    "created_at": "2025-12-13T00:00:00Z",
+    "created_by": "development-master",
+    "version": "1.0.0",
+    "last_scan": null,
+    "last_updated": "2025-12-13T00:00:00Z"
+  }
+}

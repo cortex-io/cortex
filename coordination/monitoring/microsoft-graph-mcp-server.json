@@ -1,0 +1,175 @@
+{
+  "repository": "ry-ops/microsoft-graph-mcp-server",
+  "monitoring_config": {
+    "enabled": true,
+    "integrated_at": "2025-12-13T08:20:00-06:00",
+    "health_checks": {
+      "dependency_health": {
+        "enabled": true,
+        "frequency": "daily",
+        "check_types": ["outdated", "security_advisories", "deprecated"],
+        "focus_packages": ["mcp", "msal", "httpx", "python-dotenv"]
+      },
+      "code_quality": {
+        "enabled": true,
+        "frequency": "on_commit",
+        "metrics": ["complexity", "coverage", "maintainability"],
+        "tools": ["black", "ruff", "pytest"]
+      },
+      "security_posture": {
+        "enabled": true,
+        "frequency": "daily",
+        "scans": ["vulnerabilities", "secrets", "misconfigurations", "azure_credential_exposure"],
+        "critical_files": [".env", "*.env.*", "config/*.json"],
+        "azure_specific_checks": ["client_secret_expiry", "permission_scope_drift", "token_security"]
+      },
+      "ms_graph_api_health": {
+        "enabled": true,
+        "frequency": "hourly",
+        "check_graph_connectivity": true,
+        "monitor_api_changes": true,
+        "verify_permissions": ["User.ReadWrite.All", "Directory.ReadWrite.All", "Group.ReadWrite.All", "Organization.Read.All"],
+        "test_auth_flow": true
+      },
+      "azure_integration_health": {
+        "enabled": true,
+        "frequency": "every_6_hours",
+        "check_app_registration": true,
+        "verify_consent_status": true,
+        "monitor_rate_limits": true,
+        "check_tenant_health": true
+      }
+    },
+    "alerts": {
+      "channels": ["dashboard", "events"],
+      "severity_thresholds": {
+        "critical": "immediate",
+        "high": "within_1_hour",
+        "medium": "within_24_hours",
+        "low": "weekly_summary"
+      },
+      "special_alerts": {
+        "client_secret_exposure": "critical",
+        "credential_leak": "critical",
+        "permission_escalation": "critical",
+        "client_secret_expiring_soon": "high",
+        "ms_graph_breaking_changes": "high",
+        "rate_limit_exceeded": "high",
+        "auth_failure": "medium",
+        "consent_revoked": "critical"
+      }
+    },
+    "observability": {
+      "event_tracking": true,
+      "metrics_collection": true,
+      "log_aggregation": false,
+      "dashboard_widget": {
+        "enabled": true,
+        "display_name": "Microsoft Graph MCP Server",
+        "priority": "high",
+        "show_metrics": [
+          "security_score",
+          "graph_api_health",
+          "m365_user_count",
+          "m365_license_usage",
+          "dependency_health",
+          "open_issues",
+          "last_commit",
+          "auth_success_rate",
+          "rate_limit_status"
+        ]
+      }
+    }
+  },
+  "automation_policies": {
+    "auto_dependency_updates": {
+      "enabled": false,
+      "strategy": "manual_review",
+      "update_types": ["patch", "minor"],
+      "exclude_major": true,
+      "critical_dependencies": ["mcp", "msal", "httpx"]
+    },
+    "auto_security_fixes": {
+      "enabled": false,
+      "strategy": "create_pr",
+      "severity_threshold": "high",
+      "require_tests": true,
+      "auto_rotate_keys": false,
+      "azure_secret_rotation": {
+        "enabled": false,
+        "notify_before_expiry": "30_days",
+        "manual_approval_required": true
+      }
+    },
+    "auto_documentation": {
+      "enabled": true,
+      "update_on": ["api_changes", "new_features", "tool_updates", "permission_changes"],
+      "formats": ["markdown", "api_docs", "azure_setup_guide"]
+    }
+  },
+  "integration_points": {
+    "github_webhooks": {
+      "push": "trigger_quality_check",
+      "pull_request": "trigger_security_scan",
+      "release": "trigger_full_audit",
+      "issues": "track_ms_graph_compatibility"
+    },
+    "cortex_apis": {
+      "security_api": "http://localhost:3000/api/security/scan",
+      "observability_api": "http://localhost:3001/api/events",
+      "dashboard_api": "http://localhost:3000/api/dashboard"
+    },
+    "microsoft_graph_integration": {
+      "monitor_api_changes": true,
+      "track_permission_usage": true,
+      "alert_on_breaking_changes": true,
+      "verify_consent_status": true,
+      "rate_limit_monitoring": true
+    },
+    "azure_ad_integration": {
+      "check_app_registration_health": true,
+      "monitor_secret_expiry": true,
+      "verify_service_principal": true,
+      "track_audit_logs": false
+    }
+  },
+  "reporting": {
+    "daily_health_summary": true,
+    "weekly_trends_report": true,
+    "monthly_audit_report": true,
+    "reports_location": "coordination/reports/microsoft-graph-mcp-server/",
+    "special_reports": {
+      "azure_secret_rotation_reminder": "monthly",
+      "ms_graph_compatibility_check": "weekly",
+      "m365_license_usage_report": "monthly",
+      "permission_audit": "quarterly"
+    }
+  },
+  "security_notes": {
+    "azure_credentials": "Client secrets grant full directory access - monitor for exposure and rotate every 90 days",
+    "credential_management": "Verify .env files excluded from git and stored in Azure Key Vault for production",
+    "permission_scope": "Verify app only has required permissions - avoid over-privileged access",
+    "secret_rotation": "Quarterly rotation recommended for production - track expiry in Azure Portal",
+    "monitoring_focus": "Client secret exposure, credential leaks, permission drift, dependency vulnerabilities, rate limiting",
+    "compliance": "Monitor for GDPR/compliance requirements when managing M365 user data",
+    "mfa_requirements": "Ensure admin accounts used for app registration have MFA enabled"
+  },
+  "m365_specific_monitoring": {
+    "user_management_metrics": {
+      "track_user_creation_rate": true,
+      "monitor_license_assignments": true,
+      "track_group_memberships": true,
+      "alert_on_bulk_operations": true
+    },
+    "license_optimization": {
+      "track_license_usage": true,
+      "identify_unused_licenses": false,
+      "report_cost_optimization": false
+    },
+    "audit_compliance": {
+      "log_user_operations": true,
+      "track_permission_changes": true,
+      "monitor_admin_actions": true
+    }
+  }
+}

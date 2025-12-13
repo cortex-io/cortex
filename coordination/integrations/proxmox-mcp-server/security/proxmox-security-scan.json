@@ -1,0 +1,113 @@
+{
+  "task_id": "proxmox-security-scan-001",
+  "task_type": "security_scan",
+  "priority": "high",
+  "status": "pending",
+  "assigned_master": "security-master",
+  "repository": {
+    "name": "ry-ops/proxmox-mcp-server",
+    "url": "https://github.com/ry-ops/proxmox-mcp-server",
+    "language": "Python",
+    "package_manager": "uv",
+    "default_branch": "main",
+    "local_path": "/Users/ryandahlberg/Projects/proxmox-mcp-server"
+  },
+  "scan_config": {
+    "scan_types": [
+      "dependency_vulnerabilities",
+      "secrets_detection",
+      "static_analysis",
+      "api_token_exposure",
+      "container_security"
+    ],
+    "tools": [
+      "pip-audit",
+      "bandit",
+      "safety",
+      "gitleaks",
+      "trufflehog",
+      "trivy"
+    ],
+    "severity_threshold": "medium",
+    "include_dependencies": true,
+    "focus_areas": [
+      "Proxmox API token management",
+      "Proxmox credential handling",
+      "Environment variable security",
+      "SSL/TLS verification settings",
+      "Dependency vulnerabilities",
+      "Docker image security"
+    ],
+    "scan_patterns": {
+      "secrets": [
+        "PROXMOX_TOKEN",
+        "PROXMOX_PASSWORD",
+        "PROXMOX_API_KEY",
+        "-----BEGIN PRIVATE KEY-----",
+        "-----BEGIN RSA PRIVATE KEY-----"
+      ],
+      "sensitive_files": [
+        ".env",
+        "*.env.*",
+        "config/*.json",
+        "*.pem",
+        "*.key"
+      ],
+      "code_patterns": [
+        "verify=False",
+        "verify_ssl=False",
+        "SSL_VERIFY_DISABLE"
+      ]
+    }
+  },
+  "docker_scan": {
+    "enabled": true,
+    "scan_dockerfile": true,
+    "scan_compose": true,
+    "check_base_images": true,
+    "vulnerability_db": "trivy"
+  },
+  "created_at": "2025-12-13T00:00:00Z",
+  "created_by": "cortex-integration",
+  "deliverables": {
+    "vulnerability_report": "coordination/security/reports/proxmox-mcp-server-scan.json",
+    "summary_report": "coordination/security/reports/proxmox-mcp-server-summary.md",
+    "secrets_scan_report": "coordination/security/reports/proxmox-mcp-server-secrets.json",
+    "docker_scan_report": "coordination/security/reports/proxmox-mcp-server-docker.json"
+  },
+  "security_notes": {
+    "api_tokens": "Proxmox API tokens grant full infrastructure access - critical to monitor for exposure",
+    "credential_storage": "Verify .env files are properly gitignored and never committed",
+    "ssl_verification": "Monitor for disabled SSL verification (verify=False) - security risk in production",
+    "token_rotation": "Recommend regular API token rotation policy (monthly minimum)",
+    "privileged_access": "Proxmox tokens may have elevated privileges - audit permissions regularly",
+    "multi_node_access": "Tokens may grant access to entire cluster - protect accordingly"
+  },
+  "compliance": {
+    "required_checks": [
+      "no_hardcoded_credentials",
+      "ssl_verification_enabled",
+      "secrets_in_gitignore",
+      "no_exposed_keys_in_history",
+      "docker_security_best_practices"
+    ],
+    "vulnerability_policy": {
+      "critical": "block_deployment",
+      "high": "require_review",
+      "medium": "track_and_monitor",
+      "low": "informational"
+    }
+  },
+  "automation": {
+    "scan_frequency": "daily",
+    "on_push": true,
+    "on_pull_request": true,
+    "auto_create_issues": false,
+    "alert_on_critical": true
+  },
+  "integration_points": {
+    "dashboard_widget": "coordination/integrations/proxmox-mcp-server/dashboard/proxmox-widget.json",
+    "monitoring_config": "coordination/monitoring/proxmox-mcp-server.json",
+    "event_stream": "coordination/dashboard-events.jsonl"
+  }
+}

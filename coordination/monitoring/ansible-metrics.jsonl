@@ -1,0 +1,1 @@
+{"timestamp":"2025-12-13T14:25:10Z","component":"ansible-mcp-server","period":"24h","metrics":{"total_executions":0,"successful_executions":0,"failed_executions":0,"success_rate_percent":0,"total_historical_executions":0},"latest_execution":null,"log_directory":"/Users/ryandahlberg/.ansible-mcp-server/logs"}

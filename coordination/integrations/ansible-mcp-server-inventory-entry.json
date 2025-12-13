@@ -1,0 +1,276 @@
+{
+  "created_at": "2025-12-09T00:00:00Z",
+  "default_branch": "main",
+  "description": "MCP server for Ansible configuration management - Part of the Cortex ecosystem",
+  "forks": 0,
+  "health_status": "healthy",
+  "is_archived": false,
+  "language": "Python",
+  "last_cataloged": "2025-12-13T14:30:00Z",
+  "last_commit": "2025-12-09T00:00:00Z",
+  "name": "ry-ops/ansible-mcp-server",
+  "open_issues": 0,
+  "stars": 0,
+  "status": "active",
+  "url": "https://github.com/ry-ops/ansible-mcp-server",
+  "visibility": "public",
+  "local_path": "/Users/ryandahlberg/Projects/ansible-mcp-server",
+  "project_type": "mcp-server",
+  "maturity_level": "production_ready",
+  "strategic_importance": "high",
+  "integration_priority": "HIGH",
+  "tech_stack": {
+    "language": "Python",
+    "version": "3.10+",
+    "framework": "MCP",
+    "mcp_version": "1.9.4",
+    "build_system": "hatchling",
+    "key_dependencies": [
+      "mcp>=1.9.4",
+      "httpx>=0.27.0",
+      "ansible>=2.9"
+    ],
+    "dev_dependencies": [
+      "pytest>=8.0.0",
+      "pytest-asyncio>=0.23.0",
+      "black>=24.0.0",
+      "ruff>=0.3.0",
+      "mypy>=1.8.0"
+    ]
+  },
+  "features": [
+    "Playbook execution with full parameter control",
+    "Ad-hoc command execution",
+    "Inventory management and inspection",
+    "System fact gathering",
+    "Role discovery and management",
+    "Collection management (list/install)",
+    "Ansible Vault operations (encrypt/decrypt)",
+    "Playbook syntax validation and linting",
+    "Playbook discovery",
+    "Variable extraction",
+    "Automatic syntax validation before execution",
+    "Check mode (dry-run) support",
+    "Comprehensive execution logging"
+  ],
+  "capabilities": {
+    "total_tools": 12,
+    "tools": [
+      "run_playbook",
+      "run_adhoc",
+      "list_inventory",
+      "get_facts",
+      "list_roles",
+      "list_collections",
+      "install_collection",
+      "vault_encrypt",
+      "vault_decrypt",
+      "lint_playbook",
+      "list_playbooks",
+      "get_playbook_vars"
+    ],
+    "safety_features": [
+      "syntax_validation",
+      "check_mode",
+      "execution_logging",
+      "error_handling",
+      "audit_trail"
+    ]
+  },
+  "test_results": {
+    "last_tested": "2025-12-13T14:25:00Z",
+    "total_tests": 40,
+    "passed": 40,
+    "failed": 0,
+    "skipped": 0,
+    "execution_time_seconds": 0.96,
+    "pass_rate": 1.0,
+    "test_categories": [
+      "command_execution",
+      "all_12_mcp_tools",
+      "error_handling",
+      "parameter_processing",
+      "tool_schemas"
+    ]
+  },
+  "maturity_assessment": {
+    "code_quality": 9,
+    "test_coverage": 10,
+    "documentation": 9,
+    "error_handling": 9,
+    "safety_features": 10,
+    "api_design": 9,
+    "production_readiness": 9,
+    "integration_potential": 10,
+    "overall_score": 9.4,
+    "status": "production_ready",
+    "assessed_by": "development_master",
+    "assessed_at": "2025-12-13T14:30:00Z",
+    "assessment_document": "/Users/ryandahlberg/Projects/cortex/docs/integrations/ansible-mcp-server-integration.md"
+  },
+  "cortex_integration": {
+    "integration_status": "active",
+    "integration_type": "mcp_server",
+    "integrated_at": "2025-12-13T14:30:00Z",
+    "local_clone": true,
+    "last_pulled": "2025-12-13T14:19:00Z",
+    "installation": {
+      "method": "pip",
+      "command": "pip install -e .",
+      "venv_path": "/Users/ryandahlberg/Projects/ansible-mcp-server/venv",
+      "installed": true,
+      "installed_at": "2025-12-13T14:20:00Z"
+    },
+    "monitoring": {
+      "enabled": true,
+      "health_check_script": "/Users/ryandahlberg/Projects/cortex/scripts/monitoring/check-ansible-mcp-health.sh",
+      "metrics_script": "/Users/ryandahlberg/Projects/cortex/scripts/monitoring/collect-ansible-metrics.sh",
+      "health_log": "/Users/ryandahlberg/Projects/cortex/coordination/monitoring/ansible-mcp-health.jsonl",
+      "metrics_file": "/Users/ryandahlberg/Projects/cortex/coordination/monitoring/ansible-metrics.json",
+      "check_interval_seconds": 300,
+      "last_health_check": "2025-12-13T14:25:06Z",
+      "health_status": "healthy"
+    },
+    "knowledge_base": {
+      "patterns_file": "/Users/ryandahlberg/Projects/cortex/coordination/masters/development/knowledge-base/ansible-patterns.jsonl",
+      "playbooks_library": "/Users/ryandahlberg/Projects/cortex/playbooks/",
+      "patterns_count": 8
+    },
+    "integration_points": [
+      {
+        "master": "development",
+        "use_cases": [
+          "infrastructure_provisioning",
+          "configuration_automation",
+          "deployment_workflows"
+        ]
+      },
+      {
+        "master": "cicd",
+        "use_cases": [
+          "automated_deployments",
+          "environment_setup",
+          "post_deployment_validation"
+        ]
+      },
+      {
+        "master": "security",
+        "use_cases": [
+          "security_hardening",
+          "compliance_automation",
+          "patch_management"
+        ]
+      },
+      {
+        "master": "inventory",
+        "use_cases": [
+          "infrastructure_documentation",
+          "configuration_tracking"
+        ]
+      }
+    ],
+    "integration_files": {
+      "config": "/Users/ryandahlberg/Projects/cortex/coordination/integrations/ansible-mcp-server.json",
+      "health_check": "/Users/ryandahlberg/Projects/cortex/scripts/monitoring/check-ansible-mcp-health.sh",
+      "metrics_collection": "/Users/ryandahlberg/Projects/cortex/scripts/monitoring/collect-ansible-metrics.sh",
+      "knowledge_base": "/Users/ryandahlberg/Projects/cortex/coordination/masters/development/knowledge-base/ansible-patterns.jsonl",
+      "playbooks_library": "/Users/ryandahlberg/Projects/cortex/playbooks/",
+      "documentation": "/Users/ryandahlberg/Projects/cortex/docs/integrations/ansible-mcp-server-integration.md"
+    }
+  },
+  "use_cases": {
+    "infrastructure_as_code": [
+      "Proxmox VM provisioning",
+      "K3s cluster node configuration",
+      "Container host management"
+    ],
+    "configuration_management": [
+      "Application deployment",
+      "Service management",
+      "Security settings"
+    ],
+    "orchestration": [
+      "Multi-host deployments",
+      "Rolling updates",
+      "Health checks"
+    ],
+    "security_operations": [
+      "Patch management",
+      "Security hardening",
+      "Compliance enforcement"
+    ],
+    "cicd_integration": [
+      "Automated deployments",
+      "Environment provisioning",
+      "Post-deployment verification"
+    ]
+  },
+  "deployment_status": {
+    "phase": "core_integration_complete",
+    "tasks_completed": [
+      "repository_cloned",
+      "installation_completed",
+      "tests_passed_40_40",
+      "maturity_assessed_9.4",
+      "integration_documented",
+      "health_checks_deployed",
+      "metrics_collection_active",
+      "knowledge_base_created",
+      "playbooks_library_initialized"
+    ],
+    "tasks_pending": [
+      "dashboard_widget_implementation",
+      "worker_integration",
+      "example_playbooks_creation",
+      "claude_desktop_config_update"
+    ],
+    "next_phase": "dashboard_and_worker_integration"
+  },
+  "strategic_value": {
+    "fills_automation_gap": true,
+    "enables_infrastructure_as_code": true,
+    "supports_multi_host_orchestration": true,
+    "integrates_with_existing_masters": true,
+    "value_score": 10,
+    "recommendation": "FULL_PRODUCTION_INTEGRATION"
+  },
+  "documentation": {
+    "readme_quality": "excellent",
+    "development_guide": "comprehensive",
+    "examples": "comprehensive",
+    "changelog": "complete",
+    "project_summary": "complete",
+    "integration_guide": "complete",
+    "quality_score": 9
+  },
+  "architecture": {
+    "total_lines_of_code": 1431,
+    "server_implementation": 767,
+    "test_coverage": 664,
+    "examples": 5,
+    "documentation_pages": 6,
+    "async_implementation": true,
+    "error_handling": "comprehensive",
+    "logging": "audit_trail",
+    "validation": "pre_execution"
+  },
+  "security_considerations": [
+    "Ansible Vault support for secrets",
+    "Check mode (dry-run) before changes",
+    "Explicit privilege escalation flag required",
+    "Complete execution audit trail",
+    "Syntax validation prevents invalid playbooks",
+    "Credentials managed via Ansible standards"
+  ],
+  "license": "MIT",
+  "notes": [
+    "Production-ready MCP server v0.1.0",
+    "100% test pass rate (40/40 tests)",
+    "Comprehensive safety features",
+    "Excellent documentation and examples",
+    "Perfect fit for Cortex automation needs",
+    "Fills critical infrastructure automation gap",
+    "Assessed by Development Master: 9.4/10",
+    "Full integration approved and implemented"
+  ]
+}

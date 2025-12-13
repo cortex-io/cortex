@@ -2,7 +2,9 @@
 
 **Repository**: `ry-ops/n8n-mcp-server`
 **Integration Date**: 2025-12-07
-**Status**: Active Monitoring
+**Enhanced Integration**: 2025-12-13
+**Status**: ✅ Fully Integrated - Active Monitoring
+**Local Clone**: `/Users/ryandahlberg/Projects/n8n-mcp-server`
 
 ## Overview
 
@@ -57,10 +59,11 @@ This document describes how the `n8n-mcp-server` project is integrated with Cort
 
 ## What's Integrated
 
-### 1. Repository Inventory ✅
+### 1. Repository Inventory ✅ (Enhanced 2025-12-13)
 - **Location**: `coordination/repository-inventory.json`
+- **Local Clone**: `/Users/ryandahlberg/Projects/n8n-mcp-server`
 - **Metadata**: Full project description, tech stack, dependencies, features
-- **Status**: Active, cataloged
+- **Status**: Active, cataloged, locally cloned
 - **Features**:
   - Project type: MCP Server
   - Language: Python 3.10+
@@ -68,34 +71,82 @@ This document describes how the `n8n-mcp-server` project is integrated with Cort
   - Package manager: uv
   - Key dependencies tracked
   - 13 n8n management tools documented
+  - A2A protocol support
+  - Advanced retry logic and validation
 
-### 2. Security Scanning ✅
-- **Task File**: `coordination/tasks/n8n-security-scan.json`
+### 2. Enhanced Monitoring ✅ (NEW 2025-12-13)
+- **Health Check Script**: `coordination/integrations/n8n-mcp-server/monitoring/n8n-health-check.sh`
+- **Check Interval**: 300 seconds (5 minutes)
+- **Monitoring Features**:
+  - n8n API availability and authentication
+  - Workflow status tracking (total, active, inactive)
+  - Execution monitoring (success rate, failure rate)
+  - Container health status
+  - Disk usage tracking
+- **Output Files**:
+  - `coordination/monitoring/n8n-health-report.json`
+  - `coordination/monitoring/n8n-workflow-metrics.json`
+  - `coordination/monitoring/n8n-execution-metrics.json`
+- **Health States**: healthy, degraded, unhealthy
+- **Alerts**: High failure rate (>20%), unhealthy status, API connectivity issues
+
+### 3. Enhanced Security Scanning ✅ (Enhanced 2025-12-13)
+- **Config File**: `coordination/integrations/n8n-mcp-server/security/n8n-security-scan.json`
 - **Scan Types**:
-  - Dependency vulnerability scanning (pip-audit, safety)
-  - Secrets detection (gitleaks, trufflehog)
-  - Static code analysis (bandit)
-  - API key exposure monitoring
-- **Severity Threshold**: Medium and above
-- **Reports**: `coordination/security/reports/n8n-mcp-server-*`
-- **Special Focus**: API key management, credential security
+  - **Dependency Check**: safety, bandit (known vulns, outdated deps, licenses)
+  - **Code Analysis**: bandit, ruff (credentials, injection, insecure patterns)
+  - **Container Scan**: trivy on ghcr.io/ry-ops/n8n-mcp-server:latest
+  - **Secrets Detection**: detect-secrets (API keys, passwords, tokens)
+  - **API Security**: Authentication, rate limiting, input validation, TLS
+- **Severity Threshold**: HIGH
+- **Schedule**: Daily at 02:00 UTC, on commit, on PR
+- **Reports**: `coordination/integrations/n8n-mcp-server/security/reports/`
+- **Compliance**: OWASP Top 10, CIS Docker Benchmark, Python Security Best Practices
+- **Special Focus**: API key management, credential security, n8n API key rotation
 
-### 3. Observability & Monitoring ✅
-- **Config**: `coordination/monitoring/n8n-mcp-server.json`
+### 4. Dashboard Widget ✅ (NEW 2025-12-13)
+- **Config**: `coordination/integrations/n8n-mcp-server/dashboard/n8n-widget.json`
+- **Widget ID**: `n8n-mcp-server-metrics`
+- **Category**: Integrations
+- **Refresh Interval**: 60 seconds
+- **Visualizations**:
+  - Status indicator (healthy/degraded/unhealthy)
+  - Workflow metrics grid (total, active, inactive)
+  - Execution metrics grid (success rate, failure rate)
+  - Execution trends chart (24h time series)
+  - Security status badge (vulnerability counts)
+  - Recent alerts list (warnings and errors)
+- **Actions**:
+  - Run Health Check (on-demand)
+  - View n8n Workflows (external link)
+  - View Executions (external link)
+  - Run Security Scan (task trigger)
+  - View Container Logs (modal)
+- **Alert Rules**:
+  - Unhealthy status (critical)
+  - High failure rate >20% (warning)
+  - No active workflows (info)
+  - Security vulnerabilities (high)
+
+### 5. Configuration Management ✅ (NEW 2025-12-13)
+- **Config**: `coordination/integrations/n8n-mcp-server/config/n8n-config.json`
 - **Features**:
-  - Daily dependency health checks
-  - On-commit code quality analysis
-  - Daily security posture scans
-  - Hourly n8n API compatibility checks
-  - Dashboard widget integration
-  - Event tracking in observability pipeline
-  - API key exposure alerts
+  - n8n instance connection settings
+  - Repository details and local path
+  - Container configuration
+  - Monitoring settings (intervals, retention)
+  - Security settings (scan schedule, thresholds)
+  - Dashboard integration configuration
+  - Cortex master integration (handoff rules)
+  - Worker configuration (monitoring, security)
 
-### 4. Automation Policies ⚙️
+### 6. Automation Policies ⚙️
 - **Dependency Updates**: Manual review (patch/minor only)
 - **Security Fixes**: Create PR for high+ severity (currently disabled)
 - **Documentation**: Auto-update on API changes (enabled)
 - **Key Rotation**: Monthly reminder (manual process)
+- **Health Checks**: Automated every 5 minutes
+- **Security Scans**: Automated daily at 02:00 UTC
 
 ## n8n MCP Server Capabilities
 
@@ -435,6 +486,91 @@ For issues or questions about this integration:
 2. View task status: `cat coordination/tasks/n8n-security-scan.json`
 3. Check dashboard: http://localhost:3000
 4. Review n8n-mcp-server docs: https://github.com/ry-ops/n8n-mcp-server
+
+## Integration Files Reference
+
+All integration files are located in `coordination/integrations/n8n-mcp-server/`:
+
+### Configuration
+- **Main Config**: `config/n8n-config.json`
+  - n8n instance connection settings
+  - Repository details
+  - Monitoring and security settings
+  - Cortex master integration rules
+
+### Monitoring
+- **Health Check Script**: `monitoring/n8n-health-check.sh` (executable)
+  - Runs every 5 minutes
+  - Checks n8n API, workflows, executions, container
+  - Outputs: health report, workflow metrics, execution metrics
+
+**Quick Test**:
+```bash
+/Users/ryandahlberg/Projects/cortex/coordination/integrations/n8n-mcp-server/monitoring/n8n-health-check.sh
+```
+
+### Security
+- **Scan Config**: `security/n8n-security-scan.json`
+  - 5 scanner types configured
+  - Daily schedule at 02:00 UTC
+  - Compliance frameworks included
+  - Reports in `security/reports/`
+
+### Dashboard
+- **Widget Config**: `dashboard/n8n-widget.json`
+  - Widget ID: `n8n-mcp-server-metrics`
+  - 6 visualizations
+  - 5 action buttons
+  - 4 alert rules
+  - 60-second refresh
+
+## Quick Start Guide
+
+### 1. Run Health Check
+```bash
+# Execute health check
+cd /Users/ryandahlberg/Projects/cortex
+./coordination/integrations/n8n-mcp-server/monitoring/n8n-health-check.sh
+
+# View results
+cat coordination/monitoring/n8n-health-report.json | jq
+cat coordination/monitoring/n8n-workflow-metrics.json | jq
+cat coordination/monitoring/n8n-execution-metrics.json | jq
+```
+
+### 2. View Configuration
+```bash
+# Main integration config
+cat coordination/integrations/n8n-mcp-server/config/n8n-config.json | jq
+
+# Security scan config
+cat coordination/integrations/n8n-mcp-server/security/n8n-security-scan.json | jq
+
+# Dashboard widget config
+cat coordination/integrations/n8n-mcp-server/dashboard/n8n-widget.json | jq
+```
+
+### 3. Check Integration Status
+```bash
+# View inventory entry
+cat coordination/repository-inventory.json | jq '.repositories[] | select(.name == "ry-ops/n8n-mcp-server")'
+
+# Check local repository
+cd /Users/ryandahlberg/Projects/n8n-mcp-server
+git status
+git log -1
+```
+
+### 4. Update Local Clone
+```bash
+# Pull latest changes
+cd /Users/ryandahlberg/Projects/n8n-mcp-server
+git pull origin main
+
+# Update inventory
+cd /Users/ryandahlberg/Projects/cortex
+./scripts/run-inventory-master.sh
+```
 
 ## References
 

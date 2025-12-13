@@ -1,0 +1,133 @@
+{
+  "task_id": "unifi-mcp-security-scan-001",
+  "task_type": "security_scan",
+  "priority": "high",
+  "status": "pending",
+  "assigned_master": "security-master",
+  "repository": {
+    "name": "ry-ops/unifi-mcp-server",
+    "url": "https://github.com/ry-ops/unifi-mcp-server",
+    "language": "Python",
+    "package_manager": "uv",
+    "default_branch": "main",
+    "local_path": "/Users/ryandahlberg/Projects/unifi-mcp-server"
+  },
+  "scan_config": {
+    "scan_types": [
+      "dependency_vulnerabilities",
+      "secrets_detection",
+      "static_analysis",
+      "api_key_exposure",
+      "ssrf_validation",
+      "tls_configuration",
+      "multi_api_security"
+    ],
+    "tools": [
+      "pip-audit",
+      "bandit",
+      "safety",
+      "gitleaks",
+      "trufflehog",
+      "semgrep"
+    ],
+    "severity_threshold": "medium",
+    "include_dependencies": true,
+    "focus_areas": [
+      "UniFi controller API key management",
+      "Cloud Site Manager token security",
+      "Legacy API credential handling",
+      "SSRF protection validation",
+      "TLS verification configuration",
+      "Environment variable security",
+      "Multi-API authentication security",
+      "Dependency vulnerabilities",
+      "URL validation whitelist",
+      "Protect API security",
+      "Access API door unlock authorization"
+    ]
+  },
+  "unifi_specific_checks": {
+    "api_security": {
+      "local_controller": {
+        "check_api_key_exposure": true,
+        "validate_tls_settings": true,
+        "verify_api_key_rotation": true,
+        "check_legacy_credentials": true
+      },
+      "cloud_site_manager": {
+        "check_token_exposure": true,
+        "validate_cloud_api_scope": true,
+        "verify_token_rotation": true
+      },
+      "protect_api": {
+        "check_camera_access_controls": true,
+        "validate_privacy_mode_security": true
+      },
+      "access_api": {
+        "check_door_unlock_authorization": true,
+        "validate_timed_unlock_safety": true
+      }
+    },
+    "ssrf_protection": {
+      "validate_url_validation_enabled": true,
+      "check_allowed_hosts_whitelist": true,
+      "verify_hostname_validation": true,
+      "test_ssrf_bypass_attempts": false
+    },
+    "configuration_security": {
+      "check_secrets_env_gitignore": true,
+      "validate_env_file_permissions": true,
+      "verify_no_hardcoded_credentials": true,
+      "check_tls_verification_production": true
+    },
+    "a2a_protocol_security": {
+      "validate_agent_card_security": true,
+      "check_prompt_safety_requirements": true,
+      "verify_confirmation_workflows": true,
+      "validate_reversible_operations": true
+    }
+  },
+  "network_infrastructure_considerations": {
+    "device_access": "Server provides control over network devices - validate authorization",
+    "client_blocking": "Client blocking requires confirmation workflows - verify safety checks",
+    "wlan_management": "WLAN enable/disable requires confirmation - check implementation",
+    "camera_control": "Protect camera reboots and privacy mode require authorization",
+    "door_unlock": "Access door unlock is time-limited but irreversible - validate safeguards",
+    "led_flash": "Device LED flash is safe operation - low security risk"
+  },
+  "created_at": "2025-12-13T08:20:00-06:00",
+  "created_by": "cortex-integration",
+  "deliverables": {
+    "vulnerability_report": "coordination/security/reports/unifi-mcp-server-scan.json",
+    "summary_report": "coordination/security/reports/unifi-mcp-server-summary.md",
+    "secrets_scan_report": "coordination/security/reports/unifi-mcp-server-secrets.json",
+    "ssrf_validation_report": "coordination/security/reports/unifi-mcp-server-ssrf.json",
+    "api_security_report": "coordination/security/reports/unifi-mcp-server-api-security.json"
+  },
+  "security_notes": {
+    "local_api_keys": "UniFi controller API keys grant full network access - critical to monitor for exposure and rotate monthly",
+    "site_manager_token": "Cloud Site Manager token provides cross-site infrastructure access - requires secure storage and rotation",
+    "legacy_credentials": "Legacy API username/password for WLAN management - consider 2FA and app-specific passwords",
+    "ssrf_protection": "Built-in SSRF protection with allowed hosts whitelist - validate configuration and bypass prevention",
+    "tls_verification": "TLS verification can be disabled for local controllers - acceptable for home lab, must enable for production",
+    "credential_storage": "Verify secrets.env is properly gitignored and has restricted file permissions (600)",
+    "multi_api_fallback": "Server uses multiple authentication methods - ensure all APIs properly secured",
+    "device_control": "Server provides network device control - validate authorization and confirmation workflows",
+    "camera_access": "Protect API enables camera control and privacy mode - ensure proper access controls",
+    "door_unlock": "Access API enables door unlocking - time-limited but requires strong authorization",
+    "key_rotation": "Recommend monthly API key rotation for production environments"
+  },
+  "compliance_requirements": {
+    "data_privacy": "Network client data (MAC, IP, hostname) requires privacy considerations",
+    "physical_security": "Door unlock capability requires physical security controls",
+    "video_surveillance": "Camera privacy mode affects surveillance compliance",
+    "network_security": "Client blocking affects network access controls"
+  },
+  "automation_rules": {
+    "scan_frequency": "daily",
+    "alert_on_critical": true,
+    "auto_create_issues": true,
+    "notify_channels": ["dashboard", "events"],
+    "remediation_tracking": true
+  }
+}

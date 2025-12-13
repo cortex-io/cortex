@@ -1,0 +1,36 @@
+{
+  "timestamp": "2025-12-13T14:27:58Z",
+  "health_score": 50,
+  "cli_status": {
+    "primary_cli": "[0;34m[2025-12-13 08:27:58][0m Checking OpenTofu CLI availability...",
+    "opentofu_version": "",
+    "terraform_version": "",
+    "available": true
+  },
+  "mcp_server": {
+    "status": "[0;34m[2025-12-13 08:27:58][0m Checking MCP server health endpoint...
+[0;32m[2025-12-13 08:27:58][0m MCP server main.py is valid Python
+valid",
+    "server_path": "/Users/ryandahlberg/Projects/opentofu-mcp-server",
+    "main_py_valid": false
+  },
+  "operations": {
+    "total_operations": [0;34m[2025-12-13 08:27:58][0m Checking operation audit log...,
+    "apply_operations": ,
+    "destroy_operations": ,
+    "failed_operations": ,
+    "operation_log_path": "/Users/ryandahlberg/Projects/opentofu-mcp-server/tofu_operations.log",
+    "failure_rate": 0
+  },
+  "workspace_protection": {
+    "enabled": true,
+    "protected_workspaces": "[0;34m[2025-12-13,08:27:58][0m,Checking,workspace,protection,configuration...,[0;32m[2025-12-13,08:27:58][0m,Protected,workspaces:,production,prod,main,(3,workspaces),production,prod,main",
+    "enforcement_level": "strict"
+  },
+  "security": {
+    "issues_count": [0;34m[2025-12-13 08:27:58][0m Checking for security issues...,
+    "warnings": [],
+    "last_scan": "2025-12-13T14:27:58Z"
+  },
+  "monitoring_config": "/Users/ryandahlberg/Projects/cortex/coordination/monitoring/opentofu-mcp-server.json"
+}

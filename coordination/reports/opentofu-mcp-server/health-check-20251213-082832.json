@@ -1,0 +1,26 @@
+{
+  "timestamp": "2025-12-13T14:28:32Z",
+  "health_score": 60,
+  "cli_status": {
+    "primary_cli": "none",
+    "version": "none",
+    "available": false
+  },
+  "mcp_server": {
+    "status": "valid",
+    "main_py_valid": true
+  },
+  "operations": {
+    "total_operations": 0,
+    "apply_operations": 0,
+    "destroy_operations": 0,
+    "failed_operations": 0
+  },
+  "workspace_protection": {
+    "enabled": true,
+    "protected_workspaces": "production,prod,main"
+  },
+  "security": {
+    "issues_count": 0
+  }
+}
