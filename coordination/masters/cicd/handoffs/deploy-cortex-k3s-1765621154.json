@@ -1,0 +1,25 @@
+{
+  "handoff_id": "deploy-cortex-k3s-fc732e2d58e1486687358e464cdeb70c",
+  "from_master": "cicd",
+  "to_master": "manual-operator",
+  "task_id": "deploy-cortex-to-k3s",
+  "handoff_type": "manual_deployment",
+  "priority": "critical",
+  "deployment_details": {
+    "target": "K3s Cluster CT 300",
+    "master_node": "10.88.145.180",
+    "script_path": "/Users/ryandahlberg/Projects/cortex/deploy-cortex-complete.sh",
+    "method": "Execute deploy-cortex-complete.sh on CT 300",
+    "credentials_embedded": true,
+    "expected_outcome": "4 master pods + dashboard running in cortex-system namespace"
+  },
+  "manual_steps": [
+    "Access CT 300 console via Proxmox web UI (https://10.88.140.164:8006)",
+    "Copy deploy-cortex-complete.sh to CT 300:/root/",
+    "Execute: bash /root/deploy-cortex-complete.sh",
+    "Verify pods: kubectl get pods -n cortex-system",
+    "Get dashboard URL: kubectl get svc cortex-dashboard -n cortex-system"
+  ],
+  "created_at": "2025-12-13T10:19:14Z",
+  "status": "pending_manual_execution"
+}
