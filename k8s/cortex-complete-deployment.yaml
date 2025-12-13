@@ -1,0 +1,412 @@
+---
+# CORTEX K3S COMPLETE DEPLOYMENT MANIFEST
+# Apply this file with: kubectl apply -f cortex-complete-deployment.yaml
+# All components for autonomous AI platform
+
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: cortex-system
+  labels:
+    name: cortex-system
+    app.kubernetes.io/name: cortex
+    app.kubernetes.io/managed-by: cortex
+
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: cortex-admin
+  namespace: cortex-system
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: cortex-self-manager
+rules:
+- apiGroups: ["apps"]
+  resources: ["deployments", "replicasets", "statefulsets"]
+  verbs: ["get", "list", "watch", "update", "patch"]
+- apiGroups: ["batch"]
+  resources: ["jobs"]
+  verbs: ["create", "get", "list", "watch", "delete", "deletecollection"]
+- apiGroups: [""]
+  resources: ["pods", "services", "configmaps", "secrets"]
+  verbs: ["get", "list", "watch"]
+- apiGroups: [""]
+  resources: ["pods/log"]
+  verbs: ["get"]
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: cortex-self-manager-binding
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: cortex-self-manager
+subjects:
+- kind: ServiceAccount
+  name: cortex-admin
+  namespace: cortex-system
+
+---
+# Secrets must be created separately with actual credentials
+# kubectl create secret generic cortex-credentials \
+#   --namespace=cortex-system \
+#   --from-literal=anthropic-api-key="YOUR_KEY" \
+#   --from-literal=github-token="YOUR_TOKEN"
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: cortex-config
+  namespace: cortex-system
+data:
+  k3s-master: "10.88.145.180"
+  wazuh-dashboard: "https://10.88.140.202"
+  enable-self-evaluation: "true"
+  enable-rlhf: "true"
+  enable-autonomous-remediation: "true"
+
+---
+# Coordinator Master Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: coordinator-master
+  namespace: cortex-system
+  labels:
+    app: coordinator-master
+    app.kubernetes.io/name: cortex
+    app.kubernetes.io/component: coordinator
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: coordinator-master
+  template:
+    metadata:
+      labels:
+        app: coordinator-master
+        app.kubernetes.io/name: cortex
+    spec:
+      serviceAccountName: cortex-admin
+      containers:
+      - name: coordinator
+        image: ghcr.io/ry-ops/cortex:latest
+        imagePullPolicy: Always
+        command: ["./coordination/masters/coordinator/run-coordinator.sh"]
+        env:
+        - name: ANTHROPIC_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: cortex-credentials
+              key: anthropic-api-key
+        - name: GITHUB_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: cortex-credentials
+              key: github-token
+        - name: ENABLE_SELF_EVAL
+          valueFrom:
+            configMapKeyRef:
+              name: cortex-config
+              key: enable-self-evaluation
+        resources:
+          requests:
+            memory: "2Gi"
+            cpu: "1000m"
+          limits:
+            memory: "4Gi"
+            cpu: "2000m"
+        ports:
+        - name: http
+          containerPort: 8080
+        - name: moe-router
+          containerPort: 8081
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: coordinator-master
+  namespace: cortex-system
+spec:
+  selector:
+    app: coordinator-master
+  ports:
+  - name: http
+    port: 8080
+    targetPort: 8080
+  - name: moe-router
+    port: 8081
+    targetPort: 8081
+
+---
+# Security Master Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: security-master
+  namespace: cortex-system
+  labels:
+    app: security-master
+    app.kubernetes.io/name: cortex
+    app.kubernetes.io/component: security
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: security-master
+  template:
+    metadata:
+      labels:
+        app: security-master
+        app.kubernetes.io/name: cortex
+    spec:
+      serviceAccountName: cortex-admin
+      containers:
+      - name: security
+        image: ghcr.io/ry-ops/cortex:latest
+        imagePullPolicy: Always
+        command: ["./coordination/masters/security/run-security.sh"]
+        env:
+        - name: ANTHROPIC_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: cortex-credentials
+              key: anthropic-api-key
+        resources:
+          requests:
+            memory: "2Gi"
+            cpu: "1000m"
+          limits:
+            memory: "4Gi"
+            cpu: "2000m"
+        ports:
+        - name: webhook
+          containerPort: 9443
+        - name: http
+          containerPort: 8080
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: security-master
+  namespace: cortex-system
+spec:
+  selector:
+    app: security-master
+  ports:
+  - name: webhook
+    port: 9443
+    targetPort: 9443
+  - name: http
+    port: 8080
+    targetPort: 8080
+
+---
+# Development Master Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: development-master
+  namespace: cortex-system
+  labels:
+    app: development-master
+    app.kubernetes.io/name: cortex
+    app.kubernetes.io/component: development
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: development-master
+  template:
+    metadata:
+      labels:
+        app: development-master
+        app.kubernetes.io/name: cortex
+    spec:
+      serviceAccountName: cortex-admin
+      containers:
+      - name: development
+        image: ghcr.io/ry-ops/cortex:latest
+        imagePullPolicy: Always
+        command: ["./coordination/masters/development/run-development.sh"]
+        env:
+        - name: ANTHROPIC_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: cortex-credentials
+              key: anthropic-api-key
+        - name: GITHUB_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: cortex-credentials
+              key: github-token
+        resources:
+          requests:
+            memory: "4Gi"
+            cpu: "2000m"
+          limits:
+            memory: "8Gi"
+            cpu: "4000m"
+        ports:
+        - name: http
+          containerPort: 8080
+        volumeMounts:
+        - name: git-workspace
+          mountPath: /workspace
+      volumes:
+      - name: git-workspace
+        emptyDir: {}
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: development-master
+  namespace: cortex-system
+spec:
+  selector:
+    app: development-master
+  ports:
+  - name: http
+    port: 8080
+    targetPort: 8080
+
+---
+# CI/CD Master Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cicd-master
+  namespace: cortex-system
+  labels:
+    app: cicd-master
+    app.kubernetes.io/name: cortex
+    app.kubernetes.io/component: cicd
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: cicd-master
+  template:
+    metadata:
+      labels:
+        app: cicd-master
+        app.kubernetes.io/name: cortex
+    spec:
+      serviceAccountName: cortex-admin
+      containers:
+      - name: cicd
+        image: ghcr.io/ry-ops/cortex:latest
+        imagePullPolicy: Always
+        command: ["./coordination/masters/cicd/run-cicd.sh"]
+        env:
+        - name: ANTHROPIC_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: cortex-credentials
+              key: anthropic-api-key
+        - name: GITHUB_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: cortex-credentials
+              key: github-token
+        resources:
+          requests:
+            memory: "2Gi"
+            cpu: "1000m"
+          limits:
+            memory: "4Gi"
+            cpu: "2000m"
+        ports:
+        - name: http
+          containerPort: 8080
+        volumeMounts:
+        - name: build-cache
+          mountPath: /build-cache
+      volumes:
+      - name: build-cache
+        emptyDir: {}
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: cicd-master
+  namespace: cortex-system
+spec:
+  selector:
+    app: cicd-master
+  ports:
+  - name: http
+    port: 8080
+    targetPort: 8080
+
+---
+# Dashboard Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cortex-dashboard
+  namespace: cortex-system
+  labels:
+    app: cortex-dashboard
+    app.kubernetes.io/name: cortex
+    app.kubernetes.io/component: dashboard
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: cortex-dashboard
+  template:
+    metadata:
+      labels:
+        app: cortex-dashboard
+        app.kubernetes.io/name: cortex
+    spec:
+      containers:
+      - name: dashboard
+        image: ghcr.io/ry-ops/cortex-dashboard:latest
+        imagePullPolicy: Always
+        ports:
+        - name: http
+          containerPort: 3000
+        env:
+        - name: COORDINATOR_URL
+          value: "http://coordinator-master:8080"
+        - name: SECURITY_URL
+          value: "http://security-master:8080"
+        - name: DEVELOPMENT_URL
+          value: "http://development-master:8080"
+        - name: CICD_URL
+          value: "http://cicd-master:8080"
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "250m"
+          limits:
+            memory: "1Gi"
+            cpu: "500m"
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: cortex-dashboard
+  namespace: cortex-system
+spec:
+  type: LoadBalancer
+  selector:
+    app: cortex-dashboard
+  ports:
+  - name: http
+    port: 80
+    targetPort: 3000
