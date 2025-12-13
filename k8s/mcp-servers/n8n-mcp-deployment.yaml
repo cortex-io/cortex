@@ -1,0 +1,104 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: n8n-mcp-server
+  namespace: cortex-mcp
+  labels:
+    app: cortex
+    component: mcp-server
+    mcp-server: n8n
+spec:
+  replicas: 1  # Keep 1 replica for frequently used MCP (KEDA will manage beyond this)
+  selector:
+    matchLabels:
+      app: cortex
+      component: mcp-server
+      mcp-server: n8n
+  template:
+    metadata:
+      labels:
+        app: cortex
+        component: mcp-server
+        mcp-server: n8n
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "9090"
+        prometheus.io/path: "/metrics"
+    spec:
+      serviceAccountName: cortex-mcp-server
+      containers:
+      - name: n8n-mcp
+        image: ghcr.io/ry-ops/n8n-mcp-server:latest
+        imagePullPolicy: IfNotPresent
+        ports:
+        - name: mcp
+          containerPort: 3000
+          protocol: TCP
+        - name: metrics
+          containerPort: 9090
+          protocol: TCP
+        env:
+        - name: MCP_SERVER_TYPE
+          value: "n8n"
+        - name: N8N_API_URL
+          valueFrom:
+            secretKeyRef:
+              name: n8n-mcp-credentials
+              key: api_url
+        - name: N8N_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: n8n-mcp-credentials
+              key: api_key
+        - name: PROMETHEUS_ENABLED
+          value: "true"
+        - name: METRICS_PORT
+          value: "9090"
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "100m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: mcp
+          initialDelaySeconds: 10
+          periodSeconds: 30
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /ready
+            port: mcp
+          initialDelaySeconds: 5
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: n8n-mcp-server
+  namespace: cortex-mcp
+  labels:
+    app: cortex
+    component: mcp-server
+    mcp-server: n8n
+spec:
+  type: ClusterIP
+  ports:
+  - name: mcp
+    port: 3000
+    targetPort: mcp
+    protocol: TCP
+  - name: metrics
+    port: 9090
+    targetPort: metrics
+    protocol: TCP
+  selector:
+    app: cortex
+    component: mcp-server
+    mcp-server: n8n

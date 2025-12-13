@@ -1,0 +1,44 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: cortex-mcp
+  labels:
+    app: cortex
+    component: mcp-servers
+    name: cortex-mcp
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: cortex-mcp-server
+  namespace: cortex-mcp
+  labels:
+    app: cortex
+    component: mcp-server
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: cortex-mcp-server
+  namespace: cortex-mcp
+rules:
+- apiGroups: [""]
+  resources: ["configmaps", "secrets"]
+  verbs: ["get", "list", "watch"]
+- apiGroups: [""]
+  resources: ["pods"]
+  verbs: ["get", "list"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: cortex-mcp-server
+  namespace: cortex-mcp
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: cortex-mcp-server
+subjects:
+- kind: ServiceAccount
+  name: cortex-mcp-server
+  namespace: cortex-mcp

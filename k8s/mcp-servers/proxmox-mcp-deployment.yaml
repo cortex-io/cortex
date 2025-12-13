@@ -1,0 +1,109 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: proxmox-mcp-server
+  namespace: cortex-mcp
+  labels:
+    app: cortex
+    component: mcp-server
+    mcp-server: proxmox
+spec:
+  replicas: 0  # KEDA will manage replicas
+  selector:
+    matchLabels:
+      app: cortex
+      component: mcp-server
+      mcp-server: proxmox
+  template:
+    metadata:
+      labels:
+        app: cortex
+        component: mcp-server
+        mcp-server: proxmox
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "9090"
+        prometheus.io/path: "/metrics"
+    spec:
+      serviceAccountName: cortex-mcp-server
+      containers:
+      - name: proxmox-mcp
+        image: ghcr.io/ry-ops/proxmox-mcp-server:latest
+        imagePullPolicy: IfNotPresent
+        ports:
+        - name: mcp
+          containerPort: 3000
+          protocol: TCP
+        - name: metrics
+          containerPort: 9090
+          protocol: TCP
+        env:
+        - name: MCP_SERVER_TYPE
+          value: "proxmox"
+        - name: PROXMOX_API_URL
+          valueFrom:
+            secretKeyRef:
+              name: proxmox-mcp-credentials
+              key: api_url
+        - name: PROXMOX_API_TOKEN_ID
+          valueFrom:
+            secretKeyRef:
+              name: proxmox-mcp-credentials
+              key: token_id
+        - name: PROXMOX_API_TOKEN_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: proxmox-mcp-credentials
+              key: token_secret
+        - name: PROMETHEUS_ENABLED
+          value: "true"
+        - name: METRICS_PORT
+          value: "9090"
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "100m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: mcp
+          initialDelaySeconds: 10
+          periodSeconds: 30
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /ready
+            port: mcp
+          initialDelaySeconds: 5
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: proxmox-mcp-server
+  namespace: cortex-mcp
+  labels:
+    app: cortex
+    component: mcp-server
+    mcp-server: proxmox
+spec:
+  type: ClusterIP
+  ports:
+  - name: mcp
+    port: 3000
+    targetPort: mcp
+    protocol: TCP
+  - name: metrics
+    port: 9090
+    targetPort: metrics
+    protocol: TCP
+  selector:
+    app: cortex
+    component: mcp-server
+    mcp-server: proxmox
