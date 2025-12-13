@@ -1,0 +1,60 @@
+{
+  "playbook_id": "token_budget_exhaustion",
+  "version": "1.0.0",
+  "description": "Remediation for token budget exhaustion or high usage rate",
+  "trigger": "cortex_token_budget_available < 10000 OR rate(cortex_token_budget_allocated[5m]) > 2x baseline",
+  "severity": "critical",
+  "estimated_duration": "5m",
+  "steps": [
+    {
+      "action": "analyze_failures",
+      "description": "Analyze token usage patterns",
+      "ai_prompt": "Analyze token usage. Identify: which masters/workers are consuming most tokens, unusual spikes, potential optimizations.",
+      "conditional": false
+    },
+    {
+      "action": "scale_deployment",
+      "description": "Scale down non-critical workers to conserve tokens",
+      "params": {
+        "namespace": "cortex",
+        "deployment": "cortex-worker-pool",
+        "replicas": "-2"
+      }
+    },
+    {
+      "action": "update_config",
+      "description": "Update token allocation policies",
+      "params": {
+        "config_type": "token_budget",
+        "action": "reduce_worker_allocations",
+        "percentage": 20
+      }
+    },
+    {
+      "action": "verify_resolution",
+      "description": "Verify token budget stabilized",
+      "timeout": "5m",
+      "success_criteria": "cortex_token_budget_available > 50000"
+    },
+    {
+      "action": "create_github_issue",
+      "description": "Alert team about token exhaustion",
+      "conditional": false,
+      "title": "[Self-Healing] Token budget exhaustion - Review usage patterns",
+      "labels": ["self-healing", "tokens", "critical", "budget"]
+    }
+  ],
+  "rollback_on_failure": false,
+  "max_retries": 1,
+  "retry_delay_seconds": 60,
+  "success_criteria": {
+    "metric": "cortex_token_budget_available",
+    "threshold": 50000,
+    "duration": "5m"
+  },
+  "notes": [
+    "Token budget exhaustion requires immediate action",
+    "This playbook conserves tokens by scaling down workers",
+    "Manual review recommended to identify long-term optimization opportunities"
+  ]
+}

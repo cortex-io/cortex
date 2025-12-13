@@ -1,0 +1,148 @@
+{
+  "version": "1.0.0",
+  "regions": {
+    "primary": {
+      "name": "homelab-k3s",
+      "region_id": "homelab-primary",
+      "k8s_context": "default",
+      "endpoints": {
+        "k8s_api": "https://10.88.145.180:6443",
+        "prometheus": "http://prometheus.monitoring.svc.cluster.local:9090",
+        "grafana": "http://grafana.monitoring.svc.cluster.local:3000",
+        "dashboard": "http://cortex-dashboard.cortex.svc.cluster.local:3004"
+      },
+      "role": "primary",
+      "priority": 1,
+      "location": {
+        "datacenter": "homelab",
+        "availability_zone": "az1"
+      },
+      "capacity": {
+        "max_masters": 5,
+        "max_workers": 50,
+        "max_cpu_cores": 32,
+        "max_memory_gb": 128
+      },
+      "health_check": {
+        "enabled": true,
+        "interval_seconds": 30,
+        "timeout_seconds": 5,
+        "failure_threshold": 3
+      }
+    },
+    "failover": {
+      "name": "cloud-k3s",
+      "region_id": "cloud-standby",
+      "k8s_context": "cloud",
+      "endpoints": {
+        "k8s_api": "https://cloud-k3s.example.com:6443",
+        "prometheus": "http://prometheus.monitoring.svc.cluster.local:9090",
+        "grafana": "http://grafana.monitoring.svc.cluster.local:3000",
+        "dashboard": "http://cortex-dashboard.cortex.svc.cluster.local:3004"
+      },
+      "role": "standby",
+      "priority": 2,
+      "location": {
+        "datacenter": "cloud-provider",
+        "availability_zone": "us-west-2a"
+      },
+      "capacity": {
+        "max_masters": 3,
+        "max_workers": 30,
+        "max_cpu_cores": 16,
+        "max_memory_gb": 64
+      },
+      "health_check": {
+        "enabled": true,
+        "interval_seconds": 30,
+        "timeout_seconds": 5,
+        "failure_threshold": 3
+      }
+    }
+  },
+  "replication": {
+    "coordination_state": {
+      "enabled": true,
+      "interval_seconds": 60,
+      "target_regions": ["failover"],
+      "replicate_paths": [
+        "coordination/masters/*/context/master-state.json",
+        "coordination/task-queue.json",
+        "coordination/worker-pool.json",
+        "coordination/token-budget.json",
+        "coordination/dashboard-events.jsonl",
+        "coordination/repository-inventory.json"
+      ],
+      "compression": true,
+      "encryption": true
+    },
+    "knowledge_bases": {
+      "enabled": true,
+      "interval_seconds": 300,
+      "target_regions": ["failover"],
+      "replicate_paths": [
+        "coordination/masters/*/knowledge-base/**/*.json",
+        "coordination/masters/*/knowledge-base/**/*.jsonl"
+      ],
+      "compression": true,
+      "encryption": true
+    },
+    "metrics": {
+      "enabled": false,
+      "interval_seconds": 120,
+      "target_regions": ["failover"],
+      "retention_days": 7
+    }
+  },
+  "failover": {
+    "auto_failover": true,
+    "health_check_failures": 3,
+    "health_check_interval_seconds": 30,
+    "failover_timeout_seconds": 300,
+    "failback_enabled": true,
+    "failback_delay_minutes": 10,
+    "failback_verification_minutes": 5,
+    "traffic_split": {
+      "enabled": false,
+      "primary_percentage": 100,
+      "failover_percentage": 0
+    },
+    "notifications": {
+      "enabled": true,
+      "channels": ["github_issue", "dashboard_alert"],
+      "severity": "critical"
+    }
+  },
+  "traffic_routing": {
+    "strategy": "priority",
+    "dns_update": {
+      "enabled": false,
+      "provider": "cloudflare",
+      "ttl_seconds": 60
+    },
+    "ingress_update": {
+      "enabled": true,
+      "namespace": "cortex",
+      "ingress_name": "cortex-ingress"
+    },
+    "health_based": {
+      "enabled": true,
+      "route_to_healthy_only": true
+    }
+  },
+  "disaster_recovery": {
+    "backup_to_regions": ["failover"],
+    "backup_interval_hours": 6,
+    "backup_retention_days": 30,
+    "restore_priority": ["coordination_state", "knowledge_bases", "configuration"],
+    "rto_minutes": 15,
+    "rpo_minutes": 5
+  },
+  "monitoring": {
+    "replication_lag_threshold_seconds": 120,
+    "cross_region_latency_threshold_ms": 500,
+    "alert_on_replication_failure": true,
+    "alert_on_failover": true,
+    "metrics_export": true
+  }
+}

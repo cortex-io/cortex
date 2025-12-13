@@ -1,0 +1,59 @@
+{
+  "playbook_id": "master_response_time_degradation",
+  "version": "1.0.0",
+  "description": "Remediation for degraded master response times",
+  "trigger": "histogram_quantile(0.95, rate(cortex_task_duration_seconds_bucket[5m])) > 2x baseline",
+  "severity": "warning",
+  "estimated_duration": "10m",
+  "steps": [
+    {
+      "action": "collect_logs",
+      "description": "Collect master pod logs",
+      "params": {
+        "namespace": "cortex",
+        "label": {
+          "app": "cortex",
+          "component": "master"
+        },
+        "tail": 150
+      }
+    },
+    {
+      "action": "analyze_failures",
+      "description": "Analyze performance degradation",
+      "ai_prompt": "Analyze these master logs for performance issues. Check for: slow database queries, memory pressure, CPU throttling, network latency, task queue backlog.",
+      "conditional": false
+    },
+    {
+      "action": "scale_deployment",
+      "description": "Scale up master replicas to handle load",
+      "params": {
+        "namespace": "cortex",
+        "deployment": "cortex-coordinator-master",
+        "replicas": "+1"
+      }
+    },
+    {
+      "action": "verify_resolution",
+      "description": "Verify response time has improved",
+      "timeout": "10m",
+      "success_criteria": "histogram_quantile(0.95, rate(cortex_task_duration_seconds_bucket[5m])) < 300"
+    },
+    {
+      "action": "create_github_issue",
+      "description": "Create issue if scaling didn't resolve",
+      "conditional": true,
+      "only_on_failure": true,
+      "title": "[Self-Healing] Master response time degradation persists",
+      "labels": ["self-healing", "performance", "masters", "warning"]
+    }
+  ],
+  "rollback_on_failure": false,
+  "max_retries": 2,
+  "retry_delay_seconds": 60,
+  "success_criteria": {
+    "metric": "cortex_master_response_time",
+    "threshold": 300,
+    "duration": "5m"
+  }
+}
