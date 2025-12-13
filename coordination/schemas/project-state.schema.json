@@ -1,0 +1,273 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://cortex.ai/schemas/project-state.json",
+  "title": "Project State Schema",
+  "description": "Schema for Cortex project state tracking with checkpoints and rollback support",
+  "type": "object",
+  "required": ["project_id", "state", "created_at", "updated_at"],
+  "properties": {
+    "project_id": {
+      "type": "string",
+      "description": "Unique project identifier",
+      "pattern": "^proj-[a-z0-9-]+$"
+    },
+    "task_id": {
+      "type": "string",
+      "description": "Associated task ID"
+    },
+    "state": {
+      "type": "string",
+      "enum": ["PLANNING", "EXECUTING", "VALIDATING", "BLOCKED", "FAILED", "COMPLETE", "CANCELLED"],
+      "description": "Current project state"
+    },
+    "previous_state": {
+      "type": "string",
+      "enum": ["PLANNING", "EXECUTING", "VALIDATING", "BLOCKED", "FAILED", "COMPLETE", "CANCELLED"],
+      "description": "Previous state (for rollback)"
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Project creation timestamp"
+    },
+    "updated_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Last update timestamp"
+    },
+    "completed_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Completion timestamp"
+    },
+    "description": {
+      "type": "string",
+      "description": "Project description"
+    },
+    "contractor": {
+      "type": "string",
+      "enum": ["development", "security", "inventory", "cicd"],
+      "description": "Primary contractor assigned"
+    },
+    "supporting_contractors": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "contractor": {
+            "type": "string"
+          },
+          "role": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "complexity": {
+      "type": "object",
+      "properties": {
+        "score": {
+          "type": "number",
+          "minimum": 1,
+          "maximum": 10
+        },
+        "level": {
+          "type": "string",
+          "enum": ["low", "medium", "high", "very_high"]
+        }
+      }
+    },
+    "resources": {
+      "type": "object",
+      "properties": {
+        "estimated_tokens": {
+          "type": "number"
+        },
+        "actual_tokens": {
+          "type": "number"
+        },
+        "estimated_time_minutes": {
+          "type": "number"
+        },
+        "actual_time_minutes": {
+          "type": "number"
+        },
+        "estimated_workers": {
+          "type": "number"
+        },
+        "active_workers": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "checkpoints": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["checkpoint_id", "name", "created_at", "state"],
+        "properties": {
+          "checkpoint_id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "state": {
+            "type": "string"
+          },
+          "progress_percentage": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 100
+          },
+          "snapshot": {
+            "type": "object",
+            "description": "State snapshot at checkpoint"
+          },
+          "rollback_plan": {
+            "type": "object",
+            "properties": {
+              "actions": {
+                "type": "array",
+                "items": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "milestones": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "completed": {
+            "type": "boolean"
+          },
+          "completed_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      }
+    },
+    "progress": {
+      "type": "object",
+      "properties": {
+        "percentage": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100
+        },
+        "current_phase": {
+          "type": "string"
+        },
+        "phases_completed": {
+          "type": "number"
+        },
+        "total_phases": {
+          "type": "number"
+        }
+      }
+    },
+    "validation": {
+      "type": "object",
+      "properties": {
+        "tests_passed": {
+          "type": "boolean"
+        },
+        "security_scan_passed": {
+          "type": "boolean"
+        },
+        "approval_received": {
+          "type": "boolean"
+        },
+        "validation_errors": {
+          "type": "array",
+          "items": {
+            "type": "object"
+          }
+        }
+      }
+    },
+    "rollback_triggers": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "trigger_type": {
+            "type": "string",
+            "enum": ["test_failure", "security_issue", "budget_exceeded", "manual", "timeout"]
+          },
+          "triggered_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "reason": {
+            "type": "string"
+          },
+          "checkpoint_restored": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "metadata": {
+      "type": "object",
+      "properties": {
+        "priority": {
+          "type": "string",
+          "enum": ["low", "medium", "high", "critical"]
+        },
+        "tags": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "related_projects": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "errors": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "error_id": {
+            "type": "string"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "error_type": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          },
+          "resolved": {
+            "type": "boolean"
+          }
+        }
+      }
+    }
+  }
+}

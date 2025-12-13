@@ -42,6 +42,11 @@ COMPLEXITY_ESTIMATOR_SCRIPT="$CORTEX_HOME/coordination/masters/coordinator/lib/c
 INITIALIZER_ROUTING_ENABLED="${INITIALIZER_ROUTING_ENABLED:-true}"
 COMPLEXITY_THRESHOLD="${COMPLEXITY_THRESHOLD:-3}"
 
+# Phase 4.3: GM Decision Engine Integration
+GM_DECISION_ENGINE_ENABLED="${GM_DECISION_ENGINE_ENABLED:-true}"
+GM_DECISION_ENGINE="$CORTEX_HOME/coordination/routing/gm-decision-engine.js"
+GM_DECISION_THRESHOLD="${GM_DECISION_THRESHOLD:-7}"
+
 # Load complexity estimator
 if [ -f "$COMPLEXITY_ESTIMATOR_SCRIPT" ]; then
     source "$COMPLEXITY_ESTIMATOR_SCRIPT"
@@ -702,6 +707,79 @@ generate_routing_explanation() {
 }
 
 ##############################################################################
+# try_gm_decision_engine: Use GM Decision Engine for complex tasks
+# Phase 4.3: Automatic contractor selection with resource estimation
+# Args:
+#   $1: task_id
+#   $2: task_description
+# Returns: JSON with decision or empty string if not applicable
+##############################################################################
+try_gm_decision_engine() {
+    local task_id="$1"
+    local task_description="$2"
+
+    # Check if GM Decision Engine is enabled
+    if [ "$GM_DECISION_ENGINE_ENABLED" != "true" ]; then
+        return 0
+    fi
+
+    # Check if engine exists
+    if [ ! -f "$GM_DECISION_ENGINE" ]; then
+        return 0
+    fi
+
+    # Call GM Decision Engine
+    local gm_result=""
+    if gm_result=$(node "$GM_DECISION_ENGINE" "$task_description" 2>/dev/null); then
+        # Parse complexity score
+        local complexity=$(echo "$gm_result" | jq -r '.complexity.score // 0' 2>/dev/null)
+
+        # Only use GM Decision Engine for complex tasks (score >= threshold)
+        if [ -n "$complexity" ] && (( $(echo "$complexity >= $GM_DECISION_THRESHOLD" | bc -l 2>/dev/null || echo 0) )); then
+            # Extract primary contractor and confidence
+            local contractor=$(echo "$gm_result" | jq -r '.primary_contractor.contractor // ""' 2>/dev/null)
+            local confidence=$(echo "$gm_result" | jq -r '.primary_contractor.confidence // 0' 2>/dev/null)
+
+            if [ -n "$contractor" ]; then
+                # Map contractor to expert name
+                local expert=""
+                case "$contractor" in
+                    development) expert="development" ;;
+                    security) expert="security" ;;
+                    inventory) expert="inventory" ;;
+                    cicd) expert="cicd" ;;
+                esac
+
+                if [ -n "$expert" ]; then
+                    # Format result compatible with routing system
+                    local formatted_result=$(jq -n \
+                        --arg expert "$expert" \
+                        --arg contractor "$contractor" \
+                        --argjson confidence "$confidence" \
+                        --argjson complexity "$complexity" \
+                        --arg method "gm-decision-engine" \
+                        --argjson full_decision "$gm_result" \
+                        '{
+                            expert: $expert,
+                            contractor: $contractor,
+                            confidence: $confidence,
+                            complexity: $complexity,
+                            method: $method,
+                            gm_decision: $full_decision
+                        }')
+                    echo "$formatted_result"
+                    return 0
+                fi
+            fi
+        fi
+    fi
+
+    # Return empty string if GM Decision Engine not applicable
+    echo ""
+    return 0
+}
+
+##############################################################################
 # try_nlp_classifier: Attempt NLP classification using 3-layer hybrid architecture
 # Phase 3 Enhancement: Keyword + Pattern + Claude API fallback
 # Args:
@@ -857,7 +935,49 @@ route_task_moe() {
         fi
     fi
 
-    # Phase 3: Try NLP classifier first (3-layer hybrid: keywords -> patterns -> Claude API)
+    # Phase 4.3: Try GM Decision Engine first for complex tasks
+    local gm_result=$(try_gm_decision_engine "$task_id" "$task_description")
+    local using_gm="false"
+
+    if [ -n "$gm_result" ]; then
+        # GM Decision Engine provided a result - use it
+        local expert=$(echo "$gm_result" | jq -r '.expert')
+        local confidence=$(echo "$gm_result" | jq -r '.confidence')
+        local gm_decision=$(echo "$gm_result" | jq -r '.gm_decision')
+
+        # Build enhanced routing decision with GM data
+        local routing_decision=$(jq -n \
+            --arg task_id "$task_id" \
+            --arg timestamp "$timestamp" \
+            --arg expert "$expert" \
+            --argjson confidence "$confidence" \
+            --arg method "gm-decision-engine" \
+            --argjson gm_decision "$gm_decision" \
+            '{
+                task_id: $task_id,
+                timestamp: $timestamp,
+                routing_strategy: "gm_decision_engine",
+                routing_method: $method,
+                decision: {
+                    primary_expert: $expert,
+                    primary_confidence: $confidence,
+                    strategy: "single_expert",
+                    parallel_experts: [],
+                    gm_enhanced: $gm_decision,
+                    explanation: ("Routed via GM Decision Engine: complexity " + ($gm_decision.complexity.score | tostring) + "/10")
+                }
+            }')
+
+        # Log routing decision
+        echo "$routing_decision" | jq -c '.' >> "$ROUTING_LOG"
+        sync "$ROUTING_LOG" 2>/dev/null || true
+
+        # Output decision
+        echo "$routing_decision"
+        return 0
+    fi
+
+    # Phase 3: Try NLP classifier (3-layer hybrid: keywords -> patterns -> Claude API)
     local nlp_result=$(try_nlp_classifier "$task_id" "$task_description")
     local using_nlp="false"
     local using_semantic="false"
