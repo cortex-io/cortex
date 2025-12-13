@@ -2,7 +2,7 @@
   "task_id": "wazuh-version-fix-1765571682",
   "type": "security_remediation",
   "priority": "high",
-  "status": "pending",
+  "status": "script_prepared_pending_execution",
   "title": "Fix Wazuh Server Version Mismatch on Proxmox",
   "description": "Wazuh server on Proxmox has version mismatch between API (4.14.1) and Dashboard (4.11.2). Need to upgrade dashboard to match API version to resolve the error: 'API and dashboard version mismatch. API version: 4.14.1. App version: 4.11.2'",
   "target": "wazuh-server-proxmox",
@@ -21,9 +21,32 @@
   ],
   "assigned_to": "security-master",
   "created_at": "2025-12-12T14:34:42-0600",
+  "updated_at": "2025-12-12T14:45:00-0600",
+  "network_status": {
+    "proxmox_host": "10.88.140.151",
+    "accessible_from_cortex": false,
+    "connectivity_issue": "Network timeout - Proxmox host not reachable from current environment",
+    "requires_manual_execution": true
+  },
+  "remediation": {
+    "script_created": true,
+    "script_path": "/Users/ryandahlberg/Projects/cortex/scripts/security/fix-wazuh-version-mismatch.sh",
+    "report_path": "/Users/ryandahlberg/Projects/cortex/coordination/tasks/wazuh-version-mismatch-remediation-report.md",
+    "execution_method": "automated_script_or_manual_steps",
+    "estimated_duration": "5-10 minutes",
+    "downtime_required": "1-2 minutes (dashboard only)",
+    "rollback_available": true
+  },
+  "execution_options": [
+    "Run automated script from machine with network access to Wazuh server",
+    "Execute manual steps via SSH",
+    "Use Proxmox web console for direct VM access"
+  ],
   "metadata": {
     "server_location": "proxmox",
     "component": "wazuh",
-    "error_message": "API and dashboard version mismatch"
+    "error_message": "API and dashboard version mismatch",
+    "proxmox_api_token": "root@pam!n8n (available in scripts/proxmox/create-vm.sh)",
+    "supported_os": ["ubuntu", "debian", "rhel", "centos", "rocky", "alma"]
   }
 }
