@@ -1,0 +1,13 @@
+{
+  "deployment_id": "kali-deployment-20251213-094532",
+  "ci_cd_master": "cicd",
+  "deployment_type": "os_image_import",
+  "target": "sentinel-forge-vms",
+  "vms": [900, 901, 902, 903],
+  "image": "kali-linux-2024.3-qemu-amd64",
+  "status": "initiated",
+  "timestamp": "2025-12-13T15:45:32Z",
+  "autonomous": true,
+  "deployment_package": "/tmp/kali-deployment-package.tar.gz",
+  "notes": "Deployment package created. Manual execution required on Proxmox host."
+}
