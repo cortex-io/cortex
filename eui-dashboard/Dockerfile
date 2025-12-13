@@ -7,8 +7,8 @@ WORKDIR /app
 COPY package*.json ./
 COPY . .
 
-# Install dependencies (using --omit=dev instead of deprecated --only=production)
-RUN npm ci --omit=dev && npm cache clean --force
+# Install dependencies - use install instead of ci for more flexibility
+RUN npm install --production && npm cache clean --force
 
 # Expose dashboard port
 EXPOSE 3000
