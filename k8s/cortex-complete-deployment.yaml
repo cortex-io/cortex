@@ -99,7 +99,6 @@ spec:
       - name: coordinator
         image: ghcr.io/ry-ops/cortex:latest
         imagePullPolicy: Always
-        command: ["./coordination/masters/coordinator/run-coordinator.sh"]
         env:
         - name: ANTHROPIC_API_KEY
           valueFrom:
@@ -173,7 +172,6 @@ spec:
       - name: security
         image: ghcr.io/ry-ops/cortex:latest
         imagePullPolicy: Always
-        command: ["./coordination/masters/security/run-security.sh"]
         env:
         - name: ANTHROPIC_API_KEY
           valueFrom:
@@ -237,7 +235,6 @@ spec:
       - name: development
         image: ghcr.io/ry-ops/cortex:latest
         imagePullPolicy: Always
-        command: ["./coordination/masters/development/run-development.sh"]
         env:
         - name: ANTHROPIC_API_KEY
           valueFrom:
@@ -307,7 +304,6 @@ spec:
       - name: cicd
         image: ghcr.io/ry-ops/cortex:latest
         imagePullPolicy: Always
-        command: ["./coordination/masters/cicd/run-cicd.sh"]
         env:
         - name: ANTHROPIC_API_KEY
           valueFrom:
