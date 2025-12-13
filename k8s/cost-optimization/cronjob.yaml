@@ -1,0 +1,228 @@
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: cortex-cost-optimizer
+  namespace: cortex
+  labels:
+    app: cortex
+    component: cost-optimizer
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: cortex-cost-optimizer
+  labels:
+    app: cortex
+    component: cost-optimizer
+rules:
+  # Read deployments for analysis
+  - apiGroups: ["apps"]
+    resources: ["deployments", "replicasets", "statefulsets"]
+    verbs: ["get", "list", "watch"]
+
+  # Update deployments for right-sizing
+  - apiGroups: ["apps"]
+    resources: ["deployments", "statefulsets"]
+    verbs: ["update", "patch"]
+
+  # Read pods and metrics
+  - apiGroups: [""]
+    resources: ["pods", "nodes"]
+    verbs: ["get", "list", "watch"]
+
+  # Read metrics
+  - apiGroups: ["metrics.k8s.io"]
+    resources: ["pods", "nodes"]
+    verbs: ["get", "list"]
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: cortex-cost-optimizer
+  labels:
+    app: cortex
+    component: cost-optimizer
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: cortex-cost-optimizer
+subjects:
+  - kind: ServiceAccount
+    name: cortex-cost-optimizer
+    namespace: cortex
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: cost-optimizer-config
+  namespace: cortex
+  labels:
+    app: cortex
+    component: cost-optimizer
+data:
+  config.json: |
+    {
+      "analysisSchedule": "0 2 * * *",
+      "autoApply": true,
+      "autoApplyThreshold": 0.1,
+      "createPRForHighImpact": true,
+      "namespaces": null,
+      "dryRun": false,
+      "prometheusUrl": "http://prometheus.monitoring.svc.cluster.local:9090"
+    }
+
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: cortex-cost-optimizer
+  namespace: cortex
+  labels:
+    app: cortex
+    component: cost-optimizer
+spec:
+  schedule: "0 2 * * *"  # Daily at 2 AM
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 5
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      template:
+        metadata:
+          labels:
+            app: cortex
+            component: cost-optimizer
+          annotations:
+            prometheus.io/scrape: "false"
+        spec:
+          serviceAccountName: cortex-cost-optimizer
+          restartPolicy: OnFailure
+          containers:
+            - name: optimizer
+              image: cortex-cost-optimizer:latest
+              imagePullPolicy: IfNotPresent
+              env:
+                - name: NODE_ENV
+                  value: "production"
+                - name: CONFIG_PATH
+                  value: "/config/config.json"
+                - name: PROMETHEUS_URL
+                  value: "http://prometheus.monitoring.svc.cluster.local:9090"
+                - name: KUBERNETES_NAMESPACE
+                  valueFrom:
+                    fieldRef:
+                      fieldPath: metadata.namespace
+              resources:
+                requests:
+                  cpu: 100m
+                  memory: 256Mi
+                limits:
+                  cpu: 500m
+                  memory: 512Mi
+              volumeMounts:
+                - name: config
+                  mountPath: /config
+                  readOnly: true
+                - name: history
+                  mountPath: /app/coordination
+          volumes:
+            - name: config
+              configMap:
+                name: cost-optimizer-config
+            - name: history
+              persistentVolumeClaim:
+                claimName: cortex-cost-optimizer-pvc
+
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: cortex-cost-optimizer-pvc
+  namespace: cortex
+  labels:
+    app: cortex
+    component: cost-optimizer
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+  storageClassName: local-path
+
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: cortex-cost-optimizer-manual
+  namespace: cortex
+  labels:
+    app: cortex
+    component: cost-optimizer
+    run: manual
+spec:
+  template:
+    metadata:
+      labels:
+        app: cortex
+        component: cost-optimizer
+    spec:
+      serviceAccountName: cortex-cost-optimizer
+      restartPolicy: Never
+      containers:
+        - name: optimizer
+          image: cortex-cost-optimizer:latest
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: NODE_ENV
+              value: "production"
+            - name: CONFIG_PATH
+              value: "/config/config.json"
+            - name: PROMETHEUS_URL
+              value: "http://prometheus.monitoring.svc.cluster.local:9090"
+            - name: DRY_RUN
+              value: "true"
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+          volumeMounts:
+            - name: config
+              mountPath: /config
+              readOnly: true
+            - name: history
+              mountPath: /app/coordination
+      volumes:
+        - name: config
+          configMap:
+            name: cost-optimizer-config
+        - name: history
+          persistentVolumeClaim:
+            claimName: cortex-cost-optimizer-pvc
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: cortex-cost-optimizer
+  namespace: cortex
+  labels:
+    app: cortex
+    component: cost-optimizer
+spec:
+  type: ClusterIP
+  selector:
+    app: cortex
+    component: cost-optimizer
+  ports:
+    - name: metrics
+      port: 3000
+      targetPort: 3000
+      protocol: TCP

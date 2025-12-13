@@ -1,0 +1,345 @@
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: cortex-self-healing
+  namespace: cortex
+  labels:
+    app: cortex
+    component: self-healing
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: cortex-self-healing
+  labels:
+    app: cortex
+    component: self-healing
+rules:
+  # Deployment management for scaling and restarts
+  - apiGroups: ["apps"]
+    resources: ["deployments", "replicasets"]
+    verbs: ["get", "list", "watch", "update", "patch"]
+
+  # Pod management for log collection and restarts
+  - apiGroups: [""]
+    resources: ["pods", "pods/log"]
+    verbs: ["get", "list", "watch", "delete"]
+
+  # Service monitoring
+  - apiGroups: [""]
+    resources: ["services", "endpoints"]
+    verbs: ["get", "list", "watch"]
+
+  # ConfigMap updates for configuration changes
+  - apiGroups: [""]
+    resources: ["configmaps"]
+    verbs: ["get", "list", "watch", "update", "patch"]
+
+  # Events for logging remediation actions
+  - apiGroups: [""]
+    resources: ["events"]
+    verbs: ["create", "patch"]
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: cortex-self-healing
+  labels:
+    app: cortex
+    component: self-healing
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: cortex-self-healing
+subjects:
+  - kind: ServiceAccount
+    name: cortex-self-healing
+    namespace: cortex
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: self-healing-config
+  namespace: cortex
+  labels:
+    app: cortex
+    component: self-healing
+data:
+  prometheus-url: "http://prometheus.monitoring.svc.cluster.local:9090"
+  check-interval: "60"  # seconds
+  max-retries: "3"
+  retry-delay: "30"  # seconds
+  anomaly-threshold: "2.0"  # 2x baseline
+  baseline-window: "7d"
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cortex-self-healing-operator
+  namespace: cortex
+  labels:
+    app: cortex
+    component: self-healing
+    version: v1
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate  # Only one instance should run at a time
+  selector:
+    matchLabels:
+      app: cortex
+      component: self-healing
+  template:
+    metadata:
+      labels:
+        app: cortex
+        component: self-healing
+        version: v1
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "3000"
+        prometheus.io/path: "/metrics"
+    spec:
+      serviceAccountName: cortex-self-healing
+      containers:
+        - name: self-healing-operator
+          image: cortex-self-healing:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: metrics
+              containerPort: 3000
+              protocol: TCP
+            - name: health
+              containerPort: 8080
+              protocol: TCP
+          env:
+            - name: NODE_ENV
+              value: "production"
+            - name: PROMETHEUS_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: self-healing-config
+                  key: prometheus-url
+            - name: CHECK_INTERVAL
+              valueFrom:
+                configMapKeyRef:
+                  name: self-healing-config
+                  key: check-interval
+            - name: MAX_RETRIES
+              valueFrom:
+                configMapKeyRef:
+                  name: self-healing-config
+                  key: max-retries
+            - name: ANOMALY_THRESHOLD
+              valueFrom:
+                configMapKeyRef:
+                  name: self-healing-config
+                  key: anomaly-threshold
+            - name: KUBERNETES_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 30
+            periodSeconds: 30
+            timeoutSeconds: 5
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /ready
+              port: 8080
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 2
+          volumeMounts:
+            - name: playbooks
+              mountPath: /app/lib/self-healing/playbooks
+              readOnly: true
+            - name: history
+              mountPath: /app/coordination
+      volumes:
+        - name: playbooks
+          configMap:
+            name: self-healing-playbooks
+        - name: history
+          persistentVolumeClaim:
+            claimName: cortex-self-healing-pvc
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: cortex-self-healing
+  namespace: cortex
+  labels:
+    app: cortex
+    component: self-healing
+spec:
+  type: ClusterIP
+  selector:
+    app: cortex
+    component: self-healing
+  ports:
+    - name: metrics
+      port: 3000
+      targetPort: 3000
+      protocol: TCP
+    - name: health
+      port: 8080
+      targetPort: 8080
+      protocol: TCP
+
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: cortex-self-healing-pvc
+  namespace: cortex
+  labels:
+    app: cortex
+    component: self-healing
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 2Gi
+  storageClassName: local-path
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: self-healing-playbooks
+  namespace: cortex
+  labels:
+    app: cortex
+    component: self-healing
+data:
+  high-worker-failure-rate.json: |
+    {
+      "playbook_id": "high_worker_failure_rate",
+      "version": "1.0.0",
+      "description": "Remediation for high worker spawn failure rates",
+      "trigger": "cortex_worker_failure_rate > 0.2",
+      "severity": "critical",
+      "steps": [
+        {
+          "action": "collect_logs",
+          "params": {
+            "namespace": "cortex",
+            "label": {"app": "cortex", "component": "worker"},
+            "tail": 200
+          }
+        },
+        {
+          "action": "analyze_failures",
+          "ai_prompt": "Analyze worker failures",
+          "conditional": false
+        },
+        {
+          "action": "apply_fix",
+          "conditional": true,
+          "fix_strategies": ["restart_pod", "scale_down_then_up"]
+        },
+        {
+          "action": "verify_resolution",
+          "timeout": "10m",
+          "success_criteria": "sum(rate(cortex_worker_termination_total{reason=\"spawn_failure\"}[5m])) < 0.05"
+        }
+      ]
+    }
+
+  master-response-time-degradation.json: |
+    {
+      "playbook_id": "master_response_time_degradation",
+      "version": "1.0.0",
+      "description": "Remediation for degraded master response times",
+      "trigger": "cortex_master_response_time > 2x baseline",
+      "severity": "warning",
+      "steps": [
+        {
+          "action": "collect_logs",
+          "params": {
+            "namespace": "cortex",
+            "label": {"app": "cortex", "component": "master"},
+            "tail": 150
+          }
+        },
+        {
+          "action": "scale_deployment",
+          "params": {
+            "namespace": "cortex",
+            "deployment": "cortex-coordinator-master",
+            "replicas": "+1"
+          }
+        },
+        {
+          "action": "verify_resolution",
+          "timeout": "10m",
+          "success_criteria": "histogram_quantile(0.95, rate(cortex_task_duration_seconds_bucket[5m])) < 300"
+        }
+      ]
+    }
+
+  token-budget-exhaustion.json: |
+    {
+      "playbook_id": "token_budget_exhaustion",
+      "version": "1.0.0",
+      "description": "Remediation for token budget exhaustion",
+      "trigger": "cortex_token_budget_available < 10000",
+      "severity": "critical",
+      "steps": [
+        {
+          "action": "scale_deployment",
+          "params": {
+            "namespace": "cortex",
+            "deployment": "cortex-worker-pool",
+            "replicas": "-2"
+          }
+        },
+        {
+          "action": "verify_resolution",
+          "timeout": "5m",
+          "success_criteria": "cortex_token_budget_available > 50000"
+        }
+      ]
+    }
+
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: cortex-self-healing
+  namespace: monitoring
+  labels:
+    app: cortex
+    component: self-healing
+spec:
+  selector:
+    matchLabels:
+      app: cortex
+      component: self-healing
+  namespaceSelector:
+    matchNames:
+      - cortex
+  endpoints:
+    - port: metrics
+      interval: 30s
+      path: /metrics

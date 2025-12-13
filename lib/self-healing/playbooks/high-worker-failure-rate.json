@@ -1,0 +1,60 @@
+{
+  "playbook_id": "high_worker_failure_rate",
+  "version": "1.0.0",
+  "description": "Remediation for high worker spawn failure rates",
+  "trigger": "cortex_worker_failure_rate > 0.2",
+  "severity": "critical",
+  "estimated_duration": "15m",
+  "steps": [
+    {
+      "action": "collect_logs",
+      "description": "Collect worker pod logs for analysis",
+      "params": {
+        "namespace": "cortex",
+        "label": {
+          "app": "cortex",
+          "component": "worker"
+        },
+        "tail": 200
+      }
+    },
+    {
+      "action": "analyze_failures",
+      "description": "Analyze failure patterns using AI",
+      "ai_prompt": "Analyze these worker failure logs and identify root cause. Common issues include: OOM, timeout, config errors, network issues. Recommend fix strategy.",
+      "conditional": false
+    },
+    {
+      "action": "apply_fix",
+      "description": "Apply automated fix based on analysis",
+      "conditional": true,
+      "fix_strategies": [
+        "restart_pod",
+        "scale_down_then_up",
+        "update_config"
+      ]
+    },
+    {
+      "action": "verify_resolution",
+      "description": "Verify worker failure rate has decreased",
+      "timeout": "10m",
+      "success_criteria": "sum(rate(cortex_worker_termination_total{reason=\"spawn_failure\"}[5m])) < 0.05"
+    },
+    {
+      "action": "create_github_issue",
+      "description": "Create issue if remediation failed",
+      "conditional": true,
+      "only_on_failure": true,
+      "title": "[Self-Healing] High worker failure rate - Manual intervention required",
+      "labels": ["self-healing", "workers", "critical"]
+    }
+  ],
+  "rollback_on_failure": true,
+  "max_retries": 3,
+  "retry_delay_seconds": 30,
+  "success_criteria": {
+    "metric": "cortex_worker_failure_rate",
+    "threshold": 0.05,
+    "duration": "5m"
+  }
+}
