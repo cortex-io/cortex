@@ -1,0 +1,55 @@
+name: Build and Push Cortex Images
+
+on:
+  push:
+    branches: [ main, docker-container ]
+  workflow_dispatch:
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Log in to Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata for Cortex
+        id: meta-cortex
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=raw,value=latest
+            type=sha,prefix={{branch}}-
+
+      - name: Build and push Cortex image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./Dockerfile
+          push: true
+          tags: ${{ steps.meta-cortex.outputs.tags }}
+          labels: ${{ steps.meta-cortex.outputs.labels }}
+
+      - name: Build and push Dashboard image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./eui-dashboard
+          file: ./eui-dashboard/Dockerfile
+          push: true
+          tags: ${{ env.REGISTRY }}/${{ github.repository }}-dashboard:latest
+          labels: ${{ steps.meta-cortex.outputs.labels }}
