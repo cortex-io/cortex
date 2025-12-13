@@ -52,7 +52,7 @@ RUN apk add --no-cache \
 
 # Create non-root user for security
 RUN addgroup -g 1000 cortex && \
-    adduser -D -u 1000 -G cortex -s /bin/bash cortex
+    adduser -D -u 1000 -G cortex -s /bin/sh cortex
 
 # Set working directory
 WORKDIR /app
