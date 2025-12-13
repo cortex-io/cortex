@@ -2,22 +2,47 @@
   "repository": "ry-ops/proxmox-mcp-server",
   "monitoring_config": {
     "enabled": true,
-    "integrated_at": "2025-12-06T12:30:00-06:00",
+    "integrated_at": "2025-12-13T00:00:00Z",
+    "last_updated": "2025-12-13T00:00:00Z",
     "health_checks": {
       "dependency_health": {
         "enabled": true,
         "frequency": "daily",
-        "check_types": ["outdated", "security_advisories", "deprecated"]
+        "check_types": ["outdated", "security_advisories", "deprecated"],
+        "focus_packages": ["mcp", "httpx"]
       },
       "code_quality": {
         "enabled": true,
         "frequency": "on_commit",
-        "metrics": ["complexity", "coverage", "maintainability"]
+        "metrics": ["complexity", "coverage", "maintainability"],
+        "tools": ["ruff", "black", "pytest"]
       },
       "security_posture": {
         "enabled": true,
         "frequency": "daily",
-        "scans": ["vulnerabilities", "secrets", "misconfigurations"]
+        "scans": [
+          "vulnerabilities",
+          "secrets",
+          "misconfigurations",
+          "api_token_exposure",
+          "ssl_verification_disabled"
+        ],
+        "critical_files": [".env", "*.env.*", "config/*.json", "*.pem", "*.key"]
+      },
+      "infrastructure_integration": {
+        "enabled": true,
+        "frequency": "hourly",
+        "check_proxmox_compatibility": true,
+        "monitor_api_changes": true,
+        "test_connectivity": false,
+        "note": "Actual Proxmox connectivity tests disabled to avoid production impact"
+      },
+      "docker_health": {
+        "enabled": true,
+        "frequency": "daily",
+        "scan_images": true,
+        "check_vulnerabilities": true,
+        "verify_best_practices": true
       }
     },
     "alerts": {
@@ -27,6 +52,13 @@
         "high": "within_1_hour",
         "medium": "within_24_hours",
         "low": "weekly_summary"
+      },
+      "special_alerts": {
+        "api_token_exposure": "critical",
+        "credential_leak": "critical",
+        "ssl_verification_disabled": "high",
+        "proxmox_api_breaking_changes": "high",
+        "privileged_access_misconfiguration": "high"
       }
     },
     "observability": {
@@ -36,7 +68,14 @@
       "dashboard_widget": {
         "enabled": true,
         "display_name": "Proxmox MCP Server",
-        "priority": "normal"
+        "priority": "normal",
+        "show_metrics": [
+          "security_score",
+          "dependency_health",
+          "open_issues",
+          "last_commit",
+          "infrastructure_connectivity"
+        ]
       }
     }
   },
@@ -45,17 +84,24 @@
       "enabled": false,
       "strategy": "manual_review",
       "update_types": ["patch", "minor"],
-      "exclude_major": true
+      "exclude_major": true,
+      "critical_dependencies": ["mcp", "httpx"]
     },
     "auto_security_fixes": {
       "enabled": false,
       "strategy": "create_pr",
       "severity_threshold": "high",
-      "require_tests": true
+      "require_tests": true,
+      "auto_rotate_tokens": false
     },
     "auto_documentation": {
       "enabled": true,
-      "update_on": ["api_changes", "new_features"],
+      "update_on": [
+        "api_changes",
+        "new_features",
+        "tool_updates",
+        "proxmox_api_version_changes"
+      ],
       "formats": ["markdown", "api_docs"]
     }
   },
@@ -63,18 +109,59 @@
     "github_webhooks": {
       "push": "trigger_quality_check",
       "pull_request": "trigger_security_scan",
-      "release": "trigger_full_audit"
+      "release": "trigger_full_audit",
+      "issues": "track_proxmox_compatibility"
     },
     "cortex_apis": {
       "security_api": "http://localhost:3000/api/security/scan",
       "observability_api": "http://localhost:3001/api/events",
       "dashboard_api": "http://localhost:3000/api/dashboard"
+    },
+    "proxmox_integration": {
+      "monitor_server_changes": false,
+      "track_api_versions": true,
+      "alert_on_breaking_changes": true,
+      "test_authentication": false,
+      "note": "Active Proxmox monitoring disabled to prevent production impact"
     }
   },
   "reporting": {
     "daily_health_summary": true,
     "weekly_trends_report": true,
     "monthly_audit_report": true,
-    "reports_location": "coordination/reports/proxmox-mcp-server/"
+    "reports_location": "coordination/reports/proxmox-mcp-server/",
+    "special_reports": {
+      "api_token_rotation_reminder": "monthly",
+      "proxmox_compatibility_check": "weekly",
+      "infrastructure_access_audit": "monthly"
+    }
+  },
+  "security_notes": {
+    "api_tokens": "Monitor for exposure - tokens grant full Proxmox infrastructure access including VM/container control",
+    "credential_management": "Verify .env files excluded from git - contains highly privileged credentials",
+    "token_rotation": "Monthly rotation recommended for production Proxmox instances",
+    "ssl_verification": "Monitor for disabled SSL verification (verify=False) - critical security risk",
+    "privileged_operations": "Proxmox tokens can create/delete VMs, modify storage, manage cluster - protect accordingly",
+    "monitoring_focus": "API token exposure, credential leaks, SSL verification disabled, dependency vulnerabilities"
+  },
+  "proxmox_specific": {
+    "api_version_tracking": {
+      "enabled": true,
+      "current_version": "8.x",
+      "monitor_breaking_changes": true
+    },
+    "capabilities": {
+      "vm_management": 12,
+      "container_management": 4,
+      "storage_management": 2,
+      "cluster_management": 1,
+      "task_management": 2,
+      "total_tools": 20
+    },
+    "infrastructure_impact": {
+      "risk_level": "high",
+      "reason": "Direct control over production infrastructure",
+      "requires_careful_monitoring": true
+    }
   }
 }

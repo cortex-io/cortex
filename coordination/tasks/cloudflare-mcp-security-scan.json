@@ -1,0 +1,205 @@
+{
+  "task_id": "cloudflare-mcp-security-scan-001",
+  "task_name": "Cloudflare MCP Server Security Scan",
+  "task_type": "security_scan",
+  "priority": "high",
+  "status": "pending",
+  "created_at": "2025-12-13T08:19:00Z",
+  "updated_at": "2025-12-13T08:19:00Z",
+  "assigned_to": "security-master",
+  "description": "Comprehensive security scan of cloudflare-mcp-server integration including dependency analysis, code security review, and API token security validation",
+  "target": {
+    "service": "cloudflare-mcp-server",
+    "repository": "https://github.com/ry-ops/cloudflare-mcp-server",
+    "local_path": "/Users/ryandahlberg/Projects/cloudflare-mcp-server",
+    "type": "python_mcp_server"
+  },
+  "scan_configuration": {
+    "scan_types": [
+      {
+        "type": "dependency_scan",
+        "enabled": true,
+        "tools": ["safety", "pip-audit"],
+        "config": {
+          "check_packages": ["mcp", "httpx", "pytest", "pytest-asyncio", "ruff"],
+          "severity_threshold": "medium",
+          "ignore_ids": []
+        }
+      },
+      {
+        "type": "static_code_analysis",
+        "enabled": true,
+        "tools": ["bandit", "ruff"],
+        "config": {
+          "scan_paths": ["src/cloudflare_mcp_server"],
+          "exclude_patterns": ["tests/", "__pycache__/", "*.pyc"],
+          "severity_threshold": "medium"
+        }
+      },
+      {
+        "type": "secrets_scan",
+        "enabled": true,
+        "tools": ["trufflehog", "detect-secrets"],
+        "config": {
+          "scan_paths": ["."],
+          "exclude_patterns": [".git/", "node_modules/", "*.png", "*.jpg"],
+          "check_for": [
+            "api_keys",
+            "tokens",
+            "passwords",
+            "private_keys",
+            "certificates"
+          ]
+        }
+      },
+      {
+        "type": "configuration_audit",
+        "enabled": true,
+        "checks": [
+          {
+            "name": "api_token_storage",
+            "description": "Verify API tokens are not hardcoded",
+            "severity": "critical"
+          },
+          {
+            "name": "env_variable_validation",
+            "description": "Check environment variable validation patterns",
+            "severity": "medium"
+          },
+          {
+            "name": "permission_scope",
+            "description": "Verify API token permission requirements are documented",
+            "severity": "low"
+          }
+        ]
+      },
+      {
+        "type": "api_security",
+        "enabled": true,
+        "checks": [
+          {
+            "name": "tls_verification",
+            "description": "Ensure TLS certificate verification is enabled",
+            "severity": "critical"
+          },
+          {
+            "name": "timeout_configuration",
+            "description": "Verify API timeout configurations",
+            "severity": "medium"
+          },
+          {
+            "name": "rate_limiting",
+            "description": "Check for rate limiting implementation",
+            "severity": "medium"
+          },
+          {
+            "name": "error_handling",
+            "description": "Review error handling for sensitive data leakage",
+            "severity": "high"
+          }
+        ]
+      },
+      {
+        "type": "supply_chain",
+        "enabled": true,
+        "checks": [
+          {
+            "name": "dependency_pinning",
+            "description": "Verify dependencies have version constraints",
+            "severity": "medium"
+          },
+          {
+            "name": "package_integrity",
+            "description": "Check package signatures and integrity",
+            "severity": "high"
+          },
+          {
+            "name": "license_compliance",
+            "description": "Verify all dependencies have compatible licenses",
+            "severity": "low"
+          }
+        ]
+      }
+    ],
+    "reporting": {
+      "formats": ["json", "markdown", "sarif"],
+      "output_dir": "/Users/ryandahlberg/Projects/cortex/security/reports/cloudflare-mcp-server",
+      "include_remediation": true,
+      "severity_levels": ["critical", "high", "medium", "low", "info"]
+    },
+    "remediation": {
+      "auto_fix": false,
+      "create_issues": true,
+      "notify_on_critical": true
+    }
+  },
+  "schedule": {
+    "type": "recurring",
+    "interval": "daily",
+    "time": "02:00:00",
+    "timezone": "UTC",
+    "on_change": true
+  },
+  "alerts": {
+    "enabled": true,
+    "conditions": [
+      {
+        "condition": "critical_vulnerabilities > 0",
+        "action": "immediate_alert",
+        "channels": ["dashboard", "log"]
+      },
+      {
+        "condition": "high_vulnerabilities > 5",
+        "action": "escalate",
+        "channels": ["dashboard", "log"]
+      },
+      {
+        "condition": "secrets_found > 0",
+        "action": "immediate_alert",
+        "channels": ["dashboard", "log", "security_team"]
+      }
+    ]
+  },
+  "compliance": {
+    "frameworks": ["OWASP", "CIS", "NIST"],
+    "requirements": [
+      {
+        "id": "OWASP-A02-2021",
+        "name": "Cryptographic Failures",
+        "checks": ["tls_verification", "api_token_storage"]
+      },
+      {
+        "id": "OWASP-A05-2021",
+        "name": "Security Misconfiguration",
+        "checks": ["configuration_audit", "error_handling"]
+      },
+      {
+        "id": "OWASP-A06-2021",
+        "name": "Vulnerable and Outdated Components",
+        "checks": ["dependency_scan", "package_integrity"]
+      },
+      {
+        "id": "OWASP-A08-2021",
+        "name": "Software and Data Integrity Failures",
+        "checks": ["supply_chain", "package_integrity"]
+      }
+    ]
+  },
+  "integration": {
+    "dashboard_widget": "security_scan_status",
+    "metrics_export": true,
+    "event_stream": "coordination/dashboard-events.jsonl",
+    "handoff_on_critical": {
+      "enabled": true,
+      "target_master": "security",
+      "threshold": "critical_vulnerabilities > 0 OR secrets_found > 0"
+    }
+  },
+  "metadata": {
+    "created_by": "cortex-development-master",
+    "category": "security",
+    "tags": ["cloudflare", "mcp-server", "security-scan", "dependency-scan", "secrets-scan"],
+    "related_services": ["cloudflare-mcp-server"],
+    "documentation": "/Users/ryandahlberg/Projects/cortex/docs/integrations/cloudflare-mcp-server-integration.md"
+  }
+}

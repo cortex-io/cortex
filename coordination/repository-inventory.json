@@ -1,25 +1,106 @@
 {
   "version": "1.0",
-  "last_scan": "2025-11-01T19:26:20Z",
+  "last_scan": "2025-12-13T08:30:00Z",
+  "last_integration_update": "2025-12-13T14:20:00Z",
   "scan_frequency": "daily",
-  "total_repositories": 20,
+  "total_repositories": 25,
   "repositories": [
     {
-      "created_at": "2025-10-31T18:54:21Z",
+      "created_at": "2025-12-10T18:01:20Z",
       "default_branch": "main",
-      "description": "Multi-agent AI system for autonomous GitHub repository management",
+      "description": "Answer Engine Optimization (AEO) implementation guide for optimizing ry-ops.dev blog for AI-powered search engines (ChatGPT, Perplexity, Claude, Google AI)",
       "forks": 0,
-      "health_status": "pending_catalog",
+      "health_status": "excellent",
       "is_archived": false,
-      "language": "JavaScript",
-      "last_cataloged": "2025-11-01T19:25:45Z",
-      "last_commit": "2025-11-01T19:25:22Z",
-      "name": "ry-ops/cortex",
+      "language": "Markdown",
+      "last_cataloged": "2025-12-13T08:19:00Z",
+      "last_commit": "2025-12-10T18:01:20Z",
+      "name": "ry-ops/AEO",
       "open_issues": 0,
       "stars": 0,
       "status": "active",
-      "url": "https://github.com/ry-ops/cortex",
-      "visibility": "private"
+      "url": "https://github.com/ry-ops/AEO",
+      "visibility": "public",
+      "local_path": "/Users/ryandahlberg/Projects/AEO",
+      "project_type": "documentation",
+      "strategic_importance": "high",
+      "integration_priority": "HIGH",
+      "tech_stack": {
+        "language": "Markdown",
+        "format": "Documentation",
+        "target_framework": "Astro",
+        "target_repository": "https://github.com/ry-ops/blog",
+        "implementation_type": "Content Strategy Guide"
+      },
+      "features": [
+        "llms.txt specification for AI system instructions",
+        "llms-full.txt with complete content catalog",
+        "JSON-LD schema templates (Person, TechArticle, HowTo, SoftwareSourceCode, FAQPage)",
+        "AEO-optimized blog post template structure",
+        "Content writing guidelines for AI extraction",
+        "AI traffic analytics framework",
+        "Citation monitoring workflow",
+        "6-phase implementation roadmap",
+        "Astro framework integration guidance",
+        "Success metrics based on Webflow case study (8% AI traffic)"
+      ],
+      "strategic_value": {
+        "score": 9,
+        "rationale": "High-value content strategy with proven ROI (Webflow: 4x AI traffic increase). Enables automated blog optimization for AI discoverability across 20-repository portfolio.",
+        "roi_potential": "4x AI traffic increase (2% to 8%), higher conversion rates from AI-driven traffic",
+        "automation_opportunity": "Full automation via Documentation Master - llms.txt generation, schema markup, FAQ generation, content audits"
+      },
+      "cortex_integration": {
+        "integration_status": "planned",
+        "integration_type": "documentation_master_capability",
+        "primary_owner": "documentation_master",
+        "supporting_masters": [
+          "development",
+          "cicd",
+          "security"
+        ],
+        "integration_plan": {
+          "phase_1": "Generate llms.txt from repository inventory (Week 1)",
+          "phase_2": "Implement JSON-LD schema automation (Weeks 2-4)",
+          "phase_3": "Generate AEO-optimized content (Months 2-3)",
+          "phase_4": "Monitor AI citations and traffic (Ongoing)"
+        },
+        "target_metrics": {
+          "ai_traffic_percent": 8,
+          "ai_citations_per_week": 10,
+          "blog_posts_optimized": 100,
+          "content_freshness_score": 90,
+          "timeline_months": 6
+        },
+        "dependencies": [
+          "ry-ops/blog repository access",
+          "Astro framework integration",
+          "Analytics setup for AI traffic tracking"
+        ],
+        "catalog_location": "/Users/ryandahlberg/Projects/cortex/coordination/masters/inventory/catalogs/AEO-CATALOG.md",
+        "recommendation_location": "/Users/ryandahlberg/Projects/cortex/coordination/masters/inventory/catalogs/AEO-STRATEGIC-RECOMMENDATION.md",
+        "integrated_at": null,
+        "local_clone": true,
+        "last_pulled": "2025-12-13T08:19:00Z"
+      },
+      "related_repositories": [
+        "ry-ops/blog",
+        "ry-ops/n8n-mcp-server",
+        "ry-ops/proxmox-mcp-server",
+        "ry-ops/unifi-mcp-server",
+        "ry-ops/cortex"
+      ],
+      "documentation": {
+        "readme_quality": "excellent",
+        "line_count": 547,
+        "completeness": "100%",
+        "includes_code_examples": true,
+        "includes_implementation_roadmap": true,
+        "includes_success_metrics": true
+      },
+      "license": "MIT",
+      "commit_frequency": "initial_release",
+      "last_activity_days": 3
     },
     {
       "created_at": "2025-10-31T19:21:18Z",
@@ -39,21 +120,550 @@
       "visibility": "private"
     },
     {
-      "created_at": "2025-09-21T13:33:34Z",
+      "created_at": "2025-10-01T16:45:28Z",
+      "default_branch": "master",
+      "description": "Personal portfolio website - Gatsby-based one-page portfolio with parallax effects showcasing projects and professional work",
+      "forks": 0,
+      "health_status": "active",
+      "is_archived": false,
+      "language": "TypeScript",
+      "last_cataloged": "2025-12-13T08:20:00Z",
+      "last_commit": "2025-10-05T14:18:42Z",
+      "name": "ry-ops/cara",
+      "open_issues": 0,
+      "stars": 1,
+      "status": "active",
+      "url": "https://github.com/ry-ops/cara",
+      "visibility": "private",
+      "project_type": "portfolio-website",
+      "tech_stack": {
+        "framework": "Gatsby",
+        "version": "5.14.5",
+        "language": "TypeScript",
+        "theme": "@lekoarts/gatsby-theme-cara v5.1.7",
+        "ui_library": "Theme UI",
+        "animation": "react-spring parallax",
+        "package_manager": "npm/yarn",
+        "key_dependencies": [
+          "gatsby@5.14.5",
+          "react@18.3.1",
+          "gatsby-plugin-manifest@5.14.0"
+        ]
+      },
+      "architecture": {
+        "type": "static-site-generator",
+        "build_system": "Gatsby",
+        "content_format": "MDX",
+        "sections": [
+          "intro",
+          "projects",
+          "about",
+          "contact",
+          "footer"
+        ],
+        "customization_method": "theme_shadowing",
+        "deployment_target": "https://ryandahlberg.com"
+      },
+      "features": [
+        "One-page parallax scrolling portfolio",
+        "Theme UI-based theming with dark mode",
+        "react-spring parallax effects",
+        "CSS animations on shapes",
+        "MDX-based content sections",
+        "PWA support with manifest",
+        "Responsive design",
+        "Custom footer component"
+      ],
+      "content_overview": {
+        "intro": "Ryan Dahlberg - Network and automation specialist",
+        "projects_featured": [
+          "UniFi Cloudflare DDNS",
+          "UniFi MCP Server",
+          "UniFi Grafana Streamer",
+          "Proxmox MCP Server",
+          "n8n MCP Server"
+        ],
+        "contact_links": [
+          "ry-ops.dev",
+          "github.com/ry-ops"
+        ],
+        "total_content_lines": 51
+      },
+      "deployment_status": {
+        "deployed": true,
+        "url": "https://ryandahlberg.com",
+        "platform": "likely_netlify_or_cloudflare",
+        "last_verified": "2025-12-13T08:20:00Z"
+      },
+      "automation": {
+        "dependabot_enabled": true,
+        "dependabot_ecosystems": [
+          "pip",
+          "github-actions"
+        ],
+        "ci_cd_workflows": 0,
+        "github_actions": false
+      },
+      "license": "0BSD",
+      "repository_size": "1.2MB",
+      "strategic_value": {
+        "purpose": "Personal branding and portfolio presentation",
+        "visibility": "Public-facing professional presence",
+        "maintenance_priority": "low",
+        "integration_potential": "standalone",
+        "recommendation": "STANDALONE"
+      },
+      "cortex_integration": {
+        "security_scanning": false,
+        "dependency_monitoring": "dependabot_only",
+        "automated_updates": false,
+        "integrated_at": "2025-12-13T08:20:00Z",
+        "local_clone": false,
+        "integration_recommended": false,
+        "rationale": "Portfolio website best maintained as standalone project. No operational integration needed with cortex infrastructure. Dependabot provides sufficient dependency management."
+      },
+      "assessment": {
+        "code_quality": "high",
+        "documentation_quality": "excellent",
+        "maintenance_status": "active",
+        "technical_debt": "low",
+        "security_posture": "good",
+        "last_activity_days": 69
+      },
+      "recommendations": [
+        "Continue as standalone portfolio website",
+        "Consider adding GitHub Actions for automated deployment",
+        "Update Dependabot configuration to include npm ecosystem",
+        "Periodic content updates to showcase latest projects",
+        "No cortex integration required - different domain entirely"
+      ],
+      "notes": [
+        "Based on LekoArts Gatsby Cara starter theme",
+        "Customized content showcasing UniFi and automation work",
+        "Successfully deployed and accessible at ryandahlberg.com",
+        "Serves as professional portfolio separate from infrastructure tools",
+        "Dependabot configured but for wrong ecosystems (pip instead of npm)"
+      ]
+    },
+    {
+      "created_at": "2025-10-14T12:24:18Z",
       "default_branch": "main",
-      "description": "unifi-mcp-server",
+      "description": "",
       "forks": 0,
       "health_status": "pending_catalog",
       "is_archived": false,
       "language": "Python",
       "last_cataloged": "2025-11-01T19:25:45Z",
-      "last_commit": "2025-10-31T21:04:37Z",
-      "name": "ry-ops/unifi-mcp-server",
+      "last_commit": "2025-10-14T12:32:32Z",
+      "name": "ry-ops/checkmk-mcp-server",
       "open_issues": 0,
-      "stars": 1,
+      "stars": 0,
       "status": "active",
-      "url": "https://github.com/ry-ops/unifi-mcp-server",
+      "url": "https://github.com/ry-ops/checkmk-mcp-server",
       "visibility": "public"
+    },
+    {
+      "created_at": "2025-10-05T15:24:45Z",
+      "default_branch": "main",
+      "description": "A Model Context Protocol (MCP) server that provides seamless integration with the Cloudflare API. Manages DNS, zones, Workers KV storage, cache operations, and analytics.",
+      "forks": 1,
+      "health_status": "active",
+      "is_archived": false,
+      "language": "Python",
+      "last_cataloged": "2025-12-13T08:19:00Z",
+      "last_commit": "2025-10-05T20:40:56Z",
+      "name": "ry-ops/cloudflare-mcp-server",
+      "open_issues": 0,
+      "stars": 0,
+      "status": "active",
+      "url": "https://github.com/ry-ops/cloudflare-mcp-server",
+      "visibility": "public",
+      "project_type": "mcp-server",
+      "tech_stack": {
+        "language": "Python",
+        "version": "3.10+",
+        "framework": "MCP",
+        "package_manager": "uv",
+        "key_dependencies": [
+          "mcp>=1.1.2",
+          "httpx>=0.27.0"
+        ]
+      },
+      "features": [
+        "Zone management (list, get zone info)",
+        "DNS management (list, create, update, delete records)",
+        "Workers KV storage (CRUD operations)",
+        "Cache management (purge operations)",
+        "Zone analytics (requests, bandwidth, threats)",
+        "A2A protocol support with agent card",
+        "13 tools across 5 skill categories"
+      ],
+      "a2a_protocol": {
+        "enabled": true,
+        "agent_card": "agent-card.json",
+        "capabilities": {
+          "streaming": true,
+          "tasks": true,
+          "async": true,
+          "batch_operations": false
+        },
+        "skills": [
+          "zone_management",
+          "dns_management",
+          "kv_storage",
+          "cache_management",
+          "analytics"
+        ]
+      },
+      "cortex_integration": {
+        "security_scanning": true,
+        "dependency_monitoring": true,
+        "automated_updates": false,
+        "integrated_at": "2025-12-13T08:19:00Z",
+        "local_clone": true,
+        "local_path": "/Users/ryandahlberg/Projects/cloudflare-mcp-server",
+        "last_pulled": "2025-12-13T08:19:00Z",
+        "monitoring": {
+          "enabled": true,
+          "config_file": "coordination/monitoring/cloudflare-mcp-server.json",
+          "health_check_script": "scripts/monitoring/cloudflare-health-check.sh",
+          "metrics_collection": true,
+          "check_interval": 300,
+          "dashboard_endpoints": [
+            "/api/cloudflare/status",
+            "/api/cloudflare/metrics",
+            "/api/cloudflare/health-checks",
+            "/api/cloudflare/zones",
+            "/api/cloudflare/analytics"
+          ]
+        },
+        "security": {
+          "scan_config": "coordination/tasks/cloudflare-mcp-security-scan.json",
+          "scan_schedule": "daily",
+          "vulnerability_tracking": true,
+          "secrets_detection": true,
+          "dependency_scanning": true,
+          "api_security_checks": true,
+          "compliance_frameworks": [
+            "OWASP",
+            "CIS",
+            "NIST"
+          ]
+        },
+        "features_integrated": [
+          "Health monitoring and alerting",
+          "Cloudflare API connectivity checks",
+          "DNS/CDN metrics tracking",
+          "Zone analytics monitoring",
+          "Security vulnerability scanning",
+          "Dashboard widgets for DNS and CDN metrics",
+          "API performance monitoring",
+          "KV storage operations tracking"
+        ],
+        "security_considerations": [
+          "API tokens stored in environment variables only",
+          "Tokens require scoped permissions (minimum: Zone-Read, DNS-Edit)",
+          "Account ID optional but required for KV operations",
+          "Regular token rotation recommended",
+          "TLS certificate verification enforced",
+          "API timeout configurations validated",
+          "Error handling prevents sensitive data leakage"
+        ],
+        "integration_files": {
+          "monitoring_config": "coordination/monitoring/cloudflare-mcp-server.json",
+          "health_check": "scripts/monitoring/cloudflare-health-check.sh",
+          "security_task": "coordination/tasks/cloudflare-mcp-security-scan.json",
+          "dashboard_endpoints": "eui-dashboard/server/index.js",
+          "documentation": "docs/integrations/cloudflare-mcp-server-integration.md"
+        }
+      }
+    },
+    {
+      "created_at": "2025-10-31T18:54:21Z",
+      "default_branch": "main",
+      "description": "Multi-agent AI system for autonomous GitHub repository management",
+      "forks": 0,
+      "health_status": "pending_catalog",
+      "is_archived": false,
+      "language": "JavaScript",
+      "last_cataloged": "2025-11-01T19:25:45Z",
+      "last_commit": "2025-11-01T19:25:22Z",
+      "name": "ry-ops/cortex",
+      "open_issues": 0,
+      "stars": 0,
+      "status": "active",
+      "url": "https://github.com/ry-ops/cortex",
+      "visibility": "private"
+    },
+    {
+      "created_at": "2025-12-09T21:29:19Z",
+      "default_branch": "main",
+      "description": "Cortex Holdings Inc. - AI-powered construction company for infrastructure automation. Internal project management and roadmap.",
+      "forks": 0,
+      "health_status": "active",
+      "is_archived": false,
+      "language": "none",
+      "last_cataloged": "2025-12-13T08:30:00Z",
+      "last_commit": "2025-12-09T21:31:34Z",
+      "name": "ry-ops/cortex-construction-hq",
+      "open_issues": 0,
+      "stars": 0,
+      "status": "active",
+      "url": "https://github.com/ry-ops/cortex-construction-hq",
+      "visibility": "private",
+      "project_type": "documentation",
+      "tech_stack": {
+        "language": "Markdown",
+        "files": 3,
+        "total_lines": 549,
+        "documentation_quality": "high"
+      },
+      "features": [
+        "Strategic roadmap (8 phases)",
+        "Development session logging",
+        "Ecosystem architecture documentation",
+        "MCP server inventory tracking",
+        "Milestone and metrics tracking"
+      ],
+      "cortex_integration": {
+        "role": "strategic_planning_hub",
+        "integrated": false,
+        "integration_planned": true,
+        "automation_opportunities": [
+          "automated_roadmap_sync",
+          "session_log_generation",
+          "dashboard_integration",
+          "wiki_generation"
+        ],
+        "integration_files": {
+          "analysis": "coordination/masters/inventory/analysis/cortex-construction-hq-analysis.md"
+        }
+      },
+      "strategic_importance": "high",
+      "recommendations": [
+        "Add MIT License (critical)",
+        "Implement automated roadmap sync",
+        "Integrate with Cortex dashboard",
+        "Add repository topics",
+        "Automate session logging"
+      ],
+      "next_actions": [
+        {
+          "action": "add_license",
+          "priority": "critical",
+          "effort": "15 minutes",
+          "owner": "inventory_master"
+        },
+        {
+          "action": "automated_roadmap_sync",
+          "priority": "high",
+          "effort": "1 week",
+          "owner": "inventory_master"
+        },
+        {
+          "action": "dashboard_integration",
+          "priority": "high",
+          "effort": "3 days",
+          "owner": "development_master"
+        }
+      ],
+      "assessment": {
+        "code_quality": "n/a",
+        "documentation_quality": "excellent",
+        "maintenance_status": "active",
+        "technical_debt": "none",
+        "security_posture": "good",
+        "last_activity_days": 4
+      },
+      "notes": [
+        "Created Dec 9, 2025 as project management hub for Cortex ecosystem",
+        "Documentation-only repository with strategic roadmap",
+        "Contains SESSION-LOG.md documenting massive Dec 9 build session",
+        "High strategic value for ecosystem planning and alignment",
+        "Integration opportunities with Cortex coordination system",
+        "Missing LICENSE file - needs immediate attention"
+      ]
+    },
+    {
+      "created_at": "2025-12-09T00:00:00Z",
+      "default_branch": "main",
+      "description": "MCP server for managing resource allocation, MCP server lifecycle, and Kubernetes workers in cortex",
+      "forks": 0,
+      "health_status": "active",
+      "is_archived": false,
+      "language": "Python",
+      "last_cataloged": "2025-12-13T16:30:00Z",
+      "last_commit": "2025-12-09T23:57:53Z",
+      "name": "ry-ops/cortex-resource-manager",
+      "open_issues": 0,
+      "stars": 0,
+      "status": "active",
+      "url": "https://github.com/ry-ops/cortex-resource-manager",
+      "visibility": "private",
+      "local_path": "/Users/ryandahlberg/Projects/cortex-resource-manager",
+      "project_type": "mcp-server",
+      "strategic_importance": "critical",
+      "integration_priority": "HIGH"
+    },
+    {
+      "created_at": "2025-10-15T11:54:50Z",
+      "default_branch": "main",
+      "description": "",
+      "forks": 0,
+      "health_status": "pending_catalog",
+      "is_archived": false,
+      "language": "Python",
+      "last_cataloged": "2025-11-01T19:25:45Z",
+      "last_commit": "2025-10-15T12:33:13Z",
+      "name": "ry-ops/grafana-a2a-mcp-server",
+      "open_issues": 0,
+      "stars": 0,
+      "status": "active",
+      "url": "https://github.com/ry-ops/grafana-a2a-mcp-server",
+      "visibility": "public"
+    },
+    {
+      "created_at": "2025-10-14T12:43:17Z",
+      "default_branch": "main",
+      "description": "A Model Context Protocol (MCP) server that integrates Microsoft Graph API with Claude, enabling management of Microsoft 365 users, licenses, and groups.",
+      "forks": 0,
+      "health_status": "active",
+      "is_archived": false,
+      "language": "Python",
+      "last_cataloged": "2025-12-13T08:20:00Z",
+      "last_commit": "2025-10-14T13:05:40Z",
+      "name": "ry-ops/microsoft-graph-mcp-server",
+      "open_issues": 0,
+      "stars": 0,
+      "status": "active",
+      "url": "https://github.com/ry-ops/microsoft-graph-mcp-server",
+      "visibility": "public",
+      "project_type": "mcp-server",
+      "tech_stack": {
+        "language": "Python",
+        "version": "3.10+",
+        "framework": "MCP",
+        "package_manager": "uv",
+        "key_dependencies": [
+          "mcp>=1.0.0",
+          "msal>=1.31.0",
+          "httpx>=0.27.0",
+          "python-dotenv>=1.0.0"
+        ]
+      },
+      "features": [
+        "User Management: Create, get, and search Microsoft 365 users",
+        "License Management: Assign licenses with service plan customization",
+        "Group Management: Add users to groups, list groups",
+        "Query Operations: List licenses, search users, get user details",
+        "A2A Protocol Support: Agent-to-Agent communication for automated M365 administration",
+        "OAuth2 Client Credentials Flow with MSAL",
+        "7 tools across user, license, and group operations"
+      ],
+      "cortex_integration": {
+        "security_scanning": true,
+        "dependency_monitoring": true,
+        "automated_updates": false,
+        "integrated_at": "2025-12-13T08:20:00Z",
+        "local_clone": true,
+        "local_path": "/Users/ryandahlberg/Projects/microsoft-graph-mcp-server",
+        "last_pulled": "2025-12-13T08:19:00Z",
+        "monitoring": {
+          "enabled": true,
+          "health_check_script": "scripts/monitoring/check-msgraph-health.sh",
+          "metrics_collection": true,
+          "check_interval": 3600,
+          "health_checks": [
+            "MS Graph API connectivity",
+            "OAuth2 authentication status",
+            "Permission verification",
+            "Rate limit monitoring",
+            "Azure AD app registration health"
+          ],
+          "dashboard_endpoints": {
+            "health": "/api/microsoft-graph/health",
+            "metrics": "/api/microsoft-graph/metrics",
+            "security": "/api/microsoft-graph/security",
+            "m365_stats": "/api/microsoft-graph/m365-stats"
+          }
+        },
+        "security": {
+          "scan_config": "coordination/tasks/microsoft-graph-security-scan.json",
+          "scan_schedule": "daily",
+          "vulnerability_tracking": true,
+          "secrets_detection": true,
+          "azure_credential_monitoring": true,
+          "permission_scope_audit": true,
+          "oauth_security_audit": true
+        },
+        "features_integrated": [
+          "Health monitoring and alerting",
+          "MS Graph API connectivity checks",
+          "OAuth2 authentication monitoring",
+          "Permission verification",
+          "Rate limit tracking",
+          "Security vulnerability scanning",
+          "Dashboard widget with M365 metrics",
+          "Azure AD integration health checks",
+          "Client secret expiry monitoring"
+        ],
+        "security_considerations": [
+          "Client secrets grant full directory write access",
+          "Azure credentials stored in environment variables only",
+          "Quarterly secret rotation recommended",
+          "Monitor for client secret exposure",
+          "Permission scope: User.ReadWrite.All, Directory.ReadWrite.All, Group.ReadWrite.All, Organization.Read.All",
+          "GDPR compliance required for M365 user data",
+          "MFA required for Azure AD admin accounts",
+          "Token security and replay attack prevention",
+          "Rate limiting to prevent service degradation"
+        ],
+        "integration_files": {
+          "monitoring_config": "coordination/monitoring/microsoft-graph-mcp-server.json",
+          "health_check_script": "scripts/monitoring/check-msgraph-health.sh",
+          "security_task": "coordination/tasks/microsoft-graph-security-scan.json",
+          "dashboard_endpoints": "eui-dashboard/server/index.js (lines 203-275)",
+          "documentation": "docs/integrations/microsoft-graph-mcp-server-integration.md"
+        },
+        "azure_specific": {
+          "authentication": "OAuth2 Client Credentials Flow",
+          "required_permissions": [
+            "User.ReadWrite.All",
+            "Directory.ReadWrite.All",
+            "Group.ReadWrite.All",
+            "Organization.Read.All"
+          ],
+          "environment_variables": [
+            "MICROSOFT_TENANT_ID",
+            "MICROSOFT_CLIENT_ID",
+            "MICROSOFT_CLIENT_SECRET"
+          ],
+          "token_endpoint": "https://login.microsoftonline.com/{tenant_id}/oauth2/v2.0/token",
+          "graph_endpoint": "https://graph.microsoft.com/v1.0"
+        },
+        "m365_operations": {
+          "user_management": [
+            "create_user",
+            "get_user",
+            "search_user"
+          ],
+          "license_management": [
+            "assign_license",
+            "list_available_licenses"
+          ],
+          "group_management": [
+            "add_user_to_group",
+            "list_groups"
+          ],
+          "monitoring_metrics": [
+            "User creation rate",
+            "License assignments",
+            "Group memberships",
+            "API success rate",
+            "Authentication health"
+          ]
+        }
+      }
     },
     {
       "created_at": "2025-10-15T14:40:37Z",
@@ -94,7 +704,10 @@
         "version": "3.10+",
         "framework": "MCP",
         "package_manager": "uv",
-        "key_dependencies": ["mcp>=1.0.0", "n8n-api-client"]
+        "key_dependencies": [
+          "mcp>=1.0.0",
+          "n8n-api-client"
+        ]
       },
       "features": [
         "Workflow management (list, create, update, delete, activate/deactivate)",
@@ -109,34 +722,52 @@
         "dependency_monitoring": true,
         "automated_updates": false,
         "integrated_at": "2025-12-07T00:00:00Z",
-        "local_clone": false,
+        "enhanced_integration_at": "2025-12-13T00:00:00Z",
+        "local_clone": true,
+        "local_path": "/Users/ryandahlberg/Projects/n8n-mcp-server",
+        "last_pulled": "2025-12-13T08:19:00Z",
+        "monitoring": {
+          "enabled": true,
+          "health_check_script": "coordination/integrations/n8n-mcp-server/monitoring/n8n-health-check.sh",
+          "metrics_collection": true,
+          "check_interval": 300,
+          "dashboard_widget": "coordination/integrations/n8n-mcp-server/dashboard/n8n-widget.json"
+        },
+        "security": {
+          "scan_config": "coordination/integrations/n8n-mcp-server/security/n8n-security-scan.json",
+          "scan_schedule": "daily",
+          "vulnerability_tracking": true,
+          "secrets_detection": true,
+          "container_scanning": true
+        },
+        "features_integrated": [
+          "Health monitoring and alerting",
+          "Workflow metrics tracking",
+          "Execution success/failure monitoring",
+          "Security vulnerability scanning",
+          "Dashboard widget with real-time metrics",
+          "Container status monitoring",
+          "API connectivity checks"
+        ],
         "security_considerations": [
           "API keys stored in environment variables only",
           "Keys grant full n8n instance access",
           "Regular key rotation recommended",
-          "Secrets detection monitoring enabled"
-        ]
+          "Secrets detection monitoring enabled",
+          "Container security scanning enabled",
+          "Dependency vulnerability tracking active"
+        ],
+        "integration_files": {
+          "config": "coordination/integrations/n8n-mcp-server/config/n8n-config.json",
+          "monitoring": "coordination/integrations/n8n-mcp-server/monitoring/n8n-health-check.sh",
+          "security": "coordination/integrations/n8n-mcp-server/security/n8n-security-scan.json",
+          "dashboard": "coordination/integrations/n8n-mcp-server/dashboard/n8n-widget.json",
+          "documentation": "docs/integrations/n8n-mcp-server-integration.md"
+        }
       }
     },
     {
-      "created_at": "2025-10-29T21:23:30Z",
-      "default_branch": "main",
-      "description": "",
-      "forks": 0,
-      "health_status": "pending_catalog",
-      "is_archived": false,
-      "language": "none",
-      "last_cataloged": "2025-11-01T19:25:45Z",
-      "last_commit": "2025-10-30T17:57:50Z",
-      "name": "ry-ops/ry-ops",
-      "open_issues": 0,
-      "stars": 0,
-      "status": "active",
-      "url": "https://github.com/ry-ops/ry-ops",
-      "visibility": "public"
-    },
-    {
-      "created_at": "2025-10-19T17:36:09Z",
+      "created_at": "2025-10-14T19:46:31Z",
       "default_branch": "main",
       "description": "",
       "forks": 0,
@@ -144,12 +775,95 @@
       "is_archived": false,
       "language": "Python",
       "last_cataloged": "2025-11-01T19:25:45Z",
-      "last_commit": "2025-10-24T19:53:09Z",
-      "name": "ry-ops/talos-a2a-mcp-server",
+      "last_commit": "2025-10-15T11:17:26Z",
+      "name": "ry-ops/netdata-mcp-server",
       "open_issues": 0,
       "stars": 0,
       "status": "active",
-      "url": "https://github.com/ry-ops/talos-a2a-mcp-server",
+      "url": "https://github.com/ry-ops/netdata-mcp-server",
+      "visibility": "public"
+    },
+    {
+      "created_at": "2025-10-02T15:56:10Z",
+      "default_branch": "main",
+      "description": "Model Context Protocol server enabling Claude to interact with Proxmox Virtual Environment infrastructure through natural language commands",
+      "forks": 0,
+      "health_status": "active",
+      "is_archived": false,
+      "language": "Python",
+      "last_cataloged": "2025-12-13T00:00:00Z",
+      "last_commit": "2025-10-05T20:08:56Z",
+      "name": "ry-ops/proxmox-mcp-server",
+      "open_issues": 0,
+      "stars": 0,
+      "status": "active",
+      "url": "https://github.com/ry-ops/proxmox-mcp-server",
+      "visibility": "public",
+      "local_path": "/Users/ryandahlberg/Projects/proxmox-mcp-server",
+      "project_type": "mcp-server",
+      "tech_stack": {
+        "language": "Python",
+        "version": "3.10+",
+        "framework": "MCP",
+        "package_manager": "uv",
+        "key_dependencies": [
+          "mcp>=1.0.0",
+          "httpx>=0.27.0"
+        ]
+      },
+      "cortex_integration": {
+        "security_scanning": true,
+        "dependency_monitoring": true,
+        "automated_updates": false,
+        "health_checks": true,
+        "dashboard_widget": true,
+        "integrated_at": "2025-12-13T00:00:00Z",
+        "last_updated": "2025-12-13T00:00:00Z",
+        "local_clone": true,
+        "last_pulled": "2025-12-06T12:32:00Z",
+        "integration_files": {
+          "health_check": "coordination/integrations/proxmox-mcp-server/monitoring/proxmox-health-check.sh",
+          "security_scan": "coordination/integrations/proxmox-mcp-server/security/proxmox-security-scan.json",
+          "monitoring_config": "coordination/monitoring/proxmox-mcp-server.json",
+          "dashboard_widget": "coordination/integrations/proxmox-mcp-server/dashboard/proxmox-widget.json",
+          "documentation": "docs/integrations/proxmox-mcp-server-integration.md"
+        },
+        "security_considerations": [
+          "API tokens grant full Proxmox infrastructure access",
+          "Can create/delete VMs and containers",
+          "Can modify storage and cluster configuration",
+          "Requires careful credential management",
+          "SSL verification monitoring critical",
+          "Monthly token rotation recommended",
+          "High infrastructure impact - production systems affected"
+        ]
+      },
+      "features": [
+        "Node & cluster management (2 tools)",
+        "Virtual machine management (12 tools)",
+        "LXC container management (4 tools)",
+        "Storage management (2 tools)",
+        "Task monitoring (2 tools)",
+        "Agent-to-Agent (A2A) protocol support",
+        "20 total infrastructure management tools",
+        "Docker & Docker Compose support"
+      ]
+    },
+    {
+      "created_at": "2025-10-14T12:00:56Z",
+      "default_branch": "main",
+      "description": "",
+      "forks": 0,
+      "health_status": "pending_catalog",
+      "is_archived": false,
+      "language": "Python",
+      "last_cataloged": "2025-11-01T19:25:45Z",
+      "last_commit": "2025-10-14T12:12:12Z",
+      "name": "ry-ops/pulseway-mcp-server",
+      "open_issues": 0,
+      "stars": 0,
+      "status": "active",
+      "url": "https://github.com/ry-ops/pulseway-mcp-server",
       "visibility": "public"
     },
     {
@@ -170,24 +884,275 @@
       "visibility": "public"
     },
     {
-      "created_at": "2025-10-15T11:54:50Z",
+      "created_at": "2025-10-29T21:23:30Z",
       "default_branch": "main",
       "description": "",
       "forks": 0,
       "health_status": "pending_catalog",
       "is_archived": false,
-      "language": "Python",
+      "language": "none",
       "last_cataloged": "2025-11-01T19:25:45Z",
-      "last_commit": "2025-10-15T12:33:13Z",
-      "name": "ry-ops/grafana-a2a-mcp-server",
+      "last_commit": "2025-10-30T17:57:50Z",
+      "name": "ry-ops/ry-ops",
       "open_issues": 0,
       "stars": 0,
       "status": "active",
-      "url": "https://github.com/ry-ops/grafana-a2a-mcp-server",
+      "url": "https://github.com/ry-ops/ry-ops",
       "visibility": "public"
     },
     {
-      "created_at": "2025-10-14T19:46:31Z",
+      "created_at": "2025-12-09T21:23:33Z",
+      "default_branch": "main",
+      "description": "Automated Red vs Blue Team security testing environment with unique unauthorized threat detection capability",
+      "forks": 0,
+      "health_status": "active",
+      "is_archived": false,
+      "language": "HCL",
+      "last_cataloged": "2025-12-13T16:20:00Z",
+      "last_commit": "2025-12-09T21:25:44Z",
+      "name": "ry-ops/sentinel-forge",
+      "open_issues": 0,
+      "stars": 0,
+      "status": "active",
+      "url": "https://github.com/ry-ops/sentinel-forge",
+      "visibility": "private",
+      "local_path": "/Users/ryandahlberg/Projects/sentinel-forge",
+      "project_type": "security-lab",
+      "tech_stack": {
+        "infrastructure": "Terraform/OpenTofu 1.6+",
+        "orchestration": "n8n (self-hosted)",
+        "siem": "Wazuh 4.x",
+        "hypervisor": "Proxmox VE 7.x/8.x",
+        "offensive_os": [
+          "Kali Linux 2024.4",
+          "Parrot OS"
+        ],
+        "detection": "Wazuh + Suricata + Zeek",
+        "key_technologies": [
+          "Terraform/OpenTofu",
+          "n8n workflows",
+          "Wazuh SIEM",
+          "Proxmox",
+          "Metasploit",
+          "Docker"
+        ]
+      },
+      "architecture": {
+        "deployment_model": "on-premise_proxmox",
+        "vm_count": 15,
+        "network_vlans": 5,
+        "total_lines_of_code": 4312,
+        "terraform_resources": 15,
+        "n8n_workflows": 2,
+        "wazuh_rules": 100,
+        "documentation_pages": 5,
+        "networks": {
+          "management": "10.0.0.0/24",
+          "red_team": "10.0.10.0/24",
+          "blue_team": "10.0.20.0/24",
+          "targets": "10.0.30.0/24",
+          "purple_control": "10.0.40.0/24",
+          "honeypots": "10.0.50.0/24"
+        }
+      },
+      "features": [
+        "Automated Red Team attack chains (6 phases)",
+        "Blue Team detection and response automation",
+        "Purple Team coordination and scoring",
+        "UNIQUE: Unauthorized threat detection (Black Hat vs Red Team)",
+        "Honeypot network for advanced deception",
+        "Real-time exercise orchestration via n8n",
+        "Infrastructure-as-Code deployment (Terraform)",
+        "Integration with existing Wazuh SIEM",
+        "Automated IP blocking and incident response",
+        "MITRE ATT&CK framework alignment",
+        "Comprehensive scoring system",
+        "Multi-phase attack scenarios"
+      ],
+      "capabilities": {
+        "red_team": [
+          "Reconnaissance (Nmap, Masscan, Nuclei)",
+          "Vulnerability scanning (Nikto, Burp Suite)",
+          "Exploitation (Metasploit, SQLMap)",
+          "Post-exploitation (Empire, Mimikatz)",
+          "Lateral movement (Impacket, CrackMapExec)",
+          "Data exfiltration",
+          "C2 infrastructure (Covenant, Sliver)",
+          "Phishing simulation (GoPhish)"
+        ],
+        "blue_team": [
+          "Real-time SIEM detection (Wazuh)",
+          "Network monitoring (Zeek, Suricata)",
+          "Threat intelligence (MISP)",
+          "Forensics (Volatility, Autopsy)",
+          "Incident response automation",
+          "Active response (auto-blocking)",
+          "SOC analyst workstation"
+        ],
+        "purple_team": [
+          "Exercise lifecycle management",
+          "Real-time scoring",
+          "Team coordination",
+          "Post-exercise analysis",
+          "Continuous improvement tracking"
+        ],
+        "deception": [
+          "SSH Honeypot (Cowrie)",
+          "Web Application Honeypot (Snare/Tanner)",
+          "Database Honeypot (Elasticpot)",
+          "SMB Honeypot (Impacket)"
+        ]
+      },
+      "deployment_status": {
+        "infrastructure_code": "complete",
+        "workflows": "2/4 complete",
+        "wazuh_rules": "complete",
+        "documentation": "complete",
+        "vm_templates": "pending",
+        "proxmox_deployment": "pending",
+        "overall_status": "pre-deployment",
+        "ready_for_deployment": true,
+        "prerequisites": [
+          "Proxmox VM templates",
+          "Wazuh SIEM access",
+          "n8n instance",
+          "VLAN configuration"
+        ],
+        "estimated_deployment_time": "1-2 days"
+      },
+      "cortex_integration": {
+        "security_scanning": true,
+        "dependency_monitoring": true,
+        "automated_updates": false,
+        "integrated_at": "2025-12-13T16:20:00Z",
+        "local_clone": true,
+        "last_pulled": "2025-12-13T16:20:00Z",
+        "integration_priority": "high",
+        "strategic_value": "critical",
+        "integration_opportunities": [
+          "Security Master: Automated security testing pipeline",
+          "CI/CD Master: Pre-deployment security validation",
+          "Development Master: Secure code testing",
+          "Inventory Master: Repository security posture tracking",
+          "AI Analysis: Pattern recognition and playbook generation"
+        ],
+        "integration_points": {
+          "security_master": {
+            "trigger_exercises": "webhook",
+            "receive_alerts": "wazuh_to_cortex",
+            "metrics_pipeline": "sentinel_to_dashboard",
+            "incident_response": "unauthorized_attack_workflow"
+          },
+          "cicd_master": {
+            "pre_deploy_test": "deploy_to_targets",
+            "security_scan": "automated_red_team",
+            "post_deploy_verify": "detection_validation"
+          },
+          "metrics_export": {
+            "mttd": "mean_time_to_detect",
+            "mttr": "mean_time_to_respond",
+            "coverage": "attack_technique_coverage",
+            "false_positives": "rate_tracking"
+          }
+        },
+        "monitoring": {
+          "enabled": true,
+          "health_checks": [
+            "Proxmox VM status",
+            "Wazuh agent connectivity",
+            "n8n workflow status",
+            "Network segmentation validation"
+          ],
+          "metrics_collection": true,
+          "alert_integration": true
+        },
+        "security": {
+          "threat_detection": "active",
+          "honeypot_monitoring": true,
+          "unauthorized_attack_alerts": true,
+          "automated_blocking": true,
+          "incident_response": "automated"
+        }
+      },
+      "strategic_assessment": {
+        "unique_value_proposition": "Only security lab that differentiates authorized Red Team from real threats",
+        "market_differentiation": "Dual-purpose: Training + Real Security",
+        "integration_fit": "perfect_fit_with_cortex_security",
+        "cost_benefit": {
+          "initial_investment": "$2,400 (16 hours setup)",
+          "annual_cost": "$7,200 (maintenance)",
+          "annual_savings": "$25,000-65,000 (replaces external pentesting)",
+          "roi": "161% first year",
+          "payback_period": "< 2 months"
+        },
+        "risk_level": "low",
+        "deployment_priority": "high",
+        "recommendation": "DEPLOY_AND_INTEGRATE",
+        "strategic_fit": "critical_security_capability"
+      },
+      "resource_requirements": {
+        "proxmox_ram": "60-100GB",
+        "proxmox_storage": "1TB",
+        "proxmox_vcpu": "30-60 cores",
+        "network_vlans": 5,
+        "initial_setup_time": "16 hours",
+        "monthly_maintenance": "2-4 hours"
+      },
+      "documentation": {
+        "readme": "Quick start guide",
+        "deployment_guide": "11-phase deployment process",
+        "architecture_doc": "Detailed technical architecture",
+        "project_status": "Current status and roadmap",
+        "summary": "Executive overview",
+        "contributing": "Contribution guidelines",
+        "quality": "excellent",
+        "completeness": "comprehensive"
+      },
+      "metrics_tracking": {
+        "blue_team": {
+          "mttd_target": "< 5 minutes",
+          "mttr_target": "< 15 minutes",
+          "false_positive_target": "< 5%",
+          "coverage_target": "80% MITRE ATT&CK"
+        },
+        "red_team": {
+          "success_rate": "tracked",
+          "stealth_score": "tracked",
+          "objectives_achieved": "tracked"
+        },
+        "system_health": {
+          "vm_uptime_target": "> 99%",
+          "wazuh_agent_target": "100% active",
+          "workflow_success_target": "> 95%"
+        }
+      },
+      "attack_scenarios": {
+        "implemented": [
+          "Full spectrum (complete attack chain)",
+          "Reconnaissance only"
+        ],
+        "planned": [
+          "Web application attacks (OWASP Top 10)",
+          "Container escape",
+          "Active Directory attacks",
+          "Purple team walkthrough"
+        ]
+      },
+      "license": "MIT",
+      "analysis_document": "coordination/masters/inventory/knowledge-base/sentinel-forge-analysis.md",
+      "notes": [
+        "Newest repository in portfolio (Dec 2025)",
+        "Unique Black Hat detection capability sets it apart",
+        "Direct integration with existing Cortex infrastructure",
+        "Zero additional licensing costs",
+        "Production-ready design with comprehensive documentation",
+        "High strategic value for security operations",
+        "Perfect complement to Cortex Security Master",
+        "Awaiting Proxmox deployment"
+      ]
+    },
+    {
+      "created_at": "2025-10-02T13:57:26Z",
       "default_branch": "main",
       "description": "",
       "forks": 0,
@@ -195,12 +1160,29 @@
       "is_archived": false,
       "language": "Python",
       "last_cataloged": "2025-11-01T19:25:45Z",
-      "last_commit": "2025-10-15T11:17:26Z",
-      "name": "ry-ops/netdata-mcp-server",
+      "last_commit": "2025-10-05T20:40:41Z",
+      "name": "ry-ops/starlink-enterprise-mcp-server",
       "open_issues": 0,
       "stars": 0,
       "status": "active",
-      "url": "https://github.com/ry-ops/netdata-mcp-server",
+      "url": "https://github.com/ry-ops/starlink-enterprise-mcp-server",
+      "visibility": "public"
+    },
+    {
+      "created_at": "2025-10-19T17:36:09Z",
+      "default_branch": "main",
+      "description": "",
+      "forks": 0,
+      "health_status": "pending_catalog",
+      "is_archived": false,
+      "language": "Python",
+      "last_cataloged": "2025-11-01T19:25:45Z",
+      "last_commit": "2025-10-24T19:53:09Z",
+      "name": "ry-ops/talos-a2a-mcp-server",
+      "open_issues": 0,
+      "stars": 0,
+      "status": "active",
+      "url": "https://github.com/ry-ops/talos-a2a-mcp-server",
       "visibility": "public"
     },
     {
@@ -218,57 +1200,6 @@
       "stars": 0,
       "status": "active",
       "url": "https://github.com/ry-ops/talos-mcp-server",
-      "visibility": "public"
-    },
-    {
-      "created_at": "2025-10-14T12:43:17Z",
-      "default_branch": "main",
-      "description": "",
-      "forks": 0,
-      "health_status": "pending_catalog",
-      "is_archived": false,
-      "language": "Python",
-      "last_cataloged": "2025-11-01T19:25:45Z",
-      "last_commit": "2025-10-14T13:05:40Z",
-      "name": "ry-ops/microsoft-graph-mcp-server",
-      "open_issues": 0,
-      "stars": 0,
-      "status": "active",
-      "url": "https://github.com/ry-ops/microsoft-graph-mcp-server",
-      "visibility": "public"
-    },
-    {
-      "created_at": "2025-10-14T12:24:18Z",
-      "default_branch": "main",
-      "description": "",
-      "forks": 0,
-      "health_status": "pending_catalog",
-      "is_archived": false,
-      "language": "Python",
-      "last_cataloged": "2025-11-01T19:25:45Z",
-      "last_commit": "2025-10-14T12:32:32Z",
-      "name": "ry-ops/checkmk-mcp-server",
-      "open_issues": 0,
-      "stars": 0,
-      "status": "active",
-      "url": "https://github.com/ry-ops/checkmk-mcp-server",
-      "visibility": "public"
-    },
-    {
-      "created_at": "2025-10-14T12:00:56Z",
-      "default_branch": "main",
-      "description": "",
-      "forks": 0,
-      "health_status": "pending_catalog",
-      "is_archived": false,
-      "language": "Python",
-      "last_cataloged": "2025-11-01T19:25:45Z",
-      "last_commit": "2025-10-14T12:12:12Z",
-      "name": "ry-ops/pulseway-mcp-server",
-      "open_issues": 0,
-      "stars": 0,
-      "status": "active",
-      "url": "https://github.com/ry-ops/pulseway-mcp-server",
       "visibility": "public"
     },
     {
@@ -306,105 +1237,270 @@
       "visibility": "public"
     },
     {
-      "created_at": "2025-10-05T15:24:45Z",
+      "created_at": "2025-09-21T13:33:34Z",
       "default_branch": "main",
-      "description": "Cloudflare MCP Server",
-      "forks": 1,
-      "health_status": "pending_catalog",
-      "is_archived": false,
-      "language": "Python",
-      "last_cataloged": "2025-11-01T19:25:45Z",
-      "last_commit": "2025-10-05T20:40:56Z",
-      "name": "ry-ops/cloudflare-mcp-server",
-      "open_issues": 0,
-      "stars": 0,
-      "status": "active",
-      "url": "https://github.com/ry-ops/cloudflare-mcp-server",
-      "visibility": "public"
-    },
-    {
-      "created_at": "2025-10-02T13:57:26Z",
-      "default_branch": "main",
-      "description": "",
-      "forks": 0,
-      "health_status": "pending_catalog",
-      "is_archived": false,
-      "language": "Python",
-      "last_cataloged": "2025-11-01T19:25:45Z",
-      "last_commit": "2025-10-05T20:40:41Z",
-      "name": "ry-ops/starlink-enterprise-mcp-server",
-      "open_issues": 0,
-      "stars": 0,
-      "status": "active",
-      "url": "https://github.com/ry-ops/starlink-enterprise-mcp-server",
-      "visibility": "public"
-    },
-    {
-      "created_at": "2025-10-02T15:56:10Z",
-      "default_branch": "main",
-      "description": "Model Context Protocol server enabling Claude to interact with Proxmox Virtual Environment infrastructure through natural language commands",
+      "description": "Comprehensive UniFi infrastructure management MCP server with network monitoring, device control, Protect cameras, and Access door management. Supports A2A protocol with 9 specialized skills.",
       "forks": 0,
       "health_status": "active",
       "is_archived": false,
       "language": "Python",
-      "last_cataloged": "2025-12-06T12:32:00Z",
-      "last_commit": "2025-10-05T20:08:56Z",
-      "name": "ry-ops/proxmox-mcp-server",
+      "last_cataloged": "2025-12-13T08:20:00Z",
+      "last_commit": "2025-10-31T21:04:37Z",
+      "name": "ry-ops/unifi-mcp-server",
       "open_issues": 0,
-      "stars": 0,
+      "stars": 1,
       "status": "active",
-      "url": "https://github.com/ry-ops/proxmox-mcp-server",
+      "url": "https://github.com/ry-ops/unifi-mcp-server",
       "visibility": "public",
-      "local_path": "/Users/ryandahlberg/Projects/proxmox-mcp-server",
+      "local_path": "/Users/ryandahlberg/Projects/unifi-mcp-server",
       "project_type": "mcp-server",
       "tech_stack": {
         "language": "Python",
-        "version": "3.10+",
+        "version": "3.12+",
         "framework": "MCP",
         "package_manager": "uv",
-        "key_dependencies": ["mcp>=1.0.0", "httpx>=0.27.0"]
+        "key_dependencies": [
+          "mcp>=1.6.0",
+          "httpx>=0.28.1",
+          "requests>=2.32.3"
+        ]
+      },
+      "features": [
+        "Dual API support (local controller + cloud Site Manager)",
+        "Real-time device health and status monitoring",
+        "Client activity tracking and bandwidth analysis",
+        "UniFi Protect camera management (reboot, LED, privacy mode)",
+        "UniFi Access door control with timed unlocks",
+        "Network device management with LED locate",
+        "Client blocking/unblocking with confirmation workflows",
+        "WLAN enable/disable with multi-API fallback",
+        "Comprehensive system health overview",
+        "A2A protocol with 9 specialized skills",
+        "15+ prompt playbooks for guided workflows",
+        "30+ MCP tools for network operations",
+        "SSRF protection with URL validation",
+        "Multi-API fallback and auto-discovery"
+      ],
+      "a2a_protocol": {
+        "enabled": true,
+        "version": "1.0",
+        "agent_card_location": "agent-card.json",
+        "skills_count": 9,
+        "prompts_count": 9,
+        "tools_count": 30,
+        "resources_count": 15,
+        "skill_categories": [
+          "monitoring",
+          "device_control",
+          "access_control",
+          "network_control",
+          "security",
+          "discovery",
+          "diagnostics"
+        ],
+        "safety_model": {
+          "read_only_operations": [
+            "monitoring",
+            "discovery",
+            "health_checks"
+          ],
+          "safe_operations": [
+            "device_locate_led_flash"
+          ],
+          "requires_confirmation": [
+            "block_client",
+            "unblock_client",
+            "wlan_toggle",
+            "camera_reboot",
+            "door_unlock"
+          ],
+          "reversible_operations": [
+            "block_client",
+            "wlan_toggle",
+            "privacy_mode"
+          ]
+        }
       },
       "cortex_integration": {
         "security_scanning": true,
         "dependency_monitoring": true,
+        "health_check_monitoring": true,
         "automated_updates": false,
-        "integrated_at": "2025-12-06T00:00:00Z",
+        "integrated_at": "2025-12-13T08:20:00Z",
         "local_clone": true,
-        "last_pulled": "2025-12-06T12:32:00Z"
+        "last_pulled": "2025-12-13T08:19:00Z",
+        "monitoring_config": "coordination/monitoring/unifi-mcp-server.json",
+        "health_check_script": "scripts/monitoring/check-unifi-health.sh",
+        "security_task": "coordination/tasks/unifi-mcp-security-scan.json",
+        "dashboard_endpoints": [
+          "/api/unifi/health",
+          "/api/unifi/infrastructure",
+          "/api/unifi/metrics",
+          "/api/unifi/security",
+          "/api/unifi/network-stats"
+        ],
+        "security_considerations": [
+          "UniFi controller API keys grant full network access - rotate monthly",
+          "Cloud Site Manager token provides cross-site infrastructure access",
+          "Legacy API credentials for WLAN management - use app-specific passwords",
+          "SSRF protection enabled with allowed hosts whitelist",
+          "TLS verification configurable (disable for home lab, enable for production)",
+          "Secrets.env must be excluded from git",
+          "Multi-API authentication requires secure credential storage",
+          "Device control operations require confirmation workflows",
+          "Camera privacy mode affects surveillance compliance",
+          "Door unlock capability requires physical security controls"
+        ]
+      },
+      "unifi_infrastructure": {
+        "supported_controllers": [
+          "UniFi Dream Machine (UDM)",
+          "UniFi Dream Machine Pro (UDM-Pro)",
+          "UniFi Dream Machine SE (UDM-SE)",
+          "UniFi Cloud Key Gen2/Gen2 Plus",
+          "UniFi Network Application (self-hosted)"
+        ],
+        "supported_applications": [
+          "UniFi Network (all networking equipment)",
+          "UniFi Protect (security cameras and NVRs)",
+          "UniFi Access (door controllers and readers)",
+          "UniFi Talk (VoIP phones)",
+          "UniFi Connect (SD-WAN)"
+        ],
+        "api_types": [
+          "Integration API (primary, local)",
+          "Legacy API (fallback, local)",
+          "Site Manager API (cloud)",
+          "Protect API (cameras)",
+          "Access API (doors)"
+        ],
+        "monitoring_capabilities": {
+          "network_devices": [
+            "routers",
+            "switches",
+            "access_points",
+            "gateways"
+          ],
+          "health_metrics": [
+            "uptime",
+            "cpu_usage",
+            "memory_usage",
+            "temperature",
+            "firmware_version"
+          ],
+          "client_tracking": [
+            "active_clients",
+            "bandwidth_usage",
+            "connection_quality",
+            "wireless_vs_wired"
+          ],
+          "protect_monitoring": [
+            "camera_status",
+            "recording_status",
+            "storage_usage",
+            "motion_detection"
+          ],
+          "access_monitoring": [
+            "door_status",
+            "lock_status",
+            "battery_level"
+          ]
+        }
+      },
+      "documentation": {
+        "readme": "https://github.com/ry-ops/unifi-mcp-server/blob/main/README.md",
+        "playbook": "https://github.com/ry-ops/unifi-mcp-server/blob/main/NETWORK_PLAYBOOK.md",
+        "troubleshooting": "https://github.com/ry-ops/unifi-mcp-server/blob/main/TROUBLESHOOTING.md",
+        "agent_card": "https://github.com/ry-ops/unifi-mcp-server/blob/main/agent-card.json",
+        "cortex_integration": "docs/integrations/unifi-mcp-server-integration.md"
       }
     },
     {
-      "created_at": "2025-10-01T16:45:28Z",
-      "default_branch": "master",
-      "description": "",
+      "created_at": "2025-12-09T00:00:00Z",
+      "default_branch": "main",
+      "description": "MCP server for OpenTofu/Terraform Infrastructure as Code operations with comprehensive safety features",
       "forks": 0,
-      "health_status": "pending_catalog",
+      "health_status": "active",
       "is_archived": false,
-      "language": "TypeScript",
-      "last_cataloged": "2025-11-01T19:25:45Z",
-      "last_commit": "2025-10-05T14:18:42Z",
-      "name": "ry-ops/cara",
+      "language": "Python",
+      "last_cataloged": "2025-12-13T14:20:00Z",
+      "last_commit": "2025-12-13T08:19:00Z",
+      "name": "ry-ops/opentofu-mcp-server",
       "open_issues": 0,
-      "stars": 1,
+      "stars": 0,
       "status": "active",
-      "url": "https://github.com/ry-ops/cara",
-      "visibility": "private"
+      "url": "https://github.com/ry-ops/opentofu-mcp-server",
+      "visibility": "public",
+      "local_path": "/Users/ryandahlberg/Projects/opentofu-mcp-server",
+      "project_type": "mcp-server",
+      "strategic_importance": "critical",
+      "integration_priority": "CRITICAL",
+      "tech_stack": {
+        "language": "Python",
+        "version": "3.10+",
+        "framework": "MCP 1.9.4+",
+        "package_manager": "pip",
+        "key_dependencies": [
+          "mcp>=1.9.4",
+          "httpx>=0.27.0"
+        ]
+      },
+      "features": [
+        "14 Infrastructure Tools covering complete Terraform/OpenTofu workflow",
+        "Auto-detection of tofu or terraform CLI",
+        "Workspace protection for production environments",
+        "Confirmation gates for destructive operations",
+        "Comprehensive audit logging in JSON format",
+        "Built-in health monitoring endpoint"
+      ],
+      "cortex_integration": {
+        "security_scanning": true,
+        "dependency_monitoring": true,
+        "automated_updates": false,
+        "integrated_at": "2025-12-13T14:20:00Z",
+        "local_clone": true,
+        "last_pulled": "2025-12-13T08:19:00Z",
+        "monitoring": {
+          "enabled": true,
+          "health_check_script": "/Users/ryandahlberg/Projects/cortex/scripts/monitoring/check-opentofu-health.sh",
+          "config_file": "/Users/ryandahlberg/Projects/cortex/coordination/monitoring/opentofu-mcp-server.json",
+          "reports_dir": "/Users/ryandahlberg/Projects/cortex/coordination/reports/opentofu-mcp-server"
+        },
+        "security": {
+          "scan_config": "/Users/ryandahlberg/Projects/cortex/coordination/tasks/opentofu-security-scan.json",
+          "priority": "critical"
+        },
+        "dashboard_endpoints": {
+          "health": "http://localhost:3004/api/opentofu/health",
+          "metrics": "http://localhost:3004/api/opentofu/metrics",
+          "operations": "http://localhost:3004/api/opentofu/operations",
+          "security": "http://localhost:3004/api/opentofu/security"
+        }
+      },
+      "risk_assessment": {
+        "overall_risk_level": "CRITICAL",
+        "infrastructure_impact": "CRITICAL",
+        "data_sensitivity": "HIGH"
+      }
     }
   ],
   "stats": {
-    "active": 20,
+    "active": 21,
     "archived": 0,
-    "needs_attention": 0,
+    "needs_attention": 1,
     "total_commits_today": 0,
     "languages": {
       "JavaScript": 1,
       "MDX": 1,
-      "Python": 14,
+      "Python": 15,
       "TypeScript": 2,
-      "none": 2
+      "none": 2,
+      "HCL": 1,
+      "Markdown": 1
     },
     "total_stars": 3,
-    "total_forks": 1
+    "total_forks": 1,
+    "total_repositories": 24
   },
   "alerts": []
 }

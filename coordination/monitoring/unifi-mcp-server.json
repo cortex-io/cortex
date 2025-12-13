@@ -1,0 +1,268 @@
+{
+  "repository": "ry-ops/unifi-mcp-server",
+  "monitoring_config": {
+    "enabled": true,
+    "integrated_at": "2025-12-13T08:20:00-06:00",
+    "health_checks": {
+      "unifi_controller_connectivity": {
+        "enabled": true,
+        "frequency": "5min",
+        "check_types": ["local_controller", "cloud_sitemanager"],
+        "endpoints": {
+          "integration_api": "${UNIFI_GATEWAY_HOST}:${UNIFI_GATEWAY_PORT}/proxy/network/integrations/v1",
+          "legacy_api": "${UNIFI_GATEWAY_HOST}:${UNIFI_GATEWAY_PORT}/proxy/network/api",
+          "protect_api": "${UNIFI_GATEWAY_HOST}:${UNIFI_GATEWAY_PORT}/proxy/protect/api",
+          "access_api": "${UNIFI_GATEWAY_HOST}:${UNIFI_GATEWAY_PORT}/proxy/access/api/v1",
+          "site_manager_api": "https://api.ui.com"
+        },
+        "timeout_threshold": "15s",
+        "fallback_logic": true,
+        "alert_on_all_api_failure": true
+      },
+      "dependency_health": {
+        "enabled": true,
+        "frequency": "daily",
+        "check_types": ["outdated", "security_advisories", "deprecated"],
+        "focus_packages": ["mcp", "httpx", "requests"],
+        "python_version_compatibility": ">=3.12"
+      },
+      "code_quality": {
+        "enabled": true,
+        "frequency": "on_commit",
+        "metrics": ["complexity", "coverage", "maintainability"],
+        "tools": ["ruff", "pytest"],
+        "focus_areas": ["ssrf_protection", "url_validation", "multi_api_fallback"]
+      },
+      "security_posture": {
+        "enabled": true,
+        "frequency": "daily",
+        "scans": ["vulnerabilities", "secrets", "api_keys", "tls_config"],
+        "critical_files": ["secrets.env", "*.env.*", "config/*.json"],
+        "security_features": {
+          "ssrf_protection": "validate_enabled",
+          "url_validation": "validate_enabled",
+          "allowed_hosts_whitelist": "validate_configured",
+          "tls_verification": "check_production_settings"
+        }
+      },
+      "unifi_infrastructure_health": {
+        "enabled": true,
+        "frequency": "15min",
+        "monitor_components": [
+          "network_devices",
+          "access_points",
+          "switches",
+          "routers",
+          "protect_cameras",
+          "access_doors",
+          "active_clients"
+        ],
+        "device_thresholds": {
+          "offline_devices_percent": 5,
+          "device_uptime_min": 99.0,
+          "client_disconnect_rate_max": 10
+        },
+        "tools_to_monitor": [
+          "get_system_status",
+          "get_device_health",
+          "get_client_activity",
+          "unifi_health"
+        ]
+      },
+      "a2a_protocol_compliance": {
+        "enabled": true,
+        "frequency": "on_commit",
+        "validate_agent_card": true,
+        "check_prompt_playbooks": [
+          "how_to_check_unifi_health",
+          "how_to_check_system_status",
+          "how_to_monitor_devices",
+          "how_to_check_network_activity",
+          "how_to_find_device",
+          "how_to_block_client",
+          "how_to_toggle_wlan",
+          "how_to_list_hosts",
+          "how_to_debug_api_issues"
+        ],
+        "verify_safety_requirements": true
+      }
+    },
+    "alerts": {
+      "channels": ["dashboard", "events"],
+      "severity_thresholds": {
+        "critical": "immediate",
+        "high": "within_5_min",
+        "medium": "within_1_hour",
+        "low": "daily_summary"
+      },
+      "special_alerts": {
+        "api_key_exposure": "critical",
+        "credential_leak": "critical",
+        "all_unifi_apis_down": "critical",
+        "controller_unreachable": "high",
+        "device_offline_spike": "high",
+        "site_manager_auth_failure": "high",
+        "protect_camera_offline": "medium",
+        "access_door_connectivity_lost": "high",
+        "tls_verification_disabled_production": "high"
+      }
+    },
+    "observability": {
+      "event_tracking": true,
+      "metrics_collection": true,
+      "log_aggregation": false,
+      "dashboard_widget": {
+        "enabled": true,
+        "display_name": "UniFi Network Infrastructure",
+        "priority": "high",
+        "show_metrics": [
+          "controller_status",
+          "device_count",
+          "offline_devices",
+          "active_clients",
+          "bandwidth_usage",
+          "security_score",
+          "api_health",
+          "last_commit"
+        ],
+        "network_stats": {
+          "total_devices": "resource:status://devices",
+          "total_clients": "resource:status://clients",
+          "system_health": "resource:status://system",
+          "controller_uptime": "tool:unifi_health"
+        }
+      }
+    }
+  },
+  "automation_policies": {
+    "auto_dependency_updates": {
+      "enabled": false,
+      "strategy": "manual_review",
+      "update_types": ["patch", "minor"],
+      "exclude_major": true,
+      "critical_dependencies": ["mcp", "httpx", "requests"]
+    },
+    "auto_security_fixes": {
+      "enabled": false,
+      "strategy": "create_pr",
+      "severity_threshold": "high",
+      "require_tests": true,
+      "auto_rotate_keys": false
+    },
+    "auto_documentation": {
+      "enabled": true,
+      "update_on": ["api_changes", "new_features", "tool_updates", "a2a_protocol_updates"],
+      "formats": ["markdown", "api_docs", "agent_card"]
+    },
+    "infrastructure_monitoring": {
+      "enabled": true,
+      "auto_detect_offline_devices": true,
+      "auto_report_client_issues": true,
+      "track_bandwidth_anomalies": true,
+      "monitor_protect_cameras": true,
+      "monitor_access_doors": true
+    }
+  },
+  "integration_points": {
+    "github_webhooks": {
+      "push": "trigger_quality_check",
+      "pull_request": "trigger_security_scan",
+      "release": "trigger_full_audit",
+      "issues": "track_unifi_compatibility"
+    },
+    "cortex_apis": {
+      "security_api": "http://localhost:3000/api/security/scan",
+      "observability_api": "http://localhost:3001/api/events",
+      "dashboard_api": "http://localhost:3000/api/dashboard"
+    },
+    "unifi_integration": {
+      "local_controller": {
+        "enabled": true,
+        "api_types": ["integration", "legacy", "protect", "access"],
+        "monitor_controller_health": true,
+        "track_device_changes": true,
+        "alert_on_offline_devices": true
+      },
+      "cloud_site_manager": {
+        "enabled": true,
+        "monitor_site_health": true,
+        "track_multi_site_infrastructure": true,
+        "fallback_to_cloud": true
+      },
+      "multi_api_fallback": {
+        "enabled": true,
+        "fallback_order": ["integration_api", "legacy_api", "site_manager_api"],
+        "auto_discover_site_ids": true
+      }
+    }
+  },
+  "reporting": {
+    "daily_health_summary": true,
+    "weekly_trends_report": true,
+    "monthly_audit_report": true,
+    "reports_location": "coordination/reports/unifi-mcp-server/",
+    "special_reports": {
+      "api_key_rotation_reminder": "monthly",
+      "unifi_controller_compatibility_check": "weekly",
+      "network_infrastructure_health": "daily",
+      "device_uptime_summary": "weekly",
+      "client_activity_trends": "weekly",
+      "protect_camera_status": "daily",
+      "access_door_activity": "daily"
+    }
+  },
+  "security_notes": {
+    "api_keys": "Monitor for exposure - local controller API keys grant full network access",
+    "site_manager_token": "Cloud API token provides cross-site infrastructure access - rotate monthly",
+    "legacy_credentials": "Username/password for legacy API - consider app-specific passwords for 2FA",
+    "tls_verification": "TLS verification disabled for local controller - acceptable for home lab, enable for production",
+    "credential_management": "Verify secrets.env excluded from git - contains controller access credentials",
+    "ssrf_protection": "Built-in SSRF protection with allowed hosts whitelist - validate configuration",
+    "monitoring_focus": "API key exposure, credential leaks, TLS misconfigurations, multi-API authentication failures"
+  },
+  "unifi_specific_monitoring": {
+    "network_infrastructure": {
+      "devices_to_monitor": ["routers", "switches", "access_points", "gateways"],
+      "health_metrics": ["uptime", "cpu_usage", "memory_usage", "temperature", "firmware_version"],
+      "alert_on": ["offline", "high_cpu", "high_memory", "outdated_firmware"]
+    },
+    "protect_cameras": {
+      "monitor_cameras": true,
+      "health_metrics": ["online_status", "recording_status", "storage_usage", "motion_detection"],
+      "alert_on": ["offline", "storage_full", "recording_stopped"]
+    },
+    "access_control": {
+      "monitor_doors": true,
+      "health_metrics": ["online_status", "lock_status", "battery_level"],
+      "alert_on": ["offline", "low_battery", "unlock_failed"]
+    },
+    "client_monitoring": {
+      "track_active_clients": true,
+      "bandwidth_analysis": true,
+      "connection_quality": true,
+      "alert_on": ["bandwidth_spike", "connection_drops", "unauthorized_clients"]
+    },
+    "wlan_monitoring": {
+      "track_ssid_status": true,
+      "monitor_client_count": true,
+      "track_channel_utilization": true,
+      "alert_on": ["wlan_disabled_unexpectedly", "high_channel_interference"]
+    }
+  },
+  "a2a_protocol": {
+    "agent_card_location": "agent-card.json",
+    "protocol_version": "1.0",
+    "skills_count": 9,
+    "prompts_count": 9,
+    "tools_count": 30,
+    "resources_count": 15,
+    "safety_model": {
+      "read_only_operations": ["monitoring", "discovery", "health_checks"],
+      "safe_operations": ["device_locate_led_flash"],
+      "requires_confirmation": ["block_client", "unblock_client", "wlan_toggle", "camera_reboot", "door_unlock"],
+      "reversible_operations": ["block_client", "wlan_toggle", "privacy_mode"],
+      "auto_reverting_operations": ["door_unlock_timed"]
+    },
+    "validate_compliance": true
+  }
+}

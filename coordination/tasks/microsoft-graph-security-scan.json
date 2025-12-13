@@ -1,0 +1,96 @@
+{
+  "task_id": "microsoft-graph-security-scan-001",
+  "task_type": "security_scan",
+  "priority": "critical",
+  "status": "pending",
+  "assigned_master": "security-master",
+  "repository": {
+    "name": "ry-ops/microsoft-graph-mcp-server",
+    "url": "https://github.com/ry-ops/microsoft-graph-mcp-server",
+    "language": "Python",
+    "package_manager": "uv",
+    "default_branch": "main"
+  },
+  "scan_config": {
+    "scan_types": [
+      "dependency_vulnerabilities",
+      "secrets_detection",
+      "static_analysis",
+      "azure_credential_exposure",
+      "permission_scope_audit",
+      "oauth_security_audit"
+    ],
+    "tools": [
+      "pip-audit",
+      "bandit",
+      "safety",
+      "gitleaks",
+      "trufflehog",
+      "semgrep"
+    ],
+    "severity_threshold": "medium",
+    "include_dependencies": true,
+    "focus_areas": [
+      "Azure AD credential management",
+      "Microsoft Graph API authentication",
+      "Client secret security",
+      "OAuth token handling",
+      "Environment variable security",
+      "Dependency vulnerabilities",
+      "Permission scope compliance",
+      "MSAL library security"
+    ],
+    "azure_specific_checks": {
+      "client_secret_exposure": true,
+      "token_security": true,
+      "permission_escalation": true,
+      "consent_phishing": false,
+      "app_registration_security": true
+    }
+  },
+  "created_at": "2025-12-13T08:20:00-06:00",
+  "created_by": "cortex-integration",
+  "deliverables": {
+    "vulnerability_report": "coordination/security/reports/microsoft-graph-mcp-server-scan.json",
+    "summary_report": "coordination/security/reports/microsoft-graph-mcp-server-summary.md",
+    "secrets_scan_report": "coordination/security/reports/microsoft-graph-mcp-server-secrets.json",
+    "azure_security_report": "coordination/security/reports/microsoft-graph-mcp-server-azure.json",
+    "permission_audit_report": "coordination/security/reports/microsoft-graph-mcp-server-permissions.json"
+  },
+  "security_notes": {
+    "azure_credentials": "Client secrets grant full directory write access - critical to monitor for exposure",
+    "credential_storage": "Verify .env files are properly gitignored and consider Azure Key Vault for production",
+    "secret_rotation": "Quarterly rotation recommended - monitor expiry in Azure Portal",
+    "permission_scope": "Verify app only has minimum required permissions (User.ReadWrite.All, Directory.ReadWrite.All, Group.ReadWrite.All, Organization.Read.All)",
+    "compliance_requirements": "GDPR and data privacy compliance required when managing M365 user data",
+    "mfa_security": "Ensure Azure AD admin accounts have MFA enabled",
+    "token_security": "Monitor for token theft and replay attacks",
+    "rate_limiting": "Implement proper rate limit handling to prevent service degradation"
+  },
+  "compliance_checks": {
+    "gdpr_compliance": {
+      "enabled": true,
+      "checks": [
+        "Data minimization in API calls",
+        "User data retention policies",
+        "Audit logging for user operations"
+      ]
+    },
+    "security_baseline": {
+      "enabled": true,
+      "checks": [
+        "No hardcoded credentials",
+        "Secure OAuth flow implementation",
+        "Proper error handling (no credential leakage)",
+        "Token expiry validation",
+        "HTTPS-only communication"
+      ]
+    }
+  },
+  "automated_actions": {
+    "on_critical_vulnerability": "create_issue",
+    "on_credential_exposure": "alert_immediate",
+    "on_permission_drift": "notify_security_team",
+    "on_secret_expiry_warning": "create_reminder"
+  }
+}

@@ -1,0 +1,122 @@
+{
+  "task_id": "opentofu-security-scan-001",
+  "task_type": "security_scan",
+  "priority": "critical",
+  "status": "pending",
+  "assigned_master": "security-master",
+  "repository": {
+    "name": "ry-ops/opentofu-mcp-server",
+    "url": "https://github.com/ry-ops/opentofu-mcp-server",
+    "language": "Python",
+    "package_manager": "pip",
+    "default_branch": "main",
+    "local_path": "/Users/ryandahlberg/Projects/opentofu-mcp-server"
+  },
+  "scan_config": {
+    "scan_types": [
+      "dependency_vulnerabilities",
+      "secrets_detection",
+      "static_analysis",
+      "command_injection",
+      "state_file_exposure",
+      "credential_management",
+      "workspace_protection_audit"
+    ],
+    "tools": [
+      "pip-audit",
+      "bandit",
+      "safety",
+      "gitleaks",
+      "trufflehog",
+      "semgrep"
+    ],
+    "severity_threshold": "medium",
+    "include_dependencies": true,
+    "focus_areas": [
+      "Terraform state file protection",
+      "Workspace protection enforcement",
+      "Credential and secret management",
+      "Command injection vulnerabilities",
+      "Subprocess security",
+      "Audit log integrity",
+      "Confirmation token validation",
+      "Protected workspace bypass attempts",
+      "Environment variable exposure",
+      "Dependency vulnerabilities"
+    ],
+    "iac_specific_checks": {
+      "state_file_detection": true,
+      "backend_credential_exposure": true,
+      "provider_credential_exposure": true,
+      "workspace_configuration_audit": true,
+      "operation_log_security": true
+    }
+  },
+  "compliance_checks": {
+    "verify_gitignore": [
+      "*.tfstate",
+      "*.tfstate.*",
+      ".env",
+      "*.env.*",
+      "tofu_operations.log",
+      "terraform.tfvars",
+      "*.auto.tfvars"
+    ],
+    "verify_workspace_protection": {
+      "default_protected_workspaces": ["production", "prod", "main"],
+      "confirmation_token_required": true,
+      "audit_logging_enabled": true
+    },
+    "verify_audit_logging": {
+      "log_file_exists": true,
+      "log_format": "json",
+      "operations_logged": ["apply", "destroy", "import", "workspace_select"]
+    }
+  },
+  "created_at": "2025-12-13T08:20:00-06:00",
+  "created_by": "cortex-development-master",
+  "deliverables": {
+    "vulnerability_report": "coordination/security/reports/opentofu-mcp-server-scan.json",
+    "summary_report": "coordination/security/reports/opentofu-mcp-server-summary.md",
+    "secrets_scan_report": "coordination/security/reports/opentofu-mcp-server-secrets.json",
+    "compliance_report": "coordination/security/reports/opentofu-mcp-server-compliance.json",
+    "iac_security_report": "coordination/security/reports/opentofu-mcp-server-iac-security.json"
+  },
+  "security_notes": {
+    "state_files": "Terraform/OpenTofu state files contain sensitive infrastructure data including credentials, IP addresses, and resource IDs. Critical to prevent exposure.",
+    "workspace_protection": "Protected workspaces (production, prod, main) must block destructive operations. Verify protection mechanism cannot be bypassed.",
+    "credential_storage": "Verify .env files, terraform.tfvars, and state files are properly gitignored and not tracked in repository.",
+    "audit_logging": "All state-changing operations must be logged to tofu_operations.log with proper permissions (600).",
+    "command_injection": "Server executes CLI commands via subprocess - verify input sanitization and command construction security.",
+    "confirmation_tokens": "Auto-approve operations require confirmation_token matching workspace name - verify this cannot be bypassed.",
+    "operation_log_protection": "Operation log may contain workspace names and operation details - ensure proper file permissions.",
+    "mcp_security": "MCP server has CLI access - ensure it runs with minimal required permissions and cannot be exploited for privilege escalation."
+  },
+  "risk_assessment": {
+    "infrastructure_impact": "CRITICAL - Manages production infrastructure",
+    "data_sensitivity": "HIGH - State files contain credentials and sensitive data",
+    "blast_radius": "HIGH - Can create, modify, destroy cloud resources",
+    "privilege_level": "HIGH - Requires cloud provider credentials",
+    "automation_risk": "MEDIUM - Automated operations with safety gates",
+    "overall_risk_level": "CRITICAL"
+  },
+  "recommended_actions": [
+    "Verify all state files and credentials are gitignored",
+    "Test workspace protection mechanism thoroughly",
+    "Audit operation log for unauthorized activities",
+    "Scan for hardcoded credentials in code",
+    "Verify confirmation token validation logic",
+    "Check file permissions on operation log",
+    "Test for command injection vulnerabilities",
+    "Validate MCP server input sanitization",
+    "Review subprocess command construction",
+    "Ensure least-privilege execution"
+  ],
+  "scheduled_scans": {
+    "frequency": "daily",
+    "time": "02:00 UTC",
+    "auto_create_issues": true,
+    "alert_on_critical": true,
+    "integration_with_cicd": true
+  }
+}

@@ -1,0 +1,198 @@
+{
+  "repository": "ry-ops/opentofu-mcp-server",
+  "monitoring_config": {
+    "enabled": true,
+    "integrated_at": "2025-12-13T08:20:00-06:00",
+    "health_checks": {
+      "dependency_health": {
+        "enabled": true,
+        "frequency": "daily",
+        "check_types": ["outdated", "security_advisories", "deprecated"],
+        "focus_packages": ["mcp", "httpx"]
+      },
+      "code_quality": {
+        "enabled": true,
+        "frequency": "on_commit",
+        "metrics": ["complexity", "coverage", "maintainability"],
+        "tools": ["black", "ruff", "mypy", "pytest"]
+      },
+      "security_posture": {
+        "enabled": true,
+        "frequency": "daily",
+        "scans": ["vulnerabilities", "secrets", "misconfigurations", "command_injection"],
+        "critical_files": [".env", "*.env.*", "tofu_operations.log"],
+        "special_checks": {
+          "state_file_protection": true,
+          "credential_exposure": true,
+          "workspace_protection": true,
+          "audit_log_integrity": true
+        }
+      },
+      "cli_compatibility": {
+        "enabled": true,
+        "frequency": "daily",
+        "check_opentofu_version": true,
+        "check_terraform_version": true,
+        "verify_cli_availability": true,
+        "monitor_breaking_changes": true
+      },
+      "infrastructure_health": {
+        "enabled": true,
+        "frequency": "hourly",
+        "check_types": [
+          "tofu_version",
+          "terraform_version",
+          "state_backend_connectivity",
+          "workspace_integrity",
+          "operation_log_size"
+        ]
+      }
+    },
+    "alerts": {
+      "channels": ["dashboard", "events"],
+      "severity_thresholds": {
+        "critical": "immediate",
+        "high": "within_1_hour",
+        "medium": "within_24_hours",
+        "low": "weekly_summary"
+      },
+      "special_alerts": {
+        "state_file_exposure": "critical",
+        "credential_leak": "critical",
+        "protected_workspace_breach": "critical",
+        "audit_log_corruption": "high",
+        "cli_version_mismatch": "medium",
+        "workspace_drift": "medium"
+      }
+    },
+    "observability": {
+      "event_tracking": true,
+      "metrics_collection": true,
+      "log_aggregation": true,
+      "audit_log_monitoring": {
+        "enabled": true,
+        "parse_json_logs": true,
+        "track_operations": ["apply", "destroy", "import", "workspace_select"],
+        "anomaly_detection": true
+      },
+      "dashboard_widget": {
+        "enabled": true,
+        "display_name": "OpenTofu IaC Server",
+        "priority": "high",
+        "show_metrics": [
+          "security_score",
+          "dependency_health",
+          "open_issues",
+          "last_commit",
+          "cli_version",
+          "protected_workspaces",
+          "recent_operations",
+          "infrastructure_resources"
+        ]
+      }
+    }
+  },
+  "automation_policies": {
+    "auto_dependency_updates": {
+      "enabled": false,
+      "strategy": "manual_review",
+      "update_types": ["patch", "minor"],
+      "exclude_major": true,
+      "critical_dependencies": ["mcp", "httpx"]
+    },
+    "auto_security_fixes": {
+      "enabled": false,
+      "strategy": "create_pr",
+      "severity_threshold": "high",
+      "require_tests": true,
+      "auto_rotate_keys": false
+    },
+    "auto_documentation": {
+      "enabled": true,
+      "update_on": ["tool_updates", "new_features", "security_changes"],
+      "formats": ["markdown", "api_docs", "safety_docs"]
+    },
+    "infrastructure_governance": {
+      "enabled": true,
+      "enforce_workspace_protection": true,
+      "enforce_confirmation_tokens": true,
+      "block_unprotected_destroys": true,
+      "require_audit_logging": true
+    }
+  },
+  "integration_points": {
+    "github_webhooks": {
+      "push": "trigger_quality_check",
+      "pull_request": "trigger_security_scan",
+      "release": "trigger_full_audit",
+      "issues": "track_iac_compatibility"
+    },
+    "cortex_apis": {
+      "security_api": "http://localhost:3000/api/security/scan",
+      "observability_api": "http://localhost:3001/api/events",
+      "dashboard_api": "http://localhost:3000/api/dashboard",
+      "metrics_api": "http://localhost:3001/api/metrics/iac"
+    },
+    "opentofu_integration": {
+      "monitor_state_changes": true,
+      "track_workspace_operations": true,
+      "alert_on_destructive_ops": true,
+      "verify_backend_health": true
+    },
+    "mcp_health_endpoint": {
+      "enabled": true,
+      "uri": "health://opentofu",
+      "poll_frequency": "hourly",
+      "expected_response": {
+        "status": "healthy",
+        "cli": ["tofu", "terraform"],
+        "version_check": true
+      }
+    }
+  },
+  "reporting": {
+    "daily_health_summary": true,
+    "weekly_trends_report": true,
+    "monthly_audit_report": true,
+    "reports_location": "coordination/reports/opentofu-mcp-server/",
+    "special_reports": {
+      "infrastructure_audit": "weekly",
+      "security_compliance": "monthly",
+      "workspace_activity": "weekly",
+      "operation_log_analysis": "daily"
+    },
+    "iac_specific_reports": {
+      "resource_drift_detection": "daily",
+      "cost_estimation_tracking": "weekly",
+      "compliance_violations": "immediate",
+      "state_file_audit": "weekly"
+    }
+  },
+  "security_notes": {
+    "state_files": "Monitor for exposure - state files contain sensitive infrastructure data",
+    "credential_management": "Verify .env files excluded from git, audit log protected",
+    "workspace_protection": "Protected workspaces: production, prod, main - cannot be destroyed",
+    "confirmation_tokens": "All auto-approve operations require workspace-matching token",
+    "audit_logging": "All state-changing operations logged to tofu_operations.log",
+    "monitoring_focus": "State file exposure, credential leaks, unauthorized destroys, workspace breaches"
+  },
+  "iac_metrics": {
+    "tracked_metrics": [
+      "total_resources_managed",
+      "workspaces_count",
+      "apply_operations_count",
+      "destroy_operations_count",
+      "failed_operations_count",
+      "protected_workspace_blocks",
+      "confirmation_token_failures",
+      "state_backend_errors",
+      "cli_version_info"
+    ],
+    "performance_metrics": {
+      "avg_plan_time": "tracked",
+      "avg_apply_time": "tracked",
+      "state_size_growth": "tracked",
+      "operation_timeout_rate": "tracked"
+    }
+  }
+}

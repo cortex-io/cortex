@@ -1,0 +1,262 @@
+{
+  "widget_id": "proxmox-mcp-server-widget",
+  "widget_type": "repository_health",
+  "display_name": "Proxmox MCP Server",
+  "icon": "server",
+  "priority": "high",
+  "refresh_interval": 300,
+  "enabled": true,
+  "repository": {
+    "name": "ry-ops/proxmox-mcp-server",
+    "url": "https://github.com/ry-ops/proxmox-mcp-server",
+    "local_path": "/Users/ryandahlberg/Projects/proxmox-mcp-server"
+  },
+  "metrics": {
+    "primary": [
+      {
+        "name": "security_score",
+        "display": "Security Score",
+        "type": "score",
+        "range": [0, 100],
+        "thresholds": {
+          "critical": 60,
+          "warning": 80,
+          "healthy": 90
+        },
+        "source": "coordination/security/reports/proxmox-mcp-server-scan.json",
+        "calculate": "100 - (critical_vulns * 20 + high_vulns * 10 + medium_vulns * 5)",
+        "unit": "%"
+      },
+      {
+        "name": "infrastructure_risk",
+        "display": "Infrastructure Risk",
+        "type": "status",
+        "values": ["low", "medium", "high", "critical"],
+        "current": "high",
+        "reason": "Direct control over production infrastructure",
+        "icon_map": {
+          "low": "shield-check",
+          "medium": "shield-half",
+          "high": "shield-exclamation",
+          "critical": "shield-xmark"
+        }
+      },
+      {
+        "name": "dependency_health",
+        "display": "Dependency Health",
+        "type": "health",
+        "states": ["healthy", "warning", "critical"],
+        "check_packages": ["mcp", "httpx"],
+        "source": "coordination/reports/proxmox-mcp-server/dependency-health.json"
+      }
+    ],
+    "secondary": [
+      {
+        "name": "open_issues",
+        "display": "Open Issues",
+        "type": "count",
+        "source": "github_api",
+        "endpoint": "/repos/ry-ops/proxmox-mcp-server/issues",
+        "icon": "issue-opened"
+      },
+      {
+        "name": "last_commit",
+        "display": "Last Commit",
+        "type": "timestamp",
+        "source": "git_log",
+        "format": "relative",
+        "icon": "git-commit"
+      },
+      {
+        "name": "api_token_status",
+        "display": "API Token Security",
+        "type": "status",
+        "values": ["secured", "rotation_due", "exposed"],
+        "check": "coordination/security/reports/proxmox-mcp-server-secrets.json",
+        "rotation_period_days": 30,
+        "icon": "key"
+      },
+      {
+        "name": "ssl_verification",
+        "display": "SSL Verification",
+        "type": "boolean",
+        "check_pattern": "verify=False|verify_ssl=False",
+        "source": "code_scan",
+        "icon": "lock"
+      }
+    ],
+    "infrastructure": [
+      {
+        "name": "vm_management_tools",
+        "display": "VM Management",
+        "type": "count",
+        "value": 12,
+        "icon": "server"
+      },
+      {
+        "name": "container_management_tools",
+        "display": "Container Management",
+        "type": "count",
+        "value": 4,
+        "icon": "container"
+      },
+      {
+        "name": "total_capabilities",
+        "display": "Total Tools",
+        "type": "count",
+        "value": 20,
+        "icon": "tools"
+      }
+    ]
+  },
+  "alerts": {
+    "display_active": true,
+    "max_alerts_shown": 5,
+    "severity_colors": {
+      "critical": "red",
+      "high": "orange",
+      "medium": "yellow",
+      "low": "blue"
+    },
+    "alert_types": [
+      "api_token_exposure",
+      "credential_leak",
+      "ssl_verification_disabled",
+      "high_severity_vulnerability",
+      "privileged_access_misconfiguration"
+    ]
+  },
+  "charts": {
+    "enabled": true,
+    "types": [
+      {
+        "name": "vulnerability_trend",
+        "type": "line",
+        "title": "Vulnerability Trend (30 days)",
+        "data_source": "coordination/reports/proxmox-mcp-server/",
+        "x_axis": "date",
+        "y_axis": "vulnerability_count",
+        "series": ["critical", "high", "medium", "low"]
+      },
+      {
+        "name": "dependency_age",
+        "type": "bar",
+        "title": "Dependency Freshness",
+        "data_source": "coordination/reports/proxmox-mcp-server/dependency-health.json",
+        "show_outdated": true
+      },
+      {
+        "name": "security_posture",
+        "type": "gauge",
+        "title": "Security Posture",
+        "data_source": "calculated",
+        "min": 0,
+        "max": 100,
+        "zones": [
+          {"from": 0, "to": 60, "color": "red"},
+          {"from": 60, "to": 80, "color": "yellow"},
+          {"from": 80, "to": 100, "color": "green"}
+        ]
+      }
+    ]
+  },
+  "actions": {
+    "quick_actions": [
+      {
+        "name": "run_health_check",
+        "label": "Run Health Check",
+        "icon": "activity",
+        "command": "coordination/integrations/proxmox-mcp-server/monitoring/proxmox-health-check.sh",
+        "confirm": false
+      },
+      {
+        "name": "run_security_scan",
+        "label": "Security Scan",
+        "icon": "shield",
+        "command": "scripts/run-security-master.sh --repo ry-ops/proxmox-mcp-server",
+        "confirm": true
+      },
+      {
+        "name": "view_repository",
+        "label": "View Repository",
+        "icon": "github",
+        "action": "open_url",
+        "url": "https://github.com/ry-ops/proxmox-mcp-server",
+        "confirm": false
+      },
+      {
+        "name": "view_local",
+        "label": "Open Local",
+        "icon": "folder",
+        "action": "open_path",
+        "path": "/Users/ryandahlberg/Projects/proxmox-mcp-server",
+        "confirm": false
+      }
+    ]
+  },
+  "links": {
+    "documentation": "docs/integrations/proxmox-mcp-server-integration.md",
+    "security_reports": "coordination/security/reports/",
+    "monitoring_config": "coordination/monitoring/proxmox-mcp-server.json",
+    "health_reports": "coordination/reports/proxmox-mcp-server/"
+  },
+  "notifications": {
+    "enabled": true,
+    "notify_on": [
+      "critical_vulnerability_found",
+      "api_token_exposed",
+      "ssl_verification_disabled_detected",
+      "rotation_reminder"
+    ],
+    "quiet_hours": {
+      "enabled": false,
+      "start": "22:00",
+      "end": "07:00"
+    }
+  },
+  "integration_status": {
+    "monitoring": "active",
+    "security_scanning": "active",
+    "automated_updates": "disabled",
+    "health_checks": "active",
+    "last_health_check": null,
+    "last_security_scan": null
+  },
+  "proxmox_specific": {
+    "infrastructure_warning": {
+      "enabled": true,
+      "message": "This server controls production infrastructure. Changes may impact running VMs and containers.",
+      "severity": "high"
+    },
+    "capabilities_display": {
+      "show_tool_count": true,
+      "group_by": "category",
+      "categories": [
+        "Node Management",
+        "Virtual Machine Management",
+        "Container Management",
+        "Storage Management",
+        "Task Management",
+        "Cluster Management"
+      ]
+    },
+    "api_version": {
+      "display": true,
+      "current": "8.x",
+      "check_compatibility": true
+    }
+  },
+  "layout": {
+    "position": "main_grid",
+    "size": "medium",
+    "collapsible": true,
+    "default_collapsed": false,
+    "columns": 2
+  },
+  "styling": {
+    "theme": "dark",
+    "accent_color": "#e57300",
+    "border_color": "#666",
+    "warning_badge": true
+  }
+}

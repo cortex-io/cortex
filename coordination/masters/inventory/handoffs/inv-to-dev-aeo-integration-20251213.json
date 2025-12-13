@@ -1,0 +1,218 @@
+{
+  "handoff_id": "inv-to-dev-aeo-integration-20251213",
+  "from_master": "inventory",
+  "to_master": "development",
+  "task_id": "aeo-blog-optimization-integration",
+  "handoff_type": "integration_request",
+  "created_at": "2025-12-13T08:30:00Z",
+  "status": "pending_pickup",
+  "priority": "high",
+  "context": {
+    "repository_cataloged": {
+      "name": "ry-ops/AEO",
+      "url": "https://github.com/ry-ops/AEO",
+      "local_path": "/Users/ryandahlberg/Projects/AEO",
+      "catalog_location": "/Users/ryandahlberg/Projects/cortex/coordination/masters/inventory/catalogs/AEO-CATALOG.md",
+      "recommendation_location": "/Users/ryandahlberg/Projects/cortex/coordination/masters/inventory/catalogs/AEO-STRATEGIC-RECOMMENDATION.md"
+    },
+    "strategic_assessment": {
+      "recommendation": "INTEGRATE",
+      "strategic_value_score": 9,
+      "integration_type": "documentation_master_capability",
+      "rationale": "High-value content strategy with proven ROI (Webflow: 4x AI traffic increase). Enables automated blog optimization for AI discoverability across 24-repository portfolio."
+    }
+  },
+  "integration_request": {
+    "target_repository": {
+      "name": "ry-ops/blog",
+      "url": "https://github.com/ry-ops/blog",
+      "framework": "Astro",
+      "current_state": "Active blog with December 2025 posts",
+      "access_required": "Read access for analysis, write access for implementation"
+    },
+    "implementation_phases": [
+      {
+        "phase": 1,
+        "name": "Foundation",
+        "timeline": "Week 1",
+        "tasks": [
+          "Clone and analyze blog repository structure",
+          "Generate llms.txt from repository inventory",
+          "Create Person schema template",
+          "Audit top 5 blog posts for AEO optimization"
+        ],
+        "deliverables": [
+          "llms.txt (auto-generated from 24 repositories)",
+          "Blog repository analysis report",
+          "Person schema (JSON-LD)",
+          "AEO audit report for top 5 posts"
+        ]
+      },
+      {
+        "phase": 2,
+        "name": "Schema Implementation",
+        "timeline": "Weeks 2-4",
+        "tasks": [
+          "Create schema generation templates (TechArticle, HowTo, FAQPage)",
+          "Build Astro component for schema injection",
+          "Add FAQ sections to top 5 posts",
+          "Deploy Person schema site-wide"
+        ],
+        "deliverables": [
+          "4 schema templates (JSON-LD)",
+          "Astro schema component",
+          "5 optimized blog posts with FAQs"
+        ]
+      },
+      {
+        "phase": 3,
+        "name": "Content Generation",
+        "timeline": "Months 2-3",
+        "tasks": [
+          "Generate 'What is MCP?' cornerstone content",
+          "Create 5 MCP server comparison posts",
+          "Generate 5 infrastructure automation tutorials",
+          "Build automated FAQ generation pipeline"
+        ],
+        "deliverables": [
+          "15 new AEO-optimized blog posts",
+          "Automated FAQ generation capability",
+          "Topic cluster structure (MCP, Infrastructure, Cortex)"
+        ]
+      },
+      {
+        "phase": 4,
+        "name": "Monitoring & Optimization",
+        "timeline": "Ongoing",
+        "tasks": [
+          "Set up AI traffic analytics tracking",
+          "Create citation monitoring workflow",
+          "Build content freshness scoring",
+          "Schedule quarterly content audits"
+        ],
+        "deliverables": [
+          "AI traffic dashboard",
+          "Citation tracking spreadsheet",
+          "Automated content audit reports"
+        ]
+      }
+    ],
+    "technical_requirements": {
+      "blog_analysis": {
+        "framework": "Astro",
+        "content_location": "src/content/posts/",
+        "schema_integration": "Astro components or HTML meta tags",
+        "static_file_generation": "llms.txt to public/"
+      },
+      "automation_opportunities": [
+        "llms.txt regeneration on inventory updates (CI/CD coordination)",
+        "Schema auto-injection via Astro layout components",
+        "FAQ generation from repository READMEs",
+        "Content audit scheduling (quarterly)"
+      ]
+    },
+    "dependencies": {
+      "repositories": [
+        "ry-ops/blog (target)",
+        "ry-ops/AEO (source guide)"
+      ],
+      "masters": {
+        "cicd": "Automate llms.txt regeneration, deploy schema templates",
+        "security": "Validate llms.txt for sensitive data, review attribution",
+        "documentation": "Primary owner of AEO capability post-integration"
+      }
+    },
+    "success_metrics": {
+      "week_4": {
+        "llms_txt_live": true,
+        "posts_optimized": 5,
+        "analytics_tracking": true
+      },
+      "month_2": {
+        "posts_optimized": 15,
+        "schema_coverage_percent": 50,
+        "ai_referrals_detected": true
+      },
+      "month_6": {
+        "ai_traffic_percent": 5,
+        "ai_citations_per_week": 10,
+        "posts_optimized": 100
+      }
+    }
+  },
+  "reference_materials": {
+    "aeo_guide": {
+      "source": "https://github.com/ry-ops/AEO/blob/main/README.md",
+      "local_path": "/Users/ryandahlberg/Projects/AEO/README.md",
+      "key_components": [
+        "llms.txt specification",
+        "JSON-LD schema templates",
+        "Blog post template structure",
+        "Astro implementation guidance",
+        "Success metrics (Webflow case study)"
+      ]
+    },
+    "catalog": {
+      "location": "/Users/ryandahlberg/Projects/cortex/coordination/masters/inventory/catalogs/AEO-CATALOG.md",
+      "sections": [
+        "Repository metadata",
+        "Architecture & components",
+        "Technical stack",
+        "Integration plan",
+        "Success criteria"
+      ]
+    },
+    "strategic_recommendation": {
+      "location": "/Users/ryandahlberg/Projects/cortex/coordination/masters/inventory/catalogs/AEO-STRATEGIC-RECOMMENDATION.md",
+      "key_sections": [
+        "Decision matrix (9/10 value score)",
+        "Integration architecture",
+        "Implementation roadmap",
+        "Risk analysis & mitigation",
+        "Success metrics"
+      ]
+    }
+  },
+  "expected_outcomes": {
+    "short_term": [
+      "Blog repository analyzed and documented",
+      "llms.txt generated from portfolio inventory",
+      "Schema templates created for Astro integration",
+      "Top 5 blog posts optimized for AEO"
+    ],
+    "medium_term": [
+      "Full schema implementation across blog",
+      "15 new AEO-optimized blog posts published",
+      "Automated FAQ generation operational",
+      "AI referral traffic detected in analytics"
+    ],
+    "long_term": [
+      "5-8% of blog traffic from AI platforms (Webflow benchmark)",
+      "10+ AI citations per week",
+      "100 blog posts fully AEO-optimized",
+      "Thought leadership established in MCP server space"
+    ]
+  },
+  "coordination_notes": {
+    "development_master": "Primary implementation owner. Please analyze blog repository, create schema templates, and coordinate Astro integration. Consider spawning documentor workers for content generation phases.",
+    "cicd_master": "Automation support needed for llms.txt regeneration on inventory updates and quarterly content audits.",
+    "security_master": "Validation required for llms.txt to ensure no sensitive data exposure. Review attribution requirements and AI platform citation patterns.",
+    "coordinator_master": "Track overall integration progress. This is a high-value, low-risk integration with 6-month timeline to full optimization."
+  },
+  "token_allocation": {
+    "cataloging_used": 30000,
+    "remaining_budget": 170000,
+    "phase_1_estimate": 20000,
+    "phase_2_estimate": 40000,
+    "phase_3_estimate": 60000,
+    "phase_4_estimate": 20000,
+    "total_estimate": 140000
+  },
+  "next_steps": [
+    "Development Master: Pick up handoff and acknowledge",
+    "Development Master: Clone blog repository for analysis",
+    "Development Master: Generate llms.txt from inventory",
+    "Development Master: Create blog analysis report",
+    "Coordinator Master: Track integration progress in master state"
+  ]
+}

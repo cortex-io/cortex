@@ -1,0 +1,15 @@
+{
+  "timestamp": "2025-12-13T14:27:33Z",
+  "overall_status": "healthy",
+  "failed_checks": 0,
+  "warnings": 0,
+  "checks_completed": {
+    "monitoring_config": true,
+    "repository": true,
+    "a2a_protocol": true,
+    "python_environment": true,
+    "environment_variables": true,
+    "security_posture": true,
+    "cortex_integration": true
+  }
+}

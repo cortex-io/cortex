@@ -1,0 +1,242 @@
+{
+  "service_name": "cloudflare-mcp-server",
+  "service_type": "mcp_server",
+  "integration_type": "python_uv",
+  "repository": {
+    "url": "https://github.com/ry-ops/cloudflare-mcp-server",
+    "local_path": "/Users/ryandahlberg/Projects/cloudflare-mcp-server",
+    "branch": "main",
+    "version": "1.0.0"
+  },
+  "monitoring": {
+    "enabled": true,
+    "health_checks": [
+      {
+        "name": "cloudflare_api_connectivity",
+        "type": "api_health",
+        "interval_seconds": 300,
+        "timeout_seconds": 30,
+        "endpoint": "https://api.cloudflare.com/client/v4/user/tokens/verify",
+        "method": "GET",
+        "headers": {
+          "Authorization": "Bearer ${CLOUDFLARE_API_TOKEN}"
+        },
+        "expected_status": 200,
+        "alerts": {
+          "enabled": true,
+          "on_failure": true,
+          "threshold": 3
+        }
+      },
+      {
+        "name": "zone_listing",
+        "type": "functional_test",
+        "interval_seconds": 600,
+        "timeout_seconds": 30,
+        "description": "Verify zone listing functionality",
+        "command": "uv --directory /Users/ryandahlberg/Projects/cloudflare-mcp-server run python -c 'import os; import httpx; print(httpx.get(\"https://api.cloudflare.com/client/v4/zones\", headers={\"Authorization\": f\"Bearer {os.environ.get(\\\"CLOUDFLARE_API_TOKEN\\\")}\", \"Content-Type\": \"application/json\"}).status_code)'",
+        "expected_output": "200",
+        "alerts": {
+          "enabled": true,
+          "on_failure": true,
+          "threshold": 2
+        }
+      }
+    ],
+    "metrics": {
+      "collection_enabled": true,
+      "interval_seconds": 60,
+      "metrics": [
+        {
+          "name": "cloudflare_api_requests_total",
+          "type": "counter",
+          "description": "Total number of Cloudflare API requests",
+          "labels": ["operation", "status", "zone_id"]
+        },
+        {
+          "name": "cloudflare_api_request_duration_seconds",
+          "type": "histogram",
+          "description": "Cloudflare API request duration in seconds",
+          "labels": ["operation", "status"],
+          "buckets": [0.1, 0.5, 1.0, 2.0, 5.0, 10.0]
+        },
+        {
+          "name": "cloudflare_dns_records_managed",
+          "type": "gauge",
+          "description": "Number of DNS records currently managed",
+          "labels": ["zone_id", "record_type"]
+        },
+        {
+          "name": "cloudflare_cache_purge_operations",
+          "type": "counter",
+          "description": "Number of cache purge operations",
+          "labels": ["zone_id", "purge_type"]
+        },
+        {
+          "name": "cloudflare_kv_operations_total",
+          "type": "counter",
+          "description": "Total number of KV storage operations",
+          "labels": ["namespace_id", "operation"]
+        },
+        {
+          "name": "cloudflare_zone_analytics_bandwidth_bytes",
+          "type": "gauge",
+          "description": "Zone bandwidth usage in bytes",
+          "labels": ["zone_id"]
+        },
+        {
+          "name": "cloudflare_zone_analytics_requests",
+          "type": "gauge",
+          "description": "Zone request count",
+          "labels": ["zone_id"]
+        },
+        {
+          "name": "cloudflare_zone_analytics_threats",
+          "type": "gauge",
+          "description": "Zone threat count",
+          "labels": ["zone_id"]
+        }
+      ]
+    },
+    "logging": {
+      "enabled": true,
+      "level": "info",
+      "log_path": "/Users/ryandahlberg/Projects/cortex/logs/cloudflare-mcp-server.log",
+      "rotation": {
+        "max_size_mb": 100,
+        "max_files": 10
+      }
+    }
+  },
+  "dependencies": {
+    "required": [
+      {
+        "name": "python",
+        "version": ">=3.10",
+        "type": "runtime"
+      },
+      {
+        "name": "uv",
+        "version": "latest",
+        "type": "package_manager"
+      },
+      {
+        "name": "mcp",
+        "version": ">=1.1.2",
+        "type": "python_package"
+      },
+      {
+        "name": "httpx",
+        "version": ">=0.27.0",
+        "type": "python_package"
+      }
+    ],
+    "optional": [
+      {
+        "name": "pytest",
+        "version": ">=8.0.0",
+        "type": "python_package",
+        "purpose": "testing"
+      },
+      {
+        "name": "pytest-asyncio",
+        "version": ">=0.23.0",
+        "type": "python_package",
+        "purpose": "testing"
+      },
+      {
+        "name": "ruff",
+        "version": ">=0.3.0",
+        "type": "python_package",
+        "purpose": "linting"
+      }
+    ]
+  },
+  "configuration": {
+    "env_variables": {
+      "CLOUDFLARE_API_TOKEN": {
+        "required": true,
+        "description": "Cloudflare API token with appropriate permissions",
+        "secret": true,
+        "validation": "^[a-zA-Z0-9_-]{40,}$"
+      },
+      "CLOUDFLARE_ACCOUNT_ID": {
+        "required": false,
+        "description": "Cloudflare account ID (required for KV operations)",
+        "secret": false,
+        "validation": "^[a-f0-9]{32}$"
+      }
+    },
+    "permissions": {
+      "minimum": [
+        "Zone - Zone - Read",
+        "Zone - DNS - Edit"
+      ],
+      "recommended": [
+        "Zone - Zone - Read",
+        "Zone - DNS - Edit",
+        "Account - Workers KV Storage - Edit",
+        "Zone - Cache Purge - Purge",
+        "Zone - Analytics - Read"
+      ]
+    }
+  },
+  "a2a_protocol": {
+    "enabled": true,
+    "agent_card_path": "/Users/ryandahlberg/Projects/cloudflare-mcp-server/agent-card.json",
+    "capabilities": {
+      "streaming": true,
+      "tasks": true,
+      "async": true,
+      "batch_operations": false
+    },
+    "skills": [
+      "zone_management",
+      "dns_management",
+      "kv_storage",
+      "cache_management",
+      "analytics"
+    ]
+  },
+  "alerts": {
+    "channels": [
+      {
+        "type": "dashboard",
+        "enabled": true
+      },
+      {
+        "type": "log",
+        "enabled": true,
+        "path": "/Users/ryandahlberg/Projects/cortex/coordination/monitoring/alerts/cloudflare-mcp-server.log"
+      }
+    ],
+    "rules": [
+      {
+        "name": "api_token_expired",
+        "condition": "health_check.cloudflare_api_connectivity.status == 'failed' AND health_check.cloudflare_api_connectivity.response_code == 401",
+        "severity": "critical",
+        "message": "Cloudflare API token is invalid or expired"
+      },
+      {
+        "name": "api_rate_limit",
+        "condition": "health_check.cloudflare_api_connectivity.response_code == 429",
+        "severity": "warning",
+        "message": "Cloudflare API rate limit exceeded"
+      },
+      {
+        "name": "high_error_rate",
+        "condition": "metric.cloudflare_api_requests_total{status='error'} / metric.cloudflare_api_requests_total > 0.1",
+        "severity": "warning",
+        "message": "High error rate detected in Cloudflare API requests"
+      }
+    ]
+  },
+  "integration_metadata": {
+    "integrated_by": "cortex-development-master",
+    "integration_date": "2025-12-13T08:19:00Z",
+    "category": "infrastructure",
+    "tags": ["cloudflare", "dns", "cdn", "workers", "kv-storage", "cache", "analytics", "mcp"],
+    "status": "active",
+    "priority": "high"
+  }
+}

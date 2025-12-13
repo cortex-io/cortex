@@ -1,0 +1,143 @@
+{
+  "integration_name": "n8n-mcp-server",
+  "integration_type": "mcp_server",
+  "version": "1.0.0",
+  "enabled": true,
+  "n8n_host": "http://10.88.140.149:5678",
+  "n8n_api_key": "",
+  "repository": {
+    "url": "https://github.com/ry-ops/n8n-mcp-server",
+    "branch": "main",
+    "local_path": "/Users/ryandahlberg/Projects/n8n-mcp-server"
+  },
+  "container": {
+    "enabled": true,
+    "image": "ghcr.io/ry-ops/n8n-mcp-server:latest",
+    "container_name": "n8n-mcp-server",
+    "restart_policy": "unless-stopped",
+    "environment": {
+      "N8N_HOST": "${N8N_HOST}",
+      "N8N_API_KEY": "${N8N_API_KEY}",
+      "LOG_LEVEL": "INFO"
+    }
+  },
+  "monitoring": {
+    "enabled": true,
+    "health_check": {
+      "enabled": true,
+      "script": "coordination/integrations/n8n-mcp-server/monitoring/n8n-health-check.sh",
+      "interval": 300,
+      "timeout": 30,
+      "retries": 3
+    },
+    "metrics": {
+      "enabled": true,
+      "collect_interval": 300,
+      "retention_days": 30,
+      "metrics": [
+        "workflow_count",
+        "active_workflows",
+        "execution_count",
+        "success_rate",
+        "failure_rate",
+        "avg_execution_time"
+      ]
+    },
+    "logs": {
+      "enabled": true,
+      "level": "INFO",
+      "retention_days": 7,
+      "max_size": "100MB"
+    }
+  },
+  "security": {
+    "enabled": true,
+    "scan_config": "coordination/integrations/n8n-mcp-server/security/n8n-security-scan.json",
+    "scan_schedule": "daily",
+    "auto_update": false,
+    "api_key_rotation": {
+      "enabled": false,
+      "interval_days": 90,
+      "notification_days": 7
+    },
+    "vulnerability_thresholds": {
+      "critical": 0,
+      "high": 5,
+      "medium": 10
+    }
+  },
+  "dashboard": {
+    "enabled": true,
+    "widget_config": "coordination/integrations/n8n-mcp-server/dashboard/n8n-widget.json",
+    "update_interval": 60,
+    "display_metrics": true,
+    "display_alerts": true
+  },
+  "cortex_integration": {
+    "masters": {
+      "security": {
+        "handoff_on_vulnerability": true,
+        "severity_threshold": "high"
+      },
+      "development": {
+        "handoff_on_error": true,
+        "auto_remediation": false
+      },
+      "cicd": {
+        "deploy_updates": true,
+        "run_tests": true
+      }
+    },
+    "workers": {
+      "monitoring_worker": {
+        "enabled": true,
+        "interval": 300,
+        "worker_type": "monitoring"
+      },
+      "security_worker": {
+        "enabled": true,
+        "interval": 86400,
+        "worker_type": "security"
+      }
+    }
+  },
+  "capabilities": {
+    "workflow_management": true,
+    "execution_monitoring": true,
+    "credential_management": true,
+    "webhook_operations": true,
+    "a2a_protocol": true,
+    "retry_logic": true,
+    "validation": true
+  },
+  "features": {
+    "13_mcp_tools": [
+      "list_workflows",
+      "get_workflow",
+      "create_workflow",
+      "update_workflow",
+      "delete_workflow",
+      "activate_workflow",
+      "deactivate_workflow",
+      "execute_workflow",
+      "list_executions",
+      "get_execution",
+      "delete_execution",
+      "list_credentials",
+      "list_tags"
+    ],
+    "a2a_endpoints": [
+      "/.well-known/agent-card.json",
+      "/a2a/capabilities",
+      "/a2a/execute",
+      "/a2a/batch"
+    ]
+  },
+  "metadata": {
+    "created_at": "2025-12-13T00:00:00Z",
+    "created_by": "development-master",
+    "last_updated": "2025-12-13T00:00:00Z",
+    "integration_status": "active",
+    "cortex_ecosystem": true
+  }
+}
