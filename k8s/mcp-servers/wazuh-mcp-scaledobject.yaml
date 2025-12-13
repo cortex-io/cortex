@@ -1,0 +1,52 @@
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: wazuh-mcp-scaler
+  namespace: cortex-mcp
+  labels:
+    app: cortex
+    component: autoscaler
+    mcp-server: wazuh
+spec:
+  scaleTargetRef:
+    name: wazuh-mcp-server
+  pollingInterval: 15  # Check every 15 seconds
+  cooldownPeriod: 300  # 5 minutes before scale to zero
+  minReplicaCount: 0   # Scale to zero when idle (occasionally used)
+  maxReplicaCount: 5   # Maximum 5 instances
+  advanced:
+    restoreToOriginalReplicaCount: false
+    horizontalPodAutoscalerConfig:
+      name: wazuh-mcp-hpa
+      behavior:
+        scaleUp:
+          stabilizationWindowSeconds: 0  # Scale up immediately
+          policies:
+          - type: Percent
+            value: 100  # Double capacity
+            periodSeconds: 15
+          - type: Pods
+            value: 2  # Or add 2 pods
+            periodSeconds: 15
+          selectPolicy: Max
+        scaleDown:
+          stabilizationWindowSeconds: 120  # Wait 2 minutes before scaling down
+          policies:
+          - type: Pods
+            value: 1  # Remove 1 pod at a time
+            periodSeconds: 60
+  triggers:
+  - type: prometheus
+    metadata:
+      serverAddress: http://prometheus.monitoring:9090
+      metricName: cortex_mcp_requests_total
+      threshold: '10'  # Scale up if >10 requests/min
+      query: |
+        sum(rate(cortex_mcp_requests_total{mcp_server="wazuh"}[2m])) or vector(0)
+  - type: prometheus
+    metadata:
+      serverAddress: http://prometheus.monitoring:9090
+      metricName: cortex_mcp_request_queue_depth
+      threshold: '5'  # Scale up if >5 requests queued
+      query: |
+        sum(cortex_mcp_request_queue_depth{mcp_server="wazuh"}) or vector(0)

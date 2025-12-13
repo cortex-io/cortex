@@ -1,0 +1,52 @@
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: n8n-mcp-scaler
+  namespace: cortex-mcp
+  labels:
+    app: cortex
+    component: autoscaler
+    mcp-server: n8n
+spec:
+  scaleTargetRef:
+    name: n8n-mcp-server
+  pollingInterval: 15  # Check every 15 seconds
+  cooldownPeriod: 300  # 5 minutes before scaling down
+  minReplicaCount: 1   # Keep 1 replica (frequently used - warm standby)
+  maxReplicaCount: 10  # Maximum 10 instances
+  advanced:
+    restoreToOriginalReplicaCount: false
+    horizontalPodAutoscalerConfig:
+      name: n8n-mcp-hpa
+      behavior:
+        scaleUp:
+          stabilizationWindowSeconds: 0  # Scale up immediately
+          policies:
+          - type: Percent
+            value: 100  # Double capacity
+            periodSeconds: 15
+          - type: Pods
+            value: 3  # Or add 3 pods
+            periodSeconds: 15
+          selectPolicy: Max
+        scaleDown:
+          stabilizationWindowSeconds: 120  # Wait 2 minutes before scaling down
+          policies:
+          - type: Pods
+            value: 1  # Remove 1 pod at a time
+            periodSeconds: 60
+  triggers:
+  - type: prometheus
+    metadata:
+      serverAddress: http://prometheus.monitoring:9090
+      metricName: cortex_mcp_requests_total
+      threshold: '20'  # Scale up if >20 requests/min
+      query: |
+        sum(rate(cortex_mcp_requests_total{mcp_server="n8n"}[2m])) or vector(0)
+  - type: prometheus
+    metadata:
+      serverAddress: http://prometheus.monitoring:9090
+      metricName: cortex_mcp_request_queue_depth
+      threshold: '10'  # Scale up if >10 requests queued
+      query: |
+        sum(cortex_mcp_request_queue_depth{mcp_server="n8n"}) or vector(0)
