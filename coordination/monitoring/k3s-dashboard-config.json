@@ -1,0 +1,471 @@
+{
+  "dashboard_id": "k3s-cluster-health-monitoring",
+  "dashboard_name": "K3s Cortex Cluster Health Monitor",
+  "version": "1.0.0",
+  "created_at": "2025-12-13T00:00:00Z",
+  "updated_at": "2025-12-13T00:00:00Z",
+  "monitoring_scope": {
+    "cluster_name": "cortex-k3s",
+    "namespace": "cortex-system",
+    "node": "310",
+    "region": "proxmox"
+  },
+  "infrastructure": {
+    "k3s_version": "v1.29.x",
+    "container_runtime": "containerd",
+    "loadbalancer_ip": "10.88.145.201",
+    "loadbalancer_port": 80,
+    "dashboard_url": "http://10.88.145.201/",
+    "api_endpoint": "http://10.88.145.201:3004/api"
+  },
+  "monitored_components": {
+    "cortex_pods": {
+      "coordinator": {
+        "namespace": "cortex-system",
+        "replicas": 1,
+        "labels": {
+          "app": "cortex",
+          "component": "master",
+          "master-type": "coordinator"
+        },
+        "health_checks": [
+          "pod_running",
+          "container_ready",
+          "resource_limits"
+        ]
+      },
+      "development": {
+        "namespace": "cortex-system",
+        "replicas": 1,
+        "labels": {
+          "app": "cortex",
+          "component": "master",
+          "master-type": "development"
+        },
+        "health_checks": [
+          "pod_running",
+          "container_ready"
+        ]
+      },
+      "security": {
+        "namespace": "cortex-system",
+        "replicas": 1,
+        "labels": {
+          "app": "cortex",
+          "component": "master",
+          "master-type": "security"
+        },
+        "health_checks": [
+          "pod_running",
+          "container_ready"
+        ]
+      },
+      "cicd": {
+        "namespace": "cortex-system",
+        "replicas": 1,
+        "labels": {
+          "app": "cortex",
+          "component": "master",
+          "master-type": "cicd"
+        },
+        "health_checks": [
+          "pod_running",
+          "container_ready"
+        ]
+      },
+      "inventory": {
+        "namespace": "cortex-system",
+        "replicas": 1,
+        "labels": {
+          "app": "cortex",
+          "component": "master",
+          "master-type": "inventory"
+        },
+        "health_checks": [
+          "pod_running",
+          "container_ready"
+        ]
+      }
+    },
+    "services": {
+      "dashboard": {
+        "namespace": "cortex-system",
+        "service_type": "LoadBalancer",
+        "selector": "app=cortex,component=dashboard",
+        "ports": {
+          "http": 80,
+          "https": 443
+        },
+        "endpoints_required": true
+      },
+      "api": {
+        "namespace": "cortex-system",
+        "service_type": "ClusterIP",
+        "selector": "app=cortex,component=api",
+        "ports": {
+          "http": 3000
+        }
+      },
+      "metrics": {
+        "namespace": "cortex-system",
+        "service_type": "ClusterIP",
+        "selector": "app=cortex,component=metrics",
+        "ports": {
+          "prometheus": 9090,
+          "grafana": 3000
+        }
+      }
+    },
+    "deployments": {
+      "cortex_masters": {
+        "selector": "app=cortex,component=master"
+      },
+      "cortex_workers": {
+        "selector": "app=cortex,component=worker"
+      },
+      "cortex_dashboard": {
+        "selector": "app=cortex,component=dashboard"
+      }
+    }
+  },
+  "monitoring_metrics": {
+    "pod_metrics": [
+      {
+        "name": "pod_status",
+        "query": "kubectl get pods -n cortex-system",
+        "labels": ["pod_name", "status", "namespace", "node"],
+        "alert_threshold": "pod status is not Running"
+      },
+      {
+        "name": "pod_cpu_usage",
+        "query": "kubectl top pods -n cortex-system",
+        "unit": "millicores",
+        "labels": ["pod_name", "cpu_usage", "memory_usage"]
+      },
+      {
+        "name": "pod_memory_usage",
+        "query": "kubectl top pods -n cortex-system",
+        "unit": "megabytes",
+        "labels": ["pod_name", "memory_usage"]
+      },
+      {
+        "name": "pod_restart_count",
+        "query": "kubectl get pods -n cortex-system -o jsonpath='{.items[*].status.containerStatuses[*].restartCount}'",
+        "labels": ["pod_name", "restart_count"],
+        "alert_threshold": "restart_count > 3"
+      }
+    ],
+    "service_metrics": [
+      {
+        "name": "service_endpoints",
+        "query": "kubectl get endpoints -n cortex-system",
+        "labels": ["service_name", "endpoint_count", "endpoints"]
+      },
+      {
+        "name": "loadbalancer_ip",
+        "query": "kubectl get svc dashboard -n cortex-system -o jsonpath='{.status.loadBalancer.ingress[0].ip}'",
+        "labels": ["external_ip", "status"]
+      },
+      {
+        "name": "service_status",
+        "query": "kubectl get svc -n cortex-system",
+        "labels": ["service_name", "type", "cluster_ip", "external_ip", "ports"]
+      }
+    ],
+    "deployment_metrics": [
+      {
+        "name": "deployment_replicas",
+        "query": "kubectl get deployments -n cortex-system",
+        "labels": ["deployment_name", "desired", "current", "ready", "available"]
+      },
+      {
+        "name": "deployment_status",
+        "query": "kubectl rollout status deployment -n cortex-system",
+        "labels": ["deployment_name", "status", "timestamp"]
+      }
+    ],
+    "node_metrics": [
+      {
+        "name": "node_status",
+        "query": "kubectl get nodes",
+        "labels": ["node_name", "status", "roles", "version"]
+      },
+      {
+        "name": "node_resource_allocation",
+        "query": "kubectl top nodes",
+        "labels": ["node_name", "cpu_usage", "memory_usage"]
+      }
+    ],
+    "event_metrics": [
+      {
+        "name": "cluster_events",
+        "query": "kubectl get events -n cortex-system --sort-by='.lastTimestamp'",
+        "labels": ["type", "reason", "message", "component", "timestamp"],
+        "limit": 50
+      }
+    ]
+  },
+  "dashboard_sections": {
+    "cluster_overview": {
+      "title": "Cluster Overview",
+      "widgets": [
+        {
+          "widget_id": "cluster_health_summary",
+          "type": "status_indicator",
+          "title": "Cluster Health",
+          "metrics": ["pod_status", "node_status", "service_endpoints"],
+          "refresh_interval_seconds": 30
+        },
+        {
+          "widget_id": "pod_count",
+          "type": "counter",
+          "title": "Total Pods",
+          "metric": "pod_count",
+          "refresh_interval_seconds": 30
+        },
+        {
+          "widget_id": "node_count",
+          "type": "counter",
+          "title": "Cluster Nodes",
+          "metric": "node_count"
+        },
+        {
+          "widget_id": "service_count",
+          "type": "counter",
+          "title": "Services",
+          "metric": "service_count"
+        }
+      ]
+    },
+    "cortex_pods": {
+      "title": "Cortex Pods Status",
+      "widgets": [
+        {
+          "widget_id": "cortex_pods_table",
+          "type": "table",
+          "title": "Cortex Pod Status",
+          "columns": ["Pod Name", "Status", "CPU", "Memory", "Restarts", "Age"],
+          "data_source": "pod_metrics",
+          "refresh_interval_seconds": 30
+        },
+        {
+          "widget_id": "pod_status_breakdown",
+          "type": "pie_chart",
+          "title": "Pod Status Distribution",
+          "status_values": ["Running", "Pending", "Failed", "CrashLoopBackOff"],
+          "refresh_interval_seconds": 30
+        }
+      ]
+    },
+    "resource_usage": {
+      "title": "Resource Usage",
+      "widgets": [
+        {
+          "widget_id": "cpu_usage_graph",
+          "type": "line_chart",
+          "title": "CPU Usage Over Time",
+          "metric": "pod_cpu_usage",
+          "time_range": "1h",
+          "refresh_interval_seconds": 60
+        },
+        {
+          "widget_id": "memory_usage_graph",
+          "type": "line_chart",
+          "title": "Memory Usage Over Time",
+          "metric": "pod_memory_usage",
+          "time_range": "1h",
+          "refresh_interval_seconds": 60
+        },
+        {
+          "widget_id": "resource_utilization",
+          "type": "gauge",
+          "title": "Cluster Resource Utilization",
+          "metrics": ["cpu_allocation_percent", "memory_allocation_percent"]
+        }
+      ]
+    },
+    "services_endpoints": {
+      "title": "Services & Endpoints",
+      "widgets": [
+        {
+          "widget_id": "services_table",
+          "type": "table",
+          "title": "Cortex Services",
+          "columns": ["Service Name", "Type", "Cluster IP", "External IP", "Ports", "Endpoints"],
+          "data_source": "service_metrics",
+          "refresh_interval_seconds": 30
+        },
+        {
+          "widget_id": "loadbalancer_status",
+          "type": "status_card",
+          "title": "LoadBalancer Status",
+          "service_name": "dashboard",
+          "metrics": ["external_ip", "ports", "endpoint_count"],
+          "refresh_interval_seconds": 30
+        }
+      ]
+    },
+    "deployments_status": {
+      "title": "Deployments",
+      "widgets": [
+        {
+          "widget_id": "deployments_table",
+          "type": "table",
+          "title": "Cortex Deployments",
+          "columns": ["Deployment", "Desired", "Current", "Ready", "Available"],
+          "data_source": "deployment_metrics",
+          "refresh_interval_seconds": 30
+        },
+        {
+          "widget_id": "rollout_status",
+          "type": "status_timeline",
+          "title": "Rollout Status",
+          "data_source": "deployment_status"
+        }
+      ]
+    },
+    "events_logs": {
+      "title": "Recent Events",
+      "widgets": [
+        {
+          "widget_id": "events_table",
+          "type": "table",
+          "title": "Cluster Events (Last 50)",
+          "columns": ["Type", "Reason", "Component", "Message", "Timestamp"],
+          "data_source": "event_metrics",
+          "refresh_interval_seconds": 30,
+          "sort_by": "timestamp",
+          "sort_order": "descending"
+        }
+      ]
+    }
+  },
+  "alerts": {
+    "critical_alerts": [
+      {
+        "alert_id": "pod_down",
+        "condition": "any pod status != Running for > 2 minutes",
+        "severity": "critical",
+        "action": "notify_ops"
+      },
+      {
+        "alert_id": "service_no_endpoints",
+        "condition": "service endpoints count = 0",
+        "severity": "critical",
+        "action": "notify_ops"
+      },
+      {
+        "alert_id": "node_down",
+        "condition": "node status = NotReady",
+        "severity": "critical",
+        "action": "notify_ops"
+      }
+    ],
+    "warning_alerts": [
+      {
+        "alert_id": "pod_restart_loop",
+        "condition": "pod restarts > 3 in 1 hour",
+        "severity": "warning",
+        "action": "investigate"
+      },
+      {
+        "alert_id": "high_cpu_usage",
+        "condition": "pod cpu usage > 80%",
+        "severity": "warning",
+        "action": "scale_up"
+      },
+      {
+        "alert_id": "high_memory_usage",
+        "condition": "pod memory usage > 80%",
+        "severity": "warning",
+        "action": "scale_up"
+      }
+    ]
+  },
+  "api_endpoints": {
+    "dashboard": {
+      "url": "http://10.88.145.201/",
+      "description": "Main dashboard UI (LoadBalancer)",
+      "health_check": "GET / -> 200",
+      "metrics_available": true
+    },
+    "api_server": {
+      "url": "http://10.88.145.201:3004/api",
+      "description": "Cortex API Server",
+      "health_check": "GET /api/health",
+      "endpoints": [
+        "GET /api/health",
+        "GET /api/metrics",
+        "GET /api/workers",
+        "GET /api/tasks",
+        "GET /api/dashboard/analytics/summary"
+      ]
+    },
+    "kubernetes": {
+      "url": "kubectl -n cortex-system",
+      "description": "Kubernetes CLI commands",
+      "key_commands": [
+        "kubectl get pods -n cortex-system",
+        "kubectl get svc -n cortex-system",
+        "kubectl describe pod <pod-name> -n cortex-system",
+        "kubectl logs <pod-name> -n cortex-system"
+      ]
+    },
+    "prometheus": {
+      "url": "http://10.88.145.201:9090",
+      "description": "Prometheus metrics (if enabled)",
+      "status": "optional",
+      "queries_available": true
+    },
+    "grafana": {
+      "url": "http://10.88.145.201:3000",
+      "description": "Grafana dashboards (if enabled)",
+      "status": "optional"
+    }
+  },
+  "refresh_intervals": {
+    "pod_metrics": 30,
+    "service_metrics": 30,
+    "deployment_metrics": 30,
+    "node_metrics": 60,
+    "event_metrics": 30,
+    "resource_graphs": 60
+  },
+  "data_retention": {
+    "events": "24_hours",
+    "metrics": "7_days",
+    "logs": "30_days",
+    "snapshots": "7_days"
+  },
+  "notifications": {
+    "enabled": true,
+    "channels": [
+      "email",
+      "slack",
+      "webhook"
+    ],
+    "critical_alert_recipients": [
+      "ops@cortex.ai",
+      "admin@cortex.ai"
+    ],
+    "warning_alert_recipients": [
+      "devops@cortex.ai"
+    ]
+  },
+  "access_control": {
+    "public": false,
+    "roles": {
+      "admin": ["view", "edit", "delete"],
+      "operator": ["view", "acknowledge_alerts"],
+      "viewer": ["view"]
+    },
+    "authentication": "kubernetes_rbac"
+  },
+  "feature_flags": {
+    "enable_live_metrics": true,
+    "enable_alerts": true,
+    "enable_auto_remediation": false,
+    "enable_prediction": false,
+    "enable_custom_dashboards": true
+  }
+}

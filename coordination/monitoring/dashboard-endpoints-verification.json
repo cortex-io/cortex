@@ -1,0 +1,448 @@
+{
+  "verification_timestamp": "2025-12-13T00:00:00Z",
+  "dashboard_accessibility_test": {
+    "status": "ready_for_testing",
+    "loadbalancer_ip": "10.88.145.201",
+    "loadbalancer_port": 80,
+    "primary_url": "http://10.88.145.201/",
+    "expected_service": "dashboard",
+    "expected_namespace": "cortex-system",
+    "service_type": "LoadBalancer"
+  },
+  "endpoints": {
+    "dashboard_ui": {
+      "name": "Dashboard UI",
+      "url": "http://10.88.145.201/",
+      "method": "GET",
+      "expected_status": 200,
+      "description": "Main Cortex dashboard interface",
+      "purpose": "User-facing monitoring dashboard",
+      "response_type": "HTML/React",
+      "headers": {
+        "Accept": "text/html,application/xhtml+xml"
+      },
+      "test_command": "curl -I http://10.88.145.201/",
+      "endpoint_type": "public"
+    },
+    "api_health": {
+      "name": "API Health Check",
+      "url": "http://10.88.145.201:3004/api/health",
+      "method": "GET",
+      "expected_status": 200,
+      "description": "System health status",
+      "response_format": "JSON",
+      "response_example": {
+        "status": "healthy",
+        "active_workers": 0,
+        "failed_workers": 0,
+        "timestamp": "2025-12-13T00:00:00Z"
+      },
+      "test_command": "curl http://10.88.145.201:3004/api/health | jq",
+      "endpoint_type": "api"
+    },
+    "api_metrics": {
+      "name": "System Metrics",
+      "url": "http://10.88.145.201:3004/api/metrics",
+      "method": "GET",
+      "expected_status": 200,
+      "description": "Overall system metrics and KPIs",
+      "response_format": "JSON",
+      "response_example": {
+        "active_workers": 0,
+        "total_tasks": 0,
+        "completed_tasks": 0,
+        "success_rate": 0,
+        "tokens_available": 500000,
+        "tokens_allocated": 0,
+        "tokens_total": 500000
+      },
+      "test_command": "curl http://10.88.145.201:3004/api/metrics | jq",
+      "endpoint_type": "api"
+    },
+    "api_workers": {
+      "name": "Worker Pool",
+      "url": "http://10.88.145.201:3004/api/workers",
+      "method": "GET",
+      "expected_status": 200,
+      "description": "Active and completed workers",
+      "response_format": "JSON",
+      "endpoint_type": "api"
+    },
+    "api_tasks": {
+      "name": "Task Queue",
+      "url": "http://10.88.145.201:3004/api/tasks",
+      "method": "GET",
+      "expected_status": 200,
+      "description": "Current task queue",
+      "response_format": "JSON",
+      "endpoint_type": "api"
+    },
+    "api_dashboard_summary": {
+      "name": "Dashboard Analytics Summary",
+      "url": "http://10.88.145.201:3004/api/dashboard/analytics/summary",
+      "method": "GET",
+      "expected_status": 200,
+      "description": "Dashboard KPIs and trends",
+      "response_format": "JSON",
+      "endpoint_type": "api"
+    },
+    "logs_stream": {
+      "name": "Log Stream",
+      "url": "http://10.88.145.201:3004/api/logs/stream",
+      "method": "GET",
+      "expected_status": 200,
+      "description": "Server-Sent Events log stream",
+      "response_format": "text/event-stream",
+      "test_command": "curl -N http://10.88.145.201:3004/api/logs/stream",
+      "endpoint_type": "stream"
+    },
+    "prometheus_metrics": {
+      "name": "Prometheus Metrics",
+      "url": "http://10.88.145.201:3004/metrics",
+      "method": "GET",
+      "expected_status": 200,
+      "description": "Prometheus-format metrics export",
+      "response_format": "text/plain",
+      "status": "optional",
+      "test_command": "curl http://10.88.145.201:3004/metrics",
+      "endpoint_type": "metrics"
+    },
+    "kubernetes_api": {
+      "name": "Kubernetes API",
+      "method": "CLI",
+      "description": "Native Kubernetes commands",
+      "commands": [
+        {
+          "command": "kubectl get svc dashboard -n cortex-system",
+          "description": "Get dashboard service details"
+        },
+        {
+          "command": "kubectl get endpoints dashboard -n cortex-system",
+          "description": "Get service endpoints"
+        },
+        {
+          "command": "kubectl get pods -n cortex-system",
+          "description": "List all cortex pods"
+        },
+        {
+          "command": "kubectl get nodes",
+          "description": "List cluster nodes"
+        }
+      ],
+      "endpoint_type": "kubernetes"
+    }
+  },
+  "external_integrations": {
+    "microsoft_graph": {
+      "health_endpoint": "http://10.88.145.201:3004/api/microsoft-graph/health",
+      "metrics_endpoint": "http://10.88.145.201:3004/api/microsoft-graph/metrics",
+      "security_endpoint": "http://10.88.145.201:3004/api/microsoft-graph/security",
+      "m365_stats_endpoint": "http://10.88.145.201:3004/api/microsoft-graph/m365-stats"
+    },
+    "cloudflare": {
+      "status_endpoint": "http://10.88.145.201:3004/api/cloudflare/status",
+      "metrics_endpoint": "http://10.88.145.201:3004/api/cloudflare/metrics",
+      "health_checks_endpoint": "http://10.88.145.201:3004/api/cloudflare/health-checks",
+      "zones_endpoint": "http://10.88.145.201:3004/api/cloudflare/zones",
+      "analytics_endpoint": "http://10.88.145.201:3004/api/cloudflare/analytics"
+    },
+    "opentofu": {
+      "health_endpoint": "http://10.88.145.201:3004/api/opentofu/health",
+      "metrics_endpoint": "http://10.88.145.201:3004/api/opentofu/metrics",
+      "operations_endpoint": "http://10.88.145.201:3004/api/opentofu/operations",
+      "security_endpoint": "http://10.88.145.201:3004/api/opentofu/security"
+    },
+    "unifi": {
+      "health_endpoint": "http://10.88.145.201:3004/api/unifi/health",
+      "infrastructure_endpoint": "http://10.88.145.201:3004/api/unifi/infrastructure",
+      "metrics_endpoint": "http://10.88.145.201:3004/api/unifi/metrics",
+      "security_endpoint": "http://10.88.145.201:3004/api/unifi/security",
+      "network_stats_endpoint": "http://10.88.145.201:3004/api/unifi/network-stats"
+    }
+  },
+  "test_scenarios": {
+    "scenario_1_basic_accessibility": {
+      "title": "Basic Dashboard Accessibility",
+      "steps": [
+        {
+          "step": 1,
+          "action": "Test HTTP connectivity to LoadBalancer IP",
+          "command": "curl -I http://10.88.145.201/",
+          "expected_result": "HTTP 200 response"
+        },
+        {
+          "step": 2,
+          "action": "Verify dashboard service exists",
+          "command": "kubectl get svc dashboard -n cortex-system",
+          "expected_result": "Service with external IP 10.88.145.201"
+        },
+        {
+          "step": 3,
+          "action": "Check service endpoints",
+          "command": "kubectl get endpoints dashboard -n cortex-system",
+          "expected_result": "At least one endpoint IP listed"
+        }
+      ]
+    },
+    "scenario_2_pod_health": {
+      "title": "Pod Health Verification",
+      "steps": [
+        {
+          "step": 1,
+          "action": "List all cortex pods",
+          "command": "kubectl get pods -n cortex-system",
+          "expected_result": "5 pods in Running status"
+        },
+        {
+          "step": 2,
+          "action": "Check resource usage",
+          "command": "kubectl top pods -n cortex-system",
+          "expected_result": "CPU and memory within limits"
+        },
+        {
+          "step": 3,
+          "action": "Verify no high restart counts",
+          "command": "kubectl get pods -n cortex-system -o jsonpath='{.items[*].status.containerStatuses[*].restartCount}'",
+          "expected_result": "Values near 0"
+        }
+      ]
+    },
+    "scenario_3_api_health": {
+      "title": "API Endpoints Health Check",
+      "steps": [
+        {
+          "step": 1,
+          "action": "Check API health",
+          "command": "curl http://10.88.145.201:3004/api/health",
+          "expected_result": "status: healthy"
+        },
+        {
+          "step": 2,
+          "action": "Get system metrics",
+          "command": "curl http://10.88.145.201:3004/api/metrics",
+          "expected_result": "Metrics object with active_workers, success_rate"
+        },
+        {
+          "step": 3,
+          "action": "Check dashboard summary",
+          "command": "curl http://10.88.145.201:3004/api/dashboard/analytics/summary",
+          "expected_result": "KPIs and trends data"
+        }
+      ]
+    },
+    "scenario_4_complete_cluster_health": {
+      "title": "Complete Cluster Health Check",
+      "steps": [
+        {
+          "step": 1,
+          "action": "Run health check script",
+          "command": "./scripts/monitoring/k3s-dashboard-health-check.sh",
+          "expected_result": "All checks pass"
+        },
+        {
+          "step": 2,
+          "action": "Run verbose health check",
+          "command": "./scripts/monitoring/k3s-dashboard-health-check.sh --verbose",
+          "expected_result": "Detailed output of all checks"
+        },
+        {
+          "step": 3,
+          "action": "Generate JSON report",
+          "command": "./scripts/monitoring/k3s-dashboard-health-check.sh --output json",
+          "expected_result": "JSON report at /tmp/k3s-health-check-report.json"
+        }
+      ]
+    }
+  },
+  "service_configuration": {
+    "kubernetes_service": {
+      "name": "dashboard",
+      "namespace": "cortex-system",
+      "kind": "Service",
+      "spec": {
+        "type": "LoadBalancer",
+        "selector": {
+          "app": "cortex",
+          "component": "dashboard"
+        },
+        "ports": [
+          {
+            "name": "http",
+            "port": 80,
+            "targetPort": 3000,
+            "protocol": "TCP"
+          }
+        ]
+      },
+      "status": {
+        "loadBalancer": {
+          "ingress": [
+            {
+              "ip": "10.88.145.201"
+            }
+          ]
+        }
+      }
+    },
+    "endpoints": {
+      "dashboard": {
+        "namespace": "cortex-system",
+        "service_name": "dashboard",
+        "subsets": [
+          {
+            "addresses": [
+              {
+                "ip": "10.244.0.x",
+                "targetRef": {
+                  "kind": "Pod",
+                  "name": "cortex-dashboard-xyz"
+                }
+              }
+            ],
+            "ports": [
+              {
+                "name": "http",
+                "port": 3000,
+                "protocol": "TCP"
+              }
+            ]
+          }
+        ]
+      }
+    }
+  },
+  "network_topology": {
+    "loadbalancer_configuration": {
+      "ip": "10.88.145.201",
+      "port": 80,
+      "target_namespace": "cortex-system",
+      "target_service": "dashboard",
+      "target_pod_port": 3000,
+      "protocol": "TCP"
+    },
+    "routing_path": [
+      "Client -> 10.88.145.201:80 (LoadBalancer IP)",
+      "-> K3s Service (dashboard:80 in cortex-system)",
+      "-> Pod (cortex-dashboard on port 3000)",
+      "-> Express API Server"
+    ]
+  },
+  "expected_responses": {
+    "dashboard_ui_response": {
+      "status_code": 200,
+      "content_type": "text/html; charset=utf-8",
+      "body": "React application with Cortex dashboard",
+      "headers": {
+        "Content-Type": "text/html",
+        "Server": "nginx",
+        "Cache-Control": "public, max-age=3600"
+      }
+    },
+    "api_health_response": {
+      "status_code": 200,
+      "content_type": "application/json",
+      "body": {
+        "status": "healthy|degraded|critical",
+        "active_workers": 0,
+        "failed_workers": 0,
+        "timestamp": "ISO 8601 timestamp"
+      }
+    },
+    "api_metrics_response": {
+      "status_code": 200,
+      "content_type": "application/json",
+      "body": {
+        "active_workers": "number",
+        "total_tasks": "number",
+        "completed_tasks": "number",
+        "success_rate": "number 0-1",
+        "tokens_available": "number",
+        "tokens_allocated": "number",
+        "tokens_total": "number"
+      }
+    }
+  },
+  "verification_checklist": [
+    {
+      "item": "LoadBalancer IP 10.88.145.201 is assigned",
+      "status": "pending",
+      "verified_by": "kubectl get svc dashboard -n cortex-system"
+    },
+    {
+      "item": "Dashboard service has active endpoints",
+      "status": "pending",
+      "verified_by": "kubectl get endpoints dashboard -n cortex-system"
+    },
+    {
+      "item": "HTTP request to http://10.88.145.201/ returns 200",
+      "status": "pending",
+      "verified_by": "curl -I http://10.88.145.201/"
+    },
+    {
+      "item": "All 5 Cortex pods are running",
+      "status": "pending",
+      "verified_by": "kubectl get pods -n cortex-system | grep Running"
+    },
+    {
+      "item": "API health endpoint returns healthy status",
+      "status": "pending",
+      "verified_by": "curl http://10.88.145.201:3004/api/health"
+    },
+    {
+      "item": "Dashboard metrics endpoint accessible",
+      "status": "pending",
+      "verified_by": "curl http://10.88.145.201:3004/api/metrics"
+    },
+    {
+      "item": "All external integrations endpoints accessible",
+      "status": "pending",
+      "verified_by": "Test each integration endpoint"
+    },
+    {
+      "item": "K3s health check script completes successfully",
+      "status": "pending",
+      "verified_by": "./scripts/monitoring/k3s-dashboard-health-check.sh"
+    }
+  ],
+  "troubleshooting_guide": {
+    "issue_no_external_ip": {
+      "symptom": "External IP shows '<pending>'",
+      "causes": [
+        "MetalLB not installed",
+        "No available IPs in MetalLB range",
+        "Service not properly configured"
+      ],
+      "solutions": [
+        "Check MetalLB installation: kubectl get pods -n metallb-system",
+        "Verify MetalLB ConfigMap: kubectl get configmap -n metallb-system",
+        "Check service: kubectl describe svc dashboard -n cortex-system"
+      ]
+    },
+    "issue_no_endpoints": {
+      "symptom": "Service has no endpoints (empty ENDPOINTS column)",
+      "causes": [
+        "No running pods with correct labels",
+        "Selector mismatch in service",
+        "Pod in CrashLoopBackOff state"
+      ],
+      "solutions": [
+        "Check pod status: kubectl get pods -n cortex-system",
+        "Verify service selector: kubectl get svc dashboard -n cortex-system -o yaml | grep -A2 selector",
+        "Check pod logs: kubectl logs <pod-name> -n cortex-system"
+      ]
+    },
+    "issue_connection_refused": {
+      "symptom": "Connection refused when accessing http://10.88.145.201/",
+      "causes": [
+        "Pod not listening on correct port",
+        "Service targeting wrong port",
+        "Network policy blocking traffic"
+      ],
+      "solutions": [
+        "Port forward for testing: kubectl port-forward svc/dashboard 8080:80 -n cortex-system",
+        "Check pod is running: kubectl get pods -n cortex-system",
+        "Verify service ports: kubectl get svc dashboard -n cortex-system -o yaml"
+      ]
+    }
+  }
+}

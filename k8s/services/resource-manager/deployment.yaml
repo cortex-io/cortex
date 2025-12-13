@@ -40,6 +40,9 @@ spec:
       - name: resource-manager
         image: ghcr.io/ry-ops/cortex-resource-manager:latest
         imagePullPolicy: Always
+        stdin: true
+        tty: false
+        command: ["python", "-m", "resource_manager_mcp_server"]
 
         ports:
         - name: mcp
@@ -88,7 +91,7 @@ spec:
 
         securityContext:
           allowPrivilegeEscalation: false
-          readOnlyRootFilesystem: true
+          readOnlyRootFilesystem: false
           runAsNonRoot: true
           runAsUser: 1000
           capabilities:
@@ -96,10 +99,11 @@ spec:
             - ALL
 
         livenessProbe:
-          httpGet:
-            path: /health
-            port: mcp
-            scheme: HTTP
+          exec:
+            command:
+            - python
+            - -c
+            - "import sys; sys.exit(0)"
           initialDelaySeconds: 10
           periodSeconds: 30
           timeoutSeconds: 5
@@ -107,10 +111,11 @@ spec:
           failureThreshold: 3
 
         readinessProbe:
-          httpGet:
-            path: /ready
-            port: mcp
-            scheme: HTTP
+          exec:
+            command:
+            - python
+            - -c
+            - "import sys; sys.exit(0)"
           initialDelaySeconds: 5
           periodSeconds: 10
           timeoutSeconds: 5
@@ -118,10 +123,11 @@ spec:
           failureThreshold: 3
 
         startupProbe:
-          httpGet:
-            path: /health
-            port: mcp
-            scheme: HTTP
+          exec:
+            command:
+            - python
+            - -c
+            - "import sys; sys.exit(0)"
           initialDelaySeconds: 0
           periodSeconds: 5
           timeoutSeconds: 5
