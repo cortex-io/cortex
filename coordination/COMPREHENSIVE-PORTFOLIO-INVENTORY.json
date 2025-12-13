@@ -1,0 +1,919 @@
+{
+  "inventory_metadata": {
+    "version": "2.0.0",
+    "organization": "ry-ops",
+    "scan_date": "2025-12-13T13:45:00Z",
+    "total_repositories": 26,
+    "scan_type": "comprehensive_strategic_analysis",
+    "conducted_by": "inventory-master",
+    "analysis_depth": "full"
+  },
+  "executive_summary": {
+    "total_repositories": 26,
+    "active_repositories": 26,
+    "archived_repositories": 0,
+    "public_repositories": 16,
+    "private_repositories": 10,
+    "total_stars": 10,
+    "total_forks": 2,
+    "total_disk_usage_kb": 412921,
+    "languages": {
+      "Python": 14,
+      "JavaScript": 5,
+      "TypeScript": 3,
+      "Shell": 6,
+      "Astro": 2,
+      "HCL": 2,
+      "Other": 5
+    },
+    "project_types": {
+      "mcp_servers": 12,
+      "infrastructure_automation": 3,
+      "applications": 4,
+      "automation_systems": 2,
+      "documentation": 2,
+      "themes": 1,
+      "security_labs": 1,
+      "profile": 1
+    }
+  },
+  "strategic_categories": {
+    "core_infrastructure": {
+      "description": "Critical automation and orchestration systems",
+      "repositories": [
+        {
+          "name": "cortex",
+          "type": "automation_orchestrator",
+          "visibility": "private",
+          "strategic_importance": "critical",
+          "integration_hub": true,
+          "description": "Multi-agent AI system for autonomous GitHub repository management",
+          "tech_stack": {
+            "primary_language": "Shell",
+            "languages": ["Shell", "JavaScript", "Python", "TypeScript", "HTML"],
+            "dependencies": {
+              "anthropic": "@anthropic-ai/sdk@^0.71.0",
+              "openai": "openai@^4.73.0",
+              "express": "express@^5.2.1",
+              "websockets": "ws@^8.18.3",
+              "observability": "@opentelemetry/*"
+            }
+          },
+          "size_kb": 193968,
+          "stars": 1,
+          "last_updated": "2025-12-13T13:43:52Z",
+          "health_status": "active",
+          "has_dockerfile": true,
+          "has_ci_cd": true,
+          "security_features": ["helmet", "rate-limiting", "jwt"],
+          "cortex_role": "orchestration_core"
+        },
+        {
+          "name": "cortex-docker",
+          "type": "containerized_deployment",
+          "visibility": "private",
+          "strategic_importance": "high",
+          "description": "Containerized version of Cortex - Docker and Kubernetes deployment",
+          "tech_stack": {
+            "primary_language": "Shell",
+            "languages": ["Shell", "Dockerfile", "Python", "JavaScript"],
+            "deployment": ["Docker", "Kubernetes"]
+          },
+          "size_kb": 182720,
+          "stars": 0,
+          "last_updated": "2025-12-11T20:35:21Z",
+          "health_status": "active",
+          "cortex_role": "deployment_infrastructure"
+        },
+        {
+          "name": "cortex-resource-manager",
+          "type": "mcp_server",
+          "visibility": "public",
+          "strategic_importance": "high",
+          "description": "MCP server for managing resources, MCP servers, and Kubernetes workers",
+          "tech_stack": {
+            "primary_language": "Python",
+            "framework": "MCP",
+            "dependencies": ["mcp>=1.9.4", "kubernetes>=30.0.0", "httpx>=0.27.0"]
+          },
+          "size_kb": 160,
+          "stars": 0,
+          "last_updated": "2025-12-10T05:58:00Z",
+          "health_status": "active",
+          "has_dockerfile": true,
+          "cortex_role": "resource_orchestration"
+        },
+        {
+          "name": "aiana",
+          "type": "conversation_monitor",
+          "visibility": "private",
+          "strategic_importance": "medium",
+          "description": "AI conversation attendant for Claude Code - monitors and records conversations",
+          "tech_stack": {
+            "primary_language": "Python",
+            "api_integration": "Claude Code API"
+          },
+          "size_kb": 1543,
+          "stars": 0,
+          "last_updated": "2025-12-09T19:56:56Z",
+          "health_status": "active",
+          "has_dockerfile": true,
+          "cortex_role": "observability"
+        }
+      ],
+      "strategic_value": "These repositories form the core automation infrastructure. Cortex is the central orchestration hub that should manage all other repositories."
+    },
+    "mcp_servers_infrastructure": {
+      "description": "Model Context Protocol servers for infrastructure management",
+      "repositories": [
+        {
+          "name": "proxmox-mcp-server",
+          "visibility": "public",
+          "strategic_importance": "high",
+          "description": "MCP server for Proxmox Virtual Environment VM and container management",
+          "tech_stack": {
+            "language": "Python",
+            "framework": "MCP",
+            "dependencies": ["mcp>=1.0.0", "httpx>=0.27.0"]
+          },
+          "size_kb": 3077,
+          "stars": 1,
+          "last_updated": "2025-12-10T10:48:41Z",
+          "has_dockerfile": true,
+          "cortex_integration": "documented",
+          "use_case": "VM/container provisioning and management"
+        },
+        {
+          "name": "opentofu-mcp-server",
+          "visibility": "public",
+          "strategic_importance": "high",
+          "description": "MCP server for OpenTofu/Terraform infrastructure as code",
+          "tech_stack": {
+            "language": "Python",
+            "framework": "MCP",
+            "iac_tool": "OpenTofu/Terraform"
+          },
+          "size_kb": 30,
+          "stars": 0,
+          "last_updated": "2025-12-09T21:23:45Z",
+          "use_case": "Infrastructure as code management"
+        },
+        {
+          "name": "ansible-mcp-server",
+          "visibility": "public",
+          "strategic_importance": "high",
+          "description": "MCP server for Ansible automation and configuration management",
+          "tech_stack": {
+            "language": "Python",
+            "framework": "MCP",
+            "automation_tool": "Ansible"
+          },
+          "size_kb": 29,
+          "stars": 0,
+          "last_updated": "2025-12-09T21:23:43Z",
+          "use_case": "Configuration management and automation"
+        },
+        {
+          "name": "cloudflare-mcp-server",
+          "visibility": "public",
+          "strategic_importance": "medium",
+          "description": "MCP server for Cloudflare API management",
+          "tech_stack": {
+            "language": "Python",
+            "framework": "MCP"
+          },
+          "size_kb": 1765,
+          "stars": 1,
+          "forks": 2,
+          "last_updated": "2025-12-08T21:47:56Z",
+          "topics": ["ai", "claude", "cloudflare", "mcp-server", "python", "uv"],
+          "use_case": "DNS, CDN, and edge computing management"
+        }
+      ],
+      "strategic_value": "Infrastructure management layer enabling Cortex to provision and configure infrastructure autonomously."
+    },
+    "mcp_servers_networking": {
+      "description": "MCP servers for network infrastructure and connectivity",
+      "repositories": [
+        {
+          "name": "unifi-mcp-server",
+          "visibility": "public",
+          "strategic_importance": "medium",
+          "description": "MCP server for UniFi infrastructure monitoring and management",
+          "tech_stack": {
+            "language": "Python",
+            "framework": "MCP"
+          },
+          "size_kb": 7456,
+          "stars": 2,
+          "is_fork": true,
+          "last_updated": "2025-12-08T21:49:38Z",
+          "topics": ["ai", "claude", "claude-ai", "mcp", "unifi"],
+          "use_case": "Network device and WiFi management"
+        },
+        {
+          "name": "starlink-enterprise-mcp-server",
+          "visibility": "public",
+          "strategic_importance": "low",
+          "description": "MCP server for Starlink terminal fleet management",
+          "tech_stack": {
+            "language": "Python",
+            "framework": "MCP"
+          },
+          "size_kb": 6796,
+          "stars": 1,
+          "last_updated": "2025-12-08T21:48:02Z",
+          "use_case": "Satellite internet fleet management"
+        }
+      ],
+      "strategic_value": "Network connectivity management for homelab and remote infrastructure."
+    },
+    "mcp_servers_automation": {
+      "description": "MCP servers for workflow automation and integration",
+      "repositories": [
+        {
+          "name": "n8n-mcp-server",
+          "visibility": "public",
+          "strategic_importance": "critical",
+          "description": "MCP server for n8n workflow automation",
+          "tech_stack": {
+            "language": "Python",
+            "framework": "MCP",
+            "dependencies": ["mcp>=1.9.4", "httpx>=0.27.0", "pydantic>=2.0.0"]
+          },
+          "size_kb": 3290,
+          "stars": 1,
+          "last_updated": "2025-12-10T10:48:40Z",
+          "has_dockerfile": true,
+          "cortex_integration": "documented",
+          "features": ["13 workflow tools", "execution monitoring", "credential management"],
+          "use_case": "Workflow orchestration and automation hub"
+        },
+        {
+          "name": "microsoft-graph-mcp-server",
+          "visibility": "public",
+          "strategic_importance": "medium",
+          "description": "MCP server for Microsoft Graph API - Microsoft 365 management",
+          "tech_stack": {
+            "language": "Python",
+            "framework": "MCP",
+            "scripting": ["PowerShell"]
+          },
+          "size_kb": 3779,
+          "stars": 0,
+          "last_updated": "2025-12-08T21:47:08Z",
+          "use_case": "Microsoft 365 user and license management"
+        }
+      ],
+      "strategic_value": "Automation layer connecting Cortex to external workflow systems and enterprise platforms."
+    },
+    "infrastructure_code": {
+      "description": "Infrastructure automation playbooks and configuration",
+      "repositories": [
+        {
+          "name": "playbooks",
+          "visibility": "private",
+          "strategic_importance": "high",
+          "description": "Infrastructure automation playbooks, terraform modules, and n8n workflows",
+          "tech_stack": {
+            "primary_language": "Shell",
+            "languages": ["Shell", "HCL"],
+            "tools": ["Terraform", "n8n", "Ansible"]
+          },
+          "size_kb": 119,
+          "stars": 0,
+          "last_updated": "2025-12-12T01:29:46Z",
+          "health_status": "active",
+          "has_wiki": true,
+          "cortex_role": "infrastructure_templates"
+        },
+        {
+          "name": "infrastructure-docs",
+          "visibility": "private",
+          "strategic_importance": "medium",
+          "description": "Infrastructure documentation and credentials for homelab",
+          "tech_stack": {
+            "primary_language": null,
+            "content_type": "documentation"
+          },
+          "size_kb": 7,
+          "stars": 0,
+          "last_updated": "2025-12-12T01:24:14Z",
+          "health_status": "active",
+          "has_wiki": true,
+          "cortex_role": "documentation_vault"
+        },
+        {
+          "name": "sentinel-forge",
+          "visibility": "private",
+          "strategic_importance": "high",
+          "description": "Red vs Blue Team Security Testing Lab with multi-perspective threat detection",
+          "tech_stack": {
+            "primary_language": "HCL",
+            "tools": ["Terraform", "OpenTofu"]
+          },
+          "size_kb": 43,
+          "stars": 0,
+          "last_updated": "2025-12-09T21:25:50Z",
+          "health_status": "active",
+          "cortex_role": "security_testing"
+        }
+      ],
+      "strategic_value": "Reusable infrastructure patterns and security testing capabilities for Cortex-managed deployments."
+    },
+    "applications": {
+      "description": "End-user applications and tools",
+      "repositories": [
+        {
+          "name": "DriveIQ",
+          "visibility": "public",
+          "strategic_importance": "low",
+          "description": "Vehicle management app for Toyota 4Runner - maintenance tracking and AI manual consultation",
+          "tech_stack": {
+            "primary_language": "Python",
+            "languages": ["Python", "TypeScript", "JavaScript", "HTML", "CSS"]
+          },
+          "size_kb": 84699,
+          "stars": 1,
+          "last_updated": "2025-12-08T20:39:51Z",
+          "health_status": "active",
+          "application_type": "vehicle_management"
+        },
+        {
+          "name": "DriveIQ-Docker",
+          "visibility": "private",
+          "strategic_importance": "low",
+          "description": "Dockerized version of DriveIQ",
+          "tech_stack": {
+            "primary_language": "Python",
+            "languages": ["Python", "TypeScript", "JavaScript", "Dockerfile"]
+          },
+          "size_kb": 84599,
+          "stars": 0,
+          "last_updated": "2025-12-10T15:13:33Z",
+          "health_status": "active",
+          "has_dockerfile": true
+        },
+        {
+          "name": "ATSFlow",
+          "visibility": "public",
+          "strategic_importance": "low",
+          "description": "AI-powered resume optimization tool for ATS/LPS compatibility",
+          "tech_stack": {
+            "primary_language": "JavaScript",
+            "languages": ["JavaScript"]
+          },
+          "size_kb": 4820,
+          "stars": 1,
+          "last_updated": "2025-12-08T20:31:11Z",
+          "health_status": "active",
+          "application_type": "resume_optimization"
+        },
+        {
+          "name": "unifi-cloudflare-ddns",
+          "visibility": "public",
+          "strategic_importance": "low",
+          "description": "Cloudflare Worker for UniFi dynamic DNS updates",
+          "tech_stack": {
+            "primary_language": "TypeScript",
+            "deployment": "Cloudflare Workers"
+          },
+          "size_kb": 1766,
+          "stars": 1,
+          "last_updated": "2025-12-08T20:22:59Z",
+          "health_status": "active",
+          "application_type": "dns_automation"
+        }
+      ],
+      "strategic_value": "Standalone applications demonstrating automation capabilities but not critical to Cortex infrastructure."
+    },
+    "content_platforms": {
+      "description": "Blogging and content publishing platforms",
+      "repositories": [
+        {
+          "name": "blog",
+          "visibility": "private",
+          "strategic_importance": "medium",
+          "description": "Modern blog built with Astro, inspired by GitHub Blog design",
+          "tech_stack": {
+            "primary_language": "Astro",
+            "languages": ["Astro", "JavaScript", "TypeScript", "CSS", "Shell"]
+          },
+          "size_kb": 40913,
+          "stars": 0,
+          "last_updated": "2025-12-13T01:59:59Z",
+          "health_status": "active",
+          "content_type": "blog"
+        },
+        {
+          "name": "astro-carbon",
+          "visibility": "public",
+          "strategic_importance": "low",
+          "description": "GitHub Blog-inspired dark theme for Astro with mega menu navigation",
+          "tech_stack": {
+            "primary_language": "Astro",
+            "languages": ["Astro", "JavaScript", "TypeScript", "CSS"]
+          },
+          "size_kb": 152,
+          "stars": 0,
+          "last_updated": "2025-12-08T21:36:00Z",
+          "health_status": "active",
+          "content_type": "theme"
+        }
+      ],
+      "strategic_value": "Content publishing infrastructure for documenting Cortex capabilities and technical insights."
+    },
+    "organizational": {
+      "description": "Organization profile and project management",
+      "repositories": [
+        {
+          "name": "ry-ops",
+          "visibility": "public",
+          "strategic_importance": "low",
+          "description": "Organization profile - Building pipes between infrastructure, automation, observability",
+          "tech_stack": {
+            "primary_language": null,
+            "content_type": "profile"
+          },
+          "size_kb": 22,
+          "stars": 0,
+          "last_updated": "2025-12-08T21:28:05Z",
+          "health_status": "active"
+        },
+        {
+          "name": "cortex-construction-hq",
+          "visibility": "private",
+          "strategic_importance": "medium",
+          "description": "Cortex Holdings Inc. - AI-powered construction company for infrastructure automation",
+          "tech_stack": {
+            "primary_language": null,
+            "content_type": "project_management"
+          },
+          "size_kb": 7,
+          "stars": 0,
+          "last_updated": "2025-12-09T21:31:34Z",
+          "health_status": "active",
+          "cortex_role": "project_planning"
+        },
+        {
+          "name": "AEO",
+          "visibility": "private",
+          "strategic_importance": "unknown",
+          "description": "",
+          "tech_stack": {
+            "primary_language": null
+          },
+          "size_kb": 8,
+          "stars": 0,
+          "last_updated": "2025-12-11T00:01:20Z",
+          "health_status": "active",
+          "note": "No description available - requires investigation"
+        }
+      ],
+      "strategic_value": "Organizational documentation and project coordination."
+    },
+    "legacy_or_minimal": {
+      "description": "Minimally active or legacy repositories",
+      "repositories": [
+        {
+          "name": "cara",
+          "visibility": "private",
+          "strategic_importance": "low",
+          "description": "No description",
+          "tech_stack": {
+            "primary_language": "TypeScript",
+            "languages": ["TypeScript", "MDX"]
+          },
+          "size_kb": 487,
+          "stars": 1,
+          "last_updated": "2025-12-03T18:04:18Z",
+          "health_status": "low_activity",
+          "note": "Minimal activity, unclear purpose"
+        }
+      ],
+      "strategic_value": "Low activity repositories that may be candidates for archival or documentation."
+    }
+  },
+  "dependency_analysis": {
+    "python_ecosystem": {
+      "total_repositories": 14,
+      "common_dependencies": {
+        "mcp": {
+          "versions": [">=1.0.0", ">=1.9.4"],
+          "repositories": 12,
+          "standardization_needed": true,
+          "recommended_version": ">=1.9.4"
+        },
+        "httpx": {
+          "versions": [">=0.27.0"],
+          "repositories": 6,
+          "standardization_status": "good"
+        },
+        "pydantic": {
+          "versions": [">=2.0.0"],
+          "repositories": 3,
+          "standardization_status": "good"
+        }
+      },
+      "dev_dependencies": {
+        "pytest": ">=8.0.0",
+        "ruff": ">=0.3.0",
+        "mypy": ">=1.8.0",
+        "black": ">=24.0.0"
+      },
+      "recommendation": "Standardize on MCP >=1.9.4 across all MCP servers. Consider creating shared dependency configuration."
+    },
+    "javascript_ecosystem": {
+      "total_repositories": 5,
+      "frameworks": {
+        "Astro": 2,
+        "Express": 1,
+        "Generic": 2
+      },
+      "common_dependencies": {
+        "anthropic_sdk": "@anthropic-ai/sdk@^0.71.0",
+        "openai": "openai@^4.73.0"
+      },
+      "recommendation": "Limited JavaScript standardization needed. Cortex uses modern Express 5.x."
+    },
+    "containerization": {
+      "dockerized_repositories": 6,
+      "repositories_with_dockerfile": [
+        "cortex",
+        "cortex-docker",
+        "proxmox-mcp-server",
+        "n8n-mcp-server",
+        "cortex-resource-manager",
+        "aiana"
+      ],
+      "recommendation": "Excellent containerization coverage for core infrastructure. Consider Dockerizing remaining MCP servers."
+    }
+  },
+  "security_assessment": {
+    "license_compliance": {
+      "mit_licensed": 11,
+      "other_licensed": 3,
+      "no_license": 12,
+      "recommendation": "Add MIT licenses to all repositories lacking explicit licensing."
+    },
+    "security_features": {
+      "repositories_with_security_policies": 0,
+      "repositories_with_dependabot": "unknown",
+      "repositories_with_code_scanning": "unknown",
+      "recommendation": "Enable GitHub security features (Dependabot, code scanning) across all public repositories."
+    },
+    "visibility_risk_assessment": {
+      "public_repositories_without_licenses": 5,
+      "private_repositories_with_sensitive_data": ["infrastructure-docs", "playbooks"],
+      "recommendation": "Ensure infrastructure-docs and playbooks never become public. Add .env examples without real credentials."
+    },
+    "dependency_vulnerabilities": {
+      "status": "requires_scanning",
+      "recommendation": "Run npm audit and pip-audit across all repositories. Integrate with Cortex security master."
+    }
+  },
+  "health_metrics": {
+    "activity_analysis": {
+      "highly_active": ["cortex", "blog", "proxmox-mcp-server", "n8n-mcp-server"],
+      "moderately_active": ["DriveIQ", "ATSFlow", "playbooks"],
+      "low_activity": ["cara", "AEO", "cortex-construction-hq"],
+      "recommendation": "Focus Cortex automation on highly active repositories first."
+    },
+    "documentation_status": {
+      "repositories_with_readme": 16,
+      "repositories_with_wiki": 15,
+      "repositories_without_description": 3,
+      "repositories_needing_documentation": ["AEO", "cara"],
+      "recommendation": "Add descriptions to AEO and cara. Enable wikis for documentation-heavy projects."
+    },
+    "issue_tracking": {
+      "repositories_with_open_issues": 1,
+      "total_open_issues": 1,
+      "repositories_with_issues_enabled": 26,
+      "recommendation": "Good issue tracking posture. Consider creating issue templates."
+    }
+  },
+  "integration_opportunities": {
+    "cortex_integration_candidates": {
+      "immediate_integration": [
+        {
+          "repository": "proxmox-mcp-server",
+          "integration_type": "infrastructure_provisioning",
+          "priority": "critical",
+          "use_case": "Autonomous VM/container provisioning for Cortex workers",
+          "status": "partially_integrated"
+        },
+        {
+          "repository": "n8n-mcp-server",
+          "integration_type": "workflow_orchestration",
+          "priority": "critical",
+          "use_case": "External workflow triggers and automation pipelines",
+          "status": "documented"
+        },
+        {
+          "repository": "cortex-resource-manager",
+          "integration_type": "resource_management",
+          "priority": "critical",
+          "use_case": "Managing MCP server lifecycle and Kubernetes workers",
+          "status": "active"
+        },
+        {
+          "repository": "opentofu-mcp-server",
+          "integration_type": "infrastructure_as_code",
+          "priority": "high",
+          "use_case": "Declarative infrastructure management",
+          "status": "new"
+        },
+        {
+          "repository": "ansible-mcp-server",
+          "integration_type": "configuration_management",
+          "priority": "high",
+          "use_case": "Server configuration and application deployment",
+          "status": "new"
+        }
+      ],
+      "future_integration": [
+        {
+          "repository": "cloudflare-mcp-server",
+          "integration_type": "edge_services",
+          "priority": "medium",
+          "use_case": "DNS management and CDN configuration for Cortex deployments"
+        },
+        {
+          "repository": "unifi-mcp-server",
+          "integration_type": "network_management",
+          "priority": "low",
+          "use_case": "Network visibility and management for homelab infrastructure"
+        },
+        {
+          "repository": "microsoft-graph-mcp-server",
+          "integration_type": "enterprise_integration",
+          "priority": "low",
+          "use_case": "Microsoft 365 integration for enterprise deployments"
+        }
+      ]
+    },
+    "consolidation_opportunities": {
+      "duplicate_projects": [
+        {
+          "repositories": ["DriveIQ", "DriveIQ-Docker"],
+          "recommendation": "Consolidate into single repository with Docker support",
+          "action": "Merge DriveIQ-Docker into DriveIQ main branch"
+        },
+        {
+          "repositories": ["cortex", "cortex-docker"],
+          "recommendation": "Merge containerization into main Cortex repository",
+          "action": "Integrate cortex-docker as deployment strategy in main cortex repo"
+        }
+      ],
+      "related_projects": [
+        {
+          "repositories": ["blog", "astro-carbon"],
+          "relationship": "Theme used by blog",
+          "recommendation": "Keep separate but link via submodule or npm package"
+        }
+      ]
+    }
+  },
+  "ecosystem_architecture": {
+    "layers": {
+      "layer_1_orchestration": {
+        "name": "Orchestration Core",
+        "repositories": ["cortex", "cortex-docker"],
+        "description": "Central AI orchestration system managing all automation"
+      },
+      "layer_2_resource_management": {
+        "name": "Resource Management",
+        "repositories": ["cortex-resource-manager"],
+        "description": "Manages MCP servers, Kubernetes workers, and resource allocation"
+      },
+      "layer_3_infrastructure": {
+        "name": "Infrastructure Management",
+        "repositories": ["proxmox-mcp-server", "opentofu-mcp-server", "ansible-mcp-server"],
+        "description": "Infrastructure provisioning, IaC, and configuration management"
+      },
+      "layer_4_automation": {
+        "name": "Workflow Automation",
+        "repositories": ["n8n-mcp-server"],
+        "description": "External workflow integration and automation pipelines"
+      },
+      "layer_5_services": {
+        "name": "Service Integrations",
+        "repositories": ["cloudflare-mcp-server", "unifi-mcp-server", "starlink-enterprise-mcp-server", "microsoft-graph-mcp-server"],
+        "description": "External service integrations for networking, cloud, and enterprise"
+      },
+      "layer_6_observability": {
+        "name": "Observability",
+        "repositories": ["aiana"],
+        "description": "Conversation monitoring and system observability"
+      },
+      "layer_7_infrastructure_code": {
+        "name": "Infrastructure as Code",
+        "repositories": ["playbooks", "infrastructure-docs", "sentinel-forge"],
+        "description": "Reusable infrastructure patterns and documentation"
+      },
+      "layer_8_applications": {
+        "name": "Applications",
+        "repositories": ["DriveIQ", "ATSFlow", "blog"],
+        "description": "End-user applications and content platforms"
+      }
+    },
+    "data_flows": {
+      "cortex_to_infrastructure": "Cortex -> cortex-resource-manager -> proxmox/opentofu/ansible MCP servers -> Infrastructure",
+      "cortex_to_workflows": "Cortex -> n8n-mcp-server -> n8n workflows -> External systems",
+      "cortex_to_services": "Cortex -> Service MCP servers (Cloudflare, UniFi, etc.) -> External APIs",
+      "observability_flow": "All systems -> aiana -> Cortex dashboard -> Metrics/logs"
+    }
+  },
+  "strategic_recommendations": {
+    "priority_actions": [
+      {
+        "priority": 1,
+        "action": "Complete integration of opentofu-mcp-server and ansible-mcp-server into Cortex",
+        "impact": "Critical - Enables full infrastructure automation lifecycle",
+        "effort": "Medium",
+        "timeline": "1-2 weeks"
+      },
+      {
+        "priority": 2,
+        "action": "Consolidate cortex-docker into main cortex repository",
+        "impact": "High - Simplifies deployment and reduces repository fragmentation",
+        "effort": "Medium",
+        "timeline": "1 week"
+      },
+      {
+        "priority": 3,
+        "action": "Add MIT licenses to all repositories lacking explicit licensing",
+        "impact": "High - Ensures legal compliance and clarity",
+        "effort": "Low",
+        "timeline": "1 day"
+      },
+      {
+        "priority": 4,
+        "action": "Standardize MCP dependency versions across all MCP servers",
+        "impact": "Medium - Improves consistency and reduces dependency conflicts",
+        "effort": "Low",
+        "timeline": "2 days"
+      },
+      {
+        "priority": 5,
+        "action": "Enable GitHub security features (Dependabot, code scanning) on all public repositories",
+        "impact": "High - Proactive security vulnerability detection",
+        "effort": "Low",
+        "timeline": "1 day"
+      },
+      {
+        "priority": 6,
+        "action": "Add descriptions to AEO and cara repositories",
+        "impact": "Low - Improves discoverability and documentation",
+        "effort": "Low",
+        "timeline": "1 hour"
+      },
+      {
+        "priority": 7,
+        "action": "Create shared MCP server template repository",
+        "impact": "Medium - Accelerates new MCP server development",
+        "effort": "Medium",
+        "timeline": "1 week"
+      },
+      {
+        "priority": 8,
+        "action": "Consolidate DriveIQ and DriveIQ-Docker",
+        "impact": "Low - Reduces maintenance overhead",
+        "effort": "Low",
+        "timeline": "2 days"
+      }
+    ],
+    "automation_opportunities": [
+      {
+        "opportunity": "Automated dependency updates",
+        "description": "Use Cortex to automatically create PRs for dependency updates across all repositories",
+        "value": "Reduces security vulnerabilities and keeps dependencies current",
+        "implementation": "Integrate Dependabot alerts with Cortex automation"
+      },
+      {
+        "opportunity": "Automated README generation",
+        "description": "Use Cortex to analyze codebases and generate/update README files",
+        "value": "Ensures all repositories have current, accurate documentation",
+        "implementation": "Spawn documentor workers to analyze repos and update READMEs"
+      },
+      {
+        "opportunity": "License compliance automation",
+        "description": "Automatically add LICENSE files to repositories lacking them",
+        "value": "Ensures legal compliance across portfolio",
+        "implementation": "Create Cortex task to add MIT LICENSE to flagged repositories"
+      },
+      {
+        "opportunity": "Security scanning automation",
+        "description": "Automated security scans of all repositories with findings reported to dashboard",
+        "value": "Proactive security posture management",
+        "implementation": "Integrate security-master with GitHub Advanced Security"
+      },
+      {
+        "opportunity": "Cross-repository refactoring",
+        "description": "Identify and fix common issues across multiple repositories simultaneously",
+        "value": "Maintains code quality at scale",
+        "implementation": "Use ASI learning to identify patterns and spawn workers for fixes"
+      }
+    ],
+    "consolidation_roadmap": [
+      {
+        "phase": 1,
+        "name": "Core Consolidation",
+        "repositories": ["cortex", "cortex-docker"],
+        "action": "Merge containerization into main repository",
+        "timeline": "Week 1"
+      },
+      {
+        "phase": 2,
+        "name": "Application Consolidation",
+        "repositories": ["DriveIQ", "DriveIQ-Docker"],
+        "action": "Merge Docker variant into main application",
+        "timeline": "Week 2"
+      },
+      {
+        "phase": 3,
+        "name": "Documentation Consolidation",
+        "repositories": ["playbooks", "infrastructure-docs"],
+        "action": "Evaluate merging or maintaining separation based on sensitivity",
+        "timeline": "Week 3"
+      }
+    ],
+    "growth_opportunities": [
+      {
+        "opportunity": "MCP Server Marketplace",
+        "description": "Position ry-ops as leading provider of MCP servers for infrastructure automation",
+        "action": "Improve documentation, add tutorials, promote on MCP community channels",
+        "potential_impact": "Increased stars, forks, and community adoption"
+      },
+      {
+        "opportunity": "Cortex SaaS",
+        "description": "Package Cortex as multi-tenant SaaS for autonomous repository management",
+        "action": "Add tenant isolation, billing, web UI",
+        "potential_impact": "Commercial opportunity, broader adoption"
+      },
+      {
+        "opportunity": "Infrastructure Automation Framework",
+        "description": "Package MCP servers + playbooks + Cortex as complete automation framework",
+        "action": "Create meta-repository with quickstart guides and examples",
+        "potential_impact": "Enterprise adoption, consulting opportunities"
+      }
+    ]
+  },
+  "risk_assessment": {
+    "critical_risks": [
+      {
+        "risk": "Sensitive data in private repositories",
+        "repositories": ["infrastructure-docs", "playbooks"],
+        "mitigation": "Ensure .gitignore excludes credentials, consider encrypted secrets vault",
+        "severity": "high"
+      },
+      {
+        "risk": "Missing licenses on public repositories",
+        "repositories": 5,
+        "mitigation": "Add MIT license files immediately",
+        "severity": "medium"
+      },
+      {
+        "risk": "Dependency vulnerabilities",
+        "repositories": "all",
+        "mitigation": "Enable Dependabot, run security audits, integrate with security-master",
+        "severity": "medium"
+      }
+    ],
+    "operational_risks": [
+      {
+        "risk": "Repository fragmentation",
+        "description": "26 repositories may become difficult to manage without automation",
+        "mitigation": "Use Cortex to automate common tasks across repositories",
+        "severity": "medium"
+      },
+      {
+        "risk": "Documentation drift",
+        "description": "READMEs and documentation may become outdated",
+        "mitigation": "Automated documentation generation and validation",
+        "severity": "low"
+      }
+    ]
+  },
+  "next_steps": {
+    "immediate": [
+      "Add MIT licenses to repositories lacking licensing",
+      "Add descriptions to AEO and cara",
+      "Enable Dependabot on all public repositories",
+      "Run security audit across all repositories"
+    ],
+    "short_term": [
+      "Integrate opentofu-mcp-server and ansible-mcp-server with Cortex",
+      "Consolidate cortex-docker into main cortex repository",
+      "Standardize MCP dependency versions",
+      "Create shared MCP server template"
+    ],
+    "long_term": [
+      "Build Cortex as central management hub for all repositories",
+      "Develop MCP server marketplace presence",
+      "Create infrastructure automation framework product",
+      "Implement automated cross-repository refactoring"
+    ]
+  }
+}
