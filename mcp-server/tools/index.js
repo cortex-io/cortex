@@ -129,6 +129,184 @@ const toolDefinitions = [
       },
       required: []
     }
+  },
+  {
+    name: 'cortex_request_permit',
+    description: 'Request a union permit for a production change. Permits are required for union workers (security-fix, production-deploy) and production environment changes.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        permit_type: {
+          type: 'string',
+          enum: ['EMERGENCY_CHANGE', 'PRODUCTION_DEPLOYMENT', 'SECURITY_PATCH', 'CONFIGURATION_CHANGE', 'DATABASE_MIGRATION', 'INFRASTRUCTURE_CHANGE'],
+          description: 'Type of permit to request'
+        },
+        requester_id: {
+          type: 'string',
+          description: 'ID of the requester (master or worker)'
+        },
+        requester_type: {
+          type: 'string',
+          enum: ['master', 'worker', 'human'],
+          description: 'Type of requester'
+        },
+        resource_type: {
+          type: 'string',
+          enum: ['deployment', 'configmap', 'secret', 'service', 'database', 'code', 'infrastructure'],
+          description: 'Type of resource to modify'
+        },
+        resource_identifier: {
+          type: 'string',
+          description: 'Resource identifier (deployment name, database name, etc.)'
+        },
+        environment: {
+          type: 'string',
+          enum: ['development', 'staging', 'production'],
+          description: 'Target environment'
+        },
+        justification: {
+          type: 'string',
+          description: 'Justification for the change (minimum 20 characters)'
+        },
+        rollback_plan_id: {
+          type: 'string',
+          description: 'ID of rollback plan (required for some permit types)'
+        }
+      },
+      required: ['permit_type', 'requester_id', 'requester_type', 'resource_type', 'resource_identifier', 'environment', 'justification']
+    }
+  },
+  {
+    name: 'cortex_check_certification',
+    description: 'Check worker certification status. Validates if a worker has the required certifications for its type and environment.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        worker_id: {
+          type: 'string',
+          description: 'Worker ID to check'
+        },
+        worker_type: {
+          type: 'string',
+          description: 'Worker type (implementation-worker, security-fix-worker, etc.)'
+        },
+        environment: {
+          type: 'string',
+          enum: ['development', 'staging', 'production'],
+          description: 'Environment to validate against'
+        }
+      },
+      required: ['worker_id', 'worker_type']
+    }
+  },
+  {
+    name: 'cortex_log_audit_event',
+    description: 'Log an event to the immutable audit trail. All union operations, worker spawns, and permit usage are automatically logged.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        event_type: {
+          type: 'string',
+          description: 'Type of event to log'
+        },
+        actor_id: {
+          type: 'string',
+          description: 'ID of the actor performing the action'
+        },
+        action: {
+          type: 'string',
+          description: 'Action being performed'
+        },
+        resource_type: {
+          type: 'string',
+          description: 'Type of resource being acted upon'
+        },
+        resource_id: {
+          type: 'string',
+          description: 'ID of resource being acted upon'
+        },
+        result: {
+          type: 'string',
+          enum: ['success', 'failure', 'denied'],
+          description: 'Result of the action'
+        }
+      },
+      required: ['event_type', 'actor_id', 'action']
+    }
+  },
+  {
+    name: 'cortex_create_rollback_plan',
+    description: 'Create a rollback plan for a production change. Required for permits that involve production deployments or database changes.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        permit_id: {
+          type: 'string',
+          description: 'ID of the permit this rollback plan is for'
+        },
+        resource_type: {
+          type: 'string',
+          enum: ['deployment', 'configmap', 'secret', 'database', 'code', 'infrastructure'],
+          description: 'Type of resource to rollback'
+        },
+        resource_identifier: {
+          type: 'string',
+          description: 'Resource identifier'
+        },
+        environment: {
+          type: 'string',
+          enum: ['development', 'staging', 'production'],
+          description: 'Target environment'
+        },
+        creator_id: {
+          type: 'string',
+          description: 'ID of the creator'
+        },
+        creator_type: {
+          type: 'string',
+          enum: ['master', 'worker', 'human'],
+          description: 'Type of creator'
+        }
+      },
+      required: ['permit_id', 'resource_type', 'resource_identifier', 'environment', 'creator_id', 'creator_type']
+    }
+  },
+  {
+    name: 'cortex_approve_permit',
+    description: 'Approve a pending permit. Only authorized approvers can approve permits (typically security-master and development-master).',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        permit_id: {
+          type: 'string',
+          description: 'ID of the permit to approve'
+        },
+        approver_id: {
+          type: 'string',
+          description: 'ID of the approver (master name)'
+        }
+      },
+      required: ['permit_id', 'approver_id']
+    }
+  },
+  {
+    name: 'cortex_generate_compliance_report',
+    description: 'Generate a compliance report from the audit trail. Supports SOC2, worker performance, and permit usage reports.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        report_type: {
+          type: 'string',
+          enum: ['soc2', 'workers', 'permits'],
+          description: 'Type of compliance report to generate'
+        },
+        days: {
+          type: 'number',
+          description: 'Number of days to include in report (default: 30)'
+        }
+      },
+      required: ['report_type']
+    }
   }
 ];
 
@@ -321,6 +499,192 @@ const toolImplementations = {
     }
 
     return results;
+  },
+
+  // Union system tools
+  cortex_request_permit: async (args, home) => {
+    const PermitManager = require(path.join(home, 'coordination/union/permit-manager.js'));
+    const manager = new PermitManager({ coordinationDir: path.join(home, 'coordination') });
+
+    await manager.initialize();
+
+    const permit = await manager.requestPermit({
+      permit_type: args.permit_type,
+      requester: {
+        type: args.requester_type,
+        id: args.requester_id
+      },
+      resource: {
+        type: args.resource_type,
+        identifier: args.resource_identifier,
+        environment: args.environment
+      },
+      justification: args.justification,
+      rollback_plan_id: args.rollback_plan_id
+    });
+
+    return {
+      permit_id: permit.permit_id,
+      status: permit.status,
+      expires_at: permit.expires_at,
+      auto_approved: permit.auto_approved || false,
+      message: permit.auto_approved ?
+        `Permit auto-approved: ${permit.auto_approval_reason}` :
+        'Permit pending manual approval'
+    };
+  },
+
+  cortex_check_certification: async (args, home) => {
+    const CertValidator = require(path.join(home, 'coordination/worker-certification/cert-validator.js'));
+    const validator = new CertValidator({ coordinationDir: path.join(home, 'coordination') });
+
+    await validator.initialize();
+
+    const result = await validator.validateWorkerSpawn(
+      args.worker_id,
+      args.worker_type,
+      args.environment || 'development'
+    );
+
+    return {
+      valid: result.valid,
+      worker_type: result.worker_type,
+      union_status: result.union_status,
+      environment: result.environment,
+      missing_certifications: result.missing_required,
+      expired_certifications: result.expired,
+      permit_required: result.permit_required,
+      message: result.valid ?
+        'Worker certifications valid' :
+        result.denial_reason || 'Certification validation failed'
+    };
+  },
+
+  cortex_log_audit_event: async (args, home) => {
+    const AuditLogger = require(path.join(home, 'coordination/governance/audit-logger.js'));
+    const logger = new AuditLogger({ coordinationDir: path.join(home, 'coordination') });
+
+    await logger.initialize();
+
+    const entry = await logger.logEvent({
+      event_type: args.event_type,
+      actor: {
+        type: 'unknown',
+        id: args.actor_id
+      },
+      action: args.action,
+      resource: {
+        type: args.resource_type,
+        id: args.resource_id
+      },
+      result: args.result || 'success'
+    });
+
+    return {
+      logged: true,
+      timestamp: entry.timestamp,
+      hash: entry.hash,
+      message: 'Event logged to immutable audit trail'
+    };
+  },
+
+  cortex_create_rollback_plan: async (args, home) => {
+    const RollbackPlanner = require(path.join(home, 'coordination/union/rollback-planner.js'));
+    const planner = new RollbackPlanner({ coordinationDir: path.join(home, 'coordination') });
+
+    await planner.initialize();
+
+    const plan = await planner.createRollbackPlan(
+      args.permit_id,
+      {
+        type: args.resource_type,
+        identifier: args.resource_identifier,
+        environment: args.environment
+      },
+      {
+        type: args.creator_type,
+        id: args.creator_id
+      }
+    );
+
+    return {
+      plan_id: plan.plan_id,
+      status: plan.status,
+      steps: plan.steps.length,
+      verification_checks: plan.verification.checks.length,
+      message: `Rollback plan created with ${plan.steps.length} steps`
+    };
+  },
+
+  cortex_approve_permit: async (args, home) => {
+    const PermitManager = require(path.join(home, 'coordination/union/permit-manager.js'));
+    const manager = new PermitManager({ coordinationDir: path.join(home, 'coordination') });
+
+    await manager.initialize();
+
+    const permit = await manager.approvePermit(args.permit_id, args.approver_id);
+
+    return {
+      permit_id: permit.permit_id,
+      status: permit.status,
+      approvals: permit.approved_by.length,
+      fully_approved: permit.status === 'approved',
+      message: permit.status === 'approved' ?
+        'Permit fully approved' :
+        `Permit has ${permit.approved_by.length} approval(s), more needed`
+    };
+  },
+
+  cortex_generate_compliance_report: async (args, home) => {
+    const ComplianceReporter = require(path.join(home, 'lib/governance/compliance-reporter.js'));
+    const reporter = new ComplianceReporter({ coordinationDir: path.join(home, 'coordination') });
+
+    await reporter.initialize();
+
+    const days = args.days || 30;
+    const endDate = new Date();
+    const startDate = new Date();
+    startDate.setDate(startDate.getDate() - days);
+
+    let report;
+    let filePath;
+
+    switch (args.report_type) {
+      case 'soc2':
+        report = await reporter.generateSOC2Report(
+          startDate.toISOString(),
+          endDate.toISOString()
+        );
+        filePath = await reporter.exportReport(report, 'json');
+        break;
+
+      case 'workers':
+        report = await reporter.generateWorkerPerformanceReport(
+          startDate.toISOString(),
+          endDate.toISOString()
+        );
+        filePath = await reporter.exportReport(report, 'json');
+        break;
+
+      case 'permits':
+        report = await reporter.generatePermitUsageReport(
+          startDate.toISOString(),
+          endDate.toISOString()
+        );
+        filePath = await reporter.exportReport(report, 'json');
+        break;
+    }
+
+    return {
+      report_type: args.report_type,
+      period_days: days,
+      report_file: filePath,
+      summary: report.summary || {
+        compliance_score: report.compliance_score,
+        total_events: report.total_worker_spawns || report.summary?.total_requests
+      },
+      message: `${args.report_type.toUpperCase()} report generated successfully`
+    };
   }
 };
 

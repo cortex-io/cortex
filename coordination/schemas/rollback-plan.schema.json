@@ -1,0 +1,257 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://cortex.ai/schemas/rollback-plan.schema.json",
+  "title": "Cortex Rollback Plan",
+  "description": "Schema for rollback plans in Cortex union system",
+  "type": "object",
+  "required": [
+    "plan_id",
+    "linked_permit_id",
+    "steps",
+    "verification"
+  ],
+  "properties": {
+    "plan_id": {
+      "type": "string",
+      "description": "Unique rollback plan identifier",
+      "pattern": "^rollback-[a-z0-9-]+$"
+    },
+    "linked_permit_id": {
+      "type": "string",
+      "description": "Associated permit ID",
+      "pattern": "^permit-[a-z0-9-]+$"
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When rollback plan was created"
+    },
+    "created_by": {
+      "type": "object",
+      "description": "Creator of rollback plan",
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": ["master", "worker", "human"]
+        },
+        "id": {
+          "type": "string"
+        }
+      }
+    },
+    "target_resource": {
+      "type": "object",
+      "description": "Resource that will be rolled back",
+      "required": ["type", "identifier"],
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": [
+            "deployment",
+            "configmap",
+            "secret",
+            "service",
+            "database",
+            "code",
+            "infrastructure"
+          ]
+        },
+        "identifier": {
+          "type": "string"
+        },
+        "namespace": {
+          "type": "string"
+        },
+        "environment": {
+          "type": "string",
+          "enum": ["development", "staging", "production"]
+        }
+      }
+    },
+    "trigger_conditions": {
+      "type": "array",
+      "description": "Conditions that trigger automatic rollback",
+      "items": {
+        "type": "string"
+      },
+      "examples": [
+        "test_failure_rate > 10%",
+        "error_rate > 5%",
+        "manual_trigger",
+        "health_check_failed",
+        "permit_expired"
+      ]
+    },
+    "steps": {
+      "type": "array",
+      "description": "Ordered rollback steps",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["step", "action"],
+        "properties": {
+          "step": {
+            "type": "integer",
+            "description": "Step number (execution order)",
+            "minimum": 1
+          },
+          "action": {
+            "type": "string",
+            "description": "Action to perform",
+            "enum": [
+              "scale_deployment",
+              "revert_configmap",
+              "revert_secret",
+              "rollback_database",
+              "git_revert",
+              "restore_snapshot",
+              "delete_resource",
+              "run_script"
+            ]
+          },
+          "params": {
+            "type": "object",
+            "description": "Action-specific parameters"
+          },
+          "timeout_seconds": {
+            "type": "integer",
+            "description": "Step timeout",
+            "minimum": 1,
+            "maximum": 3600
+          },
+          "critical": {
+            "type": "boolean",
+            "description": "If true, failure aborts entire rollback",
+            "default": true
+          }
+        }
+      }
+    },
+    "verification": {
+      "type": "object",
+      "description": "Post-rollback verification",
+      "required": ["checks"],
+      "properties": {
+        "checks": {
+          "type": "array",
+          "description": "Verification checks to run",
+          "items": {
+            "type": "string",
+            "enum": [
+              "health_check",
+              "smoke_test",
+              "integration_test",
+              "database_check",
+              "metrics_check"
+            ]
+          }
+        },
+        "timeout_seconds": {
+          "type": "integer",
+          "description": "Total verification timeout",
+          "default": 300
+        },
+        "required_pass_rate": {
+          "type": "number",
+          "description": "Minimum pass rate (0-1)",
+          "minimum": 0,
+          "maximum": 1,
+          "default": 1.0
+        }
+      }
+    },
+    "snapshots": {
+      "type": "object",
+      "description": "Pre-change snapshots for rollback",
+      "properties": {
+        "config_snapshots": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "snapshot_id": { "type": "string" },
+              "resource": { "type": "string" },
+              "timestamp": { "type": "string", "format": "date-time" }
+            }
+          }
+        },
+        "database_snapshots": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "snapshot_id": { "type": "string" },
+              "database": { "type": "string" },
+              "timestamp": { "type": "string", "format": "date-time" }
+            }
+          }
+        },
+        "git_commits": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "commit_sha": { "type": "string" },
+              "repository": { "type": "string" },
+              "branch": { "type": "string" }
+            }
+          }
+        }
+      }
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "ready",
+        "executing",
+        "completed",
+        "failed",
+        "aborted"
+      ],
+      "description": "Current rollback plan status"
+    },
+    "execution_log": {
+      "type": "array",
+      "description": "Log of rollback execution",
+      "items": {
+        "type": "object",
+        "properties": {
+          "step": { "type": "integer" },
+          "action": { "type": "string" },
+          "status": { "type": "string" },
+          "timestamp": { "type": "string", "format": "date-time" },
+          "output": { "type": "string" },
+          "error": { "type": "string" }
+        }
+      }
+    },
+    "executed_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When rollback was executed"
+    },
+    "completed_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When rollback completed"
+    },
+    "metadata": {
+      "type": "object",
+      "description": "Additional metadata",
+      "properties": {
+        "automated": {
+          "type": "boolean",
+          "description": "Whether rollback was automated"
+        },
+        "triggered_by": {
+          "type": "string",
+          "description": "What triggered the rollback"
+        },
+        "related_incident": {
+          "type": "string",
+          "description": "Related incident ID"
+        }
+      }
+    }
+  }
+}
