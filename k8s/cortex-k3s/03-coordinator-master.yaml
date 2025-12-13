@@ -1,0 +1,116 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: coordinator-master
+  namespace: cortex-system
+  labels:
+    app.kubernetes.io/name: cortex
+    app.kubernetes.io/component: coordinator-master
+    cortex.ai/master-type: coordinator
+spec:
+  replicas: 1
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 0
+      maxSurge: 1
+  selector:
+    matchLabels:
+      app: coordinator-master
+  template:
+    metadata:
+      labels:
+        app: coordinator-master
+        cortex.ai/master-type: coordinator
+    spec:
+      serviceAccountName: cortex-masters
+      containers:
+      - name: coordinator
+        image: ghcr.io/ry-ops/cortex:latest
+        imagePullPolicy: Always
+        command: ["./coordination/masters/coordinator/run-coordinator.sh"]
+        env:
+        - name: MASTER_TYPE
+          value: "coordinator"
+        - name: ANTHROPIC_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: cortex-credentials
+              key: anthropic-api-key
+        - name: GITHUB_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: cortex-credentials
+              key: github-token
+        - name: WAZUH_URL
+          valueFrom:
+            secretKeyRef:
+              name: cortex-credentials
+              key: wazuh-url
+        - name: K8S_NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+        - name: POD_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
+        - name: NODE_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: spec.nodeName
+        volumeMounts:
+        - name: coordination
+          mountPath: /coordination
+        - name: config
+          mountPath: /config
+          readOnly: true
+        resources:
+          requests:
+            cpu: 500m
+            memory: 1Gi
+          limits:
+            cpu: 2000m
+            memory: 4Gi
+        livenessProbe:
+          exec:
+            command:
+            - /bin/bash
+            - -c
+            - "test -f /coordination/masters/coordinator/heartbeat.json && [ $(( $(date +%s) - $(stat -c %Y /coordination/masters/coordinator/heartbeat.json) )) -lt 60 ]"
+          initialDelaySeconds: 30
+          periodSeconds: 30
+        readinessProbe:
+          exec:
+            command:
+            - /bin/bash
+            - -c
+            - "test -f /coordination/masters/coordinator/context/master-state.json"
+          initialDelaySeconds: 10
+          periodSeconds: 10
+      volumes:
+      - name: coordination
+        persistentVolumeClaim:
+          claimName: cortex-coordination-pvc
+      - name: config
+        configMap:
+          name: cortex-config
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: coordinator-master
+  namespace: cortex-system
+  labels:
+    app.kubernetes.io/name: cortex
+    app.kubernetes.io/component: coordinator-master
+spec:
+  type: ClusterIP
+  selector:
+    app: coordinator-master
+  ports:
+  - name: api
+    port: 8080
+    targetPort: 8080
+    protocol: TCP

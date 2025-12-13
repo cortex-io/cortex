@@ -1,0 +1,65 @@
+---
+# Template for Cortex worker Jobs (spawned dynamically by masters)
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: cortex-worker-TASK_ID
+  namespace: cortex-system
+  labels:
+    app.kubernetes.io/name: cortex
+    app.kubernetes.io/component: worker
+    cortex.ai/task-id: "TASK_ID"
+    cortex.ai/worker-type: "WORKER_TYPE"
+    cortex.ai/master: "MASTER_NAME"
+spec:
+  ttlSecondsAfterFinished: 300  # Auto-cleanup after 5 minutes
+  backoffLimit: 2
+  template:
+    metadata:
+      labels:
+        app: cortex-worker
+        cortex.ai/task-id: "TASK_ID"
+    spec:
+      serviceAccountName: cortex-masters
+      restartPolicy: Never
+      containers:
+      - name: worker
+        image: ghcr.io/ry-ops/cortex:latest
+        imagePullPolicy: Always
+        command: ["./scripts/spawn-worker.sh"]
+        env:
+        - name: TASK_ID
+          value: "TASK_ID"
+        - name: WORKER_TYPE
+          value: "WORKER_TYPE"
+        - name: MASTER_NAME
+          value: "MASTER_NAME"
+        - name: ANTHROPIC_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: cortex-credentials
+              key: anthropic-api-key
+        - name: GITHUB_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: cortex-credentials
+              key: github-token
+        volumeMounts:
+        - name: coordination
+          mountPath: /coordination
+        - name: workspace
+          mountPath: /workspace
+        resources:
+          requests:
+            cpu: 500m
+            memory: 1Gi
+          limits:
+            cpu: 2000m
+            memory: 4Gi
+      volumes:
+      - name: coordination
+        persistentVolumeClaim:
+          claimName: cortex-coordination-pvc
+      - name: workspace
+        emptyDir:
+          sizeLimit: 5Gi

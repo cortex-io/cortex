@@ -1,0 +1,117 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: security-master
+  namespace: cortex-system
+  labels:
+    app.kubernetes.io/name: cortex
+    app.kubernetes.io/component: security-master
+    cortex.ai/master-type: security
+spec:
+  replicas: 1
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 0
+      maxSurge: 1
+  selector:
+    matchLabels:
+      app: security-master
+  template:
+    metadata:
+      labels:
+        app: security-master
+        cortex.ai/master-type: security
+    spec:
+      serviceAccountName: cortex-masters
+      containers:
+      - name: security
+        image: ghcr.io/ry-ops/cortex:latest
+        imagePullPolicy: Always
+        command: ["./scripts/run-security-master.sh"]
+        env:
+        - name: MASTER_TYPE
+          value: "security"
+        - name: ANTHROPIC_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: cortex-credentials
+              key: anthropic-api-key
+        - name: WAZUH_URL
+          valueFrom:
+            secretKeyRef:
+              name: cortex-credentials
+              key: wazuh-url
+        - name: WAZUH_USER
+          valueFrom:
+            secretKeyRef:
+              name: cortex-credentials
+              key: wazuh-user
+        - name: WAZUH_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: cortex-credentials
+              key: wazuh-password
+        - name: K8S_NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+        - name: POD_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
+        volumeMounts:
+        - name: coordination
+          mountPath: /coordination
+        - name: config
+          mountPath: /config
+          readOnly: true
+        - name: wazuh-integration
+          mountPath: /app/lib/integrations
+        resources:
+          requests:
+            cpu: 500m
+            memory: 1Gi
+          limits:
+            cpu: 2000m
+            memory: 4Gi
+        livenessProbe:
+          exec:
+            command:
+            - /bin/bash
+            - -c
+            - "test -f /coordination/masters/security/heartbeat.json"
+          initialDelaySeconds: 30
+          periodSeconds: 30
+      volumes:
+      - name: coordination
+        persistentVolumeClaim:
+          claimName: cortex-coordination-pvc
+      - name: config
+        configMap:
+          name: cortex-config
+      - name: wazuh-integration
+        emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: security-master
+  namespace: cortex-system
+  labels:
+    app.kubernetes.io/name: cortex
+    app.kubernetes.io/component: security-master
+spec:
+  type: ClusterIP
+  selector:
+    app: security-master
+  ports:
+  - name: api
+    port: 8080
+    targetPort: 8080
+    protocol: TCP
+  - name: webhook
+    port: 9443
+    targetPort: 9443
+    protocol: TCP
