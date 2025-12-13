@@ -6,16 +6,20 @@
   "bin": {
     "wazuh-mcp-server": "./wazuh-server.js",
     "proxmox-mcp-server": "./proxmox-server.js",
-    "n8n-mcp-server": "./n8n-server.js"
+    "n8n-mcp-server": "./n8n-server.js",
+    "k3s-mcp-server": "./k3s-server-http.js"
   },
   "scripts": {
     "start:wazuh": "node wazuh-server.js",
     "start:proxmox": "node proxmox-server.js",
-    "start:n8n": "node n8n-server.js"
+    "start:n8n": "node n8n-server.js",
+    "start:k3s": "node k3s-server-http.js"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^0.5.0",
-    "axios": "^1.6.0"
+    "@kubernetes/client-node": "^0.20.0",
+    "axios": "^1.6.0",
+    "js-yaml": "^4.1.0"
   },
   "devDependencies": {
     "@types/node": "^20.0.0"
