@@ -1,0 +1,531 @@
+{
+  "workflow_id": "deploy-monitoring-stack",
+  "version": "1.0.0",
+  "created_at": "2025-12-13T00:00:00Z",
+  "name": "Deploy Monitoring Stack",
+  "description": "Multi-contractor workflow to provision VM, deploy Kubernetes monitoring stack (Prometheus, Grafana), and configure alerting",
+  "category": "infrastructure_deployment",
+  "complexity": 7,
+  "estimated_duration_minutes": 45,
+  "contractors_involved": ["infrastructure-contractor", "talos-contractor", "n8n-contractor"],
+  "phases": [
+    {
+      "phase": 1,
+      "name": "provision_monitoring_vm",
+      "contractor": "infrastructure-contractor",
+      "description": "Provision VM on Proxmox for monitoring workload",
+      "tasks": [
+        {
+          "task_id": "create_monitoring_vm",
+          "task": "create_vm",
+          "mcp_server": "proxmox-mcp-server",
+          "tool": "create_vm",
+          "params": {
+            "node": "proxmox-node-01",
+            "vmid": 150,
+            "name": "monitoring-stack",
+            "cores": 4,
+            "memory": 8192,
+            "storage": "local-lvm",
+            "disk_size": "50G",
+            "network": "vmbr0",
+            "os_type": "l26",
+            "tags": ["monitoring", "prometheus", "grafana"]
+          },
+          "success_criteria": {
+            "vm_created": true,
+            "status": "stopped"
+          },
+          "timeout_seconds": 300,
+          "retry_policy": {
+            "max_retries": 2,
+            "backoff_seconds": 30
+          }
+        },
+        {
+          "task_id": "start_monitoring_vm",
+          "task": "start_vm",
+          "mcp_server": "proxmox-mcp-server",
+          "tool": "start_vm",
+          "params": {
+            "node": "proxmox-node-01",
+            "vmid": "${phase1.create_monitoring_vm.outputs.vmid}"
+          },
+          "depends_on": ["create_monitoring_vm"],
+          "success_criteria": {
+            "vm_status": "running"
+          },
+          "timeout_seconds": 120
+        },
+        {
+          "task_id": "wait_for_vm_ready",
+          "task": "wait_for_boot",
+          "method": "poll_vm_status",
+          "mcp_server": "proxmox-mcp-server",
+          "tool": "get_vm_status",
+          "params": {
+            "node": "proxmox-node-01",
+            "vmid": "${phase1.create_monitoring_vm.outputs.vmid}",
+            "poll_interval_seconds": 10,
+            "max_wait_seconds": 180
+          },
+          "depends_on": ["start_monitoring_vm"],
+          "success_criteria": {
+            "vm_status": "running",
+            "qemu_agent_running": true,
+            "network_accessible": true
+          }
+        },
+        {
+          "task_id": "configure_vm",
+          "task": "run_playbook",
+          "mcp_server": "ansible-mcp-server",
+          "tool": "run_playbook",
+          "params": {
+            "playbook": "playbooks/k3s-node-setup.yml",
+            "inventory": "inventories/monitoring/hosts",
+            "extra_vars": {
+              "vm_ip": "${phase1.wait_for_vm_ready.outputs.ip_address}",
+              "node_role": "monitoring"
+            },
+            "check_mode": false
+          },
+          "depends_on": ["wait_for_vm_ready"],
+          "success_criteria": {
+            "playbook_status": "success",
+            "k3s_installed": true
+          },
+          "timeout_seconds": 600
+        }
+      ],
+      "outputs": {
+        "vm_id": "${create_monitoring_vm.outputs.vmid}",
+        "vm_ip": "${wait_for_vm_ready.outputs.ip_address}",
+        "k3s_ready": true
+      },
+      "rollback_strategy": {
+        "on_failure": "stop_and_delete_vm",
+        "tasks": [
+          {
+            "tool": "stop_vm",
+            "params": {
+              "vmid": "${vm_id}"
+            }
+          },
+          {
+            "tool": "delete_vm",
+            "params": {
+              "vmid": "${vm_id}"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "phase": 2,
+      "name": "deploy_prometheus_stack",
+      "contractor": "talos-contractor",
+      "description": "Deploy Prometheus and Grafana using Helm",
+      "depends_on_phase": 1,
+      "inputs_from_phase": {
+        "1": ["vm_ip", "k3s_ready"]
+      },
+      "tasks": [
+        {
+          "task_id": "create_monitoring_namespace",
+          "task": "create_namespace",
+          "tool": "kubectl_apply",
+          "params": {
+            "kubeconfig": "${phase1.outputs.kubeconfig_path}",
+            "manifest": {
+              "apiVersion": "v1",
+              "kind": "Namespace",
+              "metadata": {
+                "name": "monitoring",
+                "labels": {
+                  "name": "monitoring",
+                  "managed-by": "cortex"
+                }
+              }
+            }
+          },
+          "success_criteria": {
+            "namespace_created": true
+          }
+        },
+        {
+          "task_id": "add_prometheus_helm_repo",
+          "task": "add_helm_repo",
+          "tool": "helm_repo_add",
+          "params": {
+            "repo_name": "prometheus-community",
+            "repo_url": "https://prometheus-community.github.io/helm-charts"
+          },
+          "depends_on": ["create_monitoring_namespace"],
+          "success_criteria": {
+            "repo_added": true
+          }
+        },
+        {
+          "task_id": "install_prometheus_stack",
+          "task": "helm_install",
+          "tool": "helm_install",
+          "params": {
+            "release_name": "kube-prometheus-stack",
+            "chart": "prometheus-community/kube-prometheus-stack",
+            "namespace": "monitoring",
+            "values_file": "config/prometheus-values.yaml",
+            "values": {
+              "prometheus": {
+                "prometheusSpec": {
+                  "retention": "30d",
+                  "storageSpec": {
+                    "volumeClaimTemplate": {
+                      "spec": {
+                        "accessModes": ["ReadWriteOnce"],
+                        "resources": {
+                          "requests": {
+                            "storage": "20Gi"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              },
+              "grafana": {
+                "adminPassword": "${secrets.grafana_admin_password}",
+                "persistence": {
+                  "enabled": true,
+                  "size": "5Gi"
+                }
+              },
+              "alertmanager": {
+                "enabled": true
+              }
+            },
+            "wait": true,
+            "timeout": "10m"
+          },
+          "depends_on": ["add_prometheus_helm_repo"],
+          "success_criteria": {
+            "helm_status": "deployed",
+            "all_pods_ready": true
+          },
+          "timeout_seconds": 900
+        },
+        {
+          "task_id": "verify_prometheus_deployment",
+          "task": "check_pods_status",
+          "tool": "kubectl_get",
+          "params": {
+            "resource": "pods",
+            "namespace": "monitoring",
+            "label_selector": "app.kubernetes.io/name=prometheus"
+          },
+          "depends_on": ["install_prometheus_stack"],
+          "success_criteria": {
+            "all_pods_running": true,
+            "ready_count": "${expected_pod_count}"
+          }
+        }
+      ],
+      "outputs": {
+        "prometheus_url": "http://${phase1.outputs.vm_ip}:9090",
+        "grafana_url": "http://${phase1.outputs.vm_ip}:3000",
+        "alertmanager_url": "http://${phase1.outputs.vm_ip}:9093",
+        "deployment_status": "success"
+      },
+      "rollback_strategy": {
+        "on_failure": "helm_uninstall",
+        "tasks": [
+          {
+            "tool": "helm_uninstall",
+            "params": {
+              "release_name": "kube-prometheus-stack",
+              "namespace": "monitoring"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "phase": 3,
+      "name": "configure_alerting_workflow",
+      "contractor": "n8n-contractor",
+      "description": "Create n8n workflow to handle Prometheus alerts",
+      "depends_on_phase": 2,
+      "inputs_from_phase": {
+        "2": ["alertmanager_url"]
+      },
+      "tasks": [
+        {
+          "task_id": "create_alert_workflow",
+          "task": "create_workflow",
+          "mcp_server": "n8n-mcp-server",
+          "tool": "create_workflow",
+          "params": {
+            "name": "Prometheus Alert Handler",
+            "active": false,
+            "tags": ["monitoring", "alerts", "prometheus"],
+            "nodes": [
+              {
+                "name": "Webhook Trigger",
+                "type": "n8n-nodes-base.webhook",
+                "position": [250, 300],
+                "parameters": {
+                  "path": "prometheus-alerts",
+                  "httpMethod": "POST",
+                  "responseMode": "onReceived"
+                }
+              },
+              {
+                "name": "Parse Alert",
+                "type": "n8n-nodes-base.code",
+                "position": [450, 300],
+                "parameters": {
+                  "mode": "runOnceForAllItems",
+                  "jsCode": "const alerts = items[0].json.alerts; return alerts.map(alert => ({json: alert}));"
+                }
+              },
+              {
+                "name": "Filter Critical",
+                "type": "n8n-nodes-base.if",
+                "position": [650, 300],
+                "parameters": {
+                  "conditions": {
+                    "string": [
+                      {
+                        "value1": "={{ $json.labels.severity }}",
+                        "operation": "equals",
+                        "value2": "critical"
+                      }
+                    ]
+                  }
+                }
+              },
+              {
+                "name": "Send Slack Alert",
+                "type": "n8n-nodes-base.slack",
+                "position": [850, 250],
+                "parameters": {
+                  "channel": "#alerts-critical",
+                  "text": "CRITICAL ALERT: {{ $json.labels.alertname }}",
+                  "attachments": [
+                    {
+                      "color": "danger",
+                      "text": "{{ $json.annotations.description }}"
+                    }
+                  ]
+                }
+              },
+              {
+                "name": "Log to Dashboard",
+                "type": "n8n-nodes-base.httpRequest",
+                "position": [850, 350],
+                "parameters": {
+                  "url": "http://localhost:3004/api/events",
+                  "method": "POST",
+                  "jsonParameters": true,
+                  "options": {},
+                  "bodyParametersJson": "={{ JSON.stringify({event_type: 'alert', severity: $json.labels.severity, alert: $json.labels.alertname, timestamp: new Date().toISOString()}) }}"
+                }
+              }
+            ],
+            "connections": {
+              "Webhook Trigger": {
+                "main": [[{"node": "Parse Alert", "type": "main", "index": 0}]]
+              },
+              "Parse Alert": {
+                "main": [[{"node": "Filter Critical", "type": "main", "index": 0}]]
+              },
+              "Filter Critical": {
+                "main": [
+                  [{"node": "Send Slack Alert", "type": "main", "index": 0}],
+                  [{"node": "Log to Dashboard", "type": "main", "index": 0}]
+                ]
+              }
+            },
+            "settings": {
+              "executionOrder": "v1",
+              "saveManualExecutions": true,
+              "callerPolicy": "workflowsFromSameOwner"
+            }
+          },
+          "success_criteria": {
+            "workflow_created": true
+          }
+        },
+        {
+          "task_id": "test_alert_workflow",
+          "task": "execute_workflow",
+          "mcp_server": "n8n-mcp-server",
+          "tool": "execute_workflow",
+          "params": {
+            "workflow_id": "${phase3.create_alert_workflow.outputs.workflow_id}",
+            "data": {
+              "alerts": [
+                {
+                  "status": "firing",
+                  "labels": {
+                    "alertname": "TestAlert",
+                    "severity": "warning"
+                  },
+                  "annotations": {
+                    "description": "This is a test alert"
+                  }
+                }
+              ]
+            }
+          },
+          "depends_on": ["create_alert_workflow"],
+          "success_criteria": {
+            "execution_status": "success"
+          }
+        },
+        {
+          "task_id": "activate_alert_workflow",
+          "task": "activate_workflow",
+          "mcp_server": "n8n-mcp-server",
+          "tool": "activate_workflow",
+          "params": {
+            "workflow_id": "${phase3.create_alert_workflow.outputs.workflow_id}"
+          },
+          "depends_on": ["test_alert_workflow"],
+          "success_criteria": {
+            "workflow_active": true
+          }
+        },
+        {
+          "task_id": "configure_alertmanager",
+          "task": "update_alertmanager_config",
+          "tool": "kubectl_apply",
+          "params": {
+            "namespace": "monitoring",
+            "manifest": {
+              "apiVersion": "v1",
+              "kind": "ConfigMap",
+              "metadata": {
+                "name": "alertmanager-config",
+                "namespace": "monitoring"
+              },
+              "data": {
+                "alertmanager.yml": {
+                  "route": {
+                    "receiver": "n8n-webhook",
+                    "group_by": ["alertname", "severity"],
+                    "group_wait": "10s",
+                    "group_interval": "5m",
+                    "repeat_interval": "12h"
+                  },
+                  "receivers": [
+                    {
+                      "name": "n8n-webhook",
+                      "webhook_configs": [
+                        {
+                          "url": "${phase3.create_alert_workflow.outputs.webhook_url}",
+                          "send_resolved": true
+                        }
+                      ]
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "depends_on": ["activate_alert_workflow"],
+          "success_criteria": {
+            "config_updated": true
+          }
+        }
+      ],
+      "outputs": {
+        "workflow_id": "${create_alert_workflow.outputs.workflow_id}",
+        "webhook_url": "${create_alert_workflow.outputs.webhook_url}",
+        "alerting_configured": true
+      },
+      "rollback_strategy": {
+        "on_failure": "deactivate_and_delete_workflow",
+        "tasks": [
+          {
+            "tool": "deactivate_workflow",
+            "params": {
+              "workflow_id": "${workflow_id}"
+            }
+          },
+          {
+            "tool": "delete_workflow",
+            "params": {
+              "workflow_id": "${workflow_id}"
+            }
+          }
+        ]
+      }
+    }
+  ],
+  "global_rollback_strategy": {
+    "description": "Complete workflow rollback on critical failure",
+    "trigger_conditions": [
+      "any_phase_critical_failure",
+      "timeout_exceeded",
+      "manual_abort"
+    ],
+    "steps": [
+      {
+        "phase": 3,
+        "action": "deactivate_workflow"
+      },
+      {
+        "phase": 2,
+        "action": "helm_uninstall"
+      },
+      {
+        "phase": 1,
+        "action": "delete_vm"
+      }
+    ],
+    "cleanup_tasks": [
+      "remove_dns_entries",
+      "cleanup_inventory",
+      "remove_monitoring_dashboards"
+    ]
+  },
+  "success_criteria": {
+    "all_phases_complete": true,
+    "prometheus_accessible": true,
+    "grafana_accessible": true,
+    "alerting_functional": true,
+    "health_checks_passing": true
+  },
+  "monitoring": {
+    "track_metrics": true,
+    "emit_events": true,
+    "dashboard_integration": true,
+    "alert_on_failure": true
+  },
+  "documentation": {
+    "urls": {
+      "prometheus": "${phase2.outputs.prometheus_url}",
+      "grafana": "${phase2.outputs.grafana_url}",
+      "alertmanager": "${phase2.outputs.alertmanager_url}"
+    },
+    "credentials": {
+      "grafana_admin": "stored in secrets manager",
+      "prometheus_token": "generated during deployment"
+    },
+    "maintenance": {
+      "backup_schedule": "daily",
+      "retention_policy": "30 days",
+      "update_schedule": "monthly"
+    }
+  },
+  "tags": ["monitoring", "prometheus", "grafana", "alerting", "multi-contractor"],
+  "last_updated": "2025-12-13T00:00:00Z",
+  "version_history": [
+    {
+      "version": "1.0.0",
+      "date": "2025-12-13",
+      "changes": "Initial workflow definition"
+    }
+  ]
+}

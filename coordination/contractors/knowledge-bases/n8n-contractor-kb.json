@@ -1,0 +1,625 @@
+{
+  "contractor_id": "n8n-contractor",
+  "version": "1.0.0",
+  "created_at": "2025-12-13T00:00:00Z",
+  "domain": "workflow_automation",
+  "description": "Specialized contractor for n8n workflow automation, execution management, and integration orchestration",
+  "expertise": {
+    "mcp_servers": [
+      {
+        "server_id": "n8n-mcp-server",
+        "repository": "ry-ops/n8n-mcp-server",
+        "version": "latest",
+        "integration_status": "fully_integrated",
+        "confidence": 0.95
+      }
+    ],
+    "tool_mastery": {
+      "list_workflows": {
+        "tool_id": "list_workflows",
+        "confidence": 0.98,
+        "use_cases": [
+          "Discovering available workflows in n8n instance",
+          "Filtering workflows by status (active/inactive)",
+          "Auditing workflow inventory",
+          "Finding workflows by tag or name pattern"
+        ],
+        "best_practices": [
+          "Always check workflow status before triggering execution",
+          "Use filtering to reduce API load on large instances",
+          "Cache workflow lists for frequently accessed data",
+          "Validate workflow existence before operations"
+        ],
+        "common_patterns": [
+          "List all active workflows for health monitoring",
+          "Filter by tags for environment-specific workflows",
+          "Combine with get_workflow for detailed analysis"
+        ],
+        "typical_params": {
+          "active": "boolean - filter by active/inactive status",
+          "tags": "array - filter by workflow tags"
+        }
+      },
+      "get_workflow": {
+        "tool_id": "get_workflow",
+        "confidence": 0.96,
+        "use_cases": [
+          "Retrieving workflow configuration and nodes",
+          "Analyzing workflow structure for debugging",
+          "Validating workflow settings before execution",
+          "Documenting workflow architecture"
+        ],
+        "best_practices": [
+          "Always verify workflow ID exists before retrieval",
+          "Cache workflow details to reduce API calls",
+          "Parse nodes array to understand workflow logic",
+          "Check settings for execution parameters"
+        ],
+        "common_patterns": [
+          "Get workflow before execute to validate configuration",
+          "Retrieve workflow for troubleshooting failed executions",
+          "Analyze nodes to determine workflow complexity"
+        ]
+      },
+      "create_workflow": {
+        "tool_id": "create_workflow",
+        "confidence": 0.92,
+        "use_cases": [
+          "Creating new automation workflows programmatically",
+          "Deploying workflow templates to n8n instance",
+          "Building workflows from learned patterns",
+          "Automating workflow provisioning for new projects"
+        ],
+        "best_practices": [
+          "Validate node structure before creation",
+          "Start with inactive status for testing",
+          "Include descriptive names and tags",
+          "Test workflow with execute_workflow before activation",
+          "Document workflow purpose in settings"
+        ],
+        "common_patterns": [
+          "Create from template pattern library",
+          "Build monitoring workflow for new service",
+          "Deploy standardized alert workflow"
+        ],
+        "validation_requirements": [
+          "nodes array must be valid JSON",
+          "connections must reference existing nodes",
+          "credentials must exist in n8n instance"
+        ]
+      },
+      "update_workflow": {
+        "tool_id": "update_workflow",
+        "confidence": 0.94,
+        "use_cases": [
+          "Modifying existing workflow configuration",
+          "Updating workflow nodes or connections",
+          "Changing workflow settings or tags",
+          "Applying learned optimizations to workflows"
+        ],
+        "best_practices": [
+          "Get workflow first to preserve existing configuration",
+          "Deactivate workflow before major updates",
+          "Test updated workflow before reactivation",
+          "Document changes in commit-like fashion",
+          "Backup workflow configuration before update"
+        ],
+        "common_patterns": [
+          "Update credentials reference after rotation",
+          "Modify schedule trigger for new timing",
+          "Add error handling nodes to existing workflow"
+        ]
+      },
+      "activate_workflow": {
+        "tool_id": "activate_workflow",
+        "confidence": 0.97,
+        "use_cases": [
+          "Enabling workflow for automatic execution",
+          "Deploying tested workflows to production",
+          "Re-enabling workflows after maintenance",
+          "Activating workflows after configuration updates"
+        ],
+        "best_practices": [
+          "Always test with execute_workflow before activation",
+          "Verify workflow configuration is complete",
+          "Check that all credentials are valid",
+          "Ensure trigger nodes are properly configured",
+          "Monitor first executions after activation"
+        ],
+        "common_patterns": [
+          "Activate after successful test execution",
+          "Enable workflow as part of deployment pipeline",
+          "Reactivate after credential rotation"
+        ]
+      },
+      "deactivate_workflow": {
+        "tool_id": "deactivate_workflow",
+        "confidence": 0.97,
+        "use_cases": [
+          "Disabling workflow for maintenance",
+          "Stopping problematic workflows",
+          "Temporary pause during debugging",
+          "Preventing execution during configuration changes"
+        ],
+        "best_practices": [
+          "Deactivate before major configuration changes",
+          "Stop workflows before credential rotation",
+          "Disable during troubleshooting",
+          "Document reason for deactivation"
+        ],
+        "common_patterns": [
+          "Deactivate before update_workflow",
+          "Stop workflow showing high failure rate",
+          "Pause during infrastructure maintenance"
+        ]
+      },
+      "execute_workflow": {
+        "tool_id": "execute_workflow",
+        "confidence": 0.95,
+        "use_cases": [
+          "Manual workflow triggering for testing",
+          "On-demand execution for specific events",
+          "Validating workflow before activation",
+          "Testing workflow with specific input data"
+        ],
+        "best_practices": [
+          "Provide test data for manual executions",
+          "Monitor execution with get_execution",
+          "Use for validation before activation",
+          "Log execution results for analysis",
+          "Set appropriate timeout expectations"
+        ],
+        "common_patterns": [
+          "Test workflow after creation/update",
+          "Trigger manual backup or maintenance task",
+          "Execute workflow for specific event handling"
+        ]
+      },
+      "list_executions": {
+        "tool_id": "list_executions",
+        "confidence": 0.96,
+        "use_cases": [
+          "Monitoring workflow execution history",
+          "Analyzing execution patterns and failures",
+          "Debugging workflow issues",
+          "Generating execution reports and metrics"
+        ],
+        "best_practices": [
+          "Filter by workflow_id for specific workflow analysis",
+          "Use status filter to find failures quickly",
+          "Limit results for performance on large datasets",
+          "Analyze execution trends for optimization",
+          "Monitor execution frequency for anomalies"
+        ],
+        "common_patterns": [
+          "List recent failures for debugging",
+          "Get all executions for specific workflow",
+          "Monitor execution count for health metrics"
+        ]
+      },
+      "get_execution": {
+        "tool_id": "get_execution",
+        "confidence": 0.94,
+        "use_cases": [
+          "Retrieving detailed execution results",
+          "Debugging failed workflow executions",
+          "Analyzing execution data and outputs",
+          "Validating execution success"
+        ],
+        "best_practices": [
+          "Check execution status before retrieving data",
+          "Parse execution data for error messages",
+          "Use for post-mortem analysis of failures",
+          "Extract outputs for downstream processing",
+          "Log execution details for audit trail"
+        ],
+        "common_patterns": [
+          "Get execution after execute_workflow",
+          "Retrieve failed execution for debugging",
+          "Extract execution data for reporting"
+        ]
+      },
+      "list_credentials": {
+        "tool_id": "list_credentials",
+        "confidence": 0.93,
+        "use_cases": [
+          "Auditing available credentials in n8n",
+          "Validating credential availability before workflow creation",
+          "Credential inventory management",
+          "Finding credentials by type or name"
+        ],
+        "best_practices": [
+          "Verify credentials exist before workflow operations",
+          "Monitor credential count for security audit",
+          "Use credential type to find appropriate auth",
+          "Never expose credential values in logs"
+        ],
+        "common_patterns": [
+          "List credentials before create_workflow",
+          "Audit credentials for security review",
+          "Find specific credential by name"
+        ]
+      }
+    },
+    "workflow_patterns": {
+      "monitor_and_alert": {
+        "pattern_id": "monitor_and_alert",
+        "description": "Monitor service health and send alerts on issues",
+        "nodes": [
+          "Schedule Trigger",
+          "HTTP Request",
+          "IF (condition check)",
+          "Send Email/Slack/Teams"
+        ],
+        "complexity": 3,
+        "success_rate": 0.92,
+        "use_cases": [
+          "Service health monitoring",
+          "API endpoint monitoring",
+          "Database connectivity checks",
+          "Infrastructure health alerts"
+        ],
+        "recommended_settings": {
+          "trigger_interval": "5 minutes",
+          "retry_on_failure": true,
+          "max_retries": 3
+        }
+      },
+      "data_sync": {
+        "pattern_id": "data_sync",
+        "description": "Synchronize data between two systems",
+        "nodes": [
+          "Webhook/Schedule Trigger",
+          "Source System API",
+          "Transform Data",
+          "Target System API",
+          "Error Handler"
+        ],
+        "complexity": 4,
+        "success_rate": 0.88,
+        "use_cases": [
+          "CRM to database sync",
+          "Multi-system data replication",
+          "ETL workflows",
+          "Data warehouse updates"
+        ],
+        "recommended_settings": {
+          "batch_size": 100,
+          "error_workflow": "data_sync_error_handler",
+          "execution_order": "sequential"
+        }
+      },
+      "event_driven_automation": {
+        "pattern_id": "event_driven_automation",
+        "description": "Respond to webhook events with automated actions",
+        "nodes": [
+          "Webhook Trigger",
+          "Parse Event Data",
+          "Conditional Routing",
+          "Action Nodes",
+          "Response"
+        ],
+        "complexity": 5,
+        "success_rate": 0.95,
+        "use_cases": [
+          "GitHub webhook handling",
+          "CI/CD pipeline triggers",
+          "Real-time event processing",
+          "Alert response automation"
+        ],
+        "recommended_settings": {
+          "webhook_auth": "header_auth",
+          "timeout": 30000,
+          "response_mode": "immediate"
+        }
+      },
+      "scheduled_maintenance": {
+        "pattern_id": "scheduled_maintenance",
+        "description": "Periodic maintenance and cleanup tasks",
+        "nodes": [
+          "Cron Trigger",
+          "Pre-check Conditions",
+          "Maintenance Actions",
+          "Verification",
+          "Notification"
+        ],
+        "complexity": 3,
+        "success_rate": 0.94,
+        "use_cases": [
+          "Database cleanup",
+          "Log rotation",
+          "Cache clearing",
+          "Backup operations"
+        ],
+        "recommended_settings": {
+          "execution_time": "off_peak_hours",
+          "concurrent_executions": 1,
+          "error_notification": true
+        }
+      },
+      "approval_workflow": {
+        "pattern_id": "approval_workflow",
+        "description": "Multi-step approval process with human review",
+        "nodes": [
+          "Trigger",
+          "Create Approval Request",
+          "Wait for Webhook (approval)",
+          "Conditional Processing",
+          "Execute Action",
+          "Notify Result"
+        ],
+        "complexity": 6,
+        "success_rate": 0.90,
+        "use_cases": [
+          "Expense approvals",
+          "Deployment approvals",
+          "Access request workflows",
+          "Change management"
+        ],
+        "recommended_settings": {
+          "wait_timeout": "48 hours",
+          "reminder_interval": "24 hours",
+          "auto_reject_on_timeout": false
+        }
+      }
+    }
+  },
+  "decision_trees": {
+    "choose_workflow_vs_script": {
+      "description": "Determine when to use n8n workflow vs bash/python script",
+      "root": {
+        "question": "Does the task require integration with multiple systems?",
+        "yes": {
+          "question": "Are the integrations already available in n8n?",
+          "yes": {
+            "decision": "use_n8n_workflow",
+            "confidence": 0.95,
+            "reasoning": "n8n excels at multi-system integrations with pre-built nodes"
+          },
+          "no": {
+            "question": "Is building a custom n8n node worth the effort?",
+            "yes": {
+              "decision": "build_custom_node_then_use_n8n",
+              "confidence": 0.75
+            },
+            "no": {
+              "decision": "use_script_with_n8n_wrapper",
+              "confidence": 0.80
+            }
+          }
+        },
+        "no": {
+          "question": "Does the task require visual workflow management?",
+          "yes": {
+            "decision": "use_n8n_workflow",
+            "confidence": 0.85
+          },
+          "no": {
+            "question": "Is the task simple and one-time?",
+            "yes": {
+              "decision": "use_script",
+              "confidence": 0.90
+            },
+            "no": {
+              "decision": "use_n8n_workflow_for_reusability",
+              "confidence": 0.80
+            }
+          }
+        }
+      }
+    },
+    "determine_retry_strategy": {
+      "description": "Choose appropriate retry strategy for workflow operations",
+      "root": {
+        "question": "Is the operation idempotent?",
+        "yes": {
+          "question": "What is the failure impact?",
+          "high": {
+            "decision": "aggressive_retry",
+            "config": {
+              "max_retries": 5,
+              "retry_interval": "exponential_backoff",
+              "notify_on_failure": true
+            },
+            "confidence": 0.90
+          },
+          "medium": {
+            "decision": "moderate_retry",
+            "config": {
+              "max_retries": 3,
+              "retry_interval": "linear_backoff",
+              "notify_on_final_failure": true
+            },
+            "confidence": 0.88
+          },
+          "low": {
+            "decision": "minimal_retry",
+            "config": {
+              "max_retries": 1,
+              "retry_interval": "5_seconds",
+              "log_failures": true
+            },
+            "confidence": 0.85
+          }
+        },
+        "no": {
+          "question": "Can we detect duplicate operations?",
+          "yes": {
+            "decision": "retry_with_deduplication",
+            "config": {
+              "max_retries": 3,
+              "deduplication_key": "unique_identifier",
+              "idempotency_check": true
+            },
+            "confidence": 0.82
+          },
+          "no": {
+            "decision": "no_retry_manual_intervention",
+            "config": {
+              "max_retries": 0,
+              "notify_immediately": true,
+              "create_ticket": true
+            },
+            "confidence": 0.95
+          }
+        }
+      }
+    },
+    "select_trigger_type": {
+      "description": "Choose the appropriate trigger for workflow automation",
+      "root": {
+        "question": "Is the workflow event-driven or time-based?",
+        "event_driven": {
+          "question": "Is the event from an external system?",
+          "yes": {
+            "decision": "webhook_trigger",
+            "config": {
+              "authentication": "required",
+              "validation": "strict",
+              "rate_limiting": true
+            },
+            "confidence": 0.92
+          },
+          "no": {
+            "question": "Is it triggered by n8n workflow?",
+            "yes": {
+              "decision": "execute_workflow_trigger",
+              "confidence": 0.90
+            },
+            "no": {
+              "decision": "manual_trigger",
+              "confidence": 0.85
+            }
+          }
+        },
+        "time_based": {
+          "question": "What is the execution frequency?",
+          "high_frequency": {
+            "decision": "interval_trigger",
+            "config": {
+              "interval_minutes": "1-15",
+              "concurrent_limit": 1
+            },
+            "confidence": 0.88
+          },
+          "low_frequency": {
+            "decision": "cron_trigger",
+            "config": {
+              "cron_expression": "custom",
+              "timezone_aware": true
+            },
+            "confidence": 0.95
+          }
+        }
+      }
+    }
+  },
+  "learned_optimizations": [
+    {
+      "optimization_id": "opt-n8n-001",
+      "category": "performance",
+      "title": "Batch API requests to reduce execution time",
+      "description": "When processing multiple items, use n8n's batch processing capabilities instead of item-by-item loops",
+      "before": "Loop through 100 items, make API call for each",
+      "after": "Batch 100 items into chunks of 10, make 10 API calls",
+      "impact": "Execution time reduced from 300s to 45s",
+      "success_rate": 0.96,
+      "applicable_patterns": ["data_sync", "event_driven_automation"]
+    },
+    {
+      "optimization_id": "opt-n8n-002",
+      "category": "reliability",
+      "title": "Implement error workflow for critical automations",
+      "description": "Create dedicated error handling workflows instead of inline error nodes",
+      "before": "Error nodes in each workflow with duplicate logic",
+      "after": "Centralized error workflow called from all critical workflows",
+      "impact": "Reduced error handling code by 70%, improved consistency",
+      "success_rate": 0.94,
+      "applicable_patterns": ["monitor_and_alert", "data_sync", "approval_workflow"]
+    },
+    {
+      "optimization_id": "opt-n8n-003",
+      "category": "cost",
+      "title": "Use workflow deduplication to prevent duplicate executions",
+      "description": "Add execution tracking to prevent duplicate webhook processing",
+      "before": "Duplicate webhooks caused multiple executions",
+      "after": "Check execution history before processing webhook",
+      "impact": "Reduced duplicate executions by 85%, saved API costs",
+      "success_rate": 0.92,
+      "applicable_patterns": ["event_driven_automation"]
+    },
+    {
+      "optimization_id": "opt-n8n-004",
+      "category": "monitoring",
+      "title": "Enable execution data saving for debugging",
+      "description": "Save execution data for failed workflows to enable post-mortem analysis",
+      "before": "Failed executions had no data, debugging was difficult",
+      "after": "All failures save execution data with full context",
+      "impact": "Debugging time reduced by 60%",
+      "success_rate": 0.98,
+      "applicable_patterns": ["all"]
+    }
+  ],
+  "integration_requirements": {
+    "prerequisites": [
+      "n8n instance accessible via API",
+      "Valid n8n API key with appropriate permissions",
+      "n8n API version 1.0 or higher",
+      "Network connectivity to n8n instance"
+    ],
+    "recommended_setup": {
+      "api_key_storage": "environment_variable",
+      "api_key_rotation": "monthly",
+      "connection_pooling": true,
+      "timeout_seconds": 30,
+      "retry_config": {
+        "max_retries": 3,
+        "backoff_strategy": "exponential"
+      }
+    }
+  },
+  "common_pitfalls": [
+    {
+      "pitfall": "Not checking workflow status before execution",
+      "impact": "Executing inactive workflows fails",
+      "prevention": "Always get_workflow to verify status before execute_workflow"
+    },
+    {
+      "pitfall": "Missing error handling in workflows",
+      "impact": "Workflow failures go unnoticed",
+      "prevention": "Add error workflow reference or notification nodes"
+    },
+    {
+      "pitfall": "Hardcoding credentials in workflow nodes",
+      "impact": "Security risk, difficult credential rotation",
+      "prevention": "Always use n8n credential system, reference by name"
+    },
+    {
+      "pitfall": "Not testing workflows before activation",
+      "impact": "Production failures, unexpected behavior",
+      "prevention": "Use execute_workflow for testing before activate_workflow"
+    },
+    {
+      "pitfall": "Ignoring execution limits and rate limiting",
+      "impact": "n8n instance overload, API quota exceeded",
+      "prevention": "Monitor execution count, implement backoff, use batch processing"
+    }
+  ],
+  "success_metrics": {
+    "workflow_success_rate": 0.92,
+    "average_execution_time_seconds": 15,
+    "workflow_creation_accuracy": 0.88,
+    "troubleshooting_success_rate": 0.94,
+    "pattern_reuse_rate": 0.78
+  },
+  "knowledge_sources": [
+    "n8n-mcp-server integration documentation",
+    "n8n API v1.0 documentation",
+    "Learned patterns from Cortex executions",
+    "Community workflow templates",
+    "Internal workflow audit analysis"
+  ],
+  "last_updated": "2025-12-13T00:00:00Z",
+  "maintenance_schedule": "monthly",
+  "confidence_score": 0.93
+}

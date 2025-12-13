@@ -1,0 +1,589 @@
+{
+  "contractor_id": "security-contractor",
+  "version": "1.0.0",
+  "created_at": "2025-12-13T00:00:00Z",
+  "domain": "security_scanning_and_compliance",
+  "description": "Security specialist contractor for vulnerability scanning, secrets detection, compliance auditing, and security hardening across infrastructure and applications",
+  "expertise": {
+    "mcp_servers": [
+      {
+        "server_id": "security-tools-native",
+        "description": "Native security tools accessed via shell execution",
+        "integration_status": "native_tools",
+        "confidence": 0.92,
+        "tools": ["trivy", "gitleaks", "bandit", "safety", "semgrep", "grype"]
+      },
+      {
+        "server_id": "unifi-mcp-server",
+        "repository": "ry-ops/unifi-mcp-server",
+        "integration_status": "integrated",
+        "confidence": 0.88,
+        "primary_capabilities": ["network_security", "firewall_management", "device_monitoring"]
+      },
+      {
+        "server_id": "cloudflare-mcp-server",
+        "repository": "ry-ops/cloudflare-mcp-server",
+        "integration_status": "integrated",
+        "confidence": 0.90,
+        "primary_capabilities": ["waf_management", "dns_security", "ddos_protection"]
+      }
+    ],
+    "tool_mastery": {
+      "trivy_scan": {
+        "tool_id": "trivy",
+        "confidence": 0.96,
+        "use_cases": [
+          "Container image vulnerability scanning",
+          "Filesystem vulnerability detection",
+          "Kubernetes manifest security scanning",
+          "IaC security configuration scanning"
+        ],
+        "best_practices": [
+          "Scan all container images before deployment",
+          "Use --severity HIGH,CRITICAL for CI/CD gates",
+          "Scan both OS packages and application dependencies",
+          "Regular database updates for latest CVEs",
+          "Generate SBOM (Software Bill of Materials) for compliance"
+        ],
+        "common_patterns": [
+          "trivy image <image:tag> --severity HIGH,CRITICAL",
+          "trivy fs /path/to/project",
+          "trivy config /path/to/k8s/manifests",
+          "trivy image --format json for automation"
+        ],
+        "severity_levels": {
+          "CRITICAL": "Immediate action required, block deployment",
+          "HIGH": "Fix within 7 days, consider blocking",
+          "MEDIUM": "Fix within 30 days",
+          "LOW": "Fix during regular maintenance"
+        }
+      },
+      "gitleaks_detect": {
+        "tool_id": "gitleaks",
+        "confidence": 0.94,
+        "use_cases": [
+          "Detecting secrets in git repositories",
+          "Scanning commit history for leaked credentials",
+          "Pre-commit hook for secret prevention",
+          "CI/CD pipeline secret scanning"
+        ],
+        "best_practices": [
+          "Scan entire git history, not just current state",
+          "Use --verbose to understand detection reasons",
+          "Customize rules for project-specific patterns",
+          "Integrate as pre-commit hook for prevention",
+          "Rotate any detected secrets immediately"
+        ],
+        "common_patterns": [
+          "gitleaks detect --source /path/to/repo",
+          "gitleaks detect --verbose --report-format json",
+          "gitleaks protect (pre-commit mode)"
+        ],
+        "secret_types_detected": [
+          "API keys (AWS, Azure, GCP, GitHub, etc.)",
+          "Private keys (SSH, PGP, SSL)",
+          "Passwords and tokens",
+          "Database connection strings",
+          "OAuth tokens and secrets"
+        ]
+      },
+      "bandit_scan": {
+        "tool_id": "bandit",
+        "confidence": 0.93,
+        "use_cases": [
+          "Python code security scanning",
+          "Identifying common security issues in Python",
+          "Detecting hardcoded credentials",
+          "Finding SQL injection vulnerabilities"
+        ],
+        "best_practices": [
+          "Run on every Python code change",
+          "Use -ll for high and medium severity only",
+          "Configure .bandit for project-specific rules",
+          "Review low-severity findings for hardening",
+          "Integrate into CI/CD pipeline"
+        ],
+        "common_patterns": [
+          "bandit -r /path/to/python/code",
+          "bandit -r . -ll (low confidence, low severity)",
+          "bandit -f json for automation"
+        ],
+        "vulnerability_categories": [
+          "Hardcoded passwords",
+          "SQL injection",
+          "Command injection",
+          "Insecure deserialization",
+          "Weak cryptography"
+        ]
+      },
+      "safety_check": {
+        "tool_id": "safety",
+        "confidence": 0.95,
+        "use_cases": [
+          "Python dependency vulnerability scanning",
+          "Checking pip packages against CVE database",
+          "Requirements.txt security validation",
+          "Continuous dependency monitoring"
+        ],
+        "best_practices": [
+          "Scan requirements.txt and Pipfile",
+          "Run before package installation",
+          "Set up automated weekly scans",
+          "Review and update vulnerable packages promptly",
+          "Use --full-report for detailed information"
+        ],
+        "common_patterns": [
+          "safety check --file requirements.txt",
+          "safety check --json",
+          "safety check --full-report"
+        ]
+      },
+      "semgrep_scan": {
+        "tool_id": "semgrep",
+        "confidence": 0.91,
+        "use_cases": [
+          "Static code analysis across multiple languages",
+          "Custom security rule enforcement",
+          "Detecting code patterns and anti-patterns",
+          "Finding framework-specific vulnerabilities"
+        ],
+        "best_practices": [
+          "Use language-specific rulesets (p/python, p/javascript)",
+          "Create custom rules for organization-specific patterns",
+          "Use --config auto for automatic ruleset selection",
+          "Review findings in context of application logic",
+          "Combine with other SAST tools for coverage"
+        ],
+        "common_patterns": [
+          "semgrep --config auto /path/to/code",
+          "semgrep --config p/security-audit",
+          "semgrep --json for automation"
+        ]
+      },
+      "docker_bench_security": {
+        "tool_id": "docker-bench-security",
+        "confidence": 0.90,
+        "use_cases": [
+          "Docker host security auditing",
+          "CIS Docker Benchmark compliance checking",
+          "Container runtime security validation",
+          "Docker daemon configuration review"
+        ],
+        "best_practices": [
+          "Run on all Docker hosts regularly",
+          "Address WARN and FAIL findings",
+          "Document exceptions with justification",
+          "Automate as part of infrastructure scanning",
+          "Review NOTE findings for hardening opportunities"
+        ],
+        "common_patterns": [
+          "docker run --rm --net host --pid host docker/docker-bench-security",
+          "Generate reports for compliance evidence"
+        ]
+      },
+      "kube_bench": {
+        "tool_id": "kube-bench",
+        "confidence": 0.89,
+        "use_cases": [
+          "Kubernetes CIS Benchmark compliance",
+          "K8s control plane security auditing",
+          "Node security configuration validation",
+          "Kubernetes security best practices enforcement"
+        ],
+        "best_practices": [
+          "Run on master and worker nodes separately",
+          "Address critical and high findings first",
+          "Automate as part of cluster deployment",
+          "Re-run after configuration changes",
+          "Track remediation progress over time"
+        ],
+        "common_patterns": [
+          "kube-bench run --targets master",
+          "kube-bench run --targets node",
+          "kube-bench --json for automation"
+        ]
+      },
+      "osv_scanner": {
+        "tool_id": "osv-scanner",
+        "confidence": 0.92,
+        "use_cases": [
+          "Multi-language dependency vulnerability scanning",
+          "OSV database vulnerability checking",
+          "SBOM vulnerability analysis",
+          "Lockfile security scanning"
+        ],
+        "best_practices": [
+          "Scan all lockfiles (package-lock.json, Gemfile.lock, etc.)",
+          "Use --format json for automation",
+          "Scan SBOMs for comprehensive analysis",
+          "Integrate into CI/CD for continuous monitoring",
+          "Review and update vulnerable dependencies"
+        ],
+        "common_patterns": [
+          "osv-scanner --lockfile package-lock.json",
+          "osv-scanner --sbom sbom.json",
+          "osv-scanner -r /path/to/project"
+        ]
+      }
+    },
+    "security_workflows": {
+      "comprehensive_security_scan": {
+        "workflow_id": "comprehensive_scan",
+        "description": "Full security audit of application and infrastructure",
+        "phases": [
+          {
+            "phase": "secrets_detection",
+            "tools": ["gitleaks"],
+            "severity_threshold": "any",
+            "block_on_findings": true,
+            "description": "Scan for exposed secrets in code and git history"
+          },
+          {
+            "phase": "dependency_scanning",
+            "tools": ["safety", "osv-scanner"],
+            "severity_threshold": "HIGH",
+            "block_on_findings": true,
+            "description": "Scan dependencies for known vulnerabilities"
+          },
+          {
+            "phase": "static_code_analysis",
+            "tools": ["bandit", "semgrep"],
+            "severity_threshold": "HIGH",
+            "block_on_findings": false,
+            "description": "Analyze code for security issues and anti-patterns"
+          },
+          {
+            "phase": "container_scanning",
+            "tools": ["trivy"],
+            "severity_threshold": "CRITICAL",
+            "block_on_findings": true,
+            "description": "Scan container images for vulnerabilities"
+          },
+          {
+            "phase": "infrastructure_scanning",
+            "tools": ["trivy", "kube-bench"],
+            "severity_threshold": "HIGH",
+            "block_on_findings": false,
+            "description": "Scan IaC and K8s configurations"
+          }
+        ],
+        "complexity": 7,
+        "success_rate": 0.91,
+        "average_duration_minutes": 15
+      },
+      "pre_deployment_scan": {
+        "workflow_id": "pre_deployment_scan",
+        "description": "Quick security validation before deployment",
+        "phases": [
+          {
+            "phase": "secrets_check",
+            "tools": ["gitleaks"],
+            "fast_mode": true,
+            "scan_scope": "staged_changes"
+          },
+          {
+            "phase": "container_scan",
+            "tools": ["trivy"],
+            "severity_threshold": "CRITICAL,HIGH",
+            "timeout_seconds": 300
+          },
+          {
+            "phase": "critical_deps_check",
+            "tools": ["safety"],
+            "severity_threshold": "CRITICAL"
+          }
+        ],
+        "complexity": 3,
+        "success_rate": 0.95,
+        "average_duration_minutes": 5,
+        "use_in_ci_cd": true
+      },
+      "compliance_audit": {
+        "workflow_id": "compliance_audit",
+        "description": "Comprehensive compliance and security posture audit",
+        "phases": [
+          {
+            "phase": "docker_cis_benchmark",
+            "tools": ["docker-bench-security"],
+            "generate_report": true
+          },
+          {
+            "phase": "kubernetes_cis_benchmark",
+            "tools": ["kube-bench"],
+            "targets": ["master", "node"],
+            "generate_report": true
+          },
+          {
+            "phase": "sbom_generation",
+            "tools": ["trivy", "syft"],
+            "output_format": "cyclonedx-json"
+          },
+          {
+            "phase": "vulnerability_report",
+            "tools": ["trivy", "osv-scanner"],
+            "comprehensive_mode": true,
+            "generate_report": true
+          }
+        ],
+        "complexity": 6,
+        "success_rate": 0.88,
+        "average_duration_minutes": 30,
+        "reporting_required": true,
+        "compliance_frameworks": ["CIS", "NIST", "PCI-DSS"]
+      },
+      "secrets_remediation": {
+        "workflow_id": "secrets_remediation",
+        "description": "Detect and remediate exposed secrets",
+        "phases": [
+          {
+            "phase": "full_history_scan",
+            "tools": ["gitleaks"],
+            "scan_scope": "entire_git_history",
+            "generate_report": true
+          },
+          {
+            "phase": "secret_rotation",
+            "action": "rotate_detected_secrets",
+            "manual_approval_required": true,
+            "services": ["aws", "github", "api_keys"]
+          },
+          {
+            "phase": "git_history_cleanup",
+            "action": "bfg_or_git_filter_branch",
+            "manual_approval_required": true,
+            "warning": "Rewrites git history"
+          },
+          {
+            "phase": "prevention_setup",
+            "action": "install_pre_commit_hooks",
+            "tools": ["gitleaks", "detect-secrets"]
+          }
+        ],
+        "complexity": 8,
+        "success_rate": 0.82,
+        "average_duration_hours": 2,
+        "critical_priority": true
+      }
+    }
+  },
+  "decision_trees": {
+    "select_security_scan_type": {
+      "description": "Choose appropriate security scan for context",
+      "root": {
+        "question": "What stage of development are you in?",
+        "pre_commit": {
+          "decision": "secrets_detection_only",
+          "tools": ["gitleaks protect"],
+          "confidence": 0.96,
+          "reasoning": "Fast feedback loop, prevent secrets from entering repo"
+        },
+        "ci_cd_pipeline": {
+          "question": "Is this a production deployment?",
+          "yes": {
+            "decision": "comprehensive_security_scan",
+            "confidence": 0.94,
+            "block_on_findings": true
+          },
+          "no": {
+            "decision": "pre_deployment_scan",
+            "confidence": 0.92,
+            "block_on_findings": "only_critical"
+          }
+        },
+        "scheduled_audit": {
+          "decision": "compliance_audit",
+          "frequency": "weekly",
+          "confidence": 0.90,
+          "generate_reports": true
+        },
+        "incident_response": {
+          "decision": "targeted_deep_scan",
+          "tools": "based_on_incident_type",
+          "confidence": 0.88,
+          "urgency": "critical"
+        }
+      }
+    },
+    "vulnerability_remediation_priority": {
+      "description": "Prioritize vulnerability remediation",
+      "root": {
+        "question": "What is the vulnerability severity?",
+        "critical": {
+          "question": "Is it exploitable in production?",
+          "yes": {
+            "decision": "immediate_remediation",
+            "sla_hours": 24,
+            "actions": ["patch", "deploy", "verify"],
+            "confidence": 0.98
+          },
+          "no": {
+            "decision": "urgent_remediation",
+            "sla_days": 7,
+            "confidence": 0.95
+          }
+        },
+        "high": {
+          "decision": "prioritized_remediation",
+          "sla_days": 30,
+          "plan_before_fix": true,
+          "confidence": 0.92
+        },
+        "medium": {
+          "decision": "scheduled_remediation",
+          "sla_days": 90,
+          "batch_with_other_updates": true,
+          "confidence": 0.88
+        },
+        "low": {
+          "decision": "opportunistic_remediation",
+          "fix_during_regular_maintenance": true,
+          "confidence": 0.85
+        }
+      }
+    },
+    "compliance_framework_selection": {
+      "description": "Select appropriate compliance checks",
+      "root": {
+        "question": "What infrastructure are you auditing?",
+        "docker_containers": {
+          "decision": "cis_docker_benchmark",
+          "tool": "docker-bench-security",
+          "confidence": 0.93
+        },
+        "kubernetes_cluster": {
+          "decision": "cis_kubernetes_benchmark",
+          "tool": "kube-bench",
+          "confidence": 0.91
+        },
+        "cloud_infrastructure": {
+          "question": "Which cloud provider?",
+          "aws": {
+            "decision": "cis_aws_benchmark",
+            "tool": "prowler",
+            "confidence": 0.89
+          },
+          "azure": {
+            "decision": "cis_azure_benchmark",
+            "tool": "azure_cis",
+            "confidence": 0.87
+          }
+        }
+      }
+    }
+  },
+  "learned_optimizations": [
+    {
+      "optimization_id": "opt-sec-001",
+      "category": "performance",
+      "title": "Incremental scanning for large repositories",
+      "description": "Scan only changed files in CI/CD, full scan periodically",
+      "before": "Full scan on every commit, 15-minute CI/CD times",
+      "after": "Incremental scan on commits (2 min), full scan nightly",
+      "impact": "87% reduction in CI/CD scan time",
+      "success_rate": 0.96,
+      "applicable_workflows": ["pre_deployment_scan"]
+    },
+    {
+      "optimization_id": "opt-sec-002",
+      "category": "accuracy",
+      "title": "Multi-tool scanning for reduced false positives",
+      "description": "Use multiple tools and correlate findings",
+      "before": "Single tool reporting many false positives",
+      "after": "Findings confirmed by 2+ tools prioritized",
+      "impact": "60% reduction in false positive noise",
+      "success_rate": 0.93,
+      "applicable_workflows": ["comprehensive_security_scan"]
+    },
+    {
+      "optimization_id": "opt-sec-003",
+      "category": "compliance",
+      "title": "Automated SBOM generation and tracking",
+      "description": "Generate and maintain Software Bill of Materials",
+      "before": "No visibility into supply chain components",
+      "after": "Complete SBOM tracking, proactive vulnerability monitoring",
+      "impact": "100% supply chain visibility, 50% faster incident response",
+      "success_rate": 0.94,
+      "applicable_workflows": ["compliance_audit"]
+    },
+    {
+      "optimization_id": "opt-sec-004",
+      "category": "prevention",
+      "title": "Pre-commit hooks for secret prevention",
+      "description": "Block commits containing secrets at the source",
+      "before": "Secrets detected post-commit, requiring history cleanup",
+      "after": "Secrets blocked before commit, no remediation needed",
+      "impact": "95% reduction in secret exposure incidents",
+      "success_rate": 0.97,
+      "applicable_workflows": ["secrets_remediation"]
+    }
+  ],
+  "integration_requirements": {
+    "prerequisites": [
+      "Security scanning tools installed (trivy, gitleaks, etc.)",
+      "Access to vulnerability databases (updated regularly)",
+      "SBOM generation capability",
+      "Secure storage for scan reports and findings"
+    ],
+    "recommended_setup": {
+      "scan_frequency": {
+        "secrets": "pre-commit and daily",
+        "dependencies": "daily",
+        "containers": "on build and weekly",
+        "infrastructure": "weekly",
+        "compliance": "monthly"
+      },
+      "severity_thresholds": {
+        "block_ci_cd": "CRITICAL",
+        "alert_security_team": "HIGH",
+        "create_ticket": "MEDIUM",
+        "log_only": "LOW"
+      }
+    }
+  },
+  "common_pitfalls": [
+    {
+      "pitfall": "Scanning only production, ignoring dev/staging",
+      "impact": "Vulnerabilities reach production undetected",
+      "prevention": "Scan all environments, use CI/CD gates"
+    },
+    {
+      "pitfall": "Not updating vulnerability databases",
+      "impact": "Missing latest CVEs, false sense of security",
+      "prevention": "Automate daily database updates for all scanners"
+    },
+    {
+      "pitfall": "Alert fatigue from too many low-severity findings",
+      "impact": "Critical alerts missed in noise",
+      "prevention": "Use severity thresholds, focus on exploitable vulnerabilities"
+    },
+    {
+      "pitfall": "Scanning without remediation plan",
+      "impact": "Findings accumulate, no improvement",
+      "prevention": "Define SLAs for remediation, track metrics"
+    },
+    {
+      "pitfall": "Ignoring supply chain security",
+      "impact": "Vulnerable dependencies go undetected",
+      "prevention": "Generate and monitor SBOMs, scan all dependencies"
+    }
+  ],
+  "success_metrics": {
+    "secret_detection_accuracy": 0.94,
+    "vulnerability_detection_rate": 0.92,
+    "false_positive_rate": 0.08,
+    "mean_time_to_remediation_days": 14,
+    "compliance_score": 0.89,
+    "security_scan_coverage": 0.96
+  },
+  "knowledge_sources": [
+    "CIS Benchmarks documentation",
+    "OWASP security guidelines",
+    "CVE databases and advisories",
+    "Security tool documentation (Trivy, Gitleaks, etc.)",
+    "Cortex security incident post-mortems",
+    "Industry security best practices"
+  ],
+  "last_updated": "2025-12-13T00:00:00Z",
+  "maintenance_schedule": "monthly",
+  "confidence_score": 0.91
+}
