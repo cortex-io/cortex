@@ -1,0 +1,38 @@
+{{- if .Values.autoscaling.enabled }}
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: {{ .Values.mcpServer.name }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: {{ .Values.mcpServer.name }}
+    app.kubernetes.io/name: {{ .Values.mcpServer.name }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+spec:
+  scaleTargetRef:
+    name: {{ .Values.mcpServer.name }}
+  minReplicaCount: {{ .Values.autoscaling.minReplicas }}
+  maxReplicaCount: {{ .Values.autoscaling.maxReplicas }}
+  pollingInterval: {{ .Values.autoscaling.pollingInterval }}
+  cooldownPeriod: 300
+  triggers:
+  {{- if eq .Values.autoscaling.metric.type "prometheus" }}
+  - type: prometheus
+    metadata:
+      serverAddress: {{ .Values.autoscaling.metric.serverAddress }}
+      metricName: {{ .Values.autoscaling.metric.metricName }}
+      query: {{ tpl .Values.autoscaling.metric.query . | quote }}
+      threshold: {{ .Values.autoscaling.metric.threshold | quote }}
+  {{- else if eq .Values.autoscaling.metric.type "cpu" }}
+  - type: cpu
+    metricType: Utilization
+    metadata:
+      value: {{ .Values.autoscaling.metric.targetAverageUtilization | quote }}
+  {{- else if eq .Values.autoscaling.metric.type "external" }}
+  - type: external
+    metadata:
+      scalerAddress: {{ .Values.autoscaling.metric.scalerAddress }}
+      metricName: {{ .Values.autoscaling.metric.metricName }}
+      targetValue: {{ .Values.autoscaling.metric.targetValue | quote }}
+  {{- end }}
+{{- end }}

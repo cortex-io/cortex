@@ -1,0 +1,240 @@
+---
+# Flux GitRepository - Source of truth
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: GitRepository
+metadata:
+  name: cortex
+  namespace: flux-system
+spec:
+  interval: 1m
+  url: https://github.com/ry-ops/cortex.git
+  ref:
+    branch: main
+  secretRef:
+    name: cortex-git-credentials  # Optional: for private repos
+
+---
+# Flux Kustomization for Cortex Core
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: cortex-core
+  namespace: flux-system
+spec:
+  interval: 10m
+  retryInterval: 1m
+  timeout: 5m
+  sourceRef:
+    kind: GitRepository
+    name: cortex
+  path: ./k8s/cortex-k3s
+  prune: true
+  wait: true
+  validation: client
+  healthChecks:
+    - apiVersion: apps/v1
+      kind: Deployment
+      name: coordinator-master
+      namespace: cortex-system
+    - apiVersion: apps/v1
+      kind: Deployment
+      name: security-master
+      namespace: cortex-system
+    - apiVersion: apps/v1
+      kind: Deployment
+      name: development-master
+      namespace: cortex-system
+    - apiVersion: apps/v1
+      kind: Deployment
+      name: cicd-master
+      namespace: cortex-system
+
+---
+# Flux HelmRepository for MCP Charts
+apiVersion: source.toolkit.fluxcd.io/v1beta2
+kind: HelmRepository
+metadata:
+  name: cortex-helm
+  namespace: flux-system
+spec:
+  interval: 10m
+  url: https://ry-ops.github.io/cortex-helm-charts
+  # Or use Git-based Helm charts:
+  # type: oci
+  # url: oci://ghcr.io/ry-ops/cortex/charts
+
+---
+# Flux HelmRelease for MCP Servers
+apiVersion: helm.toolkit.fluxcd.io/v2beta1
+kind: HelmRelease
+metadata:
+  name: cortex-mcp-servers
+  namespace: flux-system
+spec:
+  interval: 10m
+  chart:
+    spec:
+      chart: ./helm/umbrella-chart
+      sourceRef:
+        kind: GitRepository
+        name: cortex
+        namespace: flux-system
+      interval: 5m
+
+  releaseName: cortex-mcp
+  targetNamespace: cortex-mcp
+  install:
+    createNamespace: true
+    remediation:
+      retries: 3
+
+  upgrade:
+    remediation:
+      retries: 3
+
+  values:
+    wazuh:
+      enabled: true
+    proxmox:
+      enabled: true
+    n8n:
+      enabled: true
+    k3s:
+      enabled: true
+
+  valuesFrom:
+    - kind: Secret
+      name: mcp-credentials
+      valuesKey: values.yaml
+      optional: true
+
+---
+# Flux Kustomization for Monitoring Stack
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: cortex-monitoring
+  namespace: flux-system
+spec:
+  interval: 10m
+  sourceRef:
+    kind: GitRepository
+    name: cortex
+  path: ./k8s/monitoring
+  prune: true
+  wait: true
+  healthChecks:
+    - apiVersion: apps/v1
+      kind: Deployment
+      name: prometheus
+      namespace: monitoring
+    - apiVersion: apps/v1
+      kind: Deployment
+      name: grafana
+      namespace: monitoring
+    - apiVersion: apps/v1
+      kind: Deployment
+      name: alertmanager
+      namespace: monitoring
+
+---
+# Flux ImageRepository - Watch for new container images
+apiVersion: image.toolkit.fluxcd.io/v1beta2
+kind: ImageRepository
+metadata:
+  name: cortex-docker
+  namespace: flux-system
+spec:
+  image: ghcr.io/ry-ops/cortex-docker
+  interval: 1m
+  secretRef:
+    name: ghcr-credentials
+
+---
+# Flux ImagePolicy - Define image update policy
+apiVersion: image.toolkit.fluxcd.io/v1beta2
+kind: ImagePolicy
+metadata:
+  name: cortex-main
+  namespace: flux-system
+spec:
+  imageRepositoryRef:
+    name: cortex-docker
+  policy:
+    semver:
+      range: '>=1.0.0'
+  # Or use tag-based policy:
+  # policy:
+  #   alphabetical:
+  #     order: asc
+
+---
+# Flux ImageUpdateAutomation - Auto-update images in Git
+apiVersion: image.toolkit.fluxcd.io/v1beta1
+kind: ImageUpdateAutomation
+metadata:
+  name: cortex-auto-update
+  namespace: flux-system
+spec:
+  interval: 30m
+  sourceRef:
+    kind: GitRepository
+    name: cortex
+  git:
+    checkout:
+      ref:
+        branch: main
+    commit:
+      author:
+        name: fluxcdbot
+        email: fluxcd@cortex.example.com
+      messageTemplate: |
+        chore: Update Cortex images
+
+        Automated image update by Flux
+
+        Images updated:
+        {{ range .Updated.Images -}}
+        - {{.}} to {{.}}:{{.}}
+        {{ end }}
+    push:
+      branch: main
+  update:
+    path: ./k8s/cortex-k3s
+    strategy: Setters
+
+---
+# Flux Alert for deployment events
+apiVersion: notification.toolkit.fluxcd.io/v1beta2
+kind: Alert
+metadata:
+  name: cortex-deployment-alerts
+  namespace: flux-system
+spec:
+  providerRef:
+    name: cortex-webhook
+  eventSeverity: info
+  eventSources:
+    - kind: Kustomization
+      name: cortex-core
+    - kind: Kustomization
+      name: cortex-monitoring
+    - kind: HelmRelease
+      name: cortex-mcp-servers
+
+---
+# Flux Provider for webhook notifications
+apiVersion: notification.toolkit.fluxcd.io/v1beta2
+kind: Provider
+metadata:
+  name: cortex-webhook
+  namespace: flux-system
+spec:
+  type: generic
+  address: http://cortex-dashboard.cortex-system.svc.cluster.local/api/flux-events
+  secretRef:
+    name: webhook-token
+    # Or use Slack:
+    # type: slack
+    # channel: cortex-deployments
+    # address: https://hooks.slack.com/services/YOUR/WEBHOOK/URL

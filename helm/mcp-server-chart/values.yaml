@@ -1,0 +1,225 @@
+# Default values for MCP server chart
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+# MCP Server configuration
+mcpServer:
+  # Name of the MCP server (e.g., wazuh-mcp-server, proxmox-mcp-server)
+  name: example-mcp-server
+
+  # Container image configuration
+  image:
+    repository: ghcr.io/ry-ops/cortex/example-mcp-server
+    tag: latest
+    pullPolicy: Always
+
+  # Service account
+  serviceAccount:
+    create: true
+    name: ""
+    annotations: {}
+
+  # Pod annotations
+  podAnnotations:
+    prometheus.io/scrape: "true"
+    prometheus.io/port: "9090"
+    prometheus.io/path: "/metrics"
+
+  # Pod labels
+  podLabels:
+    app.kubernetes.io/name: mcp-server
+    app.kubernetes.io/component: integration
+
+  # Security context for the pod
+  podSecurityContext:
+    runAsNonRoot: true
+    runAsUser: 1000
+    fsGroup: 1000
+
+  # Security context for the container
+  securityContext:
+    allowPrivilegeEscalation: false
+    readOnlyRootFilesystem: true
+    capabilities:
+      drop:
+        - ALL
+
+  # Service configuration
+  service:
+    type: ClusterIP
+    port: 8080
+    targetPort: 8080
+    annotations: {}
+
+  # Resource limits and requests
+  resources:
+    requests:
+      cpu: 250m
+      memory: 512Mi
+    limits:
+      cpu: 1000m
+      memory: 2Gi
+
+  # Environment variables
+  env: []
+  # Example:
+  # - name: MCP_SERVER_URL
+  #   value: "https://api.example.com"
+  # - name: API_KEY
+  #   valueFrom:
+  #     secretKeyRef:
+  #       name: mcp-credentials
+  #       key: api-key
+
+  # Environment variables from ConfigMap
+  envFrom: []
+  # Example:
+  # - configMapRef:
+  #     name: mcp-config
+
+  # Volume mounts
+  volumeMounts: []
+  # Example:
+  # - name: cache
+  #   mountPath: /tmp/cache
+
+  # Volumes
+  volumes: []
+  # Example:
+  # - name: cache
+  #   emptyDir: {}
+
+  # Liveness probe
+  livenessProbe:
+    httpGet:
+      path: /health
+      port: 8080
+    initialDelaySeconds: 30
+    periodSeconds: 10
+    timeoutSeconds: 5
+    successThreshold: 1
+    failureThreshold: 3
+
+  # Readiness probe
+  readinessProbe:
+    httpGet:
+      path: /ready
+      port: 8080
+    initialDelaySeconds: 10
+    periodSeconds: 5
+    timeoutSeconds: 3
+    successThreshold: 1
+    failureThreshold: 3
+
+  # Node selector
+  nodeSelector: {}
+
+  # Tolerations
+  tolerations: []
+
+  # Affinity
+  affinity: {}
+
+# Autoscaling configuration (KEDA)
+autoscaling:
+  enabled: true
+  minReplicas: 0
+  maxReplicas: 5
+  pollingInterval: 30
+
+  # Scaling metric
+  metric:
+    type: prometheus
+    serverAddress: http://prometheus.monitoring.svc.cluster.local:9090
+    metricName: cortex_mcp_requests_total
+    query: |
+      sum(rate(cortex_mcp_requests_total{server="{{ .Values.mcpServer.name }}"}[1m]))
+    threshold: "10"
+
+  # Alternative: scale based on CPU
+  # metric:
+  #   type: cpu
+  #   targetAverageUtilization: 80
+
+  # Alternative: scale based on custom metric
+  # metric:
+  #   type: external
+  #   metricName: cortex_task_queue_depth
+  #   targetValue: "5"
+
+# Secrets configuration
+secrets:
+  # Create secrets from values
+  create: false
+  name: ""
+  data: {}
+  # Example:
+  # data:
+  #   api-key: "base64-encoded-key"
+  #   username: "base64-encoded-username"
+  #   password: "base64-encoded-password"
+
+# ConfigMap configuration
+configMap:
+  create: false
+  name: ""
+  data: {}
+  # Example:
+  # data:
+  #   server-url: "https://api.example.com"
+  #   timeout: "30"
+
+# Service monitor for Prometheus (if using Prometheus Operator)
+serviceMonitor:
+  enabled: true
+  interval: 15s
+  path: /metrics
+  labels:
+    app: cortex
+    component: mcp-server
+
+# Network policy
+networkPolicy:
+  enabled: true
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              name: cortex-system
+        - namespaceSelector:
+            matchLabels:
+              name: cortex-workers
+      ports:
+        - protocol: TCP
+          port: 8080
+  egress:
+    # Allow DNS
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              name: kube-system
+      ports:
+        - protocol: UDP
+          port: 53
+    # Allow external API calls (customize per MCP server)
+    - to:
+        - ipBlock:
+            cidr: 0.0.0.0/0
+            except:
+              - 169.254.169.254/32  # Block AWS metadata
+      ports:
+        - protocol: TCP
+          port: 443
+        - protocol: TCP
+          port: 80
+
+# Horizontal Pod Autoscaler (HPA) - alternative to KEDA
+hpa:
+  enabled: false
+  minReplicas: 1
+  maxReplicas: 5
+  targetCPUUtilizationPercentage: 80
+  targetMemoryUtilizationPercentage: 80

@@ -1,0 +1,336 @@
+---
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: cortex-master-alerts
+  namespace: monitoring
+  labels:
+    app: cortex
+    component: master
+    prometheus: cortex
+spec:
+  groups:
+    - name: cortex_masters
+      interval: 30s
+      rules:
+        # Master pod down
+        - alert: MasterDown
+          expr: up{job="cortex-masters"} == 0
+          for: 2m
+          labels:
+            severity: critical
+            component: master
+          annotations:
+            summary: "Cortex master {{ $labels.master_id }} is down"
+            description: "Master {{ $labels.master_id }} has been unavailable for more than 2 minutes. Coordination may be impaired."
+
+        # Master pod restarting frequently
+        - alert: MasterRestartingFrequently
+          expr: rate(kube_pod_container_status_restarts_total{namespace="cortex-system",pod=~".*-master-.*"}[15m]) > 0.1
+          for: 5m
+          labels:
+            severity: warning
+            component: master
+          annotations:
+            summary: "Master {{ $labels.pod }} is restarting frequently"
+            description: "Master {{ $labels.pod }} has restarted {{ $value }} times in the last 15 minutes."
+
+        # Token budget exhausted
+        - alert: TokenBudgetExhausted
+          expr: cortex_token_budget_utilization > 0.95
+          for: 5m
+          labels:
+            severity: warning
+            component: master
+          annotations:
+            summary: "Master {{ $labels.master }} at 95% token budget"
+            description: "Master {{ $labels.master }} has used {{ $value | humanizePercentage }} of its token budget. Consider increasing allocation or optimizing usage."
+
+        # Token budget critically exhausted
+        - alert: TokenBudgetCritical
+          expr: cortex_token_budget_utilization > 0.98
+          for: 2m
+          labels:
+            severity: critical
+            component: master
+          annotations:
+            summary: "Master {{ $labels.master }} at 98% token budget - CRITICAL"
+            description: "Master {{ $labels.master }} has used {{ $value | humanizePercentage }} of its token budget and may halt operations soon."
+
+        # High API error rate
+        - alert: HighMasterAPIErrorRate
+          expr: rate(cortex_api_errors_total{component="master"}[5m]) > 0.05
+          for: 10m
+          labels:
+            severity: warning
+            component: master
+          annotations:
+            summary: "High error rate on master {{ $labels.master }}"
+            description: "Master {{ $labels.master }} is experiencing {{ $value }} errors per second."
+
+---
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: cortex-worker-alerts
+  namespace: monitoring
+  labels:
+    app: cortex
+    component: worker
+    prometheus: cortex
+spec:
+  groups:
+    - name: cortex_workers
+      interval: 30s
+      rules:
+        # Worker failure rate high
+        - alert: WorkerFailureRateHigh
+          expr: |
+            (
+              sum(rate(cortex_worker_failures_total[10m])) by (worker_type)
+              /
+              sum(rate(cortex_worker_completions_total[10m])) by (worker_type)
+            ) > 0.5
+          for: 10m
+          labels:
+            severity: critical
+            component: worker
+          annotations:
+            summary: "High failure rate for {{ $labels.worker_type }} workers"
+            description: "Worker type {{ $labels.worker_type }} has a failure rate of {{ $value | humanizePercentage }} over the last 10 minutes."
+
+        # Workers stuck in queue
+        - alert: WorkersStuckInQueue
+          expr: cortex_task_queue_depth > 20
+          for: 15m
+          labels:
+            severity: warning
+            component: worker
+          annotations:
+            summary: "Task queue depth high for {{ $labels.worker_type }}"
+            description: "{{ $value }} tasks are waiting in the queue for {{ $labels.worker_type }} workers. Consider scaling up."
+
+        # Worker pod OOMKilled
+        - alert: WorkerOOMKilled
+          expr: |
+            sum(kube_pod_container_status_terminated_reason{namespace="cortex-workers",reason="OOMKilled"}) by (pod) > 0
+          for: 1m
+          labels:
+            severity: warning
+            component: worker
+          annotations:
+            summary: "Worker {{ $labels.pod }} was OOMKilled"
+            description: "Worker {{ $labels.pod }} was killed due to out-of-memory. Consider increasing memory limits."
+
+        # Long-running worker tasks
+        - alert: WorkerTaskTooLong
+          expr: cortex_worker_task_duration_seconds > 3600
+          for: 5m
+          labels:
+            severity: warning
+            component: worker
+          annotations:
+            summary: "Worker task running for over 1 hour"
+            description: "Worker {{ $labels.worker_id }} has been running task {{ $labels.task_id }} for {{ $value | humanizeDuration }}."
+
+---
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: cortex-mcp-alerts
+  namespace: monitoring
+  labels:
+    app: cortex
+    component: mcp-server
+    prometheus: cortex
+spec:
+  groups:
+    - name: cortex_mcp_servers
+      interval: 30s
+      rules:
+        # MCP server down
+        - alert: MCPServerDown
+          expr: up{job="cortex-mcp-servers"} == 0
+          for: 5m
+          labels:
+            severity: critical
+            component: mcp-server
+          annotations:
+            summary: "MCP server {{ $labels.server }} is down"
+            description: "MCP server {{ $labels.server }} has been unavailable for more than 5 minutes. Integration is offline."
+
+        # High MCP server latency
+        - alert: MCPServerHighLatency
+          expr: |
+            histogram_quantile(0.95,
+              rate(cortex_mcp_request_duration_seconds_bucket[5m])
+            ) > 5
+          for: 10m
+          labels:
+            severity: warning
+            component: mcp-server
+          annotations:
+            summary: "High latency on MCP server {{ $labels.server }}"
+            description: "MCP server {{ $labels.server }} has 95th percentile latency of {{ $value }}s over the last 10 minutes."
+
+        # MCP server error rate high
+        - alert: MCPServerErrorRateHigh
+          expr: |
+            (
+              sum(rate(cortex_mcp_errors_total[5m])) by (server)
+              /
+              sum(rate(cortex_mcp_requests_total[5m])) by (server)
+            ) > 0.1
+          for: 5m
+          labels:
+            severity: warning
+            component: mcp-server
+          annotations:
+            summary: "High error rate on MCP server {{ $labels.server }}"
+            description: "MCP server {{ $labels.server }} has an error rate of {{ $value | humanizePercentage }}."
+
+        # MCP server authentication failures
+        - alert: MCPServerAuthFailures
+          expr: rate(cortex_mcp_auth_failures_total[5m]) > 0.1
+          for: 5m
+          labels:
+            severity: warning
+            component: mcp-server
+          annotations:
+            summary: "Authentication failures on MCP server {{ $labels.server }}"
+            description: "MCP server {{ $labels.server }} is experiencing {{ $value }} authentication failures per second. Check credentials."
+
+---
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: cortex-resource-alerts
+  namespace: monitoring
+  labels:
+    app: cortex
+    component: infrastructure
+    prometheus: cortex
+spec:
+  groups:
+    - name: cortex_resources
+      interval: 30s
+      rules:
+        # High memory usage
+        - alert: HighMemoryUsage
+          expr: |
+            (
+              container_memory_working_set_bytes{namespace=~"cortex.*"}
+              /
+              container_spec_memory_limit_bytes{namespace=~"cortex.*"}
+            ) > 0.9
+          for: 5m
+          labels:
+            severity: warning
+            component: infrastructure
+          annotations:
+            summary: "High memory usage in {{ $labels.namespace }}/{{ $labels.pod }}"
+            description: "Container {{ $labels.container }} in pod {{ $labels.pod }} is using {{ $value | humanizePercentage }} of its memory limit."
+
+        # High CPU usage
+        - alert: HighCPUUsage
+          expr: |
+            (
+              rate(container_cpu_usage_seconds_total{namespace=~"cortex.*"}[5m])
+              /
+              container_spec_cpu_quota{namespace=~"cortex.*"} * 100000
+            ) > 0.9
+          for: 10m
+          labels:
+            severity: warning
+            component: infrastructure
+          annotations:
+            summary: "High CPU usage in {{ $labels.namespace }}/{{ $labels.pod }}"
+            description: "Container {{ $labels.container }} in pod {{ $labels.pod }} is using {{ $value | humanizePercentage }} of its CPU limit."
+
+        # PVC almost full
+        - alert: PVCAlmostFull
+          expr: |
+            (
+              kubelet_volume_stats_used_bytes{namespace=~"cortex.*"}
+              /
+              kubelet_volume_stats_capacity_bytes{namespace=~"cortex.*"}
+            ) > 0.85
+          for: 5m
+          labels:
+            severity: warning
+            component: infrastructure
+          annotations:
+            summary: "PVC {{ $labels.persistentvolumeclaim }} is almost full"
+            description: "PVC {{ $labels.persistentvolumeclaim }} in namespace {{ $labels.namespace }} is {{ $value | humanizePercentage }} full."
+
+        # PVC critically full
+        - alert: PVCCriticallyFull
+          expr: |
+            (
+              kubelet_volume_stats_used_bytes{namespace=~"cortex.*"}
+              /
+              kubelet_volume_stats_capacity_bytes{namespace=~"cortex.*"}
+            ) > 0.95
+          for: 2m
+          labels:
+            severity: critical
+            component: infrastructure
+          annotations:
+            summary: "PVC {{ $labels.persistentvolumeclaim }} is critically full"
+            description: "PVC {{ $labels.persistentvolumeclaim }} in namespace {{ $labels.namespace }} is {{ $value | humanizePercentage }} full. Immediate action required."
+
+---
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: cortex-task-alerts
+  namespace: monitoring
+  labels:
+    app: cortex
+    component: task-queue
+    prometheus: cortex
+spec:
+  groups:
+    - name: cortex_tasks
+      interval: 30s
+      rules:
+        # Task queue backlog
+        - alert: TaskQueueBacklog
+          expr: sum(cortex_task_queue_depth) by (worker_type) > 50
+          for: 30m
+          labels:
+            severity: warning
+            component: task-queue
+          annotations:
+            summary: "Large task queue backlog for {{ $labels.worker_type }}"
+            description: "{{ $value }} tasks are queued for {{ $labels.worker_type }} workers. Backlog may indicate resource constraints."
+
+        # No workers available
+        - alert: NoWorkersAvailable
+          expr: |
+            cortex_task_queue_depth > 5
+            and
+            cortex_workers_active{worker_type=~".*"} == 0
+          for: 10m
+          labels:
+            severity: critical
+            component: task-queue
+          annotations:
+            summary: "No workers available for pending tasks"
+            description: "{{ $value }} tasks are queued but no workers are active for {{ $labels.worker_type }}. Check KEDA scaling or worker health."
+
+        # Task success rate low
+        - alert: TaskSuccessRateLow
+          expr: |
+            (
+              sum(rate(cortex_task_completions_total{status="success"}[10m])) by (task_type)
+              /
+              sum(rate(cortex_task_completions_total[10m])) by (task_type)
+            ) < 0.8
+          for: 15m
+          labels:
+            severity: warning
+            component: task-queue
+          annotations:
+            summary: "Low task success rate for {{ $labels.task_type }}"
+            description: "Task type {{ $labels.task_type }} has a success rate of only {{ $value | humanizePercentage }} over the last 15 minutes."
