@@ -1,0 +1,109 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: development-master
+  namespace: cortex-system
+  labels:
+    app.kubernetes.io/name: cortex
+    app.kubernetes.io/component: development-master
+    cortex.ai/master-type: development
+spec:
+  replicas: 1
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 0
+      maxSurge: 1
+  selector:
+    matchLabels:
+      app: development-master
+  template:
+    metadata:
+      labels:
+        app: development-master
+        cortex.ai/master-type: development
+    spec:
+      serviceAccountName: cortex-masters
+      containers:
+      - name: development
+        image: ghcr.io/ry-ops/cortex:latest
+        imagePullPolicy: Always
+        command: ["./scripts/run-development-master.sh"]
+        env:
+        - name: MASTER_TYPE
+          value: "development"
+        - name: ANTHROPIC_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: cortex-credentials
+              key: anthropic-api-key
+        - name: GITHUB_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: cortex-credentials
+              key: github-token
+        - name: GITHUB_USER
+          valueFrom:
+            secretKeyRef:
+              name: cortex-credentials
+              key: github-user
+        - name: K8S_NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+        - name: POD_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
+        volumeMounts:
+        - name: coordination
+          mountPath: /coordination
+        - name: config
+          mountPath: /config
+          readOnly: true
+        - name: git-workspace
+          mountPath: /workspace
+        resources:
+          requests:
+            cpu: 1000m
+            memory: 2Gi
+          limits:
+            cpu: 4000m
+            memory: 8Gi
+        livenessProbe:
+          exec:
+            command:
+            - /bin/bash
+            - -c
+            - "test -f /coordination/masters/development/heartbeat.json"
+          initialDelaySeconds: 30
+          periodSeconds: 30
+      volumes:
+      - name: coordination
+        persistentVolumeClaim:
+          claimName: cortex-coordination-pvc
+      - name: config
+        configMap:
+          name: cortex-config
+      - name: git-workspace
+        emptyDir:
+          sizeLimit: 10Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: development-master
+  namespace: cortex-system
+  labels:
+    app.kubernetes.io/name: cortex
+    app.kubernetes.io/component: development-master
+spec:
+  type: ClusterIP
+  selector:
+    app: development-master
+  ports:
+  - name: api
+    port: 8080
+    targetPort: 8080
+    protocol: TCP

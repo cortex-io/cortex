@@ -1,0 +1,109 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cicd-master
+  namespace: cortex-system
+  labels:
+    app.kubernetes.io/name: cortex
+    app.kubernetes.io/component: cicd-master
+    cortex.ai/master-type: cicd
+spec:
+  replicas: 1
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 0
+      maxSurge: 1
+  selector:
+    matchLabels:
+      app: cicd-master
+  template:
+    metadata:
+      labels:
+        app: cicd-master
+        cortex.ai/master-type: cicd
+    spec:
+      serviceAccountName: cortex-masters
+      containers:
+      - name: cicd
+        image: ghcr.io/ry-ops/cortex:latest
+        imagePullPolicy: Always
+        command: ["./scripts/run-cicd-master.sh"]
+        env:
+        - name: MASTER_TYPE
+          value: "cicd"
+        - name: ANTHROPIC_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: cortex-credentials
+              key: anthropic-api-key
+        - name: GITHUB_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: cortex-credentials
+              key: github-token
+        - name: GITHUB_USER
+          valueFrom:
+            secretKeyRef:
+              name: cortex-credentials
+              key: github-user
+        - name: K8S_NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+        - name: POD_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
+        volumeMounts:
+        - name: coordination
+          mountPath: /coordination
+        - name: config
+          mountPath: /config
+          readOnly: true
+        - name: build-cache
+          mountPath: /build-cache
+        resources:
+          requests:
+            cpu: 1000m
+            memory: 2Gi
+          limits:
+            cpu: 4000m
+            memory: 8Gi
+        livenessProbe:
+          exec:
+            command:
+            - /bin/bash
+            - -c
+            - "test -f /coordination/masters/cicd/heartbeat.json"
+          initialDelaySeconds: 30
+          periodSeconds: 30
+      volumes:
+      - name: coordination
+        persistentVolumeClaim:
+          claimName: cortex-coordination-pvc
+      - name: config
+        configMap:
+          name: cortex-config
+      - name: build-cache
+        emptyDir:
+          sizeLimit: 20Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: cicd-master
+  namespace: cortex-system
+  labels:
+    app.kubernetes.io/name: cortex
+    app.kubernetes.io/component: cicd-master
+spec:
+  type: ClusterIP
+  selector:
+    app: cicd-master
+  ports:
+  - name: api
+    port: 8080
+    targetPort: 8080
+    protocol: TCP

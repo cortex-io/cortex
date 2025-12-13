@@ -1,0 +1,34 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: cortex-system
+
+resources:
+  - 00-namespace.yaml
+  - 01-secrets.yaml
+  - 02-storage.yaml
+  - 03-coordinator-master.yaml
+  - 04-security-master.yaml
+  - 05-development-master.yaml
+  - 06-cicd-master.yaml
+  - 07-wazuh-integration.yaml
+  - 09-dashboard-ingress.yaml
+
+# ConfigMap generator for dynamic config
+configMapGenerator:
+  - name: cortex-deployment-info
+    literals:
+      - deployment-date=$(date +%Y-%m-%dT%H:%M:%SZ)
+      - deployment-version=1.0.0
+      - k3s-cluster=production
+
+# Secret generator (requires env vars)
+secretGenerator:
+  - name: cortex-credentials
+    envs:
+      - secrets.env
+
+labels:
+  - pairs:
+      app.kubernetes.io/managed-by: cortex
+      app.kubernetes.io/version: 1.0.0

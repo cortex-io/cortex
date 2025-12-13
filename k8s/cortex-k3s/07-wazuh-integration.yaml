@@ -1,0 +1,146 @@
+---
+# Wazuh Agent DaemonSet - Monitors all K3s nodes
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: wazuh-agent
+  namespace: cortex-system
+  labels:
+    app.kubernetes.io/name: wazuh
+    app.kubernetes.io/component: agent
+spec:
+  selector:
+    matchLabels:
+      app: wazuh-agent
+  template:
+    metadata:
+      labels:
+        app: wazuh-agent
+    spec:
+      hostNetwork: true
+      hostPID: true
+      hostIPC: true
+      containers:
+      - name: wazuh-agent
+        image: wazuh/wazuh-agent:4.14.1
+        env:
+        - name: WAZUH_MANAGER
+          value: "10.88.140.202"
+        - name: WAZUH_AGENT_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: spec.nodeName
+        - name: WAZUH_REGISTRATION_PASSWORD
+          value: "cortex-k3s-cluster"
+        securityContext:
+          privileged: true
+        volumeMounts:
+        - name: host-root
+          mountPath: /host
+          readOnly: true
+        - name: host-logs
+          mountPath: /var/log
+          readOnly: true
+        - name: docker-socket
+          mountPath: /var/run/docker.sock
+          readOnly: true
+        - name: containerd-socket
+          mountPath: /run/containerd/containerd.sock
+          readOnly: true
+        resources:
+          requests:
+            cpu: 100m
+            memory: 256Mi
+          limits:
+            cpu: 500m
+            memory: 512Mi
+      volumes:
+      - name: host-root
+        hostPath:
+          path: /
+      - name: host-logs
+        hostPath:
+          path: /var/log
+      - name: docker-socket
+        hostPath:
+          path: /var/run/docker.sock
+      - name: containerd-socket
+        hostPath:
+          path: /run/containerd/containerd.sock
+      tolerations:
+      - key: node-role.kubernetes.io/master
+        effect: NoSchedule
+      - key: node-role.kubernetes.io/control-plane
+        effect: NoSchedule
+---
+# Wazuh Webhook Service (for Security Master to receive alerts)
+apiVersion: v1
+kind: Service
+metadata:
+  name: wazuh-webhook
+  namespace: cortex-system
+  labels:
+    app.kubernetes.io/name: cortex
+    app.kubernetes.io/component: wazuh-webhook
+spec:
+  type: LoadBalancer
+  selector:
+    app: security-master
+  ports:
+  - name: webhook
+    port: 9443
+    targetPort: 9443
+    protocol: TCP
+---
+# ConfigMap for Wazuh API client
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: wazuh-client-config
+  namespace: cortex-system
+data:
+  wazuh-client.sh: |
+    #!/bin/bash
+    # Wazuh API client for Cortex Security Master
+
+    WAZUH_API_URL="${WAZUH_URL:-https://10.88.140.202:55000}"
+    WAZUH_USER="${WAZUH_USER:-admin}"
+    WAZUH_PASSWORD="${WAZUH_PASSWORD}"
+    WAZUH_TOKEN_FILE="/tmp/wazuh-token.txt"
+
+    # Authenticate and get JWT token
+    wazuh_authenticate() {
+        local response=$(curl -k -s -X POST \
+            -u "$WAZUH_USER:$WAZUH_PASSWORD" \
+            "$WAZUH_API_URL/security/user/authenticate")
+
+        echo "$response" | jq -r '.data.token' > "$WAZUH_TOKEN_FILE"
+    }
+
+    # Get recent alerts
+    wazuh_get_alerts() {
+        local limit="${1:-100}"
+        local token=$(cat "$WAZUH_TOKEN_FILE" 2>/dev/null || { wazuh_authenticate; cat "$WAZUH_TOKEN_FILE"; })
+
+        curl -k -s -X GET \
+            -H "Authorization: Bearer $token" \
+            "$WAZUH_API_URL/security/alerts?limit=$limit&sort=-timestamp"
+    }
+
+    # Get vulnerabilities for all agents
+    wazuh_get_vulnerabilities() {
+        local token=$(cat "$WAZUH_TOKEN_FILE" 2>/dev/null || { wazuh_authenticate; cat "$WAZUH_TOKEN_FILE"; })
+
+        curl -k -s -X GET \
+            -H "Authorization: Bearer $token" \
+            "$WAZUH_API_URL/vulnerability/agents"
+    }
+
+    # Get agent status
+    wazuh_get_agents() {
+        local token=$(cat "$WAZUH_TOKEN_FILE" 2>/dev/null || { wazuh_authenticate; cat "$WAZUH_TOKEN_FILE"; })
+
+        curl -k -s -X GET \
+            -H "Authorization: Bearer $token" \
+            "$WAZUH_API_URL/agents"
+    }
