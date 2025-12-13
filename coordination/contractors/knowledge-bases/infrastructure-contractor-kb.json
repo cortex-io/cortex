@@ -1,0 +1,717 @@
+{
+  "contractor_id": "infrastructure-contractor",
+  "version": "1.0.0",
+  "created_at": "2025-12-13T00:00:00Z",
+  "domain": "infrastructure_provisioning_and_management",
+  "description": "Multi-tool infrastructure specialist handling VM provisioning (Proxmox), IaC deployment (OpenTofu), and configuration management (Ansible)",
+  "expertise": {
+    "mcp_servers": [
+      {
+        "server_id": "proxmox-mcp-server",
+        "repository": "ry-ops/proxmox-mcp-server",
+        "version": "latest",
+        "integration_status": "fully_integrated",
+        "confidence": 0.94,
+        "primary_capabilities": ["vm_management", "container_management", "storage_management"]
+      },
+      {
+        "server_id": "opentofu-mcp-server",
+        "repository": "ry-ops/opentofu-mcp-server",
+        "version": "latest",
+        "integration_status": "fully_integrated",
+        "confidence": 0.92,
+        "primary_capabilities": ["infrastructure_as_code", "state_management", "workspace_management"]
+      },
+      {
+        "server_id": "ansible-mcp-server",
+        "repository": "ry-ops/ansible-mcp-server",
+        "version": "0.1.0",
+        "integration_status": "production_ready",
+        "confidence": 0.94,
+        "primary_capabilities": ["configuration_management", "orchestration", "deployment_automation"]
+      }
+    ],
+    "tool_mastery": {
+      "create_vm": {
+        "tool_id": "create_vm",
+        "mcp_server": "proxmox-mcp-server",
+        "confidence": 0.95,
+        "use_cases": [
+          "Provisioning new virtual machines in Proxmox cluster",
+          "Creating VM templates for rapid deployment",
+          "Setting up development/staging/production VMs",
+          "Building K3s cluster nodes"
+        ],
+        "best_practices": [
+          "Always specify adequate resources (CPU, memory, storage)",
+          "Use templates when possible for consistency",
+          "Tag VMs with environment and purpose metadata",
+          "Start VMs in stopped state, validate config, then start",
+          "Use descriptive VM IDs that reflect purpose (e.g., 101-k3s-master-01)"
+        ],
+        "common_patterns": [
+          "Create from template, customize, then start",
+          "Provision multiple VMs in parallel for cluster setup",
+          "Use cloud-init for initial configuration"
+        ],
+        "parameter_guidelines": {
+          "vmid": "Choose unused ID in range (100-999 for VMs)",
+          "cores": "Match workload: 2-4 for general, 8+ for intensive",
+          "memory": "4096 MB minimum for modern Linux, 8192+ for K8s nodes",
+          "storage": "Use appropriate storage pool (local-lvm for VMs, local for ISOs)"
+        }
+      },
+      "start_vm": {
+        "tool_id": "start_vm",
+        "mcp_server": "proxmox-mcp-server",
+        "confidence": 0.98,
+        "use_cases": [
+          "Starting VMs after creation or shutdown",
+          "Recovering from scheduled maintenance",
+          "Scaling up infrastructure on demand",
+          "Automated startup sequences for dependent VMs"
+        ],
+        "best_practices": [
+          "Verify VM exists and is in stopped state before starting",
+          "Wait for VM to fully boot before proceeding (use get_vm_status)",
+          "Start dependencies first (e.g., database before app server)",
+          "Monitor startup logs for errors",
+          "Implement startup timeout to detect boot failures"
+        ],
+        "common_patterns": [
+          "Start cluster nodes in specific order (master before workers)",
+          "Batch start with health check verification",
+          "Automated recovery after maintenance window"
+        ]
+      },
+      "get_vm_status": {
+        "tool_id": "get_vm_status",
+        "mcp_server": "proxmox-mcp-server",
+        "confidence": 0.97,
+        "use_cases": [
+          "Monitoring VM health and resource usage",
+          "Verifying VM state before operations",
+          "Collecting metrics for capacity planning",
+          "Troubleshooting performance issues"
+        ],
+        "best_practices": [
+          "Poll status before and after operations",
+          "Monitor CPU and memory usage for scaling decisions",
+          "Check disk usage to prevent out-of-space issues",
+          "Use status to determine if VM is ready for operations",
+          "Track uptime for SLA reporting"
+        ],
+        "common_patterns": [
+          "Health check loop for cluster monitoring",
+          "Pre-operation validation",
+          "Resource usage trending for autoscaling"
+        ]
+      },
+      "create_vm_snapshot": {
+        "tool_id": "create_vm_snapshot",
+        "mcp_server": "proxmox-mcp-server",
+        "confidence": 0.96,
+        "use_cases": [
+          "Creating backup before risky operations",
+          "Capturing known-good state for rollback",
+          "Creating restore points for disaster recovery",
+          "Preserving state before major upgrades"
+        ],
+        "best_practices": [
+          "Always snapshot before major changes",
+          "Use descriptive snapshot names with timestamp",
+          "Don't keep too many snapshots (performance impact)",
+          "Test snapshot restoration periodically",
+          "Document what each snapshot represents"
+        ],
+        "common_patterns": [
+          "Snapshot before system upgrade",
+          "Daily snapshot schedule for critical VMs",
+          "Pre-deployment snapshot for rollback capability"
+        ]
+      },
+      "init": {
+        "tool_id": "init",
+        "mcp_server": "opentofu-mcp-server",
+        "confidence": 0.96,
+        "use_cases": [
+          "Initializing new Terraform/OpenTofu projects",
+          "Updating provider versions",
+          "Reconfiguring backend after changes",
+          "Setting up workspace for infrastructure deployment"
+        ],
+        "best_practices": [
+          "Always run init before plan or apply",
+          "Use -upgrade flag to update providers when needed",
+          "Verify backend configuration before init",
+          "Check for .terraform.lock.hcl changes after init",
+          "Commit lock file to version control"
+        ],
+        "common_patterns": [
+          "init -> plan -> apply workflow",
+          "init after cloning repository",
+          "init -upgrade for provider updates"
+        ]
+      },
+      "plan": {
+        "tool_id": "plan",
+        "mcp_server": "opentofu-mcp-server",
+        "confidence": 0.95,
+        "use_cases": [
+          "Previewing infrastructure changes before apply",
+          "Validating configuration correctness",
+          "Understanding resource dependencies",
+          "Reviewing change impact for approvals"
+        ],
+        "best_practices": [
+          "Always run plan before apply",
+          "Review plan output carefully for unexpected changes",
+          "Save plan to file for consistent apply",
+          "Use -out flag to avoid drift between plan and apply",
+          "Check for resource destruction warnings"
+        ],
+        "common_patterns": [
+          "plan -> review -> apply",
+          "plan with specific target for isolated changes",
+          "plan -destroy to preview destruction"
+        ]
+      },
+      "apply": {
+        "tool_id": "apply",
+        "mcp_server": "opentofu-mcp-server",
+        "confidence": 0.90,
+        "use_cases": [
+          "Deploying infrastructure changes",
+          "Creating new resources",
+          "Updating existing infrastructure",
+          "Importing external resources into state"
+        ],
+        "best_practices": [
+          "NEVER use auto_approve in production without confirmation_token",
+          "Always run plan first to preview changes",
+          "Use workspace protection for critical environments",
+          "Take state backup before major applies",
+          "Monitor apply progress and be ready to interrupt",
+          "Verify resources after apply completes"
+        ],
+        "common_patterns": [
+          "plan -> apply with confirmation",
+          "apply in non-production, plan in production",
+          "apply with -target for specific resource updates"
+        ],
+        "safety_considerations": [
+          "Workspace protection blocks applies on production/prod/main",
+          "Confirmation token must match workspace name",
+          "All applies are logged to audit trail",
+          "State locking prevents concurrent modifications"
+        ]
+      },
+      "workspace_select": {
+        "tool_id": "workspace_select",
+        "mcp_server": "opentofu-mcp-server",
+        "confidence": 0.97,
+        "use_cases": [
+          "Switching between environments (dev/staging/prod)",
+          "Isolating infrastructure state by environment",
+          "Managing multiple deployments of same config",
+          "Environment-specific operations"
+        ],
+        "best_practices": [
+          "Always verify current workspace before operations",
+          "Use workspace naming convention (env-purpose)",
+          "Don't perform destructive ops without workspace verification",
+          "Document workspace purpose and owner",
+          "Protect production workspaces from accidental changes"
+        ],
+        "common_patterns": [
+          "Select workspace before plan/apply",
+          "Workspace-specific variable files",
+          "Environment isolation strategy"
+        ]
+      },
+      "run_playbook": {
+        "tool_id": "run_playbook",
+        "mcp_server": "ansible-mcp-server",
+        "confidence": 0.94,
+        "use_cases": [
+          "Configuring newly provisioned VMs",
+          "Deploying applications across multiple hosts",
+          "System hardening and compliance enforcement",
+          "Multi-host orchestrated updates"
+        ],
+        "best_practices": [
+          "Always use check mode first for dry-run validation",
+          "Specify inventory file explicitly",
+          "Use tags for partial playbook execution",
+          "Set appropriate timeout for long-running tasks",
+          "Use vault for sensitive variables",
+          "Limit execution to specific hosts when testing"
+        ],
+        "common_patterns": [
+          "Check mode -> review -> actual execution",
+          "Playbook with dynamic inventory from Proxmox",
+          "Multi-stage deployment playbooks"
+        ]
+      },
+      "run_adhoc": {
+        "tool_id": "run_adhoc",
+        "mcp_server": "ansible-mcp-server",
+        "confidence": 0.92,
+        "use_cases": [
+          "Quick system checks across hosts",
+          "One-off command execution",
+          "Rapid troubleshooting",
+          "Gathering facts for inventory"
+        ],
+        "best_practices": [
+          "Use for simple tasks only (complex logic belongs in playbooks)",
+          "Specify module explicitly for clarity",
+          "Use check mode where applicable",
+          "Limit to specific host pattern for safety",
+          "Log adhoc commands for audit trail"
+        ],
+        "common_patterns": [
+          "ping module for connectivity checks",
+          "shell module for quick diagnostics",
+          "service module for service status checks"
+        ]
+      },
+      "list_inventory": {
+        "tool_id": "list_inventory",
+        "mcp_server": "ansible-mcp-server",
+        "confidence": 0.95,
+        "use_cases": [
+          "Discovering managed hosts",
+          "Validating inventory configuration",
+          "Identifying target hosts for operations",
+          "Inventory auditing"
+        ],
+        "best_practices": [
+          "Verify inventory before playbook execution",
+          "Use dynamic inventory for cloud resources",
+          "Keep inventory organized by environment and role",
+          "Document host variables and groups",
+          "Validate inventory file syntax"
+        ],
+        "common_patterns": [
+          "List inventory before deployment",
+          "Verify host group membership",
+          "Inventory validation in CI/CD"
+        ]
+      }
+    },
+    "orchestration_patterns": {
+      "vm_provision_and_configure": {
+        "pattern_id": "vm_provision_and_configure",
+        "description": "End-to-end VM provisioning with configuration",
+        "steps": [
+          {
+            "step": 1,
+            "action": "create_vm",
+            "mcp_server": "proxmox-mcp-server",
+            "parameters": "VM specifications, template, network config",
+            "success_criteria": "VM created with status 'stopped'"
+          },
+          {
+            "step": 2,
+            "action": "start_vm",
+            "mcp_server": "proxmox-mcp-server",
+            "parameters": "vmid from step 1",
+            "success_criteria": "VM status 'running'"
+          },
+          {
+            "step": 3,
+            "action": "wait_for_boot",
+            "method": "poll_get_vm_status",
+            "timeout_seconds": 120,
+            "success_criteria": "VM accessible via network"
+          },
+          {
+            "step": 4,
+            "action": "run_playbook",
+            "mcp_server": "ansible-mcp-server",
+            "parameters": "configuration playbook, new VM in inventory",
+            "success_criteria": "Playbook execution successful"
+          }
+        ],
+        "complexity": 5,
+        "success_rate": 0.89,
+        "average_duration_minutes": 12,
+        "rollback_strategy": "Stop VM, delete VM, remove from inventory"
+      },
+      "infrastructure_as_code_deployment": {
+        "pattern_id": "iac_deployment",
+        "description": "Deploy infrastructure using OpenTofu with workspace isolation",
+        "steps": [
+          {
+            "step": 1,
+            "action": "workspace_select",
+            "mcp_server": "opentofu-mcp-server",
+            "parameters": "target workspace (dev/staging/prod)",
+            "success_criteria": "Workspace selected, verified"
+          },
+          {
+            "step": 2,
+            "action": "init",
+            "mcp_server": "opentofu-mcp-server",
+            "parameters": "working directory",
+            "success_criteria": "Providers initialized, backend configured"
+          },
+          {
+            "step": 3,
+            "action": "plan",
+            "mcp_server": "opentofu-mcp-server",
+            "parameters": "variable files for environment",
+            "success_criteria": "Plan generated without errors"
+          },
+          {
+            "step": 4,
+            "action": "review_plan",
+            "method": "human_or_automated",
+            "success_criteria": "Plan approved for apply"
+          },
+          {
+            "step": 5,
+            "action": "apply",
+            "mcp_server": "opentofu-mcp-server",
+            "parameters": "confirmation_token matching workspace",
+            "success_criteria": "Apply completed successfully, resources created"
+          }
+        ],
+        "complexity": 6,
+        "success_rate": 0.92,
+        "average_duration_minutes": 8,
+        "rollback_strategy": "terraform destroy or revert to previous state"
+      },
+      "multi_vm_cluster_setup": {
+        "pattern_id": "multi_vm_cluster_setup",
+        "description": "Provision and configure multi-node cluster (e.g., K3s)",
+        "steps": [
+          {
+            "step": 1,
+            "action": "create_multiple_vms",
+            "mcp_server": "proxmox-mcp-server",
+            "method": "parallel_create_vm",
+            "count": "3 (1 master, 2 workers)",
+            "success_criteria": "All VMs created"
+          },
+          {
+            "step": 2,
+            "action": "start_vms_sequentially",
+            "mcp_server": "proxmox-mcp-server",
+            "order": "master first, then workers",
+            "success_criteria": "All VMs running"
+          },
+          {
+            "step": 3,
+            "action": "wait_for_network",
+            "method": "poll_vm_status_and_ping",
+            "success_criteria": "All VMs network accessible"
+          },
+          {
+            "step": 4,
+            "action": "run_playbook",
+            "mcp_server": "ansible-mcp-server",
+            "playbook": "k3s-master-setup.yml",
+            "target": "master node",
+            "success_criteria": "K3s master initialized"
+          },
+          {
+            "step": 5,
+            "action": "run_playbook",
+            "mcp_server": "ansible-mcp-server",
+            "playbook": "k3s-worker-join.yml",
+            "target": "worker nodes",
+            "success_criteria": "Workers joined cluster"
+          }
+        ],
+        "complexity": 8,
+        "success_rate": 0.85,
+        "average_duration_minutes": 25,
+        "rollback_strategy": "Stop all VMs, delete VMs, cleanup DNS/inventory"
+      },
+      "infrastructure_snapshot_and_update": {
+        "pattern_id": "snapshot_and_update",
+        "description": "Safe infrastructure updates with snapshot-based rollback",
+        "steps": [
+          {
+            "step": 1,
+            "action": "create_vm_snapshot",
+            "mcp_server": "proxmox-mcp-server",
+            "parameters": "all VMs in scope, descriptive name",
+            "success_criteria": "Snapshots created"
+          },
+          {
+            "step": 2,
+            "action": "run_playbook",
+            "mcp_server": "ansible-mcp-server",
+            "playbook": "system-update.yml",
+            "mode": "check mode first",
+            "success_criteria": "Update plan generated"
+          },
+          {
+            "step": 3,
+            "action": "run_playbook",
+            "mcp_server": "ansible-mcp-server",
+            "playbook": "system-update.yml",
+            "mode": "actual execution",
+            "success_criteria": "Updates applied successfully"
+          },
+          {
+            "step": 4,
+            "action": "verification",
+            "method": "run_adhoc or health_checks",
+            "success_criteria": "System healthy after update"
+          }
+        ],
+        "complexity": 5,
+        "success_rate": 0.93,
+        "average_duration_minutes": 18,
+        "rollback_strategy": "Revert to snapshot if verification fails"
+      }
+    }
+  },
+  "decision_trees": {
+    "choose_provisioning_tool": {
+      "description": "Select appropriate tool for infrastructure provisioning",
+      "root": {
+        "question": "What type of infrastructure are you provisioning?",
+        "vm_on_proxmox": {
+          "question": "Is this a one-off VM or part of larger infrastructure?",
+          "one_off": {
+            "decision": "use_proxmox_mcp_server",
+            "tools": ["create_vm", "start_vm"],
+            "confidence": 0.95
+          },
+          "infrastructure": {
+            "question": "Do you need infrastructure as code?",
+            "yes": {
+              "decision": "use_opentofu_with_proxmox_provider",
+              "tools": ["init", "plan", "apply"],
+              "confidence": 0.90
+            },
+            "no": {
+              "decision": "use_proxmox_mcp_server_directly",
+              "confidence": 0.88
+            }
+          }
+        },
+        "cloud_resources": {
+          "decision": "use_opentofu_mcp_server",
+          "tools": ["init", "plan", "apply", "workspace_select"],
+          "confidence": 0.95,
+          "reasoning": "OpenTofu handles multi-cloud infrastructure as code"
+        },
+        "existing_infrastructure": {
+          "question": "Do you need to import existing resources?",
+          "yes": {
+            "decision": "use_opentofu_import",
+            "tools": ["import_resource", "plan", "apply"],
+            "confidence": 0.85
+          },
+          "no": {
+            "decision": "use_ansible_for_configuration_only",
+            "confidence": 0.90
+          }
+        }
+      }
+    },
+    "determine_configuration_strategy": {
+      "description": "Choose between Ansible, cloud-init, or manual configuration",
+      "root": {
+        "question": "How many hosts need configuration?",
+        "single_host": {
+          "question": "Is configuration complex or simple?",
+          "simple": {
+            "decision": "use_cloud_init_or_manual",
+            "confidence": 0.80
+          },
+          "complex": {
+            "decision": "use_ansible_playbook",
+            "confidence": 0.90,
+            "reasoning": "Ansible provides repeatability even for single host"
+          }
+        },
+        "multiple_hosts": {
+          "question": "Are configurations identical or varied?",
+          "identical": {
+            "decision": "use_ansible_with_single_playbook",
+            "confidence": 0.95
+          },
+          "varied": {
+            "decision": "use_ansible_with_host_vars_and_groups",
+            "confidence": 0.93
+          }
+        }
+      }
+    },
+    "workspace_selection_strategy": {
+      "description": "Determine appropriate OpenTofu workspace for operation",
+      "root": {
+        "question": "What is the target environment?",
+        "development": {
+          "decision": "use_dev_workspace",
+          "workspace": "development",
+          "protection_level": "low",
+          "auto_approve_allowed": true,
+          "confidence": 0.95
+        },
+        "staging": {
+          "decision": "use_staging_workspace",
+          "workspace": "staging",
+          "protection_level": "medium",
+          "auto_approve_allowed": "with_confirmation",
+          "confidence": 0.93
+        },
+        "production": {
+          "decision": "use_production_workspace",
+          "workspace": "production",
+          "protection_level": "critical",
+          "auto_approve_allowed": false,
+          "manual_review_required": true,
+          "confidence": 0.98,
+          "reasoning": "Production changes require manual approval and confirmation"
+        }
+      }
+    }
+  },
+  "learned_optimizations": [
+    {
+      "optimization_id": "opt-infra-001",
+      "category": "performance",
+      "title": "Parallel VM provisioning for cluster setup",
+      "description": "Create multiple VMs in parallel instead of sequentially",
+      "before": "Create VMs one by one, 5 minutes each, total 15 minutes for 3 VMs",
+      "after": "Create all VMs in parallel, total 5 minutes",
+      "impact": "70% reduction in provisioning time",
+      "success_rate": 0.94,
+      "applicable_patterns": ["multi_vm_cluster_setup"]
+    },
+    {
+      "optimization_id": "opt-infra-002",
+      "category": "reliability",
+      "title": "Always snapshot before configuration changes",
+      "description": "Create Proxmox snapshots before running Ansible playbooks",
+      "before": "No snapshot, manual recovery from backup if issues",
+      "after": "Automatic snapshot, instant rollback on failure",
+      "impact": "Recovery time reduced from hours to minutes",
+      "success_rate": 0.96,
+      "applicable_patterns": ["infrastructure_snapshot_and_update", "vm_provision_and_configure"]
+    },
+    {
+      "optimization_id": "opt-infra-003",
+      "category": "cost",
+      "title": "Use OpenTofu workspaces for environment isolation",
+      "description": "Separate dev/staging/prod into workspaces instead of separate configs",
+      "before": "Duplicate Terraform configs, hard to maintain consistency",
+      "after": "Single config with workspace-specific variables",
+      "impact": "90% reduction in config duplication, easier updates",
+      "success_rate": 0.92,
+      "applicable_patterns": ["infrastructure_as_code_deployment"]
+    },
+    {
+      "optimization_id": "opt-infra-004",
+      "category": "security",
+      "title": "Enforce workspace protection for production",
+      "description": "Block destructive operations on protected workspaces",
+      "before": "Accidental production deploys possible",
+      "after": "Protection prevents unauthorized production changes",
+      "impact": "Zero production incidents from accidental applies",
+      "success_rate": 0.98,
+      "applicable_patterns": ["infrastructure_as_code_deployment"]
+    }
+  ],
+  "integration_requirements": {
+    "proxmox": {
+      "prerequisites": [
+        "Proxmox VE 7.x or higher",
+        "Valid API token with VM management permissions",
+        "Network connectivity to Proxmox API (default port 8006)",
+        "SSH access to Proxmox nodes (for advanced operations)"
+      ],
+      "permissions_required": [
+        "VM.Allocate",
+        "VM.Config.Network",
+        "VM.Config.Disk",
+        "VM.PowerMgmt",
+        "VM.Monitor",
+        "VM.Snapshot"
+      ]
+    },
+    "opentofu": {
+      "prerequisites": [
+        "OpenTofu CLI installed (or Terraform)",
+        "Provider credentials configured (AWS, Azure, GCP, etc.)",
+        "Backend configured for state storage",
+        "Workspace protection configured for production"
+      ],
+      "safety_requirements": [
+        "State file never committed to git",
+        "Backend encryption enabled",
+        "Workspace protection enforced",
+        "Audit logging enabled"
+      ]
+    },
+    "ansible": {
+      "prerequisites": [
+        "Ansible 2.9 or higher installed",
+        "SSH access to managed hosts",
+        "Python on managed hosts",
+        "Inventory file or dynamic inventory configured"
+      ],
+      "best_practices": [
+        "Use Ansible Vault for secrets",
+        "Test with check mode first",
+        "Use roles for reusability",
+        "Tag tasks for selective execution"
+      ]
+    }
+  },
+  "common_pitfalls": [
+    {
+      "pitfall": "Not waiting for VM to fully boot before configuration",
+      "impact": "Ansible connection failures, wasted time",
+      "prevention": "Poll get_vm_status and test SSH connectivity before run_playbook"
+    },
+    {
+      "pitfall": "Forgetting to select correct OpenTofu workspace",
+      "impact": "Deploying to wrong environment, potential production impact",
+      "prevention": "Always workspace_select explicitly, verify before plan/apply"
+    },
+    {
+      "pitfall": "Not testing Ansible playbooks in check mode",
+      "impact": "Unexpected configuration changes, downtime",
+      "prevention": "Always run playbook with check mode first, review changes"
+    },
+    {
+      "pitfall": "Creating VMs without proper resource allocation",
+      "impact": "Poor performance, resource exhaustion",
+      "prevention": "Use resource calculation based on workload, monitor Proxmox node capacity"
+    },
+    {
+      "pitfall": "Not creating snapshots before risky operations",
+      "impact": "Difficult recovery from failed changes",
+      "prevention": "Always create_vm_snapshot before major updates or configuration changes"
+    }
+  ],
+  "success_metrics": {
+    "vm_provisioning_success_rate": 0.94,
+    "configuration_success_rate": 0.91,
+    "iac_deployment_success_rate": 0.92,
+    "average_vm_provision_time_minutes": 5,
+    "average_configuration_time_minutes": 8,
+    "rollback_success_rate": 0.96
+  },
+  "knowledge_sources": [
+    "Proxmox MCP Server integration documentation",
+    "OpenTofu MCP Server integration documentation",
+    "Ansible MCP Server maturity assessment",
+    "Proxmox VE API documentation",
+    "OpenTofu best practices",
+    "Ansible automation patterns",
+    "Cortex infrastructure deployment history"
+  ],
+  "last_updated": "2025-12-13T00:00:00Z",
+  "maintenance_schedule": "monthly",
+  "confidence_score": 0.92
+}

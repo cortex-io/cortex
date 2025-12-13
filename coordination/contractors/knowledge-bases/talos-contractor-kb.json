@@ -1,0 +1,611 @@
+{
+  "contractor_id": "talos-contractor",
+  "version": "1.0.0",
+  "created_at": "2025-12-13T00:00:00Z",
+  "domain": "kubernetes_and_container_orchestration",
+  "description": "Specialist contractor for Kubernetes cluster management, container orchestration, and cloud-native infrastructure operations",
+  "expertise": {
+    "mcp_servers": [
+      {
+        "server_id": "kubernetes-operations",
+        "description": "Generic K8s operations via kubectl and APIs",
+        "integration_status": "native_tools",
+        "confidence": 0.90,
+        "primary_capabilities": ["cluster_management", "workload_deployment", "resource_monitoring"]
+      }
+    ],
+    "tool_mastery": {
+      "kubectl_apply": {
+        "tool_id": "kubectl_apply",
+        "confidence": 0.94,
+        "use_cases": [
+          "Deploying Kubernetes manifests",
+          "Updating existing resources",
+          "Creating namespaces and configurations",
+          "Applying Helm chart outputs"
+        ],
+        "best_practices": [
+          "Always use --dry-run=client first to validate manifests",
+          "Apply to specific namespace to avoid conflicts",
+          "Use -f for file or directory of manifests",
+          "Verify resources after apply with kubectl get",
+          "Use kubectl diff to preview changes before apply"
+        ],
+        "common_patterns": [
+          "Apply deployment manifests with ConfigMaps and Secrets",
+          "Update rolling deployment with new image tag",
+          "Apply namespace-scoped resources in order (namespace first)"
+        ]
+      },
+      "kubectl_get": {
+        "tool_id": "kubectl_get",
+        "confidence": 0.96,
+        "use_cases": [
+          "Listing cluster resources",
+          "Checking pod status and health",
+          "Verifying deployments and services",
+          "Monitoring resource state"
+        ],
+        "best_practices": [
+          "Use -o wide for additional details (IPs, nodes)",
+          "Use -o yaml/json for full resource definition",
+          "Filter with -l (label selector) for specific resources",
+          "Use --all-namespaces to search entire cluster",
+          "Combine with watch (-w) for real-time monitoring"
+        ],
+        "common_patterns": [
+          "kubectl get pods -n <namespace> -o wide",
+          "kubectl get deployments --all-namespaces",
+          "kubectl get nodes -o yaml"
+        ]
+      },
+      "kubectl_logs": {
+        "tool_id": "kubectl_logs",
+        "confidence": 0.95,
+        "use_cases": [
+          "Debugging pod failures",
+          "Monitoring application logs",
+          "Troubleshooting container crashes",
+          "Collecting logs for analysis"
+        ],
+        "best_practices": [
+          "Use --previous for logs from crashed containers",
+          "Use --tail to limit output on large logs",
+          "Use -f (follow) for real-time log streaming",
+          "Specify container name with -c for multi-container pods",
+          "Use --timestamps for log correlation"
+        ],
+        "common_patterns": [
+          "kubectl logs <pod> -n <namespace> --tail=100",
+          "kubectl logs <pod> --previous (for crashed pods)",
+          "kubectl logs -f <pod> (follow logs)"
+        ]
+      },
+      "kubectl_describe": {
+        "tool_id": "kubectl_describe",
+        "confidence": 0.93,
+        "use_cases": [
+          "Detailed resource inspection",
+          "Understanding pod events and failures",
+          "Debugging scheduling issues",
+          "Reviewing resource configuration"
+        ],
+        "best_practices": [
+          "Check Events section for recent issues",
+          "Review Conditions for status details",
+          "Examine Labels and Annotations for metadata",
+          "Check resource limits and requests",
+          "Look for error messages in Events"
+        ],
+        "common_patterns": [
+          "kubectl describe pod <pod> -n <namespace>",
+          "kubectl describe node <node>",
+          "kubectl describe deployment <deployment>"
+        ]
+      },
+      "helm_install": {
+        "tool_id": "helm_install",
+        "confidence": 0.92,
+        "use_cases": [
+          "Installing Helm charts",
+          "Deploying packaged applications",
+          "Setting up monitoring stacks (Prometheus, Grafana)",
+          "Installing operators and controllers"
+        ],
+        "best_practices": [
+          "Use --dry-run to validate before install",
+          "Specify values file with -f for customization",
+          "Use --create-namespace for new namespace creation",
+          "Set release name explicitly (first argument)",
+          "Review values.yaml before install"
+        ],
+        "common_patterns": [
+          "helm install <release> <chart> -n <namespace> -f values.yaml",
+          "helm install --dry-run to test",
+          "helm install with --set for inline overrides"
+        ]
+      },
+      "helm_upgrade": {
+        "tool_id": "helm_upgrade",
+        "confidence": 0.90,
+        "use_cases": [
+          "Updating Helm releases",
+          "Rolling out application updates",
+          "Changing configuration values",
+          "Upgrading chart versions"
+        ],
+        "best_practices": [
+          "Use --install to install if not exists",
+          "Use --dry-run to preview changes",
+          "Backup current values with helm get values",
+          "Use --reset-values carefully (clears custom values)",
+          "Monitor upgrade with kubectl rollout status"
+        ],
+        "common_patterns": [
+          "helm upgrade <release> <chart> -n <namespace>",
+          "helm upgrade --install for idempotent deployment",
+          "helm upgrade with --reuse-values to keep existing config"
+        ]
+      },
+      "kubectl_scale": {
+        "tool_id": "kubectl_scale",
+        "confidence": 0.94,
+        "use_cases": [
+          "Scaling deployments up or down",
+          "Horizontal pod autoscaling manual override",
+          "Temporary capacity adjustment",
+          "Testing application scaling behavior"
+        ],
+        "best_practices": [
+          "Check current replica count before scaling",
+          "Scale gradually for large changes",
+          "Monitor pod status during scale operations",
+          "Consider HPA (HorizontalPodAutoscaler) for automatic scaling",
+          "Document manual scaling decisions"
+        ],
+        "common_patterns": [
+          "kubectl scale deployment <name> --replicas=3",
+          "kubectl scale statefulset <name> --replicas=5",
+          "Scale to 0 for maintenance, scale back after"
+        ]
+      },
+      "kubectl_rollout": {
+        "tool_id": "kubectl_rollout",
+        "confidence": 0.91,
+        "use_cases": [
+          "Managing deployment rollouts",
+          "Monitoring update progress",
+          "Rolling back failed deployments",
+          "Pausing/resuming rollouts"
+        ],
+        "best_practices": [
+          "Use 'rollout status' to wait for completion",
+          "Use 'rollout history' to see revision history",
+          "Use 'rollout undo' for quick rollback",
+          "Pause rollout if issues detected",
+          "Monitor application metrics during rollout"
+        ],
+        "common_patterns": [
+          "kubectl rollout status deployment/<name>",
+          "kubectl rollout undo deployment/<name>",
+          "kubectl rollout restart deployment/<name>"
+        ]
+      }
+    },
+    "orchestration_patterns": {
+      "deploy_application": {
+        "pattern_id": "deploy_application",
+        "description": "Deploy containerized application to Kubernetes",
+        "steps": [
+          {
+            "step": 1,
+            "action": "create_namespace",
+            "command": "kubectl create namespace <app-namespace>",
+            "success_criteria": "Namespace created"
+          },
+          {
+            "step": 2,
+            "action": "apply_configmaps_secrets",
+            "command": "kubectl apply -f configmaps/ -f secrets/",
+            "success_criteria": "Configuration resources created"
+          },
+          {
+            "step": 3,
+            "action": "apply_deployment",
+            "command": "kubectl apply -f deployment.yaml",
+            "success_criteria": "Deployment created, pods starting"
+          },
+          {
+            "step": 4,
+            "action": "apply_service",
+            "command": "kubectl apply -f service.yaml",
+            "success_criteria": "Service created, endpoints ready"
+          },
+          {
+            "step": 5,
+            "action": "verify_deployment",
+            "command": "kubectl rollout status deployment/<name>",
+            "success_criteria": "All replicas available"
+          }
+        ],
+        "complexity": 4,
+        "success_rate": 0.93,
+        "average_duration_minutes": 5
+      },
+      "deploy_monitoring_stack": {
+        "pattern_id": "deploy_monitoring_stack",
+        "description": "Deploy Prometheus and Grafana monitoring",
+        "steps": [
+          {
+            "step": 1,
+            "action": "add_helm_repo",
+            "command": "helm repo add prometheus-community https://prometheus-community.github.io/helm-charts",
+            "success_criteria": "Repo added"
+          },
+          {
+            "step": 2,
+            "action": "create_namespace",
+            "command": "kubectl create namespace monitoring",
+            "success_criteria": "Namespace created"
+          },
+          {
+            "step": 3,
+            "action": "install_prometheus",
+            "command": "helm install prometheus prometheus-community/kube-prometheus-stack -n monitoring",
+            "success_criteria": "Prometheus stack installed"
+          },
+          {
+            "step": 4,
+            "action": "verify_pods",
+            "command": "kubectl get pods -n monitoring",
+            "success_criteria": "All pods running"
+          },
+          {
+            "step": 5,
+            "action": "expose_grafana",
+            "command": "kubectl port-forward svc/prometheus-grafana 3000:80 -n monitoring",
+            "success_criteria": "Grafana accessible"
+          }
+        ],
+        "complexity": 5,
+        "success_rate": 0.90,
+        "average_duration_minutes": 10
+      },
+      "rolling_update": {
+        "pattern_id": "rolling_update",
+        "description": "Perform rolling update with rollback capability",
+        "steps": [
+          {
+            "step": 1,
+            "action": "record_current_state",
+            "command": "kubectl get deployment <name> -o yaml > backup.yaml",
+            "success_criteria": "Current state saved"
+          },
+          {
+            "step": 2,
+            "action": "update_image",
+            "command": "kubectl set image deployment/<name> <container>=<new-image>",
+            "success_criteria": "Image updated, rollout started"
+          },
+          {
+            "step": 3,
+            "action": "monitor_rollout",
+            "command": "kubectl rollout status deployment/<name>",
+            "success_criteria": "Rollout progressing"
+          },
+          {
+            "step": 4,
+            "action": "verify_health",
+            "method": "health_check_endpoints",
+            "success_criteria": "Application healthy"
+          },
+          {
+            "step": 5,
+            "action": "rollback_if_failed",
+            "command": "kubectl rollout undo deployment/<name> (if needed)",
+            "success_criteria": "Rollback completed if triggered"
+          }
+        ],
+        "complexity": 5,
+        "success_rate": 0.91,
+        "average_duration_minutes": 8,
+        "rollback_strategy": "kubectl rollout undo or apply backup.yaml"
+      },
+      "scale_application": {
+        "pattern_id": "scale_application",
+        "description": "Scale application based on load",
+        "steps": [
+          {
+            "step": 1,
+            "action": "check_current_scale",
+            "command": "kubectl get deployment <name>",
+            "success_criteria": "Current replica count known"
+          },
+          {
+            "step": 2,
+            "action": "scale_deployment",
+            "command": "kubectl scale deployment/<name> --replicas=<count>",
+            "success_criteria": "Scale initiated"
+          },
+          {
+            "step": 3,
+            "action": "wait_for_pods",
+            "command": "kubectl wait --for=condition=ready pod -l app=<label>",
+            "success_criteria": "New pods ready"
+          },
+          {
+            "step": 4,
+            "action": "verify_service",
+            "command": "kubectl get endpoints <service>",
+            "success_criteria": "Endpoints updated"
+          }
+        ],
+        "complexity": 3,
+        "success_rate": 0.95,
+        "average_duration_minutes": 3
+      },
+      "troubleshoot_pod_failure": {
+        "pattern_id": "troubleshoot_pod_failure",
+        "description": "Debug and resolve pod failures",
+        "steps": [
+          {
+            "step": 1,
+            "action": "identify_failing_pod",
+            "command": "kubectl get pods -n <namespace>",
+            "success_criteria": "Failed pod identified"
+          },
+          {
+            "step": 2,
+            "action": "describe_pod",
+            "command": "kubectl describe pod <pod>",
+            "success_criteria": "Events and errors reviewed"
+          },
+          {
+            "step": 3,
+            "action": "check_logs",
+            "command": "kubectl logs <pod> --previous (if crashed)",
+            "success_criteria": "Error logs retrieved"
+          },
+          {
+            "step": 4,
+            "action": "check_resource_constraints",
+            "method": "review describe output for OOMKilled, resource limits",
+            "success_criteria": "Root cause identified"
+          },
+          {
+            "step": 5,
+            "action": "apply_fix",
+            "method": "update deployment with fix, apply",
+            "success_criteria": "Pod running successfully"
+          }
+        ],
+        "complexity": 6,
+        "success_rate": 0.87,
+        "average_duration_minutes": 15
+      }
+    }
+  },
+  "decision_trees": {
+    "choose_deployment_method": {
+      "description": "Select appropriate deployment method for workload",
+      "root": {
+        "question": "What type of application are you deploying?",
+        "stateless_application": {
+          "question": "Is it a packaged Helm chart?",
+          "yes": {
+            "decision": "use_helm_install",
+            "confidence": 0.95,
+            "reasoning": "Helm simplifies complex application deployment"
+          },
+          "no": {
+            "decision": "use_kubectl_apply_with_manifests",
+            "confidence": 0.92
+          }
+        },
+        "stateful_application": {
+          "question": "Do you need persistent storage?",
+          "yes": {
+            "decision": "use_statefulset_with_pvc",
+            "confidence": 0.93,
+            "components": ["StatefulSet", "PersistentVolumeClaim", "Service"]
+          },
+          "no": {
+            "decision": "use_deployment_with_emptydir",
+            "confidence": 0.88
+          }
+        },
+        "batch_job": {
+          "question": "Is it one-time or recurring?",
+          "one_time": {
+            "decision": "use_job_resource",
+            "confidence": 0.94
+          },
+          "recurring": {
+            "decision": "use_cronjob_resource",
+            "confidence": 0.96
+          }
+        }
+      }
+    },
+    "determine_scaling_strategy": {
+      "description": "Choose scaling approach for application",
+      "root": {
+        "question": "What triggers scaling needs?",
+        "predictable_load": {
+          "question": "Is load time-based or event-based?",
+          "time_based": {
+            "decision": "use_manual_scaling_with_schedule",
+            "confidence": 0.88
+          },
+          "event_based": {
+            "decision": "use_keda_event_driven_autoscaling",
+            "confidence": 0.85
+          }
+        },
+        "variable_load": {
+          "question": "What metrics drive scaling?",
+          "cpu_memory": {
+            "decision": "use_horizontal_pod_autoscaler",
+            "confidence": 0.95,
+            "config": {
+              "minReplicas": 2,
+              "maxReplicas": 10,
+              "targetCPUUtilizationPercentage": 70
+            }
+          },
+          "custom_metrics": {
+            "decision": "use_hpa_with_custom_metrics",
+            "confidence": 0.87,
+            "requires": "metrics-server and custom metrics adapter"
+          }
+        },
+        "manual_control": {
+          "decision": "use_kubectl_scale",
+          "confidence": 0.90,
+          "reasoning": "Manual scaling for testing or specific scenarios"
+        }
+      }
+    },
+    "troubleshooting_strategy": {
+      "description": "Systematic approach to troubleshooting K8s issues",
+      "root": {
+        "question": "What is the issue symptom?",
+        "pod_not_starting": {
+          "decision": "check_describe_and_events",
+          "steps": [
+            "kubectl describe pod",
+            "Check Events for ImagePullBackOff, CrashLoopBackOff",
+            "kubectl logs --previous",
+            "Verify resource requests/limits"
+          ],
+          "confidence": 0.92
+        },
+        "service_not_accessible": {
+          "decision": "verify_service_and_endpoints",
+          "steps": [
+            "kubectl get endpoints",
+            "kubectl get svc",
+            "Test pod-to-pod connectivity",
+            "Check NetworkPolicies"
+          ],
+          "confidence": 0.89
+        },
+        "performance_issues": {
+          "decision": "analyze_resource_usage",
+          "steps": [
+            "kubectl top pods",
+            "kubectl top nodes",
+            "Check HPA status",
+            "Review application metrics"
+          ],
+          "confidence": 0.85
+        }
+      }
+    }
+  },
+  "learned_optimizations": [
+    {
+      "optimization_id": "opt-k8s-001",
+      "category": "performance",
+      "title": "Use readiness and liveness probes",
+      "description": "Configure proper health checks for all deployments",
+      "before": "Pods marked ready immediately, causing traffic to unhealthy pods",
+      "after": "Probes ensure traffic only to healthy pods",
+      "impact": "99.9% uptime, zero-downtime deployments",
+      "success_rate": 0.97,
+      "applicable_patterns": ["deploy_application", "rolling_update"]
+    },
+    {
+      "optimization_id": "opt-k8s-002",
+      "category": "reliability",
+      "title": "Implement pod disruption budgets",
+      "description": "Prevent too many pods down during maintenance",
+      "before": "Node drains could take down entire application",
+      "after": "PDB ensures minimum available pods during disruptions",
+      "impact": "Zero unplanned downtime during maintenance",
+      "success_rate": 0.95,
+      "applicable_patterns": ["deploy_application"]
+    },
+    {
+      "optimization_id": "opt-k8s-003",
+      "category": "resource_efficiency",
+      "title": "Set appropriate resource requests and limits",
+      "description": "Define CPU and memory requests/limits for all containers",
+      "before": "Pods competing for resources, causing OOMKilled",
+      "after": "Proper resource allocation, better scheduling",
+      "impact": "80% reduction in OOMKilled events",
+      "success_rate": 0.93,
+      "applicable_patterns": ["deploy_application", "troubleshoot_pod_failure"]
+    },
+    {
+      "optimization_id": "opt-k8s-004",
+      "category": "observability",
+      "title": "Deploy comprehensive monitoring stack",
+      "description": "Install Prometheus, Grafana, and alerting early",
+      "before": "Blind to cluster health, reactive troubleshooting",
+      "after": "Proactive monitoring, alerts before user impact",
+      "impact": "90% reduction in MTTR (mean time to resolution)",
+      "success_rate": 0.96,
+      "applicable_patterns": ["deploy_monitoring_stack"]
+    }
+  ],
+  "integration_requirements": {
+    "prerequisites": [
+      "Kubernetes cluster accessible via kubeconfig",
+      "kubectl CLI installed and configured",
+      "Appropriate RBAC permissions for operations",
+      "Helm CLI for chart deployments (optional but recommended)"
+    ],
+    "recommended_setup": {
+      "kubectl_version": "matching cluster version (±1 minor version)",
+      "helm_version": "3.x",
+      "kubeconfig_location": "$HOME/.kube/config",
+      "context_management": "use kubectl config use-context for multi-cluster"
+    }
+  },
+  "common_pitfalls": [
+    {
+      "pitfall": "Not setting resource requests and limits",
+      "impact": "Pod evictions, OOMKilled, scheduling issues",
+      "prevention": "Always define requests and limits for CPU and memory"
+    },
+    {
+      "pitfall": "Missing readiness probes",
+      "impact": "Traffic to unhealthy pods, failed requests",
+      "prevention": "Configure readiness and liveness probes for all containers"
+    },
+    {
+      "pitfall": "Not using namespaces for isolation",
+      "impact": "Resource conflicts, difficult RBAC management",
+      "prevention": "Use namespaces to separate environments and applications"
+    },
+    {
+      "pitfall": "Deploying without image pull policy",
+      "impact": "Using cached old images instead of latest",
+      "prevention": "Set imagePullPolicy: Always for :latest, IfNotPresent for versioned"
+    },
+    {
+      "pitfall": "Not monitoring cluster resources",
+      "impact": "Node exhaustion, degraded performance",
+      "prevention": "Deploy monitoring stack early, set up alerts"
+    }
+  ],
+  "success_metrics": {
+    "deployment_success_rate": 0.93,
+    "rollback_success_rate": 0.96,
+    "average_deployment_time_minutes": 5,
+    "troubleshooting_success_rate": 0.87,
+    "uptime_percentage": 99.9
+  },
+  "knowledge_sources": [
+    "Kubernetes official documentation",
+    "Helm documentation",
+    "K3s deployment experiences",
+    "Cloud-native best practices",
+    "Cortex K8s deployment history",
+    "Production incident post-mortems"
+  ],
+  "last_updated": "2025-12-13T00:00:00Z",
+  "maintenance_schedule": "monthly",
+  "confidence_score": 0.90
+}

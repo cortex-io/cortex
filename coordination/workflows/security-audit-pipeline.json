@@ -1,0 +1,634 @@
+{
+  "workflow_id": "security-audit-pipeline",
+  "version": "1.0.0",
+  "created_at": "2025-12-13T00:00:00Z",
+  "name": "Comprehensive Security Audit Pipeline",
+  "description": "Multi-contractor security audit workflow covering infrastructure, applications, containers, and compliance",
+  "category": "security_compliance",
+  "complexity": 8,
+  "estimated_duration_minutes": 90,
+  "contractors_involved": ["security-contractor", "infrastructure-contractor", "talos-contractor", "n8n-contractor"],
+  "phases": [
+    {
+      "phase": 1,
+      "name": "secrets_and_credentials_scan",
+      "contractor": "security-contractor",
+      "description": "Scan for exposed secrets, credentials, and sensitive data",
+      "tasks": [
+        {
+          "task_id": "scan_git_history",
+          "task": "gitleaks_scan",
+          "tool": "gitleaks",
+          "params": {
+            "source": "/Users/ryandahlberg/Projects/cortex",
+            "verbose": true,
+            "report_format": "json",
+            "report_path": "security/reports/gitleaks-report.json"
+          },
+          "success_criteria": {
+            "scan_completed": true,
+            "secrets_found": 0
+          },
+          "severity": "critical",
+          "block_on_findings": true
+        },
+        {
+          "task_id": "scan_env_files",
+          "task": "check_env_files",
+          "method": "grep_for_env_files",
+          "params": {
+            "search_path": "/Users/ryandahlberg/Projects/cortex",
+            "patterns": [".env", "*.env.*", "credentials.json", "secrets.yaml"]
+          },
+          "depends_on": ["scan_git_history"],
+          "success_criteria": {
+            "no_committed_secrets": true
+          }
+        },
+        {
+          "task_id": "scan_proxmox_credentials",
+          "task": "check_proxmox_tokens",
+          "method": "validate_credential_storage",
+          "params": {
+            "check_files": [
+              "coordination/integrations/proxmox-mcp-server/config/*.json",
+              "scripts/**/*.sh"
+            ],
+            "credential_patterns": ["PROXMOX_TOKEN", "PROXMOX_PASSWORD"]
+          },
+          "depends_on": ["scan_env_files"],
+          "success_criteria": {
+            "credentials_in_env_only": true
+          }
+        },
+        {
+          "task_id": "scan_n8n_api_keys",
+          "task": "check_n8n_keys",
+          "method": "validate_credential_storage",
+          "params": {
+            "check_files": [
+              "coordination/integrations/n8n-mcp-server/config/*.json",
+              "eui-dashboard/**/*.js"
+            ],
+            "credential_patterns": ["N8N_API_KEY", "N8N_TOKEN"]
+          },
+          "depends_on": ["scan_proxmox_credentials"],
+          "success_criteria": {
+            "credentials_in_env_only": true
+          }
+        }
+      ],
+      "outputs": {
+        "secrets_scan_status": "clean",
+        "findings_count": 0,
+        "credentials_properly_stored": true
+      },
+      "severity": "critical",
+      "block_on_failure": true
+    },
+    {
+      "phase": 2,
+      "name": "dependency_vulnerability_scan",
+      "contractor": "security-contractor",
+      "description": "Scan dependencies for known vulnerabilities",
+      "depends_on_phase": 1,
+      "tasks": [
+        {
+          "task_id": "scan_npm_dependencies",
+          "task": "osv_scanner_npm",
+          "tool": "osv-scanner",
+          "params": {
+            "lockfile": "/Users/ryandahlberg/Projects/cortex/eui-dashboard/package-lock.json",
+            "format": "json",
+            "output": "security/reports/osv-npm-report.json"
+          },
+          "success_criteria": {
+            "scan_completed": true,
+            "critical_vulnerabilities": 0
+          },
+          "severity": "high"
+        },
+        {
+          "task_id": "scan_python_dependencies",
+          "task": "safety_check",
+          "tool": "safety",
+          "params": {
+            "files": [
+              "/Users/ryandahlberg/Projects/cortex/requirements.txt"
+            ],
+            "json_output": true,
+            "output_file": "security/reports/safety-report.json"
+          },
+          "depends_on": ["scan_npm_dependencies"],
+          "success_criteria": {
+            "scan_completed": true,
+            "critical_vulnerabilities": 0
+          },
+          "severity": "high"
+        },
+        {
+          "task_id": "generate_sbom",
+          "task": "trivy_sbom",
+          "tool": "trivy",
+          "params": {
+            "scan_type": "filesystem",
+            "path": "/Users/ryandahlberg/Projects/cortex",
+            "format": "cyclonedx",
+            "output": "security/reports/cortex-sbom.json"
+          },
+          "depends_on": ["scan_python_dependencies"],
+          "success_criteria": {
+            "sbom_generated": true
+          }
+        },
+        {
+          "task_id": "analyze_sbom_vulnerabilities",
+          "task": "trivy_scan_sbom",
+          "tool": "trivy",
+          "params": {
+            "sbom_file": "security/reports/cortex-sbom.json",
+            "severity": "HIGH,CRITICAL",
+            "format": "json",
+            "output": "security/reports/sbom-vulnerabilities.json"
+          },
+          "depends_on": ["generate_sbom"],
+          "success_criteria": {
+            "scan_completed": true
+          },
+          "severity": "high"
+        }
+      ],
+      "outputs": {
+        "npm_vulnerabilities": "${scan_npm_dependencies.outputs.vulnerability_count}",
+        "python_vulnerabilities": "${scan_python_dependencies.outputs.vulnerability_count}",
+        "sbom_generated": true,
+        "total_vulnerabilities": "${analyze_sbom_vulnerabilities.outputs.total_count}"
+      },
+      "severity": "high"
+    },
+    {
+      "phase": 3,
+      "name": "container_security_scan",
+      "contractor": "security-contractor",
+      "description": "Scan container images and Docker configurations",
+      "depends_on_phase": 2,
+      "tasks": [
+        {
+          "task_id": "scan_dashboard_image",
+          "task": "trivy_image_scan",
+          "tool": "trivy",
+          "params": {
+            "image": "cortex-dashboard:latest",
+            "severity": "HIGH,CRITICAL",
+            "format": "json",
+            "output": "security/reports/dashboard-image-scan.json"
+          },
+          "success_criteria": {
+            "scan_completed": true,
+            "critical_vulnerabilities": 0
+          },
+          "severity": "high"
+        },
+        {
+          "task_id": "run_docker_bench",
+          "task": "docker_bench_security",
+          "tool": "docker-bench-security",
+          "params": {
+            "output_format": "json",
+            "output_file": "security/reports/docker-bench-report.json"
+          },
+          "depends_on": ["scan_dashboard_image"],
+          "success_criteria": {
+            "scan_completed": true,
+            "critical_findings": 0
+          },
+          "severity": "medium"
+        },
+        {
+          "task_id": "scan_dockerfiles",
+          "task": "trivy_config_scan",
+          "tool": "trivy",
+          "params": {
+            "scan_type": "config",
+            "path": "/Users/ryandahlberg/Projects/cortex",
+            "config_type": "dockerfile",
+            "format": "json",
+            "output": "security/reports/dockerfile-scan.json"
+          },
+          "depends_on": ["run_docker_bench"],
+          "success_criteria": {
+            "scan_completed": true
+          },
+          "severity": "medium"
+        }
+      ],
+      "outputs": {
+        "container_vulnerabilities": "${scan_dashboard_image.outputs.vulnerability_count}",
+        "docker_bench_score": "${run_docker_bench.outputs.score}",
+        "dockerfile_issues": "${scan_dockerfiles.outputs.issue_count}"
+      },
+      "severity": "high"
+    },
+    {
+      "phase": 4,
+      "name": "infrastructure_security_audit",
+      "contractor": "infrastructure-contractor",
+      "description": "Audit infrastructure configurations and IaC security",
+      "depends_on_phase": 3,
+      "tasks": [
+        {
+          "task_id": "scan_terraform_configs",
+          "task": "trivy_iac_scan",
+          "tool": "trivy",
+          "params": {
+            "scan_type": "config",
+            "path": "/Users/ryandahlberg/Projects/cortex/k8s",
+            "config_type": "terraform",
+            "severity": "HIGH,CRITICAL",
+            "format": "json",
+            "output": "security/reports/terraform-scan.json"
+          },
+          "success_criteria": {
+            "scan_completed": true
+          },
+          "severity": "high"
+        },
+        {
+          "task_id": "check_opentofu_state_exposure",
+          "task": "check_state_files",
+          "method": "grep_for_state_files",
+          "params": {
+            "search_path": "/Users/ryandahlberg/Projects/cortex",
+            "patterns": ["*.tfstate", "*.tfstate.*", "terraform.tfstate.d"]
+          },
+          "depends_on": ["scan_terraform_configs"],
+          "success_criteria": {
+            "no_state_files_committed": true
+          },
+          "severity": "critical",
+          "block_on_findings": true
+        },
+        {
+          "task_id": "audit_workspace_protection",
+          "task": "verify_workspace_protection",
+          "method": "check_opentofu_config",
+          "params": {
+            "config_file": "coordination/monitoring/opentofu-mcp-server.json",
+            "expected_protected_workspaces": ["production", "prod", "main"]
+          },
+          "depends_on": ["check_opentofu_state_exposure"],
+          "success_criteria": {
+            "workspace_protection_enabled": true,
+            "production_protected": true
+          }
+        },
+        {
+          "task_id": "check_ansible_vault_usage",
+          "task": "verify_ansible_secrets",
+          "method": "check_for_plaintext_secrets",
+          "params": {
+            "playbook_path": "/Users/ryandahlberg/Projects/cortex/playbooks",
+            "check_for": ["password:", "api_key:", "token:"]
+          },
+          "depends_on": ["audit_workspace_protection"],
+          "success_criteria": {
+            "no_plaintext_secrets": true
+          },
+          "severity": "high"
+        }
+      ],
+      "outputs": {
+        "iac_vulnerabilities": "${scan_terraform_configs.outputs.vulnerability_count}",
+        "state_files_secure": true,
+        "workspace_protection_verified": true,
+        "ansible_secrets_protected": true
+      },
+      "severity": "high"
+    },
+    {
+      "phase": 5,
+      "name": "kubernetes_security_audit",
+      "contractor": "talos-contractor",
+      "description": "Audit Kubernetes cluster security (if cluster exists)",
+      "depends_on_phase": 4,
+      "optional": true,
+      "skip_if": "no_k8s_cluster",
+      "tasks": [
+        {
+          "task_id": "scan_k8s_manifests",
+          "task": "trivy_k8s_scan",
+          "tool": "trivy",
+          "params": {
+            "scan_type": "config",
+            "path": "/Users/ryandahlberg/Projects/cortex/k8s",
+            "config_type": "kubernetes",
+            "severity": "HIGH,CRITICAL",
+            "format": "json",
+            "output": "security/reports/k8s-manifests-scan.json"
+          },
+          "success_criteria": {
+            "scan_completed": true
+          },
+          "severity": "high"
+        },
+        {
+          "task_id": "run_kube_bench",
+          "task": "kube_bench_audit",
+          "tool": "kube-bench",
+          "params": {
+            "targets": ["master", "node"],
+            "json_output": true,
+            "output_file": "security/reports/kube-bench-report.json"
+          },
+          "depends_on": ["scan_k8s_manifests"],
+          "success_criteria": {
+            "scan_completed": true
+          },
+          "severity": "high"
+        },
+        {
+          "task_id": "check_network_policies",
+          "task": "verify_network_policies",
+          "tool": "kubectl_get",
+          "params": {
+            "resource": "networkpolicies",
+            "all_namespaces": true
+          },
+          "depends_on": ["run_kube_bench"],
+          "success_criteria": {
+            "network_policies_exist": true
+          },
+          "severity": "medium"
+        },
+        {
+          "task_id": "check_pod_security_standards",
+          "task": "verify_pss",
+          "tool": "kubectl_get",
+          "params": {
+            "resource": "namespaces",
+            "output": "json"
+          },
+          "depends_on": ["check_network_policies"],
+          "success_criteria": {
+            "pss_enforced": true
+          },
+          "severity": "medium"
+        }
+      ],
+      "outputs": {
+        "k8s_manifest_issues": "${scan_k8s_manifests.outputs.issue_count}",
+        "kube_bench_score": "${run_kube_bench.outputs.score}",
+        "network_policies_configured": true,
+        "pss_enabled": true
+      },
+      "severity": "high"
+    },
+    {
+      "phase": 6,
+      "name": "compliance_reporting",
+      "contractor": "security-contractor",
+      "description": "Generate compliance reports and aggregate findings",
+      "depends_on_phase": 5,
+      "tasks": [
+        {
+          "task_id": "aggregate_findings",
+          "task": "aggregate_security_findings",
+          "method": "combine_all_reports",
+          "params": {
+            "report_paths": [
+              "security/reports/gitleaks-report.json",
+              "security/reports/osv-npm-report.json",
+              "security/reports/safety-report.json",
+              "security/reports/sbom-vulnerabilities.json",
+              "security/reports/dashboard-image-scan.json",
+              "security/reports/docker-bench-report.json",
+              "security/reports/terraform-scan.json",
+              "security/reports/k8s-manifests-scan.json",
+              "security/reports/kube-bench-report.json"
+            ],
+            "output_file": "security/reports/aggregate-findings.json"
+          },
+          "success_criteria": {
+            "aggregation_complete": true
+          }
+        },
+        {
+          "task_id": "calculate_security_score",
+          "task": "calculate_score",
+          "method": "security_score_calculation",
+          "params": {
+            "aggregate_file": "security/reports/aggregate-findings.json",
+            "scoring_criteria": {
+              "critical_weight": 10,
+              "high_weight": 5,
+              "medium_weight": 2,
+              "low_weight": 1
+            }
+          },
+          "depends_on": ["aggregate_findings"],
+          "success_criteria": {
+            "score_calculated": true
+          }
+        },
+        {
+          "task_id": "generate_compliance_report",
+          "task": "create_compliance_report",
+          "method": "generate_markdown_report",
+          "params": {
+            "template": "security/templates/compliance-report-template.md",
+            "data": "${phase6.aggregate_findings.outputs.data}",
+            "output": "security/reports/compliance-report-${timestamp}.md",
+            "frameworks": ["CIS", "OWASP", "NIST"]
+          },
+          "depends_on": ["calculate_security_score"],
+          "success_criteria": {
+            "report_generated": true
+          }
+        },
+        {
+          "task_id": "prioritize_remediation",
+          "task": "create_remediation_plan",
+          "method": "prioritize_by_severity_and_exploitability",
+          "params": {
+            "findings": "${phase6.aggregate_findings.outputs.data}",
+            "output": "security/reports/remediation-plan-${timestamp}.json",
+            "sla_mapping": {
+              "critical": "24_hours",
+              "high": "7_days",
+              "medium": "30_days",
+              "low": "90_days"
+            }
+          },
+          "depends_on": ["generate_compliance_report"],
+          "success_criteria": {
+            "plan_created": true
+          }
+        }
+      ],
+      "outputs": {
+        "total_critical_findings": "${aggregate_findings.outputs.critical_count}",
+        "total_high_findings": "${aggregate_findings.outputs.high_count}",
+        "security_score": "${calculate_security_score.outputs.score}",
+        "compliance_report_path": "${generate_compliance_report.outputs.file_path}",
+        "remediation_plan_path": "${prioritize_remediation.outputs.file_path}"
+      }
+    },
+    {
+      "phase": 7,
+      "name": "notification_and_tracking",
+      "contractor": "n8n-contractor",
+      "description": "Send notifications and create tracking tasks",
+      "depends_on_phase": 6,
+      "inputs_from_phase": {
+        "6": ["total_critical_findings", "security_score", "compliance_report_path"]
+      },
+      "tasks": [
+        {
+          "task_id": "create_alert_workflow",
+          "task": "create_security_alert_workflow",
+          "mcp_server": "n8n-mcp-server",
+          "tool": "create_workflow",
+          "params": {
+            "name": "Security Audit Alert - ${timestamp}",
+            "active": false,
+            "tags": ["security", "audit", "compliance"],
+            "nodes": [
+              {
+                "name": "Manual Trigger",
+                "type": "n8n-nodes-base.manualTrigger"
+              },
+              {
+                "name": "Security Report Data",
+                "type": "n8n-nodes-base.set",
+                "parameters": {
+                  "values": {
+                    "critical_findings": "${phase6.outputs.total_critical_findings}",
+                    "security_score": "${phase6.outputs.security_score}",
+                    "report_path": "${phase6.outputs.compliance_report_path}"
+                  }
+                }
+              },
+              {
+                "name": "Check Severity",
+                "type": "n8n-nodes-base.if",
+                "parameters": {
+                  "conditions": {
+                    "number": [
+                      {
+                        "value1": "={{ $json.critical_findings }}",
+                        "operation": "larger",
+                        "value2": 0
+                      }
+                    ]
+                  }
+                }
+              },
+              {
+                "name": "Send Critical Alert",
+                "type": "n8n-nodes-base.slack",
+                "parameters": {
+                  "channel": "#security-critical",
+                  "text": "CRITICAL: Security audit found {{ $json.critical_findings }} critical issues"
+                }
+              },
+              {
+                "name": "Update Dashboard",
+                "type": "n8n-nodes-base.httpRequest",
+                "parameters": {
+                  "url": "http://localhost:3004/api/events",
+                  "method": "POST",
+                  "jsonParameters": true,
+                  "bodyParametersJson": "={{ JSON.stringify({event_type: 'security_audit_complete', security_score: $json.security_score, critical_findings: $json.critical_findings}) }}"
+                }
+              }
+            ]
+          },
+          "success_criteria": {
+            "workflow_created": true
+          }
+        },
+        {
+          "task_id": "execute_alert_workflow",
+          "task": "execute_workflow",
+          "mcp_server": "n8n-mcp-server",
+          "tool": "execute_workflow",
+          "params": {
+            "workflow_id": "${phase7.create_alert_workflow.outputs.workflow_id}"
+          },
+          "depends_on": ["create_alert_workflow"],
+          "success_criteria": {
+            "execution_status": "success"
+          }
+        },
+        {
+          "task_id": "create_remediation_tasks",
+          "task": "create_tasks_from_findings",
+          "method": "generate_cortex_tasks",
+          "params": {
+            "remediation_plan": "${phase6.outputs.remediation_plan_path}",
+            "output_directory": "coordination/tasks",
+            "assign_to": "security-master"
+          },
+          "depends_on": ["execute_alert_workflow"],
+          "success_criteria": {
+            "tasks_created": true
+          }
+        }
+      ],
+      "outputs": {
+        "alerts_sent": true,
+        "dashboard_updated": true,
+        "remediation_tasks_created": "${create_remediation_tasks.outputs.task_count}"
+      }
+    }
+  ],
+  "global_rollback_strategy": {
+    "description": "Security audits typically don't need rollback, but cleanup may be needed",
+    "cleanup_tasks": [
+      "archive_scan_results",
+      "cleanup_temporary_files",
+      "update_audit_log"
+    ]
+  },
+  "success_criteria": {
+    "all_scans_completed": true,
+    "critical_findings_documented": true,
+    "compliance_report_generated": true,
+    "remediation_plan_created": true,
+    "notifications_sent": true
+  },
+  "monitoring": {
+    "track_metrics": true,
+    "emit_events": true,
+    "dashboard_integration": true,
+    "metrics_to_track": [
+      "scan_duration_minutes",
+      "total_vulnerabilities",
+      "critical_count",
+      "high_count",
+      "security_score",
+      "compliance_status"
+    ]
+  },
+  "documentation": {
+    "reports_directory": "security/reports",
+    "compliance_frameworks": ["CIS", "OWASP Top 10", "NIST Cybersecurity Framework"],
+    "scan_frequency": "weekly",
+    "retention_days": 365,
+    "escalation_policy": {
+      "critical": "immediate",
+      "high": "24_hours",
+      "medium": "weekly_review",
+      "low": "monthly_review"
+    }
+  },
+  "tags": ["security", "audit", "compliance", "vulnerability-scan", "multi-contractor"],
+  "last_updated": "2025-12-13T00:00:00Z",
+  "version_history": [
+    {
+      "version": "1.0.0",
+      "date": "2025-12-13",
+      "changes": "Initial comprehensive security audit pipeline"
+    }
+  ]
+}

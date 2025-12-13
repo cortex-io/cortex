@@ -1,0 +1,586 @@
+{
+  "workflow_id": "provision-k8s-cluster",
+  "version": "1.0.0",
+  "created_at": "2025-12-13T00:00:00Z",
+  "name": "Provision Kubernetes Cluster",
+  "description": "Multi-contractor workflow to provision K3s cluster with IaC (OpenTofu), configure with Ansible, and deploy initial workloads",
+  "category": "infrastructure_provisioning",
+  "complexity": 9,
+  "estimated_duration_minutes": 60,
+  "contractors_involved": ["infrastructure-contractor", "talos-contractor", "security-contractor"],
+  "phases": [
+    {
+      "phase": 1,
+      "name": "plan_infrastructure",
+      "contractor": "infrastructure-contractor",
+      "description": "Plan K3s cluster infrastructure using OpenTofu",
+      "tasks": [
+        {
+          "task_id": "select_workspace",
+          "task": "workspace_select",
+          "mcp_server": "opentofu-mcp-server",
+          "tool": "workspace_select",
+          "params": {
+            "workspace_name": "k3s-cluster-dev"
+          },
+          "success_criteria": {
+            "workspace_selected": true
+          }
+        },
+        {
+          "task_id": "init_terraform",
+          "task": "init",
+          "mcp_server": "opentofu-mcp-server",
+          "tool": "init",
+          "params": {
+            "working_dir": "/path/to/k3s-cluster-terraform",
+            "upgrade": true
+          },
+          "depends_on": ["select_workspace"],
+          "success_criteria": {
+            "init_successful": true,
+            "providers_installed": true
+          }
+        },
+        {
+          "task_id": "validate_config",
+          "task": "validate",
+          "mcp_server": "opentofu-mcp-server",
+          "tool": "validate",
+          "params": {
+            "working_dir": "/path/to/k3s-cluster-terraform"
+          },
+          "depends_on": ["init_terraform"],
+          "success_criteria": {
+            "config_valid": true
+          }
+        },
+        {
+          "task_id": "plan_infrastructure",
+          "task": "plan",
+          "mcp_server": "opentofu-mcp-server",
+          "tool": "plan",
+          "params": {
+            "working_dir": "/path/to/k3s-cluster-terraform",
+            "var_file": "environments/dev.tfvars",
+            "out": "k3s-cluster-plan.tfplan"
+          },
+          "depends_on": ["validate_config"],
+          "success_criteria": {
+            "plan_generated": true,
+            "resources_to_create": 5
+          },
+          "timeout_seconds": 300
+        }
+      ],
+      "outputs": {
+        "plan_file": "k3s-cluster-plan.tfplan",
+        "resources_planned": "${plan_infrastructure.outputs.resource_count}",
+        "estimated_cost": "${plan_infrastructure.outputs.cost_estimate}"
+      }
+    },
+    {
+      "phase": 2,
+      "name": "provision_vms",
+      "contractor": "infrastructure-contractor",
+      "description": "Provision K3s cluster VMs on Proxmox using Terraform and direct API",
+      "depends_on_phase": 1,
+      "tasks": [
+        {
+          "task_id": "apply_infrastructure",
+          "task": "apply",
+          "mcp_server": "opentofu-mcp-server",
+          "tool": "apply",
+          "params": {
+            "working_dir": "/path/to/k3s-cluster-terraform",
+            "plan_file": "${phase1.outputs.plan_file}",
+            "auto_approve": true,
+            "confirmation_token": "k3s-cluster-dev"
+          },
+          "success_criteria": {
+            "apply_successful": true,
+            "resources_created": 5
+          },
+          "timeout_seconds": 900
+        },
+        {
+          "task_id": "get_vm_outputs",
+          "task": "output",
+          "mcp_server": "opentofu-mcp-server",
+          "tool": "output",
+          "params": {
+            "working_dir": "/path/to/k3s-cluster-terraform",
+            "output_name": "vm_details"
+          },
+          "depends_on": ["apply_infrastructure"],
+          "success_criteria": {
+            "outputs_retrieved": true
+          }
+        },
+        {
+          "task_id": "create_master_snapshot",
+          "task": "snapshot_master",
+          "mcp_server": "proxmox-mcp-server",
+          "tool": "create_vm_snapshot",
+          "params": {
+            "node": "${phase2.get_vm_outputs.outputs.master_node}",
+            "vmid": "${phase2.get_vm_outputs.outputs.master_vmid}",
+            "snapname": "pre-k3s-install-${timestamp}"
+          },
+          "depends_on": ["get_vm_outputs"],
+          "success_criteria": {
+            "snapshot_created": true
+          }
+        },
+        {
+          "task_id": "create_worker_snapshots",
+          "task": "snapshot_workers",
+          "mcp_server": "proxmox-mcp-server",
+          "tool": "create_vm_snapshot",
+          "params": {
+            "node": "${phase2.get_vm_outputs.outputs.worker_node}",
+            "vmid_list": "${phase2.get_vm_outputs.outputs.worker_vmids}",
+            "snapname": "pre-k3s-install-${timestamp}"
+          },
+          "depends_on": ["get_vm_outputs"],
+          "method": "parallel_execution",
+          "success_criteria": {
+            "all_snapshots_created": true,
+            "snapshot_count": 2
+          }
+        }
+      ],
+      "outputs": {
+        "master_ip": "${get_vm_outputs.outputs.master_ip}",
+        "worker_ips": "${get_vm_outputs.outputs.worker_ips}",
+        "cluster_size": 3,
+        "vms_provisioned": true,
+        "snapshots_created": true
+      },
+      "rollback_strategy": {
+        "on_failure": "destroy_infrastructure",
+        "tasks": [
+          {
+            "tool": "destroy",
+            "mcp_server": "opentofu-mcp-server",
+            "params": {
+              "working_dir": "/path/to/k3s-cluster-terraform",
+              "auto_approve": true,
+              "confirmation_token": "k3s-cluster-dev"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "phase": 3,
+      "name": "configure_k3s_cluster",
+      "contractor": "infrastructure-contractor",
+      "description": "Install and configure K3s on provisioned VMs",
+      "depends_on_phase": 2,
+      "inputs_from_phase": {
+        "2": ["master_ip", "worker_ips"]
+      },
+      "tasks": [
+        {
+          "task_id": "setup_inventory",
+          "task": "generate_inventory",
+          "method": "create_ansible_inventory",
+          "params": {
+            "inventory_file": "inventories/k3s-cluster/hosts",
+            "master_hosts": ["${phase2.outputs.master_ip}"],
+            "worker_hosts": "${phase2.outputs.worker_ips}",
+            "variables": {
+              "ansible_user": "root",
+              "ansible_ssh_private_key_file": "~/.ssh/proxmox-key"
+            }
+          },
+          "success_criteria": {
+            "inventory_created": true
+          }
+        },
+        {
+          "task_id": "verify_connectivity",
+          "task": "run_adhoc",
+          "mcp_server": "ansible-mcp-server",
+          "tool": "run_adhoc",
+          "params": {
+            "inventory": "inventories/k3s-cluster/hosts",
+            "module": "ping",
+            "host_pattern": "all"
+          },
+          "depends_on": ["setup_inventory"],
+          "success_criteria": {
+            "all_hosts_reachable": true
+          }
+        },
+        {
+          "task_id": "install_k3s_master",
+          "task": "run_playbook",
+          "mcp_server": "ansible-mcp-server",
+          "tool": "run_playbook",
+          "params": {
+            "playbook": "playbooks/k3s-master-install.yml",
+            "inventory": "inventories/k3s-cluster/hosts",
+            "limit": "master",
+            "extra_vars": {
+              "k3s_version": "v1.28.5+k3s1",
+              "cluster_init": true,
+              "tls_san": ["${phase2.outputs.master_ip}"]
+            }
+          },
+          "depends_on": ["verify_connectivity"],
+          "success_criteria": {
+            "playbook_status": "success",
+            "k3s_master_running": true
+          },
+          "timeout_seconds": 600
+        },
+        {
+          "task_id": "get_join_token",
+          "task": "run_adhoc",
+          "mcp_server": "ansible-mcp-server",
+          "tool": "run_adhoc",
+          "params": {
+            "inventory": "inventories/k3s-cluster/hosts",
+            "module": "shell",
+            "args": "cat /var/lib/rancher/k3s/server/node-token",
+            "host_pattern": "master"
+          },
+          "depends_on": ["install_k3s_master"],
+          "success_criteria": {
+            "token_retrieved": true
+          }
+        },
+        {
+          "task_id": "join_workers",
+          "task": "run_playbook",
+          "mcp_server": "ansible-mcp-server",
+          "tool": "run_playbook",
+          "params": {
+            "playbook": "playbooks/k3s-worker-join.yml",
+            "inventory": "inventories/k3s-cluster/hosts",
+            "limit": "workers",
+            "extra_vars": {
+              "k3s_url": "https://${phase2.outputs.master_ip}:6443",
+              "k3s_token": "${phase3.get_join_token.outputs.token}"
+            }
+          },
+          "depends_on": ["get_join_token"],
+          "success_criteria": {
+            "playbook_status": "success",
+            "all_workers_joined": true
+          },
+          "timeout_seconds": 600
+        }
+      ],
+      "outputs": {
+        "kubeconfig_path": "${install_k3s_master.outputs.kubeconfig}",
+        "cluster_endpoint": "https://${phase2.outputs.master_ip}:6443",
+        "join_token": "${get_join_token.outputs.token}",
+        "cluster_ready": true
+      },
+      "rollback_strategy": {
+        "on_failure": "restore_snapshots",
+        "tasks": [
+          {
+            "tool": "restore_vm_snapshot",
+            "params": {
+              "vmids": "${phase2.outputs.all_vmids}",
+              "snapname": "pre-k3s-install-*"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "phase": 4,
+      "name": "verify_cluster_health",
+      "contractor": "talos-contractor",
+      "description": "Verify K3s cluster is healthy and ready",
+      "depends_on_phase": 3,
+      "inputs_from_phase": {
+        "3": ["kubeconfig_path", "cluster_endpoint"]
+      },
+      "tasks": [
+        {
+          "task_id": "check_nodes",
+          "task": "kubectl_get_nodes",
+          "tool": "kubectl_get",
+          "params": {
+            "kubeconfig": "${phase3.outputs.kubeconfig_path}",
+            "resource": "nodes",
+            "output": "wide"
+          },
+          "success_criteria": {
+            "node_count": 3,
+            "all_nodes_ready": true
+          }
+        },
+        {
+          "task_id": "check_system_pods",
+          "task": "kubectl_get_pods",
+          "tool": "kubectl_get",
+          "params": {
+            "kubeconfig": "${phase3.outputs.kubeconfig_path}",
+            "resource": "pods",
+            "namespace": "kube-system",
+            "output": "wide"
+          },
+          "depends_on": ["check_nodes"],
+          "success_criteria": {
+            "all_pods_running": true
+          }
+        },
+        {
+          "task_id": "deploy_test_workload",
+          "task": "kubectl_apply",
+          "tool": "kubectl_apply",
+          "params": {
+            "kubeconfig": "${phase3.outputs.kubeconfig_path}",
+            "manifest": {
+              "apiVersion": "v1",
+              "kind": "Pod",
+              "metadata": {
+                "name": "test-nginx",
+                "namespace": "default"
+              },
+              "spec": {
+                "containers": [
+                  {
+                    "name": "nginx",
+                    "image": "nginx:alpine",
+                    "ports": [{"containerPort": 80}]
+                  }
+                ]
+              }
+            }
+          },
+          "depends_on": ["check_system_pods"],
+          "success_criteria": {
+            "pod_created": true
+          }
+        },
+        {
+          "task_id": "verify_test_workload",
+          "task": "wait_for_pod",
+          "tool": "kubectl_wait",
+          "params": {
+            "kubeconfig": "${phase3.outputs.kubeconfig_path}",
+            "resource": "pod/test-nginx",
+            "condition": "ready",
+            "timeout": "120s"
+          },
+          "depends_on": ["deploy_test_workload"],
+          "success_criteria": {
+            "pod_ready": true
+          }
+        },
+        {
+          "task_id": "cleanup_test_workload",
+          "task": "kubectl_delete",
+          "tool": "kubectl_delete",
+          "params": {
+            "kubeconfig": "${phase3.outputs.kubeconfig_path}",
+            "resource": "pod",
+            "name": "test-nginx",
+            "namespace": "default"
+          },
+          "depends_on": ["verify_test_workload"],
+          "success_criteria": {
+            "pod_deleted": true
+          }
+        }
+      ],
+      "outputs": {
+        "cluster_healthy": true,
+        "node_status": "all_ready",
+        "test_passed": true
+      }
+    },
+    {
+      "phase": 5,
+      "name": "security_baseline",
+      "contractor": "security-contractor",
+      "description": "Run security baseline scans and hardening",
+      "depends_on_phase": 4,
+      "inputs_from_phase": {
+        "3": ["kubeconfig_path"],
+        "2": ["master_ip", "worker_ips"]
+      },
+      "tasks": [
+        {
+          "task_id": "run_kube_bench",
+          "task": "security_scan",
+          "tool": "kube-bench",
+          "params": {
+            "kubeconfig": "${phase3.outputs.kubeconfig_path}",
+            "targets": ["master", "node"],
+            "output_format": "json"
+          },
+          "success_criteria": {
+            "scan_completed": true
+          },
+          "timeout_seconds": 300
+        },
+        {
+          "task_id": "analyze_kube_bench_results",
+          "task": "analyze_scan",
+          "method": "parse_kube_bench_output",
+          "params": {
+            "scan_output": "${phase5.run_kube_bench.outputs.results}",
+            "severity_threshold": "HIGH"
+          },
+          "depends_on": ["run_kube_bench"],
+          "success_criteria": {
+            "critical_findings": 0,
+            "high_findings": "< 5"
+          }
+        },
+        {
+          "task_id": "apply_network_policies",
+          "task": "kubectl_apply",
+          "tool": "kubectl_apply",
+          "params": {
+            "kubeconfig": "${phase3.outputs.kubeconfig_path}",
+            "file": "security/network-policies/default-deny.yaml"
+          },
+          "depends_on": ["analyze_kube_bench_results"],
+          "success_criteria": {
+            "network_policies_applied": true
+          }
+        },
+        {
+          "task_id": "setup_pod_security_standards",
+          "task": "kubectl_apply",
+          "tool": "kubectl_apply",
+          "params": {
+            "kubeconfig": "${phase3.outputs.kubeconfig_path}",
+            "manifest": {
+              "apiVersion": "v1",
+              "kind": "Namespace",
+              "metadata": {
+                "name": "default",
+                "labels": {
+                  "pod-security.kubernetes.io/enforce": "restricted",
+                  "pod-security.kubernetes.io/audit": "restricted",
+                  "pod-security.kubernetes.io/warn": "restricted"
+                }
+              }
+            }
+          },
+          "depends_on": ["apply_network_policies"],
+          "success_criteria": {
+            "pss_configured": true
+          }
+        },
+        {
+          "task_id": "run_vm_security_scan",
+          "task": "run_playbook",
+          "mcp_server": "ansible-mcp-server",
+          "tool": "run_playbook",
+          "params": {
+            "playbook": "playbooks/security-hardening.yml",
+            "inventory": "inventories/k3s-cluster/hosts",
+            "extra_vars": {
+              "enable_firewall": true,
+              "disable_unused_services": true,
+              "configure_auditd": true
+            }
+          },
+          "depends_on": ["setup_pod_security_standards"],
+          "success_criteria": {
+            "hardening_applied": true
+          },
+          "timeout_seconds": 900
+        }
+      ],
+      "outputs": {
+        "kube_bench_score": "${analyze_kube_bench_results.outputs.score}",
+        "security_hardening_applied": true,
+        "network_policies_enabled": true,
+        "pss_enforced": true
+      }
+    }
+  ],
+  "global_rollback_strategy": {
+    "description": "Complete workflow rollback on critical failure",
+    "trigger_conditions": [
+      "phase_2_or_later_failure",
+      "security_baseline_critical_failure"
+    ],
+    "steps": [
+      {
+        "phase": 5,
+        "action": "document_security_findings"
+      },
+      {
+        "phase": 4,
+        "action": "cleanup_test_resources"
+      },
+      {
+        "phase": 3,
+        "action": "restore_vm_snapshots"
+      },
+      {
+        "phase": 2,
+        "action": "terraform_destroy"
+      },
+      {
+        "phase": 1,
+        "action": "cleanup_workspace"
+      }
+    ],
+    "cleanup_tasks": [
+      "remove_inventory_files",
+      "cleanup_kubeconfig",
+      "update_documentation"
+    ]
+  },
+  "success_criteria": {
+    "all_phases_complete": true,
+    "cluster_accessible": true,
+    "all_nodes_ready": true,
+    "security_baseline_met": true,
+    "test_workload_successful": true
+  },
+  "monitoring": {
+    "track_metrics": true,
+    "emit_events": true,
+    "dashboard_integration": true,
+    "alert_on_failure": true,
+    "metrics_to_track": [
+      "provision_time_minutes",
+      "node_count",
+      "security_score",
+      "phase_completion_times"
+    ]
+  },
+  "documentation": {
+    "cluster_details": {
+      "endpoint": "${phase3.outputs.cluster_endpoint}",
+      "kubeconfig": "${phase3.outputs.kubeconfig_path}",
+      "master_node": "${phase2.outputs.master_ip}",
+      "worker_nodes": "${phase2.outputs.worker_ips}"
+    },
+    "security": {
+      "kube_bench_report": "${phase5.outputs.kube_bench_report_path}",
+      "hardening_applied": "${phase5.outputs.security_hardening_applied}",
+      "compliance_status": "CIS Kubernetes Benchmark"
+    },
+    "maintenance": {
+      "backup_schedule": "daily snapshots",
+      "upgrade_schedule": "monthly",
+      "monitoring_enabled": true
+    }
+  },
+  "tags": ["kubernetes", "k3s", "cluster", "iac", "multi-contractor"],
+  "last_updated": "2025-12-13T00:00:00Z",
+  "version_history": [
+    {
+      "version": "1.0.0",
+      "date": "2025-12-13",
+      "changes": "Initial workflow definition with 5-phase deployment"
+    }
+  ]
+}
