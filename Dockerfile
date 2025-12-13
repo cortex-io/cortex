@@ -50,9 +50,9 @@ RUN apk add --no-cache \
     git \
     && rm -rf /var/cache/apk/*
 
-# Create non-root user for security
-RUN addgroup -g 1000 cortex && \
-    adduser -D -u 1000 -G cortex -s /bin/sh cortex
+# Create non-root user for security (use different IDs to avoid conflicts with node image)
+RUN addgroup -g 1001 cortex && \
+    adduser -D -u 1001 -G cortex -s /bin/sh cortex
 
 # Set working directory
 WORKDIR /app
