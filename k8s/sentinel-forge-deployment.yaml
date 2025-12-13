@@ -1,0 +1,867 @@
+---
+# Sentinel Forge Security Testing Platform - K3s Deployment
+# Deploys: Wazuh SIEM, n8n Automation, Purple Team Dashboard
+# Integrates with: 4 Kali VMs on VLAN 150 (VMs 900-903)
+
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: sentinel-forge
+  labels:
+    name: sentinel-forge
+    cortex.ai/component: security-lab
+
+---
+# Wazuh Indexer (OpenSearch for SIEM data)
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: wazuh-indexer
+  namespace: sentinel-forge
+spec:
+  serviceName: wazuh-indexer
+  replicas: 1
+  selector:
+    matchLabels:
+      app: wazuh-indexer
+  template:
+    metadata:
+      labels:
+        app: wazuh-indexer
+    spec:
+      containers:
+      - name: wazuh-indexer
+        image: wazuh/wazuh-indexer:4.7.2
+        ports:
+        - containerPort: 9200
+          name: http
+        - containerPort: 9300
+          name: transport
+        env:
+        - name: OPENSEARCH_JAVA_OPTS
+          value: "-Xms512m -Xmx512m"
+        - name: discovery.type
+          value: "single-node"
+        - name: network.host
+          value: "0.0.0.0"
+        volumeMounts:
+        - name: wazuh-indexer-data
+          mountPath: /var/lib/wazuh-indexer
+        resources:
+          requests:
+            memory: "1Gi"
+            cpu: "500m"
+          limits:
+            memory: "2Gi"
+            cpu: "1000m"
+  volumeClaimTemplates:
+  - metadata:
+      name: wazuh-indexer-data
+    spec:
+      accessModes: [ "ReadWriteOnce" ]
+      resources:
+        requests:
+          storage: 10Gi
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: wazuh-indexer
+  namespace: sentinel-forge
+spec:
+  selector:
+    app: wazuh-indexer
+  ports:
+  - port: 9200
+    targetPort: 9200
+    name: http
+  - port: 9300
+    targetPort: 9300
+    name: transport
+  clusterIP: None
+
+---
+# Wazuh Manager (SIEM Core)
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: wazuh-manager
+  namespace: sentinel-forge
+spec:
+  serviceName: wazuh-manager
+  replicas: 1
+  selector:
+    matchLabels:
+      app: wazuh-manager
+  template:
+    metadata:
+      labels:
+        app: wazuh-manager
+    spec:
+      containers:
+      - name: wazuh-manager
+        image: wazuh/wazuh-manager:4.7.2
+        ports:
+        - containerPort: 1514
+          name: agents-events
+          protocol: TCP
+        - containerPort: 1515
+          name: agents-enroll
+          protocol: TCP
+        - containerPort: 55000
+          name: api
+          protocol: TCP
+        env:
+        - name: INDEXER_URL
+          value: "https://wazuh-indexer:9200"
+        - name: INDEXER_USERNAME
+          value: "admin"
+        - name: INDEXER_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: sentinel-forge-secrets
+              key: wazuh-indexer-password
+        - name: FILEBEAT_SSL_VERIFICATION_MODE
+          value: "none"
+        - name: SSL_CERTIFICATE_AUTHORITIES
+          value: ""
+        - name: SSL_CERTIFICATE
+          value: ""
+        - name: SSL_KEY
+          value: ""
+        - name: API_USERNAME
+          value: "wazuh-api"
+        - name: API_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: sentinel-forge-secrets
+              key: wazuh-api-password
+        volumeMounts:
+        - name: wazuh-manager-data
+          mountPath: /var/ossec/data
+        - name: wazuh-manager-logs
+          mountPath: /var/ossec/logs
+        - name: wazuh-custom-rules
+          mountPath: /var/ossec/etc/rules/local_rules.xml
+          subPath: local_rules.xml
+        resources:
+          requests:
+            memory: "1Gi"
+            cpu: "500m"
+          limits:
+            memory: "2Gi"
+            cpu: "1500m"
+      volumes:
+      - name: wazuh-custom-rules
+        configMap:
+          name: wazuh-custom-rules
+  volumeClaimTemplates:
+  - metadata:
+      name: wazuh-manager-data
+    spec:
+      accessModes: [ "ReadWriteOnce" ]
+      resources:
+        requests:
+          storage: 20Gi
+  - metadata:
+      name: wazuh-manager-logs
+    spec:
+      accessModes: [ "ReadWriteOnce" ]
+      resources:
+        requests:
+          storage: 10Gi
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: wazuh-manager
+  namespace: sentinel-forge
+spec:
+  selector:
+    app: wazuh-manager
+  ports:
+  - port: 1514
+    targetPort: 1514
+    name: agents-events
+  - port: 1515
+    targetPort: 1515
+    name: agents-enroll
+  - port: 55000
+    targetPort: 55000
+    name: api
+  type: ClusterIP
+
+---
+# Wazuh Dashboard (Web UI)
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: wazuh-dashboard
+  namespace: sentinel-forge
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: wazuh-dashboard
+  template:
+    metadata:
+      labels:
+        app: wazuh-dashboard
+    spec:
+      containers:
+      - name: wazuh-dashboard
+        image: wazuh/wazuh-dashboard:4.7.2
+        ports:
+        - containerPort: 5601
+          name: http
+        env:
+        - name: INDEXER_USERNAME
+          value: "admin"
+        - name: INDEXER_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: sentinel-forge-secrets
+              key: wazuh-indexer-password
+        - name: WAZUH_API_URL
+          value: "https://wazuh-manager:55000"
+        - name: API_USERNAME
+          value: "wazuh-api"
+        - name: API_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: sentinel-forge-secrets
+              key: wazuh-api-password
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "250m"
+          limits:
+            memory: "1Gi"
+            cpu: "500m"
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: wazuh-dashboard
+  namespace: sentinel-forge
+spec:
+  selector:
+    app: wazuh-dashboard
+  ports:
+  - port: 5601
+    targetPort: 5601
+    name: http
+  type: ClusterIP
+
+---
+# n8n Workflow Automation
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: n8n
+  namespace: sentinel-forge
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: n8n
+  template:
+    metadata:
+      labels:
+        app: n8n
+    spec:
+      containers:
+      - name: n8n
+        image: n8nio/n8n:latest
+        ports:
+        - containerPort: 5678
+          name: http
+        env:
+        - name: N8N_BASIC_AUTH_ACTIVE
+          value: "true"
+        - name: N8N_BASIC_AUTH_USER
+          value: "admin"
+        - name: N8N_BASIC_AUTH_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: sentinel-forge-secrets
+              key: n8n-password
+        - name: WEBHOOK_URL
+          value: "http://n8n.sentinel-forge.local"
+        - name: N8N_ENCRYPTION_KEY
+          valueFrom:
+            secretKeyRef:
+              name: sentinel-forge-secrets
+              key: n8n-encryption-key
+        - name: EXECUTIONS_PROCESS
+          value: "main"
+        - name: EXECUTIONS_MODE
+          value: "regular"
+        - name: N8N_METRICS
+          value: "true"
+        - name: N8N_DIAGNOSTICS_ENABLED
+          value: "false"
+        volumeMounts:
+        - name: n8n-data
+          mountPath: /home/node/.n8n
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "250m"
+          limits:
+            memory: "1Gi"
+            cpu: "1000m"
+      volumes:
+      - name: n8n-data
+        persistentVolumeClaim:
+          claimName: n8n-data
+
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: n8n-data
+  namespace: sentinel-forge
+spec:
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: 5Gi
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: n8n
+  namespace: sentinel-forge
+spec:
+  selector:
+    app: n8n
+  ports:
+  - port: 5678
+    targetPort: 5678
+    name: http
+  type: ClusterIP
+
+---
+# Purple Team Dashboard (Coordination & Reporting)
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: purple-team-dashboard
+  namespace: sentinel-forge
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: purple-team-dashboard
+  template:
+    metadata:
+      labels:
+        app: purple-team-dashboard
+    spec:
+      containers:
+      - name: dashboard
+        image: nginx:alpine
+        ports:
+        - containerPort: 80
+          name: http
+        volumeMounts:
+        - name: dashboard-config
+          mountPath: /etc/nginx/conf.d
+        - name: dashboard-html
+          mountPath: /usr/share/nginx/html
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "100m"
+          limits:
+            memory: "256Mi"
+            cpu: "200m"
+      volumes:
+      - name: dashboard-config
+        configMap:
+          name: purple-team-nginx-config
+      - name: dashboard-html
+        configMap:
+          name: purple-team-dashboard-html
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: purple-team-dashboard
+  namespace: sentinel-forge
+spec:
+  selector:
+    app: purple-team-dashboard
+  ports:
+  - port: 80
+    targetPort: 80
+    name: http
+  type: ClusterIP
+
+---
+# Sentinel Forge API Gateway (Integrates with Cortex)
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sentinel-forge-api
+  namespace: sentinel-forge
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: sentinel-forge-api
+  template:
+    metadata:
+      labels:
+        app: sentinel-forge-api
+    spec:
+      containers:
+      - name: api
+        image: node:18-alpine
+        command: ["/bin/sh", "-c"]
+        args:
+        - |
+          cat > /app/server.js << 'EOF'
+          const express = require('express');
+          const axios = require('axios');
+          const app = express();
+          app.use(express.json());
+
+          // Health check
+          app.get('/health', (req, res) => {
+            res.json({ status: 'healthy', service: 'sentinel-forge-api' });
+          });
+
+          // Exercise management
+          app.post('/api/exercise/start', async (req, res) => {
+            try {
+              const { exercise_id, exercise_type, duration_hours, teams } = req.body;
+              // Trigger n8n workflow
+              const n8nResponse = await axios.post('http://n8n:5678/webhook/start-exercise', req.body);
+              res.json({ status: 'started', exercise_id, n8n_workflow: n8nResponse.data });
+            } catch (err) {
+              res.status(500).json({ error: err.message });
+            }
+          });
+
+          app.post('/api/exercise/stop', async (req, res) => {
+            const { exercise_id } = req.body;
+            res.json({ status: 'stopped', exercise_id });
+          });
+
+          // Wazuh integration
+          app.get('/api/alerts', async (req, res) => {
+            try {
+              const wazuhResponse = await axios.get('http://wazuh-manager:55000/security/alerts', {
+                headers: { 'Authorization': 'Bearer ' + process.env.WAZUH_API_TOKEN }
+              });
+              res.json(wazuhResponse.data);
+            } catch (err) {
+              res.status(500).json({ error: err.message });
+            }
+          });
+
+          // Kali VM status
+          app.get('/api/vms/status', async (req, res) => {
+            res.json({
+              vms: [
+                { id: 900, name: 'red-kali-server', ip: '10.88.150.21', team: 'red', status: 'running' },
+                { id: 901, name: 'blue-kali-server', ip: '10.88.150.7', team: 'blue', status: 'running' },
+                { id: 902, name: 'purple-kali-server', ip: '10.88.150.22', team: 'purple', status: 'running' },
+                { id: 903, name: 'green-kali-server', ip: '10.88.150.14', team: 'green', status: 'running' }
+              ]
+            });
+          });
+
+          // Cortex integration endpoint
+          app.post('/api/cortex/alert', (req, res) => {
+            console.log('Cortex alert received:', req.body);
+            res.json({ status: 'acknowledged' });
+          });
+
+          const PORT = process.env.PORT || 3000;
+          app.listen(PORT, () => console.log(\`Sentinel Forge API running on port \${PORT}\`));
+          EOF
+
+          cd /app && npm init -y && npm install express axios
+          node server.js
+        ports:
+        - containerPort: 3000
+          name: http
+        env:
+        - name: PORT
+          value: "3000"
+        - name: WAZUH_API_URL
+          value: "http://wazuh-manager:55000"
+        - name: N8N_URL
+          value: "http://n8n:5678"
+        - name: WAZUH_API_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: sentinel-forge-secrets
+              key: wazuh-api-token
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "100m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: sentinel-forge-api
+  namespace: sentinel-forge
+spec:
+  selector:
+    app: sentinel-forge-api
+  ports:
+  - port: 3000
+    targetPort: 3000
+    name: http
+  type: ClusterIP
+
+---
+# Traefik IngressRoutes for Sentinel Forge services
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: wazuh-dashboard
+  namespace: sentinel-forge
+spec:
+  entryPoints:
+  - web
+  routes:
+  - match: Host(`wazuh.cortex.local`)
+    kind: Rule
+    services:
+    - name: wazuh-dashboard
+      port: 5601
+
+---
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: n8n
+  namespace: sentinel-forge
+spec:
+  entryPoints:
+  - web
+  routes:
+  - match: Host(`n8n.cortex.local`)
+    kind: Rule
+    services:
+    - name: n8n
+      port: 5678
+
+---
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: purple-team-dashboard
+  namespace: sentinel-forge
+spec:
+  entryPoints:
+  - web
+  routes:
+  - match: Host(`purple.cortex.local`) || Host(`sentinel-forge.cortex.local`)
+    kind: Rule
+    services:
+    - name: purple-team-dashboard
+      port: 80
+
+---
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: sentinel-forge-api
+  namespace: sentinel-forge
+spec:
+  entryPoints:
+  - web
+  routes:
+  - match: Host(`sf-api.cortex.local`)
+    kind: Rule
+    services:
+    - name: sentinel-forge-api
+      port: 3000
+
+---
+# ConfigMap: Wazuh Custom Rules (from security-lab project)
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: wazuh-custom-rules
+  namespace: sentinel-forge
+data:
+  local_rules.xml: |
+    <group name="security_lab,">
+      <!-- Red Team Activity Detection (100001-100009) -->
+      <rule id="100001" level="5">
+        <decoded_as>json</decoded_as>
+        <field name="team">red</field>
+        <description>Red Team activity detected</description>
+        <group>red_team,authorized,</group>
+      </rule>
+
+      <rule id="100002" level="7">
+        <if_sid>100001</if_sid>
+        <field name="phase">reconnaissance</field>
+        <description>Red Team: Reconnaissance phase</description>
+        <group>red_team,recon,</group>
+      </rule>
+
+      <rule id="100003" level="9">
+        <if_sid>100001</if_sid>
+        <field name="phase">exploitation</field>
+        <description>Red Team: Exploitation attempt</description>
+        <group>red_team,exploit,</group>
+      </rule>
+
+      <!-- Unauthorized Activity Detection (100010-100014) -->
+      <rule id="100010" level="12">
+        <decoded_as>json</decoded_as>
+        <field name="authorized">false</field>
+        <description>UNAUTHORIZED ATTACK DETECTED</description>
+        <group>unauthorized,critical,</group>
+      </rule>
+
+      <rule id="100011" level="14">
+        <if_sid>100010</if_sid>
+        <field name="source_ip" negate="yes">^10\.88\.150\.</field>
+        <description>UNAUTHORIZED: Attack from external IP</description>
+        <group>unauthorized,external_threat,</group>
+      </rule>
+
+      <!-- Honeypot Detection (100020-100027) -->
+      <rule id="100020" level="6">
+        <decoded_as>json</decoded_as>
+        <field name="honeypot">true</field>
+        <description>Honeypot interaction detected</description>
+        <group>honeypot,threat_intel,</group>
+      </rule>
+
+      <rule id="100021" level="8">
+        <if_sid>100020</if_sid>
+        <field name="honeypot_type">ssh</field>
+        <description>SSH Honeypot: Connection attempt</description>
+        <group>honeypot,ssh,</group>
+      </rule>
+
+      <rule id="100022" level="9">
+        <if_sid>100021</if_sid>
+        <field name="authentication_attempts" type="pcre2">\d{3,}</field>
+        <description>SSH Honeypot: Brute force detected</description>
+        <group>honeypot,brute_force,</group>
+      </rule>
+
+      <!-- Blue Team Scoring (100050-100051) -->
+      <rule id="100050" level="4">
+        <decoded_as>json</decoded_as>
+        <field name="blue_team_action">detection</field>
+        <description>Blue Team: Threat detected</description>
+        <group>blue_team,score_positive,</group>
+      </rule>
+
+      <rule id="100051" level="3">
+        <decoded_as>json</decoded_as>
+        <field name="blue_team_action">remediation</field>
+        <description>Blue Team: Remediation action</description>
+        <group>blue_team,score_positive,</group>
+      </rule>
+
+      <!-- Target Compromise Indicators (100060-100065) -->
+      <rule id="100060" level="10">
+        <decoded_as>json</decoded_as>
+        <field name="target_compromised">true</field>
+        <description>TARGET COMPROMISED</description>
+        <group>target,compromised,red_team_success,</group>
+      </rule>
+
+      <rule id="100061" level="11">
+        <if_sid>100060</if_sid>
+        <field name="persistence">true</field>
+        <description>Persistence established on target</description>
+        <group>target,persistence,</group>
+      </rule>
+
+      <!-- Exercise Control (100100-100103) -->
+      <rule id="100100" level="3">
+        <decoded_as>json</decoded_as>
+        <field name="exercise_event">start</field>
+        <description>Security exercise STARTED</description>
+        <group>exercise_control,</group>
+      </rule>
+
+      <rule id="100101" level="3">
+        <decoded_as>json</decoded_as>
+        <field name="exercise_event">stop</field>
+        <description>Security exercise STOPPED</description>
+        <group>exercise_control,</group>
+      </rule>
+
+      <rule id="100102" level="15">
+        <decoded_as>json</decoded_as>
+        <field name="safe_word">true</field>
+        <description>SAFE WORD - EMERGENCY STOP</description>
+        <group>exercise_control,emergency,</group>
+      </rule>
+    </group>
+
+---
+# ConfigMap: Purple Team Dashboard HTML
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: purple-team-dashboard-html
+  namespace: sentinel-forge
+data:
+  index.html: |
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <title>Sentinel Forge - Purple Team Dashboard</title>
+      <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #0a0a0a; color: #fff; padding: 20px; }
+        .header { text-align: center; padding: 30px 0; border-bottom: 2px solid #a855f7; }
+        .header h1 { font-size: 2.5em; color: #a855f7; }
+        .status-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin: 30px 0; }
+        .status-card { background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); border-radius: 10px; padding: 20px; border: 1px solid #444; }
+        .status-card h3 { color: #fff; margin-bottom: 10px; font-size: 1.2em; }
+        .status-card .value { font-size: 2em; font-weight: bold; margin: 10px 0; }
+        .red-team { border-left: 4px solid #ef4444; }
+        .red-team .value { color: #ef4444; }
+        .blue-team { border-left: 4px solid #3b82f6; }
+        .blue-team .value { color: #3b82f6; }
+        .purple-team { border-left: 4px solid #a855f7; }
+        .purple-team .value { color: #a855f7; }
+        .green-team { border-left: 4px solid #10b981; }
+        .green-team .value { color: #10b981; }
+        .vm-status { padding: 5px; margin: 5px 0; background: #222; border-radius: 5px; }
+        .running { color: #10b981; }
+        .stopped { color: #ef4444; }
+        .links { display: flex; gap: 15px; justify-content: center; margin: 30px 0; flex-wrap: wrap; }
+        .link-btn { padding: 12px 24px; background: #a855f7; color: #fff; text-decoration: none; border-radius: 6px; transition: all 0.3s; }
+        .link-btn:hover { background: #9333ea; transform: translateY(-2px); }
+      </style>
+    </head>
+    <body>
+      <div class="header">
+        <h1>🛡️ Sentinel Forge - Purple Team Dashboard</h1>
+        <p>Security Exercise Coordination & Monitoring</p>
+      </div>
+
+      <div class="status-grid">
+        <div class="status-card red-team">
+          <h3>🔴 Red Team</h3>
+          <div class="value">READY</div>
+          <div class="vm-status">VM 900 - red-kali-server</div>
+          <div class="vm-status">IP: 10.88.150.21</div>
+          <div class="vm-status">Status: <span class="running">RUNNING</span></div>
+        </div>
+
+        <div class="status-card blue-team">
+          <h3>🔵 Blue Team</h3>
+          <div class="value">READY</div>
+          <div class="vm-status">VM 901 - blue-kali-server</div>
+          <div class="vm-status">IP: 10.88.150.7</div>
+          <div class="vm-status">Status: <span class="running">RUNNING</span></div>
+        </div>
+
+        <div class="status-card purple-team">
+          <h3>🟣 Purple Team</h3>
+          <div class="value">ACTIVE</div>
+          <div class="vm-status">VM 902 - purple-kali-server</div>
+          <div class="vm-status">IP: 10.88.150.22</div>
+          <div class="vm-status">Status: <span class="running">RUNNING</span></div>
+        </div>
+
+        <div class="status-card green-team">
+          <h3>🟢 Green Team</h3>
+          <div class="value">READY</div>
+          <div class="vm-status">VM 903 - green-kali-server</div>
+          <div class="vm-status">IP: 10.88.150.14</div>
+          <div class="vm-status">Status: <span class="running">RUNNING</span></div>
+        </div>
+      </div>
+
+      <div class="links">
+        <a href="http://wazuh.cortex.local" class="link-btn">📊 Wazuh SIEM</a>
+        <a href="http://n8n.cortex.local" class="link-btn">⚙️ n8n Workflows</a>
+        <a href="http://dashboard.cortex.local" class="link-btn">🎛️ Cortex Dashboard</a>
+        <a href="http://sf-api.cortex.local/health" class="link-btn">🔌 API Status</a>
+      </div>
+
+      <div style="text-align: center; margin-top: 40px; padding: 20px; background: #1a1a2e; border-radius: 10px;">
+        <h2>Quick Start</h2>
+        <p style="margin: 15px 0;">Start a security exercise via API:</p>
+        <code style="background: #000; padding: 10px; display: block; border-radius: 5px; font-family: monospace;">
+          curl -X POST http://sf-api.cortex.local/api/exercise/start \<br>
+          &nbsp;&nbsp;-H "Content-Type: application/json" \<br>
+          &nbsp;&nbsp;-d '{"exercise_id":"test-001","exercise_type":"reconnaissance","duration_hours":1}'
+        </code>
+      </div>
+
+      <div style="text-align: center; margin-top: 20px; color: #666; font-size: 0.9em;">
+        <p>Sentinel Forge v1.0 | Deployed on K3s | Integrated with Cortex AI</p>
+        <p>Network: VLAN 150 (10.88.150.0/29) | Isolated Security Lab Environment</p>
+      </div>
+    </body>
+    </html>
+
+---
+# ConfigMap: Nginx configuration for dashboard
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: purple-team-nginx-config
+  namespace: sentinel-forge
+data:
+  default.conf: |
+    server {
+        listen 80;
+        server_name purple.cortex.local sentinel-forge.cortex.local;
+
+        location / {
+            root /usr/share/nginx/html;
+            index index.html;
+            try_files $uri $uri/ =404;
+        }
+
+        # Proxy to Sentinel Forge API
+        location /api/ {
+            proxy_pass http://sentinel-forge-api:3000/api/;
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+        }
+
+        location /health {
+            access_log off;
+            return 200 "healthy\n";
+        }
+    }
+
+---
+# Secrets (will need to be created with actual values)
+apiVersion: v1
+kind: Secret
+metadata:
+  name: sentinel-forge-secrets
+  namespace: sentinel-forge
+type: Opaque
+stringData:
+  wazuh-indexer-password: "SecurePassword123!"
+  wazuh-api-password: "WazuhAPI123!"
+  wazuh-api-token: "generated-after-deployment"
+  n8n-password: "N8nAdmin123!"
+  n8n-encryption-key: "randomly-generated-32-char-key-here"
