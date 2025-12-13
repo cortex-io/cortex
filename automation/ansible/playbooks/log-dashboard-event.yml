@@ -1,0 +1,90 @@
+---
+# Dashboard Event Logging Playbook
+# Automates structured event logging to dashboard-events.jsonl
+# Time savings: ~2 minutes per event (from 3 min to <1 min)
+# ROI Score: 97 (very high frequency)
+
+- name: Log Event to Cortex Dashboard
+  hosts: localhost
+  connection: local
+  gather_facts: yes
+
+  vars_prompt:
+    - name: event_type
+      prompt: "Enter event type (e.g., integration_complete, health_check_passed)"
+      private: no
+
+    - name: severity
+      prompt: "Enter severity (info/low/medium/high/critical)"
+      private: no
+      default: "info"
+
+    - name: component
+      prompt: "Enter component name (e.g., unifi-mcp-server, development-master)"
+      private: no
+
+    - name: message
+      prompt: "Enter event message"
+      private: no
+
+    - name: source
+      prompt: "Enter event source (default: ansible-automation)"
+      private: no
+      default: "ansible-automation"
+
+  vars:
+    cortex_root: "/Users/ryandahlberg/Projects/cortex"
+    events_log: "{{ cortex_root }}/coordination/dashboard-events.jsonl"
+    timestamp: "{{ ansible_date_time.iso8601 }}"
+
+  tasks:
+    - name: Validate severity level
+      assert:
+        that:
+          - severity in ['info', 'low', 'medium', 'high', 'critical']
+        fail_msg: "Severity must be one of: info, low, medium, high, critical"
+
+    - name: Generate event ID
+      set_fact:
+        event_id: "evt-{{ ansible_date_time.epoch }}-ansible"
+
+    - name: Create event JSON
+      set_fact:
+        event_json: >-
+          {"timestamp":"{{ timestamp }}","event_id":"{{ event_id }}","event_type":"{{ event_type }}","severity":"{{ severity }}","component":"{{ component }}","message":"{{ message }}","source":"{{ source }}"}
+
+    - name: Log event to dashboard
+      lineinfile:
+        path: "{{ events_log }}"
+        line: "{{ event_json }}"
+        create: yes
+        mode: '0644'
+
+    - name: Display confirmation
+      debug:
+        msg:
+          - "=========================================="
+          - "Event Logged Successfully"
+          - "=========================================="
+          - "Event ID: {{ event_id }}"
+          - "Type: {{ event_type }}"
+          - "Severity: {{ severity }}"
+          - "Component: {{ component }}"
+          - "Message: {{ message }}"
+          - "Timestamp: {{ timestamp }}"
+          - "=========================================="
+          - "Event logged to: {{ events_log }}"
+
+    - name: Validate event was logged
+      shell: "tail -1 {{ events_log }} | jq -r '.event_id'"
+      register: last_event_id
+      changed_when: false
+
+    - name: Confirm event ID matches
+      assert:
+        that:
+          - last_event_id.stdout == event_id
+        success_msg: "Event successfully logged and validated"
+        fail_msg: "Event logging validation failed"
+
+...

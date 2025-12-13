@@ -1,0 +1,27 @@
+{
+  "verification_id": "k3s-verify-20251213-091309",
+  "timestamp": "2025-12-13T15:13:09Z",
+  "proxmox": {
+    "host": "10.88.140.164",
+    "node": "pve01",
+    "vmid": "310",
+    "vm_name": "k3s-master-vm",
+    "vm_status": "running"
+  },
+  "k3s_cluster": {
+    "namespace": "cortex-system",
+    "expected_pods": 5,
+    "running_pods": 0,
+    "loadbalancer_ip": "NotAssigned",
+    "expected_loadbalancer_ip": "10.88.145.201"
+  },
+  "pod_verification": {
+    "coordinator_master": "Unknown",
+    "development_master": "Unknown",
+    "security_master": "Unknown",
+    "cicd_master": "Unknown",
+    "dashboard": "Unknown"
+  },
+  "verification_method": "proxmox_api_qemu_exec",
+  "status": "partial"
+}

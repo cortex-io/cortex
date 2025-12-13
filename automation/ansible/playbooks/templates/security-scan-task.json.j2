@@ -1,0 +1,56 @@
+{
+  "task_id": "{{ mcp_repo_name }}-security-scan-001",
+  "task_type": "security_scan",
+  "priority": "high",
+  "status": "pending",
+  "assigned_master": "security-master",
+  "repository": {
+    "name": "{{ mcp_repo_org }}/{{ mcp_repo_name }}",
+    "url": "{{ mcp_github_url }}",
+    "language": "{{ mcp_language }}",
+    "package_manager": "{{ mcp_package_manager }}",
+    "default_branch": "main"
+  },
+  "scan_config": {
+    "scan_types": [
+      "dependency_vulnerabilities",
+      "secrets_detection",
+      "static_analysis"{% if api_keys_required == "yes" %},
+      "api_key_exposure"{% endif %}
+    ],
+    "tools": [
+{% if mcp_language == "Python" %}
+      "pip-audit",
+      "bandit",
+      "safety",
+{% elif mcp_language == "TypeScript" %}
+      "npm audit",
+      "eslint-plugin-security",
+{% endif %}
+      "gitleaks",
+      "trufflehog"
+    ],
+    "severity_threshold": "medium",
+    "include_dependencies": true,
+    "focus_areas": [
+{% if api_keys_required == "yes" %}
+      "API key management",
+      "Credential handling",
+      "Environment variable security",
+{% endif %}
+      "Dependency vulnerabilities"
+    ]
+  },
+  "created_at": "{{ timestamp }}",
+  "created_by": "ansible-automation",
+  "deliverables": {
+    "vulnerability_report": "coordination/security/reports/{{ mcp_repo_name }}-scan.json",
+    "summary_report": "coordination/security/reports/{{ mcp_repo_name }}-summary.md",
+    "secrets_scan_report": "coordination/security/reports/{{ mcp_repo_name }}-secrets.json"
+  }{% if api_keys_required == "yes" %},
+  "security_notes": {
+    "api_keys": "API keys grant privileged access - critical to monitor for exposure",
+    "credential_storage": "Verify .env files are properly gitignored",
+    "key_rotation": "Recommend regular API key rotation policy"
+  }{% endif %}
+}

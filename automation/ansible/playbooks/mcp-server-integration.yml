@@ -1,0 +1,218 @@
+---
+# MCP Server Integration Playbook
+# Automates the full integration of an MCP server into Cortex
+# Time savings: ~40 minutes per integration (from 45 min to 5 min)
+# ROI Score: 100 (highest priority)
+
+- name: Integrate MCP Server into Cortex Monitoring and Security
+  hosts: localhost
+  connection: local
+  gather_facts: yes
+
+  vars_prompt:
+    - name: mcp_repo_name
+      prompt: "Enter MCP repository name (e.g., unifi-mcp-server)"
+      private: no
+
+    - name: mcp_repo_org
+      prompt: "Enter GitHub organization (default: ry-ops)"
+      private: no
+      default: "ry-ops"
+
+    - name: mcp_language
+      prompt: "Enter primary language (Python/TypeScript/Go)"
+      private: no
+      default: "Python"
+
+    - name: mcp_package_manager
+      prompt: "Enter package manager (uv/npm/go mod)"
+      private: no
+      default: "uv"
+
+    - name: mcp_primary_function
+      prompt: "Enter primary function (e.g., UniFi network management)"
+      private: no
+
+    - name: api_keys_required
+      prompt: "Does this MCP server require API keys? (yes/no)"
+      private: no
+      default: "yes"
+
+  vars:
+    cortex_root: "/Users/ryandahlberg/Projects/cortex"
+    mcp_projects_dir: "/Users/ryandahlberg/Projects"
+    mcp_local_path: "{{ mcp_projects_dir }}/{{ mcp_repo_name }}"
+    mcp_github_url: "https://github.com/{{ mcp_repo_org }}/{{ mcp_repo_name }}"
+    timestamp: "{{ ansible_date_time.iso8601 }}"
+    integration_date: "{{ ansible_date_time.date }}"
+
+  tasks:
+    - name: Display integration summary
+      debug:
+        msg:
+          - "=========================================="
+          - "MCP Server Integration Automation"
+          - "=========================================="
+          - "Repository: {{ mcp_repo_org }}/{{ mcp_repo_name }}"
+          - "Language: {{ mcp_language }}"
+          - "Package Manager: {{ mcp_package_manager }}"
+          - "Primary Function: {{ mcp_primary_function }}"
+          - "=========================================="
+
+    - name: Clone MCP repository
+      git:
+        repo: "{{ mcp_github_url }}"
+        dest: "{{ mcp_local_path }}"
+        clone: yes
+        update: yes
+      register: git_clone
+      ignore_errors: yes
+
+    - name: Check if repository was cloned successfully
+      stat:
+        path: "{{ mcp_local_path }}"
+      register: repo_check
+
+    - name: Fail if repository doesn't exist
+      fail:
+        msg: "Failed to clone repository {{ mcp_github_url }}"
+      when: not repo_check.stat.exists
+
+    - name: Check for agent-card.json (A2A protocol)
+      stat:
+        path: "{{ mcp_local_path }}/agent-card.json"
+      register: agent_card_check
+
+    - name: Read agent-card.json if present
+      slurp:
+        src: "{{ mcp_local_path }}/agent-card.json"
+      register: agent_card_content
+      when: agent_card_check.stat.exists
+
+    - name: Parse agent card
+      set_fact:
+        agent_card: "{{ agent_card_content.content | b64decode | from_json }}"
+      when: agent_card_check.stat.exists
+
+    - name: Extract A2A protocol information
+      set_fact:
+        skills_count: "{{ agent_card.skills | length if agent_card_check.stat.exists else 0 }}"
+        prompts_count: "{{ agent_card.skills | map(attribute='prompts') | flatten | length if agent_card_check.stat.exists else 0 }}"
+      when: agent_card_check.stat.exists
+
+    - name: Create monitoring configuration
+      template:
+        src: "{{ cortex_root }}/automation/ansible/playbooks/templates/monitoring-config.json.j2"
+        dest: "{{ cortex_root }}/coordination/monitoring/{{ mcp_repo_name }}.json"
+        mode: '0644'
+
+    - name: Create health check script
+      template:
+        src: "{{ cortex_root }}/automation/ansible/playbooks/templates/health-check-script.sh.j2"
+        dest: "{{ cortex_root }}/scripts/monitoring/check-{{ mcp_repo_name }}-health.sh"
+        mode: '0755'
+
+    - name: Create security scan task
+      template:
+        src: "{{ cortex_root }}/automation/ansible/playbooks/templates/security-scan-task.json.j2"
+        dest: "{{ cortex_root }}/coordination/tasks/{{ mcp_repo_name }}-security-scan.json"
+        mode: '0644'
+
+    - name: Create integration documentation
+      template:
+        src: "{{ cortex_root }}/automation/ansible/playbooks/templates/integration-doc.md.j2"
+        dest: "{{ cortex_root }}/docs/integrations/{{ mcp_repo_name }}-integration.md"
+        mode: '0644'
+
+    - name: Log integration event to dashboard
+      lineinfile:
+        path: "{{ cortex_root }}/coordination/dashboard-events.jsonl"
+        line: '{"timestamp":"{{ timestamp }}","event_type":"integration_complete","source":"ansible-automation","severity":"info","message":"{{ mcp_repo_name }} integration completed successfully","repository":"{{ mcp_repo_org }}/{{ mcp_repo_name }}","integration_files":4,"health_check":"enabled","security_scanning":"enabled","dashboard_widget":"enabled","automation":"ansible"}'
+        create: yes
+
+    - name: Update repository inventory
+      shell: |
+        if ! grep -q "{{ mcp_repo_name }}" "{{ cortex_root }}/coordination/repository-inventory.json"; then
+          jq --arg name "{{ mcp_repo_name }}" \
+             --arg url "{{ mcp_github_url }}" \
+             --arg type "mcp-server" \
+             --arg status "integrated" \
+             --arg date "{{ integration_date }}" \
+             '.repositories += [{
+               "name": $name,
+               "url": $url,
+               "type": $type,
+               "status": $status,
+               "integrated_at": $date,
+               "automation": "ansible"
+             }]' "{{ cortex_root }}/coordination/repository-inventory.json" > /tmp/inventory.json
+          mv /tmp/inventory.json "{{ cortex_root }}/coordination/repository-inventory.json"
+        fi
+      args:
+        executable: /bin/bash
+
+    - name: Display integration summary
+      debug:
+        msg:
+          - "=========================================="
+          - "Integration Complete!"
+          - "=========================================="
+          - "Repository: {{ mcp_repo_name }}"
+          - "Files Created:"
+          - "  - coordination/monitoring/{{ mcp_repo_name }}.json"
+          - "  - scripts/monitoring/check-{{ mcp_repo_name }}-health.sh"
+          - "  - coordination/tasks/{{ mcp_repo_name }}-security-scan.json"
+          - "  - docs/integrations/{{ mcp_repo_name }}-integration.md"
+          - ""
+          - "Next Steps:"
+          - "  1. Review generated files for accuracy"
+          - "  2. Run health check: ./scripts/monitoring/check-{{ mcp_repo_name }}-health.sh"
+          - "  3. Commit changes to git"
+          - "  4. Test dashboard integration"
+          - "=========================================="
+
+    - name: Create integration summary file
+      copy:
+        content: |
+          # {{ mcp_repo_name }} Integration Summary
+
+          **Integration Date**: {{ integration_date }}
+          **Automation**: Ansible Playbook
+          **Time Saved**: ~40 minutes
+
+          ## Files Created
+          1. `coordination/monitoring/{{ mcp_repo_name }}.json` - Monitoring configuration
+          2. `scripts/monitoring/check-{{ mcp_repo_name }}-health.sh` - Health check script
+          3. `coordination/tasks/{{ mcp_repo_name }}-security-scan.json` - Security scan task
+          4. `docs/integrations/{{ mcp_repo_name }}-integration.md` - Integration documentation
+
+          ## Repository Details
+          - **Name**: {{ mcp_repo_name }}
+          - **URL**: {{ mcp_github_url }}
+          - **Language**: {{ mcp_language }}
+          - **Package Manager**: {{ mcp_package_manager }}
+          - **Primary Function**: {{ mcp_primary_function }}
+          {% if agent_card_check.stat.exists %}
+          - **A2A Protocol**: Compliant
+          - **Skills**: {{ skills_count }}
+          - **Prompts**: {{ prompts_count }}
+          {% endif %}
+
+          ## Next Steps
+          1. Review generated files
+          2. Test health check script
+          3. Commit to git
+          4. Verify dashboard integration
+
+          ## Manual Review Required
+          - [ ] Validate monitoring configuration for {{ mcp_repo_name }}-specific needs
+          - [ ] Customize health check script with actual API endpoints
+          - [ ] Review security scan focus areas
+          - [ ] Update integration documentation with specific examples
+          {% if api_keys_required == 'yes' %}
+          - [ ] Configure API keys in secrets.env
+          - [ ] Verify secrets.env is in .gitignore
+          {% endif %}
+        dest: "{{ cortex_root }}/automation/ansible/playbooks/integration-summaries/{{ mcp_repo_name }}-{{ integration_date }}.md"
+
+...

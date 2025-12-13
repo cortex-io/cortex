@@ -1,0 +1,21 @@
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: cortex-resource-manager
+  namespace: cortex-system
+  labels:
+    app: cortex-resource-manager
+    component: infrastructure
+    prometheus: kube-prometheus
+spec:
+  selector:
+    matchLabels:
+      app: cortex-resource-manager
+  endpoints:
+  - port: metrics
+    interval: 30s
+    path: /metrics
+    scheme: http
+  namespaceSelector:
+    matchNames:
+    - cortex-system

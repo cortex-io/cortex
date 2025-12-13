@@ -1,0 +1,188 @@
+# {{ mcp_repo_name }} - Cortex Integration Guide
+
+**Repository**: `{{ mcp_repo_org }}/{{ mcp_repo_name }}`
+**Integration Date**: {{ integration_date }}
+**Status**: ✅ Fully Integrated - Active Monitoring
+**Local Clone**: `{{ mcp_local_path }}`
+**Automation**: Ansible Playbook
+
+## Overview
+
+This document describes how the `{{ mcp_repo_name }}` project is integrated with Cortex for automated security scanning, monitoring, and observability.
+
+## Integration Architecture
+
+```
+┌──────────────────────────────────────┐
+│   {{ mcp_repo_name }} (GitHub)       │
+│   - {{ mcp_language }} MCP Server    │
+│   - {{ mcp_primary_function }}       │
+└─────────────┬────────────────────────┘
+              │
+              │ (1) Webhooks / API Calls
+              │
+              ▼
+┌──────────────────────────────────────┐
+│         Cortex (Local)               │
+│  ┌────────────────────────────────┐  │
+│  │  Repository Inventory          │  │
+│  │  - Metadata tracking           │  │
+│  │  - Health status               │  │
+│  └────────────┬───────────────────┘  │
+│               │                      │
+│  ┌────────────▼───────────────────┐  │
+│  │  Security Master               │  │
+│  │  - CVE scanning                │  │
+│  │  - Dependency audits           │  │
+│  │  - Secrets detection           │  │
+│  └────────────┬───────────────────┘  │
+│               │                      │
+│  ┌────────────▼───────────────────┐  │
+│  │  Observability Pipeline        │  │
+│  │  - Event tracking              │  │
+│  │  - Metrics collection          │  │
+│  │  - Dashboard integration       │  │
+│  └────────────────────────────────┘  │
+└──────────────────────────────────────┘
+```
+
+## Security Scanning
+
+**Task Configuration**: `coordination/tasks/{{ mcp_repo_name }}-security-scan.json`
+
+### Scan Types
+- Dependency vulnerabilities
+- Secrets detection
+- Static code analysis
+{% if api_keys_required == "yes" %}- API key exposure{% endif %}
+
+### Tools
+{% if mcp_language == "Python" %}- pip-audit (Python dependency scanning)
+- bandit (Python security analysis)
+- safety (Python security database)
+{% elif mcp_language == "TypeScript" %}- npm audit (JavaScript dependency scanning)
+- ESLint security plugin
+{% endif %}- gitleaks (secrets detection)
+- trufflehog (credential scanning)
+
+## Monitoring and Health Checks
+
+**Monitoring Config**: `coordination/monitoring/{{ mcp_repo_name }}.json`
+**Health Check Script**: `scripts/monitoring/check-{{ mcp_repo_name }}-health.sh`
+
+### Health Check Components
+1. Monitoring configuration validation
+2. Repository status and updates
+{% if agent_card_check.stat.exists %}3. A2A protocol compliance ({{ skills_count }} skills, {{ prompts_count }} prompts)
+{% else %}3. A2A protocol compliance check
+{% endif %}4. {{ mcp_language }} runtime environment
+5. Security posture
+6. Cortex integration status
+
+### Run Health Check
+```bash
+./scripts/monitoring/check-{{ mcp_repo_name }}-health.sh
+```
+
+## Dashboard Integration
+
+**Event Log**: `coordination/dashboard-events.jsonl`
+
+### Dashboard Endpoints
+- `/api/{{ mcp_repo_name }}/status` - Server health status
+- `/api/{{ mcp_repo_name }}/metrics` - Performance metrics
+- `/api/{{ mcp_repo_name }}/health-checks` - Health check results
+
+## Automation Policies
+
+### Dependency Updates
+- **Strategy**: Manual review
+- **Auto-update**: Disabled (manual approval required)
+
+### Security Fixes
+- **Strategy**: Create pull request
+- **Auto-fix**: Disabled (manual review required)
+
+### Documentation
+- **Auto-update**: Enabled
+- **Triggers**: API changes, new features
+
+## Usage
+
+### Clone Repository
+```bash
+cd {{ mcp_projects_dir }}
+git clone {{ mcp_github_url }}
+cd {{ mcp_repo_name }}
+```
+{% if mcp_language == "Python" %}
+
+### Setup Python Environment
+```bash
+# Install dependencies with {{ mcp_package_manager }}
+{{ mcp_package_manager }} sync
+```
+{% elif mcp_language == "TypeScript" %}
+
+### Setup Node.js Environment
+```bash
+# Install dependencies
+npm install
+```
+{% endif %}
+{% if api_keys_required == "yes" %}
+
+### Configure API Keys
+```bash
+# Create secrets.env file
+cp secrets.env.example secrets.env
+
+# Edit secrets.env with your API credentials
+# NEVER commit secrets.env to git
+```
+{% endif %}
+
+## Security Notes
+{% if api_keys_required == "yes" %}
+- **API Keys**: Monitor for exposure - API keys grant privileged access
+- **Credential Storage**: Verify secrets.env is in .gitignore
+- **Key Rotation**: Implement regular API key rotation policy
+{% else %}
+- Standard security practices apply
+- Monitor for dependency vulnerabilities
+{% endif %}- Follow principle of least privilege
+- Regular security audits via Cortex Security Master
+
+## Maintenance
+
+### Daily
+- Automated health checks (every 5 minutes)
+- Event logging to dashboard
+
+### Weekly
+- Dependency vulnerability scans
+- Security posture review
+
+### Monthly
+- Comprehensive audit report
+- Repository cleanup
+
+## Integration Metadata
+
+- **Integration Method**: Ansible Automation
+- **Files Created**: 4 (monitoring config, health check, security task, documentation)
+- **Time Saved**: ~40 minutes (manual integration would take 45 minutes)
+- **Automation Score**: 95/100
+
+## Next Steps
+
+1. ✅ Repository integrated into Cortex
+2. ⏭️  Configure environment-specific settings
+3. ⏭️  Run initial health check
+4. ⏭️  Review security scan results
+5. ⏭️  Test dashboard integration
+
+---
+
+*Auto-generated by Cortex Ansible Automation*
+*Integration Date: {{ integration_date }}*

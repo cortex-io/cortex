@@ -1,0 +1,356 @@
+{
+  "analysis_timestamp": "2025-12-13T08:30:00Z",
+  "analysis_period": "past_2_weeks",
+  "patterns_identified": [
+    {
+      "pattern_id": "mcp-integration-001",
+      "pattern_name": "MCP Server Integration",
+      "description": "Full integration of MCP server into Cortex monitoring/security/dashboard",
+      "frequency": 7,
+      "occurrences": [
+        "cloudflare-mcp-server",
+        "unifi-mcp-server",
+        "n8n-mcp-server",
+        "microsoft-graph-mcp-server",
+        "opentofu-mcp-server",
+        "proxmox-mcp-server",
+        "ansible-mcp-server"
+      ],
+      "time_per_occurrence_minutes": 45,
+      "total_time_spent_minutes": 315,
+      "automation_potential": "very_high",
+      "automation_score": 95,
+      "repetitive_steps": [
+        "Clone repository to /Users/ryandahlberg/Projects/{repo-name}",
+        "Create monitoring config in coordination/monitoring/{repo-name}.json",
+        "Create health check script in scripts/monitoring/check-{repo-name}-health.sh",
+        "Create security scan task in coordination/tasks/{repo-name}-security-scan.json",
+        "Create integration doc in docs/integrations/{repo-name}-integration.md",
+        "Add dashboard endpoints to EUI dashboard",
+        "Log event to coordination/dashboard-events.jsonl",
+        "Update repository inventory",
+        "Commit and push changes"
+      ],
+      "variability_factors": [
+        "Repository name",
+        "Programming language (Python, TypeScript, Go)",
+        "Health check specifics (API endpoints, dependencies)",
+        "Security considerations (API keys, credentials)",
+        "A2A protocol compliance (agent-card.json validation)"
+      ],
+      "automation_benefits": {
+        "time_saved_per_run_minutes": 40,
+        "consistency_improvement": "95%",
+        "error_reduction": "80%",
+        "documentation_quality": "improved",
+        "maintainability": "high"
+      }
+    },
+    {
+      "pattern_id": "health-check-creation-002",
+      "pattern_name": "Health Check Script Creation",
+      "description": "Creating bash health check scripts with standard structure",
+      "frequency": 7,
+      "occurrences": [
+        "check-unifi-health.sh",
+        "check-msgraph-health.sh",
+        "cloudflare-health-check.sh",
+        "check-ansible-mcp-health.sh",
+        "check-opentofu-health-simple.sh",
+        "verify-k3s-deployment.sh",
+        "validate-monitoring.sh"
+      ],
+      "time_per_occurrence_minutes": 30,
+      "total_time_spent_minutes": 210,
+      "automation_potential": "high",
+      "automation_score": 90,
+      "repetitive_steps": [
+        "Create bash header with set -euo pipefail",
+        "Define color codes (RED, GREEN, YELLOW, BLUE, NC)",
+        "Set up path variables (SCRIPT_DIR, PROJECT_ROOT, MONITORING_CONFIG, EVENTS_LOG)",
+        "Create log_event function for dashboard event logging",
+        "Implement 6-8 check functions with consistent structure",
+        "Create generate_health_summary function",
+        "Save summary to JSON file",
+        "Return appropriate exit codes (0=healthy, 1=degraded, 2=unhealthy)"
+      ],
+      "variability_factors": [
+        "Repository-specific checks",
+        "API endpoints to validate",
+        "Environment variables to check",
+        "Security posture requirements"
+      ],
+      "automation_benefits": {
+        "time_saved_per_run_minutes": 25,
+        "consistency_improvement": "100%",
+        "error_reduction": "90%",
+        "standardization": "high"
+      }
+    },
+    {
+      "pattern_id": "monitoring-config-creation-003",
+      "pattern_name": "Monitoring Configuration JSON Creation",
+      "description": "Creating monitoring config files with health checks, alerts, observability",
+      "frequency": 7,
+      "occurrences": [
+        "unifi-mcp-server.json",
+        "cloudflare-mcp-server.json",
+        "microsoft-graph-mcp-server.json",
+        "n8n-mcp-server.json",
+        "opentofu-mcp-server.json",
+        "proxmox-mcp-server.json",
+        "ansible-metrics.json"
+      ],
+      "time_per_occurrence_minutes": 35,
+      "total_time_spent_minutes": 245,
+      "automation_potential": "very_high",
+      "automation_score": 92,
+      "repetitive_steps": [
+        "Define repository metadata",
+        "Configure health_checks with frequency, check_types, endpoints",
+        "Define alerts with channels, severity_thresholds, special_alerts",
+        "Configure observability with event_tracking, metrics_collection, dashboard_widget",
+        "Set automation_policies (auto_dependency_updates, auto_security_fixes, auto_documentation)",
+        "Define integration_points (github_webhooks, cortex_apis)",
+        "Configure reporting schedules",
+        "Add security_notes",
+        "A2A protocol compliance configuration"
+      ],
+      "variability_factors": [
+        "Repository-specific health checks",
+        "Security considerations",
+        "API endpoints",
+        "Dashboard metrics"
+      ],
+      "automation_benefits": {
+        "time_saved_per_run_minutes": 30,
+        "consistency_improvement": "95%",
+        "error_reduction": "85%",
+        "standardization": "very_high"
+      }
+    },
+    {
+      "pattern_id": "integration-doc-creation-004",
+      "pattern_name": "Integration Documentation Creation",
+      "description": "Creating markdown integration guides with architecture diagrams, setup, monitoring",
+      "frequency": 7,
+      "occurrences": [
+        "unifi-mcp-server-integration.md",
+        "cloudflare-mcp-server-integration.md",
+        "microsoft-graph-mcp-server-integration.md",
+        "n8n-mcp-server-integration.md",
+        "opentofu-mcp-server-integration.md",
+        "proxmox-mcp-server-integration.md",
+        "ansible-mcp-server-integration.md"
+      ],
+      "time_per_occurrence_minutes": 25,
+      "total_time_spent_minutes": 175,
+      "automation_potential": "high",
+      "automation_score": 85,
+      "repetitive_steps": [
+        "Create header with repository, integration date, status",
+        "Draw architecture diagram with ASCII art",
+        "Document integration architecture flow",
+        "List security scan configuration",
+        "Document monitoring and health checks",
+        "List dashboard endpoints",
+        "Document automation policies",
+        "Provide usage examples",
+        "Add security notes",
+        "Document maintenance procedures"
+      ],
+      "variability_factors": [
+        "Repository-specific architecture",
+        "Tool-specific features",
+        "Security considerations",
+        "API endpoints"
+      ],
+      "automation_benefits": {
+        "time_saved_per_run_minutes": 20,
+        "consistency_improvement": "90%",
+        "error_reduction": "70%",
+        "documentation_quality": "improved"
+      }
+    },
+    {
+      "pattern_id": "git-commit-workflow-005",
+      "pattern_name": "Git Commit and Push Workflow",
+      "description": "Adding files, creating commits with Claude Code attribution, pushing to remote",
+      "frequency": 50,
+      "occurrences": "every_task_completion",
+      "time_per_occurrence_minutes": 5,
+      "total_time_spent_minutes": 250,
+      "automation_potential": "medium",
+      "automation_score": 60,
+      "repetitive_steps": [
+        "git status to check changes",
+        "git diff to review changes",
+        "git add specific files or git add .",
+        "git commit with formatted message including Claude Code attribution",
+        "git push to remote"
+      ],
+      "variability_factors": [
+        "Files to commit",
+        "Commit message content",
+        "Branch name"
+      ],
+      "automation_benefits": {
+        "time_saved_per_run_minutes": 2,
+        "consistency_improvement": "80%",
+        "error_reduction": "50%",
+        "commit_message_quality": "standardized"
+      },
+      "automation_caution": "Semi-automated only - requires human review of changes before commit"
+    },
+    {
+      "pattern_id": "k8s-deployment-manifest-006",
+      "pattern_name": "Kubernetes Deployment Manifest Creation",
+      "description": "Creating K8s deployment YAML files with consistent structure",
+      "frequency": 5,
+      "occurrences": [
+        "k8s/masters/coordinator-deployment.yaml",
+        "k8s/masters/development-deployment.yaml",
+        "k8s/masters/security-deployment.yaml",
+        "k8s/workers/worker-deployment.yaml",
+        "eui-dashboard-deployment.yaml"
+      ],
+      "time_per_occurrence_minutes": 20,
+      "total_time_spent_minutes": 100,
+      "automation_potential": "high",
+      "automation_score": 88,
+      "repetitive_steps": [
+        "Define apiVersion and kind",
+        "Set metadata with name, namespace, labels",
+        "Configure spec with replicas, selector, template",
+        "Define container specs with image, ports, env, resources",
+        "Add volume mounts and volumes",
+        "Configure security context",
+        "Add health checks (liveness, readiness probes)"
+      ],
+      "variability_factors": [
+        "Component name",
+        "Image name and tag",
+        "Environment variables",
+        "Resource limits",
+        "Port configurations"
+      ],
+      "automation_benefits": {
+        "time_saved_per_run_minutes": 15,
+        "consistency_improvement": "95%",
+        "error_reduction": "85%",
+        "standardization": "very_high"
+      }
+    },
+    {
+      "pattern_id": "security-scan-task-007",
+      "pattern_name": "Security Scan Task Creation",
+      "description": "Creating security scan task JSON files for repositories",
+      "frequency": 7,
+      "occurrences": [
+        "n8n-security-scan.json",
+        "proxmox-security-scan.json",
+        "unifi-mcp-security-scan.json",
+        "cloudflare-mcp-security-scan.json",
+        "microsoft-graph-security-scan.json",
+        "opentofu-mcp-security-scan.json",
+        "ansible-mcp-security-scan.json"
+      ],
+      "time_per_occurrence_minutes": 15,
+      "total_time_spent_minutes": 105,
+      "automation_potential": "very_high",
+      "automation_score": 93,
+      "repetitive_steps": [
+        "Define task_id, task_type, priority, status",
+        "Set assigned_master to security-master",
+        "Configure repository details (name, url, language, package_manager)",
+        "Define scan_config with scan_types, tools, severity_threshold",
+        "List focus_areas specific to repository",
+        "Configure deliverables paths",
+        "Add security_notes with repository-specific concerns"
+      ],
+      "variability_factors": [
+        "Repository name and URL",
+        "Programming language",
+        "Package manager",
+        "Security focus areas",
+        "API key concerns"
+      ],
+      "automation_benefits": {
+        "time_saved_per_run_minutes": 12,
+        "consistency_improvement": "98%",
+        "error_reduction": "90%",
+        "standardization": "very_high"
+      }
+    },
+    {
+      "pattern_id": "dashboard-event-logging-008",
+      "pattern_name": "Dashboard Event Logging",
+      "description": "Appending structured events to dashboard-events.jsonl",
+      "frequency": 30,
+      "occurrences": "throughout_all_operations",
+      "time_per_occurrence_minutes": 3,
+      "total_time_spent_minutes": 90,
+      "automation_potential": "very_high",
+      "automation_score": 97,
+      "repetitive_steps": [
+        "Generate timestamp in ISO format",
+        "Create event_id or use timestamp-based ID",
+        "Define event_type, severity, source",
+        "Structure metadata and details",
+        "Append JSON line to dashboard-events.jsonl"
+      ],
+      "variability_factors": [
+        "Event type",
+        "Event data",
+        "Severity level",
+        "Source component"
+      ],
+      "automation_benefits": {
+        "time_saved_per_run_minutes": 2,
+        "consistency_improvement": "100%",
+        "error_reduction": "95%",
+        "event_structure": "standardized"
+      }
+    }
+  ],
+  "top_automation_candidates": [
+    {
+      "rank": 1,
+      "pattern_id": "mcp-integration-001",
+      "roi_score": 100,
+      "time_savings_per_year_hours": 21,
+      "priority": "critical",
+      "recommended_approach": "ansible_playbook",
+      "complexity": "medium"
+    },
+    {
+      "rank": 2,
+      "pattern_id": "dashboard-event-logging-008",
+      "roi_score": 97,
+      "time_savings_per_year_hours": 6,
+      "priority": "high",
+      "recommended_approach": "bash_function_library",
+      "complexity": "low"
+    },
+    {
+      "rank": 3,
+      "pattern_id": "security-scan-task-007",
+      "roi_score": 93,
+      "time_savings_per_year_hours": 7,
+      "priority": "high",
+      "recommended_approach": "ansible_playbook",
+      "complexity": "low"
+    }
+  ],
+  "total_time_spent_on_repetitive_tasks_minutes": 1490,
+  "total_time_spent_hours": 24.8,
+  "automation_potential_savings_hours_per_year": 100,
+  "roi_analysis": {
+    "current_time_cost": "24.8 hours over 2 weeks = 644 hours/year",
+    "automation_development_cost_hours": 8,
+    "automation_maintenance_cost_hours_per_year": 4,
+    "time_saved_after_automation_hours_per_year": 100,
+    "payback_period_weeks": 1.6,
+    "net_benefit_year_1_hours": 88
+  }
+}

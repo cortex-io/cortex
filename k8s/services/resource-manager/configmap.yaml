@@ -1,0 +1,31 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: cortex-resource-manager-config
+  namespace: cortex-system
+  labels:
+    app: cortex-resource-manager
+    component: infrastructure
+data:
+  # Resource limits for the cluster
+  TOTAL_CPU: "16.0"
+  TOTAL_MEMORY: "32768"  # 32GB in MB
+  TOTAL_WORKERS: "10"
+
+  # MCP server defaults
+  MCP_NAMESPACE: "cortex"
+  MCP_MAX_REPLICAS: "10"
+  MCP_SCALE_TIMEOUT: "300"  # 5 minutes
+
+  # Worker configuration
+  WORKER_NAMESPACE: "cortex"
+  WORKER_TTL_DEFAULT: "3600"  # 1 hour
+  WORKER_DRAIN_TIMEOUT: "300"  # 5 minutes
+
+  # Logging
+  LOG_LEVEL: "INFO"
+  LOG_FORMAT: "json"
+
+  # Health check
+  HEALTH_CHECK_INTERVAL: "30"
+  HEALTH_CHECK_TIMEOUT: "10"

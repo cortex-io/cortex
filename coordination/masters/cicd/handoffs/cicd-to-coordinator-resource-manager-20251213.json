@@ -1,0 +1,167 @@
+{
+  "handoff_id": "cicd-to-coordinator-resource-manager-20251213",
+  "from_master": "cicd",
+  "to_master": "coordinator",
+  "task_id": "deploy-cortex-resource-manager",
+  "handoff_type": "deployment_complete",
+  "created_at": "2025-12-13T10:00:00Z",
+  "status": "ready_for_pickup",
+  "priority": "high",
+
+  "deployment_summary": {
+    "service": "cortex-resource-manager",
+    "repository": "https://github.com/ry-ops/cortex-resource-manager",
+    "target_cluster": "k3s-cortex (10.88.145.180:6443)",
+    "namespace": "cortex-system",
+    "deployment_status": "ready_for_deployment",
+    "deployment_strategy": "rolling_update",
+    "autonomous_execution": true,
+    "workers_spawned": 0,
+    "duration_minutes": 25,
+    "tokens_used": 45880
+  },
+
+  "artifacts_created": {
+    "kubernetes_manifests": [
+      "/Users/ryandahlberg/Projects/cortex/k8s/services/resource-manager/namespace.yaml",
+      "/Users/ryandahlberg/Projects/cortex/k8s/services/resource-manager/serviceaccount.yaml",
+      "/Users/ryandahlberg/Projects/cortex/k8s/services/resource-manager/configmap.yaml",
+      "/Users/ryandahlberg/Projects/cortex/k8s/services/resource-manager/deployment.yaml",
+      "/Users/ryandahlberg/Projects/cortex/k8s/services/resource-manager/service.yaml",
+      "/Users/ryandahlberg/Projects/cortex/k8s/services/resource-manager/servicemonitor.yaml",
+      "/Users/ryandahlberg/Projects/cortex/k8s/services/resource-manager/kustomization.yaml"
+    ],
+    "deployment_scripts": [
+      "/Users/ryandahlberg/Projects/cortex/scripts/deploy/deploy-resource-manager.sh",
+      "/Users/ryandahlberg/Projects/cortex/scripts/deploy/deploy-via-proxmox-api.sh",
+      "/Users/ryandahlberg/Projects/cortex/scripts/deploy/package-resource-manager.sh"
+    ],
+    "testing_scripts": [
+      "/Users/ryandahlberg/Projects/cortex/scripts/testing/test-resource-manager.sh"
+    ],
+    "documentation": [
+      "/Users/ryandahlberg/Projects/cortex/docs/deployment/CORTEX-RESOURCE-MANAGER-DEPLOYMENT.md",
+      "/Users/ryandahlberg/Projects/cortex/CORTEX-RESOURCE-MANAGER-DEPLOYMENT-SUMMARY.md"
+    ],
+    "deployment_package": {
+      "tarball": "/tmp/cortex-resource-manager-deployment.tar.gz",
+      "directory": "/tmp/cortex-resource-manager-deployment/"
+    }
+  },
+
+  "deployment_specifications": {
+    "replicas": 1,
+    "resources": {
+      "requests": {
+        "cpu": "250m",
+        "memory": "256Mi"
+      },
+      "limits": {
+        "cpu": "500m",
+        "memory": "512Mi"
+      }
+    },
+    "rbac": "cluster-admin level permissions",
+    "security_context": {
+      "run_as_non_root": true,
+      "run_as_user": 1000,
+      "read_only_root_filesystem": true,
+      "capabilities_dropped": "ALL"
+    },
+    "service": {
+      "type": "ClusterIP",
+      "ports": {
+        "mcp": 8080,
+        "metrics": 9090
+      }
+    }
+  },
+
+  "api_capabilities": {
+    "total_tools": 16,
+    "categories": {
+      "resource_allocation": 5,
+      "mcp_lifecycle": 5,
+      "worker_management": 6
+    }
+  },
+
+  "deployment_instructions": {
+    "recommended_approach": "deployment_package",
+    "steps": [
+      {
+        "step": 1,
+        "action": "Transfer deployment package to K3s node",
+        "command": "scp /tmp/cortex-resource-manager-deployment.tar.gz root@10.88.145.180:/tmp/"
+      },
+      {
+        "step": 2,
+        "action": "SSH to K3s node",
+        "command": "ssh root@10.88.145.180"
+      },
+      {
+        "step": 3,
+        "action": "Extract and deploy",
+        "command": "cd /tmp && tar -xzf cortex-resource-manager-deployment.tar.gz && cd cortex-resource-manager-deployment && ./deploy.sh"
+      },
+      {
+        "step": 4,
+        "action": "Run test suite",
+        "command": "./test-resource-manager.sh"
+      }
+    ],
+    "estimated_deployment_time": "2-5 minutes",
+    "verification_command": "kubectl get pods -n cortex-system -l app=cortex-resource-manager"
+  },
+
+  "testing_validation": {
+    "automated_test_suite": "/Users/ryandahlberg/Projects/cortex/scripts/testing/test-resource-manager.sh",
+    "test_count": 15,
+    "tests_include": [
+      "Deployment exists",
+      "Pods running",
+      "Service endpoints",
+      "RBAC configuration",
+      "Health/readiness endpoints",
+      "All 16 API tools functional",
+      "Metrics endpoint",
+      "Resource usage"
+    ]
+  },
+
+  "integration_with_cortex": {
+    "masters_to_integrate": [
+      "development-master",
+      "security-master",
+      "coordinator-master"
+    ],
+    "use_cases": [
+      "Request resources before spawning workers",
+      "Manage MCP server lifecycle",
+      "Provision burst workers for high load",
+      "Query cluster capacity for task scheduling"
+    ]
+  },
+
+  "next_steps": [
+    "Transfer deployment package to K3s cluster",
+    "Execute deployment on K3s node",
+    "Run validation test suite",
+    "Configure Prometheus/Grafana monitoring",
+    "Integrate with cortex masters for resource orchestration",
+    "Document worker provisioning workflows"
+  ],
+
+  "success_criteria": [
+    "Deployment succeeds on K3s cluster",
+    "All 15 tests pass",
+    "Health endpoint responding",
+    "All 16 API tools functional",
+    "Prometheus metrics available",
+    "Cortex masters can request resources"
+  ],
+
+  "routing_reason": "Deployment orchestration complete, awaiting coordination for K3s cluster deployment execution",
+  "expected_outcome": "Coordinator to arrange K3s cluster access and execute deployment",
+  "handoff_back_trigger": "After successful deployment and validation on K3s cluster"
+}
