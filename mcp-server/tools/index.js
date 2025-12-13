@@ -8,6 +8,7 @@
 const { spawn, execSync } = require('child_process');
 const fs = require('fs').promises;
 const path = require('path');
+const { getK8sToolDefinitions, getK8sTool } = require('./k8s-tools');
 
 // Tool definitions following MCP schema
 const toolDefinitions = [
@@ -325,15 +326,28 @@ const toolImplementations = {
 
 // Export functions
 module.exports = {
-  getToolDefinitions: () => toolDefinitions,
+  getToolDefinitions: () => {
+    // Combine core tools with K8s tools
+    const k8sTools = getK8sToolDefinitions();
+    return [...toolDefinitions, ...k8sTools];
+  },
 
   getTool: (name) => {
+    // Check core tools first
     const definition = toolDefinitions.find(t => t.name === name);
-    if (!definition) return null;
+    if (definition) {
+      return {
+        definition,
+        execute: toolImplementations[name]
+      };
+    }
 
-    return {
-      definition,
-      execute: toolImplementations[name]
-    };
+    // Check K8s tools
+    const k8sTool = getK8sTool(name);
+    if (k8sTool) {
+      return k8sTool;
+    }
+
+    return null;
   }
 };
