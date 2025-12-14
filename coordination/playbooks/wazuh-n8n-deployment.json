@@ -1,0 +1,830 @@
+{
+  "playbook_id": "wazuh-n8n-deployment-k3s",
+  "name": "Wazuh SIEM + n8n Automation Deployment to K3s",
+  "version": "1.0.0",
+  "author": "Cortex Development-Master (with human oversight)",
+  "created": "2025-12-14",
+  "description": "Deploy complete security monitoring (Wazuh SIEM) and workflow automation (n8n) stack to K3s cluster with MCP server integration. Includes KEDA autoscaling and Wazuh→n8n webhook integration.",
+  "category": "security",
+  "tags": ["security", "siem", "wazuh", "n8n", "automation", "k3s", "mcp", "keda"],
+
+  "prerequisites": {
+    "access": [
+      "K3s cluster access via Proxmox API",
+      "GitHub access for MCP server repositories",
+      "Docker build capability on k3s master node"
+    ],
+    "infrastructure": [
+      "Working VLAN with inter-VLAN routing (see vlan-provisioning playbook)",
+      "K3s cluster (1 master, 2+ workers)",
+      "Sufficient resources: ~7 CPU / 18GB RAM total",
+      "Persistent storage (local-path or NFS)"
+    ],
+    "knowledge": [
+      "Kubernetes manifest structure",
+      "Proxmox API usage",
+      "Docker image building",
+      "KEDA autoscaling concepts"
+    ]
+  },
+
+  "variables": {
+    "k3s_master_vmid": {
+      "type": "string",
+      "description": "Proxmox VM ID for k3s master",
+      "example": "310",
+      "required": true
+    },
+    "k3s_worker1_vmid": {
+      "type": "string",
+      "description": "Proxmox VM ID for worker 1 (Wazuh)",
+      "example": "311",
+      "required": true
+    },
+    "k3s_worker2_vmid": {
+      "type": "string",
+      "description": "Proxmox VM ID for worker 2 (n8n + MCP)",
+      "example": "312",
+      "required": true
+    },
+    "wazuh_version": {
+      "type": "string",
+      "description": "Wazuh version to deploy",
+      "default": "4.7.1",
+      "required": false
+    },
+    "wazuh_indexer_heap": {
+      "type": "string",
+      "description": "Wazuh Indexer heap size",
+      "default": "2g",
+      "required": false
+    },
+    "wazuh_indexer_storage": {
+      "type": "string",
+      "description": "Storage for Wazuh Indexer PVC",
+      "default": "50Gi",
+      "required": false
+    },
+    "n8n_postgres_storage": {
+      "type": "string",
+      "description": "Storage for n8n PostgreSQL PVC",
+      "default": "5Gi",
+      "required": false
+    },
+    "timezone": {
+      "type": "string",
+      "description": "Timezone for n8n",
+      "default": "America/Chicago",
+      "required": false
+    },
+    "wazuh_webhook_url": {
+      "type": "string",
+      "description": "n8n webhook URL for Wazuh alerts",
+      "default": "http://n8n.n8n.svc.cluster.local:5678/webhook/wazuh-alerts",
+      "required": false
+    },
+    "alert_level_threshold": {
+      "type": "integer",
+      "description": "Minimum Wazuh alert level to forward to n8n",
+      "default": 7,
+      "required": false
+    },
+    "mcp_min_replicas": {
+      "type": "integer",
+      "description": "Minimum MCP server replicas",
+      "default": 0,
+      "required": false
+    },
+    "mcp_max_replicas": {
+      "type": "integer",
+      "description": "Maximum MCP server replicas",
+      "default": 5,
+      "required": false
+    }
+  },
+
+  "steps": [
+    {
+      "step": 1,
+      "phase": "preparation",
+      "action": "create_github_repositories",
+      "description": "Create GitHub repositories for MCP servers if they don't exist",
+      "commands": [
+        {
+          "type": "shell",
+          "command": "gh repo view ry-ops/wazuh-mcp-server || gh repo create ry-ops/wazuh-mcp-server --public --description 'MCP server for Wazuh SIEM integration'"
+        },
+        {
+          "type": "shell",
+          "command": "gh repo view ry-ops/n8n-mcp-server || echo 'n8n-mcp-server already exists'"
+        }
+      ],
+      "verification": [
+        "Both repositories exist and are accessible"
+      ],
+      "rollback": null,
+      "critical": false
+    },
+    {
+      "step": 2,
+      "phase": "preparation",
+      "action": "build_mcp_server_images",
+      "description": "Build Docker images for MCP servers on k3s master",
+      "commands": [
+        {
+          "type": "proxmox_api",
+          "vmid": "{{k3s_master_vmid}}",
+          "command": "cd /tmp && rm -rf wazuh-mcp-server n8n-mcp-server && git clone https://github.com/ry-ops/wazuh-mcp-server.git && cd wazuh-mcp-server && docker build -t wazuh-mcp-server:latest ."
+        },
+        {
+          "type": "proxmox_api",
+          "vmid": "{{k3s_master_vmid}}",
+          "command": "cd /tmp && git clone https://github.com/ry-ops/n8n-mcp-server.git && cd n8n-mcp-server && docker build -t n8n-mcp-server:latest ."
+        }
+      ],
+      "important_notes": [
+        "Build on k3s master to avoid image registry complexity",
+        "Images will be loaded into containerd directly"
+      ],
+      "rollback": null,
+      "critical": true
+    },
+    {
+      "step": 3,
+      "phase": "preparation",
+      "action": "load_images_to_containerd",
+      "description": "Load Docker images into k3s containerd runtime",
+      "commands": [
+        {
+          "type": "proxmox_api",
+          "vmid": "{{k3s_master_vmid}}",
+          "command": "cd /tmp && docker save wazuh-mcp-server:latest -o wazuh-mcp.tar && ctr -n k8s.io image import wazuh-mcp.tar"
+        },
+        {
+          "type": "proxmox_api",
+          "vmid": "{{k3s_master_vmid}}",
+          "command": "cd /tmp && docker save n8n-mcp-server:latest -o n8n-mcp.tar && ctr -n k8s.io image import n8n-mcp.tar"
+        }
+      ],
+      "verification": [
+        {
+          "command": "ctr -n k8s.io images ls | grep wazuh-mcp-server",
+          "expected": "wazuh-mcp-server:latest"
+        },
+        {
+          "command": "ctr -n k8s.io images ls | grep n8n-mcp-server",
+          "expected": "n8n-mcp-server:latest"
+        }
+      ],
+      "rollback": null,
+      "critical": true
+    },
+    {
+      "step": 4,
+      "phase": "deployment",
+      "action": "create_namespaces",
+      "description": "Create Kubernetes namespaces for each component",
+      "commands": [
+        {
+          "type": "kubectl",
+          "command": "kubectl create namespace wazuh --dry-run=client -o yaml | kubectl apply -f -"
+        },
+        {
+          "type": "kubectl",
+          "command": "kubectl create namespace n8n --dry-run=client -o yaml | kubectl apply -f -"
+        },
+        {
+          "type": "kubectl",
+          "command": "kubectl create namespace mcp --dry-run=client -o yaml | kubectl apply -f -"
+        }
+      ],
+      "verification": [
+        "kubectl get namespace wazuh",
+        "kubectl get namespace n8n",
+        "kubectl get namespace mcp"
+      ],
+      "rollback": "kubectl delete namespace wazuh n8n mcp",
+      "critical": true
+    },
+    {
+      "step": 5,
+      "phase": "deployment",
+      "action": "create_secrets",
+      "description": "Create secrets for Wazuh and n8n credentials",
+      "commands": [
+        {
+          "type": "kubectl",
+          "manifest": "wazuh-secrets.yaml",
+          "content": {
+            "apiVersion": "v1",
+            "kind": "Secret",
+            "metadata": {
+              "name": "wazuh-credentials",
+              "namespace": "wazuh"
+            },
+            "type": "Opaque",
+            "stringData": {
+              "wazuh-api-user": "wazuh-api",
+              "wazuh-api-password": "MyS3cr3tP@ssw0rd!",
+              "indexer-admin-user": "admin",
+              "indexer-admin-password": "SecureP@ssw0rd123"
+            }
+          }
+        },
+        {
+          "type": "kubectl",
+          "manifest": "n8n-secrets.yaml",
+          "content": {
+            "apiVersion": "v1",
+            "kind": "Secret",
+            "metadata": {
+              "name": "n8n-credentials",
+              "namespace": "n8n"
+            },
+            "type": "Opaque",
+            "stringData": {
+              "postgres-user": "n8n",
+              "postgres-password": "n8nP@ssw0rd2024!",
+              "postgres-db": "n8n",
+              "n8n-encryption-key": "g8KAcPnZm9XjYfR3QwE5tVbN7uHsLdMp"
+            }
+          }
+        }
+      ],
+      "important_notes": [
+        "SECURITY: Change default passwords before production use",
+        "Store credentials in secure vault for production"
+      ],
+      "rollback": "kubectl delete secret wazuh-credentials -n wazuh && kubectl delete secret n8n-credentials -n n8n",
+      "critical": true
+    },
+    {
+      "step": 6,
+      "phase": "deployment",
+      "action": "deploy_wazuh_indexer",
+      "description": "Deploy Wazuh Indexer (OpenSearch) as StatefulSet",
+      "commands": [
+        {
+          "type": "kubectl",
+          "manifest": "wazuh-indexer-statefulset.yaml",
+          "important_fields": {
+            "replicas": 1,
+            "image": "wazuh/wazuh-indexer:{{wazuh_version}}",
+            "env": {
+              "OPENSEARCH_JAVA_OPTS": "-Xms{{wazuh_indexer_heap}} -Xmx{{wazuh_indexer_heap}}",
+              "discovery.type": "single-node",
+              "DISABLE_SECURITY_PLUGIN": "true"
+            },
+            "resources": {
+              "requests": {
+                "memory": "2Gi",
+                "cpu": "500m"
+              },
+              "limits": {
+                "memory": "4Gi",
+                "cpu": "1000m"
+              }
+            },
+            "volumeClaimTemplates": {
+              "storage": "{{wazuh_indexer_storage}}"
+            },
+            "nodeSelector": {
+              "kubernetes.io/hostname": "k3s-worker1"
+            }
+          }
+        }
+      ],
+      "verification": [
+        {
+          "command": "kubectl get statefulset -n wazuh",
+          "expected": "wazuh-indexer   1/1"
+        },
+        {
+          "command": "kubectl get pods -n wazuh -l app=wazuh-indexer",
+          "expected": "STATUS: Running"
+        }
+      ],
+      "rollback": "kubectl delete statefulset wazuh-indexer -n wazuh",
+      "critical": true
+    },
+    {
+      "step": 7,
+      "phase": "deployment",
+      "action": "deploy_wazuh_manager",
+      "description": "Deploy Wazuh Manager with NodePort for agent connections",
+      "commands": [
+        {
+          "type": "kubectl",
+          "manifest": "wazuh-manager-deployment.yaml",
+          "important_fields": {
+            "image": "wazuh/wazuh-manager:{{wazuh_version}}",
+            "env": {
+              "INDEXER_URL": "http://wazuh-indexer:9200",
+              "FILEBEAT_SSL_VERIFICATION_MODE": "none"
+            },
+            "service": {
+              "type": "NodePort",
+              "ports": [
+                {"name": "agents", "port": 1514, "nodePort": 31514},
+                {"name": "registration", "port": 1515, "nodePort": 31515},
+                {"name": "api", "port": 55000}
+              ]
+            },
+            "nodeSelector": {
+              "kubernetes.io/hostname": "k3s-worker1"
+            }
+          }
+        }
+      ],
+      "verification": [
+        {
+          "command": "kubectl get deployment -n wazuh wazuh-manager",
+          "expected": "READY: 1/1"
+        },
+        {
+          "command": "kubectl get svc -n wazuh wazuh-manager",
+          "expected": "NodePort with ports 31514, 31515"
+        }
+      ],
+      "rollback": "kubectl delete deployment wazuh-manager -n wazuh && kubectl delete svc wazuh-manager -n wazuh",
+      "critical": true
+    },
+    {
+      "step": 8,
+      "phase": "deployment",
+      "action": "deploy_n8n_postgres",
+      "description": "Deploy PostgreSQL backend for n8n",
+      "commands": [
+        {
+          "type": "kubectl",
+          "manifest": "n8n-postgres-statefulset.yaml",
+          "important_fields": {
+            "image": "postgres:15-alpine",
+            "env": {
+              "POSTGRES_USER": "from secret",
+              "POSTGRES_PASSWORD": "from secret",
+              "POSTGRES_DB": "from secret",
+              "PGDATA": "/var/lib/postgresql/data/pgdata"
+            },
+            "volumeClaimTemplates": {
+              "storage": "{{n8n_postgres_storage}}"
+            },
+            "nodeSelector": {
+              "kubernetes.io/hostname": "k3s-worker2"
+            }
+          }
+        }
+      ],
+      "verification": [
+        {
+          "command": "kubectl get statefulset -n n8n",
+          "expected": "n8n-postgres   1/1"
+        }
+      ],
+      "rollback": "kubectl delete statefulset n8n-postgres -n n8n",
+      "critical": true
+    },
+    {
+      "step": 9,
+      "phase": "deployment",
+      "action": "deploy_n8n",
+      "description": "Deploy n8n workflow automation platform",
+      "commands": [
+        {
+          "type": "kubectl",
+          "manifest": "n8n-deployment.yaml",
+          "important_fields": {
+            "image": "n8nio/n8n:latest",
+            "env": {
+              "DB_TYPE": "postgresdb",
+              "DB_POSTGRESDB_HOST": "n8n-postgres",
+              "GENERIC_TIMEZONE": "{{timezone}}",
+              "WEBHOOK_URL": "http://n8n.n8n.svc.cluster.local:5678/"
+            },
+            "nodeSelector": {
+              "kubernetes.io/hostname": "k3s-worker2"
+            }
+          }
+        }
+      ],
+      "verification": [
+        {
+          "command": "kubectl get deployment -n n8n n8n",
+          "expected": "READY: 1/1"
+        },
+        {
+          "command": "kubectl logs -n n8n -l app=n8n --tail=20",
+          "expected": "n8n ready on port 5678"
+        }
+      ],
+      "rollback": "kubectl delete deployment n8n -n n8n",
+      "critical": true
+    },
+    {
+      "step": 10,
+      "phase": "deployment",
+      "action": "deploy_mcp_servers",
+      "description": "Deploy Wazuh and n8n MCP servers with KEDA autoscaling",
+      "commands": [
+        {
+          "type": "kubectl",
+          "manifest": "wazuh-mcp-deployment.yaml",
+          "important_fields": {
+            "image": "wazuh-mcp-server:latest",
+            "imagePullPolicy": "Never",
+            "env": {
+              "WAZUH_API_URL": "http://wazuh-manager.wazuh.svc.cluster.local:55000",
+              "PORT": "3000"
+            },
+            "nodeSelector": {
+              "kubernetes.io/hostname": "k3s-worker2"
+            }
+          }
+        },
+        {
+          "type": "kubectl",
+          "manifest": "n8n-mcp-deployment.yaml",
+          "important_fields": {
+            "image": "n8n-mcp-server:latest",
+            "imagePullPolicy": "Never",
+            "env": {
+              "N8N_API_URL": "http://n8n.n8n.svc.cluster.local:5678",
+              "PORT": "3001"
+            },
+            "nodeSelector": {
+              "kubernetes.io/hostname": "k3s-worker2"
+            }
+          }
+        },
+        {
+          "type": "kubectl",
+          "manifest": "keda-scaledobjects.yaml",
+          "important_fields": {
+            "minReplicaCount": "{{mcp_min_replicas}}",
+            "maxReplicaCount": "{{mcp_max_replicas}}",
+            "triggers": {
+              "type": "prometheus",
+              "query": "sum(rate(cortex_mcp_requests_total{mcp_server=\"wazuh\"}[2m]))"
+            }
+          }
+        }
+      ],
+      "verification": [
+        {
+          "command": "kubectl get deployment -n mcp",
+          "expected": "wazuh-mcp-server, n8n-mcp-server deployments"
+        },
+        {
+          "command": "kubectl get scaledobject -n mcp",
+          "expected": "wazuh-mcp-scaler, n8n-mcp-scaler"
+        }
+      ],
+      "rollback": "kubectl delete -n mcp deployment wazuh-mcp-server n8n-mcp-server && kubectl delete scaledobject -n mcp --all",
+      "critical": true
+    },
+    {
+      "step": 11,
+      "phase": "integration",
+      "action": "configure_wazuh_webhook",
+      "description": "Configure Wazuh to send alerts to n8n webhook",
+      "commands": [
+        {
+          "type": "kubectl_exec",
+          "pod": "wazuh-manager-*",
+          "namespace": "wazuh",
+          "command": "Edit /var/ossec/etc/ossec.conf and add integration block before </ossec_config>",
+          "integration_block": {
+            "name": "custom-webhook",
+            "hook_url": "{{wazuh_webhook_url}}",
+            "level": "{{alert_level_threshold}}",
+            "alert_format": "json"
+          }
+        },
+        {
+          "type": "kubectl",
+          "command": "kubectl rollout restart deployment wazuh-manager -n wazuh"
+        }
+      ],
+      "verification": [
+        {
+          "command": "kubectl logs -n wazuh -l app=wazuh-manager | grep webhook",
+          "expected": "Webhook integration configured"
+        }
+      ],
+      "rollback": "Remove integration block and restart manager",
+      "critical": false
+    },
+    {
+      "step": 12,
+      "phase": "integration",
+      "action": "create_n8n_webhook_workflow",
+      "description": "Create n8n workflow to receive Wazuh alerts",
+      "commands": [
+        {
+          "type": "manual",
+          "description": "Port-forward to n8n: kubectl port-forward -n n8n svc/n8n 5678:5678"
+        },
+        {
+          "type": "manual",
+          "description": "Access http://localhost:5678 and import webhook workflow"
+        },
+        {
+          "type": "manual",
+          "description": "Activate workflow and verify webhook path matches Wazuh config"
+        }
+      ],
+      "workflow_template": {
+        "name": "Wazuh Security Alerts",
+        "nodes": [
+          {
+            "type": "webhook",
+            "path": "wazuh-alerts"
+          },
+          {
+            "type": "filter",
+            "condition": "level >= 7"
+          },
+          {
+            "type": "function",
+            "process": "Alert enrichment and formatting"
+          }
+        ]
+      },
+      "rollback": "Delete workflow in n8n",
+      "critical": false
+    },
+    {
+      "step": 13,
+      "phase": "verification",
+      "action": "verify_all_pods_running",
+      "description": "Verify all deployed pods are in Running state",
+      "commands": [
+        {
+          "type": "kubectl",
+          "command": "kubectl get pods -n wazuh -n n8n -n mcp"
+        }
+      ],
+      "expected_results": [
+        "wazuh-indexer-0: Running",
+        "wazuh-manager-*: Running",
+        "wazuh-dashboard-*: Running",
+        "n8n-postgres-0: Running",
+        "n8n-*: Running",
+        "wazuh-mcp-server-* or 0/0 (scaled to zero)",
+        "n8n-mcp-server-* or 0/0 (scaled to zero)"
+      ],
+      "rollback": null,
+      "critical": true
+    },
+    {
+      "step": 14,
+      "phase": "verification",
+      "action": "test_mcp_server_connectivity",
+      "description": "Verify MCP servers respond to health checks",
+      "commands": [
+        {
+          "type": "kubectl",
+          "command": "kubectl port-forward -n mcp svc/wazuh-mcp-server 3000:3000"
+        },
+        {
+          "type": "curl",
+          "url": "http://localhost:3000/health",
+          "expected": "HTTP 200"
+        }
+      ],
+      "rollback": null,
+      "critical": false
+    },
+    {
+      "step": 15,
+      "phase": "documentation",
+      "action": "update_cortex_mcp_registry",
+      "description": "Register new MCP servers in Cortex resource manager",
+      "commands": [
+        {
+          "type": "edit",
+          "file": "/coordination/mcp-server-registry.json",
+          "action": "Add wazuh-mcp-server and n8n-mcp-server entries"
+        }
+      ],
+      "registry_entry_template": {
+        "server_id": "wazuh-mcp-server",
+        "name": "Wazuh SIEM MCP Server",
+        "namespace": "mcp",
+        "service": "wazuh-mcp-server",
+        "port": 3000,
+        "url": "http://wazuh-mcp-server.mcp.svc.cluster.local:3000",
+        "transport": "http/sse",
+        "capabilities": ["security", "siem", "alerting", "compliance"]
+      },
+      "rollback": "Remove registry entries",
+      "critical": false
+    }
+  ],
+
+  "resource_requirements": {
+    "total": {
+      "cpu": "~7 cores",
+      "memory": "~18 GB",
+      "storage": "55 GB (50GB Wazuh + 5GB n8n)"
+    },
+    "by_node": {
+      "worker1": {
+        "cpu": "~3 cores",
+        "memory": "~10 GB",
+        "components": ["wazuh-indexer", "wazuh-manager", "wazuh-dashboard"]
+      },
+      "worker2": {
+        "cpu": "~3 cores",
+        "memory": "~6 GB",
+        "components": ["n8n-postgres", "n8n", "wazuh-mcp-server", "n8n-mcp-server"]
+      }
+    }
+  },
+
+  "common_mistakes": [
+    {
+      "mistake": "Not loading Docker images into containerd",
+      "symptom": "ImagePullBackOff errors for MCP servers",
+      "fix": "Use 'docker save | ctr -n k8s.io image import' pattern",
+      "detection": "kubectl describe pod shows 'Failed to pull image'",
+      "severity": "critical"
+    },
+    {
+      "mistake": "Wazuh Indexer fails to start due to vm.max_map_count",
+      "symptom": "Pod in CrashLoopBackOff, logs show memory mapping error",
+      "fix": "Add init container to set sysctl -w vm.max_map_count=262144",
+      "detection": "kubectl logs shows 'max virtual memory areas'",
+      "severity": "critical"
+    },
+    {
+      "mistake": "n8n can't connect to PostgreSQL",
+      "symptom": "n8n pod restarting, logs show database connection errors",
+      "fix": "Wait for PostgreSQL to be fully ready (30-60 seconds)",
+      "detection": "kubectl logs n8n shows 'ECONNREFUSED'",
+      "severity": "high"
+    },
+    {
+      "mistake": "MCP servers scale to zero and never wake up",
+      "symptom": "No MCP server pods, KEDA not triggering scale-up",
+      "fix": "Verify Prometheus is accessible and metric exists",
+      "detection": "kubectl describe scaledobject shows metric query errors",
+      "severity": "medium"
+    },
+    {
+      "mistake": "Webhook integration not working",
+      "symptom": "Wazuh generates alerts but n8n never receives them",
+      "fix": "Verify webhook URL uses cluster DNS, check n8n workflow is active",
+      "detection": "n8n workflow executions show zero runs",
+      "severity": "medium"
+    }
+  ],
+
+  "testing_checklist": [
+    {
+      "test": "All pods running",
+      "command": "kubectl get pods -A | grep -E 'wazuh|n8n|mcp'",
+      "expected": "All pods STATUS: Running (or 0/0 for scaled-to-zero MCP)"
+    },
+    {
+      "test": "Wazuh Indexer healthy",
+      "command": "kubectl exec -n wazuh wazuh-indexer-0 -- curl -s http://localhost:9200/_cluster/health",
+      "expected": "status: green or yellow"
+    },
+    {
+      "test": "Wazuh Manager API accessible",
+      "command": "kubectl port-forward -n wazuh svc/wazuh-manager 55000:55000 && curl -k https://localhost:55000",
+      "expected": "Wazuh API response"
+    },
+    {
+      "test": "n8n accessible",
+      "command": "kubectl port-forward -n n8n svc/n8n 5678:5678 && curl http://localhost:5678",
+      "expected": "n8n web interface"
+    },
+    {
+      "test": "MCP server health",
+      "command": "kubectl port-forward -n mcp svc/wazuh-mcp-server 3000:3000 && curl http://localhost:3000/health",
+      "expected": "HTTP 200"
+    },
+    {
+      "test": "KEDA scaling works",
+      "command": "kubectl get scaledobject -n mcp",
+      "expected": "Both ScaledObjects show READY: True"
+    },
+    {
+      "test": "Generate test alert",
+      "command": "Restart Wazuh agent on monitored host",
+      "expected": "Alert appears in n8n workflow executions"
+    }
+  ],
+
+  "troubleshooting": {
+    "indexer_crashloop": {
+      "symptom": "wazuh-indexer pod constantly restarting",
+      "likely_causes": [
+        "vm.max_map_count too low (needs 262144)",
+        "Insufficient memory",
+        "Storage permissions issues"
+      ],
+      "debug_commands": [
+        "kubectl logs -n wazuh wazuh-indexer-0 --previous",
+        "kubectl describe pod -n wazuh wazuh-indexer-0"
+      ],
+      "fix": "Add privileged init container to set sysctl vm.max_map_count"
+    },
+    "webhook_not_working": {
+      "symptom": "Alerts not reaching n8n",
+      "likely_causes": [
+        "Wazuh integration config wrong",
+        "n8n workflow not activated",
+        "Network policy blocking traffic",
+        "Webhook URL incorrect"
+      ],
+      "debug_commands": [
+        "kubectl logs -n wazuh -l app=wazuh-manager | grep integration",
+        "kubectl exec -n wazuh wazuh-manager-* -- grep -A5 integration /var/ossec/etc/ossec.conf",
+        "kubectl exec -n wazuh wazuh-manager-* -- curl -v http://n8n.n8n.svc.cluster.local:5678/webhook/wazuh-alerts"
+      ],
+      "fix": "Verify integration block in ossec.conf, ensure n8n workflow active"
+    },
+    "mcp_imagepull_error": {
+      "symptom": "MCP server pods show ImagePullBackOff",
+      "likely_causes": [
+        "Image not in containerd",
+        "Wrong image name in manifest"
+      ],
+      "debug_commands": [
+        "ctr -n k8s.io images ls | grep mcp",
+        "kubectl describe pod -n mcp <pod-name>"
+      ],
+      "fix": "Run docker save/ctr import commands from step 3"
+    }
+  },
+
+  "post_deployment": {
+    "security_hardening": [
+      "Change all default passwords",
+      "Enable TLS for Wazuh components",
+      "Configure network policies",
+      "Set up RBAC for n8n users",
+      "Enable audit logging"
+    ],
+    "monitoring_setup": [
+      "Add Prometheus ServiceMonitors",
+      "Create Grafana dashboards",
+      "Set up alerting rules",
+      "Configure log aggregation"
+    ],
+    "operational_tasks": [
+      "Register Wazuh agents",
+      "Create n8n workflows for common scenarios",
+      "Test backup and restore procedures",
+      "Document access procedures for team"
+    ]
+  },
+
+  "lessons_learned": [
+    "Building images locally and loading into containerd avoids registry complexity for isolated clusters",
+    "KEDA scale-to-zero saves resources but requires proper Prometheus metrics",
+    "Wazuh Indexer needs sysctl vm.max_map_count=262144 in privileged init container",
+    "n8n needs time to initialize database schema on first start (30-60 seconds)",
+    "Webhook URLs must use Kubernetes cluster DNS for reliable communication",
+    "NodePort services allow external Wazuh agent connections while keeping dashboard internal",
+    "Proper node selectors prevent resource contention between heavy workloads"
+  ],
+
+  "related_playbooks": [
+    "vlan-provisioning",
+    "k3s-cluster-deployment",
+    "prometheus-monitoring-setup",
+    "backup-strategy-implementation"
+  ],
+
+  "references": [
+    {
+      "title": "Deploying Wazuh + n8n to K3s with AI Agents",
+      "url": "internal://blog-posts/deploying-wazuh-n8n-to-k3s",
+      "type": "case_study"
+    },
+    {
+      "title": "Wazuh Documentation",
+      "url": "https://documentation.wazuh.com/",
+      "type": "official_docs"
+    },
+    {
+      "title": "n8n Documentation",
+      "url": "https://docs.n8n.io/",
+      "type": "official_docs"
+    },
+    {
+      "title": "KEDA Documentation",
+      "url": "https://keda.sh/",
+      "type": "official_docs"
+    },
+    {
+      "title": "Complete deployment package",
+      "url": "file:///k8s/wazuh-n8n-deployment/",
+      "type": "local_files"
+    }
+  ]
+}
