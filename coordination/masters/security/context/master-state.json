@@ -10,7 +10,9 @@
       "dependency_auditing",
       "secrets_detection",
       "security_remediation",
-      "compliance_monitoring"
+      "compliance_monitoring",
+      "agent_deployment",
+      "security_monitoring"
     ],
     "threat_databases": [
       "CVE",
@@ -225,7 +227,7 @@
       "status": "active"
     }
   ],
-  "completed_tasks": 2,
+  "completed_tasks": 3,
   "security_metrics": {
     "vulnerabilities_found": 5,
     "vulnerabilities_fixed": 4,
@@ -241,8 +243,20 @@
       "high": "100%",
       "medium": "N/A",
       "low": "100%"
+    },
+    "wazuh_deployment": {
+      "status": "package_ready",
+      "target_systems": 8,
+      "deployed_systems": 0,
+      "pending_deployment": 8,
+      "deployment_methods": ["ssh", "manual", "http", "base64_inline"],
+      "manager_endpoint": "10.88.145.181:31514",
+      "deployment_scripts_generated": true,
+      "verification_script_ready": true,
+      "documentation_complete": true,
+      "last_updated": "2025-12-14T15:12:00Z"
     }
   },
-  "last_run": "2025-11-26T18:00:00Z",
-  "last_started": "2025-11-26T18:00:00Z"
+  "last_run": "2025-12-14T15:12:00Z",
+  "last_started": "2025-12-14T15:08:47Z"
 }
