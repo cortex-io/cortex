@@ -98,7 +98,24 @@ curl -k -s -X GET \
 
 ## Credential Storage Patterns
 
-### For Shell Scripts
+### For Cortex-Docker Workforce (Recommended)
+
+All credentials are available in `/.env` at the root of the cortex repository:
+
+```bash
+# In your scripts, load credentials from .env
+set -a
+source /.env
+set +a
+
+# Now all environment variables are available
+echo "Proxmox Token: ${PROXMOX_TOKEN:0:30}..."
+echo "Anthropic API Key: ${ANTHROPIC_API_KEY:0:20}..."
+```
+
+**Template:** See `/.env.example` for all available variables
+
+### For Shell Scripts (Alternative)
 
 Create `/coordination/config/proxmox-credentials.sh`:
 
@@ -456,7 +473,15 @@ echo "PID: $pid"
 
 ## Quick Reference
 
-**Load All Credentials:**
+**Load All Credentials (Recommended for cortex-docker workforce):**
+```bash
+# Load from .env file
+set -a
+source /.env
+set +a
+```
+
+**Load All Credentials (Alternative using shell scripts):**
 ```bash
 source /coordination/config/proxmox-credentials.sh
 source /coordination/config/anthropic-credentials.sh
