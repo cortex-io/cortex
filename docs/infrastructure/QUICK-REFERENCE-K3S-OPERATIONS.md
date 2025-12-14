@@ -6,6 +6,21 @@
 
 ## 🚀 Quick Start
 
+### Option 1: Using .env file (Recommended for cortex-docker workforce)
+
+```bash
+# Load credentials from .env (root of cortex directory)
+set -a
+source /.env
+set +a
+
+# Verify loaded
+echo "Proxmox: ${PROXMOX_TOKEN:0:30}..."
+echo "K3s Master: VM $K3S_MASTER_VMID"
+```
+
+### Option 2: Using credential shell scripts
+
 ```bash
 # Load credentials
 source /coordination/config/proxmox-credentials.sh
@@ -184,7 +199,7 @@ curl -k -s -X GET \
 ## ⚡ Variables Reference
 
 ```bash
-# From proxmox-credentials.sh
+# From .env or proxmox-credentials.sh
 $PROXMOX_TOKEN          # API token
 $PROXMOX_HOST           # 10.88.140.164
 $PROXMOX_PORT           # 8006
@@ -199,7 +214,7 @@ $K3S_MASTER_IP          # 10.88.145.180
 $K3S_WORKER1_IP         # 10.88.145.181
 $K3S_WORKER2_IP         # 10.88.145.182
 
-# From anthropic-credentials.sh
+# From .env or anthropic-credentials.sh
 $ANTHROPIC_API_KEY      # Claude API key
 $ANTHROPIC_MODEL        # claude-sonnet-4-5-20250929
 ```
@@ -234,7 +249,8 @@ sleep 10  # instead of 3
 ## 📚 Full Documentation
 
 - **Complete Guide:** `/docs/infrastructure/K3S-CLUSTER-ACCESS-VIA-PROXMOX-API.md`
-- **Credentials:** `/coordination/config/API-KEYS-AND-CREDENTIALS.md`
+- **Credentials Reference:** `/coordination/config/API-KEYS-AND-CREDENTIALS.md`
+- **Environment Template:** `/.env.example` (copy to `/.env` and fill in values)
 - **This Quick Reference:** `/docs/infrastructure/QUICK-REFERENCE-K3S-OPERATIONS.md`
 
 ---
