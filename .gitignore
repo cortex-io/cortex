@@ -114,3 +114,7 @@ llm-mesh/models/*.pt
 # OpenTelemetry runtime files
 coordination/observability/traces/*.jsonl
 coordination/observability/metrics/*.jsonl
+
+# Credential files (except documented reference files)
+coordination/config/*credentials*.sh
+!coordination/config/API-KEYS-AND-CREDENTIALS.md
