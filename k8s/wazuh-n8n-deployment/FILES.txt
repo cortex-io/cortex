@@ -1,0 +1,126 @@
+Wazuh + n8n + MCP Deployment Package
+=====================================
+
+Created: 2025-12-14
+Location: /Users/ryandahlberg/Projects/cortex/k8s/wazuh-n8n-deployment/
+
+DOCUMENTATION
+-------------
+README.md                     - Complete deployment guide with troubleshooting
+DEPLOYMENT-SUMMARY.md         - Executive summary and architecture details
+QUICK-START.md                - TL;DR quick start commands
+FILES.txt                     - This file
+
+WAZUH MANIFESTS (wazuh/)
+------------------------
+00-namespace.yaml             - Wazuh namespace
+01-secrets.yaml               - Credentials (API, Indexer, Dashboard)
+02-indexer-statefulset.yaml   - Wazuh Indexer (50GB PVC, node 311)
+03-manager-deployment.yaml    - Wazuh Manager (NodePort 31514/31515, node 311)
+04-dashboard-deployment.yaml  - Wazuh Dashboard (ClusterIP 5601, node 311)
+
+N8N MANIFESTS (n8n/)
+--------------------
+00-namespace.yaml             - n8n namespace
+01-secrets.yaml               - PostgreSQL and n8n credentials
+02-postgres-statefulset.yaml  - PostgreSQL 15 (5GB PVC, node 312)
+03-n8n-deployment.yaml        - n8n application (webhook enabled, node 312)
+
+MCP MANIFESTS (mcp/)
+--------------------
+00-namespace.yaml             - MCP namespace
+01-wazuh-mcp-deployment.yaml  - Wazuh MCP server (port 3000, node 312)
+02-n8n-mcp-deployment.yaml    - n8n MCP server (port 3001, node 312)
+03-keda-scaledobjects.yaml    - KEDA autoscaling (1-5 replicas)
+
+DEPLOYMENT SCRIPTS (scripts/)
+------------------------------
+deploy-via-proxmox.sh         - Automated deployment via Proxmox API
+deploy-direct.sh              - Direct kubectl deployment
+build-and-deploy.sh           - SSH-based deployment with image builds
+deploy-all.sh                 - Alternative Proxmox deployment
+check-status.sh               - Verification script
+
+GITHUB REPOSITORIES
+-------------------
+https://github.com/ry-ops/wazuh-mcp-server
+https://github.com/ry-ops/n8n-mcp-server
+
+UPDATED FILES
+-------------
+/Users/ryandahlberg/Projects/cortex/coordination/mcp-server-registry.json
+  - Added wazuh-mcp-server entry
+  - Updated n8n-mcp-server entry
+
+RESOURCE SUMMARY
+----------------
+Total: ~7 CPU / ~18GB RAM / ~55GB storage
+
+Wazuh (node 311): 4 CPU / 12GB RAM / 50GB
+  - Indexer: 2GB RAM, 50GB
+  - Manager: 2GB RAM
+  - Dashboard: 1GB RAM
+
+n8n (node 312): 2 CPU / 4GB RAM / 5GB
+  - PostgreSQL: 512MB RAM, 5GB
+  - n8n: 1GB RAM
+
+MCP (node 312): 1 CPU / 2GB RAM
+  - wazuh-mcp-server: 256MB RAM
+  - n8n-mcp-server: 256MB RAM
+
+ACCESS URLS
+-----------
+Internal:
+  - Wazuh API: http://wazuh-manager.wazuh.svc.cluster.local:55000
+  - Wazuh Indexer: http://wazuh-indexer.wazuh.svc.cluster.local:9200
+  - Wazuh Dashboard: http://wazuh-dashboard.wazuh.svc.cluster.local:5601
+  - n8n: http://n8n.n8n.svc.cluster.local:5678
+  - Wazuh MCP: http://wazuh-mcp-server.mcp.svc.cluster.local:3000
+  - n8n MCP: http://n8n-mcp-server.mcp.svc.cluster.local:3001
+
+External (NodePort):
+  - Wazuh Agents: 10.88.145.181:31514
+  - Wazuh Registration: 10.88.145.181:31515
+
+CREDENTIALS
+-----------
+Wazuh:
+  - API: wazuh-api / MyS3cr3tP@ssw0rd!
+  - Indexer: admin / SecureP@ssw0rd123
+  - Dashboard: kibanaserver / KibanaP@ss2024
+
+n8n:
+  - PostgreSQL: n8n / n8nP@ssw0rd2024!
+  - Encryption: g8KAcPnZm9XjYfR3QwE5tVbN7uHsLdMp
+
+INTEGRATION
+-----------
+Wazuh → n8n Webhook:
+  URL: http://n8n.n8n.svc.cluster.local:5678/webhook/wazuh-alerts
+  Level: 7+
+  Format: JSON
+
+MCP Capabilities:
+  - Wazuh MCP: Agent management, alerts, vulnerabilities, compliance
+  - n8n MCP: Workflow automation, webhooks, monitoring
+
+DEPLOYMENT STATUS
+-----------------
+[x] Manifests created
+[x] Scripts created
+[x] Documentation completed
+[x] GitHub repositories ready
+[x] MCP registry updated
+[ ] Images built (requires k3s node access)
+[ ] Pods deployed and running
+[ ] Integration configured
+[ ] End-to-end testing
+
+NEXT STEPS
+----------
+1. Deploy using: scripts/deploy-via-proxmox.sh OR manual SSH
+2. Verify pods: kubectl get pods -n wazuh -n n8n -n mcp
+3. Configure n8n webhook workflow
+4. Test MCP server connectivity
+5. Connect Wazuh agents to 10.88.145.181:31514

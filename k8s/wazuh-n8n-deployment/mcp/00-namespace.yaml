@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: mcp
+  labels:
+    app.cortex.ai/stack: mcp
+    app.cortex.ai/managed-by: cortex

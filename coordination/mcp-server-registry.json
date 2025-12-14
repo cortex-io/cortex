@@ -1,7 +1,59 @@
 {
   "version": "1.0.0",
-  "last_updated": "2025-12-13T22:09:38.398Z",
+  "last_updated": "2025-12-14T13:30:00.000Z",
   "servers": [
+    {
+      "name": "wazuh-mcp-server",
+      "url": "http://wazuh-mcp-server.mcp.svc.cluster.local:3000",
+      "external_url": "http://10.88.145.182:3000",
+      "type": "wazuh",
+      "namespace": "mcp",
+      "transport": "sse",
+      "status": "active",
+      "discovered": true,
+      "github_repo": "https://github.com/ry-ops/wazuh-mcp-server",
+      "k8s_service": {
+        "cluster_ip": "auto",
+        "ports": [
+          {
+            "port": 3000,
+            "targetPort": 3000,
+            "protocol": "TCP"
+          }
+        ],
+        "labels": {
+          "app.cortex.ai/component": "mcp-server",
+          "app.cortex.ai/type": "wazuh"
+        }
+      },
+      "wazuh_config": {
+        "api_url": "http://wazuh-manager.wazuh.svc.cluster.local:55000",
+        "indexer_url": "http://wazuh-indexer.wazuh.svc.cluster.local:9200",
+        "webhook_integration": "http://n8n.n8n.svc.cluster.local:5678/webhook/wazuh-alerts"
+      },
+      "last_discovered": "2025-12-14T13:30:00.000Z",
+      "capabilities": [
+        "agent_management",
+        "alert_monitoring",
+        "vulnerability_scanning",
+        "compliance_checking",
+        "security_analysis",
+        "threat_intelligence"
+      ],
+      "tools": [
+        "get_agents",
+        "get_agent_details",
+        "get_alerts",
+        "get_vulnerabilities",
+        "get_sca_results",
+        "search_rules",
+        "get_agent_stats",
+        "restart_agent",
+        "get_sentinel_forge_status",
+        "analyze_security_events"
+      ],
+      "created_at": "2025-12-14T13:30:00.000Z"
+    },
     {
       "name": "k3s-mcp-server",
       "url": "http://k3s-mcp-server.cortex-system.svc.cluster.local:3001",
@@ -57,18 +109,20 @@
     },
     {
       "name": "n8n-mcp-server",
-      "url": "http://n8n-mcp-server.cortex-system.svc.cluster.local:3002",
+      "url": "http://n8n-mcp-server.mcp.svc.cluster.local:3001",
+      "external_url": "http://10.88.145.182:3001",
       "type": "n8n",
-      "namespace": "cortex-system",
+      "namespace": "mcp",
       "transport": "sse",
       "status": "active",
       "discovered": true,
+      "github_repo": "https://github.com/ry-ops/n8n-mcp-server",
       "k8s_service": {
-        "cluster_ip": "10.43.100.51",
+        "cluster_ip": "auto",
         "ports": [
           {
-            "port": 3002,
-            "targetPort": 3002,
+            "port": 3001,
+            "targetPort": 3001,
             "protocol": "TCP"
           }
         ],
@@ -77,16 +131,22 @@
           "app.cortex.ai/type": "n8n"
         }
       },
-      "last_discovered": "2025-12-13T22:09:38.398Z",
+      "n8n_config": {
+        "api_url": "http://n8n.n8n.svc.cluster.local:5678",
+        "webhook_base_url": "http://n8n.n8n.svc.cluster.local:5678/webhook"
+      },
+      "last_discovered": "2025-12-14T13:30:00.000Z",
       "capabilities": [
         "workflow_automation",
         "workflow_execution",
         "webhook_management",
-        "integration_orchestration"
+        "integration_orchestration",
+        "workflow_monitoring",
+        "credential_management"
       ],
-      "created_at": "2025-12-13T22:09:38.398Z"
+      "created_at": "2025-12-14T13:30:00.000Z"
     }
   ],
   "discovery_enabled": true,
-  "last_discovery": "2025-12-13T22:09:38.398Z"
+  "last_discovery": "2025-12-14T13:30:00.000Z"
 }

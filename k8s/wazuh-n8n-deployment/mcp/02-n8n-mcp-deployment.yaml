@@ -1,0 +1,81 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: n8n-mcp-config
+  namespace: mcp
+data:
+  N8N_API_URL: "http://n8n.n8n.svc.cluster.local:5678"
+  PORT: "3001"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: n8n-mcp-server
+  namespace: mcp
+  labels:
+    app: n8n-mcp-server
+    app.cortex.ai/component: mcp-server
+    app.cortex.ai/type: n8n
+spec:
+  type: ClusterIP
+  ports:
+  - name: http
+    port: 3001
+    targetPort: 3001
+    protocol: TCP
+  selector:
+    app: n8n-mcp-server
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: n8n-mcp-server
+  namespace: mcp
+  labels:
+    app: n8n-mcp-server
+    app.cortex.ai/component: mcp-server
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: n8n-mcp-server
+  template:
+    metadata:
+      labels:
+        app: n8n-mcp-server
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "3001"
+        prometheus.io/path: "/metrics"
+    spec:
+      nodeSelector:
+        kubernetes.io/hostname: k3s-worker2
+      containers:
+      - name: n8n-mcp
+        image: n8n-mcp-server:latest
+        imagePullPolicy: Never
+        envFrom:
+        - configMapRef:
+            name: n8n-mcp-config
+        ports:
+        - containerPort: 3001
+          name: http
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "250m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 3001
+          initialDelaySeconds: 15
+          periodSeconds: 20
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 3001
+          initialDelaySeconds: 5
+          periodSeconds: 10
