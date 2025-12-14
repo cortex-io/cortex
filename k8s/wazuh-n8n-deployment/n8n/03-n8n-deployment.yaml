@@ -1,0 +1,123 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: n8n
+  namespace: n8n
+  labels:
+    app: n8n
+spec:
+  type: ClusterIP
+  ports:
+  - name: http
+    port: 5678
+    targetPort: 5678
+    protocol: TCP
+  selector:
+    app: n8n
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: n8n
+  namespace: n8n
+  labels:
+    app: n8n
+    app.cortex.ai/component: automation
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: n8n
+  template:
+    metadata:
+      labels:
+        app: n8n
+    spec:
+      nodeSelector:
+        kubernetes.io/hostname: k3s-worker2
+      initContainers:
+      - name: wait-for-postgres
+        image: postgres:15-alpine
+        command:
+        - sh
+        - -c
+        - |
+          until pg_isready -h n8n-postgres -U n8n; do
+            echo "Waiting for PostgreSQL..."
+            sleep 2
+          done
+          echo "PostgreSQL is ready!"
+      containers:
+      - name: n8n
+        image: n8nio/n8n:latest
+        env:
+        - name: DB_TYPE
+          value: "postgresdb"
+        - name: DB_POSTGRESDB_HOST
+          value: "n8n-postgres"
+        - name: DB_POSTGRESDB_PORT
+          value: "5432"
+        - name: DB_POSTGRESDB_DATABASE
+          valueFrom:
+            secretKeyRef:
+              name: n8n-credentials
+              key: postgres-db
+        - name: DB_POSTGRESDB_USER
+          valueFrom:
+            secretKeyRef:
+              name: n8n-credentials
+              key: postgres-user
+        - name: DB_POSTGRESDB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: n8n-credentials
+              key: postgres-password
+        - name: N8N_ENCRYPTION_KEY
+          valueFrom:
+            secretKeyRef:
+              name: n8n-credentials
+              key: n8n-encryption-key
+        - name: N8N_HOST
+          value: "n8n.n8n.svc.cluster.local"
+        - name: N8N_PORT
+          value: "5678"
+        - name: N8N_PROTOCOL
+          value: "http"
+        - name: WEBHOOK_URL
+          value: "http://n8n.n8n.svc.cluster.local:5678/"
+        - name: GENERIC_TIMEZONE
+          value: "America/Chicago"
+        - name: TZ
+          value: "America/Chicago"
+        - name: N8N_METRICS
+          value: "true"
+        - name: N8N_LOG_LEVEL
+          value: "info"
+        ports:
+        - containerPort: 5678
+          name: http
+        resources:
+          requests:
+            memory: "1Gi"
+            cpu: "500m"
+          limits:
+            memory: "2Gi"
+            cpu: "1000m"
+        volumeMounts:
+        - name: data
+          mountPath: /home/node/.n8n
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: 5678
+          initialDelaySeconds: 60
+          periodSeconds: 30
+        readinessProbe:
+          httpGet:
+            path: /healthz
+            port: 5678
+          initialDelaySeconds: 30
+          periodSeconds: 10
+      volumes:
+      - name: data
+        emptyDir: {}

@@ -1,0 +1,35 @@
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: wazuh-mcp-scaler
+  namespace: mcp
+spec:
+  scaleTargetRef:
+    name: wazuh-mcp-server
+  minReplicaCount: 1
+  maxReplicaCount: 5
+  triggers:
+  - type: prometheus
+    metadata:
+      serverAddress: http://prometheus-k8s.monitoring.svc.cluster.local:9090
+      metricName: cortex_mcp_requests_total
+      query: sum(rate(cortex_mcp_requests_total{service="wazuh-mcp-server"}[1m]))
+      threshold: "10"
+---
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: n8n-mcp-scaler
+  namespace: mcp
+spec:
+  scaleTargetRef:
+    name: n8n-mcp-server
+  minReplicaCount: 1
+  maxReplicaCount: 5
+  triggers:
+  - type: prometheus
+    metadata:
+      serverAddress: http://prometheus-k8s.monitoring.svc.cluster.local:9090
+      metricName: cortex_mcp_requests_total
+      query: sum(rate(cortex_mcp_requests_total{service="n8n-mcp-server"}[1m]))
+      threshold: "10"

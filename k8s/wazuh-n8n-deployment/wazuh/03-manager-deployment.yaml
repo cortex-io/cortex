@@ -1,0 +1,120 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: wazuh-manager
+  namespace: wazuh
+  labels:
+    app: wazuh-manager
+spec:
+  type: NodePort
+  ports:
+  - name: registration
+    port: 1515
+    targetPort: 1515
+    nodePort: 31515
+    protocol: TCP
+  - name: agents
+    port: 1514
+    targetPort: 1514
+    nodePort: 31514
+    protocol: TCP
+  - name: api
+    port: 55000
+    targetPort: 55000
+    protocol: TCP
+  selector:
+    app: wazuh-manager
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: wazuh-manager
+  namespace: wazuh
+  labels:
+    app: wazuh-manager
+    app.cortex.ai/component: manager
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: wazuh-manager
+  template:
+    metadata:
+      labels:
+        app: wazuh-manager
+    spec:
+      nodeSelector:
+        kubernetes.io/hostname: k3s-worker1
+      containers:
+      - name: manager
+        image: wazuh/wazuh-manager:4.7.1
+        env:
+        - name: INDEXER_URL
+          value: "https://wazuh-indexer:9200"
+        - name: INDEXER_USERNAME
+          valueFrom:
+            secretKeyRef:
+              name: wazuh-credentials
+              key: indexer-admin-user
+        - name: INDEXER_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: wazuh-credentials
+              key: indexer-admin-password
+        - name: FILEBEAT_SSL_VERIFICATION_MODE
+          value: "none"
+        - name: SSL_CERTIFICATE_AUTHORITIES
+          value: ""
+        - name: SSL_CERTIFICATE
+          value: ""
+        - name: SSL_KEY
+          value: ""
+        - name: API_USERNAME
+          valueFrom:
+            secretKeyRef:
+              name: wazuh-credentials
+              key: wazuh-api-user
+        - name: API_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: wazuh-credentials
+              key: wazuh-api-password
+        ports:
+        - containerPort: 1514
+          name: agents
+          protocol: TCP
+        - containerPort: 1515
+          name: registration
+          protocol: TCP
+        - containerPort: 55000
+          name: api
+          protocol: TCP
+        resources:
+          requests:
+            memory: "2Gi"
+            cpu: "1000m"
+          limits:
+            memory: "4Gi"
+            cpu: "2000m"
+        volumeMounts:
+        - name: config
+          mountPath: /wazuh-config-mount
+        - name: filebeat-data
+          mountPath: /var/lib/filebeat
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 55000
+          initialDelaySeconds: 60
+          periodSeconds: 30
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 55000
+          initialDelaySeconds: 30
+          periodSeconds: 10
+      volumes:
+      - name: config
+        emptyDir: {}
+      - name: filebeat-data
+        emptyDir: {}

@@ -1,0 +1,118 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: wazuh-indexer
+  namespace: wazuh
+  labels:
+    app: wazuh-indexer
+spec:
+  type: ClusterIP
+  clusterIP: None
+  ports:
+  - name: http
+    port: 9200
+    targetPort: 9200
+  - name: transport
+    port: 9300
+    targetPort: 9300
+  selector:
+    app: wazuh-indexer
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: wazuh-indexer
+  namespace: wazuh
+  labels:
+    app: wazuh-indexer
+    app.cortex.ai/component: indexer
+spec:
+  serviceName: wazuh-indexer
+  replicas: 1
+  selector:
+    matchLabels:
+      app: wazuh-indexer
+  template:
+    metadata:
+      labels:
+        app: wazuh-indexer
+    spec:
+      nodeSelector:
+        kubernetes.io/hostname: k3s-worker1
+      initContainers:
+      - name: sysctl
+        image: busybox:1.36
+        command:
+        - sh
+        - -c
+        - |
+          sysctl -w vm.max_map_count=262144
+          ulimit -n 65536
+        securityContext:
+          privileged: true
+      containers:
+      - name: indexer
+        image: wazuh/wazuh-indexer:4.7.1
+        env:
+        - name: OPENSEARCH_JAVA_OPTS
+          value: "-Xms4g -Xmx4g"
+        - name: cluster.name
+          value: "wazuh-cluster"
+        - name: node.name
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
+        - name: discovery.type
+          value: "single-node"
+        - name: bootstrap.memory_lock
+          value: "true"
+        - name: DISABLE_SECURITY_PLUGIN
+          value: "false"
+        - name: plugins.security.ssl.http.enabled
+          value: "true"
+        - name: INDEXER_USERNAME
+          valueFrom:
+            secretKeyRef:
+              name: wazuh-credentials
+              key: indexer-admin-user
+        - name: INDEXER_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: wazuh-credentials
+              key: indexer-admin-password
+        ports:
+        - containerPort: 9200
+          name: http
+        - containerPort: 9300
+          name: transport
+        resources:
+          requests:
+            memory: "4Gi"
+            cpu: "1000m"
+          limits:
+            memory: "8Gi"
+            cpu: "2000m"
+        volumeMounts:
+        - name: data
+          mountPath: /var/lib/wazuh-indexer
+        livenessProbe:
+          tcpSocket:
+            port: 9200
+          initialDelaySeconds: 60
+          periodSeconds: 30
+        readinessProbe:
+          httpGet:
+            path: /_cluster/health
+            port: 9200
+            scheme: HTTPS
+          initialDelaySeconds: 60
+          periodSeconds: 10
+  volumeClaimTemplates:
+  - metadata:
+      name: data
+    spec:
+      accessModes: ["ReadWriteOnce"]
+      storageClassName: local-path
+      resources:
+        requests:
+          storage: 50Gi

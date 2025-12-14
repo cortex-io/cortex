@@ -1,0 +1,471 @@
+{
+  "playbook_id": "vlan-provisioning-standard",
+  "name": "Standard VLAN Provisioning",
+  "version": "1.0.0",
+  "author": "Ryan Dahlberg",
+  "created": "2025-12-14",
+  "description": "Standard procedure for provisioning new VLANs across UniFi and Proxmox infrastructure. Based on lessons learned from k3s cluster VLAN 145 deployment.",
+  "category": "infrastructure",
+  "tags": ["networking", "vlan", "unifi", "proxmox", "infrastructure"],
+
+  "prerequisites": {
+    "access": [
+      "UniFi Dream Machine Pro admin access",
+      "Proxmox VE root access",
+      "Physical switch configuration access (if separate from UDM-Pro)"
+    ],
+    "knowledge": [
+      "VLAN ID range planning (avoid conflicts)",
+      "Subnet allocation (IP range, gateway, DHCP)",
+      "Zone assignment (Internal, DMZ, etc.)"
+    ]
+  },
+
+  "variables": {
+    "vlan_id": {
+      "type": "integer",
+      "description": "VLAN ID (1-4094, must be unique)",
+      "example": 145,
+      "required": true
+    },
+    "vlan_name": {
+      "type": "string",
+      "description": "Descriptive name for the VLAN",
+      "example": "K3S-Cluster",
+      "required": true
+    },
+    "subnet": {
+      "type": "string",
+      "description": "Network subnet in CIDR notation",
+      "example": "10.88.145.0/24",
+      "required": true
+    },
+    "gateway_ip": {
+      "type": "string",
+      "description": "Gateway IP (usually .1)",
+      "example": "10.88.145.1",
+      "required": true
+    },
+    "proxmox_bridge_ip": {
+      "type": "string",
+      "description": "Proxmox bridge IP (must be valid host IP, NOT network address)",
+      "example": "10.88.145.2/24",
+      "required": true,
+      "validation": "Must not be .0 (network address) or .255 (broadcast)"
+    },
+    "dhcp_enabled": {
+      "type": "boolean",
+      "description": "Enable DHCP server on this VLAN",
+      "default": true
+    },
+    "dhcp_range_start": {
+      "type": "string",
+      "description": "DHCP range start IP",
+      "example": "10.88.145.100",
+      "required_if": "dhcp_enabled=true"
+    },
+    "dhcp_range_end": {
+      "type": "string",
+      "description": "DHCP range end IP",
+      "example": "10.88.145.200",
+      "required_if": "dhcp_enabled=true"
+    },
+    "zone": {
+      "type": "string",
+      "description": "UniFi security zone",
+      "enum": ["Internal", "DMZ", "Hotspot", "Custom"],
+      "default": "Internal"
+    },
+    "proxmox_node": {
+      "type": "string",
+      "description": "Proxmox node name",
+      "example": "pve01",
+      "required": true
+    },
+    "physical_interface": {
+      "type": "string",
+      "description": "Physical interface on Proxmox",
+      "example": "nic0",
+      "default": "nic0"
+    },
+    "bridge_name": {
+      "type": "string",
+      "description": "Proxmox bridge name",
+      "example": "vmbr1",
+      "required": true
+    }
+  },
+
+  "steps": [
+    {
+      "step": 1,
+      "phase": "planning",
+      "action": "validate_vlan_parameters",
+      "description": "Verify VLAN ID is unique and subnet doesn't conflict",
+      "commands": [
+        {
+          "type": "unifi_api",
+          "operation": "list_networks",
+          "validate": "VLAN {{vlan_id}} is not in use"
+        },
+        {
+          "type": "shell",
+          "command": "ipcalc {{subnet}}",
+          "validate": "Subnet is valid CIDR notation"
+        }
+      ],
+      "rollback": null,
+      "critical": true
+    },
+    {
+      "step": 2,
+      "phase": "unifi_configuration",
+      "action": "create_network_in_unifi",
+      "description": "Create network in UniFi Controller with explicit VLAN ID",
+      "commands": [
+        {
+          "type": "unifi_ui",
+          "path": "Settings > Networks > Create New Network",
+          "fields": {
+            "name": "{{vlan_name}}",
+            "vlan_id": "{{vlan_id}} (MANUAL - NOT AUTO)",
+            "gateway_subnet": "{{gateway_ip}}/{{subnet_mask}}",
+            "dhcp_mode": "{{dhcp_enabled ? 'DHCP Server' : 'None'}}",
+            "dhcp_range": "{{dhcp_range_start}} - {{dhcp_range_end}}",
+            "zone": "{{zone}}",
+            "auto_scale": false
+          },
+          "important_notes": [
+            "CRITICAL: Set VLAN ID to MANUAL, not AUTO",
+            "AUTO VLAN IDs cause routing failures with Proxmox",
+            "Verify zone assignment matches firewall rules"
+          ]
+        }
+      ],
+      "verification": [
+        "Network appears in UniFi network list",
+        "VLAN ID shows as {{vlan_id}} (not 'Auto')",
+        "Gateway IP is {{gateway_ip}}"
+      ],
+      "rollback": "Delete network from UniFi",
+      "critical": true
+    },
+    {
+      "step": 3,
+      "phase": "unifi_configuration",
+      "action": "configure_switch_port_profile",
+      "description": "Ensure switch ports trunk the new VLAN",
+      "commands": [
+        {
+          "type": "unifi_ui",
+          "path": "Settings > Profiles > Switch Ports",
+          "action": "verify_or_create_trunk_profile",
+          "fields": {
+            "profile_name": "Proxmox Trunk",
+            "native_vlan": "1",
+            "tagged_vlans": "all (or include {{vlan_id}})"
+          }
+        }
+      ],
+      "verification": [
+        "Proxmox uplink port uses trunk profile",
+        "VLAN {{vlan_id}} is in tagged VLAN list"
+      ],
+      "rollback": null,
+      "critical": true
+    },
+    {
+      "step": 4,
+      "phase": "proxmox_configuration",
+      "action": "create_proxmox_bridge",
+      "description": "Create VLAN-aware bridge on Proxmox with proper physical uplink",
+      "commands": [
+        {
+          "type": "shell",
+          "node": "{{proxmox_node}}",
+          "command": "cat >> /etc/network/interfaces <<EOF\n\nauto {{bridge_name}}\niface {{bridge_name}} inet static\n        address {{proxmox_bridge_ip}}\n        gateway {{gateway_ip}}\n        bridge-ports {{physical_interface}}.{{vlan_id}}\n        bridge-stp off\n        bridge-fd 0\n        bridge-vlan-aware yes\nEOF"
+        }
+      ],
+      "validation": [
+        {
+          "check": "Bridge IP is valid host address",
+          "command": "ipcalc {{proxmox_bridge_ip}} | grep HostMin",
+          "expected": "Bridge IP is within usable range (not .0 or .255)"
+        },
+        {
+          "check": "Bridge has physical uplink",
+          "command": "grep 'bridge-ports {{physical_interface}}.{{vlan_id}}' /etc/network/interfaces",
+          "expected": "bridge-ports is NOT empty"
+        }
+      ],
+      "important_notes": [
+        "CRITICAL: Use {{physical_interface}}.{{vlan_id}} for bridge-ports",
+        "NEVER leave bridge-ports empty - this isolates the bridge",
+        "Bridge IP must be a valid host IP (not .0 network address)",
+        "Pattern: nicX.<vlan-id> for consistency"
+      ],
+      "rollback": "Remove bridge configuration from /etc/network/interfaces",
+      "critical": true
+    },
+    {
+      "step": 5,
+      "phase": "proxmox_configuration",
+      "action": "apply_network_configuration",
+      "description": "Apply Proxmox network changes",
+      "commands": [
+        {
+          "type": "shell",
+          "node": "{{proxmox_node}}",
+          "command": "ifreload -a"
+        }
+      ],
+      "verification": [
+        {
+          "command": "ip addr show {{bridge_name}}",
+          "expected": "Bridge has IP {{proxmox_bridge_ip}}"
+        },
+        {
+          "command": "bridge vlan show dev {{bridge_name}}",
+          "expected": "VLAN {{vlan_id}} is visible"
+        }
+      ],
+      "rollback": "ifreload -a (after removing bridge config)",
+      "critical": true
+    },
+    {
+      "step": 6,
+      "phase": "verification",
+      "action": "test_gateway_connectivity",
+      "description": "Verify Proxmox can reach VLAN gateway",
+      "commands": [
+        {
+          "type": "shell",
+          "node": "{{proxmox_node}}",
+          "command": "ping -c 3 {{gateway_ip}}",
+          "expected": "3 packets transmitted, 3 received"
+        }
+      ],
+      "rollback": null,
+      "critical": true
+    },
+    {
+      "step": 7,
+      "phase": "verification",
+      "action": "test_inter_vlan_routing",
+      "description": "Verify inter-VLAN routing works from other VLANs",
+      "commands": [
+        {
+          "type": "shell",
+          "source": "management_workstation",
+          "command": "ping -c 3 {{gateway_ip}}",
+          "expected": "3 packets transmitted, 3 received"
+        },
+        {
+          "type": "shell",
+          "source": "management_workstation",
+          "command": "ping -c 3 {{proxmox_bridge_ip | without_cidr}}",
+          "expected": "3 packets transmitted, 3 received"
+        }
+      ],
+      "failure_troubleshooting": [
+        "If gateway responds but hosts don't: Check bridge-ports is not empty",
+        "If gateway doesn't respond: Check UniFi VLAN ID is MANUAL, not AUTO",
+        "If you see '!H' in traceroute: Check UniFi firewall zone rules",
+        "If DHCP works but routing doesn't: Check bridge IP is valid host address"
+      ],
+      "rollback": null,
+      "critical": true
+    },
+    {
+      "step": 8,
+      "phase": "documentation",
+      "action": "document_vlan",
+      "description": "Update network documentation",
+      "commands": [
+        {
+          "type": "append",
+          "file": "/coordination/infrastructure/vlans.json",
+          "content": {
+            "vlan_id": "{{vlan_id}}",
+            "name": "{{vlan_name}}",
+            "subnet": "{{subnet}}",
+            "gateway": "{{gateway_ip}}",
+            "proxmox_bridge": "{{bridge_name}}",
+            "zone": "{{zone}}",
+            "created": "{{timestamp}}",
+            "status": "active"
+          }
+        }
+      ],
+      "rollback": null,
+      "critical": false
+    }
+  ],
+
+  "common_mistakes": [
+    {
+      "mistake": "Setting VLAN ID to 'Auto' in UniFi",
+      "symptom": "Inter-VLAN routing fails with 'Host Unreachable' from gateway",
+      "fix": "Change VLAN ID from 'Auto' to explicit numeric value",
+      "detection": "Traceroute shows !H flag from gateway",
+      "severity": "critical"
+    },
+    {
+      "mistake": "Using network address (.0) as bridge IP",
+      "symptom": "Routing confusion, unpredictable connectivity",
+      "fix": "Use valid host IP (.2-.254 in /24)",
+      "detection": "ip addr show shows .0 address",
+      "severity": "critical"
+    },
+    {
+      "mistake": "Empty bridge-ports configuration",
+      "symptom": "VMs can talk to each other but not outside VLAN",
+      "fix": "Set bridge-ports to nicX.<vlan-id>",
+      "detection": "grep 'bridge-ports' /etc/network/interfaces shows empty value",
+      "severity": "critical"
+    },
+    {
+      "mistake": "Forgetting to reprovision UniFi devices after network changes",
+      "symptom": "Changes don't take effect immediately",
+      "fix": "Force provision affected switches/APs in UniFi",
+      "detection": "Network shows in config but doesn't work",
+      "severity": "medium"
+    },
+    {
+      "mistake": "Incorrect zone assignment in UniFi",
+      "symptom": "Firewall blocks inter-VLAN traffic",
+      "fix": "Verify zone matches firewall rules",
+      "detection": "Check firewall logs for drops",
+      "severity": "high"
+    }
+  ],
+
+  "testing_checklist": [
+    {
+      "test": "Gateway reachability",
+      "command": "ping {{gateway_ip}}",
+      "expected": "Success from both Proxmox and other VLANs"
+    },
+    {
+      "test": "DHCP functionality",
+      "command": "Create test VM, verify it gets IP in DHCP range",
+      "expected": "VM receives IP from {{dhcp_range_start}}-{{dhcp_range_end}}"
+    },
+    {
+      "test": "Inter-VLAN routing",
+      "command": "ping from management VLAN to new VLAN",
+      "expected": "Success (no !H flag in traceroute)"
+    },
+    {
+      "test": "Internet connectivity",
+      "command": "ping 8.8.8.8 from test VM",
+      "expected": "Success"
+    },
+    {
+      "test": "DNS resolution",
+      "command": "nslookup google.com from test VM",
+      "expected": "Successful DNS resolution"
+    },
+    {
+      "test": "Intra-VLAN communication",
+      "command": "Ping between two VMs on same VLAN",
+      "expected": "Success"
+    }
+  ],
+
+  "quick_reference": {
+    "unifi_checklist": [
+      "Create network with explicit VLAN ID (MANUAL, not AUTO)",
+      "Assign to appropriate zone (Internal for trusted networks)",
+      "Configure DHCP if needed",
+      "Verify switch port profile trunks the VLAN",
+      "Force provision affected devices"
+    ],
+    "proxmox_checklist": [
+      "Add bridge with bridge-ports nicX.<vlan-id>",
+      "Use valid host IP (NOT .0 network address)",
+      "Set bridge-vlan-aware yes",
+      "Apply with ifreload -a",
+      "Verify with ip addr show and ping tests"
+    ],
+    "vm_configuration": [
+      "Set VM NIC to bridge {{bridge_name}}",
+      "Set VLAN tag to {{vlan_id}} (if not using VLAN-aware bridge)",
+      "Start VM and verify network connectivity"
+    ]
+  },
+
+  "troubleshooting_flowchart": {
+    "gateway_responds": {
+      "yes": {
+        "hosts_respond": {
+          "yes": "SUCCESS - VLAN fully operational",
+          "no": {
+            "issue": "Bridge configuration problem",
+            "checks": [
+              "Verify bridge-ports is not empty",
+              "Verify bridge IP is valid host address",
+              "Check bridge-vlan-aware is set to yes"
+            ]
+          }
+        }
+      },
+      "no": {
+        "unifi_vlan_id": {
+          "auto": {
+            "issue": "VLAN ID mismatch",
+            "fix": "Change UniFi VLAN ID from Auto to {{vlan_id}}"
+          },
+          "manual": {
+            "zone_rules": {
+              "permissive": {
+                "issue": "Network configuration issue",
+                "checks": [
+                  "Verify switch port trunks VLAN",
+                  "Check UniFi gateway has interface on VLAN"
+                ]
+              },
+              "restrictive": {
+                "issue": "Firewall blocking traffic",
+                "fix": "Update zone-based firewall rules"
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+
+  "lessons_learned": [
+    "Broadcast traffic (DHCP) can work even with broken routing - don't rely on it as verification",
+    "VLAN ID 'Auto' creates ambiguity between UniFi and Proxmox VLAN tagging",
+    "An invalid bridge IP (.0) can cause subtle routing issues",
+    "Empty bridge-ports is easy to miss but breaks external connectivity completely",
+    "Always test inter-VLAN routing, not just intra-VLAN or internet access",
+    "Document your bridge-ports pattern (nicX.<vlan-id>) for consistency"
+  ],
+
+  "related_playbooks": [
+    "vm-provisioning-standard",
+    "k3s-cluster-deployment",
+    "firewall-rule-creation"
+  ],
+
+  "references": [
+    {
+      "title": "When VLANs Go Silent: Troubleshooting Network Isolation Between UniFi and Proxmox",
+      "url": "internal://blog-posts/when-vlans-go-silent",
+      "type": "case_study"
+    },
+    {
+      "title": "Proxmox Network Configuration",
+      "url": "https://pve.proxmox.com/wiki/Network_Configuration",
+      "type": "official_docs"
+    },
+    {
+      "title": "UniFi VLAN Configuration Guide",
+      "url": "https://help.ui.com/hc/en-us/articles/219654087",
+      "type": "official_docs"
+    }
+  ]
+}

@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: n8n
+  labels:
+    app.cortex.ai/stack: n8n
+    app.cortex.ai/managed-by: cortex

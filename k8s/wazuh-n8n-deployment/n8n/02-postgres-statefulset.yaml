@@ -1,0 +1,97 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: n8n-postgres
+  namespace: n8n
+  labels:
+    app: n8n-postgres
+spec:
+  type: ClusterIP
+  clusterIP: None
+  ports:
+  - name: postgres
+    port: 5432
+    targetPort: 5432
+  selector:
+    app: n8n-postgres
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: n8n-postgres
+  namespace: n8n
+  labels:
+    app: n8n-postgres
+    app.cortex.ai/component: database
+spec:
+  serviceName: n8n-postgres
+  replicas: 1
+  selector:
+    matchLabels:
+      app: n8n-postgres
+  template:
+    metadata:
+      labels:
+        app: n8n-postgres
+    spec:
+      nodeSelector:
+        kubernetes.io/hostname: k3s-worker2
+      containers:
+      - name: postgres
+        image: postgres:15-alpine
+        env:
+        - name: POSTGRES_USER
+          valueFrom:
+            secretKeyRef:
+              name: n8n-credentials
+              key: postgres-user
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: n8n-credentials
+              key: postgres-password
+        - name: POSTGRES_DB
+          valueFrom:
+            secretKeyRef:
+              name: n8n-credentials
+              key: postgres-db
+        - name: PGDATA
+          value: /var/lib/postgresql/data/pgdata
+        ports:
+        - containerPort: 5432
+          name: postgres
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "250m"
+          limits:
+            memory: "1Gi"
+            cpu: "500m"
+        volumeMounts:
+        - name: data
+          mountPath: /var/lib/postgresql/data
+        livenessProbe:
+          exec:
+            command:
+            - pg_isready
+            - -U
+            - n8n
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          exec:
+            command:
+            - pg_isready
+            - -U
+            - n8n
+          initialDelaySeconds: 10
+          periodSeconds: 5
+  volumeClaimTemplates:
+  - metadata:
+      name: data
+    spec:
+      accessModes: ["ReadWriteOnce"]
+      storageClassName: local-path
+      resources:
+        requests:
+          storage: 5Gi
