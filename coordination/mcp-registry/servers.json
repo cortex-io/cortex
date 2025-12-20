@@ -4,47 +4,10 @@
     "version": "1.0.0",
     "maintainer": "ry-ops",
     "github_org": "https://github.com/ry-ops",
-    "last_updated": "2025-12-09T00:00:00Z",
-    "total_servers": 7
+    "last_updated": "2025-12-19T00:00:00Z",
+    "total_servers": 6
   },
   "servers": [
-    {
-      "id": "n8n-mcp-server",
-      "name": "n8n MCP Server",
-      "repository": "https://github.com/ry-ops/n8n-mcp-server",
-      "status": "active",
-      "language": "python",
-      "tool_count": 16,
-      "description": "Model Context Protocol server for n8n workflow automation",
-      "capabilities": [
-        "workflow_management",
-        "workflow_execution",
-        "workflow_control",
-        "execution_monitoring",
-        "api_integration"
-      ],
-      "configuration": {
-        "env_vars": [
-          {
-            "name": "N8N_URL",
-            "description": "URL of your n8n instance",
-            "required": true
-          },
-          {
-            "name": "N8N_API_KEY",
-            "description": "API key for authentication",
-            "required": true
-          }
-        ]
-      },
-      "use_cases": [
-        "automated_workflow_orchestration",
-        "cicd_pipeline_management",
-        "integration_automation",
-        "workflow_monitoring"
-      ],
-      "tags": ["automation", "workflows", "n8n", "integration"]
-    },
     {
       "id": "cortex-resource-manager",
       "name": "Cortex Resource Manager",
