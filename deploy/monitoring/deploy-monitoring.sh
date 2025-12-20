@@ -218,11 +218,6 @@ get_access_info() {
     echo "    Port-forward: kubectl port-forward -n ${NAMESPACE} svc/prometheus-alertmanager 9093:9093"
     echo ""
 
-    # Webhook URL for n8n
-    echo "  Webhook URL for n8n:"
-    echo "    http://n8n.cortex.svc.cluster.local:5678/webhook/alertmanager"
-    echo ""
-
     log_info "Note: Update /etc/hosts or DNS to resolve *.cortex.local to your cluster IP"
     log_info "Or use port-forwarding for local access"
 }
@@ -271,8 +266,6 @@ main() {
     echo "  1. Update /etc/hosts with cluster IP for *.cortex.local"
     echo "  2. Configure DNS for production use"
     echo "  3. Update Grafana admin password"
-    echo "  4. Configure n8n webhook endpoint"
-    echo "  5. Test alert routing to n8n"
 }
 
 # Command line interface
