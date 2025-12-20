@@ -43,31 +43,6 @@ Contractors serve as domain experts that:
 - Design high-availability architectures
 - Implement backup and disaster recovery strategies
 
-### n8n-contractor
-
-**Specialization**: n8n workflow automation expert
-
-**Knowledge Domains**:
-- Workflow design patterns (ETL, webhooks, scheduled tasks, bi-directional sync)
-- Node type recommendations and usage
-- Error handling and retry strategies
-- Performance optimization techniques
-- Security best practices for workflows
-- Integration patterns (API, database, messaging)
-
-**MCP Server**: n8n-mcp-server
-
-**Files**:
-- `/Users/ryandahlberg/Projects/cortex/coordination/contractors/n8n-contractor.md` - Agent definition and expertise
-- `/Users/ryandahlberg/Projects/cortex/coordination/contractors/n8n-contractor-knowledge.json` - Knowledge base with patterns and code snippets
-
-**Use Cases**:
-- Build complex automation workflows
-- Design integration architectures
-- Implement event processing systems
-- Create scheduled data pipelines
-- Set up monitoring and alerting workflows
-
 ### talos-contractor
 
 **Specialization**: Talos Linux and Kubernetes cluster management expert
@@ -101,7 +76,7 @@ Contractors serve as domain experts that:
 | **Scope** | Domain (dev, security, etc) | Task-specific | Tool/platform-specific |
 | **Knowledge** | Coordination patterns | Implementation skills | Deep domain expertise |
 | **Lifecycle** | Long-running | Short-lived (task duration) | On-demand |
-| **Examples** | Development Master, Security Master | feature-implementer, bug-fixer | n8n-contractor, terraform-contractor |
+| **Examples** | Development Master, Security Master | feature-implementer, bug-fixer | infrastructure-contractor, talos-contractor |
 
 ## How Contractors Work
 
@@ -110,12 +85,12 @@ Contractors serve as domain experts that:
 ```json
 {
   "request_type": "contractor_consultation",
-  "contractor": "n8n-contractor",
-  "task": "Design webhook processing workflow",
+  "contractor": "infrastructure-contractor",
+  "task": "Design isolated network environment",
   "requirements": {
-    "source": "GitHub webhooks",
-    "processing": "Parse events, validate, route by type",
-    "destinations": ["Slack", "Database", "PagerDuty"]
+    "vlan": "145",
+    "services": ["k3s cluster", "monitoring", "storage"],
+    "security": "firewall rules for external access"
   }
 }
 ```
@@ -123,9 +98,9 @@ Contractors serve as domain experts that:
 ### 2. Contractor Response
 
 The contractor provides:
-- Workflow architecture design
-- Recommended nodes and configurations
-- Error handling strategy
+- Infrastructure architecture design
+- Recommended configurations and security policies
+- Network topology and VLAN design
 - Code snippets and examples
 - Implementation using MCP server tools
 
@@ -218,8 +193,6 @@ coordination/contractors/
 ├── README.md                                    # This file
 ├── infrastructure-contractor.md                 # Infrastructure expert agent
 ├── infrastructure-contractor-knowledge.json     # Infrastructure knowledge base
-├── n8n-contractor.md                            # n8n expert agent
-├── n8n-contractor-knowledge.json                # n8n knowledge base
 ├── talos-contractor.md                          # Talos/K8s expert agent
 ├── talos-contractor-knowledge.json              # Talos knowledge base
 └── [future contractors...]

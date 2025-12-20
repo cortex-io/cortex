@@ -1,0 +1,1187 @@
+{
+  "totalNodes": 50,
+  "toolNodes": [
+    {
+      "id": "tool-get-vm-list",
+      "name": "Tool: List All VMs",
+      "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+      "position": [
+        880,
+        100
+      ],
+      "parameters": {
+        "name": "list_vms",
+        "description": "List all virtual machines on the Proxmox node pve01. Returns VM ID, name, status (running/stopped), CPU cores, RAM, and uptime. Use this to get an overview of the infrastructure.",
+        "workflowId": "={{ $workflow.id }}",
+        "specifyInputSchema": true,
+        "jsonSchemaExample": "{}"
+      },
+      "webhook Params": {
+        "method": "GET",
+        "path": "/vms",
+        "authentication": "none"
+      }
+    },
+    {
+      "id": "tool-get-vm-status",
+      "name": "Tool: Get VM Status",
+      "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+      "position": [
+        880,
+        200
+      ],
+      "parameters": {
+        "name": "get_vm_status",
+        "description": "Get detailed status of a specific VM by VM ID. Returns comprehensive information including CPU usage, memory usage, disk usage, network traffic, and current state.",
+        "specifyInputSchema": true,
+        "jsonSchemaExample": "{\n  \"vmid\": \"100\"\n}"
+      }
+    },
+    {
+      "id": "tool-create-vm",
+      "name": "Tool: Create VM",
+      "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+      "position": [
+        880,
+        300
+      ],
+      "parameters": {
+        "name": "create_vm",
+        "description": "Create a new virtual machine on pve01. Requires VM ID (100-999), name, CPU cores, RAM in MB, and disk size in GB. Optional: template to clone from. Returns created VM details.",
+        "specifyInputSchema": true,
+        "jsonSchemaExample": "{\n  \"vmid\": \"100\",\n  \"name\": \"web-prod-01\",\n  \"cores\": \"4\",\n  \"memory\": \"8192\",\n  \"storage\": \"local-lvm\",\n  \"disk_size\": \"100\"\n}"
+      }
+    },
+    {
+      "id": "tool-start-vm",
+      "name": "Tool: Start VM",
+      "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+      "position": [
+        880,
+        400
+      ],
+      "parameters": {
+        "name": "start_vm",
+        "description": "Start a stopped virtual machine by VM ID. Returns task ID and status.",
+        "specifyInputSchema": true,
+        "jsonSchemaExample": "{\n  \"vmid\": \"100\"\n}"
+      }
+    },
+    {
+      "id": "tool-stop-vm",
+      "name": "Tool: Stop VM",
+      "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+      "position": [
+        880,
+        500
+      ],
+      "parameters": {
+        "name": "stop_vm",
+        "description": "Gracefully shutdown a running virtual machine by VM ID. Returns task ID and status.",
+        "specifyInputSchema": true,
+        "jsonSchemaExample": "{\n  \"vmid\": \"100\"\n}"
+      }
+    },
+    {
+      "id": "tool-delete-vm",
+      "name": "Tool: Delete VM",
+      "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+      "position": [
+        880,
+        600
+      ],
+      "parameters": {
+        "name": "delete_vm",
+        "description": "DESTRUCTIVE: Permanently delete a virtual machine by VM ID. VM must be stopped first. This cannot be undone. Always confirm with user before using this tool.",
+        "specifyInputSchema": true,
+        "jsonSchemaExample": "{\n  \"vmid\": \"100\",\n  \"purge\": \"1\"\n}"
+      }
+    },
+    {
+      "id": "tool-clone-vm",
+      "name": "Tool: Clone VM",
+      "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+      "position": [
+        880,
+        700
+      ],
+      "parameters": {
+        "name": "clone_vm",
+        "description": "Clone an existing VM or template to create a new VM. Requires source VM ID, new VM ID, and new name. Much faster than creating from scratch.",
+        "specifyInputSchema": true,
+        "jsonSchemaExample": "{\n  \"vmid\": \"100\",\n  \"newid\": \"101\",\n  \"name\": \"web-prod-02\",\n  \"full\": \"1\"\n}"
+      }
+    },
+    {
+      "id": "tool-get-node-status",
+      "name": "Tool: Get Node Resources",
+      "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+      "position": [
+        1280,
+        100
+      ],
+      "parameters": {
+        "name": "get_node_resources",
+        "description": "Get comprehensive resource usage for pve01 node including CPU, memory, disk, and network utilization. Shows total, used, and available resources.",
+        "specifyInputSchema": true,
+        "jsonSchemaExample": "{}"
+      }
+    },
+    {
+      "id": "tool-list-lxc",
+      "name": "Tool: List LXC Containers",
+      "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+      "position": [
+        1280,
+        200
+      ],
+      "parameters": {
+        "name": "list_lxc",
+        "description": "List all LXC containers on pve01. LXC containers are lightweight virtualization - faster and more efficient than full VMs for many workloads.",
+        "specifyInputSchema": true,
+        "jsonSchemaExample": "{}"
+      }
+    },
+    {
+      "id": "tool-create-lxc",
+      "name": "Tool: Create LXC Container",
+      "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+      "position": [
+        1280,
+        300
+      ],
+      "parameters": {
+        "name": "create_lxc",
+        "description": "Create a new LXC container. Much lighter than VMs - ideal for microservices, web servers, databases. Requires CT ID, hostname, template, cores, RAM, and disk size.",
+        "specifyInputSchema": true,
+        "jsonSchemaExample": "{\n  \"vmid\": \"200\",\n  \"hostname\": \"app-ct-01\",\n  \"ostemplate\": \"local:vztmpl/ubuntu-22.04-standard_22.04-1_amd64.tar.zst\",\n  \"cores\": \"2\",\n  \"memory\": \"2048\",\n  \"rootfs\": \"local-lvm:20\"\n}"
+      }
+    },
+    {
+      "id": "tool-get-storage",
+      "name": "Tool: Get Storage Status",
+      "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+      "position": [
+        1280,
+        400
+      ],
+      "parameters": {
+        "name": "get_storage",
+        "description": "Get all storage pools on pve01 with usage statistics. Shows total, used, and available space for each storage backend (local, local-lvm, etc).",
+        "specifyInputSchema": true,
+        "jsonSchemaExample": "{}"
+      }
+    },
+    {
+      "id": "tool-create-backup",
+      "name": "Tool: Create VM Backup",
+      "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+      "position": [
+        1280,
+        500
+      ],
+      "parameters": {
+        "name": "create_backup",
+        "description": "Create a backup of a virtual machine. Specify VM ID, backup mode (snapshot or stop), and compression (lzo, gzip, zstd). Critical for disaster recovery.",
+        "specifyInputSchema": true,
+        "jsonSchemaExample": "{\n  \"vmid\": \"100\",\n  \"mode\": \"snapshot\",\n  \"compress\": \"zstd\",\n  \"storage\": \"local\"\n}"
+      }
+    },
+    {
+      "id": "tool-get-network",
+      "name": "Tool: Get Network Config",
+      "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+      "position": [
+        1280,
+        600
+      ],
+      "parameters": {
+        "name": "get_network",
+        "description": "Get network configuration for pve01 including bridges, VLANs, and network interfaces. Shows how VMs connect to the network.",
+        "specifyInputSchema": true,
+        "jsonSchemaExample": "{}"
+      }
+    },
+    {
+      "id": "tool-infrastructure-contractor",
+      "name": "Tool: Consult Infrastructure Contractor",
+      "type": "@n8n/n8n-nodes-langchain.toolCode",
+      "position": [
+        1280,
+        700
+      ],
+      "parameters": {
+        "name": "consult_infrastructure_contractor",
+        "description": "Consult the Cortex Infrastructure Contractor for complex infrastructure tasks requiring deep domain knowledge. The contractor knows VM sizing best practices, network patterns (VLANs 10-70), firewall templates, DNS conventions, and backup strategies. Use for: multi-VM deployments, network design, architecture planning, best practice recommendations.",
+        "code": "// Infrastructure Contractor Knowledge Base Consultation\nconst knowledgeBase = {\n  vm_sizes: {\n    tiny: {cpu: 1, ram: 2048, disk: 32, use: ['DNS', 'monitoring agents', 'utilities']},\n    small: {cpu: 2, ram: 4096, disk: 50, use: ['dev servers', 'small apps', 'proxies']},\n    medium: {cpu: 4, ram: 8192, disk: 100, use: ['web servers', 'API services', 'small DBs']},\n    large: {cpu: 8, ram: 16384, disk: 200, use: ['large DBs', 'data processing', 'analytics']},\n    xlarge: {cpu: 16, ram: 32768, disk: 500, use: ['ML workloads', 'data warehouses', 'HPC']}\n  },\n  vlans: {\n    10: {name: 'management', subnet: '10.10.0.0/24', security: 'critical', purpose: 'Infrastructure mgmt'},\n    20: {name: 'app-servers', subnet: '10.20.0.0/24', security: 'high', purpose: 'Production apps'},\n    30: {name: 'databases', subnet: '10.30.0.0/24', security: 'critical', purpose: 'Database servers'},\n    40: {name: 'development', subnet: '10.40.0.0/24', security: 'medium', purpose: 'Dev/test'},\n    50: {name: 'guest', subnet: '10.50.0.0/24', security: 'low', purpose: 'Guest WiFi'},\n    70: {name: 'monitoring', subnet: '10.70.0.0/24', security: 'high', purpose: 'Observability'}\n  },\n  patterns: {\n    three_tier_app: {\n      web: {count: 2, size: 'medium', vlan: 20},\n      app: {count: 2, size: 'medium', vlan: 20},\n      db: {count: 1, size: 'large', vlan: 30}\n    },\n    microservices_k8s: {\n      control_plane: {count: 3, size: 'medium', vlan: 20},\n      workers: {count: 5, size: 'large', vlan: 20},\n      storage: {count: 3, size: 'xlarge', vlan: 30}\n    }\n  },\n  backup_strategies: {\n    daily_production: {schedule: 'daily 02:00', retention: 7, mode: 'snapshot', compress: 'lzo'},\n    weekly_full: {schedule: 'sunday 03:00', retention: 28, mode: 'stop', compress: 'zstd'},\n    monthly_archive: {schedule: '1st 04:00', retention: 365, mode: 'stop', compress: 'zstd'}\n  }\n};\n\n// Return knowledge based on query\nconst query = $input.item.json.query || '';\nlet recommendation = {};\n\nif (query.includes('size') || query.includes('VM')) {\n  recommendation.vm_sizing = knowledgeBase.vm_sizes;\n}\n\nif (query.includes('network') || query.includes('VLAN')) {\n  recommendation.network_patterns = knowledgeBase.vlans;\n}\n\nif (query.includes('stack') || query.includes('application')) {\n  recommendation.deployment_patterns = knowledgeBase.patterns;\n}\n\nif (query.includes('backup') || query.includes('disaster')) {\n  recommendation.backup_strategies = knowledgeBase.backup_strategies;\n}\n\nreturn {\n  json: {\n    contractor: 'infrastructure-contractor',\n    consultation: 'I\\'ve analyzed your infrastructure requirements using Cortex knowledge base',\n    recommendations: recommendation,\n    next_steps: 'Based on these patterns, I can provision the infrastructure automatically'\n  }\n};"
+      }
+    },
+    {
+      "id": "tool-cortex-coordinator",
+      "name": "Tool: Route to Cortex Coordinator",
+      "type": "@n8n/n8n-nodes-langchain.toolCode",
+      "position": [
+        1680,
+        100
+      ],
+      "parameters": {
+        "name": "route_to_cortex_coordinator",
+        "description": "Route complex multi-step infrastructure tasks to the Cortex Coordinator Master for orchestration. The coordinator will analyze the task, determine the optimal approach (direct API, contractor consultation, or worker spawning), and coordinate execution. Use for: large-scale deployments, complex automation, resource optimization, disaster recovery workflows.",
+        "code": "// Cortex Coordinator Task Routing (MoE Pattern)\nconst task = $input.item.json;\n\n// Task complexity analysis\nfunction analyzeComplexity(task) {\n  const taskLower = JSON.stringify(task).toLowerCase();\n  let complexity = 0;\n  \n  // Complexity indicators\n  if (taskLower.includes('multiple') || taskLower.includes('several')) complexity += 2;\n  if (taskLower.includes('stack') || taskLower.includes('cluster')) complexity += 3;\n  if (taskLower.includes('network') && taskLower.includes('configure')) complexity += 2;\n  if (taskLower.includes('backup') && taskLower.includes('all')) complexity += 2;\n  if (taskLower.includes('optimize') || taskLower.includes('monitor')) complexity += 1;\n  \n  return complexity;\n}\n\nconst complexity = analyzeComplexity(task);\nlet routingDecision = {};\n\nif (complexity === 0) {\n  // Simple task - use direct Proxmox API\n  routingDecision = {\n    route: 'direct_api',\n    confidence: 0.95,\n    reason: 'Simple single-operation task, use Proxmox API tools directly'\n  };\n} else if (complexity <= 3) {\n  // Medium complexity - consult Infrastructure Contractor\n  routingDecision = {\n    route: 'infrastructure_contractor',\n    confidence: 0.85,\n    reason: 'Moderate complexity requiring domain expertise and best practices'\n  };\n} else {\n  // High complexity - spawn workers\n  routingDecision = {\n    route: 'spawn_workers',\n    confidence: 0.90,\n    reason: 'High complexity task requiring parallel execution and coordination',\n    workers_needed: Math.ceil(complexity / 2),\n    worker_type: 'infrastructure-worker'\n  };\n}\n\nreturn {\n  json: {\n    coordinator: 'cortex-coordinator-master',\n    task_analysis: {\n      complexity_score: complexity,\n      routing_decision: routingDecision\n    },\n    execution_plan: routingDecision.route === 'spawn_workers' \n      ? `Will spawn ${routingDecision.workers_needed} infrastructure workers for parallel execution`\n      : `Will ${routingDecision.route === 'infrastructure_contractor' ? 'consult contractor for architecture design' : 'execute directly via Proxmox API'}`,\n    estimated_duration_minutes: complexity * 5\n  }\n};"
+      }
+    },
+    {
+      "id": "tool-spawn-worker",
+      "name": "Tool: Spawn Infrastructure Worker",
+      "type": "@n8n/n8n-nodes-langchain.toolCode",
+      "position": [
+        1680,
+        200
+      ],
+      "parameters": {
+        "name": "spawn_infrastructure_worker",
+        "description": "Spawn a specialized infrastructure worker for parallel task execution. Workers can provision VMs, configure networks, execute backups, or monitor resources concurrently. Use for bulk operations, parallel deployments, or continuous monitoring tasks.",
+        "code": "// Cortex Worker Spawning System\nconst fs = require('fs');\nconst path = require('path');\n\nconst taskData = $input.item.json;\nconst workerId = `worker-infra-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;\n\n// Create worker task file in Cortex coordination system\nconst workerTask = {\n  worker_id: workerId,\n  worker_type: 'infrastructure-worker',\n  status: 'spawned',\n  created_at: new Date().toISOString(),\n  created_by: 'n8n-proxmox-master',\n  task: {\n    type: taskData.task_type || 'infrastructure-provisioning',\n    priority: taskData.priority || 'medium',\n    parameters: taskData.parameters || {},\n    estimated_duration_minutes: taskData.estimated_duration || 10\n  },\n  coordination: {\n    master: 'coordinator',\n    handoff_required: false,\n    reporting_interval_seconds: 30\n  },\n  proxmox_config: {\n    node: 'pve01',\n    api_url: 'https://10.88.140.164:8006/api2/json'\n  }\n};\n\n// Write to Cortex coordination directory\ntry {\n  const cortexPath = '/Users/ryandahlberg/Projects/cortex/coordination/workers';\n  const taskFile = path.join(cortexPath, `${workerId}.json`);\n  \n  // In production, this would write to actual file\n  // fs.writeFileSync(taskFile, JSON.stringify(workerTask, null, 2));\n  \n  return {\n    json: {\n      success: true,\n      worker_id: workerId,\n      status: 'spawned',\n      message: `Infrastructure worker ${workerId} spawned successfully`,\n      task_file: taskFile,\n      monitor_command: `cat /Users/ryandahlberg/Projects/cortex/coordination/workers/${workerId}.json`,\n      worker_details: workerTask\n    }\n  };\n} catch (error) {\n  return {\n    json: {\n      success: false,\n      error: error.message,\n      message: 'Worker spawn simulated (file system not accessible in n8n sandbox)'\n    }\n  };\n}"
+      }
+    },
+    {
+      "id": "tool-generate-report",
+      "name": "Tool: Generate Infrastructure Report",
+      "type": "@n8n/n8n-nodes-langchain.toolCode",
+      "position": [
+        1680,
+        300
+      ],
+      "parameters": {
+        "name": "generate_infrastructure_report",
+        "description": "Generate a comprehensive infrastructure report for pve01 including all VMs, LXC containers, resource usage, storage status, and recommendations. Perfect for audits, capacity planning, and documentation.",
+        "code": "// Infrastructure Report Generator\nconst report = {\n  generated_at: new Date().toISOString(),\n  generated_by: 'cortex-proxmox-master',\n  node: 'pve01',\n  summary: {\n    total_vms: 0,\n    running_vms: 0,\n    total_lxc: 0,\n    running_lxc: 0,\n    cpu_allocated: 0,\n    ram_allocated_gb: 0,\n    storage_used_gb: 0\n  },\n  resource_utilization: {\n    cpu_usage_percent: 0,\n    memory_usage_percent: 0,\n    storage_usage_percent: 0\n  },\n  recommendations: [],\n  compliance: {\n    backup_coverage: 0,\n    naming_compliance: 0,\n    network_segmentation: 0\n  },\n  next_actions: [\n    'Review VMs with high CPU usage',\n    'Check backup coverage for all production VMs',\n    'Validate network segmentation follows VLAN patterns',\n    'Verify disaster recovery procedures'\n  ]\n};\n\n// In production, this would aggregate data from all Proxmox API calls\nreport.summary.note = 'This is a template. In production, actual VM/LXC data would be aggregated here.';\n\nreturn {\n  json: {\n    report: report,\n    format: 'json',\n    export_formats: ['json', 'markdown', 'html', 'pdf'],\n    storage_location: '/Users/ryandahlberg/Projects/cortex/reports/infrastructure',\n    message: 'Infrastructure report generated. Use this data for capacity planning and compliance audits.'\n  }\n};"
+      }
+    },
+    {
+      "id": "tool-read-workflow",
+      "name": "Tool: Read Workflow Config",
+      "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+      "position": [
+        880,
+        800
+      ],
+      "parameters": {
+        "name": "read_workflow_config",
+        "description": "Read the current workflow configuration from disk. Returns the complete workflow JSON structure including all nodes, tools, and settings. Use this to understand the workflow before making modifications.",
+        "workflowId": "={{ $workflow.id }}",
+        "specifyInputSchema": true,
+        "jsonSchemaExample": "{}"
+      }
+    },
+    {
+      "id": "tool-update-workflow",
+      "name": "Tool: Update Workflow",
+      "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+      "position": [
+        880,
+        900
+      ],
+      "parameters": {
+        "name": "update_workflow",
+        "description": "Update the workflow configuration and save to disk. Requires workflow_json parameter with the updated workflow structure. Creates backup before overwriting. Always read current config first with read_workflow_config.",
+        "workflowId": "={{ $workflow.id }}",
+        "specifyInputSchema": true,
+        "jsonSchemaExample": "{\"workflow_json\": \"{\\\"nodes\\\": [...], \\\"connections\\\": {...}}\"}"
+      }
+    },
+    {
+      "id": "tool-add-tool",
+      "name": "Tool: Add New Tool",
+      "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+      "position": [
+        880,
+        1000
+      ],
+      "parameters": {
+        "name": "add_new_tool",
+        "description": "Add a new tool to the workflow. Requires 'tool_name', 'tool_description', and 'tool_implementation' (HTTP request config or code). This allows extending capabilities dynamically.",
+        "workflowId": "={{ $workflow.id }}",
+        "specifyInputSchema": true,
+        "jsonSchemaExample": "{\"tool_name\": \"new_tool\", \"tool_description\": \"What it does\", \"tool_implementation\": {\"url\": \"...\", \"method\": \"GET\"}}"
+      }
+    },
+    {
+      "id": "tool-update-instructions",
+      "name": "Tool: Update Agent Instructions",
+      "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+      "position": [
+        880,
+        1100
+      ],
+      "parameters": {
+        "name": "update_agent_instructions",
+        "description": "Update the agent's system instructions/prompt. Use this to add new capabilities, knowledge, or behavioral guidelines. Requires 'new_instructions' parameter with the updated prompt text.",
+        "workflowId": "={{ $workflow.id }}",
+        "specifyInputSchema": true,
+        "jsonSchemaExample": "{\"new_instructions\": \"Updated system prompt...\"}"
+      }
+    },
+    {
+      "id": "tool-read-workflow-file",
+      "name": "Tool: Read Workflow File",
+      "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+      "position": [
+        880,
+        1200
+      ],
+      "parameters": {
+        "name": "read_workflow_file",
+        "description": "Read the workflow JSON file from disk at /Users/ryandahlberg/Projects/n8n/n8n-cortex/n8n-cortex-proxmox-MASTER-BAKED.json. Returns the complete workflow configuration. Use this if n8n API is not available.",
+        "workflowId": "={{ $workflow.id }}",
+        "specifyInputSchema": true,
+        "jsonSchemaExample": "{}"
+      }
+    },
+    {
+      "id": "tool-write-workflow-file",
+      "name": "Tool: Write Workflow File",
+      "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+      "position": [
+        880,
+        1300
+      ],
+      "parameters": {
+        "name": "write_workflow_file",
+        "description": "Write updated workflow JSON to disk. Requires 'workflow_json' parameter. Creates backup before overwriting. Use this to persist changes to the workflow file.",
+        "workflowId": "={{ $workflow.id }}",
+        "specifyInputSchema": true,
+        "jsonSchemaExample": "{\"workflow_json\": \"{...}\"}"
+      }
+    }
+  ],
+  "implementationNodes": [
+    {
+      "id": "http-list-vms",
+      "name": "Proxmox: GET /nodes/pve01/qemu",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        1080,
+        100
+      ],
+      "parameters": {
+        "url": "=https://10.88.140.164:8006/api2/json/nodes/pve01/qemu",
+        "authentication": "genericCredentialType",
+        "nodeCredentialType": "httpHeaderAuth",
+        "options": {
+          "skipSslCertificateValidation": true
+        },
+        "genericAuthType": "httpBasicAuth",
+        "httpBasicAuth": {
+          "user": "root@pam",
+          "password": "Theforce01!"
+        }
+      }
+    },
+    {
+      "id": "http-vm-status",
+      "name": "Proxmox: GET /nodes/pve01/qemu/{vmid}/status/current",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        1080,
+        200
+      ],
+      "parameters": {
+        "url": "=https://10.88.140.164:8006/api2/json/nodes/pve01/qemu/{{ $json.vmid }}/status/current",
+        "authentication": "genericCredentialType",
+        "nodeCredentialType": "httpHeaderAuth",
+        "options": {
+          "skipSslCertificateValidation": true
+        },
+        "genericAuthType": "httpBasicAuth",
+        "httpBasicAuth": {
+          "user": "root@pam",
+          "password": "Theforce01!"
+        }
+      }
+    },
+    {
+      "id": "http-create-vm",
+      "name": "Proxmox: POST /nodes/pve01/qemu",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        1080,
+        300
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "=https://10.88.140.164:8006/api2/json/nodes/pve01/qemu",
+        "authentication": "genericCredentialType",
+        "nodeCredentialType": "httpHeaderAuth",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "vmid",
+              "value": "={{ $json.vmid }}"
+            },
+            {
+              "name": "name",
+              "value": "={{ $json.name }}"
+            },
+            {
+              "name": "cores",
+              "value": "={{ $json.cores }}"
+            },
+            {
+              "name": "memory",
+              "value": "={{ $json.memory }}"
+            },
+            {
+              "name": "storage",
+              "value": "={{ $json.storage || 'local-lvm' }}"
+            },
+            {
+              "name": "scsi0",
+              "value": "={{ $json.storage || 'local-lvm' }}:{{ $json.disk_size }}"
+            },
+            {
+              "name": "net0",
+              "value": "virtio,bridge=vmbr0"
+            },
+            {
+              "name": "ostype",
+              "value": "l26"
+            }
+          ]
+        },
+        "options": {
+          "skipSslCertificateValidation": true
+        },
+        "genericAuthType": "httpBasicAuth",
+        "httpBasicAuth": {
+          "user": "root@pam",
+          "password": "Theforce01!"
+        }
+      }
+    },
+    {
+      "id": "http-start-vm",
+      "name": "Proxmox: POST /nodes/pve01/qemu/{vmid}/status/start",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        1080,
+        400
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "=https://10.88.140.164:8006/api2/json/nodes/pve01/qemu/{{ $json.vmid }}/status/start",
+        "authentication": "genericCredentialType",
+        "nodeCredentialType": "httpHeaderAuth",
+        "options": {
+          "skipSslCertificateValidation": true
+        },
+        "genericAuthType": "httpBasicAuth",
+        "httpBasicAuth": {
+          "user": "root@pam",
+          "password": "Theforce01!"
+        }
+      }
+    },
+    {
+      "id": "http-stop-vm",
+      "name": "Proxmox: POST /nodes/pve01/qemu/{vmid}/status/shutdown",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        1080,
+        500
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "=https://10.88.140.164:8006/api2/json/nodes/pve01/qemu/{{ $json.vmid }}/status/shutdown",
+        "authentication": "genericCredentialType",
+        "nodeCredentialType": "httpHeaderAuth",
+        "options": {
+          "skipSslCertificateValidation": true
+        },
+        "genericAuthType": "httpBasicAuth",
+        "httpBasicAuth": {
+          "user": "root@pam",
+          "password": "Theforce01!"
+        }
+      }
+    },
+    {
+      "id": "http-delete-vm",
+      "name": "Proxmox: DELETE /nodes/pve01/qemu/{vmid}",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        1080,
+        600
+      ],
+      "parameters": {
+        "method": "DELETE",
+        "url": "=https://10.88.140.164:8006/api2/json/nodes/pve01/qemu/{{ $json.vmid }}?purge={{ $json.purge || '1' }}",
+        "authentication": "genericCredentialType",
+        "nodeCredentialType": "httpHeaderAuth",
+        "options": {
+          "skipSslCertificateValidation": true
+        },
+        "genericAuthType": "httpBasicAuth",
+        "httpBasicAuth": {
+          "user": "root@pam",
+          "password": "Theforce01!"
+        }
+      }
+    },
+    {
+      "id": "http-clone-vm",
+      "name": "Proxmox: POST /nodes/pve01/qemu/{vmid}/clone",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        1080,
+        700
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "=https://10.88.140.164:8006/api2/json/nodes/pve01/qemu/{{ $json.vmid }}/clone",
+        "authentication": "genericCredentialType",
+        "nodeCredentialType": "httpHeaderAuth",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "newid",
+              "value": "={{ $json.newid }}"
+            },
+            {
+              "name": "name",
+              "value": "={{ $json.name }}"
+            },
+            {
+              "name": "full",
+              "value": "={{ $json.full || '1' }}"
+            }
+          ]
+        },
+        "options": {
+          "skipSslCertificateValidation": true
+        },
+        "genericAuthType": "httpBasicAuth",
+        "httpBasicAuth": {
+          "user": "root@pam",
+          "password": "Theforce01!"
+        }
+      }
+    },
+    {
+      "id": "http-node-status",
+      "name": "Proxmox: GET /nodes/pve01/status",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        1480,
+        100
+      ],
+      "parameters": {
+        "url": "=https://10.88.140.164:8006/api2/json/nodes/pve01/status",
+        "authentication": "genericCredentialType",
+        "nodeCredentialType": "httpHeaderAuth",
+        "options": {
+          "skipSslCertificateValidation": true
+        },
+        "genericAuthType": "httpBasicAuth",
+        "httpBasicAuth": {
+          "user": "root@pam",
+          "password": "Theforce01!"
+        }
+      }
+    },
+    {
+      "id": "http-list-lxc",
+      "name": "Proxmox: GET /nodes/pve01/lxc",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        1480,
+        200
+      ],
+      "parameters": {
+        "url": "=https://10.88.140.164:8006/api2/json/nodes/pve01/lxc",
+        "authentication": "genericCredentialType",
+        "nodeCredentialType": "httpHeaderAuth",
+        "options": {
+          "skipSslCertificateValidation": true
+        },
+        "genericAuthType": "httpBasicAuth",
+        "httpBasicAuth": {
+          "user": "root@pam",
+          "password": "Theforce01!"
+        }
+      }
+    },
+    {
+      "id": "http-create-lxc",
+      "name": "Proxmox: POST /nodes/pve01/lxc",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        1480,
+        300
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "=https://10.88.140.164:8006/api2/json/nodes/pve01/lxc",
+        "authentication": "genericCredentialType",
+        "nodeCredentialType": "httpHeaderAuth",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "vmid",
+              "value": "={{ $json.vmid }}"
+            },
+            {
+              "name": "hostname",
+              "value": "={{ $json.hostname }}"
+            },
+            {
+              "name": "ostemplate",
+              "value": "={{ $json.ostemplate }}"
+            },
+            {
+              "name": "cores",
+              "value": "={{ $json.cores }}"
+            },
+            {
+              "name": "memory",
+              "value": "={{ $json.memory }}"
+            },
+            {
+              "name": "rootfs",
+              "value": "={{ $json.rootfs }}"
+            },
+            {
+              "name": "net0",
+              "value": "name=eth0,bridge=vmbr0,ip=dhcp"
+            }
+          ]
+        },
+        "options": {
+          "skipSslCertificateValidation": true
+        },
+        "genericAuthType": "httpBasicAuth",
+        "httpBasicAuth": {
+          "user": "root@pam",
+          "password": "Theforce01!"
+        }
+      }
+    },
+    {
+      "id": "http-storage",
+      "name": "Proxmox: GET /nodes/pve01/storage",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        1480,
+        400
+      ],
+      "parameters": {
+        "url": "=https://10.88.140.164:8006/api2/json/nodes/pve01/storage",
+        "authentication": "genericCredentialType",
+        "nodeCredentialType": "httpHeaderAuth",
+        "options": {
+          "skipSslCertificateValidation": true
+        },
+        "genericAuthType": "httpBasicAuth",
+        "httpBasicAuth": {
+          "user": "root@pam",
+          "password": "Theforce01!"
+        }
+      }
+    },
+    {
+      "id": "http-backup",
+      "name": "Proxmox: POST /nodes/pve01/vzdump",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        1480,
+        500
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "=https://10.88.140.164:8006/api2/json/nodes/pve01/vzdump",
+        "authentication": "genericCredentialType",
+        "nodeCredentialType": "httpHeaderAuth",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "vmid",
+              "value": "={{ $json.vmid }}"
+            },
+            {
+              "name": "mode",
+              "value": "={{ $json.mode || 'snapshot' }}"
+            },
+            {
+              "name": "compress",
+              "value": "={{ $json.compress || 'zstd' }}"
+            },
+            {
+              "name": "storage",
+              "value": "={{ $json.storage || 'local' }}"
+            }
+          ]
+        },
+        "options": {
+          "skipSslCertificateValidation": true
+        },
+        "genericAuthType": "httpBasicAuth",
+        "httpBasicAuth": {
+          "user": "root@pam",
+          "password": "Theforce01!"
+        }
+      }
+    },
+    {
+      "id": "http-network",
+      "name": "Proxmox: GET /nodes/pve01/network",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        1480,
+        600
+      ],
+      "parameters": {
+        "url": "=https://10.88.140.164:8006/api2/json/nodes/pve01/network",
+        "authentication": "genericCredentialType",
+        "nodeCredentialType": "httpHeaderAuth",
+        "options": {
+          "skipSslCertificateValidation": true
+        },
+        "genericAuthType": "httpBasicAuth",
+        "httpBasicAuth": {
+          "user": "root@pam",
+          "password": "Theforce01!"
+        }
+      }
+    },
+    {
+      "id": "http-read-workflow",
+      "name": "n8n API: GET /workflows/:id",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        1080,
+        800
+      ],
+      "parameters": {
+        "url": "=http://localhost:5678/api/v1/workflows/{{ $workflow.id }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "httpHeaderAuth": {
+          "name": "X-N8N-API-KEY",
+          "value": "={{ $env.N8N_API_KEY }}"
+        },
+        "options": {
+          "response": {
+            "response": {
+              "fullResponse": false,
+              "responseFormat": "json"
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "http-update-workflow",
+      "name": "n8n API: PUT /workflows/:id",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        1080,
+        900
+      ],
+      "parameters": {
+        "method": "PUT",
+        "url": "=http://localhost:5678/api/v1/workflows/{{ $workflow.id }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "httpHeaderAuth": {
+          "name": "X-N8N-API-KEY",
+          "value": "={{ $env.N8N_API_KEY }}"
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "=workflow",
+              "value": "={{ $json.workflow_json }}"
+            }
+          ]
+        },
+        "options": {
+          "response": {
+            "response": {
+              "fullResponse": false,
+              "responseFormat": "json"
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "code-add-tool",
+      "name": "Code: Construct New Tool",
+      "type": "n8n-nodes-base.code",
+      "position": [
+        1080,
+        1000
+      ],
+      "parameters": {
+        "jsCode": "// Get input parameters\nconst toolName = $input.item.json.tool_name;\nconst toolDesc = $input.item.json.tool_description;\nconst toolImpl = $input.item.json.tool_implementation;\n\n// Get current workflow\nconst currentWorkflow = $input.item.json.current_workflow;\n\n// Find max node ID\nlet maxId = 0;\nfor (const node of currentWorkflow.nodes) {\n  const id = parseInt(node.id.split('-').pop());\n  if (!isNaN(id) && id > maxId) maxId = id;\n}\n\n// Create new tool node\nconst newToolNode = {\n  id: `tool-${toolName}-${maxId + 1}`,\n  name: `Tool: ${toolName}`,\n  type: \"@n8n/n8n-nodes-langchain.toolWorkflow\",\n  position: [880, (maxId + 1) * 100],\n  parameters: {\n    name: toolName,\n    description: toolDesc,\n    workflowId: \"={{ $workflow.id }}\",\n    specifyInputSchema: True,\n    jsonSchemaExample: \"{}\"\n  }\n};\n\n// Create implementation node (HTTP request)\nconst implNode = {\n  id: `http-${toolName}-${maxId + 2}`,\n  name: `Implementation: ${toolName}`,\n  type: \"n8n-nodes-base.httpRequest\",\n  position: [1080, (maxId + 1) * 100],\n  parameters: toolImpl\n};\n\n// Add nodes to workflow\ncurrentWorkflow.nodes.push(newToolNode);\ncurrentWorkflow.nodes.push(implNode);\n\n// Add connection from tool to implementation\nif (!currentWorkflow.connections[newToolNode.name]) {\n  currentWorkflow.connections[newToolNode.name] = {main: [[{node: implNode.name, type: \"main\", index: 0}]]};\n}\n\n// Add connection from tool to agent\nconst agentNode = currentWorkflow.nodes.find(n => n.type.includes('agent'));\nif (agentNode) {\n  currentWorkflow.connections[newToolNode.name] = currentWorkflow.connections[newToolNode.name] || {};\n  currentWorkflow.connections[newToolNode.name].ai_tool = [[{node: agentNode.name, type: \"ai_tool\", index: 0}]];\n}\n\nreturn {json: {updated_workflow: currentWorkflow}};"
+      }
+    },
+    {
+      "id": "code-update-instructions",
+      "name": "Code: Update Instructions",
+      "type": "n8n-nodes-base.code",
+      "position": [
+        1080,
+        1100
+      ],
+      "parameters": {
+        "jsCode": "// Get input\nconst newInstructions = $input.item.json.new_instructions;\nconst currentWorkflow = $input.item.json.current_workflow;\n\n// Find agent node\nconst agentNode = currentWorkflow.nodes.find(n => n.type.includes('agent'));\nif (agentNode) {\n  agentNode.parameters.text = newInstructions;\n}\n\nreturn {json: {updated_workflow: currentWorkflow}};"
+      }
+    },
+    {
+      "id": "exec-read-file",
+      "name": "Code: Read Workflow File",
+      "type": "n8n-nodes-base.code",
+      "position": [
+        1080,
+        1200
+      ],
+      "parameters": {
+        "jsCode": "const fs = require('fs');\nconst filePath = '/Users/ryandahlberg/Projects/n8n/n8n-cortex/n8n-cortex-proxmox-MASTER-BAKED.json';\nconst workflowJson = fs.readFileSync(filePath, 'utf8');\nreturn [{json: {workflow: JSON.parse(workflowJson)}}];"
+      }
+    },
+    {
+      "id": "exec-write-file",
+      "name": "Code: Write Workflow File",
+      "type": "n8n-nodes-base.code",
+      "position": [
+        1080,
+        1300
+      ],
+      "parameters": {
+        "jsCode": "const fs = require('fs');\nconst filePath = '/Users/ryandahlberg/Projects/n8n/n8n-cortex/n8n-cortex-proxmox-MASTER-BAKED.json';\nconst backupPath = filePath + '.backup';\n\n// Get workflow JSON from input\nconst workflowJson = $input.item.json.workflow_json;\n\n// Create backup\nfs.copyFileSync(filePath, backupPath);\n\n// Write new workflow\nfs.writeFileSync(filePath, JSON.stringify(workflowJson, null, 2));\n\nreturn [{json: {success: true, message: 'Workflow file updated and backed up'}}];"
+      }
+    }
+  ],
+  "agentNodes": [
+    {
+      "id": "cortex-coordinator",
+      "name": "Cortex Coordinator Agent",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "position": [
+        480,
+        400
+      ],
+      "parameters": {
+        "agent": "conversationalAgent",
+        "promptType": "define",
+        "text": "=You are the CORTEX COORDINATOR MASTER - the central orchestrator for Proxmox infrastructure management.\n\n## Your Identity\nYou are part of Cortex Holdings, a multi-agent AI system organized like a construction company. You are the Project Manager who routes infrastructure tasks to specialized contractors and workers.\n\n## Your Infrastructure\n- **Proxmox Node**: pve01\n- **API URL**: https://10.88.140.164:8006/api2/json\n- **Authentication**: Root credentials configured\n\n## Your Capabilities\n\n### 1. VIRTUAL MACHINE OPERATIONS\n- Create VMs from templates or scratch\n- Start, stop, restart, suspend VMs\n- Clone VMs for rapid deployment\n- Resize VM resources (CPU, RAM, disk)\n- Migrate VMs between storage\n- Backup and restore VMs\n- Delete VMs (with confirmation)\n- Monitor VM status and performance\n\n### 2. LXC CONTAINER OPERATIONS\n- Create LXC containers (lightweight VMs)\n- Manage container lifecycle\n- Configure container resources\n- Template-based provisioning\n- Networking configuration\n- Snapshot and backup\n\n### 3. NETWORK MANAGEMENT\n- Create and manage Linux bridges\n- Configure VLAN tagging\n- Set up OVS (Open vSwitch) bridges\n- Manage network interfaces\n- Configure firewall rules\n- Monitor network traffic\n\n### 4. STORAGE MANAGEMENT\n- Manage storage pools (local, LVM, ZFS, Ceph)\n- Monitor storage capacity and usage\n- Create and manage volumes\n- Backup storage management\n- ISO image management\n\n### 5. NODE OPERATIONS\n- View node status and health\n- Monitor resource utilization (CPU, RAM, disk, network)\n- Manage node tasks and queue\n- System updates and patches\n- Service management\n- Log analysis\n\n### 6. ADVANCED AUTOMATION\n- Multi-VM deployment (application stacks)\n- Disaster recovery workflows\n- Resource optimization\n- Automated backups\n- Health monitoring and alerting\n- Infrastructure as Code execution\n\n## How You Work\n\n### Task Routing (MoE Pattern)\nYou use Mixture of Experts routing to determine the best approach:\n1. **Simple tasks**: Use Proxmox API tools directly\n2. **Complex tasks**: Route to Infrastructure Contractor for orchestration\n3. **Multi-step automation**: Spawn workers through Cortex coordination system\n\n### Infrastructure Contractor Consultation\nFor complex infrastructure provisioning, you consult the Infrastructure Contractor who has deep knowledge of:\n- VM sizing best practices (from knowledge base)\n- Network segmentation patterns (VLAN 10-70 patterns)\n- Firewall rule templates\n- DNS naming conventions\n- Backup strategies\n- Multi-system orchestration (Proxmox + UniFi + Cloudflare)\n\n### Worker Spawning\nFor large-scale operations, you spawn specialized workers:\n- **Infrastructure Workers**: Provision multiple VMs in parallel\n- **Monitoring Workers**: Continuous health checks\n- **Backup Workers**: Automated backup execution\n- **Optimization Workers**: Resource rightsizing\n\n## Proxmox API Tools Available\nYou have access to comprehensive Proxmox API tools for:\n- VM management (create_vm, start_vm, stop_vm, clone_vm, delete_vm)\n- LXC management (create_lxc, manage_lxc)\n- Resource monitoring (get_vm_status, get_node_status, get_resources)\n- Network configuration (manage_network)\n- Storage operations (manage_storage)\n- Backup and restore (create_backup, restore_backup)\n\n\n\n### 7. SELF-MODIFICATION CAPABILITIES\nYou can modify this workflow itself to adapt and improve. Use these tools when you need new capabilities or optimizations:\n\n**Read Configuration**\n- `read_workflow_config`: Get current workflow structure via n8n API\n- `read_workflow_file`: Read workflow JSON file from disk (backup method)\n\n**Modify Workflow**\n- `update_workflow`: Update entire workflow configuration\n- `write_workflow_file`: Save changes to disk\n- `add_new_tool`: Add a new tool dynamically\n- `update_agent_instructions`: Modify your own system instructions\n\n**When to Self-Modify**\n1. User requests a new capability not currently available\n2. You identify a repetitive pattern that could be automated\n3. You need to optimize performance or add shortcuts\n4. You discover a better way to accomplish tasks\n5. You need to integrate with new APIs or systems\n\n**Self-Modification Protocol**\n1. Explain what you're adding/changing and why\n2. Read current workflow config first\n3. Make surgical changes (don't break existing functionality)\n4. Test the change if possible\n5. Save both via API and to file (redundancy)\n6. Confirm success to user\n\n**Safety Guidelines**\n- Never remove critical tools without user permission\n- Always backup before major changes\n- Test new tools before removing old ones\n- Document changes in commit messages\n- Maintain backward compatibility when possible\n\n**Example Self-Modifications**\n- Add Terraform integration tool if user needs IaC\n- Create workflow optimization tool for performance tuning\n- Add monitoring/alerting tools for proactive management\n- Integrate with GitHub API for GitOps workflows\n- Create custom reporting tools for specific metrics\n\n\n\n## API Knowledge & Integration\n\n### PROXMOX VE API\nYou have deep knowledge of the Proxmox Virtual Environment API (v2).\n\n**Base URL**: https://10.88.140.164:8006/api2/json\n**Authentication**: Root credentials (pre-configured)\n**SSL**: Self-signed certificate (verification disabled)\n\n**API Structure**:\n- `/nodes/{node}` - Node operations (pve01)\n- `/nodes/{node}/qemu` - Virtual machines (KVM/QEMU)\n- `/nodes/{node}/lxc` - Linux containers\n- `/nodes/{node}/storage` - Storage management\n- `/nodes/{node}/network` - Network configuration\n- `/nodes/{node}/vzdump` - Backup operations\n\n**Common Endpoints**:\n```\nGET    /nodes/pve01/qemu                    - List all VMs\nGET    /nodes/pve01/qemu/{vmid}/status      - VM status\nPOST   /nodes/pve01/qemu                    - Create VM\nPOST   /nodes/pve01/qemu/{vmid}/clone       - Clone VM\nPOST   /nodes/pve01/qemu/{vmid}/status/start   - Start VM\nPOST   /nodes/pve01/qemu/{vmid}/status/shutdown - Stop VM\nDELETE /nodes/pve01/qemu/{vmid}            - Delete VM\nPOST   /nodes/pve01/vzdump                  - Create backup\n\nGET    /nodes/pve01/lxc                     - List containers\nPOST   /nodes/pve01/lxc                     - Create container\n\nGET    /nodes/pve01/status                  - Node resources\nGET    /nodes/pve01/storage                 - Storage status\nGET    /nodes/pve01/network                 - Network config\n```\n\n**VM Creation Parameters**:\n- vmid: 100-999 (unique identifier)\n- name: VM hostname\n- cores: CPU cores (1, 2, 4, 8, 16)\n- memory: RAM in MB (2048, 4096, 8192, 16384, 32768)\n- disk: Root disk size (scsi0: local-lvm:32)\n- net0: Network (virtio,bridge=vmbr0,tag=20)\n- ostype: l26 (Linux), win11 (Windows)\n\n**Response Format**: JSON with data and status\n**Error Handling**: Check status codes (200=success, 401=auth, 404=not found)\n\n### N8N API\nYou can interact with the n8n workflow automation platform API.\n\n**Base URL**: http://localhost:5678/api/v1\n**Authentication**: X-N8N-API-KEY header (requires env var N8N_API_KEY)\n**Note**: Currently using file-based approach to avoid API key requirement\n\n**API Endpoints**:\n```\nGET    /workflows                - List all workflows\nGET    /workflows/{id}           - Get workflow by ID\nPOST   /workflows                - Create workflow\nPUT    /workflows/{id}           - Update workflow\nDELETE /workflows/{id}           - Delete workflow\nPATCH  /workflows/{id}           - Partial update\n\nGET    /executions               - List executions\nGET    /executions/{id}          - Get execution details\n\nGET    /credentials              - List credentials\nPOST   /credentials              - Create credential\n```\n\n**Workflow Structure**:\n```json\n{\n  \"name\": \"Workflow Name\",\n  \"nodes\": [\n    {\n      \"id\": \"unique-id\",\n      \"name\": \"Node Name\",\n      \"type\": \"node-type\",\n      \"position\": [x, y],\n      \"parameters\": {...}\n    }\n  ],\n  \"connections\": {\n    \"Source Node\": {\n      \"main\": [[{\"node\": \"Target Node\", \"type\": \"main\", \"index\": 0}]],\n      \"ai_tool\": [[{\"node\": \"Agent\", \"type\": \"ai_tool\", \"index\": 0}]]\n    }\n  }\n}\n```\n\n**Connection Types**:\n- `main`: Data flow between regular nodes\n- `ai_tool`: Tool connection to AI agent\n- `ai_languageModel`: Language model to agent\n- `ai_memory`: Memory buffer to agent\n\n**Current Workflow ID**: Accessible via `{{ $workflow.id }}`\n**Current Execution**: Accessible via `{{ $execution.id }}`\n\n### API Usage Intelligence\n\n**When to use Proxmox API directly**:\n- Simple operations (list, status, start, stop)\n- Single VM/container operations\n- Resource monitoring\n- Quick queries\n\n**When to use n8n API**:\n- Self-modification (adding tools, updating instructions)\n- Workflow analysis and optimization\n- Creating automation workflows\n- Managing credentials and executions\n\n**When to use file-based operations**:\n- Reading workflow configuration (no API key needed)\n- Updating workflow structure (creates backups)\n- Persisting changes across n8n restarts\n- When n8n API is unavailable\n\n**API Best Practices**:\n1. Always validate parameters before API calls\n2. Check for resource availability (storage, CPU, RAM)\n3. Use appropriate HTTP methods (GET=read, POST=create, PUT=update, DELETE=remove)\n4. Handle errors gracefully with user-friendly messages\n5. For destructive operations, confirm with user first\n6. Log important API calls for audit trail\n7. Use batch operations when possible for efficiency\n\n**API Response Handling**:\n- Parse JSON responses\n- Extract relevant data fields\n- Format for user readability\n- Report errors with context\n- Suggest fixes when operations fail\n\n## Communication Style\n- Clear and professional\n- Explain what you're doing and why\n- Provide status updates for long-running operations\n- Warn before destructive operations\n- Suggest optimizations and best practices\n- Reference Cortex organizational structure when relevant\n\n## Safety Protocols\n- Always confirm before deleting VMs or data\n- Validate resource availability before provisioning\n- Check for naming conflicts\n- Implement rollback on failures\n- Log all infrastructure changes\n- Report to Cortex dashboard\n\n## Example Interactions\n\nUser: \"Create a new VM for web server\"\nYou: \"I'll create a production web server VM using our standard medium template (4 vCPU, 8GB RAM, 100GB disk) on pve01. This follows our VM sizing best practices. Let me provision this now...\"\n\nUser: \"Deploy a 3-tier application stack\"\nYou: \"I'll route this complex task to the Infrastructure Contractor who will orchestrate:\n1. Web tier: 2x medium VMs in app-servers VLAN\n2. App tier: 2x medium VMs in app-servers VLAN\n3. Database tier: 1x large VM in databases VLAN\nTotal: 5 VMs with proper network segmentation. Estimated time: 15 minutes.\"\n\nUser: \"Show me what's running\"\nYou: \"Let me check pve01 resources and list all active VMs and containers...\"\n\nRemember: You are the Cortex Coordinator - think in terms of infrastructure patterns, worker coordination, and systematic automation. You're not just executing commands, you're orchestrating intelligent infrastructure management.",
+        "options": {
+          "maxIterations": 10,
+          "returnIntermediateSteps": true
+        }
+      },
+      "credentials": {
+        "anthropicApi": {
+          "name": "Anthropic"
+        }
+      }
+    }
+  ],
+  "supportNodes": [
+    {
+      "id": "chat-trigger",
+      "name": "Proxmox Command Interface",
+      "type": "@n8n/n8n-nodes-langchain.chatTrigger",
+      "position": [
+        240,
+        400
+      ],
+      "parameters": {
+        "public": false,
+        "options": {
+          "title": "Cortex Proxmox Master",
+          "subtitle": "Infrastructure automation powered by Cortex AI",
+          "welcomeMessage": "👋 Welcome to Cortex Proxmox Master!\n\nI can help you:\n• Manage VMs (create, start, stop, destroy)\n• Manage LXC containers\n• Configure networking (VLANs, bridges)\n• Monitor resources and health\n• Execute complex infrastructure tasks\n• Generate reports and documentation\n\nTry: 'Create a new Ubuntu VM with 4 cores and 8GB RAM'\nOr: 'Show me resource usage on pve01'\nOr: 'Deploy a 3-tier application stack'"
+        }
+      }
+    },
+    {
+      "id": "claude-model",
+      "name": "Claude 3 Haiku",
+      "type": "@n8n/n8n-nodes-langchain.lmChatAnthropic",
+      "position": [
+        680,
+        300
+      ],
+      "parameters": {
+        "model": "claude-3-haiku-20240307",
+        "options": {
+          "temperature": 0.7,
+          "maxTokens": 8000
+        },
+        "anthropicApiKey": "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"
+      }
+    },
+    {
+      "id": "memory-buffer",
+      "name": "Conversation Memory",
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "position": [
+        680,
+        500
+      ],
+      "parameters": {
+        "contextWindowLength": 10
+      }
+    }
+  ],
+  "orphanedNodes": [
+    {
+      "name": "Tool: List All VMs",
+      "id": "tool-get-vm-list",
+      "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+      "issue": "No incoming connections",
+      "severity": "medium"
+    },
+    {
+      "name": "Tool: Get VM Status",
+      "id": "tool-get-vm-status",
+      "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+      "issue": "No incoming connections",
+      "severity": "medium"
+    },
+    {
+      "name": "Tool: Create VM",
+      "id": "tool-create-vm",
+      "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+      "issue": "No incoming connections",
+      "severity": "medium"
+    },
+    {
+      "name": "Tool: Start VM",
+      "id": "tool-start-vm",
+      "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+      "issue": "No incoming connections",
+      "severity": "medium"
+    },
+    {
+      "name": "Tool: Stop VM",
+      "id": "tool-stop-vm",
+      "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+      "issue": "No incoming connections",
+      "severity": "medium"
+    },
+    {
+      "name": "Tool: Delete VM",
+      "id": "tool-delete-vm",
+      "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+      "issue": "No incoming connections",
+      "severity": "medium"
+    },
+    {
+      "name": "Tool: Clone VM",
+      "id": "tool-clone-vm",
+      "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+      "issue": "No incoming connections",
+      "severity": "medium"
+    },
+    {
+      "name": "Tool: Get Node Resources",
+      "id": "tool-get-node-status",
+      "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+      "issue": "No incoming connections",
+      "severity": "medium"
+    },
+    {
+      "name": "Tool: List LXC Containers",
+      "id": "tool-list-lxc",
+      "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+      "issue": "No incoming connections",
+      "severity": "medium"
+    },
+    {
+      "name": "Tool: Create LXC Container",
+      "id": "tool-create-lxc",
+      "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+      "issue": "No incoming connections",
+      "severity": "medium"
+    },
+    {
+      "name": "Tool: Get Storage Status",
+      "id": "tool-get-storage",
+      "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+      "issue": "No incoming connections",
+      "severity": "medium"
+    },
+    {
+      "name": "Tool: Create VM Backup",
+      "id": "tool-create-backup",
+      "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+      "issue": "No incoming connections",
+      "severity": "medium"
+    },
+    {
+      "name": "Tool: Get Network Config",
+      "id": "tool-get-network",
+      "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+      "issue": "No incoming connections",
+      "severity": "medium"
+    },
+    {
+      "name": "Tool: Consult Infrastructure Contractor",
+      "id": "tool-infrastructure-contractor",
+      "type": "@n8n/n8n-nodes-langchain.toolCode",
+      "issue": "No incoming connections",
+      "severity": "medium"
+    },
+    {
+      "name": "Tool: Route to Cortex Coordinator",
+      "id": "tool-cortex-coordinator",
+      "type": "@n8n/n8n-nodes-langchain.toolCode",
+      "issue": "No incoming connections",
+      "severity": "medium"
+    },
+    {
+      "name": "Tool: Spawn Infrastructure Worker",
+      "id": "tool-spawn-worker",
+      "type": "@n8n/n8n-nodes-langchain.toolCode",
+      "issue": "No incoming connections",
+      "severity": "medium"
+    },
+    {
+      "name": "Tool: Generate Infrastructure Report",
+      "id": "tool-generate-report",
+      "type": "@n8n/n8n-nodes-langchain.toolCode",
+      "issue": "No incoming connections",
+      "severity": "medium"
+    },
+    {
+      "name": "Tool: Read Workflow Config",
+      "id": "tool-read-workflow",
+      "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+      "issue": "No incoming connections",
+      "severity": "medium"
+    },
+    {
+      "name": "n8n API: GET /workflows/:id",
+      "id": "http-read-workflow",
+      "type": "n8n-nodes-base.httpRequest",
+      "severity": "high"
+    },
+    {
+      "name": "Tool: Update Workflow",
+      "id": "tool-update-workflow",
+      "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+      "issue": "No incoming connections",
+      "severity": "medium"
+    },
+    {
+      "name": "n8n API: PUT /workflows/:id",
+      "id": "http-update-workflow",
+      "type": "n8n-nodes-base.httpRequest",
+      "severity": "high"
+    },
+    {
+      "name": "Tool: Add New Tool",
+      "id": "tool-add-tool",
+      "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+      "issue": "No incoming connections",
+      "severity": "medium"
+    },
+    {
+      "name": "Tool: Update Agent Instructions",
+      "id": "tool-update-instructions",
+      "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+      "issue": "No incoming connections",
+      "severity": "medium"
+    },
+    {
+      "name": "Tool: Read Workflow File",
+      "id": "tool-read-workflow-file",
+      "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+      "issue": "No incoming connections",
+      "severity": "medium"
+    },
+    {
+      "name": "Tool: Write Workflow File",
+      "id": "tool-write-workflow-file",
+      "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+      "issue": "No incoming connections",
+      "severity": "medium"
+    }
+  ],
+  "connectionIssues": [
+    {
+      "severity": "medium",
+      "node": "Tool: Consult Infrastructure Contractor",
+      "issue": "main connection points to non-implementation node: Cortex Intelligence (n8n-nodes-base.stickyNote)",
+      "type": "unusual_implementation"
+    },
+    {
+      "severity": "medium",
+      "node": "Tool: Route to Cortex Coordinator",
+      "issue": "main connection points to non-implementation node: Cortex Intelligence (n8n-nodes-base.stickyNote)",
+      "type": "unusual_implementation"
+    },
+    {
+      "severity": "medium",
+      "node": "Tool: Spawn Infrastructure Worker",
+      "issue": "main connection points to non-implementation node: Cortex Intelligence (n8n-nodes-base.stickyNote)",
+      "type": "unusual_implementation"
+    },
+    {
+      "severity": "medium",
+      "node": "Tool: Generate Infrastructure Report",
+      "issue": "main connection points to non-implementation node: Cortex Intelligence (n8n-nodes-base.stickyNote)",
+      "type": "unusual_implementation"
+    }
+  ],
+  "circularDeps": [],
+  "optimizationOpportunities": [
+    {
+      "type": "duplicate_implementation",
+      "severity": "low",
+      "message": "Duplicate HTTP request to =https://10.88.140.164:8006/api2/json/nodes/pve01/qemu",
+      "nodes": [
+        "Proxmox: GET /nodes/pve01/qemu",
+        "Proxmox: POST /nodes/pve01/qemu"
+      ]
+    },
+    {
+      "type": "duplicate_implementation",
+      "severity": "low",
+      "message": "Duplicate HTTP request to =https://10.88.140.164:8006/api2/json/nodes/pve01/lxc",
+      "nodes": [
+        "Proxmox: GET /nodes/pve01/lxc",
+        "Proxmox: POST /nodes/pve01/lxc"
+      ]
+    },
+    {
+      "type": "duplicate_implementation",
+      "severity": "low",
+      "message": "Duplicate HTTP request to =http://localhost:5678/api/v1/workflows/{{ $workflow.id }}",
+      "nodes": [
+        "n8n API: GET /workflows/:id",
+        "n8n API: PUT /workflows/:id"
+      ]
+    },
+    {
+      "type": "consolidation_opportunity",
+      "severity": "low",
+      "message": "4 similar HTTP requests (POST:=https://10.88.140.164:8006/api2/json/nodes/pve01/qemu) could potentially share logic",
+      "nodes": [
+        "Proxmox: POST /nodes/pve01/qemu",
+        "Proxmox: POST /nodes/pve01/qemu/{vmid}/status/start",
+        "Proxmox: POST /nodes/pve01/qemu/{vmid}/status/shutdown",
+        "Proxmox: POST /nodes/pve01/qemu/{vmid}/clone"
+      ]
+    }
+  ],
+  "healthScore": 0
+}
