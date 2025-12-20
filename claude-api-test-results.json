@@ -1,0 +1,102 @@
+{
+  "timestamp": "2025-12-18T18:24:30.310Z",
+  "apiKey": {
+    "prefix": "sk-ant-api03-2UMUa_E",
+    "suffix": "A-kIcMCAAA",
+    "length": 108
+  },
+  "model": "claude-3-haiku-20240307",
+  "tests": {
+    "basicAPICall": {
+      "success": true,
+      "statusCode": 200,
+      "response": {
+        "model": "claude-3-haiku-20240307",
+        "id": "msg_01UchENryALqfKmAzxMJbeWZ",
+        "type": "message",
+        "role": "assistant",
+        "content": [
+          {
+            "type": "text",
+            "text": "Hello! I can confirm that the API is working. How may I assist you today?"
+          }
+        ],
+        "stop_reason": "end_turn",
+        "stop_sequence": null,
+        "usage": {
+          "input_tokens": 22,
+          "cache_creation_input_tokens": 0,
+          "cache_read_input_tokens": 0,
+          "cache_creation": {
+            "ephemeral_5m_input_tokens": 0,
+            "ephemeral_1h_input_tokens": 0
+          },
+          "output_tokens": 21,
+          "service_tier": "standard"
+        }
+      },
+      "headers": {
+        "date": "Thu, 18 Dec 2025 18:24:31 GMT",
+        "content-type": "application/json",
+        "content-length": "476",
+        "connection": "keep-alive",
+        "cf-cache-status": "DYNAMIC",
+        "server": "cloudflare",
+        "strict-transport-security": "max-age=31536000; includeSubDomains; preload",
+        "x-robots-tag": "none",
+        "anthropic-organization-id": "88247ad5-ceb9-4197-a394-ed0225f6d801",
+        "anthropic-ratelimit-input-tokens-limit": "50000",
+        "anthropic-ratelimit-input-tokens-remaining": "50000",
+        "anthropic-ratelimit-input-tokens-reset": "2025-12-18T18:24:30Z",
+        "anthropic-ratelimit-output-tokens-limit": "10000",
+        "anthropic-ratelimit-output-tokens-remaining": "10000",
+        "anthropic-ratelimit-output-tokens-reset": "2025-12-18T18:24:31Z",
+        "anthropic-ratelimit-requests-limit": "50",
+        "anthropic-ratelimit-requests-remaining": "49",
+        "anthropic-ratelimit-requests-reset": "2025-12-18T18:24:31Z",
+        "anthropic-ratelimit-tokens-limit": "60000",
+        "anthropic-ratelimit-tokens-remaining": "60000",
+        "anthropic-ratelimit-tokens-reset": "2025-12-18T18:24:30Z",
+        "request-id": "req_011CWEcxQsk1Yscbep1GuX8o",
+        "x-envoy-upstream-service-time": "682",
+        "vary": "accept-encoding",
+        "cf-ray": "9b00b28eaf274c9a-MSP"
+      }
+    },
+    "rateLimits": {
+      "rateLimit": {
+        "requestsLimit": "50",
+        "requestsRemaining": "49",
+        "requestsReset": "2025-12-18T18:24:31Z",
+        "tokensLimit": "60000",
+        "tokensRemaining": "60000",
+        "tokensReset": "2025-12-18T18:24:30Z"
+      }
+    },
+    "maxTokensParameter": [
+      {
+        "maxTokens": 100,
+        "outputTokens": 100,
+        "stopReason": "max_tokens",
+        "success": true
+      },
+      {
+        "maxTokens": 512,
+        "outputTokens": 153,
+        "stopReason": "end_turn",
+        "success": true
+      },
+      {
+        "maxTokens": 1024,
+        "outputTokens": 153,
+        "stopReason": "end_turn",
+        "success": true
+      }
+    ],
+    "modelValidation": {
+      "success": true,
+      "model": "claude-3-haiku-20240307",
+      "response": "Claude, version unknown."
+    }
+  }
+}

@@ -1,0 +1,14 @@
+# MCP Resource Manager Server Dependencies
+
+# Kubernetes Python client for managing MCP server lifecycle
+kubernetes>=28.1.0,<29.0.0
+
+# Type hints and validation
+typing-extensions>=4.8.0
+
+# Date and time utilities (included in standard library, but listed for documentation)
+# python-dateutil is included with kubernetes client
+
+# Optional: Additional utilities
+# pyyaml>=6.0  # For config file parsing (if needed)
+# requests>=2.31.0  # For HTTP requests (if needed for health checks)
