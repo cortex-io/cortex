@@ -1,0 +1,104 @@
+{
+  "id": "k3s-cluster-overview",
+  "title": "K3s Cluster Security Overview",
+  "description": "Complete K3s cluster monitoring with all 7 nodes (Larry and the Darryl's)",
+  "version": 1,
+  "kibanaSavedObjectMeta": {
+    "searchSourceJSON": "{\"query\":{\"language\":\"kuery\",\"query\":\"\"},\"filter\":[]}"
+  },
+  "panels": [
+    {
+      "gridData": {"x": 0, "y": 0, "w": 12, "h": 4},
+      "panelIndex": "1",
+      "embeddableConfig": {
+        "title": "K3s Cluster Status - All Agents",
+        "visState": "{\"title\":\"K3s Agent Status\",\"type\":\"metric\",\"params\":{\"metric\":{\"colorSchema\":\"Green to Red\",\"colorsRange\":[{\"from\":0,\"to\":5},{\"from\":5,\"to\":7},{\"from\":7,\"to\":8}],\"labels\":{\"show\":true},\"percentageMode\":false,\"style\":{\"bgColor\":false,\"bgFill\":\"#000\",\"fontSize\":60,\"labelColor\":false,\"subText\":\"\"}},\"addLegend\":false,\"addTooltip\":true,\"type\":\"metric\"},\"aggs\":[{\"id\":\"1\",\"enabled\":true,\"type\":\"cardinality\",\"schema\":\"metric\",\"params\":{\"field\":\"agent.id\"}}]}"
+      }
+    },
+    {
+      "gridData": {"x": 12, "y": 0, "w": 12, "h": 4},
+      "panelIndex": "2",
+      "embeddableConfig": {
+        "title": "K3s Security Events (Last 24h)",
+        "visState": "{\"title\":\"Security Events\",\"type\":\"metric\",\"params\":{\"metric\":{\"colorSchema\":\"Green to Red\",\"colorsRange\":[{\"from\":0,\"to\":100},{\"from\":100,\"to\":1000},{\"from\":1000,\"to\":10000}],\"labels\":{\"show\":true},\"percentageMode\":false,\"style\":{\"bgColor\":true,\"bgFill\":\"#000\",\"fontSize\":60,\"labelColor\":false,\"subText\":\"\"}},\"addLegend\":false,\"addTooltip\":true,\"type\":\"metric\"},\"aggs\":[{\"id\":\"1\",\"enabled\":true,\"type\":\"count\",\"schema\":\"metric\",\"params\":{}}]}"
+      }
+    },
+    {
+      "gridData": {"x": 0, "y": 4, "w": 24, "h": 6},
+      "panelIndex": "3",
+      "embeddableConfig": {
+        "title": "Larry and the Darryl's - Node List",
+        "visState": "{\"title\":\"K3s Nodes\",\"type\":\"table\",\"params\":{\"perPage\":10,\"showPartialRows\":false,\"showMetricsAtAllLevels\":false,\"sort\":{\"columnIndex\":null,\"direction\":null},\"showTotal\":false,\"totalFunc\":\"sum\"},\"aggs\":[{\"id\":\"1\",\"enabled\":true,\"type\":\"count\",\"schema\":\"metric\",\"params\":{}},{\"id\":\"2\",\"enabled\":true,\"type\":\"terms\",\"schema\":\"bucket\",\"params\":{\"field\":\"agent.name\",\"size\":10,\"order\":\"desc\",\"orderBy\":\"1\"}},{\"id\":\"3\",\"enabled\":true,\"type\":\"terms\",\"schema\":\"bucket\",\"params\":{\"field\":\"agent.ip\",\"size\":1,\"order\":\"desc\",\"orderBy\":\"1\"}},{\"id\":\"4\",\"enabled\":true,\"type\":\"terms\",\"schema\":\"bucket\",\"params\":{\"field\":\"rule.level\",\"size\":5,\"order\":\"desc\",\"orderBy\":\"1\",\"customLabel\":\"Max Alert Level\"}}]}"
+      }
+    },
+    {
+      "gridData": {"x": 0, "y": 10, "w": 12, "h": 6},
+      "panelIndex": "4",
+      "embeddableConfig": {
+        "title": "K3s Master Nodes - Security Events",
+        "visState": "{\"title\":\"Master Nodes\",\"type\":\"line\",\"params\":{\"addLegend\":true,\"addTimeMarker\":false,\"addTooltip\":true,\"defaultYExtents\":false,\"drawLinesBetweenPoints\":true,\"interpolate\":\"linear\",\"radiusRatio\":9,\"scale\":\"linear\",\"setYExtents\":false,\"showCircles\":true,\"times\":[]},\"aggs\":[{\"id\":\"1\",\"enabled\":true,\"type\":\"count\",\"schema\":\"metric\",\"params\":{}},{\"id\":\"2\",\"enabled\":true,\"type\":\"date_histogram\",\"schema\":\"segment\",\"params\":{\"field\":\"@timestamp\",\"interval\":\"auto\",\"customInterval\":\"2h\",\"min_doc_count\":1,\"extended_bounds\":{}}},{\"id\":\"3\",\"enabled\":true,\"type\":\"filters\",\"schema\":\"group\",\"params\":{\"filters\":[{\"input\":{\"query\":\"agent.name:k3s-master01\"},\"label\":\"k3s-master01 (.190)\"},{\"input\":{\"query\":\"agent.name:k3s-master02\"},\"label\":\"k3s-master02 (.193)\"},{\"input\":{\"query\":\"agent.name:k3s-master03\"},\"label\":\"k3s-master03 (.196)\"}]}}]}"
+      }
+    },
+    {
+      "gridData": {"x": 12, "y": 10, "w": 12, "h": 6},
+      "panelIndex": "5",
+      "embeddableConfig": {
+        "title": "K3s Worker Nodes - Security Events",
+        "visState": "{\"title\":\"Worker Nodes\",\"type\":\"line\",\"params\":{\"addLegend\":true,\"addTimeMarker\":false,\"addTooltip\":true,\"defaultYExtents\":false,\"drawLinesBetweenPoints\":true,\"interpolate\":\"linear\",\"radiusRatio\":9,\"scale\":\"linear\",\"setYExtents\":false,\"showCircles\":true,\"times\":[]},\"aggs\":[{\"id\":\"1\",\"enabled\":true,\"type\":\"count\",\"schema\":\"metric\",\"params\":{}},{\"id\":\"2\",\"enabled\":true,\"type\":\"date_histogram\",\"schema\":\"segment\",\"params\":{\"field\":\"@timestamp\",\"interval\":\"auto\",\"customInterval\":\"2h\",\"min_doc_count\":1,\"extended_bounds\":{}}},{\"id\":\"3\",\"enabled\":true,\"type\":\"filters\",\"schema\":\"group\",\"params\":{\"filters\":[{\"input\":{\"query\":\"agent.name:k3s-worker01\"},\"label\":\"k3s-worker01 (.191)\"},{\"input\":{\"query\":\"agent.name:k3s-worker02\"},\"label\":\"k3s-worker02 (.192)\"},{\"input\":{\"query\":\"agent.name:k3s-worker04\"},\"label\":\"k3s-worker04 (.195)\"},{\"input\":{\"query\":\"agent.name:k3s-worker03-agent\"},\"label\":\"k3s-worker03 (.194)\"}]}}]}"
+      }
+    },
+    {
+      "gridData": {"x": 0, "y": 16, "w": 8, "h": 6},
+      "panelIndex": "6",
+      "embeddableConfig": {
+        "title": "Kubernetes Audit Events",
+        "visState": "{\"title\":\"K8s Audit Events\",\"type\":\"pie\",\"params\":{\"addLegend\":true,\"addTooltip\":true,\"isDonut\":true,\"labels\":{\"show\":false,\"values\":true,\"last_level\":true,\"truncate\":100},\"legendPosition\":\"right\",\"type\":\"pie\"},\"aggs\":[{\"id\":\"1\",\"enabled\":true,\"type\":\"count\",\"schema\":\"metric\",\"params\":{}},{\"id\":\"2\",\"enabled\":true,\"type\":\"terms\",\"schema\":\"segment\",\"params\":{\"field\":\"data.audit.verb\",\"size\":10,\"order\":\"desc\",\"orderBy\":\"1\",\"customLabel\":\"K8s API Action\"}}]}"
+      }
+    },
+    {
+      "gridData": {"x": 8, "y": 16, "w": 8, "h": 6},
+      "panelIndex": "7",
+      "embeddableConfig": {
+        "title": "Security Alert Levels",
+        "visState": "{\"title\":\"Alert Severity\",\"type\":\"pie\",\"params\":{\"addLegend\":true,\"addTooltip\":true,\"isDonut\":true,\"labels\":{\"show\":true,\"values\":true,\"last_level\":true,\"truncate\":100},\"legendPosition\":\"right\",\"type\":\"pie\"},\"aggs\":[{\"id\":\"1\",\"enabled\":true,\"type\":\"count\",\"schema\":\"metric\",\"params\":{}},{\"id\":\"2\",\"enabled\":true,\"type\":\"filters\",\"schema\":\"segment\",\"params\":{\"filters\":[{\"input\":{\"query\":\"rule.level:[1 TO 4]\"},\"label\":\"Low (1-4)\"},{\"input\":{\"query\":\"rule.level:[5 TO 7]\"},\"label\":\"Medium (5-7)\"},{\"input\":{\"query\":\"rule.level:[8 TO 11]\"},\"label\":\"High (8-11)\"},{\"input\":{\"query\":\"rule.level:[12 TO 15]\"},\"label\":\"Critical (12+)\"}]}}]}"
+      }
+    },
+    {
+      "gridData": {"x": 16, "y": 16, "w": 8, "h": 6},
+      "panelIndex": "8",
+      "embeddableConfig": {
+        "title": "Top Security Rules Triggered",
+        "visState": "{\"title\":\"Top Rules\",\"type\":\"pie\",\"params\":{\"addLegend\":true,\"addTooltip\":true,\"isDonut\":false,\"labels\":{\"show\":false,\"values\":true,\"last_level\":true,\"truncate\":100},\"legendPosition\":\"right\",\"type\":\"pie\"},\"aggs\":[{\"id\":\"1\",\"enabled\":true,\"type\":\"count\",\"schema\":\"metric\",\"params\":{}},{\"id\":\"2\",\"enabled\":true,\"type\":\"terms\",\"schema\":\"segment\",\"params\":{\"field\":\"rule.description\",\"size\":10,\"order\":\"desc\",\"orderBy\":\"1\"}}]}"
+      }
+    },
+    {
+      "gridData": {"x": 0, "y": 22, "w": 24, "h": 8},
+      "panelIndex": "9",
+      "embeddableConfig": {
+        "title": "Recent Security Events - All K3s Nodes",
+        "visState": "{\"title\":\"Security Events Log\",\"type\":\"table\",\"params\":{\"perPage\":15,\"showPartialRows\":false,\"showMetricsAtAllLevels\":false,\"sort\":{\"columnIndex\":0,\"direction\":\"desc\"},\"showTotal\":false,\"totalFunc\":\"sum\"},\"aggs\":[{\"id\":\"1\",\"enabled\":true,\"type\":\"count\",\"schema\":\"metric\",\"params\":{}},{\"id\":\"2\",\"enabled\":true,\"type\":\"date_histogram\",\"schema\":\"bucket\",\"params\":{\"field\":\"@timestamp\",\"interval\":\"auto\",\"customInterval\":\"2h\",\"min_doc_count\":1,\"extended_bounds\":{},\"customLabel\":\"Time\"}},{\"id\":\"3\",\"enabled\":true,\"type\":\"terms\",\"schema\":\"bucket\",\"params\":{\"field\":\"agent.name\",\"size\":1,\"order\":\"desc\",\"orderBy\":\"1\",\"customLabel\":\"Node\"}},{\"id\":\"4\",\"enabled\":true,\"type\":\"terms\",\"schema\":\"bucket\",\"params\":{\"field\":\"rule.description\",\"size\":1,\"order\":\"desc\",\"orderBy\":\"1\",\"customLabel\":\"Alert\"}},{\"id\":\"5\",\"enabled\":true,\"type\":\"terms\",\"schema\":\"bucket\",\"params\":{\"field\":\"rule.level\",\"size\":1,\"order\":\"desc\",\"orderBy\":\"1\",\"customLabel\":\"Level\"}}]}"
+      }
+    },
+    {
+      "gridData": {"x": 0, "y": 30, "w": 12, "h": 6},
+      "panelIndex": "10",
+      "embeddableConfig": {
+        "title": "UniFi Network Events from Syslog",
+        "visState": "{\"title\":\"UniFi Events\",\"type\":\"line\",\"params\":{\"addLegend\":true,\"addTimeMarker\":false,\"addTooltip\":true,\"defaultYExtents\":false,\"drawLinesBetweenPoints\":true,\"interpolate\":\"linear\",\"radiusRatio\":9,\"scale\":\"linear\",\"setYExtents\":false,\"showCircles\":true,\"times\":[]},\"aggs\":[{\"id\":\"1\",\"enabled\":true,\"type\":\"count\",\"schema\":\"metric\",\"params\":{}},{\"id\":\"2\",\"enabled\":true,\"type\":\"date_histogram\",\"schema\":\"segment\",\"params\":{\"field\":\"@timestamp\",\"interval\":\"auto\",\"customInterval\":\"2h\",\"min_doc_count\":1,\"extended_bounds\":{}}},{\"id\":\"3\",\"enabled\":true,\"type\":\"filters\",\"schema\":\"group\",\"params\":{\"filters\":[{\"input\":{\"query\":\"data.srcip:10.88.140.1\"},\"label\":\"UniFi Controller Events\"}]}}]}"
+      }
+    },
+    {
+      "gridData": {"x": 12, "y": 30, "w": 12, "h": 6},
+      "panelIndex": "11",
+      "embeddableConfig": {
+        "title": "K3s Pod Execution Events",
+        "visState": "{\"title\":\"Pod Exec Events\",\"type\":\"histogram\",\"params\":{\"addLegend\":true,\"addTimeMarker\":false,\"addTooltip\":true,\"defaultYExtents\":false,\"mode\":\"stacked\",\"scale\":\"linear\",\"setYExtents\":false,\"times\":[]},\"aggs\":[{\"id\":\"1\",\"enabled\":true,\"type\":\"count\",\"schema\":\"metric\",\"params\":{}},{\"id\":\"2\",\"enabled\":true,\"type\":\"date_histogram\",\"schema\":\"segment\",\"params\":{\"field\":\"@timestamp\",\"interval\":\"auto\",\"customInterval\":\"2h\",\"min_doc_count\":1,\"extended_bounds\":{}}},{\"id\":\"3\",\"enabled\":true,\"type\":\"filters\",\"schema\":\"group\",\"params\":{\"filters\":[{\"input\":{\"query\":\"data.audit.objectRef.resource:pods AND data.audit.objectRef.subresource:exec\"},\"label\":\"Pod Exec Events\"}]}}]}"
+      }
+    }
+  ],
+  "timeRestore": false,
+  "refreshInterval": {
+    "pause": false,
+    "value": 30000
+  }
+}
