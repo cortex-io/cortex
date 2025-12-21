@@ -1,0 +1,409 @@
+---
+# Cortex AI Agent Prometheus Exporter
+# Monitors master agents, workers, tasks, and performance metrics
+# Similar to Amazon Bedrock AgentCore monitoring
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: cortex-agent-exporter-script
+  namespace: monitoring
+data:
+  exporter.py: |
+    #!/usr/bin/env python3
+    """
+    Cortex AI Agent Prometheus Exporter
+    Monitors master agents, workers, tasks, and security metrics
+    Based on Amazon Bedrock AgentCore monitoring patterns
+    """
+    import os
+    import time
+    import json
+    import glob
+    from pathlib import Path
+    from prometheus_client import start_http_server, Gauge, Counter, Histogram, Info
+
+    # Configuration
+    CORTEX_ROOT = os.getenv('CORTEX_ROOT', '/cortex')
+    SCRAPE_INTERVAL = int(os.getenv('SCRAPE_INTERVAL', '30'))
+    EXPORTER_PORT = int(os.getenv('EXPORTER_PORT', '9131'))
+
+    # Master Agent Metrics
+    cortex_master_status = Gauge('cortex_master_status', 'Master agent status (1=active, 0=inactive)', ['master_id', 'master_name'])
+    cortex_master_workers = Gauge('cortex_master_workers_total', 'Total active workers per master', ['master_id', 'worker_type'])
+    cortex_master_tasks_completed = Counter('cortex_master_tasks_completed_total', 'Completed tasks by master', ['master_id'])
+    cortex_master_uptime = Gauge('cortex_master_uptime_seconds', 'Master agent uptime', ['master_id'])
+
+    # Worker Metrics
+    cortex_worker_count = Gauge('cortex_worker_count', 'Total workers by type and status', ['master_id', 'worker_type', 'status'])
+    cortex_worker_spawn_time = Histogram('cortex_worker_spawn_duration_seconds', 'Worker spawn duration', ['master_id', 'worker_type'])
+
+    # Task Metrics (like Bedrock invocation rates)
+    cortex_task_total = Counter('cortex_task_invocations_total', 'Total task invocations', ['master_id', 'task_type'])
+    cortex_task_duration = Histogram('cortex_task_duration_seconds', 'Task execution duration', ['master_id', 'task_type'])
+    cortex_task_errors = Counter('cortex_task_errors_total', 'Task execution errors', ['master_id', 'task_type'])
+    cortex_task_pending = Gauge('cortex_task_pending', 'Pending tasks count', ['master_id'])
+    cortex_task_active = Gauge('cortex_task_active', 'Active tasks count', ['master_id'])
+    cortex_task_success_rate = Gauge('cortex_task_success_rate', 'Task success rate percentage', ['master_id'])
+
+    # Security Master Specific Metrics
+    cortex_security_vulnerabilities = Gauge('cortex_security_vulnerabilities', 'Vulnerabilities found', ['severity'])
+    cortex_security_vulnerabilities_fixed = Counter('cortex_security_vulnerabilities_fixed_total', 'Vulnerabilities fixed')
+    cortex_security_scan_duration = Histogram('cortex_security_scan_duration_seconds', 'Security scan duration')
+    cortex_security_repos_scanned = Counter('cortex_security_repos_scanned_total', 'Repositories scanned')
+    cortex_security_sla_compliance = Gauge('cortex_security_sla_compliance', 'SLA compliance rate', ['severity'])
+    cortex_security_remediation_rate = Gauge('cortex_security_remediation_success_rate', 'Remediation success rate')
+
+    # System Metrics (like Bedrock resource utilization)
+    cortex_system_cpu = Gauge('cortex_system_cpu_percent', 'System CPU usage', ['component'])
+    cortex_system_memory = Gauge('cortex_system_memory_percent', 'System memory usage', ['component'])
+    cortex_system_connections = Gauge('cortex_system_db_connections', 'Database connections', ['pool'])
+
+    # MoE Learning Metrics
+    cortex_moe_pattern_confidence = Gauge('cortex_moe_pattern_confidence', 'MoE routing pattern confidence', ['pattern'])
+    cortex_moe_routing_accuracy = Gauge('cortex_moe_routing_accuracy', 'MoE routing accuracy', ['master_id'])
+
+    # Scrape Metrics
+    cortex_scrape_duration = Gauge('cortex_scrape_duration_seconds', 'Time taken to scrape Cortex metrics')
+    cortex_scrape_errors = Counter('cortex_scrape_errors_total', 'Total number of scrape errors')
+
+    class CortexMonitor:
+        def __init__(self):
+            self.cortex_root = Path(CORTEX_ROOT)
+            self.masters_path = self.cortex_root / 'coordination' / 'masters'
+            self.tasks_path = self.cortex_root / 'coordination' / 'tasks'
+
+        def read_json_file(self, file_path):
+            """Safely read and parse JSON file"""
+            try:
+                with open(file_path, 'r') as f:
+                    return json.load(f)
+            except Exception as e:
+                print(f"Error reading {file_path}: {e}")
+                return None
+
+        def collect_master_metrics(self):
+            """Collect metrics from all master agents"""
+            masters = ['security', 'development', 'coordinator', 'inventory', 'cicd']
+
+            for master_id in masters:
+                state_file = self.masters_path / master_id / 'context' / 'master-state.json'
+                if not state_file.exists():
+                    print(f"State file not found for {master_id}")
+                    continue
+
+                state = self.read_json_file(state_file)
+                if not state:
+                    continue
+
+                # Master status
+                status_value = 1 if state.get('status') == 'active' else 0
+                cortex_master_status.labels(
+                    master_id=master_id,
+                    master_name=state.get('master_name', master_id)
+                ).set(status_value)
+
+                # Master uptime
+                if state.get('initialized_at'):
+                    from datetime import datetime
+                    init_time = datetime.fromisoformat(state['initialized_at'].replace('Z', '+00:00'))
+                    uptime = (datetime.now(init_time.tzinfo) - init_time).total_seconds()
+                    cortex_master_uptime.labels(master_id=master_id).set(uptime)
+
+                # Completed tasks
+                completed = state.get('completed_tasks', 0)
+                cortex_master_tasks_completed.labels(master_id=master_id).inc(completed)
+
+                # Worker metrics
+                workers = state.get('active_workers', [])
+                worker_types = {}
+                for worker in workers:
+                    worker_type = worker.get('worker_type', 'unknown')
+                    worker_types[worker_type] = worker_types.get(worker_type, 0) + 1
+
+                for worker_type, count in worker_types.items():
+                    cortex_master_workers.labels(
+                        master_id=master_id,
+                        worker_type=worker_type
+                    ).set(count)
+
+                    cortex_worker_count.labels(
+                        master_id=master_id,
+                        worker_type=worker_type,
+                        status='active'
+                    ).set(count)
+
+                # Security-specific metrics
+                if master_id == 'security' and 'security_metrics' in state:
+                    sec = state['security_metrics']
+
+                    # Vulnerabilities by severity
+                    cortex_security_vulnerabilities.labels(severity='critical').set(sec.get('critical_count', 0))
+                    cortex_security_vulnerabilities.labels(severity='high').set(sec.get('high_count', 0))
+                    cortex_security_vulnerabilities.labels(severity='medium').set(sec.get('medium_count', 0))
+                    cortex_security_vulnerabilities.labels(severity='low').set(sec.get('low_count', 0))
+
+                    # Fixed vulnerabilities
+                    cortex_security_vulnerabilities_fixed.inc(sec.get('vulnerabilities_fixed', 0))
+
+                    # Remediation success rate
+                    cortex_security_remediation_rate.set(sec.get('remediation_success_rate', 0))
+
+                    # Repositories scanned
+                    cortex_security_repos_scanned.inc(len(sec.get('repositories_scanned', [])))
+
+                    # SLA compliance
+                    sla = sec.get('sla_compliance', {})
+                    for severity, compliance in sla.items():
+                        if compliance != 'N/A':
+                            rate = float(compliance.replace('%', '')) / 100.0
+                            cortex_security_sla_compliance.labels(severity=severity).set(rate)
+
+        def collect_task_metrics(self):
+            """Collect task-related metrics"""
+            # Count pending tasks
+            pending_tasks = self.tasks_path / 'pending'
+            if pending_tasks.exists():
+                pending_files = list(pending_tasks.glob('*.json'))
+                for task_file in pending_files:
+                    task = self.read_json_file(task_file)
+                    if task and 'master_id' in task:
+                        master_id = task['master_id']
+                        cortex_task_pending.labels(master_id=master_id).inc()
+
+            # Count active tasks
+            active_tasks = self.tasks_path / 'active'
+            if active_tasks.exists():
+                active_files = list(active_tasks.glob('*.json'))
+                for task_file in active_files:
+                    task = self.read_json_file(task_file)
+                    if task and 'master_id' in task:
+                        master_id = task['master_id']
+                        cortex_task_active.labels(master_id=master_id).inc()
+
+            # Process completed tasks for metrics
+            completed_tasks = self.tasks_path / 'completed'
+            if completed_tasks.exists():
+                completed_files = list(completed_tasks.glob('*.json'))[-100:]  # Last 100
+                for task_file in completed_files:
+                    task = self.read_json_file(task_file)
+                    if not task:
+                        continue
+
+                    master_id = task.get('master_id', 'unknown')
+                    task_type = task.get('task_type', 'unknown')
+
+                    # Task invocations
+                    cortex_task_total.labels(master_id=master_id, task_type=task_type).inc()
+
+                    # Task duration
+                    if 'duration' in task:
+                        cortex_task_duration.labels(
+                            master_id=master_id,
+                            task_type=task_type
+                        ).observe(task['duration'])
+
+                    # Task errors
+                    if task.get('status') == 'error':
+                        cortex_task_errors.labels(
+                            master_id=master_id,
+                            task_type=task_type
+                        ).inc()
+
+        def collect_moe_metrics(self):
+            """Collect MoE (Mixture of Experts) learning metrics"""
+            routing_decisions = self.cortex_root / 'coordination' / 'masters' / 'coordinator' / 'knowledge-base' / 'routing-decisions.jsonl'
+            if routing_decisions.exists():
+                try:
+                    with open(routing_decisions, 'r') as f:
+                        # Read last 100 decisions
+                        decisions = [json.loads(line) for line in f.readlines()[-100:]]
+
+                    # Calculate routing accuracy per master
+                    master_accuracy = {}
+                    for decision in decisions:
+                        master = decision.get('assigned_master')
+                        confidence = decision.get('confidence', 0)
+                        if master:
+                            if master not in master_accuracy:
+                                master_accuracy[master] = []
+                            master_accuracy[master].append(confidence)
+
+                    for master, confidences in master_accuracy.items():
+                        avg_confidence = sum(confidences) / len(confidences)
+                        cortex_moe_routing_accuracy.labels(master_id=master).set(avg_confidence)
+                except Exception as e:
+                    print(f"Error collecting MoE metrics: {e}")
+
+        def collect_metrics(self):
+            """Main metrics collection function"""
+            print("Collecting Cortex agent metrics...")
+            start_time = time.time()
+
+            try:
+                self.collect_master_metrics()
+                self.collect_task_metrics()
+                self.collect_moe_metrics()
+
+                duration = time.time() - start_time
+                cortex_scrape_duration.set(duration)
+                print(f"Metrics collection completed in {duration:.2f}s")
+
+            except Exception as e:
+                print(f"Error collecting metrics: {e}")
+                cortex_scrape_errors.inc()
+
+    if __name__ == '__main__':
+        print(f"Starting Cortex AI Agent Prometheus Exporter on port {EXPORTER_PORT}")
+        print(f"Cortex root: {CORTEX_ROOT}")
+        print(f"Scrape interval: {SCRAPE_INTERVAL}s")
+
+        # Start HTTP server
+        start_http_server(EXPORTER_PORT)
+
+        monitor = CortexMonitor()
+
+        # Collect metrics in a loop
+        while True:
+            monitor.collect_metrics()
+            time.sleep(SCRAPE_INTERVAL)
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: cortex-data-pvc
+  namespace: monitoring
+spec:
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 1Gi
+  storageClassName: local-path
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cortex-agent-exporter
+  namespace: monitoring
+  labels:
+    app: cortex-agent-exporter
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: cortex-agent-exporter
+  template:
+    metadata:
+      labels:
+        app: cortex-agent-exporter
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "9131"
+        prometheus.io/path: "/metrics"
+    spec:
+      containers:
+      - name: exporter
+        image: python:3.11-slim
+        command:
+          - /bin/bash
+          - -c
+          - |
+            pip install --no-cache-dir prometheus-client
+            python /app/exporter.py
+        ports:
+        - name: metrics
+          containerPort: 9131
+          protocol: TCP
+        env:
+        - name: CORTEX_ROOT
+          value: "/cortex"
+        - name: SCRAPE_INTERVAL
+          value: "30"
+        - name: EXPORTER_PORT
+          value: "9131"
+        volumeMounts:
+        - name: script
+          mountPath: /app
+        - name: cortex-data
+          mountPath: /cortex
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "50m"
+          limits:
+            memory: "256Mi"
+            cpu: "200m"
+        livenessProbe:
+          httpGet:
+            path: /metrics
+            port: 9131
+          initialDelaySeconds: 30
+          periodSeconds: 30
+        readinessProbe:
+          httpGet:
+            path: /metrics
+            port: 9131
+          initialDelaySeconds: 10
+          periodSeconds: 10
+      initContainers:
+      - name: sync-cortex-data
+        image: alpine/git
+        command:
+          - sh
+          - -c
+          - |
+            # Clone or update Cortex repository to get agent state files
+            if [ -d /cortex/.git ]; then
+              cd /cortex && git pull
+            else
+              git clone https://github.com/ry-ops/cortex.git /cortex
+            fi
+        volumeMounts:
+        - name: cortex-data
+          mountPath: /cortex
+      volumes:
+      - name: script
+        configMap:
+          name: cortex-agent-exporter-script
+          defaultMode: 0755
+      - name: cortex-data
+        persistentVolumeClaim:
+          claimName: cortex-data-pvc
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: cortex-agent-exporter
+  namespace: monitoring
+  labels:
+    app: cortex-agent-exporter
+  annotations:
+    prometheus.io/scrape: "true"
+    prometheus.io/port: "9131"
+    prometheus.io/path: "/metrics"
+spec:
+  type: ClusterIP
+  ports:
+  - name: metrics
+    port: 9131
+    targetPort: 9131
+    protocol: TCP
+  selector:
+    app: cortex-agent-exporter
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: cortex-agent-exporter
+  namespace: monitoring
+  labels:
+    app: cortex-agent-exporter
+    release: prometheus
+spec:
+  selector:
+    matchLabels:
+      app: cortex-agent-exporter
+  endpoints:
+  - port: metrics
+    interval: 30s
+    path: /metrics
