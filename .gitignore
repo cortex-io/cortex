@@ -93,3 +93,4 @@ llm-mesh/models/*.pt
 # OpenTelemetry runtime files
 coordination/observability/traces/*.jsonl
 coordination/observability/metrics/*.jsonl
+.env.unifi
