@@ -1,12 +1,12 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: grafana-dashboard-unifi
+  name: grafana-dashboard-unifi-working
   namespace: monitoring
   labels:
     grafana_dashboard: "1"
 data:
-  unifi-network.json: |
+  unifi-network-working.json: |
     {
       "annotations": {
         "list": [
