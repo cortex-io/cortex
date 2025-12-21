@@ -1,0 +1,70 @@
+---
+# External Service & Endpoint for UDM Pro at 10.88.140.1
+apiVersion: v1
+kind: Service
+metadata:
+  name: unifi-controller
+  namespace: default
+  labels:
+    app: unifi-controller
+spec:
+  type: ClusterIP
+  ports:
+    - name: https
+      protocol: TCP
+      port: 8443
+      targetPort: 8443
+    - name: http
+      protocol: TCP
+      port: 8080
+      targetPort: 8080
+---
+apiVersion: v1
+kind: Endpoints
+metadata:
+  name: unifi-controller
+  namespace: default
+subsets:
+  - addresses:
+      - ip: 10.88.140.1
+    ports:
+      - name: https
+        port: 8443
+        protocol: TCP
+      - name: http
+        port: 8080
+        protocol: TCP
+---
+# Traefik IngressRoute for UniFi Controller
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: unifi-controller
+  namespace: default
+spec:
+  entryPoints:
+    - web
+    - websecure
+  routes:
+    - match: Host(`unifi.cortex.local`) || Host(`unifi.local`)
+      kind: Rule
+      services:
+        - name: unifi-controller
+          port: 8443
+          scheme: https
+      middlewares:
+        - name: unifi-headers
+---
+# Middleware for UniFi headers
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: unifi-headers
+  namespace: default
+spec:
+  headers:
+    customRequestHeaders:
+      X-Forwarded-Proto: https
+    sslRedirect: false
+    customResponseHeaders:
+      X-Frame-Options: SAMEORIGIN
