@@ -1,0 +1,643 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-dashboard-unifi-complete
+  namespace: monitoring
+  labels:
+    grafana_dashboard: "1"
+data:
+  unifi-access-points.json: |
+    {
+      "title": "UniFi Access Points - Wireless Metrics",
+      "tags": ["unifi", "wireless", "access-points"],
+      "timezone": "browser",
+      "refresh": "30s",
+      "time": {
+        "from": "now-6h",
+        "to": "now"
+      },
+      "panels": [
+        {
+          "title": "2.4GHz Client Count",
+          "type": "timeseries",
+          "gridPos": {"h": 8, "w": 8, "x": 0, "y": 0},
+          "targets": [{
+            "expr": "sum(unifi_device_clients{radio=\"2g\"}) by (device_name)",
+            "legendFormat": "{{device_name}}"
+          }],
+          "fieldConfig": {
+            "defaults": {
+              "custom": {"drawStyle": "line", "fillOpacity": 10},
+              "color": {"mode": "palette-classic"},
+              "unit": "short"
+            }
+          }
+        },
+        {
+          "title": "5GHz Client Count",
+          "type": "timeseries",
+          "gridPos": {"h": 8, "w": 8, "x": 8, "y": 0},
+          "targets": [{
+            "expr": "sum(unifi_device_clients{radio=\"5g\"}) by (device_name)",
+            "legendFormat": "{{device_name}}"
+          }],
+          "fieldConfig": {
+            "defaults": {
+              "custom": {"drawStyle": "line", "fillOpacity": 10},
+              "color": {"mode": "palette-classic"},
+              "unit": "short"
+            }
+          }
+        },
+        {
+          "title": "6GHz Client Count",
+          "type": "timeseries",
+          "gridPos": {"h": 8, "w": 8, "x": 16, "y": 0},
+          "targets": [{
+            "expr": "sum(unifi_device_clients{radio=\"6g\"}) by (device_name)",
+            "legendFormat": "{{device_name}}"
+          }],
+          "fieldConfig": {
+            "defaults": {
+              "custom": {"drawStyle": "line", "fillOpacity": 10},
+              "color": {"mode": "palette-classic"},
+              "unit": "short"
+            }
+          }
+        },
+        {
+          "title": "Radio Utilization - 2.4GHz",
+          "type": "timeseries",
+          "gridPos": {"h": 8, "w": 12, "x": 0, "y": 8},
+          "targets": [{
+            "expr": "unifi_device_radio_utilization{radio=\"2g\"}",
+            "legendFormat": "{{device_name}} - Channel {{channel}}"
+          }],
+          "fieldConfig": {
+            "defaults": {
+              "custom": {"fillOpacity": 20},
+              "unit": "percent",
+              "max": 100
+            }
+          }
+        },
+        {
+          "title": "Radio Utilization - 5GHz",
+          "type": "timeseries",
+          "gridPos": {"h": 8, "w": 12, "x": 12, "y": 8},
+          "targets": [{
+            "expr": "unifi_device_radio_utilization{radio=\"5g\"}",
+            "legendFormat": "{{device_name}} - Channel {{channel}}"
+          }],
+          "fieldConfig": {
+            "defaults": {
+              "custom": {"fillOpacity": 20},
+              "unit": "percent",
+              "max": 100
+            }
+          }
+        },
+        {
+          "title": "Access Point Traffic (TX/RX)",
+          "type": "timeseries",
+          "gridPos": {"h": 8, "w": 24, "x": 0, "y": 16},
+          "targets": [
+            {
+              "expr": "rate(unifi_device_tx_bytes_total{model=~\".*U6.*|.*U7.*\"}[5m]) * 8",
+              "legendFormat": "{{device_name}} TX"
+            },
+            {
+              "expr": "rate(unifi_device_rx_bytes_total{model=~\".*U6.*|.*U7.*\"}[5m]) * 8",
+              "legendFormat": "{{device_name}} RX"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "unit": "bps",
+              "custom": {"fillOpacity": 10}
+            }
+          }
+        },
+        {
+          "title": "Signal Strength Distribution",
+          "type": "bargauge",
+          "gridPos": {"h": 8, "w": 12, "x": 0, "y": 24},
+          "targets": [{
+            "expr": "histogram_quantile(0.5, sum(rate(unifi_client_signal_histogram_bucket[5m])) by (le, ap_name))",
+            "legendFormat": "{{ap_name}} - Median Signal"
+          }],
+          "fieldConfig": {
+            "defaults": {
+              "unit": "dBm",
+              "thresholds": {
+                "steps": [
+                  {"color": "red", "value": -80},
+                  {"color": "yellow", "value": -70},
+                  {"color": "green", "value": -60}
+                ]
+              }
+            }
+          }
+        },
+        {
+          "title": "Channel Distribution",
+          "type": "piechart",
+          "gridPos": {"h": 8, "w": 12, "x": 12, "y": 24},
+          "targets": [{
+            "expr": "sum(unifi_device_clients) by (channel)",
+            "legendFormat": "Channel {{channel}}"
+          }]
+        }
+      ],
+      "templating": {
+        "list": [
+          {
+            "name": "AccessPoint",
+            "type": "query",
+            "query": "label_values(unifi_device_state{model=~\".*U6.*|.*U7.*\"}, device_name)",
+            "multi": true,
+            "includeAll": true
+          }
+        ]
+      }
+    }
+
+  unifi-switches.json: |
+    {
+      "title": "UniFi Switches - Port & Traffic Metrics",
+      "tags": ["unifi", "switches", "network"],
+      "refresh": "30s",
+      "time": {"from": "now-6h", "to": "now"},
+      "panels": [
+        {
+          "title": "Switch Port Status Overview",
+          "type": "bargauge",
+          "gridPos": {"h": 12, "w": 24, "x": 0, "y": 0},
+          "targets": [{
+            "expr": "unifi_port_state{device_name=\"USW Enterprise 24 PoE\"}",
+            "legendFormat": "Port {{port_idx}} - {{port_name}}"
+          }],
+          "fieldConfig": {
+            "defaults": {
+              "mappings": [
+                {"type": "value", "options": {"0": {"text": "Down", "color": "red"}}},
+                {"type": "value", "options": {"1": {"text": "Up", "color": "green"}}}
+              ],
+              "thresholds": {
+                "steps": [
+                  {"color": "red", "value": 0},
+                  {"color": "green", "value": 1}
+                ]
+              }
+            }
+          },
+          "options": {
+            "displayMode": "gradient",
+            "orientation": "vertical"
+          }
+        },
+        {
+          "title": "Port Traffic - Transmit (Grouped)",
+          "type": "timeseries",
+          "gridPos": {"h": 8, "w": 12, "x": 0, "y": 12},
+          "targets": [{
+            "expr": "rate(unifi_port_tx_bytes{device_name=\"USW Enterprise 24 PoE\"}[5m]) * 8",
+            "legendFormat": "Port {{port_idx}}"
+          }],
+          "fieldConfig": {
+            "defaults": {
+              "unit": "bps",
+              "custom": {"fillOpacity": 10, "lineWidth": 2}
+            }
+          }
+        },
+        {
+          "title": "Port Traffic - Receive (Grouped)",
+          "type": "timeseries",
+          "gridPos": {"h": 8, "w": 12, "x": 12, "y": 12},
+          "targets": [{
+            "expr": "rate(unifi_port_rx_bytes{device_name=\"USW Enterprise 24 PoE\"}[5m]) * 8",
+            "legendFormat": "Port {{port_idx}}"
+          }],
+          "fieldConfig": {
+            "defaults": {
+              "unit": "bps",
+              "custom": {"fillOpacity": 10, "lineWidth": 2}
+            }
+          }
+        },
+        {
+          "title": "PoE Power Consumption by Port",
+          "type": "timeseries",
+          "gridPos": {"h": 8, "w": 12, "x": 0, "y": 20},
+          "targets": [{
+            "expr": "unifi_port_poe_power_watts{device_name=\"USW Enterprise 24 PoE\"}",
+            "legendFormat": "Port {{port_idx}} - {{port_name}}"
+          }],
+          "fieldConfig": {
+            "defaults": {
+              "unit": "watt",
+              "custom": {"fillOpacity": 20},
+              "thresholds": {
+                "steps": [
+                  {"color": "green", "value": 0},
+                  {"color": "yellow", "value": 15},
+                  {"color": "red", "value": 25}
+                ]
+              }
+            }
+          }
+        },
+        {
+          "title": "Total PoE Power Draw",
+          "type": "gauge",
+          "gridPos": {"h": 8, "w": 6, "x": 12, "y": 20},
+          "targets": [{
+            "expr": "sum(unifi_port_poe_power_watts{device_name=\"USW Enterprise 24 PoE\"})",
+            "refId": "A"
+          }],
+          "fieldConfig": {
+            "defaults": {
+              "unit": "watt",
+              "max": 400,
+              "thresholds": {
+                "steps": [
+                  {"color": "green", "value": 0},
+                  {"color": "yellow", "value": 300},
+                  {"color": "red", "value": 350}
+                ]
+              }
+            }
+          }
+        },
+        {
+          "title": "Port Speed Distribution",
+          "type": "piechart",
+          "gridPos": {"h": 8, "w": 6, "x": 18, "y": 20},
+          "targets": [{
+            "expr": "count(unifi_port_speed_mbps) by (speed)",
+            "legendFormat": "{{speed}} Mbps"
+          }]
+        },
+        {
+          "title": "Port Details Table",
+          "type": "table",
+          "gridPos": {"h": 10, "w": 24, "x": 0, "y": 28},
+          "targets": [{
+            "expr": "unifi_port_state{device_name=\"USW Enterprise 24 PoE\"}",
+            "format": "table",
+            "instant": true
+          }],
+          "transformations": [
+            {
+              "id": "organize",
+              "options": {
+                "excludeByName": {},
+                "indexByName": {},
+                "renameByName": {
+                  "port_idx": "Port",
+                  "port_name": "Name",
+                  "Value": "Status"
+                }
+              }
+            }
+          ]
+        }
+      ],
+      "templating": {
+        "list": [
+          {
+            "name": "Switch",
+            "type": "query",
+            "query": "label_values(unifi_device_state{model=~\".*USW.*\"}, device_name)",
+            "multi": false
+          },
+          {
+            "name": "Port",
+            "type": "query",
+            "query": "label_values(unifi_port_state{device_name=\"$Switch\"}, port_idx)",
+            "multi": true,
+            "includeAll": true
+          }
+        ]
+      }
+    }
+
+  unifi-clients.json: |
+    {
+      "title": "UniFi Clients - Device & Anomaly Tracking",
+      "tags": ["unifi", "clients", "devices"],
+      "refresh": "30s",
+      "time": {"from": "now-6h", "to": "now"},
+      "panels": [
+        {
+          "title": "Total Clients Over Time",
+          "type": "timeseries",
+          "gridPos": {"h": 8, "w": 12, "x": 0, "y": 0},
+          "targets": [
+            {
+              "expr": "unifi_clients_total",
+              "legendFormat": "Total Clients"
+            },
+            {
+              "expr": "unifi_clients_wireless",
+              "legendFormat": "Wireless"
+            },
+            {
+              "expr": "unifi_clients_wired",
+              "legendFormat": "Wired"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "unit": "short",
+              "custom": {"fillOpacity": 10, "lineWidth": 2}
+            }
+          }
+        },
+        {
+          "title": "Clients by Channel",
+          "type": "piechart",
+          "gridPos": {"h": 8, "w": 6, "x": 12, "y": 0},
+          "targets": [{
+            "expr": "sum(unifi_client_count) by (channel)",
+            "legendFormat": "Channel {{channel}}"
+          }]
+        },
+        {
+          "title": "Clients by Radio Band",
+          "type": "piechart",
+          "gridPos": {"h": 8, "w": 6, "x": 18, "y": 0},
+          "targets": [{
+            "expr": "sum(unifi_client_count) by (radio)",
+            "legendFormat": "{{radio}}"
+          }],
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "palette-classic"
+              }
+            }
+          }
+        },
+        {
+          "title": "Device Type Breakdown",
+          "type": "bargauge",
+          "gridPos": {"h": 8, "w": 12, "x": 0, "y": 8},
+          "targets": [{
+            "expr": "sum(unifi_client_count) by (device_type)",
+            "legendFormat": "{{device_type}}"
+          }],
+          "options": {
+            "displayMode": "gradient",
+            "orientation": "horizontal"
+          }
+        },
+        {
+          "title": "Client Anomalies",
+          "type": "stat",
+          "gridPos": {"h": 4, "w": 6, "x": 12, "y": 8},
+          "targets": [{
+            "expr": "sum(unifi_client_anomalies_total)",
+            "refId": "A"
+          }],
+          "fieldConfig": {
+            "defaults": {
+              "thresholds": {
+                "steps": [
+                  {"color": "green", "value": 0},
+                  {"color": "yellow", "value": 5},
+                  {"color": "red", "value": 20}
+                ]
+              }
+            }
+          }
+        },
+        {
+          "title": "Connection Errors",
+          "type": "stat",
+          "gridPos": {"h": 4, "w": 6, "x": 18, "y": 8},
+          "targets": [{
+            "expr": "sum(rate(unifi_client_errors_total[5m]))",
+            "refId": "A"
+          }],
+          "fieldConfig": {
+            "defaults": {
+              "unit": "ops",
+              "thresholds": {
+                "steps": [
+                  {"color": "green", "value": 0},
+                  {"color": "red", "value": 1}
+                ]
+              }
+            }
+          }
+        },
+        {
+          "title": "Clients with Anomalies (Recent)",
+          "type": "table",
+          "gridPos": {"h": 8, "w": 24, "x": 0, "y": 16},
+          "targets": [{
+            "expr": "topk(10, unifi_client_anomalies{anomaly_count>0})",
+            "format": "table",
+            "instant": true
+          }],
+          "transformations": [
+            {
+              "id": "organize",
+              "options": {
+                "renameByName": {
+                  "client_name": "Device Name",
+                  "client_mac": "MAC Address",
+                  "anomaly_count": "Anomaly Count",
+                  "last_anomaly": "Last Anomaly Type"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "title": "Apple Devices Group",
+          "type": "timeseries",
+          "gridPos": {"h": 8, "w": 12, "x": 0, "y": 24},
+          "targets": [{
+            "expr": "sum(unifi_client_traffic_bytes{manufacturer=~\".*Apple.*\"}) by (client_name)",
+            "legendFormat": "{{client_name}}"
+          }],
+          "fieldConfig": {
+            "defaults": {
+              "unit": "bytes",
+              "custom": {"fillOpacity": 10}
+            }
+          }
+        },
+        {
+          "title": "Camera Group",
+          "type": "timeseries",
+          "gridPos": {"h": 8, "w": 12, "x": 12, "y": 24},
+          "targets": [{
+            "expr": "sum(rate(unifi_client_tx_bytes{device_type=\"camera\"}[5m])) by (client_name) * 8",
+            "legendFormat": "{{client_name}}"
+          }],
+          "fieldConfig": {
+            "defaults": {
+              "unit": "bps",
+              "custom": {"fillOpacity": 10}
+            }
+          }
+        }
+      ]
+    }
+
+  unifi-overview.json: |
+    {
+      "title": "UniFi Network Overview",
+      "tags": ["unifi", "overview", "dashboard"],
+      "refresh": "30s",
+      "time": {"from": "now-6h", "to": "now"},
+      "panels": [
+        {
+          "title": "Network Health Score",
+          "type": "gauge",
+          "gridPos": {"h": 6, "w": 6, "x": 0, "y": 0},
+          "targets": [{
+            "expr": "(count(unifi_device_state==1) / count(unifi_device_state)) * 100",
+            "refId": "A"
+          }],
+          "fieldConfig": {
+            "defaults": {
+              "unit": "percent",
+              "max": 100,
+              "thresholds": {
+                "steps": [
+                  {"color": "red", "value": 0},
+                  {"color": "yellow", "value": 80},
+                  {"color": "green", "value": 95}
+                ]
+              }
+            }
+          }
+        },
+        {
+          "title": "Total Connected Clients",
+          "type": "stat",
+          "gridPos": {"h": 6, "w": 6, "x": 6, "y": 0},
+          "targets": [{
+            "expr": "unifi_clients_total",
+            "refId": "A"
+          }],
+          "fieldConfig": {
+            "defaults": {
+              "color": {"mode": "thresholds"},
+              "thresholds": {
+                "steps": [
+                  {"color": "green", "value": 0},
+                  {"color": "yellow", "value": 50},
+                  {"color": "red", "value": 100}
+                ]
+              }
+            }
+          },
+          "options": {
+            "graphMode": "area"
+          }
+        },
+        {
+          "title": "Total Network Traffic",
+          "type": "stat",
+          "gridPos": {"h": 6, "w": 6, "x": 12, "y": 0},
+          "targets": [{
+            "expr": "sum(rate(unifi_device_tx_bytes_total[5m])) * 8 + sum(rate(unifi_device_rx_bytes_total[5m])) * 8",
+            "refId": "A"
+          }],
+          "fieldConfig": {
+            "defaults": {
+              "unit": "bps",
+              "decimals": 2
+            }
+          },
+          "options": {
+            "graphMode": "area"
+          }
+        },
+        {
+          "title": "Devices Online",
+          "type": "stat",
+          "gridPos": {"h": 6, "w": 6, "x": 18, "y": 0},
+          "targets": [{
+            "expr": "count(unifi_device_state==1)",
+            "refId": "A"
+          }],
+          "fieldConfig": {
+            "defaults": {
+              "color": {"mode": "thresholds"},
+              "thresholds": {
+                "steps": [
+                  {"color": "red", "value": 0},
+                  {"color": "green", "value": 6}
+                ]
+              }
+            }
+          }
+        },
+        {
+          "title": "Network Traffic Timeline",
+          "type": "timeseries",
+          "gridPos": {"h": 8, "w": 24, "x": 0, "y": 6},
+          "targets": [
+            {
+              "expr": "sum(rate(unifi_device_tx_bytes_total[5m])) by (device_name) * 8",
+              "legendFormat": "{{device_name}} TX"
+            },
+            {
+              "expr": "sum(rate(unifi_device_rx_bytes_total[5m])) by (device_name) * 8",
+              "legendFormat": "{{device_name}} RX"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "unit": "bps",
+              "custom": {"fillOpacity": 10}
+            }
+          }
+        },
+        {
+          "title": "Device Status",
+          "type": "table",
+          "gridPos": {"h": 10, "w": 24, "x": 0, "y": 14},
+          "targets": [{
+            "expr": "unifi_device_state",
+            "format": "table",
+            "instant": true
+          }],
+          "transformations": [
+            {
+              "id": "organize",
+              "options": {
+                "renameByName": {
+                  "device_name": "Device",
+                  "model": "Model",
+                  "Value": "Status"
+                }
+              }
+            }
+          ],
+          "fieldConfig": {
+            "overrides": [
+              {
+                "matcher": {"id": "byName", "options": "Status"},
+                "properties": [
+                  {
+                    "id": "mappings",
+                    "value": [
+                      {"type": "value", "options": {"0": {"text": "Offline", "color": "red"}}},
+                      {"type": "value", "options": {"1": {"text": "Online", "color": "green"}}}
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      ]
+    }
