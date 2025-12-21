@@ -1,0 +1,134 @@
+================================================================================
+K3s HA CLUSTER BUILD - NEXT STEPS
+================================================================================
+
+CURRENT STATUS: 70% Complete
+
+✅ COMPLETED:
+- All 7 VMs created (VMID 300-306)
+- All VMs configured with 2 cores, 6GB RAM, 100GB storage
+- Existing 3-node cluster operational
+- New VMs cloned and started
+
+⚠️  REQUIRED ACTION: Manual Network Configuration
+
+The 4 new VMs need their network configured via Proxmox console.
+This cannot be automated due to IP conflicts from cloning.
+
+================================================================================
+STEP 1: CONFIGURE VMS VIA PROXMOX CONSOLE
+================================================================================
+
+Go to Proxmox: https://10.88.140.164:8006
+
+For each VM, open Console and run these commands:
+
+--- VM 303 (k3s-master02) ---
+sudo hostnamectl set-hostname k3s-master02
+sudo tee /etc/netplan/50-cloud-init.yaml > /dev/null <<NETPLAN
+network:
+  version: 2
+  ethernets:
+    ens18:
+      addresses:
+        - 10.88.145.193/24
+      routes:
+        - to: default
+          via: 10.88.145.1
+      nameservers:
+        addresses: [8.8.8.8, 8.8.4.4]
+NETPLAN
+sudo netplan apply
+
+--- VM 304 (k3s-worker03) ---
+sudo hostnamectl set-hostname k3s-worker03
+sudo tee /etc/netplan/50-cloud-init.yaml > /dev/null <<NETPLAN
+network:
+  version: 2
+  ethernets:
+    ens18:
+      addresses:
+        - 10.88.145.194/24
+      routes:
+        - to: default
+          via: 10.88.145.1
+      nameservers:
+        addresses: [8.8.8.8, 8.8.4.4]
+NETPLAN
+sudo netplan apply
+
+--- VM 305 (k3s-worker04) ---
+sudo hostnamectl set-hostname k3s-worker04
+sudo tee /etc/netplan/50-cloud-init.yaml > /dev/null <<NETPLAN
+network:
+  version: 2
+  ethernets:
+    ens18:
+      addresses:
+        - 10.88.145.195/24
+      routes:
+        - to: default
+          via: 10.88.145.1
+      nameservers:
+        addresses: [8.8.8.8, 8.8.4.4]
+NETPLAN
+sudo netplan apply
+
+--- VM 306 (k3s-master03) ---
+sudo hostnamectl set-hostname k3s-master03
+sudo tee /etc/netplan/50-cloud-init.yaml > /dev/null <<NETPLAN
+network:
+  version: 2
+  ethernets:
+    ens18:
+      addresses:
+        - 10.88.145.196/24
+      routes:
+        - to: default
+          via: 10.88.145.1
+      nameservers:
+        addresses: [8.8.8.8, 8.8.4.4]
+NETPLAN
+sudo netplan apply
+
+================================================================================
+STEP 2: VERIFY CONNECTIVITY
+================================================================================
+
+Test SSH to each new VM:
+
+ssh k3s@10.88.145.193 "hostname"  # Should return: k3s-master02
+ssh k3s@10.88.145.194 "hostname"  # Should return: k3s-worker03
+ssh k3s@10.88.145.195 "hostname"  # Should return: k3s-worker04
+ssh k3s@10.88.145.196 "hostname"  # Should return: k3s-master03
+
+================================================================================
+STEP 3: COMPLETE CLUSTER BUILD (AUTOMATED)
+================================================================================
+
+Once all 4 VMs are accessible via SSH, run:
+
+    ./complete-cluster-build.py
+
+This will automatically:
+1. Retrieve K3s token from master01
+2. Join 2 new masters as control-plane nodes
+3. Join 2 new workers
+4. Verify 7-node cluster
+
+Expected runtime: 5-10 minutes
+
+================================================================================
+FINAL CLUSTER
+================================================================================
+
+7 nodes total:
+- 3 control-plane nodes (k3s-master01, k3s-master02, k3s-master03)
+- 4 worker nodes (k3s-worker01, k3s-worker02, k3s-worker03, k3s-worker04)
+
+Resources: 14 cores, 42GB RAM, 700GB storage
+
+Verification:
+ssh k3s@10.88.145.190 'kubectl get nodes -o wide'
+
+================================================================================
