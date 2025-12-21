@@ -1,0 +1,10 @@
+{
+  "timestamp": "2025-12-20T14:03:10-0600",
+  "type": "moe_routing_decision",
+  "data": {
+    "task_id": "fix-k3s-master03-ip-1734739200",
+    "expert": "development",
+    "confidence": 0,
+    "strategy": "single_expert_low_confidence"
+  }
+}
