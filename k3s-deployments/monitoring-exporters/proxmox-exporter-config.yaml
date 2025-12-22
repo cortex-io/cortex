@@ -1,0 +1,12 @@
+apiVersion: v1
+data:
+  pve.yml: |
+    default:
+      user: root@pam
+      token_name: "grafana-proxmox-cortex"
+      token_value: "ab5e0e65-58e9-4e17-bb08-d81f177957b6"
+      verify_ssl: false
+kind: ConfigMap
+metadata:
+  name: proxmox-exporter-config
+  namespace: monitoring-exporters
