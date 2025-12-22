@@ -19,7 +19,7 @@ data:
   UP_UNIFI_CONTROLLER_0_SAVE_IDS: "true"
   UP_UNIFI_CONTROLLER_0_SAVE_SITES: "true"
   UP_UNIFI_CONTROLLER_0_SAVE_DPI: "false"
-  UP_UNIFI_CONTROLLER_0_URL: "https://10.88.140.144:8443"
+  UP_UNIFI_CONTROLLER_0_URL: "https://10.88.140.144:443"
   UP_UNIFI_CONTROLLER_0_USER: "unifi-poller"
   UP_UNIFI_CONTROLLER_0_PASS: "rvF4T4UuzjX^cQy8umPE"
   UP_UNIFI_CONTROLLER_0_SITE: "default"
@@ -104,7 +104,7 @@ metadata:
   namespace: monitoring
   labels:
     app: unpoller
-    release: prometheus
+    release: kube-prometheus-stack
 spec:
   selector:
     matchLabels:
