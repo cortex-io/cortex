@@ -1,0 +1,1620 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#000000">
+    <title>Cortex Chat - v2.0</title>
+    <link rel="manifest" href="data:application/json;base64,eyJuYW1lIjoiQ29ydGV4IENoYXQiLCJzaG9ydF9uYW1lIjoiQ29ydGV4Iiwic3RhcnRfdXJsIjoiLyIsImRpc3BsYXkiOiJzdGFuZGFsb25lIiwiYmFja2dyb3VuZF9jb2xvciI6IiMwMDAwMDAiLCJ0aGVtZV9jb2xvciI6IiMwMDAwMDAiLCJpY29ucyI6W3sic3JjIjoiZGF0YTppbWFnZS9zdmcreG1sO2Jhc2U2NCxQSE4yWnlCM2FXUjBhRDBpTVRFeUlpQm9aV2xuYUhROUlqRXhNaUlnZG1sbGQwSnZlRDBpTUNBd0lERXhNaUF4TVRJaUlIaHRiRzV6UFNKb2RIUndPaTh2ZDNkM0xuY3pMbTl5Wnk4eU1EQXdMM04yWnlJK1BHTnBjbU5zWlNCamVEMGlOVFlpSUdONVBTSTFOaUlnY2owaU5EQWlJR1pwYkd3OUlpTm1aamRoTXpRaUx6NDhMMk4yWno0PSIsInNpemVzIjoiMTEyeDExMiIsInR5cGUiOiJpbWFnZS9zdmcreG1sIn1dfQ==">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-black: #000000;
+            --bg-dark: #1a1a1a;
+            --bg-message: #2a2a2a;
+            --user-blue: #0a84ff;
+            --text-white: #ffffff;
+            --text-gray: #8e8e93;
+            --text-light-gray: #a1a1a6;
+            --orange-accent: #ff6b35;
+            --error-red: #ff3b30;
+            --sidebar-width: 280px;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: var(--bg-black);
+            color: var(--text-white);
+            height: 100vh;
+            overflow: hidden;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* Login Screen Styles */
+        #login-screen {
+            display: none;
+            width: 100vw;
+            height: 100vh;
+            background: var(--bg-black);
+            position: fixed;
+            top: 0;
+            left: 0;
+            z-index: 9999;
+            align-items: center;
+            justify-content: center;
+        }
+
+        #login-screen.active {
+            display: flex;
+        }
+
+        .login-container {
+            width: 100%;
+            max-width: 400px;
+            padding: 40px 32px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 32px;
+        }
+
+        .login-logo {
+            width: 100px;
+            height: 100px;
+            margin-bottom: 16px;
+        }
+
+        .login-title {
+            font-size: 32px;
+            font-weight: 600;
+            color: var(--text-white);
+            margin-bottom: 8px;
+        }
+
+        .login-subtitle {
+            font-size: 16px;
+            color: var(--text-gray);
+            text-align: center;
+        }
+
+        .login-form {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .login-input-group {
+            width: 100%;
+        }
+
+        .login-label {
+            display: block;
+            font-size: 14px;
+            color: var(--text-light-gray);
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+
+        .login-input {
+            width: 100%;
+            background: var(--bg-message);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 14px 16px;
+            color: var(--text-white);
+            font-size: 16px;
+            outline: none;
+            transition: all 0.2s;
+        }
+
+        .login-input:focus {
+            border-color: var(--orange-accent);
+            background: rgba(255, 107, 53, 0.05);
+        }
+
+        .login-input::placeholder {
+            color: var(--text-gray);
+        }
+
+        .login-error {
+            background: rgba(255, 59, 48, 0.1);
+            border: 1px solid rgba(255, 59, 48, 0.3);
+            color: var(--error-red);
+            padding: 12px 16px;
+            border-radius: 8px;
+            font-size: 14px;
+            display: none;
+            text-align: center;
+        }
+
+        .login-error.show {
+            display: block;
+            animation: slideDown 0.3s ease;
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .login-btn {
+            width: 100%;
+            background: var(--orange-accent);
+            border: none;
+            border-radius: 12px;
+            padding: 16px;
+            color: var(--text-white);
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-top: 8px;
+        }
+
+        .login-btn:hover {
+            background: #ff7a47;
+        }
+
+        .login-btn:active {
+            transform: scale(0.98);
+        }
+
+        .login-btn:disabled {
+            background: rgba(255, 107, 53, 0.3);
+            cursor: not-allowed;
+        }
+
+        /* App Container - Hidden by default */
+        .app-container {
+            display: none;
+            flex-direction: column;
+            height: 100vh;
+            height: 100dvh;
+        }
+
+        .app-container.authenticated {
+            display: flex;
+        }
+
+        /* Mobile Layout */
+        /* Top Bar */
+        .top-bar {
+            background: var(--bg-dark);
+            padding: 12px 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            padding-top: env(safe-area-inset-top, 12px);
+            z-index: 1000;
+        }
+
+        .hamburger-btn {
+            background: none;
+            border: none;
+            color: var(--text-white);
+            font-size: 24px;
+            cursor: pointer;
+            padding: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 40px;
+            height: 40px;
+            transition: opacity 0.2s;
+        }
+
+        .hamburger-btn:active {
+            opacity: 0.6;
+        }
+
+        .model-selector {
+            background: none;
+            border: none;
+            color: var(--text-white);
+            font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+            padding: 6px 12px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .model-selector::after {
+            content: '▼';
+            font-size: 10px;
+            color: var(--text-gray);
+        }
+
+        /* Sidebar - Hidden by default on mobile */
+        .sidebar {
+            position: fixed;
+            left: -100%;
+            top: 0;
+            width: 85%;
+            max-width: var(--sidebar-width);
+            height: 100vh;
+            background: var(--bg-dark);
+            transition: left 0.3s ease;
+            z-index: 2000;
+            overflow-y: auto;
+            padding-top: env(safe-area-inset-top, 0);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .sidebar.open {
+            left: 0;
+        }
+
+        .sidebar-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 1999;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s;
+        }
+
+        .sidebar-overlay.show {
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        .sidebar-header {
+            padding: 20px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .sidebar-header h2 {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--text-white);
+        }
+
+        .chat-list {
+            padding: 8px;
+            flex: 1;
+            overflow-y: auto;
+        }
+
+        .sidebar-footer {
+            padding: 16px;
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .sidebar-logout-btn {
+            width: 100%;
+            background: rgba(255, 59, 48, 0.1);
+            border: 1px solid rgba(255, 59, 48, 0.3);
+            color: var(--error-red);
+            padding: 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .sidebar-logout-btn:hover {
+            background: rgba(255, 59, 48, 0.2);
+        }
+
+        .sidebar-logout-btn:active {
+            transform: scale(0.98);
+        }
+
+        .chat-item {
+            padding: 12px 16px;
+            border-radius: 8px;
+            margin-bottom: 4px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .chat-item:hover {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .chat-item.active {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .chat-item-title {
+            font-size: 14px;
+            color: var(--text-white);
+            margin-bottom: 4px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .chat-item-time {
+            font-size: 12px;
+            color: var(--text-gray);
+        }
+
+        /* Main Chat Area */
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px 16px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Empty State */
+        .empty-state {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 24px;
+            opacity: 1;
+            transition: opacity 0.3s;
+        }
+
+        .empty-state.hidden {
+            display: none;
+        }
+
+        .logo-container {
+            width: 80px;
+            height: 80px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .logo-svg {
+            width: 60px;
+            height: 60px;
+            animation: pulse 4s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.8; transform: scale(0.98); }
+        }
+
+        .welcome-text {
+            font-size: 22px;
+            color: var(--text-light-gray);
+            text-align: center;
+            line-height: 1.4;
+            max-width: 320px;
+            font-weight: 300;
+        }
+
+        /* Messages */
+        .messages-container {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .message {
+            display: flex;
+            gap: 12px;
+            max-width: 85%;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .message.user {
+            align-self: flex-end;
+            flex-direction: row-reverse;
+        }
+
+        .message-bubble {
+            padding: 12px 16px;
+            border-radius: 18px;
+            word-wrap: break-word;
+            line-height: 1.5;
+        }
+
+        .message.assistant .message-bubble {
+            background: var(--bg-message);
+            color: var(--text-white);
+            border-bottom-left-radius: 4px;
+        }
+
+        .message.user .message-bubble {
+            background: var(--user-blue);
+            color: var(--text-white);
+            border-bottom-right-radius: 4px;
+        }
+
+        .tool-indicator {
+            background: rgba(255, 107, 53, 0.1);
+            border: 1px solid rgba(255, 107, 53, 0.3);
+            color: var(--orange-accent);
+            padding: 8px 12px;
+            border-radius: 12px;
+            font-size: 13px;
+            margin-bottom: 8px;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .tool-spinner {
+            width: 12px;
+            height: 12px;
+            border: 2px solid var(--orange-accent);
+            border-top-color: transparent;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Bottom Input Area */
+        .input-area {
+            background: var(--bg-dark);
+            padding: 12px 16px;
+            padding-bottom: calc(12px + env(safe-area-inset-bottom, 0));
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .input-container {
+            background: var(--bg-message);
+            border-radius: 24px;
+            padding: 8px 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+
+        .input-field {
+            flex: 1;
+            background: none;
+            border: none;
+            color: var(--text-white);
+            font-size: 16px;
+            outline: none;
+            padding: 6px 4px;
+        }
+
+        .input-field::placeholder {
+            color: var(--text-gray);
+        }
+
+        .button-row {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .icon-btn {
+            background: rgba(255, 255, 255, 0.05);
+            border: none;
+            color: var(--text-gray);
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 18px;
+            transition: all 0.2s;
+        }
+
+        .icon-btn:active {
+            background: rgba(255, 255, 255, 0.1);
+            transform: scale(0.95);
+        }
+
+        .icon-btn.primary {
+            background: var(--text-gray);
+            color: var(--bg-black);
+        }
+
+        .icon-btn.primary:active {
+            background: var(--text-white);
+        }
+
+        .send-btn {
+            background: var(--user-blue);
+            color: var(--text-white);
+        }
+
+        .send-btn:disabled {
+            background: rgba(10, 132, 255, 0.3);
+            cursor: not-allowed;
+        }
+
+        /* Desktop Layout */
+        @media (min-width: 768px) {
+            .app-container {
+                flex-direction: row;
+            }
+
+            .top-bar {
+                display: none;
+            }
+
+            .sidebar {
+                position: static;
+                width: var(--sidebar-width);
+                max-width: none;
+                height: 100vh;
+                border-right: 1px solid rgba(255, 255, 255, 0.05);
+            }
+
+            .sidebar-overlay {
+                display: none;
+            }
+
+            .main-content {
+                position: relative;
+            }
+
+            .chat-messages {
+                padding: 40px 32px;
+            }
+
+            .message {
+                max-width: 70%;
+            }
+
+            .input-area {
+                padding: 16px 32px;
+            }
+
+            .input-container {
+                max-width: 800px;
+                margin: 0 auto 8px;
+            }
+
+            .button-row {
+                max-width: 800px;
+                margin: 0 auto;
+            }
+
+            .login-container {
+                padding: 60px 40px;
+            }
+        }
+
+        /* Tablet adjustments */
+        @media (min-width: 768px) and (max-width: 1024px) {
+            .sidebar {
+                width: 240px;
+            }
+        }
+
+        /* Loading state */
+        .typing-indicator {
+            display: flex;
+            gap: 4px;
+            padding: 12px 16px;
+        }
+
+        .typing-dot {
+            width: 8px;
+            height: 8px;
+            background: var(--text-gray);
+            border-radius: 50%;
+            animation: typing 1.4s infinite;
+        }
+
+        .typing-dot:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        .typing-dot:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+
+        @keyframes typing {
+            0%, 60%, 100% {
+                opacity: 0.3;
+                transform: translateY(0);
+            }
+            30% {
+                opacity: 1;
+                transform: translateY(-4px);
+            }
+        }
+
+        /* Voice recording animation */
+        .icon-btn.recording {
+            background: var(--orange-accent);
+            animation: recordPulse 1.5s ease-in-out infinite;
+        }
+
+        @keyframes recordPulse {
+            0%, 100% {
+                transform: scale(1);
+                box-shadow: 0 0 0 0 rgba(255, 107, 53, 0.7);
+            }
+            50% {
+                transform: scale(1.05);
+                box-shadow: 0 0 0 10px rgba(255, 107, 53, 0);
+            }
+        }
+
+        /* Speech error toast */
+        .speech-error {
+            position: fixed;
+            bottom: 120px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(255, 59, 48, 0.9);
+            color: white;
+            padding: 12px 20px;
+            border-radius: 8px;
+            font-size: 14px;
+            z-index: 3000;
+            animation: slideUp 0.3s ease;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateX(-50%) translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(-50%) translateY(0);
+            }
+        }
+
+        /* File upload styling */
+        .file-input {
+            display: none;
+        }
+
+        .file-preview {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 8px 12px;
+            border-radius: 12px;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            margin: 8px 0;
+            font-size: 14px;
+        }
+
+        .file-remove {
+            background: none;
+            border: none;
+            color: var(--text-gray);
+            cursor: pointer;
+            font-size: 16px;
+            padding: 0 4px;
+        }
+
+        /* Markdown styling */
+        .message-content code {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: 'SF Mono', Monaco, monospace;
+            font-size: 0.9em;
+        }
+
+        .message-content pre {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 12px;
+            border-radius: 8px;
+            overflow-x: auto;
+            margin: 8px 0;
+        }
+
+        .message-content pre code {
+            background: none;
+            padding: 0;
+        }
+    </style>
+</head>
+<body>
+    <!-- Login Screen -->
+    <div id="login-screen" class="active">
+        <div class="login-container">
+            <svg class="login-logo" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                <defs>
+                    <radialGradient id="loginLogoGradient" cx="50%" cy="50%" r="50%">
+                        <stop offset="0%" style="stop-color:#ff7a47;stop-opacity:1" />
+                        <stop offset="100%" style="stop-color:#ff6b35;stop-opacity:1" />
+                    </radialGradient>
+                </defs>
+                <circle cx="50" cy="50" r="8" fill="url(#loginLogoGradient)"/>
+                <g transform="translate(50,50)">
+                    <ellipse rx="4" ry="20" fill="url(#loginLogoGradient)" transform="rotate(0)"/>
+                    <ellipse rx="4" ry="20" fill="url(#loginLogoGradient)" transform="rotate(30)"/>
+                    <ellipse rx="4" ry="20" fill="url(#loginLogoGradient)" transform="rotate(60)"/>
+                    <ellipse rx="4" ry="20" fill="url(#loginLogoGradient)" transform="rotate(90)"/>
+                    <ellipse rx="4" ry="20" fill="url(#loginLogoGradient)" transform="rotate(120)"/>
+                    <ellipse rx="4" ry="20" fill="url(#loginLogoGradient)" transform="rotate(150)"/>
+                    <ellipse rx="4" ry="20" fill="url(#loginLogoGradient)" transform="rotate(180)"/>
+                    <ellipse rx="4" ry="20" fill="url(#loginLogoGradient)" transform="rotate(210)"/>
+                    <ellipse rx="4" ry="20" fill="url(#loginLogoGradient)" transform="rotate(240)"/>
+                    <ellipse rx="4" ry="20" fill="url(#loginLogoGradient)" transform="rotate(270)"/>
+                    <ellipse rx="4" ry="20" fill="url(#loginLogoGradient)" transform="rotate(300)"/>
+                    <ellipse rx="4" ry="20" fill="url(#loginLogoGradient)" transform="rotate(330)"/>
+                </g>
+            </svg>
+            <div>
+                <h1 class="login-title">Cortex Chat</h1>
+                <p class="login-subtitle">Sign in to continue</p>
+            </div>
+            <form class="login-form" id="loginForm">
+                <div class="login-error" id="loginError">Invalid username or password</div>
+                <div class="login-input-group">
+                    <label class="login-label" for="username">Username</label>
+                    <input 
+                        type="text" 
+                        id="username" 
+                        class="login-input" 
+                        placeholder="Enter username" 
+                        autocomplete="username"
+                        required
+                    >
+                </div>
+                <div class="login-input-group">
+                    <label class="login-label" for="password">Password</label>
+                    <input 
+                        type="password" 
+                        id="password" 
+                        class="login-input" 
+                        placeholder="Enter password" 
+                        autocomplete="current-password"
+                        required
+                    >
+                </div>
+                <button type="submit" class="login-btn" id="loginBtn">Sign In</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Main App Container -->
+    <div class="app-container" id="app-container">
+        <!-- Mobile Top Bar -->
+        <div class="top-bar">
+            <button class="hamburger-btn" id="hamburgerBtn" aria-label="Menu">☰</button>
+            <button class="model-selector" id="modelSelector">Cortex v2.0</button>
+            <div style="width: 40px;"></div>
+        </div>
+
+        <!-- Sidebar Overlay -->
+        <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+        <!-- Sidebar -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <h2>Recent Chats</h2>
+            </div>
+            <div class="chat-list" id="chatList">
+                <!-- Chat history will be populated here -->
+            </div>
+            <div class="sidebar-footer">
+                <button class="sidebar-logout-btn" id="sidebarLogoutBtn">
+                    <span>🚪</span>
+                    <span>Logout</span>
+                </button>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <div class="chat-messages" id="chatMessages">
+                <!-- Empty State -->
+                <div class="empty-state" id="emptyState">
+                    <div class="logo-container">
+                        <svg class="logo-svg" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                            <defs>
+                                <radialGradient id="logoGradient" cx="50%" cy="50%" r="50%">
+                                    <stop offset="0%" style="stop-color:#ff7a47;stop-opacity:1" />
+                                    <stop offset="100%" style="stop-color:#ff6b35;stop-opacity:1" />
+                                </radialGradient>
+                            </defs>
+                            <circle cx="50" cy="50" r="8" fill="url(#logoGradient)"/>
+                            <g transform="translate(50,50)">
+                                <ellipse rx="4" ry="20" fill="url(#logoGradient)" transform="rotate(0)"/>
+                                <ellipse rx="4" ry="20" fill="url(#logoGradient)" transform="rotate(30)"/>
+                                <ellipse rx="4" ry="20" fill="url(#logoGradient)" transform="rotate(60)"/>
+                                <ellipse rx="4" ry="20" fill="url(#logoGradient)" transform="rotate(90)"/>
+                                <ellipse rx="4" ry="20" fill="url(#logoGradient)" transform="rotate(120)"/>
+                                <ellipse rx="4" ry="20" fill="url(#logoGradient)" transform="rotate(150)"/>
+                                <ellipse rx="4" ry="20" fill="url(#logoGradient)" transform="rotate(180)"/>
+                                <ellipse rx="4" ry="20" fill="url(#logoGradient)" transform="rotate(210)"/>
+                                <ellipse rx="4" ry="20" fill="url(#logoGradient)" transform="rotate(240)"/>
+                                <ellipse rx="4" ry="20" fill="url(#logoGradient)" transform="rotate(270)"/>
+                                <ellipse rx="4" ry="20" fill="url(#logoGradient)" transform="rotate(300)"/>
+                                <ellipse rx="4" ry="20" fill="url(#logoGradient)" transform="rotate(330)"/>
+                            </g>
+                        </svg>
+                    </div>
+                    <div class="welcome-text" id="welcomeText">How can Cortex help you this evening?</div>
+                </div>
+
+                <!-- Messages Container -->
+                <div class="messages-container" id="messagesContainer" style="display: none;">
+                    <!-- Messages will be appended here -->
+                </div>
+            </div>
+
+            <!-- Input Area -->
+            <div class="input-area">
+                <div class="input-container">
+                    <input type="text" class="input-field" id="messageInput" placeholder="Chat with Cortex" autocomplete="off">
+                    <button class="icon-btn send-btn" id="sendBtn" aria-label="Send" disabled>➤</button>
+                </div>
+                <div class="button-row">
+                    <input type="file" class="file-input" id="fileInput" accept="*/*">
+                    <button class="icon-btn" id="uploadBtn" aria-label="Upload file">+</button>
+                    <button class="icon-btn" id="historyBtn" aria-label="History">🕐</button>
+                    <button class="icon-btn" id="micBtn" aria-label="Voice input">🎤</button>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // Configuration
+        const API_BASE = window.location.origin;
+        const STORAGE_KEYS = {
+            AUTH_TOKEN: 'cortex_auth_token',
+            USERNAME: 'cortex_username',
+            CONVERSATIONS: 'cortex_conversations',
+            CURRENT_CONV: 'cortex_current_conversation'
+        };
+
+        // Welcome messages rotation
+        const WELCOME_MESSAGES = [
+            "How can Cortex help you this evening?",
+            "What infrastructure challenge can Cortex solve?",
+            "Ready to orchestrate your infrastructure?",
+            "Let's automate something amazing",
+            "Your AI DevOps team is ready",
+            "What would you like to deploy today?"
+        ];
+
+        // State
+        let currentConversationId = null;
+        let isStreaming = false;
+        let currentFile = null;
+        let recognition = null;
+        let isRecording = false;
+        let isAuthenticated = false;
+
+        // DOM Elements
+        const loginScreen = document.getElementById('login-screen');
+        const appContainer = document.getElementById('app-container');
+        const loginForm = document.getElementById('loginForm');
+        const loginError = document.getElementById('loginError');
+        const loginBtn = document.getElementById('loginBtn');
+        const usernameInput = document.getElementById('username');
+        const passwordInput = document.getElementById('password');
+        
+        const hamburgerBtn = document.getElementById('hamburgerBtn');
+        const sidebar = document.getElementById('sidebar');
+        const sidebarOverlay = document.getElementById('sidebarOverlay');
+        const chatList = document.getElementById('chatList');
+        const emptyState = document.getElementById('emptyState');
+        const messagesContainer = document.getElementById('messagesContainer');
+        const messageInput = document.getElementById('messageInput');
+        const sendBtn = document.getElementById('sendBtn');
+        const uploadBtn = document.getElementById('uploadBtn');
+        const fileInput = document.getElementById('fileInput');
+        const historyBtn = document.getElementById('historyBtn');
+        const micBtn = document.getElementById('micBtn');
+        const sidebarLogoutBtn = document.getElementById('sidebarLogoutBtn');
+        const chatMessages = document.getElementById('chatMessages');
+
+        // Initialize
+        function init() {
+            // Check if user is already authenticated
+            checkAuthStatus();
+            
+            // Set random welcome message
+            const welcomeText = document.getElementById('welcomeText');
+            welcomeText.textContent = WELCOME_MESSAGES[Math.floor(Math.random() * WELCOME_MESSAGES.length)];
+
+            // Setup event listeners
+            setupEventListeners();
+
+            // Initialize speech recognition if available
+            initSpeechRecognition();
+        }
+
+        function checkAuthStatus() {
+            const token = localStorage.getItem(STORAGE_KEYS.AUTH_TOKEN);
+            const username = localStorage.getItem(STORAGE_KEYS.USERNAME);
+            
+            if (token && username) {
+                // User is authenticated
+                showChatInterface();
+            } else {
+                // Show login screen
+                showLoginScreen();
+            }
+        }
+
+        function showLoginScreen(message = null) {
+            isAuthenticated = false;
+            loginScreen.classList.add('active');
+            appContainer.classList.remove('authenticated');
+            
+            if (message) {
+                loginError.textContent = message;
+                loginError.classList.add('show');
+            }
+            
+            // Focus username input
+            setTimeout(() => usernameInput.focus(), 100);
+        }
+
+        function showChatInterface() {
+            isAuthenticated = true;
+            loginScreen.classList.remove('active');
+            appContainer.classList.add('authenticated');
+            
+            // Load conversations
+            loadConversations();
+            
+            // Resume current conversation if exists
+            const currentConv = localStorage.getItem(STORAGE_KEYS.CURRENT_CONV);
+            if (currentConv) {
+                currentConversationId = currentConv;
+                loadConversation(currentConv);
+            }
+        }
+
+        function setupEventListeners() {
+            // Login form
+            loginForm.addEventListener('submit', handleLogin);
+            
+            // Clear error when typing
+            usernameInput.addEventListener('input', () => loginError.classList.remove('show'));
+            passwordInput.addEventListener('input', () => loginError.classList.remove('show'));
+            
+            // Sidebar toggle
+            hamburgerBtn.addEventListener('click', () => {
+                sidebar.classList.toggle('open');
+                sidebarOverlay.classList.toggle('show');
+            });
+
+            sidebarOverlay.addEventListener('click', () => {
+                sidebar.classList.remove('open');
+                sidebarOverlay.classList.remove('show');
+            });
+
+            // Input handling
+            messageInput.addEventListener('input', () => {
+                sendBtn.disabled = !messageInput.value.trim() && !currentFile;
+            });
+
+            messageInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    sendMessage();
+                }
+            });
+
+            sendBtn.addEventListener('click', sendMessage);
+
+            // File upload
+            uploadBtn.addEventListener('click', () => fileInput.click());
+            fileInput.addEventListener('change', handleFileSelect);
+
+            // History
+            historyBtn.addEventListener('click', () => {
+                sidebar.classList.add('open');
+                sidebarOverlay.classList.add('show');
+            });
+
+            // Microphone
+            micBtn.addEventListener('click', toggleSpeechRecognition);
+
+            // Logout
+            sidebarLogoutBtn.addEventListener('click', logout);
+        }
+
+        async function handleLogin(e) {
+            e.preventDefault();
+            
+            const username = usernameInput.value.trim();
+            const password = passwordInput.value;
+            
+            if (!username || !password) {
+                loginError.textContent = 'Please enter username and password';
+                loginError.classList.add('show');
+                return;
+            }
+            
+            // Disable form
+            loginBtn.disabled = true;
+            loginBtn.textContent = 'Signing in...';
+            
+            try {
+                const response = await fetch(`${API_BASE}/api/auth/login`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ username, password })
+                });
+                
+                const data = await response.json();
+                
+                if (!response.ok || !data.success) {
+                    throw new Error(data.error || 'Login failed');
+                }
+                
+                // Store auth data
+                localStorage.setItem(STORAGE_KEYS.AUTH_TOKEN, data.token);
+                localStorage.setItem(STORAGE_KEYS.USERNAME, data.username);
+                
+                // Clear form
+                usernameInput.value = '';
+                passwordInput.value = '';
+                loginError.classList.remove('show');
+                
+                // Show chat interface
+                showChatInterface();
+                
+            } catch (error) {
+                console.error('Login error:', error);
+                loginError.textContent = error.message || 'Login failed. Please try again.';
+                loginError.classList.add('show');
+            } finally {
+                loginBtn.disabled = false;
+                loginBtn.textContent = 'Sign In';
+            }
+        }
+
+        function logout() {
+            // Clear auth data
+            localStorage.removeItem(STORAGE_KEYS.AUTH_TOKEN);
+            localStorage.removeItem(STORAGE_KEYS.USERNAME);
+            
+            // Clear conversation state
+            currentConversationId = null;
+            localStorage.removeItem(STORAGE_KEYS.CURRENT_CONV);
+            
+            // Close sidebar if open
+            sidebar.classList.remove('open');
+            sidebarOverlay.classList.remove('show');
+            
+            // Show login screen
+            showLoginScreen();
+        }
+
+        function handleAuthError() {
+            // Clear auth data
+            localStorage.removeItem(STORAGE_KEYS.AUTH_TOKEN);
+            localStorage.removeItem(STORAGE_KEYS.USERNAME);
+            
+            // Show login screen with session expired message
+            showLoginScreen('Session expired. Please sign in again.');
+        }
+
+        function loadConversations() {
+            const conversations = JSON.parse(localStorage.getItem(STORAGE_KEYS.CONVERSATIONS) || '[]');
+            chatList.innerHTML = '';
+
+            if (conversations.length === 0) {
+                chatList.innerHTML = '<div style="padding: 16px; color: var(--text-gray); text-align: center;">No conversations yet</div>';
+                return;
+            }
+
+            conversations.sort((a, b) => new Date(b.updated_at) - new Date(a.updated_at));
+
+            conversations.forEach(conv => {
+                const item = document.createElement('div');
+                item.className = 'chat-item';
+                if (conv.id === currentConversationId) {
+                    item.classList.add('active');
+                }
+
+                const title = document.createElement('div');
+                title.className = 'chat-item-title';
+                title.textContent = conv.title || 'New Chat';
+
+                const time = document.createElement('div');
+                time.className = 'chat-item-time';
+                time.textContent = formatTime(conv.updated_at);
+
+                item.appendChild(title);
+                item.appendChild(time);
+
+                item.addEventListener('click', () => {
+                    currentConversationId = conv.id;
+                    localStorage.setItem(STORAGE_KEYS.CURRENT_CONV, conv.id);
+                    loadConversation(conv.id);
+                    sidebar.classList.remove('open');
+                    sidebarOverlay.classList.remove('show');
+                    loadConversations(); // Refresh to update active state
+                });
+
+                chatList.appendChild(item);
+            });
+        }
+
+        function loadConversation(conversationId) {
+            const conversations = JSON.parse(localStorage.getItem(STORAGE_KEYS.CONVERSATIONS) || '[]');
+            const conv = conversations.find(c => c.id === conversationId);
+
+            if (!conv) return;
+
+            emptyState.classList.add('hidden');
+            messagesContainer.style.display = 'flex';
+            messagesContainer.innerHTML = '';
+
+            conv.messages.forEach(msg => {
+                appendMessage(msg.role, msg.content, false);
+            });
+
+            scrollToBottom();
+        }
+
+        async function sendMessage() {
+            const message = messageInput.value.trim();
+            if (!message && !currentFile) return;
+
+            // Check auth
+            if (!isAuthenticated) {
+                showLoginScreen('Please sign in to continue');
+                return;
+            }
+
+            // Disable input
+            messageInput.disabled = true;
+            sendBtn.disabled = true;
+            isStreaming = true;
+
+            // Hide empty state
+            emptyState.classList.add('hidden');
+            messagesContainer.style.display = 'flex';
+
+            // Add user message
+            appendMessage('user', message);
+
+            // Clear input
+            messageInput.value = '';
+            currentFile = null;
+
+            // Create or get conversation ID
+            if (!currentConversationId) {
+                currentConversationId = generateId();
+                localStorage.setItem(STORAGE_KEYS.CURRENT_CONV, currentConversationId);
+            }
+
+            // Get conversation history
+            const conversations = JSON.parse(localStorage.getItem(STORAGE_KEYS.CONVERSATIONS) || '[]');
+            let conv = conversations.find(c => c.id === currentConversationId);
+            const history = conv ? conv.messages.map(msg => ({
+                role: msg.role,
+                content: msg.content
+            })) : [];
+
+            // Add typing indicator
+            const typingDiv = document.createElement('div');
+            typingDiv.className = 'message assistant';
+            typingDiv.innerHTML = `
+                <div class="message-bubble">
+                    <div class="typing-indicator">
+                        <div class="typing-dot"></div>
+                        <div class="typing-dot"></div>
+                        <div class="typing-dot"></div>
+                    </div>
+                </div>
+            `;
+            messagesContainer.appendChild(typingDiv);
+            scrollToBottom();
+
+            try {
+                // Call API with SSE
+                const requestBody = {
+                    message: message
+                };
+
+                // Only add history if it exists
+                if (history.length > 0) {
+                    requestBody.history = history;
+                }
+
+                const authToken = localStorage.getItem(STORAGE_KEYS.AUTH_TOKEN);
+                const response = await fetch(`${API_BASE}/api/chat`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${authToken}`
+                    },
+                    body: JSON.stringify(requestBody)
+                });
+
+                // Remove typing indicator
+                typingDiv.remove();
+
+                if (response.status === 401) {
+                    handleAuthError();
+                    return;
+                }
+
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${await response.text()}`);
+                }
+
+                // Handle SSE stream
+                const reader = response.body.getReader();
+                const decoder = new TextDecoder();
+                let assistantMessage = '';
+                let messageDiv = null;
+                let toolIndicators = new Map(); // Track tool execution indicators
+
+                while (true) {
+                    const { done, value } = await reader.read();
+                    if (done) break;
+
+                    const chunk = decoder.decode(value);
+                    const lines = chunk.split('\n');
+
+                    for (const line of lines) {
+                        if (line.startsWith('data: ')) {
+                            try {
+                                const data = JSON.parse(line.slice(6));
+
+                                // Handle content_block_delta - append text content
+                                if (data.type === 'content_block_delta' && data.delta) {
+                                    assistantMessage += data.delta;
+                                    
+                                    if (!messageDiv) {
+                                        messageDiv = appendMessage('assistant', assistantMessage);
+                                    } else {
+                                        const bubble = messageDiv.querySelector('.message-bubble');
+                                        bubble.innerHTML = formatMarkdown(assistantMessage);
+                                    }
+                                    scrollToBottom();
+                                }
+                                // Handle content_block_start - initialize message
+                                else if (data.type === 'content_block_start') {
+                                    if (data.text) {
+                                        assistantMessage += data.text;
+                                        if (!messageDiv) {
+                                            messageDiv = appendMessage('assistant', assistantMessage);
+                                        }
+                                        scrollToBottom();
+                                    }
+                                }
+                                // Handle tool_use_start - show "Using tool..." indicator
+                                else if (data.type === 'tool_use_start' && data.toolName) {
+                                    if (!messageDiv) {
+                                        messageDiv = document.createElement('div');
+                                        messageDiv.className = 'message assistant';
+                                        messagesContainer.appendChild(messageDiv);
+                                    }
+                                    
+                                    const toolDiv = document.createElement('div');
+                                    toolDiv.className = 'tool-indicator';
+                                    toolDiv.innerHTML = `
+                                        <div class="tool-spinner"></div>
+                                        <span>Using ${data.toolName}...</span>
+                                    `;
+                                    messageDiv.appendChild(toolDiv);
+                                    
+                                    // Store reference for updates
+                                    if (data.toolUseId) {
+                                        toolIndicators.set(data.toolUseId, toolDiv);
+                                    } else if (data.toolName) {
+                                        toolIndicators.set(data.toolName, toolDiv);
+                                    }
+                                    
+                                    scrollToBottom();
+                                }
+                                // Handle tool_execution_start - update to "Executing..."
+                                else if (data.type === 'tool_execution_start' && data.toolName) {
+                                    const toolDiv = toolIndicators.get(data.toolName);
+                                    if (toolDiv) {
+                                        toolDiv.innerHTML = `
+                                            <div class="tool-spinner"></div>
+                                            <span>Executing ${data.toolName}...</span>
+                                        `;
+                                    } else {
+                                        // Create new indicator if not found
+                                        if (!messageDiv) {
+                                            messageDiv = document.createElement('div');
+                                            messageDiv.className = 'message assistant';
+                                            messagesContainer.appendChild(messageDiv);
+                                        }
+                                        const newToolDiv = document.createElement('div');
+                                        newToolDiv.className = 'tool-indicator';
+                                        newToolDiv.innerHTML = `
+                                            <div class="tool-spinner"></div>
+                                            <span>Executing ${data.toolName}...</span>
+                                        `;
+                                        messageDiv.appendChild(newToolDiv);
+                                        toolIndicators.set(data.toolName, newToolDiv);
+                                    }
+                                    scrollToBottom();
+                                }
+                                // Handle tool_execution_complete - show success briefly
+                                else if (data.type === 'tool_execution_complete' && data.toolName) {
+                                    const toolDiv = toolIndicators.get(data.toolName);
+                                    if (toolDiv) {
+                                        toolDiv.innerHTML = `
+                                            <span style="color: #34c759;">✓ ${data.toolName} complete</span>
+                                        `;
+                                        // Remove after 2 seconds
+                                        setTimeout(() => {
+                                            if (toolDiv.parentElement) {
+                                                toolDiv.remove();
+                                            }
+                                            toolIndicators.delete(data.toolName);
+                                        }, 2000);
+                                    }
+                                    scrollToBottom();
+                                }
+                                // Handle tool_execution_error - show error
+                                else if (data.type === 'tool_execution_error' && data.toolName) {
+                                    const toolDiv = toolIndicators.get(data.toolName);
+                                    const errorMsg = data.error || 'Unknown error';
+                                    
+                                    if (toolDiv) {
+                                        toolDiv.style.borderColor = 'rgba(255, 59, 48, 0.5)';
+                                        toolDiv.style.backgroundColor = 'rgba(255, 59, 48, 0.1)';
+                                        toolDiv.innerHTML = `
+                                            <span style="color: var(--error-red);">✗ ${data.toolName}: ${errorMsg}</span>
+                                        `;
+                                    } else {
+                                        // Create error indicator
+                                        if (!messageDiv) {
+                                            messageDiv = document.createElement('div');
+                                            messageDiv.className = 'message assistant';
+                                            messagesContainer.appendChild(messageDiv);
+                                        }
+                                        const errorDiv = document.createElement('div');
+                                        errorDiv.className = 'tool-indicator';
+                                        errorDiv.style.borderColor = 'rgba(255, 59, 48, 0.5)';
+                                        errorDiv.style.backgroundColor = 'rgba(255, 59, 48, 0.1)';
+                                        errorDiv.innerHTML = `
+                                            <span style="color: var(--error-red);">✗ ${data.toolName}: ${errorMsg}</span>
+                                        `;
+                                        messageDiv.appendChild(errorDiv);
+                                    }
+                                    scrollToBottom();
+                                }
+                                // Handle message_stop - finalize message
+                                else if (data.type === 'message_stop') {
+                                    // Save conversation
+                                    if (assistantMessage) {
+                                        saveConversation(currentConversationId, message, assistantMessage);
+                                    }
+                                }
+                                // Handle error events
+                                else if (data.type === 'error') {
+                                    const errorMsg = data.error || 'Unknown error occurred';
+                                    throw new Error(errorMsg);
+                                }
+                                // Ignore other event types (content_block_stop, etc.)
+                            } catch (e) {
+                                console.error('Error parsing SSE data:', e);
+                            }
+                        }
+                    }
+                }
+            } catch (error) {
+                console.error('Chat error:', error);
+                
+                // Check if it's an auth error
+                if (error.message.includes('401') || error.message.includes('unauthorized')) {
+                    handleAuthError();
+                    return;
+                }
+                
+                appendMessage('assistant', `Error: ${error.message}`);
+            } finally {
+                messageInput.disabled = false;
+                sendBtn.disabled = false;
+                isStreaming = false;
+                messageInput.focus();
+            }
+        }
+
+        function appendMessage(role, content, save = true) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${role}`;
+
+            const bubble = document.createElement('div');
+            bubble.className = 'message-bubble';
+            bubble.innerHTML = formatMarkdown(content);
+
+            messageDiv.appendChild(bubble);
+            messagesContainer.appendChild(messageDiv);
+
+            scrollToBottom();
+            return messageDiv;
+        }
+
+        function saveConversation(conversationId, userMessage, assistantMessage) {
+            const conversations = JSON.parse(localStorage.getItem(STORAGE_KEYS.CONVERSATIONS) || '[]');
+            let conv = conversations.find(c => c.id === conversationId);
+
+            if (!conv) {
+                conv = {
+                    id: conversationId,
+                    title: userMessage.substring(0, 50),
+                    messages: [],
+                    created_at: new Date().toISOString(),
+                    updated_at: new Date().toISOString()
+                };
+                conversations.push(conv);
+            }
+
+            conv.messages.push(
+                { role: 'user', content: userMessage },
+                { role: 'assistant', content: assistantMessage }
+            );
+            conv.updated_at = new Date().toISOString();
+
+            localStorage.setItem(STORAGE_KEYS.CONVERSATIONS, JSON.stringify(conversations));
+            loadConversations();
+        }
+
+        function formatMarkdown(text) {
+            // Basic markdown formatting
+            let formatted = text;
+            
+            // Code blocks
+            formatted = formatted.replace(/```(\w+)?\n([\s\S]*?)```/g, '<pre><code>$2</code></pre>');
+            
+            // Inline code
+            formatted = formatted.replace(/`([^`]+)`/g, '<code>$1</code>');
+            
+            // Bold
+            formatted = formatted.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+            
+            // Italic
+            formatted = formatted.replace(/\*([^*]+)\*/g, '<em>$1</em>');
+            
+            // Line breaks
+            formatted = formatted.replace(/\n/g, '<br>');
+            
+            return formatted;
+        }
+
+        function scrollToBottom() {
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        function generateId() {
+            return `conv_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+        }
+
+        function formatTime(timestamp) {
+            const date = new Date(timestamp);
+            const now = new Date();
+            const diffMs = now - date;
+            const diffMins = Math.floor(diffMs / 60000);
+            const diffHours = Math.floor(diffMs / 3600000);
+            const diffDays = Math.floor(diffMs / 86400000);
+
+            if (diffMins < 1) return 'Just now';
+            if (diffMins < 60) return `${diffMins}m ago`;
+            if (diffHours < 24) return `${diffHours}h ago`;
+            if (diffDays < 7) return `${diffDays}d ago`;
+            
+            return date.toLocaleDateString();
+        }
+
+        function handleFileSelect(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            currentFile = file;
+            sendBtn.disabled = false;
+
+            // Show file preview (simplified)
+            console.log('File selected:', file.name);
+        }
+
+        function initSpeechRecognition() {
+            if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+                micBtn.style.display = 'none';
+                return;
+            }
+
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            recognition = new SpeechRecognition();
+            recognition.continuous = false;
+            recognition.interimResults = false;
+
+            recognition.onresult = (event) => {
+                const transcript = event.results[0][0].transcript;
+                messageInput.value = transcript;
+                sendBtn.disabled = false;
+                micBtn.classList.remove('recording');
+                isRecording = false;
+            };
+
+            recognition.onerror = (event) => {
+                console.error('Speech recognition error:', event.error);
+                micBtn.classList.remove('recording');
+                isRecording = false;
+                showSpeechError('Speech recognition failed');
+            };
+
+            recognition.onend = () => {
+                micBtn.classList.remove('recording');
+                isRecording = false;
+            };
+        }
+
+        function toggleSpeechRecognition() {
+            if (!recognition) return;
+
+            if (isRecording) {
+                recognition.stop();
+                micBtn.classList.remove('recording');
+                isRecording = false;
+            } else {
+                recognition.start();
+                micBtn.classList.add('recording');
+                isRecording = true;
+            }
+        }
+
+        function showSpeechError(message) {
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'speech-error';
+            errorDiv.textContent = message;
+            document.body.appendChild(errorDiv);
+
+            setTimeout(() => {
+                errorDiv.remove();
+            }, 3000);
+        }
+
+        // Initialize app
+        init();
+    </script>
+</body>
+</html>
