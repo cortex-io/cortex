@@ -1,0 +1,44 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: indexer-config-simple
+  namespace: wazuh-security
+data:
+  opensearch.yml: |
+    network.host: "0.0.0.0"
+    cluster.name: "wazuh-cluster"
+    node.name: "${HOSTNAME}"
+
+    # Single node configuration
+    discovery.type: single-node
+
+    # Compatibility setting for Filebeat 7.10.2 _type parameter
+    compatibility.override_main_response_version: true
+
+    # Security plugin configuration
+    plugins.security.ssl.http.enabled: true
+    plugins.security.ssl.http.pemcert_filepath: /usr/share/wazuh-indexer/certs/node.pem
+    plugins.security.ssl.http.pemkey_filepath: /usr/share/wazuh-indexer/certs/node-key.pem
+    plugins.security.ssl.http.pemtrustedcas_filepath: /usr/share/wazuh-indexer/certs/root-ca.pem
+
+    plugins.security.ssl.transport.enabled: true
+    plugins.security.ssl.transport.pemcert_filepath: /usr/share/wazuh-indexer/certs/node.pem
+    plugins.security.ssl.transport.pemkey_filepath: /usr/share/wazuh-indexer/certs/node-key.pem
+    plugins.security.ssl.transport.pemtrustedcas_filepath: /usr/share/wazuh-indexer/certs/root-ca.pem
+    plugins.security.ssl.transport.enforce_hostname_verification: false
+
+    plugins.security.nodes_dn:
+      - "CN=wazuh-indexer,O=Cortex,ST=CA,C=US"
+      - "CN=admin,O=Cortex,ST=CA,C=US"
+      - "CN=filebeat,O=Cortex,ST=CA,C=US"
+
+    plugins.security.authcz.admin_dn:
+      - "CN=admin,O=Cortex,ST=CA,C=US"
+
+    plugins.security.check_snapshot_restore_write_privileges: true
+    plugins.security.enable_snapshot_restore_privilege: true
+    plugins.security.restapi.roles_enabled: ["all_access", "security_rest_api_access"]
+
+    # Disable some restrictive settings for simpler deployment
+    plugins.security.allow_unsafe_democertificates: false
+    plugins.security.allow_default_init_securityindex: true

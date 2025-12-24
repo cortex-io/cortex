@@ -1,0 +1,228 @@
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: catalog-system
+  labels:
+    name: catalog-system
+    cortex-component: catalog
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: catalog-config
+  namespace: catalog-system
+data:
+  REDIS_HOST: "redis-master.cortex-system.svc.cluster.local"
+  REDIS_PORT: "6379"
+  CORTEX_ROOT: "/cortex"
+  LOG_LEVEL: "info"
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: catalog-scripts
+  namespace: catalog-system
+data:
+  catalog-api.js: |
+$(cat catalog-api.js | sed 's/^/    /')
+  catalog-discovery.js: |
+$(cat catalog-discovery.js | sed 's/^/    /')
+  package.json: |
+$(cat package.json | sed 's/^/    /')
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: catalog-api
+  namespace: catalog-system
+  labels:
+    app: catalog-api
+    component: api
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: catalog-api
+  template:
+    metadata:
+      labels:
+        app: catalog-api
+        component: api
+    spec:
+      initContainers:
+      - name: install-deps
+        image: node:18-alpine
+        command: ["/bin/sh", "-c"]
+        args:
+          - |
+            cd /app
+            npm install --production
+        volumeMounts:
+        - name: app-code
+          mountPath: /app
+        - name: node-modules
+          mountPath: /app/node_modules
+      containers:
+      - name: catalog-api
+        image: node:18-alpine
+        command: ["/bin/sh", "-c"]
+        args:
+          - |
+            cd /app
+            node catalog-api.js
+        ports:
+        - containerPort: 3000
+          name: http
+          protocol: TCP
+        env:
+        - name: REDIS_HOST
+          valueFrom:
+            configMapKeyRef:
+              name: catalog-config
+              key: REDIS_HOST
+        - name: REDIS_PORT
+          valueFrom:
+            configMapKeyRef:
+              name: catalog-config
+              key: REDIS_PORT
+        - name: REDIS_PASSWORD
+          value: "cortex123"
+        - name: PORT
+          value: "3000"
+        volumeMounts:
+        - name: app-code
+          mountPath: /app
+        - name: node-modules
+          mountPath: /app/node_modules
+        resources:
+          requests:
+            cpu: 100m
+            memory: 128Mi
+          limits:
+            cpu: 500m
+            memory: 512Mi
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 3000
+          initialDelaySeconds: 10
+          periodSeconds: 30
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 3000
+          initialDelaySeconds: 5
+          periodSeconds: 10
+      volumes:
+      - name: app-code
+        configMap:
+          name: catalog-scripts
+      - name: node-modules
+        emptyDir: {}
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: catalog-api
+  namespace: catalog-system
+  labels:
+    app: catalog-api
+spec:
+  type: ClusterIP
+  ports:
+  - port: 3000
+    targetPort: 3000
+    protocol: TCP
+    name: http
+  selector:
+    app: catalog-api
+
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: catalog-discovery
+  namespace: catalog-system
+  labels:
+    app: catalog-discovery
+    component: discovery
+spec:
+  schedule: "*/15 * * * *"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      template:
+        metadata:
+          labels:
+            app: catalog-discovery
+            component: discovery
+        spec:
+          restartPolicy: OnFailure
+          initContainers:
+          - name: install-deps
+            image: node:18-alpine
+            command: ["/bin/sh", "-c"]
+            args:
+              - |
+                cd /app
+                npm install --production
+            volumeMounts:
+            - name: app-code
+              mountPath: /app
+            - name: node-modules
+              mountPath: /app/node_modules
+          containers:
+          - name: discovery
+            image: node:18-alpine
+            command: ["/bin/sh", "-c"]
+            args:
+              - |
+                cd /app
+                node catalog-discovery.js
+            env:
+            - name: REDIS_HOST
+              valueFrom:
+                configMapKeyRef:
+                  name: catalog-config
+                  key: REDIS_HOST
+            - name: REDIS_PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: catalog-config
+                  key: REDIS_PORT
+            - name: REDIS_PASSWORD
+              value: "cortex123"
+            - name: CORTEX_ROOT
+              value: "/cortex"
+            volumeMounts:
+            - name: app-code
+              mountPath: /app
+            - name: node-modules
+              mountPath: /app/node_modules
+            - name: cortex-files
+              mountPath: /cortex
+              readOnly: true
+            resources:
+              requests:
+                cpu: 200m
+                memory: 256Mi
+              limits:
+                cpu: 1000m
+                memory: 1Gi
+          volumes:
+          - name: app-code
+            configMap:
+              name: catalog-scripts
+          - name: node-modules
+            emptyDir: {}
+          - name: cortex-files
+            hostPath:
+              path: /Users/ryandahlberg/Projects/cortex
+              type: Directory
