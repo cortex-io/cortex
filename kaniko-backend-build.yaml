@@ -1,0 +1,29 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: kaniko-backend-build
+  namespace: cortex-chat
+spec:
+  nodeSelector:
+    kubernetes.io/hostname: k3s-master03
+  containers:
+  - name: kaniko
+    image: gcr.io/kaniko-project/executor:latest
+    args:
+    - "--context=/workspace/backend"
+    - "--dockerfile=/workspace/backend/Dockerfile"
+    - "--destination=docker-registry.cortex-chat.svc.cluster.local:5000/cortex-chat-backend:latest"
+    - "--insecure"
+    - "--skip-tls-verify"
+    - "--cache=false"
+    - "--verbosity=debug"
+    volumeMounts:
+    - name: node-tmp
+      mountPath: /workspace
+      subPath: cortex-chat
+  volumes:
+  - name: node-tmp
+    hostPath:
+      path: /tmp
+      type: Directory
+  restartPolicy: Never

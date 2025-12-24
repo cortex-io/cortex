@@ -1,0 +1,294 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: sync-middleware-script
+  namespace: cortex-system
+data:
+  sync.py: |
+    #!/usr/bin/env python3
+    """
+    Redis-PostgreSQL Sync Middleware
+    Subscribes to Redis pub/sub and syncs coordination data to PostgreSQL
+    """
+    import os
+    import sys
+    import time
+    import json
+    import redis
+    import psycopg2
+    from datetime import datetime
+    from psycopg2.extras import execute_values
+
+    # Configuration
+    REDIS_HOST = os.getenv('REDIS_HOST', 'redis-master.cortex-system.svc.cluster.local')
+    REDIS_PORT = int(os.getenv('REDIS_PORT', '6379'))
+    REDIS_PASSWORD = os.getenv('REDIS_PASSWORD', 'cortex123')
+
+    POSTGRES_HOST = os.getenv('POSTGRES_HOST', 'postgres.cortex-system.svc.cluster.local')
+    POSTGRES_PORT = int(os.getenv('POSTGRES_PORT', '5432'))
+    POSTGRES_DB = os.getenv('POSTGRES_DB', 'cortex')
+    POSTGRES_USER = os.getenv('POSTGRES_USER', 'cortex')
+    POSTGRES_PASSWORD = os.getenv('POSTGRES_PASSWORD', 'cortex')
+
+    def connect_redis():
+        """Connect to Redis"""
+        print("[Sync] Connecting to Redis...")
+        r = redis.Redis(
+            host=REDIS_HOST,
+            port=REDIS_PORT,
+            password=REDIS_PASSWORD,
+            decode_responses=True
+        )
+        r.ping()
+        print(f"[Sync] Connected to Redis at {REDIS_HOST}:{REDIS_PORT}")
+        return r
+
+    def connect_postgres():
+        """Connect to PostgreSQL"""
+        print("[Sync] Connecting to PostgreSQL...")
+        conn = psycopg2.connect(
+            host=POSTGRES_HOST,
+            port=POSTGRES_PORT,
+            database=POSTGRES_DB,
+            user=POSTGRES_USER,
+            password=POSTGRES_PASSWORD
+        )
+        print(f"[Sync] Connected to PostgreSQL at {POSTGRES_HOST}:{POSTGRES_PORT}")
+        return conn
+
+    def sync_larry_task_to_postgres(pg_conn, event_data):
+        """Sync Larry coordination event to PostgreSQL tasks table"""
+        cursor = pg_conn.cursor()
+
+        larry_id = event_data.get('from')
+        event_type = event_data.get('event')
+        timestamp = event_data.get('timestamp', datetime.utcnow().isoformat() + 'Z')
+
+        # Map events to task operations
+        if event_type == 'phase_started':
+            cursor.execute("""
+                INSERT INTO tasks (task_id, agent_id, task_type, status, description, created_at, updated_at)
+                VALUES (%s, %s, %s, %s, %s, %s, %s)
+                ON CONFLICT (task_id) DO UPDATE SET
+                    status = EXCLUDED.status,
+                    updated_at = EXCLUDED.updated_at
+            """, (
+                f"{larry_id}-phase",
+                larry_id,
+                'coordination',
+                'in_progress',
+                f"{larry_id} coordination phase started",
+                timestamp,
+                timestamp
+            ))
+
+        elif event_type == 'progress_update':
+            progress = event_data.get('progress', 0)
+            message = event_data.get('message', '')
+
+            cursor.execute("""
+                UPDATE tasks
+                SET status = %s,
+                    result = %s,
+                    updated_at = %s
+                WHERE task_id = %s
+            """, (
+                'in_progress',
+                json.dumps({'progress': progress, 'message': message}),
+                timestamp,
+                f"{larry_id}-phase"
+            ))
+
+        elif event_type == 'phase_complete':
+            cursor.execute("""
+                UPDATE tasks
+                SET status = %s,
+                    completed_at = %s,
+                    updated_at = %s
+                WHERE task_id = %s
+            """, (
+                'completed',
+                timestamp,
+                timestamp,
+                f"{larry_id}-phase"
+            ))
+
+        pg_conn.commit()
+        cursor.close()
+
+    def sync_periodic_snapshot(redis_client, pg_conn):
+        """Periodically sync full Redis state to PostgreSQL"""
+        cursor = pg_conn.cursor()
+
+        # Get all Larry phase keys
+        for larry_id in ['larry-01', 'larry-02', 'larry-03']:
+            status = redis_client.get(f"phase:{larry_id}:status")
+            progress = redis_client.get(f"phase:{larry_id}:progress")
+            started_at = redis_client.get(f"phase:{larry_id}:started_at")
+            completed_at = redis_client.get(f"phase:{larry_id}:completed_at")
+
+            if status:
+                # Ensure task exists
+                cursor.execute("""
+                    INSERT INTO tasks (task_id, agent_id, task_type, status, created_at, updated_at)
+                    VALUES (%s, %s, %s, %s, %s, %s)
+                    ON CONFLICT (task_id) DO NOTHING
+                """, (
+                    f"{larry_id}-phase",
+                    larry_id,
+                    'coordination',
+                    status,
+                    started_at or datetime.utcnow().isoformat() + 'Z',
+                    datetime.utcnow().isoformat() + 'Z'
+                ))
+
+                # Update task status
+                cursor.execute("""
+                    UPDATE tasks
+                    SET status = %s,
+                        result = %s,
+                        updated_at = %s,
+                        completed_at = %s
+                    WHERE task_id = %s
+                """, (
+                    status,
+                    json.dumps({'progress': progress}),
+                    datetime.utcnow().isoformat() + 'Z',
+                    completed_at,
+                    f"{larry_id}-phase"
+                ))
+
+            # Sync Larry-specific metrics
+            if larry_id == 'larry-02':
+                findings = redis_client.hgetall(f"phase:{larry_id}:findings")
+                if findings:
+                    cursor.execute("""
+                        UPDATE tasks
+                        SET result = jsonb_set(
+                            COALESCE(result, '{}'::jsonb),
+                            '{security_findings}',
+                            %s::jsonb
+                        )
+                        WHERE task_id = %s
+                    """, (json.dumps(findings), f"{larry_id}-phase"))
+
+            elif larry_id == 'larry-03':
+                assets = redis_client.get(f"phase:{larry_id}:inventory:assets")
+                prs = redis_client.get(f"phase:{larry_id}:development:prs")
+                if assets or prs:
+                    cursor.execute("""
+                        UPDATE tasks
+                        SET result = jsonb_set(
+                            jsonb_set(
+                                COALESCE(result, '{}'::jsonb),
+                                '{assets_cataloged}',
+                                %s::jsonb
+                            ),
+                            '{prs_created}',
+                            %s::jsonb
+                        )
+                        WHERE task_id = %s
+                    """, (json.dumps(int(assets or 0)), json.dumps(int(prs or 0)), f"{larry_id}-phase"))
+
+        pg_conn.commit()
+        cursor.close()
+
+    def main():
+        print("========================================")
+        print("  Redis-PostgreSQL Sync Middleware")
+        print("========================================")
+        print("")
+
+        # Connect to services
+        redis_client = connect_redis()
+        pg_conn = connect_postgres()
+
+        # Subscribe to Larry coordination channel
+        pubsub = redis_client.pubsub()
+        pubsub.subscribe('larry:coordination')
+
+        print("[Sync] Subscribed to larry:coordination channel")
+        print("[Sync] Starting sync loop...")
+
+        last_snapshot = time.time()
+        snapshot_interval = 30  # seconds
+
+        for message in pubsub.listen():
+            try:
+                # Handle pub/sub messages
+                if message['type'] == 'message':
+                    event_data = json.loads(message['data'])
+                    print(f"[Sync] Event: {event_data.get('from')} - {event_data.get('event')}")
+                    sync_larry_task_to_postgres(pg_conn, event_data)
+
+                # Periodic full snapshot
+                if time.time() - last_snapshot > snapshot_interval:
+                    print("[Sync] Performing periodic snapshot...")
+                    sync_periodic_snapshot(redis_client, pg_conn)
+                    last_snapshot = time.time()
+
+            except Exception as e:
+                print(f"[Sync] ERROR: {e}")
+                import traceback
+                traceback.print_exc()
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: redis-postgres-sync
+  namespace: cortex-system
+  labels:
+    app: redis-postgres-sync
+    component: middleware
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: redis-postgres-sync
+  template:
+    metadata:
+      labels:
+        app: redis-postgres-sync
+        component: middleware
+    spec:
+      containers:
+      - name: sync-middleware
+        image: python:3.11-slim
+        command: ["/bin/sh", "-c"]
+        args:
+          - |
+            pip install --no-cache-dir redis==5.0.1 psycopg2-binary==2.9.9
+            python3 /app/sync.py
+        env:
+        - name: REDIS_HOST
+          value: "redis-master.cortex-system.svc.cluster.local"
+        - name: REDIS_PORT
+          value: "6379"
+        - name: REDIS_PASSWORD
+          value: "cortex123"
+        - name: POSTGRES_HOST
+          value: "postgres.cortex-system.svc.cluster.local"
+        - name: POSTGRES_PORT
+          value: "5432"
+        - name: POSTGRES_DB
+          value: "cortex"
+        - name: POSTGRES_USER
+          value: "cortex"
+        - name: POSTGRES_PASSWORD
+          value: "cortex"
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "100m"
+          limits:
+            memory: "512Mi"
+            cpu: "250m"
+        volumeMounts:
+        - name: script
+          mountPath: /app
+      volumes:
+      - name: script
+        configMap:
+          name: sync-middleware-script

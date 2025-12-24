@@ -1,0 +1,21 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: source-copy
+  namespace: cortex-chat
+spec:
+  nodeSelector:
+    kubernetes.io/hostname: k3s-master03
+  containers:
+  - name: copy
+    image: alpine:latest
+    command: ["/bin/sh", "-c", "sleep 3600"]
+    volumeMounts:
+    - name: node-tmp
+      mountPath: /node-tmp
+  volumes:
+  - name: node-tmp
+    hostPath:
+      path: /tmp
+      type: Directory
+  restartPolicy: Never
