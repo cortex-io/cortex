@@ -41,6 +41,10 @@ spec:
             secretKeyRef:
               name: cortex-chat-secrets
               key: anthropic-api-key
+        - name: REDIS_HOST
+          value: "redis.cortex-system.svc.cluster.local"
+        - name: REDIS_PORT
+          value: "6379"
         - name: REDIS_URL
           value: "redis://:$(REDIS_PASSWORD)@redis.cortex-chat.svc.cluster.local:6379"
         - name: REDIS_PASSWORD

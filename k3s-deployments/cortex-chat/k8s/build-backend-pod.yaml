@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: backend-build-helper
+  namespace: cortex-chat
+spec:
+  restartPolicy: Never
+  containers:
+  - name: builder
+    image: alpine:latest
+    command: ["sleep", "3600"]
+    volumeMounts:
+    - name: build-source
+      mountPath: /workspace
+  volumes:
+  - name: build-source
+    emptyDir: {}

@@ -1,0 +1,91 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: cortex-chat-clawd-frontend-source
+  namespace: cortex-chat
+data:
+  Dockerfile: |
+    FROM nginx:alpine
+
+    # Copy static files with proper permissions
+    COPY --chown=nginx:nginx index-clawd.html /usr/share/nginx/html/index.html
+
+    # Set file permissions
+    RUN chmod 644 /usr/share/nginx/html/index.html
+
+    # Configure nginx with aggressive no-cache headers
+    RUN echo "server { \
+        listen 3000; \
+        server_name _; \
+        root /usr/share/nginx/html; \
+        index index.html; \
+        location / { \
+            try_files \$uri \$uri/ /index.html; \
+            add_header Cache-Control \"no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0\"; \
+            add_header Pragma \"no-cache\"; \
+            add_header Expires \"0\"; \
+            add_header X-Content-Type-Options \"nosniff\"; \
+            if_modified_since off; \
+            etag off; \
+        } \
+    }" > /etc/nginx/conf.d/default.conf
+
+    EXPOSE 3000
+
+    CMD ["nginx", "-g", "daemon off;"]
+  index-clawd.html: |
+    PLACEHOLDER_FOR_HTML_CONTENT
+
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: kaniko-frontend-clawd
+  namespace: cortex-chat
+spec:
+  ttlSecondsAfterFinished: 300
+  template:
+    spec:
+      initContainers:
+      # Copy source files from ConfigMap
+      - name: prepare-source
+        image: busybox:1.36
+        command:
+        - sh
+        - -c
+        - |
+          set -e
+          echo "Copying source files..."
+          cp /source/Dockerfile /workspace/Dockerfile
+          cp /source/index-clawd.html /workspace/index-clawd.html
+          echo "Source files copied successfully"
+          ls -la /workspace/
+        volumeMounts:
+        - name: source
+          mountPath: /source
+        - name: workspace
+          mountPath: /workspace
+      containers:
+      # Kaniko build container
+      - name: kaniko
+        image: gcr.io/kaniko-project/executor:v1.23.2-debug
+        args:
+        - "--dockerfile=/workspace/Dockerfile"
+        - "--context=/workspace"
+        - "--destination=10.43.170.72:5000/cortex-chat-frontend:latest"
+        - "--insecure"
+        - "--skip-tls-verify"
+        - "--cleanup"
+        - "--verbosity=info"
+        volumeMounts:
+        - name: workspace
+          mountPath: /workspace
+      volumes:
+      - name: source
+        configMap:
+          name: cortex-chat-clawd-frontend-source
+      - name: workspace
+        emptyDir: {}
+      restartPolicy: Never
+  backoffLimit: 3

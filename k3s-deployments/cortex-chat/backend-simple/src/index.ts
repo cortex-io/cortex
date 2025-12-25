@@ -1,22 +1,13 @@
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
-import { createClaudeService } from './services/claude';
-import { createChatRoutes } from './routes/chat';
+import { createChatRoutes } from './routes/chat-simple';
 import { createAuthRoutes } from './routes/auth';
 import { authMiddleware } from './middleware/auth';
 
 // Configuration
 const PORT = parseInt(process.env.PORT || '8080');
-const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY;
-const CLAUDE_MODEL = process.env.CLAUDE_MODEL || 'claude-sonnet-4-5-20250929';
-const MAX_TOKENS = parseInt(process.env.MAX_TOKENS || '4096');
 const CORS_ORIGIN = process.env.CORS_ORIGIN || '*';
-
-// Validate required configuration
-if (!ANTHROPIC_API_KEY) {
-  console.error('ERROR: ANTHROPIC_API_KEY environment variable is required');
-  process.exit(1);
-}
+const CORTEX_URL = process.env.CORTEX_URL || 'http://cortex-orchestrator.cortex.svc.cluster.local:8000';
 
 // Create Hono app
 const app = new Hono();
@@ -40,39 +31,35 @@ app.use('*', async (c, next) => {
   console.log(`[${timestamp2}] ${c.req.method} ${c.req.path} - ${c.res.status} (${duration}ms)`);
 });
 
-// Initialize Claude service
-console.log('[Server] Initializing Claude service...');
-const claudeService = createClaudeService(ANTHROPIC_API_KEY, CLAUDE_MODEL, MAX_TOKENS);
-console.log('[Server] Claude service initialized');
-console.log(`[Server] Using model: ${CLAUDE_MODEL}`);
-console.log(`[Server] Max tokens: ${MAX_TOKENS}`);
+console.log('[Server] Mode: Simple Proxy to Cortex');
+console.log(`[Server] Cortex URL: ${CORTEX_URL}`);
 
 // Mount auth routes (PUBLIC - no auth required)
 const authRoutes = createAuthRoutes();
 app.route('/api/auth', authRoutes);
 
 // Mount chat routes with auth middleware (PROTECTED)
-const chatRoutes = createChatRoutes(claudeService);
+const chatRoutes = createChatRoutes();
 app.use('/api/chat', authMiddleware);
-app.use('/api/tools', authMiddleware);
 app.route('/api', chatRoutes);
 
 // Root endpoint (PUBLIC)
 app.get('/', (c) => {
   return c.json({
     name: 'Cortex Chat Backend',
-    version: '2.0.0',
+    version: '3.0.0',
+    mode: 'simple-proxy',
     framework: 'Hono',
     runtime: 'Bun',
     status: 'running',
+    cortexUrl: CORTEX_URL,
     endpoints: {
       auth: {
         login: 'POST /api/auth/login',
         verify: 'POST /api/auth/verify'
       },
       chat: {
-        chat: 'POST /api/chat (protected)',
-        tools: 'GET /api/tools (protected)',
+        chat: 'POST /api/chat (protected - proxies to Cortex)',
         health: 'GET /api/health (public)'
       }
     }
@@ -106,11 +93,13 @@ app.onError((err, c) => {
 
 // Start server
 console.log('============================================================');
-console.log('Cortex Chat Backend (Hono + Tool Execution + Auth)');
+console.log('Cortex Chat Backend (Simple Proxy)');
 console.log('============================================================');
 console.log(`Server starting on port ${PORT}`);
 console.log(`CORS enabled for: ${CORS_ORIGIN}`);
-console.log(`Claude Model: ${CLAUDE_MODEL}`);
+console.log(`Cortex URL: ${CORTEX_URL}`);
+console.log('');
+console.log('Mode: SIMPLE PROXY - All queries forwarded to Cortex');
 console.log('');
 console.log('Available endpoints:');
 console.log('  PUBLIC:');
@@ -120,17 +109,13 @@ console.log(`    GET    http://localhost:${PORT}/health`);
 console.log(`    GET    http://localhost:${PORT}/api/health`);
 console.log('  PROTECTED (requires JWT token):');
 console.log(`    POST   http://localhost:${PORT}/api/chat`);
-console.log(`    GET    http://localhost:${PORT}/api/tools`);
 console.log('');
 console.log('Authentication:');
 console.log(`  Username: ${process.env.AUTH_USERNAME || 'ryan'}`);
 console.log(`  Password: ${process.env.AUTH_PASSWORD ? '***' : '7vuzjzuN9! (default)'}`);
 console.log('');
-console.log('MCP Servers:');
-console.log('  - Wazuh:   http://wazuh-mcp.cortex-system.svc.cluster.local:3000');
-console.log('  - UniFi:   http://unifi-mcp.cortex-system.svc.cluster.local:3000');
-console.log('  - Proxmox: http://proxmox-mcp.cortex-system.svc.cluster.local:3000');
-console.log('  - Cortex:  http://cortex-orchestrator.cortex.svc.cluster.local:8000');
+console.log('Note: All intelligence is in Cortex orchestrator');
+console.log('      This backend just forwards queries');
 console.log('============================================================');
 
 export default {
