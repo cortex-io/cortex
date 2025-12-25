@@ -1,0 +1,54 @@
+{
+  "name": "@cortex/mcp-server",
+  "version": "1.0.0",
+  "description": "Cortex MCP Server - Unified Model Context Protocol interface to the entire Cortex construction company",
+  "main": "src/index.js",
+  "bin": {
+    "cortex-mcp-server": "src/index.js"
+  },
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "NODE_ENV=development node src/index.js",
+    "test": "jest --coverage",
+    "lint": "eslint src/",
+    "docker:build": "docker build -t cortex-mcp-server:latest .",
+    "docker:run": "docker run -it --rm -p 3000:3000 -p 8080:8080 cortex-mcp-server:latest",
+    "k8s:deploy": "kubectl apply -f k8s/cortex-mcp-server.yaml",
+    "k8s:delete": "kubectl delete -f k8s/cortex-mcp-server.yaml",
+    "health": "curl http://localhost:8080/health",
+    "status": "curl http://localhost:8080/status",
+    "routing": "curl http://localhost:8080/routing"
+  },
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "cortex",
+    "infrastructure",
+    "automation",
+    "ai",
+    "agent",
+    "worker-pool"
+  ],
+  "author": "Cortex Holdings",
+  "license": "UNLICENSED",
+  "private": true,
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "dependencies": {
+    "axios": "^1.6.0",
+    "uuid": "^9.0.1"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0",
+    "eslint": "^8.50.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/cortex/cortex.git"
+  },
+  "bugs": {
+    "url": "https://github.com/cortex/cortex/issues"
+  },
+  "homepage": "https://github.com/cortex/cortex#readme"
+}
