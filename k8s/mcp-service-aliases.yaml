@@ -1,0 +1,75 @@
+---
+# Service aliases for backward compatibility with Cortex orchestrator
+# These allow Cortex to reach MCP servers using the old service names
+# while the actual services use the correct naming convention
+apiVersion: v1
+kind: Service
+metadata:
+  name: unifi-mcp
+  namespace: cortex-system
+  labels:
+    app: unifi-mcp-server
+    cortex.component: mcp-alias
+spec:
+  type: ClusterIP
+  ports:
+  - port: 3000
+    targetPort: 3000
+    protocol: TCP
+    name: http
+  selector:
+    app: unifi-mcp-server
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: wazuh-mcp
+  namespace: cortex-system
+  labels:
+    app: wazuh-mcp-server
+    cortex.component: mcp-alias
+spec:
+  type: ClusterIP
+  ports:
+  - port: 3000
+    targetPort: 8080
+    protocol: TCP
+    name: http
+  selector:
+    app: wazuh-mcp-server
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: proxmox-mcp
+  namespace: cortex-system
+  labels:
+    app: proxmox-mcp-server
+    cortex.component: mcp-alias
+spec:
+  type: ClusterIP
+  ports:
+  - port: 3000
+    targetPort: 3000
+    protocol: TCP
+    name: http
+  selector:
+    app: proxmox-mcp-server
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: cloudflare-mcp
+  namespace: cortex-system
+  labels:
+    app: cloudflare-mcp-server
+    cortex.component: mcp-alias
+spec:
+  type: ClusterIP
+  ports:
+  - port: 3000
+    targetPort: 3000
+    protocol: TCP
+    name: http
+  selector:
+    app: cloudflare-mcp-server
