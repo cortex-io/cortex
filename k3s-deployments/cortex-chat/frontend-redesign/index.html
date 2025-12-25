@@ -191,8 +191,12 @@
         }
 
         /* Mobile Layout */
-        /* Top Bar */
+        /* Top Bar - FIXED */
         .top-bar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
             background: var(--bg-dark);
             padding: 12px 16px;
             display: flex;
@@ -327,12 +331,41 @@
             transform: scale(0.98);
         }
 
+        .new-chat-btn {
+            background: #0a84ff;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 10px 16px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin: 12px 20px;
+            width: calc(100% - 40px);
+            justify-content: center;
+            transition: all 0.2s;
+        }
+
+        .new-chat-btn:hover {
+            background: #0077ed;
+        }
+
+        .new-chat-btn:active {
+            transform: scale(0.98);
+        }
+
         .chat-item {
             padding: 12px 16px;
             border-radius: 8px;
             margin-bottom: 4px;
             cursor: pointer;
             transition: background 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
         }
 
         .chat-item:hover {
@@ -341,6 +374,11 @@
 
         .chat-item.active {
             background: rgba(255, 255, 255, 0.1);
+        }
+
+        .chat-item-content {
+            flex: 1;
+            min-width: 0;
         }
 
         .chat-item-title {
@@ -357,18 +395,45 @@
             color: var(--text-gray);
         }
 
+        .delete-chat-btn {
+            background: none;
+            border: none;
+            color: #ff453a;
+            font-size: 18px;
+            cursor: pointer;
+            padding: 4px 8px;
+            opacity: 0;
+            transition: opacity 0.2s;
+            flex-shrink: 0;
+        }
+
+        .chat-item:hover .delete-chat-btn {
+            opacity: 1;
+        }
+
+        .delete-chat-btn:hover {
+            color: #ff6961;
+        }
+
+        .delete-chat-btn:active {
+            transform: scale(0.9);
+        }
+
         /* Main Chat Area */
         .main-content {
             flex: 1;
             display: flex;
             flex-direction: column;
             overflow: hidden;
+            padding-top: 60px; /* Space for fixed top bar */
+            padding-bottom: 0; /* Input area will handle its own spacing */
         }
 
         .chat-messages {
             flex: 1;
             overflow-y: auto;
             padding: 20px 16px;
+            padding-bottom: 140px; /* Space for fixed input area */
             display: flex;
             flex-direction: column;
         }
@@ -494,10 +559,15 @@
 
         /* Bottom Input Area */
         .input-area {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
             background: var(--bg-dark);
             padding: 12px 16px;
             padding-bottom: calc(12px + env(safe-area-inset-bottom, 0));
             border-top: 1px solid rgba(255, 255, 255, 0.05);
+            z-index: 999;
         }
 
         .input-container {
@@ -597,6 +667,7 @@
 
             .chat-messages {
                 padding: 40px 32px;
+                padding-bottom: 160px; /* More space on desktop for fixed input */
             }
 
             .message {
@@ -605,6 +676,7 @@
 
             .input-area {
                 padding: 16px 32px;
+                left: var(--sidebar-width); /* Offset for sidebar on desktop */
             }
 
             .input-container {
@@ -831,6 +903,10 @@
             <div class="sidebar-header">
                 <h2>Recent Chats</h2>
             </div>
+            <button class="new-chat-btn" id="newChatBtn">
+                <span>✚</span>
+                <span>New Chat</span>
+            </button>
             <div class="chat-list" id="chatList">
                 <!-- Chat history will be populated here -->
             </div>
@@ -1056,6 +1132,12 @@
 
             // Logout
             sidebarLogoutBtn.addEventListener('click', logout);
+
+            // New chat button
+            const newChatBtn = document.getElementById('newChatBtn');
+            if (newChatBtn) {
+                newChatBtn.addEventListener('click', startNewChat);
+            }
         }
 
         async function handleLogin(e) {
@@ -1137,63 +1219,172 @@
             showLoginScreen('Session expired. Please sign in again.');
         }
 
-        function loadConversations() {
-            const conversations = JSON.parse(localStorage.getItem(STORAGE_KEYS.CONVERSATIONS) || '[]');
-            chatList.innerHTML = '';
+        async function loadConversations() {
+            chatList.innerHTML = '<div style="padding: 16px; color: var(--text-gray); text-align: center;">Loading...</div>';
 
-            if (conversations.length === 0) {
-                chatList.innerHTML = '<div style="padding: 16px; color: var(--text-gray); text-align: center;">No conversations yet</div>';
+            try {
+                const authToken = localStorage.getItem(STORAGE_KEYS.AUTH_TOKEN);
+                const response = await fetch(`${API_BASE}/api/conversations`, {
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`
+                    }
+                });
+
+                if (response.status === 401) {
+                    handleAuthError();
+                    return;
+                }
+
+                if (!response.ok) {
+                    throw new Error('Failed to load conversations');
+                }
+
+                const data = await response.json();
+                const conversations = data.conversations || [];
+
+                chatList.innerHTML = '';
+
+                if (conversations.length === 0) {
+                    chatList.innerHTML = '<div style="padding: 16px; color: var(--text-gray); text-align: center;">No conversations yet</div>';
+                    return;
+                }
+
+                conversations.forEach(conv => {
+                    const item = document.createElement('div');
+                    item.className = 'chat-item';
+                    if (conv.id === currentConversationId) {
+                        item.classList.add('active');
+                    }
+
+                    const content = document.createElement('div');
+                    content.className = 'chat-item-content';
+
+                    const title = document.createElement('div');
+                    title.className = 'chat-item-title';
+                    title.textContent = conv.title || 'New Chat';
+
+                    const time = document.createElement('div');
+                    time.className = 'chat-item-time';
+                    time.textContent = formatTime(conv.updated_at);
+
+                    content.appendChild(title);
+                    content.appendChild(time);
+
+                    const deleteBtn = document.createElement('button');
+                    deleteBtn.className = 'delete-chat-btn';
+                    deleteBtn.innerHTML = '🗑️';
+                    deleteBtn.title = 'Delete chat';
+
+                    deleteBtn.addEventListener('click', async (e) => {
+                        e.stopPropagation();
+                        await deleteConversation(conv.id);
+                    });
+
+                    content.addEventListener('click', async () => {
+                        currentConversationId = conv.id;
+                        localStorage.setItem(STORAGE_KEYS.CURRENT_CONV, conv.id);
+                        await loadConversation(conv.id);
+                        sidebar.classList.remove('open');
+                        sidebarOverlay.classList.remove('show');
+                        await loadConversations(); // Refresh to update active state
+                    });
+
+                    item.appendChild(content);
+                    item.appendChild(deleteBtn);
+                    chatList.appendChild(item);
+                });
+            } catch (error) {
+                console.error('Error loading conversations:', error);
+                chatList.innerHTML = '<div style="padding: 16px; color: var(--error-red); text-align: center;">Failed to load conversations</div>';
+            }
+        }
+
+        async function deleteConversation(conversationId) {
+            if (!confirm('Are you sure you want to delete this chat?')) {
                 return;
             }
 
-            conversations.sort((a, b) => new Date(b.updated_at) - new Date(a.updated_at));
-
-            conversations.forEach(conv => {
-                const item = document.createElement('div');
-                item.className = 'chat-item';
-                if (conv.id === currentConversationId) {
-                    item.classList.add('active');
-                }
-
-                const title = document.createElement('div');
-                title.className = 'chat-item-title';
-                title.textContent = conv.title || 'New Chat';
-
-                const time = document.createElement('div');
-                time.className = 'chat-item-time';
-                time.textContent = formatTime(conv.updated_at);
-
-                item.appendChild(title);
-                item.appendChild(time);
-
-                item.addEventListener('click', () => {
-                    currentConversationId = conv.id;
-                    localStorage.setItem(STORAGE_KEYS.CURRENT_CONV, conv.id);
-                    loadConversation(conv.id);
-                    sidebar.classList.remove('open');
-                    sidebarOverlay.classList.remove('show');
-                    loadConversations(); // Refresh to update active state
+            try {
+                const authToken = localStorage.getItem(STORAGE_KEYS.AUTH_TOKEN);
+                const response = await fetch(`${API_BASE}/api/conversations/${conversationId}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`
+                    }
                 });
 
-                chatList.appendChild(item);
-            });
+                if (response.status === 401) {
+                    handleAuthError();
+                    return;
+                }
+
+                if (!response.ok) {
+                    throw new Error('Failed to delete conversation');
+                }
+
+                // If we deleted the current conversation, clear it
+                if (currentConversationId === conversationId) {
+                    currentConversationId = null;
+                    localStorage.removeItem(STORAGE_KEYS.CURRENT_CONV);
+                    messagesContainer.innerHTML = '';
+                    messagesContainer.style.display = 'none';
+                    emptyState.classList.remove('hidden');
+                }
+
+                await loadConversations();
+            } catch (error) {
+                console.error('Error deleting conversation:', error);
+                alert('Failed to delete conversation');
+            }
         }
 
-        function loadConversation(conversationId) {
-            const conversations = JSON.parse(localStorage.getItem(STORAGE_KEYS.CONVERSATIONS) || '[]');
-            const conv = conversations.find(c => c.id === conversationId);
-
-            if (!conv) return;
-
-            emptyState.classList.add('hidden');
-            messagesContainer.style.display = 'flex';
+        function startNewChat() {
+            currentConversationId = null;
+            localStorage.removeItem(STORAGE_KEYS.CURRENT_CONV);
             messagesContainer.innerHTML = '';
+            messagesContainer.style.display = 'none';
+            emptyState.classList.remove('hidden');
+            sidebar.classList.remove('open');
+            sidebarOverlay.classList.remove('show');
+            loadConversations();
+            messageInput.focus();
+        }
 
-            conv.messages.forEach(msg => {
-                appendMessage(msg.role, msg.content, false);
-            });
+        async function loadConversation(conversationId) {
+            try {
+                const authToken = localStorage.getItem(STORAGE_KEYS.AUTH_TOKEN);
+                const response = await fetch(`${API_BASE}/api/conversations/${conversationId}`, {
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`
+                    }
+                });
 
-            scrollToBottom();
+                if (response.status === 401) {
+                    handleAuthError();
+                    return;
+                }
+
+                if (!response.ok) {
+                    throw new Error('Failed to load conversation');
+                }
+
+                const data = await response.json();
+                const conv = data.conversation;
+
+                if (!conv) return;
+
+                emptyState.classList.add('hidden');
+                messagesContainer.style.display = 'flex';
+                messagesContainer.innerHTML = '';
+
+                conv.messages.forEach(msg => {
+                    appendMessage(msg.role, msg.content, false);
+                });
+
+                scrollToBottom();
+            } catch (error) {
+                console.error('Error loading conversation:', error);
+            }
         }
 
         async function sendMessage() {
@@ -1228,13 +1419,23 @@
                 localStorage.setItem(STORAGE_KEYS.CURRENT_CONV, currentConversationId);
             }
 
-            // Get conversation history
-            const conversations = JSON.parse(localStorage.getItem(STORAGE_KEYS.CONVERSATIONS) || '[]');
-            let conv = conversations.find(c => c.id === currentConversationId);
-            const history = conv ? conv.messages.map(msg => ({
-                role: msg.role,
-                content: msg.content
-            })) : [];
+            // Get conversation history from server
+            let history = [];
+            try {
+                const authToken = localStorage.getItem(STORAGE_KEYS.AUTH_TOKEN);
+                const convResponse = await fetch(`${API_BASE}/api/conversations/${currentConversationId}`, {
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`
+                    }
+                });
+
+                if (convResponse.ok) {
+                    const convData = await convResponse.json();
+                    history = convData.conversation?.messages || [];
+                }
+            } catch (e) {
+                // No existing conversation, that's ok
+            }
 
             // Add typing indicator
             const typingDiv = document.createElement('div');
@@ -1332,7 +1533,13 @@
                                         messageDiv.className = 'message assistant';
                                         messagesContainer.appendChild(messageDiv);
                                     }
-                                    
+
+                                    // Remove any existing indicator for this tool to prevent duplicates
+                                    const existingIndicator = toolIndicators.get(data.toolName);
+                                    if (existingIndicator && existingIndicator.parentElement) {
+                                        existingIndicator.remove();
+                                    }
+
                                     const toolDiv = document.createElement('div');
                                     toolDiv.className = 'tool-indicator';
                                     toolDiv.innerHTML = `
@@ -1340,14 +1547,14 @@
                                         <span>Using ${data.toolName}...</span>
                                     `;
                                     messageDiv.appendChild(toolDiv);
-                                    
+
                                     // Store reference for updates
                                     if (data.toolUseId) {
                                         toolIndicators.set(data.toolUseId, toolDiv);
                                     } else if (data.toolName) {
                                         toolIndicators.set(data.toolName, toolDiv);
                                     }
-                                    
+
                                     scrollToBottom();
                                 }
                                 // Handle tool_execution_start - update to "Executing..."
@@ -1474,29 +1681,60 @@
             return messageDiv;
         }
 
-        function saveConversation(conversationId, userMessage, assistantMessage) {
-            const conversations = JSON.parse(localStorage.getItem(STORAGE_KEYS.CONVERSATIONS) || '[]');
-            let conv = conversations.find(c => c.id === conversationId);
+        async function saveConversation(conversationId, userMessage, assistantMessage) {
+            try {
+                const authToken = localStorage.getItem(STORAGE_KEYS.AUTH_TOKEN);
 
-            if (!conv) {
-                conv = {
-                    id: conversationId,
-                    title: userMessage.substring(0, 50),
-                    messages: [],
-                    created_at: new Date().toISOString(),
-                    updated_at: new Date().toISOString()
-                };
-                conversations.push(conv);
+                // Get existing conversation from server
+                let messages = [];
+                try {
+                    const convResponse = await fetch(`${API_BASE}/api/conversations/${conversationId}`, {
+                        headers: {
+                            'Authorization': `Bearer ${authToken}`
+                        }
+                    });
+
+                    if (convResponse.ok) {
+                        const convData = await convResponse.json();
+                        messages = convData.conversation?.messages || [];
+                    }
+                } catch (e) {
+                    // Conversation doesn't exist yet, that's ok
+                }
+
+                // Append new messages
+                messages.push(
+                    { role: 'user', content: userMessage },
+                    { role: 'assistant', content: assistantMessage }
+                );
+
+                // Save to server
+                const response = await fetch(`${API_BASE}/api/conversations`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        id: conversationId,
+                        title: userMessage.substring(0, 50),
+                        messages: messages
+                    })
+                });
+
+                if (response.status === 401) {
+                    handleAuthError();
+                    return;
+                }
+
+                if (!response.ok) {
+                    throw new Error('Failed to save conversation');
+                }
+
+                await loadConversations();
+            } catch (error) {
+                console.error('Error saving conversation:', error);
             }
-
-            conv.messages.push(
-                { role: 'user', content: userMessage },
-                { role: 'assistant', content: assistantMessage }
-            );
-            conv.updated_at = new Date().toISOString();
-
-            localStorage.setItem(STORAGE_KEYS.CONVERSATIONS, JSON.stringify(conversations));
-            loadConversations();
         }
 
         function formatMarkdown(text) {

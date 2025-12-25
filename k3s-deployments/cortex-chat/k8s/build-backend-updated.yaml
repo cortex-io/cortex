@@ -1,0 +1,29 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: kaniko-backend-build-updated
+  namespace: cortex-chat
+spec:
+  ttlSecondsAfterFinished: 300
+  template:
+    spec:
+      restartPolicy: Never
+      containers:
+      - name: kaniko
+        image: gcr.io/kaniko-project/executor:latest
+        args:
+        - "--dockerfile=/workspace/Dockerfile"
+        - "--context=/workspace"
+        - "--destination=10.43.170.72:5000/cortex-chat-backend-simple:latest"
+        - "--skip-tls-verify"
+        - "--insecure"
+        - "--cache=true"
+        - "--cache-ttl=24h"
+        volumeMounts:
+        - name: backend-source
+          mountPath: /workspace
+          subPath: backend-simple
+      volumes:
+      - name: backend-source
+        persistentVolumeClaim:
+          claimName: backend-source-pvc

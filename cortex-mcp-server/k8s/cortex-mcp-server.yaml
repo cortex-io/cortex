@@ -1,0 +1,258 @@
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: cortex-system
+  labels:
+    name: cortex-system
+    managed-by: cortex
+
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: cortex-mcp-server
+  namespace: cortex-system
+  labels:
+    app: cortex-mcp-server
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: cortex-mcp-server
+rules:
+  # Allow cortex-mcp-server to manage k8s resources
+  - apiGroups: [""]
+    resources: ["pods", "services", "deployments", "namespaces", "nodes"]
+    verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+  - apiGroups: ["apps"]
+    resources: ["deployments", "replicasets", "statefulsets"]
+    verbs: ["get", "list", "watch", "create", "update", "patch", "delete", "scale"]
+  - apiGroups: ["batch"]
+    resources: ["jobs", "cronjobs"]
+    verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: cortex-mcp-server
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: cortex-mcp-server
+subjects:
+  - kind: ServiceAccount
+    name: cortex-mcp-server
+    namespace: cortex-system
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: cortex-mcp-server-config
+  namespace: cortex-system
+  labels:
+    app: cortex-mcp-server
+data:
+  CORTEX_HOME: "/app"
+  STATUS_PORT: "8080"
+  NODE_ENV: "production"
+
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: cortex-mcp-server-secrets
+  namespace: cortex-system
+  labels:
+    app: cortex-mcp-server
+type: Opaque
+stringData:
+  # Add sensitive configuration here
+  # UNIFI_MCP_SERVER: "http://unifi-mcp-server.cortex-system.svc.cluster.local:3000"
+  # PROXMOX_MCP_SERVER: "http://proxmox-mcp-server.cortex-system.svc.cluster.local:3000"
+  # WAZUH_MCP_SERVER: "http://wazuh-mcp-server.cortex-system.svc.cluster.local:8080"
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cortex-mcp-server
+  namespace: cortex-system
+  labels:
+    app: cortex-mcp-server
+    tier: platform
+    component: mcp-server
+spec:
+  replicas: 2
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  selector:
+    matchLabels:
+      app: cortex-mcp-server
+  template:
+    metadata:
+      labels:
+        app: cortex-mcp-server
+        tier: platform
+        component: mcp-server
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8080"
+        prometheus.io/path: "/metrics"
+    spec:
+      serviceAccountName: cortex-mcp-server
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1001
+        fsGroup: 1001
+      containers:
+        - name: cortex-mcp-server
+          image: cortex-mcp-server:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: mcp
+              containerPort: 3000
+              protocol: TCP
+            - name: status
+              containerPort: 8080
+              protocol: TCP
+          env:
+            - name: CORTEX_HOME
+              valueFrom:
+                configMapKeyRef:
+                  name: cortex-mcp-server-config
+                  key: CORTEX_HOME
+            - name: STATUS_PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: cortex-mcp-server-config
+                  key: STATUS_PORT
+            - name: NODE_ENV
+              valueFrom:
+                configMapKeyRef:
+                  name: cortex-mcp-server-config
+                  key: NODE_ENV
+            - name: UNIFI_MCP_SERVER
+              value: "http://unifi-mcp-server.cortex-system.svc.cluster.local:3000"
+            - name: PROXMOX_MCP_SERVER
+              value: "http://proxmox-mcp-server.cortex-system.svc.cluster.local:3000"
+            - name: WAZUH_MCP_SERVER
+              value: "http://wazuh-mcp-server.cortex-system.svc.cluster.local:8080"
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "250m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: status
+            initialDelaySeconds: 10
+            periodSeconds: 30
+            timeoutSeconds: 5
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: status
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 3
+          volumeMounts:
+            - name: cortex-data
+              mountPath: /app/coordination
+              readOnly: true
+      volumes:
+        - name: cortex-data
+          persistentVolumeClaim:
+            claimName: cortex-data-pvc
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: cortex-mcp-server
+  namespace: cortex-system
+  labels:
+    app: cortex-mcp-server
+spec:
+  type: ClusterIP
+  ports:
+    - name: mcp
+      port: 3000
+      targetPort: mcp
+      protocol: TCP
+    - name: status
+      port: 8080
+      targetPort: status
+      protocol: TCP
+  selector:
+    app: cortex-mcp-server
+
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: cortex-data-pvc
+  namespace: cortex-system
+  labels:
+    app: cortex-mcp-server
+spec:
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 10Gi
+  storageClassName: local-path
+
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: cortex-mcp-server-hpa
+  namespace: cortex-system
+  labels:
+    app: cortex-mcp-server
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: cortex-mcp-server
+  minReplicas: 2
+  maxReplicas: 10
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 70
+    - type: Resource
+      resource:
+        name: memory
+        target:
+          type: Utilization
+          averageUtilization: 80
+
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: cortex-mcp-server-pdb
+  namespace: cortex-system
+  labels:
+    app: cortex-mcp-server
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: cortex-mcp-server
