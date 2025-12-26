@@ -10,9 +10,19 @@ const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY;
 // MCP Server endpoints
 const MCP_SERVERS = {
   unifi: process.env.UNIFI_MCP_URL || 'http://unifi-mcp-server.cortex-system.svc.cluster.local:3000',
-  sandfly: process.env.SANDFLY_MCP_URL || 'http://sandfly-mcp-server.cortex-system.svc.cluster.local:3000',
   proxmox: process.env.PROXMOX_MCP_URL || 'http://proxmox-mcp-server.cortex-system.svc.cluster.local:3000'
 };
+
+// Sandfly API configuration
+const SANDFLY_CONFIG = {
+  host: process.env.SANDFLY_HOST || '10.88.140.176',
+  username: process.env.SANDFLY_USERNAME || 'admin',
+  password: process.env.SANDFLY_PASSWORD || 'emphasize-art-nibble-arguable-paradox-flick-unpack',
+  baseUrl: `https://${process.env.SANDFLY_HOST || '10.88.140.176'}/v4`
+};
+
+let sandflyToken = null;
+let sandflyTokenExpiry = null;
 
 /**
  * Call Anthropic Claude API
@@ -63,6 +73,122 @@ async function callClaude(messages, tools) {
     req.write(data);
     req.end();
   });
+}
+
+/**
+ * Get Sandfly authentication token
+ */
+async function getSandflyToken() {
+  // Check if token is still valid
+  if (sandflyToken && sandflyTokenExpiry && Date.now() < sandflyTokenExpiry) {
+    return sandflyToken;
+  }
+
+  // Get new token
+  return new Promise((resolve, reject) => {
+    const data = JSON.stringify({
+      username: SANDFLY_CONFIG.username,
+      password: SANDFLY_CONFIG.password
+    });
+
+    const options = {
+      hostname: SANDFLY_CONFIG.host,
+      port: 443,
+      path: '/v4/auth/login',
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Content-Length': data.length
+      },
+      rejectUnauthorized: false // Allow self-signed certs
+    };
+
+    const req = https.request(options, (res) => {
+      let responseData = '';
+
+      res.on('data', (chunk) => {
+        responseData += chunk;
+      });
+
+      res.on('end', () => {
+        try {
+          const parsed = JSON.parse(responseData);
+          if (parsed.access_token) {
+            sandflyToken = parsed.access_token;
+            // Token valid for 60 minutes, refresh at 50 minutes
+            sandflyTokenExpiry = Date.now() + (50 * 60 * 1000);
+            resolve(sandflyToken);
+          } else {
+            reject(new Error('No access_token in response'));
+          }
+        } catch (error) {
+          reject(error);
+        }
+      });
+    });
+
+    req.on('error', (error) => {
+      reject(error);
+    });
+
+    req.write(data);
+    req.end();
+  });
+}
+
+/**
+ * Query Sandfly API
+ */
+async function querySandfly(query) {
+  try {
+    const token = await getSandflyToken();
+
+    // For now, just get hosts list as a simple implementation
+    // In future, parse query and route to appropriate endpoint
+    return new Promise((resolve, reject) => {
+      const options = {
+        hostname: SANDFLY_CONFIG.host,
+        port: 443,
+        path: '/v4/hosts?summary=true',
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        rejectUnauthorized: false
+      };
+
+      const req = https.request(options, (res) => {
+        let responseData = '';
+
+        res.on('data', (chunk) => {
+          responseData += chunk;
+        });
+
+        res.on('end', () => {
+          try {
+            const parsed = JSON.parse(responseData);
+            resolve({
+              success: true,
+              output: JSON.stringify(parsed, null, 2)
+            });
+          } catch (error) {
+            resolve({ success: true, output: responseData });
+          }
+        });
+      });
+
+      req.on('error', (error) => {
+        console.error('[Cortex] Sandfly API error:', error.message);
+        resolve({ success: false, error: error.message });
+      });
+
+      req.end();
+    });
+  } catch (error) {
+    console.error('[Cortex] Sandfly auth error:', error.message);
+    return { success: false, error: error.message };
+  }
 }
 
 /**
@@ -158,7 +284,7 @@ async function executeTool(toolName, input) {
       return await queryMCPServer(MCP_SERVERS.unifi, input.query);
 
     case 'sandfly_query':
-      return await queryMCPServer(MCP_SERVERS.sandfly, input.query);
+      return await querySandfly(input.query);
 
     case 'proxmox_query':
       return await queryMCPServer(MCP_SERVERS.proxmox, input.query);
@@ -376,10 +502,10 @@ server.listen(PORT, '0.0.0.0', () => {
   console.log('============================================================');
   console.log(`Listening on port ${PORT}`);
   console.log(`Intelligence: ${ANTHROPIC_API_KEY ? 'ENABLED ✓' : 'DISABLED ✗'}`);
-  console.log('\nMCP Servers:');
-  console.log(`  UniFi:    ${MCP_SERVERS.unifi}`);
-  console.log(`  Sandfly:  ${MCP_SERVERS.sandfly}`);
-  console.log(`  Proxmox:  ${MCP_SERVERS.proxmox}`);
+  console.log('\nIntegrations:');
+  console.log(`  UniFi MCP:    ${MCP_SERVERS.unifi}`);
+  console.log(`  Sandfly API:  ${SANDFLY_CONFIG.baseUrl}`);
+  console.log(`  Proxmox MCP:  ${MCP_SERVERS.proxmox}`);
   console.log('\nEndpoints:');
   console.log('  GET  /health - Health check');
   console.log('  POST /api/tasks - Process intelligent queries');
