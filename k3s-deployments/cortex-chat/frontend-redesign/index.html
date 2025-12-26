@@ -739,7 +739,7 @@
         .progress-indicator {
             display: inline-flex;
             align-items: center;
-            gap: 8px;
+            gap: 4px;
             padding: 10px 16px;
             background: rgba(255, 107, 53, 0.1);
             border: 1px solid rgba(255, 107, 53, 0.3);
@@ -758,22 +758,6 @@
             to {
                 opacity: 1;
                 transform: translateX(0);
-            }
-        }
-
-        .progress-emoji {
-            font-size: 18px;
-            animation: pulse 1.5s ease-in-out infinite;
-        }
-
-        @keyframes pulse {
-            0%, 100% {
-                opacity: 1;
-                transform: scale(1);
-            }
-            50% {
-                opacity: 0.7;
-                transform: scale(1.1);
             }
         }
 
@@ -1518,12 +1502,12 @@
 
             // Add chatty progress indicator
             const progressMessages = [
-                { emoji: '🔍', text: 'Investigating' },
-                { emoji: '⚙️', text: 'Working on it' },
-                { emoji: '🤔', text: 'Thinking' },
-                { emoji: '💭', text: 'Analyzing' },
-                { emoji: '🔬', text: 'Checking systems' },
-                { emoji: '🎯', text: 'Gathering info' }
+                'Investigating',
+                'Working on it',
+                'Thinking',
+                'Analyzing',
+                'Checking systems',
+                'Gathering info'
             ];
             const randomProgress = progressMessages[Math.floor(Math.random() * progressMessages.length)];
 
@@ -1532,9 +1516,8 @@
             progressDiv.innerHTML = `
                 <div class="message-bubble">
                     <div class="progress-indicator">
-                        <span class="progress-emoji">${randomProgress.emoji}</span>
                         <div class="progress-text">
-                            <span>${randomProgress.text}</span>
+                            <span>${randomProgress}</span>
                             <span class="progress-dots">
                                 <span>.</span>
                                 <span>.</span>
