@@ -1637,6 +1637,123 @@ async function handleGetMetrics(input) {
 }
 
 /**
+ * Handle cortex_create_task tool
+ * Creates a new task in Cortex for processing by master agents
+ * DESIGNED FOR PARALLEL SUBMISSION - returns immediately
+ */
+async function handleCreateTask(input) {
+  const {
+    title,
+    description,
+    category = 'general',
+    priority = 'medium',
+    metadata = {}
+  } = input;
+
+  // Generate unique task ID
+  const taskId = `task-chat-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+
+  // Map priority names to numbers
+  const priorityMap = {
+    'critical': 1,
+    'high': 3,
+    'medium': 5,
+    'low': 7
+  };
+  const numericPriority = typeof priority === 'string' ? priorityMap[priority] || 5 : priority;
+
+  // Create task object matching Cortex task schema
+  const task = {
+    id: taskId,
+    type: 'user_query',
+    priority: numericPriority,
+    status: 'queued',
+    payload: {
+      query: description,
+      title: title,
+      category: category
+    },
+    metadata: {
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+      source: 'chat',
+      original_input: input,
+      ...metadata
+    }
+  };
+
+  // Write task to filesystem - Cortex will pick it up
+  const taskPath = `/app/tasks/${taskId}.json`;
+
+  try {
+    const fs = require('fs').promises;
+
+    // Ensure tasks directory exists
+    await fs.mkdir('/app/tasks', { recursive: true });
+
+    // Write task file
+    await fs.writeFile(taskPath, JSON.stringify(task, null, 2));
+
+    console.log(`[CortexAPI] Task created: ${taskId} (${category}, priority ${numericPriority})`);
+    console.log(`[CortexAPI] Task title: ${title}`);
+
+    // Return immediately - don't wait for processing
+    return {
+      task_id: taskId,
+      status: 'queued',
+      message: 'Task created and queued for processing',
+      created_at: task.metadata.created_at,
+      estimated_start: 'Immediate - will be picked up by next orchestrator cycle'
+    };
+
+  } catch (error) {
+    console.error(`[CortexAPI] Error creating task:`, error);
+    throw new Error(`Failed to create task: ${error.message}`);
+  }
+}
+
+/**
+ * Handle cortex_get_task_status tool
+ * Check the status of a previously created task
+ */
+async function handleGetTaskStatus(input) {
+  const { task_id } = input;
+
+  if (!task_id) {
+    throw new Error('task_id is required');
+  }
+
+  const taskPath = `/app/tasks/${task_id}.json`;
+
+  try {
+    const fs = require('fs').promises;
+    const content = await fs.readFile(taskPath, 'utf8');
+    const task = JSON.parse(content);
+
+    return {
+      task_id: task.id,
+      status: task.status,
+      type: task.type,
+      priority: task.priority,
+      title: task.payload?.title,
+      created_at: task.metadata?.created_at,
+      updated_at: task.metadata?.updated_at,
+      result: task.result || null
+    };
+
+  } catch (error) {
+    if (error.code === 'ENOENT') {
+      return {
+        task_id,
+        status: 'not_found',
+        message: 'Task not found - may have been completed and archived'
+      };
+    }
+    throw new Error(`Failed to get task status: ${error.message}`);
+  }
+}
+
+/**
  * HTTP request handler
  */
 const server = http.createServer(async (req, res) => {
@@ -1766,6 +1883,12 @@ const server = http.createServer(async (req, res) => {
             break;
           case 'cortex_get_metrics':
             result = await handleGetMetrics(tool_input);
+            break;
+          case 'cortex_create_task':
+            result = await handleCreateTask(tool_input);
+            break;
+          case 'cortex_get_task_status':
+            result = await handleGetTaskStatus(tool_input);
             break;
           default:
             res.writeHead(400, { 'Content-Type': 'application/json' });
