@@ -1,0 +1,1884 @@
+apiVersion: v1
+data:
+  proxmox-cluster.json: |
+    {
+      "annotations": {
+        "list": []
+      },
+      "editable": true,
+      "fiscalYearStartMonth": 0,
+      "graphTooltip": 1,
+      "links": [],
+      "liveNow": true,
+      "panels": [
+        {
+          "datasource": {
+            "type": "prometheus"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "thresholds"
+              },
+              "mappings": [
+                {
+                  "options": {
+                    "0": {
+                      "color": "red",
+                      "text": "DOWN"
+                    },
+                    "1": {
+                      "color": "green",
+                      "text": "UP"
+                    }
+                  },
+                  "type": "value"
+                }
+              ],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "red",
+                    "value": null
+                  },
+                  {
+                    "color": "green",
+                    "value": 1
+                  }
+                ]
+              }
+            }
+          },
+          "gridPos": {
+            "h": 4,
+            "w": 3,
+            "x": 0,
+            "y": 0
+          },
+          "id": 1,
+          "options": {
+            "colorMode": "background",
+            "graphMode": "none",
+            "justifyMode": "auto",
+            "orientation": "auto",
+            "reduceOptions": {
+              "calcs": [
+                "lastNotNull"
+              ],
+              "fields": "",
+              "values": false
+            },
+            "textMode": "value_and_name"
+          },
+          "pluginVersion": "10.0.0",
+          "targets": [
+            {
+              "expr": "proxmox_up",
+              "refId": "A"
+            }
+          ],
+          "title": "Proxmox API Status",
+          "type": "stat"
+        },
+        {
+          "datasource": {
+            "type": "prometheus"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "thresholds"
+              },
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  }
+                ]
+              }
+            }
+          },
+          "gridPos": {
+            "h": 4,
+            "w": 3,
+            "x": 3,
+            "y": 0
+          },
+          "id": 2,
+          "options": {
+            "colorMode": "value",
+            "graphMode": "area",
+            "justifyMode": "auto",
+            "orientation": "auto",
+            "reduceOptions": {
+              "calcs": [
+                "lastNotNull"
+              ],
+              "fields": "",
+              "values": false
+            },
+            "textMode": "auto"
+          },
+          "pluginVersion": "10.0.0",
+          "targets": [
+            {
+              "expr": "proxmox_cluster_nodes_total",
+              "refId": "A"
+            }
+          ],
+          "title": "Total Nodes",
+          "type": "stat"
+        },
+        {
+          "datasource": {
+            "type": "prometheus"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "thresholds"
+              },
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "red",
+                    "value": null
+                  },
+                  {
+                    "color": "green",
+                    "value": 1
+                  }
+                ]
+              }
+            }
+          },
+          "gridPos": {
+            "h": 4,
+            "w": 3,
+            "x": 6,
+            "y": 0
+          },
+          "id": 3,
+          "options": {
+            "colorMode": "value",
+            "graphMode": "area",
+            "justifyMode": "auto",
+            "orientation": "auto",
+            "reduceOptions": {
+              "calcs": [
+                "lastNotNull"
+              ],
+              "fields": "",
+              "values": false
+            },
+            "textMode": "auto"
+          },
+          "pluginVersion": "10.0.0",
+          "targets": [
+            {
+              "expr": "proxmox_cluster_nodes_online",
+              "refId": "A"
+            }
+          ],
+          "title": "Nodes Online",
+          "type": "stat"
+        },
+        {
+          "datasource": {
+            "type": "prometheus"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "thresholds"
+              },
+              "mappings": [
+                {
+                  "options": {
+                    "0": {
+                      "color": "red",
+                      "text": "NO QUORUM"
+                    },
+                    "1": {
+                      "color": "green",
+                      "text": "QUORATE"
+                    }
+                  },
+                  "type": "value"
+                }
+              ],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "red",
+                    "value": null
+                  },
+                  {
+                    "color": "green",
+                    "value": 1
+                  }
+                ]
+              }
+            }
+          },
+          "gridPos": {
+            "h": 4,
+            "w": 3,
+            "x": 9,
+            "y": 0
+          },
+          "id": 4,
+          "options": {
+            "colorMode": "background",
+            "graphMode": "none",
+            "justifyMode": "auto",
+            "orientation": "auto",
+            "reduceOptions": {
+              "calcs": [
+                "lastNotNull"
+              ],
+              "fields": "",
+              "values": false
+            },
+            "textMode": "value"
+          },
+          "pluginVersion": "10.0.0",
+          "targets": [
+            {
+              "expr": "proxmox_cluster_quorate",
+              "refId": "A"
+            }
+          ],
+          "title": "Cluster Quorum",
+          "type": "stat"
+        },
+        {
+          "datasource": {
+            "type": "prometheus"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "axisCenteredZero": false,
+                "axisColorMode": "text",
+                "axisLabel": "",
+                "axisPlacement": "auto",
+                "barAlignment": 0,
+                "drawStyle": "line",
+                "fillOpacity": 20,
+                "gradientMode": "none",
+                "hideFrom": {
+                  "tooltip": false,
+                  "viz": false,
+                  "legend": false
+                },
+                "lineInterpolation": "linear",
+                "lineWidth": 2,
+                "pointSize": 5,
+                "scaleDistribution": {
+                  "type": "linear"
+                },
+                "showPoints": "never",
+                "spanNulls": false,
+                "stacking": {
+                  "group": "A",
+                  "mode": "none"
+                },
+                "thresholdsStyle": {
+                  "mode": "off"
+                }
+              },
+              "mappings": [],
+              "max": 1,
+              "min": 0,
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  }
+                ]
+              },
+              "unit": "percentunit"
+            }
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 12,
+            "y": 0
+          },
+          "id": 5,
+          "options": {
+            "legend": {
+              "calcs": ["last", "mean", "max"],
+              "displayMode": "table",
+              "placement": "right",
+              "showLegend": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "none"
+            }
+          },
+          "pluginVersion": "10.0.0",
+          "targets": [
+            {
+              "expr": "proxmox_node_cpu_usage_ratio",
+              "legendFormat": "Node: {{node}}",
+              "refId": "A"
+            }
+          ],
+          "title": "Node CPU Usage",
+          "type": "timeseries"
+        },
+        {
+          "datasource": {
+            "type": "prometheus"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "thresholds"
+              },
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  }
+                ]
+              }
+            }
+          },
+          "gridPos": {
+            "h": 4,
+            "w": 3,
+            "x": 0,
+            "y": 4
+          },
+          "id": 6,
+          "options": {
+            "colorMode": "value",
+            "graphMode": "area",
+            "justifyMode": "auto",
+            "orientation": "auto",
+            "reduceOptions": {
+              "calcs": [
+                "lastNotNull"
+              ],
+              "fields": "",
+              "values": false
+            },
+            "textMode": "auto"
+          },
+          "pluginVersion": "10.0.0",
+          "targets": [
+            {
+              "expr": "sum(proxmox_vms_total)",
+              "refId": "A"
+            }
+          ],
+          "title": "Total VMs",
+          "type": "stat"
+        },
+        {
+          "datasource": {
+            "type": "prometheus"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "thresholds"
+              },
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  }
+                ]
+              }
+            }
+          },
+          "gridPos": {
+            "h": 4,
+            "w": 3,
+            "x": 3,
+            "y": 4
+          },
+          "id": 7,
+          "options": {
+            "colorMode": "value",
+            "graphMode": "area",
+            "justifyMode": "auto",
+            "orientation": "auto",
+            "reduceOptions": {
+              "calcs": [
+                "lastNotNull"
+              ],
+              "fields": "",
+              "values": false
+            },
+            "textMode": "auto"
+          },
+          "pluginVersion": "10.0.0",
+          "targets": [
+            {
+              "expr": "sum(proxmox_vms_running)",
+              "refId": "A"
+            }
+          ],
+          "title": "VMs Running",
+          "type": "stat"
+        },
+        {
+          "datasource": {
+            "type": "prometheus"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "thresholds"
+              },
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  }
+                ]
+              }
+            }
+          },
+          "gridPos": {
+            "h": 4,
+            "w": 3,
+            "x": 6,
+            "y": 4
+          },
+          "id": 8,
+          "options": {
+            "colorMode": "value",
+            "graphMode": "area",
+            "justifyMode": "auto",
+            "orientation": "auto",
+            "reduceOptions": {
+              "calcs": [
+                "lastNotNull"
+              ],
+              "fields": "",
+              "values": false
+            },
+            "textMode": "auto"
+          },
+          "pluginVersion": "10.0.0",
+          "targets": [
+            {
+              "expr": "sum(proxmox_containers_total)",
+              "refId": "A"
+            }
+          ],
+          "title": "Total Containers",
+          "type": "stat"
+        },
+        {
+          "datasource": {
+            "type": "prometheus"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "thresholds"
+              },
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  }
+                ]
+              }
+            }
+          },
+          "gridPos": {
+            "h": 4,
+            "w": 3,
+            "x": 9,
+            "y": 4
+          },
+          "id": 9,
+          "options": {
+            "colorMode": "value",
+            "graphMode": "area",
+            "justifyMode": "auto",
+            "orientation": "auto",
+            "reduceOptions": {
+              "calcs": [
+                "lastNotNull"
+              ],
+              "fields": "",
+              "values": false
+            },
+            "textMode": "auto"
+          },
+          "pluginVersion": "10.0.0",
+          "targets": [
+            {
+              "expr": "sum(proxmox_containers_running)",
+              "refId": "A"
+            }
+          ],
+          "title": "Containers Running",
+          "type": "stat"
+        },
+        {
+          "datasource": {
+            "type": "prometheus"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "axisCenteredZero": false,
+                "axisColorMode": "text",
+                "axisLabel": "",
+                "axisPlacement": "auto",
+                "barAlignment": 0,
+                "drawStyle": "line",
+                "fillOpacity": 20,
+                "gradientMode": "none",
+                "hideFrom": {
+                  "tooltip": false,
+                  "viz": false,
+                  "legend": false
+                },
+                "lineInterpolation": "linear",
+                "lineWidth": 2,
+                "pointSize": 5,
+                "scaleDistribution": {
+                  "type": "linear"
+                },
+                "showPoints": "never",
+                "spanNulls": false,
+                "stacking": {
+                  "group": "A",
+                  "mode": "none"
+                },
+                "thresholdsStyle": {
+                  "mode": "off"
+                }
+              },
+              "mappings": [],
+              "max": 1,
+              "min": 0,
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  }
+                ]
+              },
+              "unit": "percentunit"
+            }
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 12,
+            "y": 8
+          },
+          "id": 10,
+          "options": {
+            "legend": {
+              "calcs": ["last", "mean", "max"],
+              "displayMode": "table",
+              "placement": "right",
+              "showLegend": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "none"
+            }
+          },
+          "pluginVersion": "10.0.0",
+          "targets": [
+            {
+              "expr": "proxmox_node_memory_used_bytes / proxmox_node_memory_total_bytes",
+              "legendFormat": "Node: {{node}}",
+              "refId": "A"
+            }
+          ],
+          "title": "Node Memory Usage",
+          "type": "timeseries"
+        },
+        {
+          "datasource": {
+            "type": "prometheus"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "thresholds"
+              },
+              "custom": {
+                "align": "auto",
+                "cellOptions": {
+                  "type": "auto"
+                },
+                "inspect": false
+              },
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  }
+                ]
+              }
+            },
+            "overrides": [
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "Status"
+                },
+                "properties": [
+                  {
+                    "id": "mappings",
+                    "value": [
+                      {
+                        "options": {
+                          "0": {
+                            "color": "red",
+                            "text": "Stopped"
+                          },
+                          "1": {
+                            "color": "green",
+                            "text": "Running"
+                          }
+                        },
+                        "type": "value"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "custom.cellOptions",
+                    "value": {
+                      "type": "color-background"
+                    }
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "CPU %"
+                },
+                "properties": [
+                  {
+                    "id": "unit",
+                    "value": "percent"
+                  },
+                  {
+                    "id": "custom.cellOptions",
+                    "value": {
+                      "type": "gauge",
+                      "mode": "gradient"
+                    }
+                  },
+                  {
+                    "id": "max",
+                    "value": 100
+                  },
+                  {
+                    "id": "min",
+                    "value": 0
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "Memory %"
+                },
+                "properties": [
+                  {
+                    "id": "unit",
+                    "value": "percent"
+                  },
+                  {
+                    "id": "custom.cellOptions",
+                    "value": {
+                      "type": "gauge",
+                      "mode": "gradient"
+                    }
+                  },
+                  {
+                    "id": "max",
+                    "value": 100
+                  },
+                  {
+                    "id": "min",
+                    "value": 0
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "Memory"
+                },
+                "properties": [
+                  {
+                    "id": "unit",
+                    "value": "bytes"
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "Uptime"
+                },
+                "properties": [
+                  {
+                    "id": "unit",
+                    "value": "s"
+                  }
+                ]
+              }
+            ]
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 0,
+            "y": 8
+          },
+          "id": 11,
+          "options": {
+            "cellHeight": "sm",
+            "footer": {
+              "countRows": false,
+              "fields": "",
+              "reducer": [
+                "sum"
+              ],
+              "show": false
+            },
+            "showHeader": true,
+            "sortBy": [
+              {
+                "desc": true,
+                "displayName": "Status"
+              }
+            ]
+          },
+          "pluginVersion": "10.0.0",
+          "targets": [
+            {
+              "expr": "proxmox_vm_status",
+              "format": "table",
+              "instant": true,
+              "refId": "A"
+            },
+            {
+              "expr": "proxmox_vm_cpu_usage_ratio * 100",
+              "format": "table",
+              "instant": true,
+              "refId": "B"
+            },
+            {
+              "expr": "(proxmox_vm_memory_used_bytes / proxmox_vm_memory_total_bytes) * 100",
+              "format": "table",
+              "instant": true,
+              "refId": "C"
+            },
+            {
+              "expr": "proxmox_vm_memory_used_bytes",
+              "format": "table",
+              "instant": true,
+              "refId": "D"
+            },
+            {
+              "expr": "proxmox_vm_uptime_seconds",
+              "format": "table",
+              "instant": true,
+              "refId": "E"
+            }
+          ],
+          "title": "Virtual Machines",
+          "transformations": [
+            {
+              "id": "merge",
+              "options": {}
+            },
+            {
+              "id": "organize",
+              "options": {
+                "excludeByName": {
+                  "Time": true,
+                  "node": true,
+                  "__name__": true,
+                  "instance": true,
+                  "job": true
+                },
+                "indexByName": {
+                  "vmid": 0,
+                  "name": 1,
+                  "Value #A": 2,
+                  "Value #B": 3,
+                  "Value #C": 4,
+                  "Value #D": 5,
+                  "Value #E": 6
+                },
+                "renameByName": {
+                  "Value #A": "Status",
+                  "Value #B": "CPU %",
+                  "Value #C": "Memory %",
+                  "Value #D": "Memory",
+                  "Value #E": "Uptime",
+                  "vmid": "VMID",
+                  "name": "Name"
+                }
+              }
+            }
+          ],
+          "type": "table"
+        },
+        {
+          "datasource": {
+            "type": "prometheus"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "axisCenteredZero": false,
+                "axisColorMode": "text",
+                "axisLabel": "",
+                "axisPlacement": "auto",
+                "barAlignment": 0,
+                "drawStyle": "line",
+                "fillOpacity": 20,
+                "gradientMode": "none",
+                "hideFrom": {
+                  "tooltip": false,
+                  "viz": false,
+                  "legend": false
+                },
+                "lineInterpolation": "linear",
+                "lineWidth": 2,
+                "pointSize": 5,
+                "scaleDistribution": {
+                  "type": "linear"
+                },
+                "showPoints": "never",
+                "spanNulls": false,
+                "stacking": {
+                  "group": "A",
+                  "mode": "none"
+                },
+                "thresholdsStyle": {
+                  "mode": "off"
+                }
+              },
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  }
+                ]
+              },
+              "unit": "bytes"
+            }
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 0,
+            "y": 16
+          },
+          "id": 12,
+          "options": {
+            "legend": {
+              "calcs": ["last", "mean"],
+              "displayMode": "table",
+              "placement": "right",
+              "showLegend": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "none"
+            }
+          },
+          "pluginVersion": "10.0.0",
+          "targets": [
+            {
+              "expr": "proxmox_vm_memory_used_bytes",
+              "legendFormat": "{{name}}",
+              "refId": "A"
+            }
+          ],
+          "title": "VM Memory Usage",
+          "type": "timeseries"
+        },
+        {
+          "datasource": {
+            "type": "prometheus"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "axisCenteredZero": false,
+                "axisColorMode": "text",
+                "axisLabel": "",
+                "axisPlacement": "auto",
+                "barAlignment": 0,
+                "drawStyle": "line",
+                "fillOpacity": 20,
+                "gradientMode": "none",
+                "hideFrom": {
+                  "tooltip": false,
+                  "viz": false,
+                  "legend": false
+                },
+                "lineInterpolation": "linear",
+                "lineWidth": 2,
+                "pointSize": 5,
+                "scaleDistribution": {
+                  "type": "linear"
+                },
+                "showPoints": "never",
+                "spanNulls": false,
+                "stacking": {
+                  "group": "A",
+                  "mode": "none"
+                },
+                "thresholdsStyle": {
+                  "mode": "off"
+                }
+              },
+              "mappings": [],
+              "max": 1,
+              "min": 0,
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  }
+                ]
+              },
+              "unit": "percentunit"
+            }
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 12,
+            "y": 16
+          },
+          "id": 13,
+          "options": {
+            "legend": {
+              "calcs": ["last", "max"],
+              "displayMode": "table",
+              "placement": "right",
+              "showLegend": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "none"
+            }
+          },
+          "pluginVersion": "10.0.0",
+          "targets": [
+            {
+              "expr": "proxmox_vm_cpu_usage_ratio",
+              "legendFormat": "{{name}}",
+              "refId": "A"
+            }
+          ],
+          "title": "VM CPU Usage",
+          "type": "timeseries"
+        },
+        {
+          "datasource": {
+            "type": "prometheus"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "thresholds"
+              },
+              "custom": {
+                "align": "auto",
+                "cellOptions": {
+                  "type": "auto"
+                },
+                "inspect": false
+              },
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  }
+                ]
+              }
+            },
+            "overrides": [
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "Status"
+                },
+                "properties": [
+                  {
+                    "id": "mappings",
+                    "value": [
+                      {
+                        "options": {
+                          "0": {
+                            "color": "red",
+                            "text": "Stopped"
+                          },
+                          "1": {
+                            "color": "green",
+                            "text": "Running"
+                          }
+                        },
+                        "type": "value"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "custom.cellOptions",
+                    "value": {
+                      "type": "color-background"
+                    }
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "CPU %"
+                },
+                "properties": [
+                  {
+                    "id": "unit",
+                    "value": "percent"
+                  },
+                  {
+                    "id": "custom.cellOptions",
+                    "value": {
+                      "type": "gauge",
+                      "mode": "gradient"
+                    }
+                  },
+                  {
+                    "id": "max",
+                    "value": 100
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "Memory %"
+                },
+                "properties": [
+                  {
+                    "id": "unit",
+                    "value": "percent"
+                  },
+                  {
+                    "id": "custom.cellOptions",
+                    "value": {
+                      "type": "gauge",
+                      "mode": "gradient"
+                    }
+                  },
+                  {
+                    "id": "max",
+                    "value": 100
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "Memory"
+                },
+                "properties": [
+                  {
+                    "id": "unit",
+                    "value": "bytes"
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "Uptime"
+                },
+                "properties": [
+                  {
+                    "id": "unit",
+                    "value": "s"
+                  }
+                ]
+              }
+            ]
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 0,
+            "y": 24
+          },
+          "id": 14,
+          "options": {
+            "cellHeight": "sm",
+            "footer": {
+              "countRows": false,
+              "fields": "",
+              "reducer": [
+                "sum"
+              ],
+              "show": false
+            },
+            "showHeader": true,
+            "sortBy": [
+              {
+                "desc": true,
+                "displayName": "Status"
+              }
+            ]
+          },
+          "pluginVersion": "10.0.0",
+          "targets": [
+            {
+              "expr": "proxmox_container_status",
+              "format": "table",
+              "instant": true,
+              "refId": "A"
+            },
+            {
+              "expr": "proxmox_container_cpu_usage_ratio * 100",
+              "format": "table",
+              "instant": true,
+              "refId": "B"
+            },
+            {
+              "expr": "(proxmox_container_memory_used_bytes / proxmox_container_memory_total_bytes) * 100",
+              "format": "table",
+              "instant": true,
+              "refId": "C"
+            },
+            {
+              "expr": "proxmox_container_memory_used_bytes",
+              "format": "table",
+              "instant": true,
+              "refId": "D"
+            },
+            {
+              "expr": "proxmox_container_uptime_seconds",
+              "format": "table",
+              "instant": true,
+              "refId": "E"
+            }
+          ],
+          "title": "LXC Containers",
+          "transformations": [
+            {
+              "id": "merge",
+              "options": {}
+            },
+            {
+              "id": "organize",
+              "options": {
+                "excludeByName": {
+                  "Time": true,
+                  "node": true,
+                  "__name__": true,
+                  "instance": true,
+                  "job": true
+                },
+                "indexByName": {
+                  "vmid": 0,
+                  "name": 1,
+                  "Value #A": 2,
+                  "Value #B": 3,
+                  "Value #C": 4,
+                  "Value #D": 5,
+                  "Value #E": 6
+                },
+                "renameByName": {
+                  "Value #A": "Status",
+                  "Value #B": "CPU %",
+                  "Value #C": "Memory %",
+                  "Value #D": "Memory",
+                  "Value #E": "Uptime",
+                  "vmid": "CTID",
+                  "name": "Name"
+                }
+              }
+            }
+          ],
+          "type": "table"
+        },
+        {
+          "datasource": {
+            "type": "prometheus"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "thresholds"
+              },
+              "mappings": [],
+              "max": 1,
+              "min": 0,
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "yellow",
+                    "value": 0.7
+                  },
+                  {
+                    "color": "red",
+                    "value": 0.9
+                  }
+                ]
+              },
+              "unit": "percentunit"
+            }
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 12,
+            "y": 24
+          },
+          "id": 15,
+          "options": {
+            "orientation": "auto",
+            "reduceOptions": {
+              "calcs": [
+                "lastNotNull"
+              ],
+              "fields": "",
+              "values": false
+            },
+            "showThresholdLabels": false,
+            "showThresholdMarkers": true,
+            "text": {}
+          },
+          "pluginVersion": "10.0.0",
+          "targets": [
+            {
+              "expr": "proxmox_storage_usage_ratio",
+              "legendFormat": "{{storage}} ({{type}})",
+              "refId": "A"
+            }
+          ],
+          "title": "Storage Usage",
+          "type": "gauge"
+        },
+        {
+          "datasource": {
+            "type": "prometheus"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "axisCenteredZero": false,
+                "axisColorMode": "text",
+                "axisLabel": "",
+                "axisPlacement": "auto",
+                "barAlignment": 0,
+                "drawStyle": "line",
+                "fillOpacity": 0,
+                "gradientMode": "none",
+                "hideFrom": {
+                  "tooltip": false,
+                  "viz": false,
+                  "legend": false
+                },
+                "lineInterpolation": "linear",
+                "lineWidth": 1,
+                "pointSize": 5,
+                "scaleDistribution": {
+                  "type": "linear"
+                },
+                "showPoints": "never",
+                "spanNulls": false,
+                "stacking": {
+                  "group": "A",
+                  "mode": "none"
+                },
+                "thresholdsStyle": {
+                  "mode": "off"
+                }
+              },
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  }
+                ]
+              },
+              "unit": "Bps"
+            }
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 0,
+            "y": 32
+          },
+          "id": 16,
+          "options": {
+            "legend": {
+              "calcs": ["last", "mean", "max"],
+              "displayMode": "table",
+              "placement": "right",
+              "showLegend": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "none"
+            }
+          },
+          "pluginVersion": "10.0.0",
+          "targets": [
+            {
+              "expr": "rate(proxmox_vm_network_in_bytes_total[5m])",
+              "legendFormat": "{{name}} - RX",
+              "refId": "A"
+            },
+            {
+              "expr": "rate(proxmox_vm_network_out_bytes_total[5m])",
+              "legendFormat": "{{name}} - TX",
+              "refId": "B"
+            }
+          ],
+          "title": "VM Network I/O",
+          "type": "timeseries"
+        },
+        {
+          "datasource": {
+            "type": "prometheus"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "axisCenteredZero": false,
+                "axisColorMode": "text",
+                "axisLabel": "",
+                "axisPlacement": "auto",
+                "barAlignment": 0,
+                "drawStyle": "line",
+                "fillOpacity": 0,
+                "gradientMode": "none",
+                "hideFrom": {
+                  "tooltip": false,
+                  "viz": false,
+                  "legend": false
+                },
+                "lineInterpolation": "linear",
+                "lineWidth": 1,
+                "pointSize": 5,
+                "scaleDistribution": {
+                  "type": "linear"
+                },
+                "showPoints": "never",
+                "spanNulls": false,
+                "stacking": {
+                  "group": "A",
+                  "mode": "none"
+                },
+                "thresholdsStyle": {
+                  "mode": "off"
+                }
+              },
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  }
+                ]
+              },
+              "unit": "Bps"
+            }
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 12,
+            "y": 32
+          },
+          "id": 17,
+          "options": {
+            "legend": {
+              "calcs": ["last", "mean", "max"],
+              "displayMode": "table",
+              "placement": "right",
+              "showLegend": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "none"
+            }
+          },
+          "pluginVersion": "10.0.0",
+          "targets": [
+            {
+              "expr": "rate(proxmox_vm_disk_read_bytes_total[5m])",
+              "legendFormat": "{{name}} - Read",
+              "refId": "A"
+            },
+            {
+              "expr": "rate(proxmox_vm_disk_write_bytes_total[5m])",
+              "legendFormat": "{{name}} - Write",
+              "refId": "B"
+            }
+          ],
+          "title": "VM Disk I/O",
+          "type": "timeseries"
+        },
+        {
+          "datasource": {
+            "type": "prometheus"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "thresholds"
+              },
+              "custom": {
+                "align": "auto",
+                "cellOptions": {
+                  "type": "auto"
+                },
+                "inspect": false
+              },
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  }
+                ]
+              }
+            },
+            "overrides": [
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "Usage %"
+                },
+                "properties": [
+                  {
+                    "id": "unit",
+                    "value": "percent"
+                  },
+                  {
+                    "id": "custom.cellOptions",
+                    "value": {
+                      "type": "gauge",
+                      "mode": "gradient"
+                    }
+                  },
+                  {
+                    "id": "max",
+                    "value": 100
+                  },
+                  {
+                    "id": "thresholds",
+                    "value": {
+                      "mode": "absolute",
+                      "steps": [
+                        {
+                          "color": "green",
+                          "value": null
+                        },
+                        {
+                          "color": "yellow",
+                          "value": 70
+                        },
+                        {
+                          "color": "red",
+                          "value": 90
+                        }
+                      ]
+                    }
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "Total"
+                },
+                "properties": [
+                  {
+                    "id": "unit",
+                    "value": "bytes"
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "Used"
+                },
+                "properties": [
+                  {
+                    "id": "unit",
+                    "value": "bytes"
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "Available"
+                },
+                "properties": [
+                  {
+                    "id": "unit",
+                    "value": "bytes"
+                  }
+                ]
+              }
+            ]
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 24,
+            "x": 0,
+            "y": 40
+          },
+          "id": 18,
+          "options": {
+            "cellHeight": "sm",
+            "footer": {
+              "countRows": false,
+              "fields": "",
+              "reducer": [
+                "sum"
+              ],
+              "show": false
+            },
+            "showHeader": true,
+            "sortBy": [
+              {
+                "desc": true,
+                "displayName": "Usage %"
+              }
+            ]
+          },
+          "pluginVersion": "10.0.0",
+          "targets": [
+            {
+              "expr": "proxmox_storage_total_bytes",
+              "format": "table",
+              "instant": true,
+              "refId": "A"
+            },
+            {
+              "expr": "proxmox_storage_used_bytes",
+              "format": "table",
+              "instant": true,
+              "refId": "B"
+            },
+            {
+              "expr": "proxmox_storage_available_bytes",
+              "format": "table",
+              "instant": true,
+              "refId": "C"
+            },
+            {
+              "expr": "proxmox_storage_usage_ratio * 100",
+              "format": "table",
+              "instant": true,
+              "refId": "D"
+            }
+          ],
+          "title": "Storage Pools",
+          "transformations": [
+            {
+              "id": "merge",
+              "options": {}
+            },
+            {
+              "id": "organize",
+              "options": {
+                "excludeByName": {
+                  "Time": true,
+                  "__name__": true,
+                  "instance": true,
+                  "job": true
+                },
+                "indexByName": {
+                  "node": 0,
+                  "storage": 1,
+                  "type": 2,
+                  "Value #A": 3,
+                  "Value #B": 4,
+                  "Value #C": 5,
+                  "Value #D": 6
+                },
+                "renameByName": {
+                  "Value #A": "Total",
+                  "Value #B": "Used",
+                  "Value #C": "Available",
+                  "Value #D": "Usage %",
+                  "node": "Node",
+                  "storage": "Storage",
+                  "type": "Type"
+                }
+              }
+            }
+          ],
+          "type": "table"
+        },
+        {
+          "datasource": {
+            "type": "prometheus"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "axisCenteredZero": false,
+                "axisColorMode": "text",
+                "axisLabel": "",
+                "axisPlacement": "auto",
+                "barAlignment": 0,
+                "drawStyle": "line",
+                "fillOpacity": 10,
+                "gradientMode": "none",
+                "hideFrom": {
+                  "tooltip": false,
+                  "viz": false,
+                  "legend": false
+                },
+                "lineInterpolation": "linear",
+                "lineWidth": 1,
+                "pointSize": 5,
+                "scaleDistribution": {
+                  "type": "linear"
+                },
+                "showPoints": "never",
+                "spanNulls": false,
+                "stacking": {
+                  "group": "A",
+                  "mode": "none"
+                },
+                "thresholdsStyle": {
+                  "mode": "off"
+                }
+              },
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  }
+                ]
+              }
+            }
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 0,
+            "y": 48
+          },
+          "id": 19,
+          "options": {
+            "legend": {
+              "calcs": ["last", "max"],
+              "displayMode": "table",
+              "placement": "right",
+              "showLegend": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "none"
+            }
+          },
+          "pluginVersion": "10.0.0",
+          "targets": [
+            {
+              "expr": "proxmox_node_load_1m",
+              "legendFormat": "{{node}} - 1m",
+              "refId": "A"
+            },
+            {
+              "expr": "proxmox_node_load_5m",
+              "legendFormat": "{{node}} - 5m",
+              "refId": "B"
+            },
+            {
+              "expr": "proxmox_node_load_15m",
+              "legendFormat": "{{node}} - 15m",
+              "refId": "C"
+            }
+          ],
+          "title": "Node Load Average",
+          "type": "timeseries"
+        },
+        {
+          "datasource": {
+            "type": "prometheus"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "thresholds"
+              },
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  }
+                ]
+              }
+            }
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 12,
+            "y": 48
+          },
+          "id": 20,
+          "options": {
+            "colorMode": "value",
+            "graphMode": "none",
+            "justifyMode": "auto",
+            "orientation": "auto",
+            "reduceOptions": {
+              "calcs": [
+                "lastNotNull"
+              ],
+              "fields": "",
+              "values": false
+            },
+            "textMode": "auto"
+          },
+          "pluginVersion": "10.0.0",
+          "targets": [
+            {
+              "expr": "proxmox_tasks_running",
+              "legendFormat": "{{node}} - Running Tasks",
+              "refId": "A"
+            }
+          ],
+          "title": "Running Tasks",
+          "type": "stat"
+        }
+      ],
+      "refresh": "30s",
+      "schemaVersion": 38,
+      "style": "dark",
+      "tags": [
+        "proxmox",
+        "virtualization",
+        "infrastructure"
+      ],
+      "templating": {
+        "list": []
+      },
+      "time": {
+        "from": "now-6h",
+        "to": "now"
+      },
+      "timepicker": {},
+      "timezone": "",
+      "title": "Proxmox VE Cluster",
+      "uid": "proxmox-cluster",
+      "version": 1,
+      "weekStart": ""
+    }
+kind: ConfigMap
+metadata:
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: |
+      {"apiVersion":"v1","data":{"proxmox-cluster.json":"{\n  \"annotations\": {\n    \"list\": []\n  },\n  \"editable\": true,\n  \"fiscalYearStartMonth\": 0,\n  \"graphTooltip\": 1,\n  \"links\": [],\n  \"liveNow\": true,\n  \"panels\": [\n    {\n      \"datasource\": {\n        \"type\": \"prometheus\"\n      },\n      \"fieldConfig\": {\n        \"defaults\": {\n          \"color\": {\n            \"mode\": \"thresholds\"\n          },\n          \"mappings\": [\n            {\n              \"options\": {\n                \"0\": {\n                  \"color\": \"red\",\n                  \"text\": \"DOWN\"\n                },\n                \"1\": {\n                  \"color\": \"green\",\n                  \"text\": \"UP\"\n                }\n              },\n              \"type\": \"value\"\n            }\n          ],\n          \"thresholds\": {\n            \"mode\": \"absolute\",\n            \"steps\": [\n              {\n                \"color\": \"red\",\n                \"value\": null\n              },\n              {\n                \"color\": \"green\",\n                \"value\": 1\n              }\n            ]\n          }\n        }\n      },\n      \"gridPos\": {\n        \"h\": 4,\n        \"w\": 3,\n        \"x\": 0,\n        \"y\": 0\n      },\n      \"id\": 1,\n      \"options\": {\n        \"colorMode\": \"background\",\n        \"graphMode\": \"none\",\n        \"justifyMode\": \"auto\",\n        \"orientation\": \"auto\",\n        \"reduceOptions\": {\n          \"calcs\": [\n            \"lastNotNull\"\n          ],\n          \"fields\": \"\",\n          \"values\": false\n        },\n        \"textMode\": \"value_and_name\"\n      },\n      \"pluginVersion\": \"10.0.0\",\n      \"targets\": [\n        {\n          \"expr\": \"proxmox_up\",\n          \"refId\": \"A\"\n        }\n      ],\n      \"title\": \"Proxmox API Status\",\n      \"type\": \"stat\"\n    },\n    {\n      \"datasource\": {\n        \"type\": \"prometheus\"\n      },\n      \"fieldConfig\": {\n        \"defaults\": {\n          \"color\": {\n            \"mode\": \"thresholds\"\n          },\n          \"mappings\": [],\n          \"thresholds\": {\n            \"mode\": \"absolute\",\n            \"steps\": [\n              {\n                \"color\": \"green\",\n                \"value\": null\n              }\n            ]\n          }\n        }\n      },\n      \"gridPos\": {\n        \"h\": 4,\n        \"w\": 3,\n        \"x\": 3,\n        \"y\": 0\n      },\n      \"id\": 2,\n      \"options\": {\n        \"colorMode\": \"value\",\n        \"graphMode\": \"area\",\n        \"justifyMode\": \"auto\",\n        \"orientation\": \"auto\",\n        \"reduceOptions\": {\n          \"calcs\": [\n            \"lastNotNull\"\n          ],\n          \"fields\": \"\",\n          \"values\": false\n        },\n        \"textMode\": \"auto\"\n      },\n      \"pluginVersion\": \"10.0.0\",\n      \"targets\": [\n        {\n          \"expr\": \"proxmox_cluster_nodes_total\",\n          \"refId\": \"A\"\n        }\n      ],\n      \"title\": \"Total Nodes\",\n      \"type\": \"stat\"\n    },\n    {\n      \"datasource\": {\n        \"type\": \"prometheus\"\n      },\n      \"fieldConfig\": {\n        \"defaults\": {\n          \"color\": {\n            \"mode\": \"thresholds\"\n          },\n          \"mappings\": [],\n          \"thresholds\": {\n            \"mode\": \"absolute\",\n            \"steps\": [\n              {\n                \"color\": \"red\",\n                \"value\": null\n              },\n              {\n                \"color\": \"green\",\n                \"value\": 1\n              }\n            ]\n          }\n        }\n      },\n      \"gridPos\": {\n        \"h\": 4,\n        \"w\": 3,\n        \"x\": 6,\n        \"y\": 0\n      },\n      \"id\": 3,\n      \"options\": {\n        \"colorMode\": \"value\",\n        \"graphMode\": \"area\",\n        \"justifyMode\": \"auto\",\n        \"orientation\": \"auto\",\n        \"reduceOptions\": {\n          \"calcs\": [\n            \"lastNotNull\"\n          ],\n          \"fields\": \"\",\n          \"values\": false\n        },\n        \"textMode\": \"auto\"\n      },\n      \"pluginVersion\": \"10.0.0\",\n      \"targets\": [\n        {\n          \"expr\": \"proxmox_cluster_nodes_online\",\n          \"refId\": \"A\"\n        }\n      ],\n      \"title\": \"Nodes Online\",\n      \"type\": \"stat\"\n    },\n    {\n      \"datasource\": {\n        \"type\": \"prometheus\"\n      },\n      \"fieldConfig\": {\n        \"defaults\": {\n          \"color\": {\n            \"mode\": \"thresholds\"\n          },\n          \"mappings\": [\n            {\n              \"options\": {\n                \"0\": {\n                  \"color\": \"red\",\n                  \"text\": \"NO QUORUM\"\n                },\n                \"1\": {\n                  \"color\": \"green\",\n                  \"text\": \"QUORATE\"\n                }\n              },\n              \"type\": \"value\"\n            }\n          ],\n          \"thresholds\": {\n            \"mode\": \"absolute\",\n            \"steps\": [\n              {\n                \"color\": \"red\",\n                \"value\": null\n              },\n              {\n                \"color\": \"green\",\n                \"value\": 1\n              }\n            ]\n          }\n        }\n      },\n      \"gridPos\": {\n        \"h\": 4,\n        \"w\": 3,\n        \"x\": 9,\n        \"y\": 0\n      },\n      \"id\": 4,\n      \"options\": {\n        \"colorMode\": \"background\",\n        \"graphMode\": \"none\",\n        \"justifyMode\": \"auto\",\n        \"orientation\": \"auto\",\n        \"reduceOptions\": {\n          \"calcs\": [\n            \"lastNotNull\"\n          ],\n          \"fields\": \"\",\n          \"values\": false\n        },\n        \"textMode\": \"value\"\n      },\n      \"pluginVersion\": \"10.0.0\",\n      \"targets\": [\n        {\n          \"expr\": \"proxmox_cluster_quorate\",\n          \"refId\": \"A\"\n        }\n      ],\n      \"title\": \"Cluster Quorum\",\n      \"type\": \"stat\"\n    },\n    {\n      \"datasource\": {\n        \"type\": \"prometheus\"\n      },\n      \"fieldConfig\": {\n        \"defaults\": {\n          \"color\": {\n            \"mode\": \"palette-classic\"\n          },\n          \"custom\": {\n            \"axisCenteredZero\": false,\n            \"axisColorMode\": \"text\",\n            \"axisLabel\": \"\",\n            \"axisPlacement\": \"auto\",\n            \"barAlignment\": 0,\n            \"drawStyle\": \"line\",\n            \"fillOpacity\": 20,\n            \"gradientMode\": \"none\",\n            \"hideFrom\": {\n              \"tooltip\": false,\n              \"viz\": false,\n              \"legend\": false\n            },\n            \"lineInterpolation\": \"linear\",\n            \"lineWidth\": 2,\n            \"pointSize\": 5,\n            \"scaleDistribution\": {\n              \"type\": \"linear\"\n            },\n            \"showPoints\": \"never\",\n            \"spanNulls\": false,\n            \"stacking\": {\n              \"group\": \"A\",\n              \"mode\": \"none\"\n            },\n            \"thresholdsStyle\": {\n              \"mode\": \"off\"\n            }\n          },\n          \"mappings\": [],\n          \"max\": 1,\n          \"min\": 0,\n          \"thresholds\": {\n            \"mode\": \"absolute\",\n            \"steps\": [\n              {\n                \"color\": \"green\",\n                \"value\": null\n              }\n            ]\n          },\n          \"unit\": \"percentunit\"\n        }\n      },\n      \"gridPos\": {\n        \"h\": 8,\n        \"w\": 12,\n        \"x\": 12,\n        \"y\": 0\n      },\n      \"id\": 5,\n      \"options\": {\n        \"legend\": {\n          \"calcs\": [\"last\", \"mean\", \"max\"],\n          \"displayMode\": \"table\",\n          \"placement\": \"right\",\n          \"showLegend\": true\n        },\n        \"tooltip\": {\n          \"mode\": \"multi\",\n          \"sort\": \"none\"\n        }\n      },\n      \"pluginVersion\": \"10.0.0\",\n      \"targets\": [\n        {\n          \"expr\": \"proxmox_node_cpu_usage_ratio\",\n          \"legendFormat\": \"Node: {{node}}\",\n          \"refId\": \"A\"\n        }\n      ],\n      \"title\": \"Node CPU Usage\",\n      \"type\": \"timeseries\"\n    },\n    {\n      \"datasource\": {\n        \"type\": \"prometheus\"\n      },\n      \"fieldConfig\": {\n        \"defaults\": {\n          \"color\": {\n            \"mode\": \"thresholds\"\n          },\n          \"mappings\": [],\n          \"thresholds\": {\n            \"mode\": \"absolute\",\n            \"steps\": [\n              {\n                \"color\": \"green\",\n                \"value\": null\n              }\n            ]\n          }\n        }\n      },\n      \"gridPos\": {\n        \"h\": 4,\n        \"w\": 3,\n        \"x\": 0,\n        \"y\": 4\n      },\n      \"id\": 6,\n      \"options\": {\n        \"colorMode\": \"value\",\n        \"graphMode\": \"area\",\n        \"justifyMode\": \"auto\",\n        \"orientation\": \"auto\",\n        \"reduceOptions\": {\n          \"calcs\": [\n            \"lastNotNull\"\n          ],\n          \"fields\": \"\",\n          \"values\": false\n        },\n        \"textMode\": \"auto\"\n      },\n      \"pluginVersion\": \"10.0.0\",\n      \"targets\": [\n        {\n          \"expr\": \"sum(proxmox_vms_total)\",\n          \"refId\": \"A\"\n        }\n      ],\n      \"title\": \"Total VMs\",\n      \"type\": \"stat\"\n    },\n    {\n      \"datasource\": {\n        \"type\": \"prometheus\"\n      },\n      \"fieldConfig\": {\n        \"defaults\": {\n          \"color\": {\n            \"mode\": \"thresholds\"\n          },\n          \"mappings\": [],\n          \"thresholds\": {\n            \"mode\": \"absolute\",\n            \"steps\": [\n              {\n                \"color\": \"green\",\n                \"value\": null\n              }\n            ]\n          }\n        }\n      },\n      \"gridPos\": {\n        \"h\": 4,\n        \"w\": 3,\n        \"x\": 3,\n        \"y\": 4\n      },\n      \"id\": 7,\n      \"options\": {\n        \"colorMode\": \"value\",\n        \"graphMode\": \"area\",\n        \"justifyMode\": \"auto\",\n        \"orientation\": \"auto\",\n        \"reduceOptions\": {\n          \"calcs\": [\n            \"lastNotNull\"\n          ],\n          \"fields\": \"\",\n          \"values\": false\n        },\n        \"textMode\": \"auto\"\n      },\n      \"pluginVersion\": \"10.0.0\",\n      \"targets\": [\n        {\n          \"expr\": \"sum(proxmox_vms_running)\",\n          \"refId\": \"A\"\n        }\n      ],\n      \"title\": \"VMs Running\",\n      \"type\": \"stat\"\n    },\n    {\n      \"datasource\": {\n        \"type\": \"prometheus\"\n      },\n      \"fieldConfig\": {\n        \"defaults\": {\n          \"color\": {\n            \"mode\": \"thresholds\"\n          },\n          \"mappings\": [],\n          \"thresholds\": {\n            \"mode\": \"absolute\",\n            \"steps\": [\n              {\n                \"color\": \"green\",\n                \"value\": null\n              }\n            ]\n          }\n        }\n      },\n      \"gridPos\": {\n        \"h\": 4,\n        \"w\": 3,\n        \"x\": 6,\n        \"y\": 4\n      },\n      \"id\": 8,\n      \"options\": {\n        \"colorMode\": \"value\",\n        \"graphMode\": \"area\",\n        \"justifyMode\": \"auto\",\n        \"orientation\": \"auto\",\n        \"reduceOptions\": {\n          \"calcs\": [\n            \"lastNotNull\"\n          ],\n          \"fields\": \"\",\n          \"values\": false\n        },\n        \"textMode\": \"auto\"\n      },\n      \"pluginVersion\": \"10.0.0\",\n      \"targets\": [\n        {\n          \"expr\": \"sum(proxmox_containers_total)\",\n          \"refId\": \"A\"\n        }\n      ],\n      \"title\": \"Total Containers\",\n      \"type\": \"stat\"\n    },\n    {\n      \"datasource\": {\n        \"type\": \"prometheus\"\n      },\n      \"fieldConfig\": {\n        \"defaults\": {\n          \"color\": {\n            \"mode\": \"thresholds\"\n          },\n          \"mappings\": [],\n          \"thresholds\": {\n            \"mode\": \"absolute\",\n            \"steps\": [\n              {\n                \"color\": \"green\",\n                \"value\": null\n              }\n            ]\n          }\n        }\n      },\n      \"gridPos\": {\n        \"h\": 4,\n        \"w\": 3,\n        \"x\": 9,\n        \"y\": 4\n      },\n      \"id\": 9,\n      \"options\": {\n        \"colorMode\": \"value\",\n        \"graphMode\": \"area\",\n        \"justifyMode\": \"auto\",\n        \"orientation\": \"auto\",\n        \"reduceOptions\": {\n          \"calcs\": [\n            \"lastNotNull\"\n          ],\n          \"fields\": \"\",\n          \"values\": false\n        },\n        \"textMode\": \"auto\"\n      },\n      \"pluginVersion\": \"10.0.0\",\n      \"targets\": [\n        {\n          \"expr\": \"sum(proxmox_containers_running)\",\n          \"refId\": \"A\"\n        }\n      ],\n      \"title\": \"Containers Running\",\n      \"type\": \"stat\"\n    },\n    {\n      \"datasource\": {\n        \"type\": \"prometheus\"\n      },\n      \"fieldConfig\": {\n        \"defaults\": {\n          \"color\": {\n            \"mode\": \"palette-classic\"\n          },\n          \"custom\": {\n            \"axisCenteredZero\": false,\n            \"axisColorMode\": \"text\",\n            \"axisLabel\": \"\",\n            \"axisPlacement\": \"auto\",\n            \"barAlignment\": 0,\n            \"drawStyle\": \"line\",\n            \"fillOpacity\": 20,\n            \"gradientMode\": \"none\",\n            \"hideFrom\": {\n              \"tooltip\": false,\n              \"viz\": false,\n              \"legend\": false\n            },\n            \"lineInterpolation\": \"linear\",\n            \"lineWidth\": 2,\n            \"pointSize\": 5,\n            \"scaleDistribution\": {\n              \"type\": \"linear\"\n            },\n            \"showPoints\": \"never\",\n            \"spanNulls\": false,\n            \"stacking\": {\n              \"group\": \"A\",\n              \"mode\": \"none\"\n            },\n            \"thresholdsStyle\": {\n              \"mode\": \"off\"\n            }\n          },\n          \"mappings\": [],\n          \"max\": 1,\n          \"min\": 0,\n          \"thresholds\": {\n            \"mode\": \"absolute\",\n            \"steps\": [\n              {\n                \"color\": \"green\",\n                \"value\": null\n              }\n            ]\n          },\n          \"unit\": \"percentunit\"\n        }\n      },\n      \"gridPos\": {\n        \"h\": 8,\n        \"w\": 12,\n        \"x\": 12,\n        \"y\": 8\n      },\n      \"id\": 10,\n      \"options\": {\n        \"legend\": {\n          \"calcs\": [\"last\", \"mean\", \"max\"],\n          \"displayMode\": \"table\",\n          \"placement\": \"right\",\n          \"showLegend\": true\n        },\n        \"tooltip\": {\n          \"mode\": \"multi\",\n          \"sort\": \"none\"\n        }\n      },\n      \"pluginVersion\": \"10.0.0\",\n      \"targets\": [\n        {\n          \"expr\": \"proxmox_node_memory_used_bytes / proxmox_node_memory_total_bytes\",\n          \"legendFormat\": \"Node: {{node}}\",\n          \"refId\": \"A\"\n        }\n      ],\n      \"title\": \"Node Memory Usage\",\n      \"type\": \"timeseries\"\n    },\n    {\n      \"datasource\": {\n        \"type\": \"prometheus\"\n      },\n      \"fieldConfig\": {\n        \"defaults\": {\n          \"color\": {\n            \"mode\": \"thresholds\"\n          },\n          \"custom\": {\n            \"align\": \"auto\",\n            \"cellOptions\": {\n              \"type\": \"auto\"\n            },\n            \"inspect\": false\n          },\n          \"mappings\": [],\n          \"thresholds\": {\n            \"mode\": \"absolute\",\n            \"steps\": [\n              {\n                \"color\": \"green\",\n                \"value\": null\n              }\n            ]\n          }\n        },\n        \"overrides\": [\n          {\n            \"matcher\": {\n              \"id\": \"byName\",\n              \"options\": \"Status\"\n            },\n            \"properties\": [\n              {\n                \"id\": \"mappings\",\n                \"value\": [\n                  {\n                    \"options\": {\n                      \"0\": {\n                        \"color\": \"red\",\n                        \"text\": \"Stopped\"\n                      },\n                      \"1\": {\n                        \"color\": \"green\",\n                        \"text\": \"Running\"\n                      }\n                    },\n                    \"type\": \"value\"\n                  }\n                ]\n              },\n              {\n                \"id\": \"custom.cellOptions\",\n                \"value\": {\n                  \"type\": \"color-background\"\n                }\n              }\n            ]\n          },\n          {\n            \"matcher\": {\n              \"id\": \"byName\",\n              \"options\": \"CPU %\"\n            },\n            \"properties\": [\n              {\n                \"id\": \"unit\",\n                \"value\": \"percent\"\n              },\n              {\n                \"id\": \"custom.cellOptions\",\n                \"value\": {\n                  \"type\": \"gauge\",\n                  \"mode\": \"gradient\"\n                }\n              },\n              {\n                \"id\": \"max\",\n                \"value\": 100\n              },\n              {\n                \"id\": \"min\",\n                \"value\": 0\n              }\n            ]\n          },\n          {\n            \"matcher\": {\n              \"id\": \"byName\",\n              \"options\": \"Memory %\"\n            },\n            \"properties\": [\n              {\n                \"id\": \"unit\",\n                \"value\": \"percent\"\n              },\n              {\n                \"id\": \"custom.cellOptions\",\n                \"value\": {\n                  \"type\": \"gauge\",\n                  \"mode\": \"gradient\"\n                }\n              },\n              {\n                \"id\": \"max\",\n                \"value\": 100\n              },\n              {\n                \"id\": \"min\",\n                \"value\": 0\n              }\n            ]\n          },\n          {\n            \"matcher\": {\n              \"id\": \"byName\",\n              \"options\": \"Memory\"\n            },\n            \"properties\": [\n              {\n                \"id\": \"unit\",\n                \"value\": \"bytes\"\n              }\n            ]\n          },\n          {\n            \"matcher\": {\n              \"id\": \"byName\",\n              \"options\": \"Uptime\"\n            },\n            \"properties\": [\n              {\n                \"id\": \"unit\",\n                \"value\": \"s\"\n              }\n            ]\n          }\n        ]\n      },\n      \"gridPos\": {\n        \"h\": 8,\n        \"w\": 12,\n        \"x\": 0,\n        \"y\": 8\n      },\n      \"id\": 11,\n      \"options\": {\n        \"cellHeight\": \"sm\",\n        \"footer\": {\n          \"countRows\": false,\n          \"fields\": \"\",\n          \"reducer\": [\n            \"sum\"\n          ],\n          \"show\": false\n        },\n        \"showHeader\": true,\n        \"sortBy\": [\n          {\n            \"desc\": true,\n            \"displayName\": \"Status\"\n          }\n        ]\n      },\n      \"pluginVersion\": \"10.0.0\",\n      \"targets\": [\n        {\n          \"expr\": \"proxmox_vm_status\",\n          \"format\": \"table\",\n          \"instant\": true,\n          \"refId\": \"A\"\n        },\n        {\n          \"expr\": \"proxmox_vm_cpu_usage_ratio * 100\",\n          \"format\": \"table\",\n          \"instant\": true,\n          \"refId\": \"B\"\n        },\n        {\n          \"expr\": \"(proxmox_vm_memory_used_bytes / proxmox_vm_memory_total_bytes) * 100\",\n          \"format\": \"table\",\n          \"instant\": true,\n          \"refId\": \"C\"\n        },\n        {\n          \"expr\": \"proxmox_vm_memory_used_bytes\",\n          \"format\": \"table\",\n          \"instant\": true,\n          \"refId\": \"D\"\n        },\n        {\n          \"expr\": \"proxmox_vm_uptime_seconds\",\n          \"format\": \"table\",\n          \"instant\": true,\n          \"refId\": \"E\"\n        }\n      ],\n      \"title\": \"Virtual Machines\",\n      \"transformations\": [\n        {\n          \"id\": \"merge\",\n          \"options\": {}\n        },\n        {\n          \"id\": \"organize\",\n          \"options\": {\n            \"excludeByName\": {\n              \"Time\": true,\n              \"node\": true,\n              \"__name__\": true,\n              \"instance\": true,\n              \"job\": true\n            },\n            \"indexByName\": {\n              \"vmid\": 0,\n              \"name\": 1,\n              \"Value #A\": 2,\n              \"Value #B\": 3,\n              \"Value #C\": 4,\n              \"Value #D\": 5,\n              \"Value #E\": 6\n            },\n            \"renameByName\": {\n              \"Value #A\": \"Status\",\n              \"Value #B\": \"CPU %\",\n              \"Value #C\": \"Memory %\",\n              \"Value #D\": \"Memory\",\n              \"Value #E\": \"Uptime\",\n              \"vmid\": \"VMID\",\n              \"name\": \"Name\"\n            }\n          }\n        }\n      ],\n      \"type\": \"table\"\n    },\n    {\n      \"datasource\": {\n        \"type\": \"prometheus\"\n      },\n      \"fieldConfig\": {\n        \"defaults\": {\n          \"color\": {\n            \"mode\": \"palette-classic\"\n          },\n          \"custom\": {\n            \"axisCenteredZero\": false,\n            \"axisColorMode\": \"text\",\n            \"axisLabel\": \"\",\n            \"axisPlacement\": \"auto\",\n            \"barAlignment\": 0,\n            \"drawStyle\": \"line\",\n            \"fillOpacity\": 20,\n            \"gradientMode\": \"none\",\n            \"hideFrom\": {\n              \"tooltip\": false,\n              \"viz\": false,\n              \"legend\": false\n            },\n            \"lineInterpolation\": \"linear\",\n            \"lineWidth\": 2,\n            \"pointSize\": 5,\n            \"scaleDistribution\": {\n              \"type\": \"linear\"\n            },\n            \"showPoints\": \"never\",\n            \"spanNulls\": false,\n            \"stacking\": {\n              \"group\": \"A\",\n              \"mode\": \"none\"\n            },\n            \"thresholdsStyle\": {\n              \"mode\": \"off\"\n            }\n          },\n          \"mappings\": [],\n          \"thresholds\": {\n            \"mode\": \"absolute\",\n            \"steps\": [\n              {\n                \"color\": \"green\",\n                \"value\": null\n              }\n            ]\n          },\n          \"unit\": \"bytes\"\n        }\n      },\n      \"gridPos\": {\n        \"h\": 8,\n        \"w\": 12,\n        \"x\": 0,\n        \"y\": 16\n      },\n      \"id\": 12,\n      \"options\": {\n        \"legend\": {\n          \"calcs\": [\"last\", \"mean\"],\n          \"displayMode\": \"table\",\n          \"placement\": \"right\",\n          \"showLegend\": true\n        },\n        \"tooltip\": {\n          \"mode\": \"multi\",\n          \"sort\": \"none\"\n        }\n      },\n      \"pluginVersion\": \"10.0.0\",\n      \"targets\": [\n        {\n          \"expr\": \"proxmox_vm_memory_used_bytes\",\n          \"legendFormat\": \"{{name}}\",\n          \"refId\": \"A\"\n        }\n      ],\n      \"title\": \"VM Memory Usage\",\n      \"type\": \"timeseries\"\n    },\n    {\n      \"datasource\": {\n        \"type\": \"prometheus\"\n      },\n      \"fieldConfig\": {\n        \"defaults\": {\n          \"color\": {\n            \"mode\": \"palette-classic\"\n          },\n          \"custom\": {\n            \"axisCenteredZero\": false,\n            \"axisColorMode\": \"text\",\n            \"axisLabel\": \"\",\n            \"axisPlacement\": \"auto\",\n            \"barAlignment\": 0,\n            \"drawStyle\": \"line\",\n            \"fillOpacity\": 20,\n            \"gradientMode\": \"none\",\n            \"hideFrom\": {\n              \"tooltip\": false,\n              \"viz\": false,\n              \"legend\": false\n            },\n            \"lineInterpolation\": \"linear\",\n            \"lineWidth\": 2,\n            \"pointSize\": 5,\n            \"scaleDistribution\": {\n              \"type\": \"linear\"\n            },\n            \"showPoints\": \"never\",\n            \"spanNulls\": false,\n            \"stacking\": {\n              \"group\": \"A\",\n              \"mode\": \"none\"\n            },\n            \"thresholdsStyle\": {\n              \"mode\": \"off\"\n            }\n          },\n          \"mappings\": [],\n          \"max\": 1,\n          \"min\": 0,\n          \"thresholds\": {\n            \"mode\": \"absolute\",\n            \"steps\": [\n              {\n                \"color\": \"green\",\n                \"value\": null\n              }\n            ]\n          },\n          \"unit\": \"percentunit\"\n        }\n      },\n      \"gridPos\": {\n        \"h\": 8,\n        \"w\": 12,\n        \"x\": 12,\n        \"y\": 16\n      },\n      \"id\": 13,\n      \"options\": {\n        \"legend\": {\n          \"calcs\": [\"last\", \"max\"],\n          \"displayMode\": \"table\",\n          \"placement\": \"right\",\n          \"showLegend\": true\n        },\n        \"tooltip\": {\n          \"mode\": \"multi\",\n          \"sort\": \"none\"\n        }\n      },\n      \"pluginVersion\": \"10.0.0\",\n      \"targets\": [\n        {\n          \"expr\": \"proxmox_vm_cpu_usage_ratio\",\n          \"legendFormat\": \"{{name}}\",\n          \"refId\": \"A\"\n        }\n      ],\n      \"title\": \"VM CPU Usage\",\n      \"type\": \"timeseries\"\n    },\n    {\n      \"datasource\": {\n        \"type\": \"prometheus\"\n      },\n      \"fieldConfig\": {\n        \"defaults\": {\n          \"color\": {\n            \"mode\": \"thresholds\"\n          },\n          \"custom\": {\n            \"align\": \"auto\",\n            \"cellOptions\": {\n              \"type\": \"auto\"\n            },\n            \"inspect\": false\n          },\n          \"mappings\": [],\n          \"thresholds\": {\n            \"mode\": \"absolute\",\n            \"steps\": [\n              {\n                \"color\": \"green\",\n                \"value\": null\n              }\n            ]\n          }\n        },\n        \"overrides\": [\n          {\n            \"matcher\": {\n              \"id\": \"byName\",\n              \"options\": \"Status\"\n            },\n            \"properties\": [\n              {\n                \"id\": \"mappings\",\n                \"value\": [\n                  {\n                    \"options\": {\n                      \"0\": {\n                        \"color\": \"red\",\n                        \"text\": \"Stopped\"\n                      },\n                      \"1\": {\n                        \"color\": \"green\",\n                        \"text\": \"Running\"\n                      }\n                    },\n                    \"type\": \"value\"\n                  }\n                ]\n              },\n              {\n                \"id\": \"custom.cellOptions\",\n                \"value\": {\n                  \"type\": \"color-background\"\n                }\n              }\n            ]\n          },\n          {\n            \"matcher\": {\n              \"id\": \"byName\",\n              \"options\": \"CPU %\"\n            },\n            \"properties\": [\n              {\n                \"id\": \"unit\",\n                \"value\": \"percent\"\n              },\n              {\n                \"id\": \"custom.cellOptions\",\n                \"value\": {\n                  \"type\": \"gauge\",\n                  \"mode\": \"gradient\"\n                }\n              },\n              {\n                \"id\": \"max\",\n                \"value\": 100\n              }\n            ]\n          },\n          {\n            \"matcher\": {\n              \"id\": \"byName\",\n              \"options\": \"Memory %\"\n            },\n            \"properties\": [\n              {\n                \"id\": \"unit\",\n                \"value\": \"percent\"\n              },\n              {\n                \"id\": \"custom.cellOptions\",\n                \"value\": {\n                  \"type\": \"gauge\",\n                  \"mode\": \"gradient\"\n                }\n              },\n              {\n                \"id\": \"max\",\n                \"value\": 100\n              }\n            ]\n          },\n          {\n            \"matcher\": {\n              \"id\": \"byName\",\n              \"options\": \"Memory\"\n            },\n            \"properties\": [\n              {\n                \"id\": \"unit\",\n                \"value\": \"bytes\"\n              }\n            ]\n          },\n          {\n            \"matcher\": {\n              \"id\": \"byName\",\n              \"options\": \"Uptime\"\n            },\n            \"properties\": [\n              {\n                \"id\": \"unit\",\n                \"value\": \"s\"\n              }\n            ]\n          }\n        ]\n      },\n      \"gridPos\": {\n        \"h\": 8,\n        \"w\": 12,\n        \"x\": 0,\n        \"y\": 24\n      },\n      \"id\": 14,\n      \"options\": {\n        \"cellHeight\": \"sm\",\n        \"footer\": {\n          \"countRows\": false,\n          \"fields\": \"\",\n          \"reducer\": [\n            \"sum\"\n          ],\n          \"show\": false\n        },\n        \"showHeader\": true,\n        \"sortBy\": [\n          {\n            \"desc\": true,\n            \"displayName\": \"Status\"\n          }\n        ]\n      },\n      \"pluginVersion\": \"10.0.0\",\n      \"targets\": [\n        {\n          \"expr\": \"proxmox_container_status\",\n          \"format\": \"table\",\n          \"instant\": true,\n          \"refId\": \"A\"\n        },\n        {\n          \"expr\": \"proxmox_container_cpu_usage_ratio * 100\",\n          \"format\": \"table\",\n          \"instant\": true,\n          \"refId\": \"B\"\n        },\n        {\n          \"expr\": \"(proxmox_container_memory_used_bytes / proxmox_container_memory_total_bytes) * 100\",\n          \"format\": \"table\",\n          \"instant\": true,\n          \"refId\": \"C\"\n        },\n        {\n          \"expr\": \"proxmox_container_memory_used_bytes\",\n          \"format\": \"table\",\n          \"instant\": true,\n          \"refId\": \"D\"\n        },\n        {\n          \"expr\": \"proxmox_container_uptime_seconds\",\n          \"format\": \"table\",\n          \"instant\": true,\n          \"refId\": \"E\"\n        }\n      ],\n      \"title\": \"LXC Containers\",\n      \"transformations\": [\n        {\n          \"id\": \"merge\",\n          \"options\": {}\n        },\n        {\n          \"id\": \"organize\",\n          \"options\": {\n            \"excludeByName\": {\n              \"Time\": true,\n              \"node\": true,\n              \"__name__\": true,\n              \"instance\": true,\n              \"job\": true\n            },\n            \"indexByName\": {\n              \"vmid\": 0,\n              \"name\": 1,\n              \"Value #A\": 2,\n              \"Value #B\": 3,\n              \"Value #C\": 4,\n              \"Value #D\": 5,\n              \"Value #E\": 6\n            },\n            \"renameByName\": {\n              \"Value #A\": \"Status\",\n              \"Value #B\": \"CPU %\",\n              \"Value #C\": \"Memory %\",\n              \"Value #D\": \"Memory\",\n              \"Value #E\": \"Uptime\",\n              \"vmid\": \"CTID\",\n              \"name\": \"Name\"\n            }\n          }\n        }\n      ],\n      \"type\": \"table\"\n    },\n    {\n      \"datasource\": {\n        \"type\": \"prometheus\"\n      },\n      \"fieldConfig\": {\n        \"defaults\": {\n          \"color\": {\n            \"mode\": \"thresholds\"\n          },\n          \"mappings\": [],\n          \"max\": 1,\n          \"min\": 0,\n          \"thresholds\": {\n            \"mode\": \"absolute\",\n            \"steps\": [\n              {\n                \"color\": \"green\",\n                \"value\": null\n              },\n              {\n                \"color\": \"yellow\",\n                \"value\": 0.7\n              },\n              {\n                \"color\": \"red\",\n                \"value\": 0.9\n              }\n            ]\n          },\n          \"unit\": \"percentunit\"\n        }\n      },\n      \"gridPos\": {\n        \"h\": 8,\n        \"w\": 12,\n        \"x\": 12,\n        \"y\": 24\n      },\n      \"id\": 15,\n      \"options\": {\n        \"orientation\": \"auto\",\n        \"reduceOptions\": {\n          \"calcs\": [\n            \"lastNotNull\"\n          ],\n          \"fields\": \"\",\n          \"values\": false\n        },\n        \"showThresholdLabels\": false,\n        \"showThresholdMarkers\": true,\n        \"text\": {}\n      },\n      \"pluginVersion\": \"10.0.0\",\n      \"targets\": [\n        {\n          \"expr\": \"proxmox_storage_usage_ratio\",\n          \"legendFormat\": \"{{storage}} ({{type}})\",\n          \"refId\": \"A\"\n        }\n      ],\n      \"title\": \"Storage Usage\",\n      \"type\": \"gauge\"\n    },\n    {\n      \"datasource\": {\n        \"type\": \"prometheus\"\n      },\n      \"fieldConfig\": {\n        \"defaults\": {\n          \"color\": {\n            \"mode\": \"palette-classic\"\n          },\n          \"custom\": {\n            \"axisCenteredZero\": false,\n            \"axisColorMode\": \"text\",\n            \"axisLabel\": \"\",\n            \"axisPlacement\": \"auto\",\n            \"barAlignment\": 0,\n            \"drawStyle\": \"line\",\n            \"fillOpacity\": 0,\n            \"gradientMode\": \"none\",\n            \"hideFrom\": {\n              \"tooltip\": false,\n              \"viz\": false,\n              \"legend\": false\n            },\n            \"lineInterpolation\": \"linear\",\n            \"lineWidth\": 1,\n            \"pointSize\": 5,\n            \"scaleDistribution\": {\n              \"type\": \"linear\"\n            },\n            \"showPoints\": \"never\",\n            \"spanNulls\": false,\n            \"stacking\": {\n              \"group\": \"A\",\n              \"mode\": \"none\"\n            },\n            \"thresholdsStyle\": {\n              \"mode\": \"off\"\n            }\n          },\n          \"mappings\": [],\n          \"thresholds\": {\n            \"mode\": \"absolute\",\n            \"steps\": [\n              {\n                \"color\": \"green\",\n                \"value\": null\n              }\n            ]\n          },\n          \"unit\": \"Bps\"\n        }\n      },\n      \"gridPos\": {\n        \"h\": 8,\n        \"w\": 12,\n        \"x\": 0,\n        \"y\": 32\n      },\n      \"id\": 16,\n      \"options\": {\n        \"legend\": {\n          \"calcs\": [\"last\", \"mean\", \"max\"],\n          \"displayMode\": \"table\",\n          \"placement\": \"right\",\n          \"showLegend\": true\n        },\n        \"tooltip\": {\n          \"mode\": \"multi\",\n          \"sort\": \"none\"\n        }\n      },\n      \"pluginVersion\": \"10.0.0\",\n      \"targets\": [\n        {\n          \"expr\": \"rate(proxmox_vm_network_in_bytes_total[5m])\",\n          \"legendFormat\": \"{{name}} - RX\",\n          \"refId\": \"A\"\n        },\n        {\n          \"expr\": \"rate(proxmox_vm_network_out_bytes_total[5m])\",\n          \"legendFormat\": \"{{name}} - TX\",\n          \"refId\": \"B\"\n        }\n      ],\n      \"title\": \"VM Network I/O\",\n      \"type\": \"timeseries\"\n    },\n    {\n      \"datasource\": {\n        \"type\": \"prometheus\"\n      },\n      \"fieldConfig\": {\n        \"defaults\": {\n          \"color\": {\n            \"mode\": \"palette-classic\"\n          },\n          \"custom\": {\n            \"axisCenteredZero\": false,\n            \"axisColorMode\": \"text\",\n            \"axisLabel\": \"\",\n            \"axisPlacement\": \"auto\",\n            \"barAlignment\": 0,\n            \"drawStyle\": \"line\",\n            \"fillOpacity\": 0,\n            \"gradientMode\": \"none\",\n            \"hideFrom\": {\n              \"tooltip\": false,\n              \"viz\": false,\n              \"legend\": false\n            },\n            \"lineInterpolation\": \"linear\",\n            \"lineWidth\": 1,\n            \"pointSize\": 5,\n            \"scaleDistribution\": {\n              \"type\": \"linear\"\n            },\n            \"showPoints\": \"never\",\n            \"spanNulls\": false,\n            \"stacking\": {\n              \"group\": \"A\",\n              \"mode\": \"none\"\n            },\n            \"thresholdsStyle\": {\n              \"mode\": \"off\"\n            }\n          },\n          \"mappings\": [],\n          \"thresholds\": {\n            \"mode\": \"absolute\",\n            \"steps\": [\n              {\n                \"color\": \"green\",\n                \"value\": null\n              }\n            ]\n          },\n          \"unit\": \"Bps\"\n        }\n      },\n      \"gridPos\": {\n        \"h\": 8,\n        \"w\": 12,\n        \"x\": 12,\n        \"y\": 32\n      },\n      \"id\": 17,\n      \"options\": {\n        \"legend\": {\n          \"calcs\": [\"last\", \"mean\", \"max\"],\n          \"displayMode\": \"table\",\n          \"placement\": \"right\",\n          \"showLegend\": true\n        },\n        \"tooltip\": {\n          \"mode\": \"multi\",\n          \"sort\": \"none\"\n        }\n      },\n      \"pluginVersion\": \"10.0.0\",\n      \"targets\": [\n        {\n          \"expr\": \"rate(proxmox_vm_disk_read_bytes_total[5m])\",\n          \"legendFormat\": \"{{name}} - Read\",\n          \"refId\": \"A\"\n        },\n        {\n          \"expr\": \"rate(proxmox_vm_disk_write_bytes_total[5m])\",\n          \"legendFormat\": \"{{name}} - Write\",\n          \"refId\": \"B\"\n        }\n      ],\n      \"title\": \"VM Disk I/O\",\n      \"type\": \"timeseries\"\n    },\n    {\n      \"datasource\": {\n        \"type\": \"prometheus\"\n      },\n      \"fieldConfig\": {\n        \"defaults\": {\n          \"color\": {\n            \"mode\": \"thresholds\"\n          },\n          \"custom\": {\n            \"align\": \"auto\",\n            \"cellOptions\": {\n              \"type\": \"auto\"\n            },\n            \"inspect\": false\n          },\n          \"mappings\": [],\n          \"thresholds\": {\n            \"mode\": \"absolute\",\n            \"steps\": [\n              {\n                \"color\": \"green\",\n                \"value\": null\n              }\n            ]\n          }\n        },\n        \"overrides\": [\n          {\n            \"matcher\": {\n              \"id\": \"byName\",\n              \"options\": \"Usage %\"\n            },\n            \"properties\": [\n              {\n                \"id\": \"unit\",\n                \"value\": \"percent\"\n              },\n              {\n                \"id\": \"custom.cellOptions\",\n                \"value\": {\n                  \"type\": \"gauge\",\n                  \"mode\": \"gradient\"\n                }\n              },\n              {\n                \"id\": \"max\",\n                \"value\": 100\n              },\n              {\n                \"id\": \"thresholds\",\n                \"value\": {\n                  \"mode\": \"absolute\",\n                  \"steps\": [\n                    {\n                      \"color\": \"green\",\n                      \"value\": null\n                    },\n                    {\n                      \"color\": \"yellow\",\n                      \"value\": 70\n                    },\n                    {\n                      \"color\": \"red\",\n                      \"value\": 90\n                    }\n                  ]\n                }\n              }\n            ]\n          },\n          {\n            \"matcher\": {\n              \"id\": \"byName\",\n              \"options\": \"Total\"\n            },\n            \"properties\": [\n              {\n                \"id\": \"unit\",\n                \"value\": \"bytes\"\n              }\n            ]\n          },\n          {\n            \"matcher\": {\n              \"id\": \"byName\",\n              \"options\": \"Used\"\n            },\n            \"properties\": [\n              {\n                \"id\": \"unit\",\n                \"value\": \"bytes\"\n              }\n            ]\n          },\n          {\n            \"matcher\": {\n              \"id\": \"byName\",\n              \"options\": \"Available\"\n            },\n            \"properties\": [\n              {\n                \"id\": \"unit\",\n                \"value\": \"bytes\"\n              }\n            ]\n          }\n        ]\n      },\n      \"gridPos\": {\n        \"h\": 8,\n        \"w\": 24,\n        \"x\": 0,\n        \"y\": 40\n      },\n      \"id\": 18,\n      \"options\": {\n        \"cellHeight\": \"sm\",\n        \"footer\": {\n          \"countRows\": false,\n          \"fields\": \"\",\n          \"reducer\": [\n            \"sum\"\n          ],\n          \"show\": false\n        },\n        \"showHeader\": true,\n        \"sortBy\": [\n          {\n            \"desc\": true,\n            \"displayName\": \"Usage %\"\n          }\n        ]\n      },\n      \"pluginVersion\": \"10.0.0\",\n      \"targets\": [\n        {\n          \"expr\": \"proxmox_storage_total_bytes\",\n          \"format\": \"table\",\n          \"instant\": true,\n          \"refId\": \"A\"\n        },\n        {\n          \"expr\": \"proxmox_storage_used_bytes\",\n          \"format\": \"table\",\n          \"instant\": true,\n          \"refId\": \"B\"\n        },\n        {\n          \"expr\": \"proxmox_storage_available_bytes\",\n          \"format\": \"table\",\n          \"instant\": true,\n          \"refId\": \"C\"\n        },\n        {\n          \"expr\": \"proxmox_storage_usage_ratio * 100\",\n          \"format\": \"table\",\n          \"instant\": true,\n          \"refId\": \"D\"\n        }\n      ],\n      \"title\": \"Storage Pools\",\n      \"transformations\": [\n        {\n          \"id\": \"merge\",\n          \"options\": {}\n        },\n        {\n          \"id\": \"organize\",\n          \"options\": {\n            \"excludeByName\": {\n              \"Time\": true,\n              \"__name__\": true,\n              \"instance\": true,\n              \"job\": true\n            },\n            \"indexByName\": {\n              \"node\": 0,\n              \"storage\": 1,\n              \"type\": 2,\n              \"Value #A\": 3,\n              \"Value #B\": 4,\n              \"Value #C\": 5,\n              \"Value #D\": 6\n            },\n            \"renameByName\": {\n              \"Value #A\": \"Total\",\n              \"Value #B\": \"Used\",\n              \"Value #C\": \"Available\",\n              \"Value #D\": \"Usage %\",\n              \"node\": \"Node\",\n              \"storage\": \"Storage\",\n              \"type\": \"Type\"\n            }\n          }\n        }\n      ],\n      \"type\": \"table\"\n    },\n    {\n      \"datasource\": {\n        \"type\": \"prometheus\"\n      },\n      \"fieldConfig\": {\n        \"defaults\": {\n          \"color\": {\n            \"mode\": \"palette-classic\"\n          },\n          \"custom\": {\n            \"axisCenteredZero\": false,\n            \"axisColorMode\": \"text\",\n            \"axisLabel\": \"\",\n            \"axisPlacement\": \"auto\",\n            \"barAlignment\": 0,\n            \"drawStyle\": \"line\",\n            \"fillOpacity\": 10,\n            \"gradientMode\": \"none\",\n            \"hideFrom\": {\n              \"tooltip\": false,\n              \"viz\": false,\n              \"legend\": false\n            },\n            \"lineInterpolation\": \"linear\",\n            \"lineWidth\": 1,\n            \"pointSize\": 5,\n            \"scaleDistribution\": {\n              \"type\": \"linear\"\n            },\n            \"showPoints\": \"never\",\n            \"spanNulls\": false,\n            \"stacking\": {\n              \"group\": \"A\",\n              \"mode\": \"none\"\n            },\n            \"thresholdsStyle\": {\n              \"mode\": \"off\"\n            }\n          },\n          \"mappings\": [],\n          \"thresholds\": {\n            \"mode\": \"absolute\",\n            \"steps\": [\n              {\n                \"color\": \"green\",\n                \"value\": null\n              }\n            ]\n          }\n        }\n      },\n      \"gridPos\": {\n        \"h\": 8,\n        \"w\": 12,\n        \"x\": 0,\n        \"y\": 48\n      },\n      \"id\": 19,\n      \"options\": {\n        \"legend\": {\n          \"calcs\": [\"last\", \"max\"],\n          \"displayMode\": \"table\",\n          \"placement\": \"right\",\n          \"showLegend\": true\n        },\n        \"tooltip\": {\n          \"mode\": \"multi\",\n          \"sort\": \"none\"\n        }\n      },\n      \"pluginVersion\": \"10.0.0\",\n      \"targets\": [\n        {\n          \"expr\": \"proxmox_node_load_1m\",\n          \"legendFormat\": \"{{node}} - 1m\",\n          \"refId\": \"A\"\n        },\n        {\n          \"expr\": \"proxmox_node_load_5m\",\n          \"legendFormat\": \"{{node}} - 5m\",\n          \"refId\": \"B\"\n        },\n        {\n          \"expr\": \"proxmox_node_load_15m\",\n          \"legendFormat\": \"{{node}} - 15m\",\n          \"refId\": \"C\"\n        }\n      ],\n      \"title\": \"Node Load Average\",\n      \"type\": \"timeseries\"\n    },\n    {\n      \"datasource\": {\n        \"type\": \"prometheus\"\n      },\n      \"fieldConfig\": {\n        \"defaults\": {\n          \"color\": {\n            \"mode\": \"thresholds\"\n          },\n          \"mappings\": [],\n          \"thresholds\": {\n            \"mode\": \"absolute\",\n            \"steps\": [\n              {\n                \"color\": \"green\",\n                \"value\": null\n              }\n            ]\n          }\n        }\n      },\n      \"gridPos\": {\n        \"h\": 8,\n        \"w\": 12,\n        \"x\": 12,\n        \"y\": 48\n      },\n      \"id\": 20,\n      \"options\": {\n        \"colorMode\": \"value\",\n        \"graphMode\": \"none\",\n        \"justifyMode\": \"auto\",\n        \"orientation\": \"auto\",\n        \"reduceOptions\": {\n          \"calcs\": [\n            \"lastNotNull\"\n          ],\n          \"fields\": \"\",\n          \"values\": false\n        },\n        \"textMode\": \"auto\"\n      },\n      \"pluginVersion\": \"10.0.0\",\n      \"targets\": [\n        {\n          \"expr\": \"proxmox_tasks_running\",\n          \"legendFormat\": \"{{node}} - Running Tasks\",\n          \"refId\": \"A\"\n        }\n      ],\n      \"title\": \"Running Tasks\",\n      \"type\": \"stat\"\n    }\n  ],\n  \"refresh\": \"30s\",\n  \"schemaVersion\": 38,\n  \"style\": \"dark\",\n  \"tags\": [\n    \"proxmox\",\n    \"virtualization\",\n    \"infrastructure\"\n  ],\n  \"templating\": {\n    \"list\": []\n  },\n  \"time\": {\n    \"from\": \"now-6h\",\n    \"to\": \"now\"\n  },\n  \"timepicker\": {},\n  \"timezone\": \"\",\n  \"title\": \"Proxmox VE Cluster\",\n  \"uid\": \"proxmox-cluster\",\n  \"version\": 1,\n  \"weekStart\": \"\"\n}\n"},"kind":"ConfigMap","metadata":{"annotations":{},"creationTimestamp":null,"name":"grafana-dashboard-proxmox","namespace":"monitoring"}}
+  creationTimestamp: "2025-12-21T00:49:55Z"
+  labels:
+    grafana_dashboard: "1"
+  name: grafana-dashboard-proxmox
+  namespace: monitoring
+  resourceVersion: "30571047"
+  uid: b5793d29-6746-4480-a965-ee7ce4405174
