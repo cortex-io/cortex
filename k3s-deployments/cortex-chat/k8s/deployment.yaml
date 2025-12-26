@@ -56,8 +56,8 @@ spec:
           value: "http://unifi-mcp.cortex-system.svc.cluster.local:3000"
         - name: PROXMOX_MCP_URL
           value: "http://proxmox-mcp.cortex-system.svc.cluster.local:3000"
-        - name: WAZUH_MCP_URL
-          value: "http://wazuh-mcp.cortex-system.svc.cluster.local:3000"
+        - name: SANDFLY_MCP_URL
+          value: "http://sandfly-mcp-server.cortex-system.svc.cluster.local:3000"
         - name: CORTEX_URL
           value: "http://cortex-orchestrator.cortex.svc.cluster.local:8000"
         - name: AUTH_USERNAME
