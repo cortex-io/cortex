@@ -74,6 +74,26 @@ spec:
           value: "admin"
         - name: SANDFLY_PASSWORD
           value: "emphasize-art-nibble-arguable-paradox-flick-unpack"
+        - name: PROXMOX_HOST
+          value: "10.88.140.21"
+        - name: PROXMOX_PORT
+          value: "8006"
+        - name: PROXMOX_USERNAME
+          value: "root@pam"
+        - name: PROXMOX_PASSWORD
+          value: "toor"
+        - name: UNIFI_HOST
+          value: "10.88.140.16"
+        - name: UNIFI_PORT
+          value: "443"
+        - name: UNIFI_USERNAME
+          value: "cortex"
+        - name: UNIFI_PASSWORD
+          value: "cortex"
+        - name: UNIFI_SITE
+          value: "default"
+        - name: UNIFI_IS_UDM
+          value: "false"
         resources:
           requests:
             memory: "128Mi"
