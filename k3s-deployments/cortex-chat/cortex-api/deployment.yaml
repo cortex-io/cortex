@@ -15,17 +15,29 @@ metadata:
   name: cortex-api-reader
 rules:
 - apiGroups: [""]
-  resources: ["pods", "services", "nodes", "namespaces", "configmaps", "secrets"]
+  resources: ["pods", "services", "nodes", "namespaces", "configmaps", "secrets", "endpoints"]
   verbs: ["get", "list", "watch"]
+- apiGroups: [""]
+  resources: ["pods", "pods/log"]
+  verbs: ["get", "list"]
+- apiGroups: [""]
+  resources: ["pods"]
+  verbs: ["create", "delete"]  # For connectivity tests
 - apiGroups: ["apps"]
   resources: ["deployments", "statefulsets", "daemonsets", "replicasets"]
-  verbs: ["get", "list", "watch"]
+  verbs: ["get", "list", "watch", "patch", "update"]  # patch/update for self-healing
+- apiGroups: ["apps"]
+  resources: ["deployments/scale"]
+  verbs: ["get", "update", "patch"]  # For scaling during healing
 - apiGroups: ["batch"]
   resources: ["jobs", "cronjobs"]
   verbs: ["get", "list", "watch"]
 - apiGroups: ["metrics.k8s.io"]
   resources: ["nodes", "pods"]
   verbs: ["get", "list"]
+- apiGroups: [""]
+  resources: ["events"]
+  verbs: ["get", "list", "watch"]  # For diagnostic checks
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
@@ -94,13 +106,17 @@ spec:
           value: "default"
         - name: UNIFI_IS_UDM
           value: "false"
+        - name: SELF_HEAL_WORKER_PATH
+          value: "/app/scripts/self-heal-worker.sh"
+        - name: HEALING_ENABLED
+          value: "true"
         resources:
           requests:
-            memory: "128Mi"
-            cpu: "100m"
+            memory: "256Mi"
+            cpu: "200m"
           limits:
-            memory: "512Mi"
-            cpu: "500m"
+            memory: "1Gi"
+            cpu: "1000m"
 ---
 apiVersion: v1
 kind: Service
