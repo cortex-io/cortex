@@ -65,6 +65,15 @@ spec:
         ports:
         - containerPort: 8000
           name: http
+        env:
+        - name: ANTHROPIC_API_KEY
+          value: "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"
+        - name: SANDFLY_HOST
+          value: "10.88.140.176"
+        - name: SANDFLY_USERNAME
+          value: "admin"
+        - name: SANDFLY_PASSWORD
+          value: "emphasize-art-nibble-arguable-paradox-flick-unpack"
         resources:
           requests:
             memory: "128Mi"
