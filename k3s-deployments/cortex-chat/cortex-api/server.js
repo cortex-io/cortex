@@ -9,9 +9,9 @@ const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY;
 
 // MCP Server endpoints
 const MCP_SERVERS = {
-  unifi: process.env.UNIFI_MCP_URL || 'http://unifi-mcp.cortex-system.svc.cluster.local:3000',
-  wazuh: process.env.WAZUH_MCP_URL || 'http://wazuh-mcp.cortex-system.svc.cluster.local:3000',
-  proxmox: process.env.PROXMOX_MCP_URL || 'http://proxmox-mcp.cortex-system.svc.cluster.local:3000'
+  unifi: process.env.UNIFI_MCP_URL || 'http://unifi-mcp-server.cortex-system.svc.cluster.local:3000',
+  sandfly: process.env.SANDFLY_MCP_URL || 'http://sandfly-mcp-server.cortex-system.svc.cluster.local:3000',
+  proxmox: process.env.PROXMOX_MCP_URL || 'http://proxmox-mcp-server.cortex-system.svc.cluster.local:3000'
 };
 
 /**
@@ -157,8 +157,8 @@ async function executeTool(toolName, input) {
     case 'unifi_query':
       return await queryMCPServer(MCP_SERVERS.unifi, input.query);
 
-    case 'wazuh_query':
-      return await queryMCPServer(MCP_SERVERS.wazuh, input.query);
+    case 'sandfly_query':
+      return await queryMCPServer(MCP_SERVERS.sandfly, input.query);
 
     case 'proxmox_query':
       return await queryMCPServer(MCP_SERVERS.proxmox, input.query);
@@ -209,14 +209,14 @@ async function processUserQuery(userQuery) {
       }
     },
     {
-      name: 'wazuh_query',
-      description: 'Query Wazuh security platform for alerts, vulnerabilities, compliance status, security events, and threat intelligence.',
+      name: 'sandfly_query',
+      description: 'Query Sandfly Security for Linux host intrusion detection - get security alerts, scan results, host processes, users, network listeners, kernel modules, scheduled tasks, detection rules, and perform on-demand scans.',
       input_schema: {
         type: 'object',
         properties: {
           query: {
             type: 'string',
-            description: 'What security information to query (e.g., "get recent security alerts")'
+            description: 'What security information to query (e.g., "get recent security alerts", "list monitored hosts", "scan all production hosts")'
           }
         },
         required: ['query']
@@ -377,9 +377,9 @@ server.listen(PORT, '0.0.0.0', () => {
   console.log(`Listening on port ${PORT}`);
   console.log(`Intelligence: ${ANTHROPIC_API_KEY ? 'ENABLED ✓' : 'DISABLED ✗'}`);
   console.log('\nMCP Servers:');
-  console.log(`  UniFi:   ${MCP_SERVERS.unifi}`);
-  console.log(`  Wazuh:   ${MCP_SERVERS.wazuh}`);
-  console.log(`  Proxmox: ${MCP_SERVERS.proxmox}`);
+  console.log(`  UniFi:    ${MCP_SERVERS.unifi}`);
+  console.log(`  Sandfly:  ${MCP_SERVERS.sandfly}`);
+  console.log(`  Proxmox:  ${MCP_SERVERS.proxmox}`);
   console.log('\nEndpoints:');
   console.log('  GET  /health - Health check');
   console.log('  POST /api/tasks - Process intelligent queries');
