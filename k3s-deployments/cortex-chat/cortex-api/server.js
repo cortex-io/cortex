@@ -9,6 +9,7 @@ const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY;
 
 // MCP Server endpoints
 const MCP_SERVERS = {
+  sandfly: process.env.SANDFLY_MCP_URL || 'http://sandfly-mcp-server.cortex-system.svc.cluster.local:3000',
   unifi: process.env.UNIFI_MCP_URL || 'http://unifi-mcp-server.cortex-system.svc.cluster.local:3000',
   proxmox: process.env.PROXMOX_MCP_URL || 'http://proxmox-mcp-server.cortex-system.svc.cluster.local:3000'
 };
@@ -21,8 +22,447 @@ const SANDFLY_CONFIG = {
   baseUrl: `https://${process.env.SANDFLY_HOST || '10.88.140.176'}/v4`
 };
 
+// Proxmox API configuration
+const PROXMOX_CONFIG = {
+  host: process.env.PROXMOX_HOST || 'proxmox.local',
+  port: process.env.PROXMOX_PORT || '8006',
+  username: process.env.PROXMOX_USERNAME || 'root@pam',
+  password: process.env.PROXMOX_PASSWORD || '',
+  baseUrl: `https://${process.env.PROXMOX_HOST || 'proxmox.local'}:${process.env.PROXMOX_PORT || '8006'}/api2/json`
+};
+
+// UniFi API configuration
+const UNIFI_CONFIG = {
+  host: process.env.UNIFI_HOST || 'unifi.local',
+  port: process.env.UNIFI_PORT || '443',
+  username: process.env.UNIFI_USERNAME || 'admin',
+  password: process.env.UNIFI_PASSWORD || '',
+  site: process.env.UNIFI_SITE || 'default',
+  isUDM: process.env.UNIFI_IS_UDM === 'true',
+  baseUrl: `https://${process.env.UNIFI_HOST || 'unifi.local'}:${process.env.UNIFI_PORT || '443'}`
+};
+
 let sandflyToken = null;
 let sandflyTokenExpiry = null;
+let sandflyHostsCache = null;
+let sandflyHostsCacheExpiry = null;
+
+let proxmoxTicket = null;
+let proxmoxCSRFToken = null;
+let proxmoxTicketExpiry = null;
+
+let unifiCookie = null;
+let unifiCookieExpiry = null;
+
+/**
+ * Get list of Sandfly hosts and cache for 5 minutes
+ */
+async function getSandflyHosts() {
+  // Check cache
+  if (sandflyHostsCache && sandflyHostsCacheExpiry && Date.now() < sandflyHostsCacheExpiry) {
+    return sandflyHostsCache;
+  }
+
+  const token = await getSandflyToken();
+
+  return new Promise((resolve, reject) => {
+    const options = {
+      hostname: SANDFLY_CONFIG.host,
+      port: 443,
+      path: '/v4/hosts?summary=true',
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      },
+      rejectUnauthorized: false
+    };
+
+    const req = https.request(options, (res) => {
+      let responseData = '';
+
+      res.on('data', (chunk) => {
+        responseData += chunk;
+      });
+
+      res.on('end', () => {
+        try {
+          const parsed = JSON.parse(responseData);
+          sandflyHostsCache = parsed;
+          sandflyHostsCacheExpiry = Date.now() + (5 * 60 * 1000); // Cache 5 minutes
+          resolve(parsed);
+        } catch (error) {
+          reject(error);
+        }
+      });
+    });
+
+    req.on('error', (error) => {
+      reject(error);
+    });
+
+    req.end();
+  });
+}
+
+/**
+ * Find host_id by hostname
+ */
+async function getHostIdByName(hostname) {
+  try {
+    const hostsResponse = await getSandflyHosts();
+    const hosts = hostsResponse.data || [];
+
+    // Match by hostname
+    const host = hosts.find(h =>
+      h.hostname === hostname ||
+      h.hostname === hostname.toLowerCase() ||
+      h.ip === hostname
+    );
+
+    return host ? host.id : null;
+  } catch (error) {
+    console.error('[Cortex] Error finding host_id:', error.message);
+    return null;
+  }
+}
+
+/**
+ * Extract hostname from query
+ */
+function extractHostname(query) {
+  const queryLower = query.toLowerCase();
+
+  // Common patterns: "on k3s-worker01", "for k3s-worker01", "k3s-worker01 processes"
+  const patterns = [
+    /\bon\s+([\w\-\.]+)/i,
+    /\bfor\s+([\w\-\.]+)/i,
+    /\bhost\s+([\w\-\.]+)/i,
+    /\bnode\s+([\w\-\.]+)/i,
+    /\b([\w\-\.]+)\s+processes/i,
+    /\b([\w\-\.]+)\s+users/i,
+    /\b(k3s-[\w\-]+)/i  // Match k3s-* patterns specifically
+  ];
+
+  for (const pattern of patterns) {
+    const match = query.match(pattern);
+    if (match && match[1]) {
+      return match[1];
+    }
+  }
+
+  return null;
+}
+
+/**
+ * Get Proxmox authentication ticket and CSRF token
+ */
+async function getProxmoxTicket() {
+  // Check if ticket is still valid (tickets expire in 2 hours, refresh at 1 hour 50 min)
+  if (proxmoxTicket && proxmoxCSRFToken && proxmoxTicketExpiry && Date.now() < proxmoxTicketExpiry) {
+    return { ticket: proxmoxTicket, csrf: proxmoxCSRFToken };
+  }
+
+  if (!PROXMOX_CONFIG.password) {
+    throw new Error('Proxmox password not configured');
+  }
+
+  // Get new ticket
+  return new Promise((resolve, reject) => {
+    const data = `username=${encodeURIComponent(PROXMOX_CONFIG.username)}&password=${encodeURIComponent(PROXMOX_CONFIG.password)}`;
+
+    const options = {
+      hostname: PROXMOX_CONFIG.host,
+      port: parseInt(PROXMOX_CONFIG.port),
+      path: '/api2/json/access/ticket',
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+        'Content-Length': data.length
+      },
+      rejectUnauthorized: false
+    };
+
+    const req = https.request(options, (res) => {
+      let responseData = '';
+
+      res.on('data', (chunk) => {
+        responseData += chunk;
+      });
+
+      res.on('end', () => {
+        try {
+          const parsed = JSON.parse(responseData);
+          if (parsed.data && parsed.data.ticket && parsed.data.CSRFPreventionToken) {
+            proxmoxTicket = parsed.data.ticket;
+            proxmoxCSRFToken = parsed.data.CSRFPreventionToken;
+            // Ticket valid for 2 hours, refresh at 1 hour 50 min
+            proxmoxTicketExpiry = Date.now() + (110 * 60 * 1000);
+            resolve({ ticket: proxmoxTicket, csrf: proxmoxCSRFToken });
+          } else {
+            reject(new Error('No ticket in Proxmox response'));
+          }
+        } catch (error) {
+          reject(error);
+        }
+      });
+    });
+
+    req.on('error', (error) => {
+      reject(error);
+    });
+
+    req.write(data);
+    req.end();
+  });
+}
+
+/**
+ * Query Proxmox API with intelligent routing
+ */
+async function queryProxmox(query) {
+  try {
+    const queryLower = query.toLowerCase();
+    const proxmoxMCP = MCP_SERVERS.proxmox;
+
+    // Use MCP server /query endpoint for now
+    // TODO: Map to specific Proxmox MCP tools when needed
+    console.log(`[Cortex] Proxmox query via MCP: "${query}"`);
+
+    return await queryMCPServer(proxmoxMCP, query);
+  } catch (error) {
+    console.error('[Cortex] Proxmox MCP error:', error.message);
+    return { success: false, error: error.message };
+  }
+}
+
+/**
+ * Make authenticated Proxmox API request
+ */
+async function makeProxmoxRequest(endpoint, method, body, auth) {
+  return new Promise((resolve, reject) => {
+    const options = {
+      hostname: PROXMOX_CONFIG.host,
+      port: parseInt(PROXMOX_CONFIG.port),
+      path: `/api2/json${endpoint}`,
+      method: method,
+      headers: {
+        'Cookie': `PVEAuthCookie=${auth.ticket}`
+      },
+      rejectUnauthorized: false
+    };
+
+    // Add CSRF token for write operations
+    if (method !== 'GET') {
+      options.headers['CSRFPreventionToken'] = auth.csrf;
+    }
+
+    if (body) {
+      options.headers['Content-Type'] = 'application/json';
+      options.headers['Content-Length'] = Buffer.byteLength(body);
+    }
+
+    const req = https.request(options, (res) => {
+      let responseData = '';
+
+      res.on('data', (chunk) => {
+        responseData += chunk;
+      });
+
+      res.on('end', () => {
+        // Check HTTP status code
+        if (res.statusCode < 200 || res.statusCode >= 300) {
+          console.error(`[Cortex] Proxmox API returned ${res.statusCode}:`, responseData.substring(0, 200));
+          resolve({
+            success: false,
+            error: `Proxmox API error (${res.statusCode}): ${responseData.substring(0, 200)}`
+          });
+          return;
+        }
+
+        try {
+          const parsed = JSON.parse(responseData);
+          resolve({
+            success: true,
+            output: JSON.stringify(parsed, null, 2)
+          });
+        } catch (error) {
+          resolve({ success: true, output: responseData });
+        }
+      });
+    });
+
+    req.on('error', (error) => {
+      console.error('[Cortex] Proxmox API error:', error.message);
+      resolve({ success: false, error: error.message });
+    });
+
+    if (body) {
+      req.write(body);
+    }
+    req.end();
+  });
+}
+
+/**
+ * Get UniFi session cookie
+ */
+async function getUnifiCookie() {
+  // Check if cookie is still valid (cookies expire in ~1 hour, refresh at 50 min)
+  if (unifiCookie && unifiCookieExpiry && Date.now() < unifiCookieExpiry) {
+    return unifiCookie;
+  }
+
+  if (!UNIFI_CONFIG.password) {
+    throw new Error('UniFi password not configured');
+  }
+
+  // Login endpoint differs for UDM vs standard controller
+  const loginPath = UNIFI_CONFIG.isUDM ? '/api/auth/login' : '/api/login';
+
+  return new Promise((resolve, reject) => {
+    const data = JSON.stringify({
+      username: UNIFI_CONFIG.username,
+      password: UNIFI_CONFIG.password,
+      remember: true
+    });
+
+    const options = {
+      hostname: UNIFI_CONFIG.host,
+      port: parseInt(UNIFI_CONFIG.port),
+      path: loginPath,
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Content-Length': data.length
+      },
+      rejectUnauthorized: false
+    };
+
+    const req = https.request(options, (res) => {
+      let responseData = '';
+
+      res.on('data', (chunk) => {
+        responseData += chunk;
+      });
+
+      res.on('end', () => {
+        // Extract cookie from Set-Cookie header
+        const cookies = res.headers['set-cookie'];
+        if (cookies && cookies.length > 0) {
+          // Find unifises cookie
+          const unifiCookieMatch = cookies.find(c => c.startsWith('unifises='));
+          if (unifiCookieMatch) {
+            unifiCookie = unifiCookieMatch.split(';')[0];  // Get just "unifises=..."
+            unifiCookieExpiry = Date.now() + (50 * 60 * 1000);  // 50 minutes
+            resolve(unifiCookie);
+          } else {
+            reject(new Error('No unifises cookie in UniFi response'));
+          }
+        } else {
+          reject(new Error('No cookies in UniFi response'));
+        }
+      });
+    });
+
+    req.on('error', (error) => {
+      reject(error);
+    });
+
+    req.write(data);
+    req.end();
+  });
+}
+
+/**
+ * Query UniFi API with intelligent routing
+ */
+async function queryUnifi(query) {
+  try {
+    const queryLower = query.toLowerCase();
+    const unifiMCP = MCP_SERVERS.unifi;
+
+    // Use MCP server /query endpoint for now
+    // TODO: Map to specific UniFi MCP tools when needed
+    console.log(`[Cortex] UniFi query via MCP: "${query}"`);
+
+    return await queryMCPServer(unifiMCP, query);
+  } catch (error) {
+    console.error('[Cortex] UniFi MCP error:', error.message);
+    return { success: false, error: error.message };
+  }
+}
+
+/**
+ * Make authenticated UniFi API request
+ */
+async function makeUnifiRequest(endpoint, method, body, cookie) {
+  return new Promise((resolve, reject) => {
+    const options = {
+      hostname: UNIFI_CONFIG.host,
+      port: parseInt(UNIFI_CONFIG.port),
+      path: endpoint,
+      method: method,
+      headers: {
+        'Cookie': cookie,
+        'Content-Type': 'application/json'
+      },
+      rejectUnauthorized: false
+    };
+
+    if (body) {
+      options.headers['Content-Length'] = Buffer.byteLength(body);
+    }
+
+    const req = https.request(options, (res) => {
+      let responseData = '';
+
+      res.on('data', (chunk) => {
+        responseData += chunk;
+      });
+
+      res.on('end', () => {
+        // Check HTTP status code
+        if (res.statusCode < 200 || res.statusCode >= 300) {
+          console.error(`[Cortex] UniFi API returned ${res.statusCode}:`, responseData.substring(0, 200));
+          resolve({
+            success: false,
+            error: `UniFi API error (${res.statusCode}): ${responseData.substring(0, 200)}`
+          });
+          return;
+        }
+
+        try {
+          const parsed = JSON.parse(responseData);
+          // UniFi returns {data: [...], meta: {rc: "ok"}}
+          if (parsed.meta && parsed.meta.rc === 'ok') {
+            resolve({
+              success: true,
+              output: JSON.stringify(parsed.data, null, 2)
+            });
+          } else {
+            resolve({
+              success: false,
+              error: `UniFi API error: ${parsed.meta ? parsed.meta.msg : 'Unknown error'}`
+            });
+          }
+        } catch (error) {
+          resolve({ success: true, output: responseData });
+        }
+      });
+    });
+
+    req.on('error', (error) => {
+      console.error('[Cortex] UniFi API error:', error.message);
+      resolve({ success: false, error: error.message });
+    });
+
+    if (body) {
+      req.write(body);
+    }
+    req.end();
+  });
+}
 
 /**
  * Call Anthropic Claude API
@@ -141,115 +581,61 @@ async function getSandflyToken() {
  */
 async function querySandfly(query) {
   try {
-    const token = await getSandflyToken();
     const queryLower = query.toLowerCase();
+    const sandflyMCP = MCP_SERVERS.sandfly || 'http://sandfly-mcp-server.cortex-system.svc.cluster.local:3000';
 
-    // Parse query and determine endpoint
-    let endpoint = '/v4/hosts?summary=true';  // Default
-    let method = 'GET';
-    let body = null;
+    // Parse query and determine which MCP tool to call
+    let toolName = 'sandfly_list_hosts';  // Default
+    let toolArgs = { summary: true, page: 1, size: 100 };
 
     // Security alerts and results
     if (queryLower.includes('alert') || queryLower.includes('result') ||
         queryLower.includes('security') || queryLower.includes('threat') ||
         queryLower.includes('violation') || queryLower.includes('critical')) {
-      endpoint = '/v4/results?sort=-created_at&limit=100';
+      toolName = 'sandfly_get_results';
+      toolArgs = {
+        filter: {},
+        page: 1,
+        size: 100,
+        summary: false  // Get individual results, not aggregated
+      };
     }
     // Hosts
     else if (queryLower.includes('host') || queryLower.includes('node') ||
              queryLower.includes('server')) {
-      endpoint = '/v4/hosts?summary=true';
-    }
-    // Forensics - processes
-    else if (queryLower.includes('process')) {
-      endpoint = '/v4/forensics/processes';
-    }
-    // Forensics - users
-    else if (queryLower.includes('user') || queryLower.includes('account')) {
-      endpoint = '/v4/forensics/users';
-    }
-    // Forensics - network
-    else if (queryLower.includes('listen') || queryLower.includes('network') ||
-             queryLower.includes('port') || queryLower.includes('connection')) {
-      endpoint = '/v4/forensics/listeners';
-    }
-    // Forensics - services
-    else if (queryLower.includes('service') || queryLower.includes('systemd')) {
-      endpoint = '/v4/forensics/services';
-    }
-    // Forensics - scheduled tasks
-    else if (queryLower.includes('cron') || queryLower.includes('scheduled') ||
-             queryLower.includes('task')) {
-      endpoint = '/v4/forensics/scheduled_tasks';
-    }
-    // Forensics - kernel modules
-    else if (queryLower.includes('kernel') || queryLower.includes('module') ||
-             queryLower.includes('driver')) {
-      endpoint = '/v4/forensics/kernel_modules';
+      toolName = 'sandfly_list_hosts';
+      toolArgs = { summary: true, page: 1, size: 100 };
     }
     // Scanning
     else if (queryLower.includes('scan')) {
       if (queryLower.includes('start') || queryLower.includes('run') ||
           queryLower.includes('trigger') || queryLower.includes('initiate')) {
-        endpoint = '/v4/scans';
-        method = 'POST';
-        body = JSON.stringify({ all: true });
+        toolName = 'sandfly_start_scan';
+        toolArgs = { host_ids: [], sandfly_ids: [] };  // Empty = all
       } else {
-        endpoint = '/v4/scans';
+        return {
+          success: false,
+          error: 'Scan status queries not yet implemented. Use "start a scan" to trigger scans.'
+        };
       }
     }
-
-    console.log(`[Cortex] Sandfly query: "${query}" -> ${method} ${endpoint}`);
-
-    return new Promise((resolve, reject) => {
-      const options = {
-        hostname: SANDFLY_CONFIG.host,
-        port: 443,
-        path: endpoint,
-        method: method,
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        },
-        rejectUnauthorized: false
+    // Forensics - For now, return helpful message
+    // TODO: Implement forensics tools (requires host_id lookup first)
+    else if (queryLower.includes('process') || queryLower.includes('user') ||
+             queryLower.includes('listen') || queryLower.includes('service')) {
+      return {
+        success: false,
+        error: 'Forensics queries (processes, users, listeners, etc.) coming soon. For now, try "what security alerts do we have?" or "list all hosts".'
       };
+    }
 
-      if (body) {
-        options.headers['Content-Length'] = Buffer.byteLength(body);
-      }
+    console.log(`[Cortex] Sandfly query via MCP: "${query}" -> ${toolName}`, toolArgs);
 
-      const req = https.request(options, (res) => {
-        let responseData = '';
+    // Call MCP server with specific tool
+    return await callMCPTool(sandflyMCP, toolName, toolArgs);
 
-        res.on('data', (chunk) => {
-          responseData += chunk;
-        });
-
-        res.on('end', () => {
-          try {
-            const parsed = JSON.parse(responseData);
-            resolve({
-              success: true,
-              output: JSON.stringify(parsed, null, 2)
-            });
-          } catch (error) {
-            resolve({ success: true, output: responseData });
-          }
-        });
-      });
-
-      req.on('error', (error) => {
-        console.error('[Cortex] Sandfly API error:', error.message);
-        resolve({ success: false, error: error.message });
-      });
-
-      if (body) {
-        req.write(body);
-      }
-      req.end();
-    });
   } catch (error) {
-    console.error('[Cortex] Sandfly auth error:', error.message);
+    console.error('[Cortex] Sandfly MCP error:', error.message);
     return { success: false, error: error.message };
   }
 }
@@ -334,6 +720,59 @@ async function queryMCPServer(serverUrl, query) {
 }
 
 /**
+ * Call specific MCP tool via /call-tool endpoint
+ */
+async function callMCPTool(serverUrl, toolName, arguments) {
+  return new Promise((resolve, reject) => {
+    const url = new URL(serverUrl);
+    const data = JSON.stringify({ tool_name: toolName, arguments });
+
+    const options = {
+      hostname: url.hostname,
+      port: url.port || 3000,
+      path: '/call-tool',
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Content-Length': data.length
+      },
+      timeout: 60000  // 60 second timeout for MCP tools
+    };
+
+    const protocol = url.protocol === 'https:' ? https : http;
+    const req = protocol.request(options, (res) => {
+      let responseData = '';
+
+      res.on('data', (chunk) => {
+        responseData += chunk;
+      });
+
+      res.on('end', () => {
+        try {
+          const parsed = JSON.parse(responseData);
+          resolve(parsed);
+        } catch (error) {
+          resolve({ success: true, output: responseData });
+        }
+      });
+    });
+
+    req.on('error', (error) => {
+      console.error(`[Cortex] MCP tool call error (${serverUrl}/${toolName}):`, error.message);
+      resolve({ success: false, error: error.message });
+    });
+
+    req.on('timeout', () => {
+      req.destroy();
+      resolve({ success: false, error: 'MCP tool call timeout' });
+    });
+
+    req.write(data);
+    req.end();
+  });
+}
+
+/**
  * Execute tool call from Claude
  */
 async function executeTool(toolName, input) {
@@ -344,13 +783,15 @@ async function executeTool(toolName, input) {
       return await executeKubectl(input.command);
 
     case 'unifi_query':
-      return await queryMCPServer(MCP_SERVERS.unifi, input.query);
+      // Use direct API instead of MCP wrapper
+      return await queryUnifi(input.query);
 
     case 'sandfly_query':
       return await querySandfly(input.query);
 
     case 'proxmox_query':
-      return await queryMCPServer(MCP_SERVERS.proxmox, input.query);
+      // Use direct API instead of MCP wrapper
+      return await queryProxmox(input.query);
 
     default:
       return { success: false, error: `Unknown tool: ${toolName}` };
@@ -461,6 +902,16 @@ async function processUserQuery(userQuery) {
 
     console.log(`[Cortex] Final response - stop_reason: ${finalResponse.stop_reason}`);
 
+    // Check if response is valid
+    if (!finalResponse || !finalResponse.content) {
+      console.error('[Cortex] Invalid final response from Claude:', JSON.stringify(finalResponse).substring(0, 500));
+      return {
+        answer: 'Error: Invalid response from Claude API',
+        tools_used: toolUses.map(t => t.name),
+        raw_response: finalResponse
+      };
+    }
+
     // Extract text answer
     const textBlock = finalResponse.content.find(b => b.type === 'text');
     return {
@@ -471,6 +922,15 @@ async function processUserQuery(userQuery) {
   }
 
   // No tools used, return direct answer
+  if (!response || !response.content) {
+    console.error('[Cortex] Invalid response from Claude:', JSON.stringify(response).substring(0, 500));
+    return {
+      answer: 'Error: Invalid response from Claude API',
+      tools_used: [],
+      raw_response: response
+    };
+  }
+
   const textBlock = response.content.find(b => b.type === 'text');
   return {
     answer: textBlock?.text || 'No response from Claude',
@@ -565,10 +1025,11 @@ server.listen(PORT, '0.0.0.0', () => {
   console.log('============================================================');
   console.log(`Listening on port ${PORT}`);
   console.log(`Intelligence: ${ANTHROPIC_API_KEY ? 'ENABLED ✓' : 'DISABLED ✗'}`);
-  console.log('\nIntegrations:');
-  console.log(`  UniFi MCP:    ${MCP_SERVERS.unifi}`);
+  console.log('\nDirect API Integrations:');
   console.log(`  Sandfly API:  ${SANDFLY_CONFIG.baseUrl}`);
-  console.log(`  Proxmox MCP:  ${MCP_SERVERS.proxmox}`);
+  console.log(`  Proxmox API:  ${PROXMOX_CONFIG.baseUrl}`);
+  console.log(`  UniFi API:    ${UNIFI_CONFIG.baseUrl} (${UNIFI_CONFIG.isUDM ? 'UDM Pro' : 'Standard'})`);
+  console.log(`  Kubernetes:   kubectl (native)`);
   console.log('\nEndpoints:');
   console.log('  GET  /health - Health check');
   console.log('  POST /api/tasks - Process intelligent queries');
