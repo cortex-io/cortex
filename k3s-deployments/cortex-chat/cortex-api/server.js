@@ -137,26 +137,86 @@ async function getSandflyToken() {
 }
 
 /**
- * Query Sandfly API
+ * Query Sandfly API with intelligent routing
  */
 async function querySandfly(query) {
   try {
     const token = await getSandflyToken();
+    const queryLower = query.toLowerCase();
 
-    // For now, just get hosts list as a simple implementation
-    // In future, parse query and route to appropriate endpoint
+    // Parse query and determine endpoint
+    let endpoint = '/v4/hosts?summary=true';  // Default
+    let method = 'GET';
+    let body = null;
+
+    // Security alerts and results
+    if (queryLower.includes('alert') || queryLower.includes('result') ||
+        queryLower.includes('security') || queryLower.includes('threat') ||
+        queryLower.includes('violation') || queryLower.includes('critical')) {
+      endpoint = '/v4/results?sort=-created_at&limit=100';
+    }
+    // Hosts
+    else if (queryLower.includes('host') || queryLower.includes('node') ||
+             queryLower.includes('server')) {
+      endpoint = '/v4/hosts?summary=true';
+    }
+    // Forensics - processes
+    else if (queryLower.includes('process')) {
+      endpoint = '/v4/forensics/processes';
+    }
+    // Forensics - users
+    else if (queryLower.includes('user') || queryLower.includes('account')) {
+      endpoint = '/v4/forensics/users';
+    }
+    // Forensics - network
+    else if (queryLower.includes('listen') || queryLower.includes('network') ||
+             queryLower.includes('port') || queryLower.includes('connection')) {
+      endpoint = '/v4/forensics/listeners';
+    }
+    // Forensics - services
+    else if (queryLower.includes('service') || queryLower.includes('systemd')) {
+      endpoint = '/v4/forensics/services';
+    }
+    // Forensics - scheduled tasks
+    else if (queryLower.includes('cron') || queryLower.includes('scheduled') ||
+             queryLower.includes('task')) {
+      endpoint = '/v4/forensics/scheduled_tasks';
+    }
+    // Forensics - kernel modules
+    else if (queryLower.includes('kernel') || queryLower.includes('module') ||
+             queryLower.includes('driver')) {
+      endpoint = '/v4/forensics/kernel_modules';
+    }
+    // Scanning
+    else if (queryLower.includes('scan')) {
+      if (queryLower.includes('start') || queryLower.includes('run') ||
+          queryLower.includes('trigger') || queryLower.includes('initiate')) {
+        endpoint = '/v4/scans';
+        method = 'POST';
+        body = JSON.stringify({ all: true });
+      } else {
+        endpoint = '/v4/scans';
+      }
+    }
+
+    console.log(`[Cortex] Sandfly query: "${query}" -> ${method} ${endpoint}`);
+
     return new Promise((resolve, reject) => {
       const options = {
         hostname: SANDFLY_CONFIG.host,
         port: 443,
-        path: '/v4/hosts?summary=true',
-        method: 'GET',
+        path: endpoint,
+        method: method,
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
         },
         rejectUnauthorized: false
       };
+
+      if (body) {
+        options.headers['Content-Length'] = Buffer.byteLength(body);
+      }
 
       const req = https.request(options, (res) => {
         let responseData = '';
@@ -183,6 +243,9 @@ async function querySandfly(query) {
         resolve({ success: false, error: error.message });
       });
 
+      if (body) {
+        req.write(body);
+      }
       req.end();
     });
   } catch (error) {
@@ -336,13 +399,13 @@ async function processUserQuery(userQuery) {
     },
     {
       name: 'sandfly_query',
-      description: 'Query Sandfly Security for Linux host intrusion detection - get security alerts, scan results, host processes, users, network listeners, kernel modules, scheduled tasks, detection rules, and perform on-demand scans.',
+      description: 'Query Sandfly Security for Linux intrusion detection and forensics. Supports: security alerts/results, monitored hosts, processes, users, network listeners, services, scheduled tasks, kernel modules, and triggering scans. Use this for ANY security-related query about Linux hosts.',
       input_schema: {
         type: 'object',
         properties: {
           query: {
             type: 'string',
-            description: 'What security information to query (e.g., "get recent security alerts", "list monitored hosts", "scan all production hosts")'
+            description: 'Natural language security query (e.g., "security alerts", "processes on k3s-worker01", "network listeners", "start a scan")'
           }
         },
         required: ['query']
