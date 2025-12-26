@@ -1,12 +1,14 @@
 import { Tool } from '@anthropic-ai/sdk/resources/messages.mjs';
-import { cortexTool } from './cortex-tool';
+import { cortexTool, cortexCreateTaskTool, cortexGetTaskStatusTool } from './cortex-tool';
 
 /**
  * Tool definitions for Cortex Chat
- * Simplified to just route to existing Cortex orchestrator
+ * Includes parallel task creation and status checking
  */
 export const tools: Tool[] = [
-  cortexTool
+  cortexTool,
+  cortexCreateTaskTool,
+  cortexGetTaskStatusTool
 ];
 
 /**
