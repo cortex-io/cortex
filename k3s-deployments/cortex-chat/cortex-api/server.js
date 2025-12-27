@@ -4,10 +4,54 @@ const { exec } = require('child_process');
 const util = require('util');
 const execPromise = util.promisify(exec);
 const path = require('path');
+const fs = require('fs').promises;
+const Redis = require('ioredis');
 
 const PORT = process.env.PORT || 8000;
 const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY;
 const SELF_HEAL_WORKER_PATH = process.env.SELF_HEAL_WORKER_PATH || '/app/scripts/self-heal-worker.sh';
+const TASK_DIR = process.env.TASK_DIR || '/app/tasks';
+const TASK_POLL_INTERVAL = process.env.TASK_POLL_INTERVAL || 5000; // 5 seconds
+
+// Redis configuration
+const REDIS_HOST = process.env.REDIS_HOST || 'redis-queue.cortex.svc.cluster.local';
+const REDIS_PORT = process.env.REDIS_PORT || 6379;
+const REDIS_ENABLED = process.env.REDIS_ENABLED !== 'false'; // Default enabled
+
+// Priority queue names
+const PRIORITY_QUEUES = {
+  critical: 'cortex:queue:critical',
+  high: 'cortex:queue:high',
+  medium: 'cortex:queue:medium',
+  low: 'cortex:queue:low'
+};
+
+// Initialize Redis client
+let redisClient = null;
+if (REDIS_ENABLED) {
+  redisClient = new Redis({
+    host: REDIS_HOST,
+    port: REDIS_PORT,
+    maxRetriesPerRequest: 3,
+    retryStrategy(times) {
+      const delay = Math.min(times * 50, 2000);
+      return delay;
+    },
+    lazyConnect: true // Don't connect immediately
+  });
+
+  redisClient.on('error', (error) => {
+    console.error('[Redis] Connection error:', error.message);
+  });
+
+  redisClient.on('connect', () => {
+    console.log('[Redis] Connected successfully');
+  });
+
+  redisClient.on('ready', () => {
+    console.log('[Redis] Ready for operations');
+  });
+}
 
 // MCP Server endpoints
 const MCP_SERVERS = {
@@ -374,6 +418,107 @@ async function getUnifiCookie() {
     req.write(data);
     req.end();
   });
+}
+
+/**
+ * Call a specific UniFi MCP tool using proper MCP JSON-RPC protocol
+ */
+async function callUnifiMCPTool(toolName, args, sseWriter = null) {
+  try {
+    console.log(`[Cortex] Calling UniFi MCP tool: ${toolName}`);
+
+    // Use proper MCP JSON-RPC protocol (Daryl fixed the HTTP wrapper to support this)
+    const unifiMCPUrl = MCP_SERVERS.unifi.replace('/query', '');
+    const url = new URL(unifiMCPUrl);
+
+    const mcpRequest = {
+      jsonrpc: '2.0',
+      id: Date.now(),
+      method: 'tools/call',
+      params: {
+        name: toolName,
+        arguments: args || {}
+      }
+    };
+
+    const data = JSON.stringify(mcpRequest);
+    const options = {
+      hostname: url.hostname,
+      port: url.port || 3000,
+      path: '/',
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Content-Length': data.length
+      },
+      timeout: 30000
+    };
+
+    return new Promise((resolve, reject) => {
+      const protocol = url.protocol === 'https:' ? https : http;
+      const req = protocol.request(options, (res) => {
+        let responseData = '';
+
+        res.on('data', (chunk) => {
+          responseData += chunk;
+        });
+
+        res.on('end', () => {
+          try {
+            const parsed = JSON.parse(responseData);
+
+            // Handle MCP JSON-RPC response
+            if (parsed.result) {
+              // Standard MCP response format
+              if (parsed.result.content && Array.isArray(parsed.result.content)) {
+                const content = parsed.result.content[0];
+                if (content.type === 'text') {
+                  // Try to parse the text as JSON (Site Manager API returns JSON strings)
+                  try {
+                    const jsonData = JSON.parse(content.text);
+                    resolve({ success: true, output: JSON.stringify(jsonData) });
+                  } catch (e) {
+                    // Not JSON, return as-is
+                    resolve({ success: true, output: content.text });
+                  }
+                } else {
+                  resolve({ success: true, output: JSON.stringify(content) });
+                }
+              } else {
+                resolve({ success: true, output: JSON.stringify(parsed.result) });
+              }
+            } else if (parsed.error) {
+              // MCP JSON-RPC error
+              resolve({
+                success: false,
+                error: `MCP Error ${parsed.error.code}: ${parsed.error.message}`
+              });
+            } else {
+              resolve({ success: false, error: 'Invalid MCP response format' });
+            }
+          } catch (error) {
+            resolve({ success: false, error: `Failed to parse MCP response: ${error.message}` });
+          }
+        });
+      });
+
+      req.on('error', (error) => {
+        console.error(`[Cortex] UniFi MCP error:`, error.message);
+        resolve({ success: false, error: error.message });
+      });
+
+      req.on('timeout', () => {
+        req.destroy();
+        resolve({ success: false, error: 'MCP request timeout' });
+      });
+
+      req.write(data);
+      req.end();
+    });
+  } catch (error) {
+    console.error('[Cortex] UniFi MCP tool call error:', error.message);
+    return { success: false, error: error.message };
+  }
 }
 
 /**
@@ -1259,9 +1404,17 @@ async function executeTool(toolName, input, sseWriter = null) {
     case 'kubectl':
       return await executeKubectl(input.command);
 
-    case 'unifi_query':
-      // Use direct API instead of MCP wrapper
-      return await queryUnifi(input.query, sseWriter);
+    case 'get_infrastructure_summary':
+      return await getInfrastructureSummary(sseWriter);
+
+    case 'unifi_list_active_clients':
+      return await callUnifiMCPTool('list_active_clients', {}, sseWriter);
+
+    case 'unifi_get_device_health':
+      return await callUnifiMCPTool('get_device_health', {}, sseWriter);
+
+    case 'unifi_get_client_activity':
+      return await callUnifiMCPTool('get_client_activity', {}, sseWriter);
 
     case 'sandfly_query':
       return await querySandfly(input.query, sseWriter);
@@ -1272,6 +1425,113 @@ async function executeTool(toolName, input, sseWriter = null) {
 
     default:
       return { success: false, error: `Unknown tool: ${toolName}` };
+  }
+}
+
+/**
+ * Get infrastructure summary by querying all systems
+ */
+async function getInfrastructureSummary(sseWriter = null) {
+  const summary = {
+    timestamp: new Date().toISOString(),
+    kubernetes: null,
+    unifi: null,
+    proxmox: null,
+    sandfly: null
+  };
+
+  try {
+    // K8s cluster status
+    if (sseWriter) {
+      sseWriter(JSON.stringify({ type: 'summary_progress', service: 'kubernetes' }));
+    }
+
+    const k8sResult = await executeKubectl('kubectl get nodes -o json && kubectl get pods --all-namespaces -o json');
+    if (k8sResult.success) {
+      try {
+        const parts = k8sResult.output.split('\n');
+        const nodesData = JSON.parse(parts[0] || '{"items":[]}');
+        const podsData = JSON.parse(parts[1] || '{"items":[]}');
+
+        summary.kubernetes = {
+          nodes: {
+            total: nodesData.items?.length || 0,
+            ready: nodesData.items?.filter(n => n.status?.conditions?.find(c => c.type === 'Ready' && c.status === 'True')).length || 0
+          },
+          pods: {
+            total: podsData.items?.length || 0,
+            running: podsData.items?.filter(p => p.status?.phase === 'Running').length || 0,
+            pending: podsData.items?.filter(p => p.status?.phase === 'Pending').length || 0,
+            failed: podsData.items?.filter(p => p.status?.phase === 'Failed').length || 0
+          }
+        };
+      } catch (e) {
+        summary.kubernetes = { error: 'Failed to parse kubectl output' };
+      }
+    } else {
+      summary.kubernetes = { error: k8sResult.error };
+    }
+
+    // UniFi network health
+    if (sseWriter) {
+      sseWriter(JSON.stringify({ type: 'summary_progress', service: 'unifi' }));
+    }
+
+    const unifiResult = await callUnifiMCPTool('get_device_health', {}, sseWriter);
+    if (unifiResult.success) {
+      try {
+        const devices = JSON.parse(unifiResult.output);
+        summary.unifi = {
+          devices: devices.length || 0,
+          online: devices.filter(d => d.state === 1).length || 0,
+          types: devices.reduce((acc, d) => {
+            acc[d.type] = (acc[d.type] || 0) + 1;
+            return acc;
+          }, {})
+        };
+      } catch (e) {
+        summary.unifi = { error: 'Failed to parse UniFi data' };
+      }
+    } else {
+      summary.unifi = { error: unifiResult.error };
+    }
+
+    // Proxmox VMs
+    if (sseWriter) {
+      sseWriter(JSON.stringify({ type: 'summary_progress', service: 'proxmox' }));
+    }
+
+    const proxmoxResult = await queryProxmox('list all VMs and their status', sseWriter);
+    if (proxmoxResult.success) {
+      summary.proxmox = { status: 'available', raw: proxmoxResult.output };
+    } else {
+      summary.proxmox = { error: proxmoxResult.error };
+    }
+
+    // Sandfly security alerts
+    if (sseWriter) {
+      sseWriter(JSON.stringify({ type: 'summary_progress', service: 'sandfly' }));
+    }
+
+    const sandflyResult = await querySandfly('security alerts', sseWriter);
+    if (sandflyResult.success) {
+      try {
+        const alerts = JSON.parse(sandflyResult.output);
+        summary.sandfly = {
+          total_alerts: alerts.count || alerts.data?.length || 0,
+          status: 'monitored'
+        };
+      } catch (e) {
+        summary.sandfly = { error: 'Failed to parse Sandfly data' };
+      }
+    } else {
+      summary.sandfly = { error: sandflyResult.error };
+    }
+
+    return { success: true, output: JSON.stringify(summary, null, 2) };
+  } catch (error) {
+    console.error('[Cortex] Infrastructure summary error:', error.message);
+    return { success: false, error: error.message, partial_summary: summary };
   }
 }
 
@@ -1302,17 +1562,39 @@ async function processUserQuery(userQuery, sseWriter = null) {
       }
     },
     {
-      name: 'unifi_query',
-      description: 'Query UniFi network controller for network status, connected devices, access points, WiFi clients, network health, and performance metrics.',
+      name: 'get_infrastructure_summary',
+      description: 'Get a comprehensive summary of all infrastructure in a single call: K8s cluster status, UniFi network health, Proxmox VMs, and Sandfly security alerts. This is the most efficient way to get an overview of the entire system.',
       input_schema: {
         type: 'object',
-        properties: {
-          query: {
-            type: 'string',
-            description: 'What information to get from UniFi (e.g., "get network status and connected devices")'
-          }
-        },
-        required: ['query']
+        properties: {},
+        required: []
+      }
+    },
+    {
+      name: 'unifi_list_active_clients',
+      description: 'List all active WiFi and wired clients connected to the UniFi network with details like hostname, IP, MAC, signal strength, and data usage.',
+      input_schema: {
+        type: 'object',
+        properties: {},
+        required: []
+      }
+    },
+    {
+      name: 'unifi_get_device_health',
+      description: 'Get health status and details of all UniFi devices (access points, switches, gateways) including uptime, CPU, memory, and connectivity.',
+      input_schema: {
+        type: 'object',
+        properties: {},
+        required: []
+      }
+    },
+    {
+      name: 'unifi_get_client_activity',
+      description: 'Get recent client connection activity, bandwidth usage, and network statistics.',
+      input_schema: {
+        type: 'object',
+        properties: {},
+        required: []
       }
     },
     {
@@ -1382,12 +1664,22 @@ async function processUserQuery(userQuery, sseWriter = null) {
     const allToolsUsed = [];
     let currentResponse = response;
     let iteration = 0;
-    const MAX_ITERATIONS = 5; // Prevent infinite loops
+    const MAX_ITERATIONS = 10; // Increased from 5 to handle complex queries
 
     // Multi-turn tool use loop
     while (toolUses.length > 0 && iteration < MAX_ITERATIONS) {
       iteration++;
       console.log(`[Cortex] Iteration ${iteration}: Executing ${toolUses.length} tool(s)`);
+
+      // Send progress update via SSE
+      if (sseWriter) {
+        sseWriter(JSON.stringify({
+          type: 'tool_progress',
+          iteration: iteration,
+          max_iterations: MAX_ITERATIONS,
+          tools: toolUses.map(t => t.name)
+        }));
+      }
 
       // Track tools used
       allToolsUsed.push(...toolUses.map(t => t.name));
@@ -1395,11 +1687,64 @@ async function processUserQuery(userQuery, sseWriter = null) {
       // Execute all tools in this turn
       const toolResults = [];
       for (const toolUse of toolUses) {
+        // Send individual tool execution update
+        if (sseWriter) {
+          sseWriter(JSON.stringify({
+            type: 'tool_execution',
+            tool_name: toolUse.name,
+            status: 'executing'
+          }));
+        }
+
         const result = await executeTool(toolUse.name, toolUse.input, sseWriter);
+
+        // Send tool completion update
+        if (sseWriter) {
+          sseWriter(JSON.stringify({
+            type: 'tool_execution',
+            tool_name: toolUse.name,
+            status: result.success ? 'completed' : 'failed',
+            error: result.error
+          }));
+        }
+
+        // Format result for Claude - include partial results even on failure
+        let formattedResult;
+        if (result.success && result.output) {
+          // If MCP server returned output as JSON string, try to parse it
+          try {
+            const parsed = JSON.parse(result.output);
+            formattedResult = JSON.stringify(parsed, null, 2);
+          } catch (e) {
+            // If not JSON, use as-is
+            formattedResult = result.output;
+          }
+        } else if (result.partial_summary) {
+          // Include partial results for infrastructure summary even if it failed
+          formattedResult = JSON.stringify({
+            status: 'partial',
+            error: result.error,
+            partial_data: result.partial_summary
+          }, null, 2);
+          console.log(`[Cortex] Tool ${toolUse.name} returned partial results despite error`);
+        } else if (result.output) {
+          // If there's output but success=false, include both
+          formattedResult = JSON.stringify({
+            status: 'error',
+            error: result.error,
+            output: result.output
+          }, null, 2);
+        } else {
+          // For other results (kubectl, etc), stringify the whole object
+          formattedResult = JSON.stringify(result);
+        }
+
+        console.log(`[Cortex] Tool result for ${toolUse.name}:`, formattedResult.substring(0, 500));
+
         toolResults.push({
           type: 'tool_result',
           tool_use_id: toolUse.id,
-          content: JSON.stringify(result)
+          content: formattedResult
         });
       }
 
@@ -1640,6 +1985,7 @@ async function handleGetMetrics(input) {
  * Handle cortex_create_task tool
  * Creates a new task in Cortex for processing by master agents
  * DESIGNED FOR PARALLEL SUBMISSION - returns immediately
+ * DUAL PERSISTENCE: Writes to BOTH Redis queue AND filesystem
  */
 async function handleCreateTask(input) {
   const {
@@ -1653,7 +1999,7 @@ async function handleCreateTask(input) {
   // Generate unique task ID
   const taskId = `task-chat-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 
-  // Map priority names to numbers
+  // Map priority names to both numbers and queue names
   const priorityMap = {
     'critical': 1,
     'high': 3,
@@ -1661,12 +2007,13 @@ async function handleCreateTask(input) {
     'low': 7
   };
   const numericPriority = typeof priority === 'string' ? priorityMap[priority] || 5 : priority;
+  const priorityName = typeof priority === 'string' ? priority : 'medium';
 
   // Create task object matching Cortex task schema
   const task = {
     id: taskId,
     type: 'user_query',
-    priority: numericPriority,
+    priority: priorityName, // Use string priority for Redis queue selection
     status: 'queued',
     payload: {
       query: description,
@@ -1679,32 +2026,78 @@ async function handleCreateTask(input) {
       source: 'chat',
       original_input: input,
       ...metadata
-    }
+    },
+    // Additional fields for worker execution
+    messages: [
+      {
+        role: 'user',
+        content: description
+      }
+    ],
+    estimatedTokens: 2000
   };
 
-  // Write task to filesystem - Cortex will pick it up
-  const taskPath = `/app/tasks/${taskId}.json`;
-
   try {
-    const fs = require('fs').promises;
-
     // Ensure tasks directory exists
     await fs.mkdir('/app/tasks', { recursive: true });
 
-    // Write task file
+    // DUAL PERSISTENCE 1: Write to filesystem (for backwards compatibility)
+    const taskPath = `/app/tasks/${taskId}.json`;
     await fs.writeFile(taskPath, JSON.stringify(task, null, 2));
 
-    console.log(`[CortexAPI] Task created: ${taskId} (${category}, priority ${numericPriority})`);
+    console.log(`[CortexAPI] Task created: ${taskId} (${category}, priority ${priorityName})`);
     console.log(`[CortexAPI] Task title: ${title}`);
+    console.log(`[CortexAPI] Saved to filesystem: ${taskPath}`);
 
-    // Return immediately - don't wait for processing
-    return {
-      task_id: taskId,
-      status: 'queued',
-      message: 'Task created and queued for processing',
-      created_at: task.metadata.created_at,
-      estimated_start: 'Immediate - will be picked up by next orchestrator cycle'
-    };
+    // DUAL PERSISTENCE 2: Push to Redis queue (if enabled)
+    if (redisClient && REDIS_ENABLED) {
+      try {
+        const queueName = PRIORITY_QUEUES[priorityName] || PRIORITY_QUEUES.medium;
+
+        // LPUSH to add task to queue (workers use BRPOP from the other end)
+        await redisClient.lpush(queueName, JSON.stringify(task));
+
+        console.log(`[CortexAPI] Task pushed to Redis queue: ${queueName}`);
+
+        // Update queue depth metric
+        const queueDepth = await redisClient.llen(queueName);
+        await redisClient.set(`cortex:queue:depth:${priorityName}`, queueDepth);
+
+        return {
+          task_id: taskId,
+          status: 'queued',
+          message: 'Task created and queued for processing (dual persistence: Redis + filesystem)',
+          created_at: task.metadata.created_at,
+          estimated_start: 'Immediate - workers are monitoring the queue',
+          queue: queueName,
+          queue_depth: queueDepth,
+          persistence_mode: 'dual'
+        };
+
+      } catch (redisError) {
+        console.error(`[CortexAPI] Redis push failed (fallback to filesystem only):`, redisError.message);
+
+        return {
+          task_id: taskId,
+          status: 'queued',
+          message: 'Task created (filesystem only - Redis unavailable)',
+          created_at: task.metadata.created_at,
+          estimated_start: 'Will be picked up by next orchestrator cycle (polling mode)',
+          persistence_mode: 'filesystem_only',
+          warning: 'Redis queue unavailable'
+        };
+      }
+    } else {
+      // Redis disabled, filesystem only
+      return {
+        task_id: taskId,
+        status: 'queued',
+        message: 'Task created (filesystem only - Redis disabled)',
+        created_at: task.metadata.created_at,
+        estimated_start: 'Will be picked up by next orchestrator cycle',
+        persistence_mode: 'filesystem_only'
+      };
+    }
 
   } catch (error) {
     console.error(`[CortexAPI] Error creating task:`, error);
@@ -1754,6 +2147,237 @@ async function handleGetTaskStatus(input) {
 }
 
 /**
+ * Task Processing Infrastructure
+ */
+
+// Task processing state
+const taskProcessingState = {
+  isProcessing: false,
+  currentTask: null,
+  lastCheck: null,
+  processedCount: 0,
+  failedCount: 0
+};
+
+/**
+ * Scan task directory for queued tasks
+ */
+async function scanForTasks() {
+  try {
+    // Ensure task directory exists
+    await fs.mkdir(TASK_DIR, { recursive: true });
+
+    // Read all files in task directory
+    const files = await fs.readdir(TASK_DIR);
+    const taskFiles = files.filter(f => f.startsWith('task-') && f.endsWith('.json'));
+
+    const tasks = [];
+    for (const file of taskFiles) {
+      try {
+        const filePath = path.join(TASK_DIR, file);
+        const content = await fs.readFile(filePath, 'utf8');
+        const task = JSON.parse(content);
+
+        // Only include queued tasks
+        if (task.status === 'queued') {
+          tasks.push({ ...task, filePath });
+        }
+      } catch (err) {
+        console.error(`[TaskProcessor] Error reading task file ${file}:`, err.message);
+      }
+    }
+
+    // Sort by priority (lower number = higher priority)
+    tasks.sort((a, b) => a.priority - b.priority);
+
+    return tasks;
+  } catch (error) {
+    console.error('[TaskProcessor] Error scanning for tasks:', error.message);
+    return [];
+  }
+}
+
+/**
+ * Update task status
+ */
+async function updateTaskStatus(task, status, updates = {}) {
+  try {
+    const updatedTask = {
+      ...task,
+      status,
+      metadata: {
+        ...task.metadata,
+        updated_at: new Date().toISOString(),
+        ...updates.metadata
+      },
+      ...updates
+    };
+
+    // Remove filePath from saved data
+    const { filePath, ...taskData } = updatedTask;
+
+    await fs.writeFile(task.filePath, JSON.stringify(taskData, null, 2));
+
+    console.log(`[TaskProcessor] Task ${task.id} updated to status: ${status}`);
+
+    return updatedTask;
+  } catch (error) {
+    console.error(`[TaskProcessor] Error updating task ${task.id}:`, error.message);
+    throw error;
+  }
+}
+
+/**
+ * Route task to appropriate master agent
+ */
+function routeTaskToMaster(task) {
+  const category = task.payload?.category || 'general';
+
+  const masterMap = {
+    'development': 'development-master',
+    'security': 'security-master',
+    'infrastructure': 'infrastructure-master',
+    'inventory': 'inventory-master',
+    'cicd': 'cicd-master',
+    'ci/cd': 'cicd-master',
+    'general': 'infrastructure-master' // Default to infrastructure
+  };
+
+  return masterMap[category.toLowerCase()] || 'infrastructure-master';
+}
+
+/**
+ * Process a single task
+ */
+async function processTask(task) {
+  console.log(`\n[TaskProcessor] ========================================`);
+  console.log(`[TaskProcessor] Processing task: ${task.id}`);
+  console.log(`[TaskProcessor] Title: ${task.payload?.title || 'No title'}`);
+  console.log(`[TaskProcessor] Category: ${task.payload?.category || 'general'}`);
+  console.log(`[TaskProcessor] Priority: ${task.priority}`);
+  console.log(`[TaskProcessor] ========================================\n`);
+
+  try {
+    // Update status to in_progress
+    const inProgressTask = await updateTaskStatus(task, 'in_progress', {
+      metadata: {
+        started_at: new Date().toISOString(),
+        assigned_to: routeTaskToMaster(task)
+      }
+    });
+
+    taskProcessingState.currentTask = inProgressTask;
+
+    // Execute the task query using Claude
+    const query = task.payload?.query || task.payload?.description || '';
+
+    if (!query) {
+      throw new Error('No query found in task payload');
+    }
+
+    console.log(`[TaskProcessor] Executing query via Claude...`);
+    const result = await processUserQuery(query, null);
+
+    // Task completed successfully
+    const completedTask = await updateTaskStatus(inProgressTask, 'completed', {
+      result: {
+        answer: result.answer,
+        tools_used: result.tools_used || [],
+        iterations: result.iterations || 0,
+        completed_at: new Date().toISOString()
+      },
+      metadata: {
+        completed_at: new Date().toISOString(),
+        processing_time_ms: Date.now() - new Date(inProgressTask.metadata.started_at).getTime()
+      }
+    });
+
+    taskProcessingState.processedCount++;
+    taskProcessingState.currentTask = null;
+
+    console.log(`[TaskProcessor] Task ${task.id} completed successfully`);
+
+    return completedTask;
+
+  } catch (error) {
+    console.error(`[TaskProcessor] Task ${task.id} failed:`, error.message);
+
+    // Mark task as failed
+    await updateTaskStatus(task, 'failed', {
+      error: {
+        message: error.message,
+        stack: error.stack,
+        failed_at: new Date().toISOString()
+      },
+      metadata: {
+        failed_at: new Date().toISOString()
+      }
+    });
+
+    taskProcessingState.failedCount++;
+    taskProcessingState.currentTask = null;
+
+    throw error;
+  }
+}
+
+/**
+ * Task processing loop
+ */
+async function taskProcessingLoop() {
+  if (taskProcessingState.isProcessing) {
+    return; // Already processing
+  }
+
+  try {
+    taskProcessingState.isProcessing = true;
+    taskProcessingState.lastCheck = new Date().toISOString();
+
+    // Scan for queued tasks
+    const queuedTasks = await scanForTasks();
+
+    if (queuedTasks.length > 0) {
+      console.log(`[TaskProcessor] Found ${queuedTasks.length} queued task(s)`);
+
+      // Process tasks one at a time
+      for (const task of queuedTasks) {
+        try {
+          await processTask(task);
+
+          // Small delay between tasks to avoid overwhelming the system
+          await new Promise(resolve => setTimeout(resolve, 1000));
+        } catch (error) {
+          console.error(`[TaskProcessor] Error processing task ${task.id}:`, error.message);
+          // Continue to next task
+        }
+      }
+    }
+
+  } catch (error) {
+    console.error('[TaskProcessor] Error in task processing loop:', error.message);
+  } finally {
+    taskProcessingState.isProcessing = false;
+  }
+}
+
+/**
+ * Start task processing daemon
+ */
+function startTaskProcessor() {
+  console.log(`[TaskProcessor] Starting task processor daemon`);
+  console.log(`[TaskProcessor] Task directory: ${TASK_DIR}`);
+  console.log(`[TaskProcessor] Poll interval: ${TASK_POLL_INTERVAL}ms`);
+
+  // Run initial scan
+  taskProcessingLoop();
+
+  // Set up polling interval
+  setInterval(() => {
+    taskProcessingLoop();
+  }, TASK_POLL_INTERVAL);
+}
+
+/**
  * HTTP request handler
  */
 const server = http.createServer(async (req, res) => {
@@ -1769,13 +2393,92 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
+  // Queue status endpoint
+  if (req.url === '/api/queue/status' && req.method === 'GET') {
+    try {
+      let queueStatus = {
+        redis_enabled: REDIS_ENABLED,
+        queues: {}
+      };
+
+      if (redisClient && REDIS_ENABLED) {
+        for (const [priority, queueName] of Object.entries(PRIORITY_QUEUES)) {
+          const depth = await redisClient.llen(queueName);
+          queueStatus.queues[priority] = {
+            name: queueName,
+            depth: depth
+          };
+        }
+      } else {
+        queueStatus.message = 'Redis queue system disabled';
+      }
+
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify(queueStatus));
+    } catch (error) {
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: error.message }));
+    }
+    return;
+  }
+
+  // Workers status endpoint
+  if (req.url === '/api/workers/status' && req.method === 'GET') {
+    try {
+      // Query Kubernetes for worker pod count
+      const { stdout } = await execPromise('kubectl get pods -n cortex -l app=cortex-queue-worker -o json');
+      const podsData = JSON.parse(stdout);
+
+      const workers = podsData.items.map(pod => ({
+        name: pod.metadata.name,
+        status: pod.status.phase,
+        ready: pod.status.conditions?.find(c => c.type === 'Ready')?.status === 'True',
+        started: pod.status.startTime
+      }));
+
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({
+        total: workers.length,
+        ready: workers.filter(w => w.ready).length,
+        workers: workers
+      }));
+    } catch (error) {
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: error.message, total: 0 }));
+    }
+    return;
+  }
+
   // Health check
   if (req.url === '/health' && req.method === 'GET') {
     res.writeHead(200, { 'Content-Type': 'application/json' });
     res.end(JSON.stringify({
       status: 'healthy',
       timestamp: new Date().toISOString(),
-      intelligence: ANTHROPIC_API_KEY ? 'enabled' : 'disabled'
+      intelligence: ANTHROPIC_API_KEY ? 'enabled' : 'disabled',
+      redis: REDIS_ENABLED && redisClient ? (redisClient.status === 'ready' ? 'connected' : redisClient.status) : 'disabled',
+      taskProcessor: {
+        enabled: true,
+        processedCount: taskProcessingState.processedCount,
+        failedCount: taskProcessingState.failedCount,
+        isProcessing: taskProcessingState.isProcessing,
+        lastCheck: taskProcessingState.lastCheck,
+        currentTask: taskProcessingState.currentTask?.id || null
+      }
+    }));
+    return;
+  }
+
+  // Task processor status
+  if (req.url === '/api/task-processor/status' && req.method === 'GET') {
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({
+      enabled: true,
+      state: taskProcessingState,
+      config: {
+        taskDir: TASK_DIR,
+        pollInterval: TASK_POLL_INTERVAL
+      }
     }));
     return;
   }
@@ -1994,14 +2697,33 @@ process.on('SIGINT', () => {
   }, 10000);
 });
 
-server.listen(PORT, '0.0.0.0', () => {
+server.listen(PORT, '0.0.0.0', async () => {
   console.log('============================================================');
-  console.log('Cortex Intelligent Orchestrator');
+  console.log('Cortex Intelligent Orchestrator v2.0 - Redis Queue Edition');
   console.log('============================================================');
   console.log(`Listening on port ${PORT}`);
   console.log(`Intelligence: ${ANTHROPIC_API_KEY ? 'ENABLED ✓' : 'DISABLED ✗'}`);
   console.log(`Self-Healing: ENABLED ✓`);
   console.log(`Healing Worker: ${SELF_HEAL_WORKER_PATH}`);
+  console.log(`Task Processor: ENABLED ✓`);
+  console.log(`Task Directory: ${TASK_DIR}`);
+  console.log(`Poll Interval: ${TASK_POLL_INTERVAL}ms`);
+
+  // Connect to Redis
+  if (redisClient && REDIS_ENABLED) {
+    try {
+      await redisClient.connect();
+      console.log(`Redis Queue: ENABLED ✓ (${REDIS_HOST}:${REDIS_PORT})`);
+      console.log('Queue System: DUAL PERSISTENCE (Redis + Filesystem)');
+    } catch (error) {
+      console.error(`Redis Queue: FAILED ✗ (${error.message})`);
+      console.log('Queue System: FILESYSTEM ONLY (fallback mode)');
+    }
+  } else {
+    console.log('Redis Queue: DISABLED (filesystem only)');
+    console.log('Queue System: FILESYSTEM ONLY');
+  }
+
   console.log('\nDirect API Integrations:');
   console.log(`  Sandfly API:  ${SANDFLY_CONFIG.baseUrl}`);
   console.log(`  Proxmox API:  ${PROXMOX_CONFIG.baseUrl}`);
@@ -2009,6 +2731,9 @@ server.listen(PORT, '0.0.0.0', () => {
   console.log(`  Kubernetes:   kubectl (native)`);
   console.log('\nEndpoints:');
   console.log('  GET  /health - Health check');
+  console.log('  GET  /api/queue/status - Queue depths and status');
+  console.log('  GET  /api/workers/status - Active worker count');
+  console.log('  GET  /api/task-processor/status - Task processor status');
   console.log('  POST /api/tasks - Process intelligent queries');
   console.log('  POST /execute-tool - Execute Cortex introspection tools (chat integration)');
   console.log('\nError Handling:');
@@ -2016,5 +2741,9 @@ server.listen(PORT, '0.0.0.0', () => {
   console.log('  Unhandled rejections: Logged and continued');
   console.log('  MCP failures: Self-healing attempted');
   console.log('  Claude API errors: Retry with exponential backoff');
+  console.log('  Redis failures: Automatic fallback to filesystem');
   console.log('============================================================');
+
+  // Start task processor daemon
+  startTaskProcessor();
 });
