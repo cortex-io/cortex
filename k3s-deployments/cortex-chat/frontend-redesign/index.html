@@ -289,16 +289,95 @@
             border-bottom: 1px solid rgba(255, 255, 255, 0.05);
         }
 
-        .sidebar-header h2 {
-            font-size: 18px;
-            font-weight: 600;
+        .sidebar-header h1 {
+            font-size: 24px;
+            font-weight: 700;
             color: var(--text-white);
+            margin: 0;
+        }
+
+        .section-header {
+            padding: 12px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            cursor: pointer;
+            user-select: none;
+            transition: background 0.2s;
+        }
+
+        .section-header:hover {
+            background: rgba(255, 255, 255, 0.03);
+        }
+
+        .section-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-gray);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .section-toggle {
+            font-size: 12px;
+            color: var(--text-gray);
+            transition: transform 0.2s;
+        }
+
+        .section-toggle.collapsed {
+            transform: rotate(-90deg);
         }
 
         .chat-list {
             padding: 8px;
-            flex: 1;
             overflow-y: auto;
+            max-height: 400px;
+            transition: max-height 0.3s ease, opacity 0.3s ease;
+        }
+
+        .chat-list.collapsed {
+            max-height: 0;
+            opacity: 0;
+            padding: 0;
+            overflow: hidden;
+        }
+
+        .quick-actions {
+            padding: 8px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .quick-action-btn {
+            background: rgba(255, 107, 53, 0.1);
+            border: 1px solid rgba(255, 107, 53, 0.3);
+            color: var(--orange-accent);
+            padding: 12px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            transition: all 0.2s;
+            text-align: left;
+        }
+
+        .quick-action-btn:hover {
+            background: rgba(255, 107, 53, 0.15);
+            border-color: rgba(255, 107, 53, 0.4);
+        }
+
+        .quick-action-btn:active {
+            transform: scale(0.98);
+        }
+
+        .quick-action-icon {
+            font-size: 18px;
+            width: 24px;
+            text-align: center;
         }
 
         .sidebar-footer {
@@ -867,25 +946,270 @@
         }
 
         /* Markdown styling */
+        .message-content {
+            line-height: 1.6;
+        }
+
+        /* Headings */
+        .message-content h1,
+        .message-content h2,
+        .message-content h3,
+        .message-content h4,
+        .message-content h5,
+        .message-content h6 {
+            margin-top: 24px;
+            margin-bottom: 16px;
+            font-weight: 600;
+            line-height: 1.25;
+            color: var(--text-white);
+        }
+
+        .message-content h1:first-child,
+        .message-content h2:first-child,
+        .message-content h3:first-child,
+        .message-content h4:first-child,
+        .message-content h5:first-child,
+        .message-content h6:first-child {
+            margin-top: 0;
+        }
+
+        .message-content h1 {
+            font-size: 2em;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            padding-bottom: 8px;
+        }
+
+        .message-content h2 {
+            font-size: 1.5em;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            padding-bottom: 6px;
+        }
+
+        .message-content h3 {
+            font-size: 1.25em;
+        }
+
+        .message-content h4 {
+            font-size: 1em;
+            color: var(--text-light-gray);
+        }
+
+        .message-content h5 {
+            font-size: 0.875em;
+            color: var(--text-light-gray);
+        }
+
+        .message-content h6 {
+            font-size: 0.85em;
+            color: var(--text-gray);
+        }
+
+        /* Paragraphs */
+        .message-content p {
+            margin-bottom: 16px;
+        }
+
+        .message-content p:last-child {
+            margin-bottom: 0;
+        }
+
+        /* Lists */
+        .message-content ul,
+        .message-content ol {
+            margin: 12px 0;
+            padding-left: 28px;
+        }
+
+        .message-content ul {
+            list-style-type: disc;
+        }
+
+        .message-content ol {
+            list-style-type: decimal;
+        }
+
+        .message-content li {
+            margin: 6px 0;
+            padding-left: 8px;
+        }
+
+        .message-content li > ul,
+        .message-content li > ol {
+            margin: 6px 0;
+        }
+
+        .message-content ul ul {
+            list-style-type: circle;
+        }
+
+        .message-content ul ul ul {
+            list-style-type: square;
+        }
+
+        /* Code */
         .message-content code {
-            background: rgba(255, 255, 255, 0.1);
+            background: rgba(255, 107, 53, 0.15);
+            color: var(--orange-accent);
             padding: 2px 6px;
             border-radius: 4px;
-            font-family: 'SF Mono', Monaco, monospace;
+            font-family: 'SF Mono', Monaco, 'Cascadia Code', 'Courier New', monospace;
             font-size: 0.9em;
+            border: 1px solid rgba(255, 107, 53, 0.2);
         }
 
         .message-content pre {
             background: rgba(255, 255, 255, 0.05);
-            padding: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 16px;
             border-radius: 8px;
             overflow-x: auto;
-            margin: 8px 0;
+            margin: 12px 0;
+            position: relative;
         }
 
         .message-content pre code {
             background: none;
             padding: 0;
+            border: none;
+            color: var(--text-white);
+            font-size: 0.875em;
+            display: block;
+            line-height: 1.5;
+        }
+
+        /* Tables */
+        .message-content table {
+            border-collapse: collapse;
+            width: 100%;
+            margin: 16px 0;
+            overflow: hidden;
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .message-content table th,
+        .message-content table td {
+            padding: 12px 16px;
+            text-align: left;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .message-content table th {
+            background: rgba(255, 107, 53, 0.1);
+            color: var(--orange-accent);
+            font-weight: 600;
+            border-bottom: 2px solid rgba(255, 107, 53, 0.3);
+        }
+
+        .message-content table tr:nth-child(even) {
+            background: rgba(255, 255, 255, 0.03);
+        }
+
+        .message-content table tr:hover {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .message-content table tr:last-child td {
+            border-bottom: none;
+        }
+
+        /* Scrollable table wrapper */
+        .message-content table {
+            display: block;
+            overflow-x: auto;
+            white-space: nowrap;
+        }
+
+        .message-content table thead,
+        .message-content table tbody,
+        .message-content table tr {
+            display: table;
+            width: 100%;
+            table-layout: fixed;
+        }
+
+        /* Blockquotes */
+        .message-content blockquote {
+            margin: 16px 0;
+            padding: 12px 16px;
+            border-left: 4px solid var(--orange-accent);
+            background: rgba(255, 107, 53, 0.05);
+            border-radius: 0 8px 8px 0;
+            color: var(--text-light-gray);
+        }
+
+        .message-content blockquote p {
+            margin-bottom: 8px;
+        }
+
+        .message-content blockquote p:last-child {
+            margin-bottom: 0;
+        }
+
+        .message-content blockquote code {
+            background: rgba(255, 107, 53, 0.2);
+        }
+
+        /* Horizontal rules */
+        .message-content hr {
+            border: none;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            margin: 24px 0;
+        }
+
+        /* Links */
+        .message-content a {
+            color: var(--user-blue);
+            text-decoration: none;
+            border-bottom: 1px solid transparent;
+            transition: border-color 0.2s;
+        }
+
+        .message-content a:hover {
+            border-bottom-color: var(--user-blue);
+        }
+
+        /* Strong and emphasis */
+        .message-content strong {
+            font-weight: 600;
+            color: var(--text-white);
+        }
+
+        .message-content em {
+            font-style: italic;
+            color: var(--text-light-gray);
+        }
+
+        /* Images */
+        .message-content img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 8px;
+            margin: 12px 0;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        /* Task lists */
+        .message-content input[type="checkbox"] {
+            margin-right: 8px;
+            cursor: pointer;
+        }
+
+        /* Definition lists */
+        .message-content dl {
+            margin: 12px 0;
+        }
+
+        .message-content dt {
+            font-weight: 600;
+            margin-top: 12px;
+            color: var(--text-white);
+        }
+
+        .message-content dd {
+            margin-left: 24px;
+            margin-top: 4px;
+            color: var(--text-light-gray);
         }
     </style>
 </head>
@@ -964,15 +1288,49 @@
         <!-- Sidebar -->
         <aside class="sidebar" id="sidebar">
             <div class="sidebar-header">
-                <h2>Recent Chats</h2>
+                <h1>Cortex</h1>
             </div>
             <button class="new-chat-btn" id="newChatBtn">
                 <span>✚</span>
                 <span>New Chat</span>
             </button>
+
+            <!-- Collapsible Recent Chats Section -->
+            <div class="section-header" id="recentChatsHeader">
+                <span class="section-title">Recent Chats</span>
+                <span class="section-toggle">▼</span>
+            </div>
             <div class="chat-list" id="chatList">
                 <!-- Chat history will be populated here -->
             </div>
+
+            <!-- Quick Actions Section -->
+            <div class="section-header" style="margin-top: 16px;">
+                <span class="section-title">Quick Actions</span>
+            </div>
+            <div class="quick-actions">
+                <button class="quick-action-btn" data-query="What is the status of the UniFi network?">
+                    <span class="quick-action-icon">📡</span>
+                    <span>UniFi Network</span>
+                </button>
+                <button class="quick-action-btn" data-query="Show me the K3s cluster status">
+                    <span class="quick-action-icon">☸️</span>
+                    <span>K3s Cluster</span>
+                </button>
+                <button class="quick-action-btn" data-query="List all Proxmox VMs and their status">
+                    <span class="quick-action-icon">🖥️</span>
+                    <span>Proxmox VMs</span>
+                </button>
+                <button class="quick-action-btn" data-query="What security alerts do we have?">
+                    <span class="quick-action-icon">🔒</span>
+                    <span>Security</span>
+                </button>
+                <button class="quick-action-btn" data-query="Give me an infrastructure summary">
+                    <span class="quick-action-icon">📊</span>
+                    <span>Infrastructure Summary</span>
+                </button>
+            </div>
+
             <div class="sidebar-footer">
                 <button class="sidebar-logout-btn" id="sidebarLogoutBtn">
                     <span>🚪</span>
@@ -1201,6 +1559,37 @@
             if (newChatBtn) {
                 newChatBtn.addEventListener('click', startNewChat);
             }
+
+            // Collapsible Recent Chats
+            const recentChatsHeader = document.getElementById('recentChatsHeader');
+            const chatListDiv = document.getElementById('chatList');
+            const sectionToggle = recentChatsHeader?.querySelector('.section-toggle');
+
+            // Load collapsed state from localStorage
+            const isCollapsed = localStorage.getItem('recentChatsCollapsed') === 'true';
+            if (isCollapsed) {
+                chatListDiv.classList.add('collapsed');
+                sectionToggle.classList.add('collapsed');
+            }
+
+            recentChatsHeader?.addEventListener('click', () => {
+                chatListDiv.classList.toggle('collapsed');
+                sectionToggle.classList.toggle('collapsed');
+                // Save state
+                localStorage.setItem('recentChatsCollapsed', chatListDiv.classList.contains('collapsed'));
+            });
+
+            // Quick Action Buttons
+            const quickActionBtns = document.querySelectorAll('.quick-action-btn');
+            quickActionBtns.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const query = btn.getAttribute('data-query');
+                    if (query) {
+                        messageInput.value = query;
+                        sendMessage();
+                    }
+                });
+            });
         }
 
         async function handleLogin(e) {
@@ -1533,7 +1922,8 @@
             try {
                 // Call API with SSE
                 const requestBody = {
-                    message: message
+                    message: message,
+                    sessionId: currentConversationId || `session-${Date.now()}`
                 };
 
                 // Only add history if it exists

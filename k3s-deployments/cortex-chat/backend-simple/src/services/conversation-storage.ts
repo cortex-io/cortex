@@ -8,6 +8,7 @@ export interface Message {
 
 export interface Conversation {
   sessionId: string;
+  title?: string;
   messages: Message[];
   summary?: string;
   createdAt: string;
@@ -90,6 +91,15 @@ export class ConversationStorage {
     }
   }
 
+  /**
+   * Generate a title from the first user message
+   */
+  private generateTitle(message: string): string {
+    // Take first 50 characters or until first newline
+    const title = message.split('\n')[0].substring(0, 50).trim();
+    return title.length < message.length ? `${title}...` : title;
+  }
+
   async addMessage(sessionId: string, message: Message): Promise<Conversation> {
     try {
       let conversation = await this.getConversation(sessionId);
@@ -103,6 +113,14 @@ export class ConversationStorage {
           updatedAt: new Date().toISOString(),
           messageCount: 0
         };
+
+        // Auto-generate title from first user message
+        if (message.role === 'user') {
+          conversation.title = this.generateTitle(message.content);
+        }
+      } else if (!conversation.title && message.role === 'user' && conversation.messages.length === 0) {
+        // Set title if this is the first user message and no title exists
+        conversation.title = this.generateTitle(message.content);
       }
 
       // Add message
