@@ -253,7 +253,7 @@ spec:
         resources:
           requests:
             memory: "128Mi"
-            cpu: "50m"
+            cpu: "100m"
           limits:
             memory: "256Mi"
             cpu: "200m"
@@ -303,7 +303,7 @@ metadata:
   namespace: monitoring
   labels:
     app: unifi-exporter
-    release: prometheus
+    release: kube-prometheus-stack
 spec:
   selector:
     matchLabels:

@@ -1,0 +1,94 @@
+{
+  "sandfly": {
+    "enabled": true,
+    "priority": "high",
+    "sources": [
+      {
+        "url": "https://docs.sandflysecurity.com",
+        "type": "documentation",
+        "crawl_depth": 5,
+        "update_frequency": "daily",
+        "selectors": {
+          "content": "main, article, .documentation",
+          "exclude": "nav, footer, .sidebar"
+        }
+      },
+      {
+        "url": "https://sandflysecurity.com/blog",
+        "type": "blog",
+        "crawl_depth": 2,
+        "update_frequency": "weekly",
+        "selectors": {
+          "content": "article, .post-content",
+          "exclude": "nav, footer, .comments"
+        }
+      },
+      {
+        "url": "https://docs.sandflysecurity.com/api",
+        "type": "api_reference",
+        "crawl_depth": 3,
+        "update_frequency": "daily",
+        "selectors": {
+          "content": ".api-endpoint, .api-reference",
+          "exclude": "nav, .sidebar"
+        }
+      }
+    ],
+    "knowledge_graph": {
+      "entities": ["alerts", "hosts", "processes", "forensics", "policies", "api", "authentication", "security", "monitoring"],
+      "relationships": ["detects", "monitors", "analyzes", "integrates_with", "triggers", "escalates"],
+      "cross_domain_links": {
+        "security-master": ["threat_detection", "vulnerability_scanning", "incident_response"],
+        "inventory-master": ["host_inventory", "asset_tracking", "system_information"]
+      }
+    }
+  },
+  "proxmox": {
+    "enabled": false,
+    "priority": "medium",
+    "sources": [
+      {
+        "url": "https://pve.proxmox.com/pve-docs",
+        "type": "documentation",
+        "crawl_depth": 4,
+        "update_frequency": "weekly",
+        "selectors": {
+          "content": "main, .documentation",
+          "exclude": "nav, footer"
+        }
+      }
+    ],
+    "knowledge_graph": {
+      "entities": ["vm", "container", "storage", "network", "cluster", "backup"],
+      "relationships": ["manages", "contains", "connects_to", "backs_up"],
+      "cross_domain_links": {
+        "infrastructure-master": ["virtualization", "resource_management"],
+        "inventory-master": ["vm_inventory", "infrastructure_tracking"]
+      }
+    }
+  },
+  "k3s": {
+    "enabled": false,
+    "priority": "medium",
+    "sources": [
+      {
+        "url": "https://docs.k3s.io",
+        "type": "documentation",
+        "crawl_depth": 4,
+        "update_frequency": "weekly",
+        "selectors": {
+          "content": "main, article",
+          "exclude": "nav, footer, .sidebar"
+        }
+      }
+    ],
+    "knowledge_graph": {
+      "entities": ["cluster", "node", "pod", "service", "ingress", "deployment"],
+      "relationships": ["deploys", "manages", "routes_to", "scales"],
+      "cross_domain_links": {
+        "orchestration-master": ["container_orchestration", "service_discovery"],
+        "deployment-master": ["application_deployment", "scaling"]
+      }
+    }
+  }
+}

@@ -1,0 +1,242 @@
+YouTube Ingestion Service - Project Map
+=======================================
+
+youtube-ingestion/
+│
+├── 📄 Core Documentation
+│   ├── README.md                         # Main documentation, API reference, usage
+│   ├── PROJECT_SUMMARY.md                # Complete project overview
+│   ├── DEPLOYMENT.md                     # Deployment guide & troubleshooting
+│   └── docs/
+│       ├── ARCHITECTURE.md               # System architecture & design
+│       └── INTEGRATION_GUIDE.md          # Integration examples
+│
+├── 🔧 Source Code
+│   └── src/
+│       ├── index.js                      # HTTP API server (main entry)
+│       ├── config.js                     # Configuration & constants
+│       ├── ingestion-service.js          # Main orchestrator
+│       │
+│       ├── utils/
+│       │   └── url-detector.js           # YouTube URL pattern matching
+│       │
+│       ├── extractors/
+│       │   ├── transcript-extractor.js   # Transcript extraction w/ retry
+│       │   └── metadata-extractor.js     # Metadata scraping (title, etc.)
+│       │
+│       ├── processors/
+│       │   └── classifier.js             # AI classification (Claude)
+│       │
+│       ├── storage/
+│       │   └── knowledge-store.js        # Redis + Filesystem storage
+│       │
+│       ├── agents/
+│       │   └── improvement-agent.js      # Self-improvement & meta-review
+│       │
+│       └── middleware/
+│           └── message-interceptor.js    # Cortex Chat integration hook
+│
+├── ☸️  Kubernetes Manifests
+│   └── k8s/
+│       ├── deployment.yaml               # Main deployment (1 replica)
+│       ├── service.yaml                  # ClusterIP service
+│       ├── pvc.yaml                      # 10Gi persistent volume claim
+│       └── ingress.yaml                  # Optional external access
+│
+├── 🚀 Deployment Scripts
+│   └── scripts/
+│       ├── build-and-deploy.sh           # Automated build & deploy
+│       └── test-service.sh               # Comprehensive test suite
+│
+├── 📚 Examples
+│   └── examples/
+│       └── example-usage.js              # Complete usage examples
+│
+├── 🐳 Container
+│   ├── Dockerfile                        # Multi-stage Node.js build
+│   └── package.json                      # Dependencies & scripts
+│
+└── 📊 Data Directories (Runtime)
+    └── /data/                            # Created in container
+        ├── transcripts/                  # Raw transcripts
+        ├── knowledge/                    # Processed knowledge (JSON)
+        └── cache/                        # Temporary data
+
+
+Key Features by Component
+==========================
+
+🔍 URL Detector
+  • Multi-format YouTube URL detection
+  • Regex pattern matching
+  • Video ID extraction
+
+📝 Transcript Extractor
+  • youtube-transcript npm library
+  • Multi-language support (prefers English)
+  • Retry logic with exponential backoff
+  • Timestamp preservation
+
+🤖 AI Classifier (Claude Sonnet 4.5)
+  • Content categorization (10 categories)
+  • Relevance scoring (0.0-1.0)
+  • Key concept extraction
+  • Actionable item identification
+  • Tool/technology detection
+
+💾 Knowledge Store (Dual Layer)
+  Redis Layer:
+    • Fast access & indexing
+    • Category/relevance indexes
+    • TTL-based expiration (30 days)
+  Filesystem Layer:
+    • Persistent backup
+    • Full JSON documents
+    • Fallback when Redis unavailable
+
+🧠 Improvement Agent
+  Passive (Auto):
+    • Add knowledge to context
+    • Update pattern library
+    • Enhance understanding
+  Active (Approval):
+    • Suggest new integrations
+    • Propose architecture changes
+    • Recommend prompt updates
+
+🔬 Meta-Review Agent
+  • Analyze patterns across videos
+  • Identify recurring themes/tools
+  • Generate strategic insights (Claude)
+  • Prioritize recommendations
+
+
+API Endpoints
+=============
+
+Core:
+  GET  /health              → Health check
+  GET  /stats               → Knowledge base stats
+  POST /process             → Auto-detect URLs in message
+  POST /ingest              → Manually ingest video
+
+Query:
+  GET  /videos?limit=N      → List all videos
+  GET  /video/:videoId      → Get specific video
+  POST /search              → Search knowledge base
+
+Improvement:
+  GET  /improvements        → Get pending proposals
+  POST /meta-review         → Perform meta-review
+
+
+Integration Points
+==================
+
+1. Cortex Chat Backend
+   Import: src/middleware/message-interceptor.js
+   Hook: In message handler
+   Purpose: Auto-detect YouTube URLs
+
+2. Claude Code CLI
+   Commands: /ingest, /learned, /improve
+   Purpose: Manual ingestion & queries
+
+3. MCP Server
+   Tools: youtube_ingest, youtube_search
+   Purpose: Programmatic access
+
+
+Deployment Workflow
+===================
+
+1. Prerequisites
+   ✓ k3s cluster running
+   ✓ Redis at redis-queue.cortex.svc.cluster.local
+   ✓ Anthropic API key in secret
+   ✓ Local registry at localhost:5000
+
+2. Deploy
+   $ cd /path/to/youtube-ingestion
+   $ ./scripts/build-and-deploy.sh
+
+3. Verify
+   $ kubectl get pods -n cortex -l app=youtube-ingestion
+   $ kubectl logs -n cortex -l app=youtube-ingestion
+
+4. Test
+   $ kubectl port-forward -n cortex svc/youtube-ingestion 8080:8080
+   $ ./scripts/test-service.sh
+
+
+Technology Stack
+================
+
+Runtime:       Node.js 20 (Alpine)
+Transport:     HTTP/JSON REST API
+AI:            Claude Sonnet 4.5 (Anthropic)
+Storage:       Redis + Filesystem
+Orchestration: Kubernetes (k3s)
+Container:     Docker
+
+
+Resource Requirements
+=====================
+
+Deployment:
+  Replicas:  1 (can scale with queue-based processing)
+  CPU:       200m request, 1000m limit
+  Memory:    256Mi request, 1Gi limit
+  Storage:   10Gi PVC (local-path)
+
+Network:
+  Service:   ClusterIP (internal only)
+  Port:      8080
+  DNS:       youtube-ingestion.cortex.svc.cluster.local
+
+
+Monitoring
+==========
+
+Health:
+  Liveness:  /health every 10s
+  Readiness: /health every 5s
+
+Metrics:
+  Total videos ingested
+  Videos by category
+  Average relevance score
+  Recent count (7 days)
+
+Logs:
+  Structured with component prefixes
+  [URLDetector], [TranscriptExtractor], etc.
+  Error stack traces included
+
+
+Files Summary
+=============
+
+Source Code:         13 files
+Documentation:        5 files
+Kubernetes:           4 files
+Scripts:              2 files
+Examples:             1 file
+Configuration:        2 files
+──────────────────────────────
+Total:               27 files
+
+
+Lines of Code (Estimated)
+==========================
+
+Source JavaScript:  ~2,500 lines
+Documentation:      ~2,000 lines
+Configuration:        ~200 lines
+──────────────────────────────
+Total:              ~4,700 lines
+
+
+Status: ✅ COMPLETE - Ready for Production
+Built by: Larry (Backend Infrastructure Specialist)
+Date: 2025-12-28

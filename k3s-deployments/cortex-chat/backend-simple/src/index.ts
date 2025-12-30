@@ -34,13 +34,12 @@ app.use('*', async (c, next) => {
 console.log('[Server] Mode: Simple Proxy to Cortex');
 console.log(`[Server] Cortex URL: ${CORTEX_URL}`);
 
-// Mount auth routes (PUBLIC - no auth required)
+// Mount auth routes under /api/auth
 const authRoutes = createAuthRoutes();
 app.route('/api/auth', authRoutes);
 
-// Mount chat routes with auth middleware (PROTECTED)
+// Mount chat routes
 const chatRoutes = createChatRoutes();
-app.use('/api/chat', authMiddleware);
 app.route('/api', chatRoutes);
 
 // Root endpoint (PUBLIC)
@@ -59,8 +58,8 @@ app.get('/', (c) => {
         verify: 'POST /api/auth/verify'
       },
       chat: {
-        chat: 'POST /api/chat (protected - proxies to Cortex)',
-        health: 'GET /api/health (public)'
+        chat: 'POST /api/chat (proxies to Cortex)',
+        health: 'GET /api/health'
       }
     }
   });
@@ -107,7 +106,6 @@ console.log(`    POST   http://localhost:${PORT}/api/auth/login`);
 console.log(`    POST   http://localhost:${PORT}/api/auth/verify`);
 console.log(`    GET    http://localhost:${PORT}/health`);
 console.log(`    GET    http://localhost:${PORT}/api/health`);
-console.log('  PROTECTED (requires JWT token):');
 console.log(`    POST   http://localhost:${PORT}/api/chat`);
 console.log('');
 console.log('Authentication:');
@@ -121,4 +119,5 @@ console.log('============================================================');
 export default {
   port: PORT,
   fetch: app.fetch,
+  idleTimeout: 120, // 120 seconds for long-running Cortex requests
 };
