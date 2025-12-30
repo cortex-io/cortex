@@ -188,7 +188,7 @@ data:
 
             # Make a minimal test request using cheapest model
             # This costs approximately $0.0005 per scrape
-            test_model = "claude-haiku-4"
+            test_model = "claude-3-haiku-20240307"
 
             request_start = time.time()
             message = client.messages.create(

@@ -1,9 +1,34 @@
 import { Hono } from 'hono';
 import { streamSSE } from 'hono/streaming';
 import { conversationStorage, type Message } from '../services/conversation-storage';
+import { issueDetector, type DetectedIssue } from '../services/issue-detector';
+import { contextAnalyzer, type ContextualSuggestion } from '../services/context-analyzer';
+import { detectYouTubeURLs } from '../services/youtube-detector';
+import { startVideoProcessing, handleImplementationApproval } from '../services/youtube-workflow';
 
 const CORTEX_URL = process.env.CORTEX_URL || 'http://cortex-orchestrator.cortex.svc.cluster.local:8000';
 const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY || '';
+
+/**
+ * Strip all emojis and visual indicators from text
+ */
+function stripEmojis(text: string): string {
+  // Remove emojis, symbols, pictographs, colored circles, and other visual indicators
+  return text
+    .replace(/[\u{1F600}-\u{1F64F}]/gu, '') // Emoticons
+    .replace(/[\u{1F300}-\u{1F5FF}]/gu, '') // Misc Symbols and Pictographs
+    .replace(/[\u{1F680}-\u{1F6FF}]/gu, '') // Transport and Map
+    .replace(/[\u{1F1E0}-\u{1F1FF}]/gu, '') // Flags
+    .replace(/[\u{2600}-\u{26FF}]/gu, '')   // Misc symbols (including colored circles)
+    .replace(/[\u{2700}-\u{27BF}]/gu, '')   // Dingbats
+    .replace(/[\u{1F900}-\u{1F9FF}]/gu, '') // Supplemental Symbols and Pictographs
+    .replace(/[\u{1FA70}-\u{1FAFF}]/gu, '') // Symbols and Pictographs Extended-A
+    .replace(/[\u{25A0}-\u{25FF}]/gu, '')   // Geometric shapes (squares, circles, triangles)
+    .replace(/[\u{2B00}-\u{2BFF}]/gu, '')   // Misc Symbols and Arrows
+    .replace(/[\u{FE00}-\u{FE0F}]/gu, '')   // Variation Selectors
+    .replace(/[\u{1F004}]/gu, '')           // Mahjong Tile Red Dragon
+    .replace(/[\u{1F0CF}]/gu, '');          // Playing Card Black Joker
+}
 
 export function createChatRoutes() {
   const app = new Hono();
@@ -27,7 +52,7 @@ export function createChatRoutes() {
       await ensureStorage();
 
       const body = await c.req.json();
-      const { message, style, sessionId } = body;
+      const { message, style, sessionId, isAction } = body;
 
       if (!message || typeof message !== 'string') {
         return c.json({ error: 'Message is required' }, 400);
@@ -37,26 +62,96 @@ export function createChatRoutes() {
         return c.json({ error: 'Session ID is required' }, 400);
       }
 
-      // Build personality-aware message
-      let personalityPrefix = '';
-      switch(style) {
-        case 'rick_morty':
-          personalityPrefix = '[PERSONALITY: Rick & Morty Mode] You are Rick Sanchez, the smartest man in the universe. *burp* You are helping with infrastructure. Be condescending but helpful. Add occasional burps and rants. Morty sometimes chimes in nervously. ';
-          break;
-        case 'pirate':
-          personalityPrefix = '[PERSONALITY: Pirate Mode] You are a pirate ship captain managing infrastructure. Speak in pirate dialect. Call pods "vessels", namespaces "ports", deployments "voyages", etc. ';
-          break;
-        case 'robot':
-          personalityPrefix = '[PERSONALITY: Robot/Clawd Mode] BEEP BOOP. YOU ARE A FRIENDLY ROBOT NAMED CLAWD. SPEAK IN ALL CAPS. BE ENTHUSIASTIC ABOUT INFRASTRUCTURE. END MESSAGES WITH BEEP! ';
-          break;
-        case 'formal':
-          personalityPrefix = '[PERSONALITY: Formal Mode] Provide executive-level summaries with detailed explanations, metrics, and SLOs. Be professional and thorough. ';
-          break;
-        case 'scientific':
-          personalityPrefix = '[PERSONALITY: Scientific Mode] Provide technical deep-dives with reasoning, trade-offs, and documentation references. Explain the "why" behind recommendations. ';
-          break;
-        default:
-          personalityPrefix = '';
+      // If this is an action (fix/investigate/auto-continue), update status to in_progress
+      if (isAction === true) {
+        await conversationStorage.updateConversationStatus(sessionId, 'in_progress');
+      }
+
+      // Check for yes/no/details responses to YouTube analysis
+      const lowerMessage = message.toLowerCase().trim();
+      const isYouTubeResponse = lowerMessage === 'yes' || lowerMessage === 'no' || lowerMessage === 'details';
+
+      // Get recent messages to check if this is a response to YouTube analysis
+      const recentMessages = await conversationStorage.getMessages(sessionId);
+      const lastAnalysis = recentMessages.reverse().find(m =>
+        m.metadata?.type === 'youtube_analysis' &&
+        m.metadata?.requiresApproval === true
+      );
+
+      if (isYouTubeResponse && lastAnalysis) {
+        // Handle YouTube implementation approval
+        const videoId = lastAnalysis.metadata?.videoId;
+
+        if (lowerMessage === 'yes') {
+          await handleImplementationApproval(sessionId, videoId, true);
+          return c.json({ message: 'Implementation started' });
+        } else if (lowerMessage === 'no') {
+          await handleImplementationApproval(sessionId, videoId, false);
+          return c.json({ message: 'Implementation cancelled' });
+        } else if (lowerMessage === 'details') {
+          const analysis = lastAnalysis.metadata?.analysis;
+          const detailsMessage = formatDetailedAnalysis(analysis);
+
+          await conversationStorage.addMessage(sessionId, {
+            role: 'assistant',
+            content: detailsMessage,
+            timestamp: new Date().toISOString()
+          });
+
+          // Return SSE stream and trigger frontend reload
+          return streamSSE(c, async (stream) => {
+            await stream.writeSSE({
+              data: JSON.stringify({
+                type: 'details_posted',
+                message: 'Detailed analysis posted'
+              }),
+              event: 'details_posted'
+            });
+
+            await stream.writeSSE({
+              data: '[DONE]',
+              event: 'done'
+            });
+          });
+        }
+      }
+
+      // Check for YouTube URLs and trigger workflow
+      const youtubeDetection = detectYouTubeURLs(message);
+
+      if (youtubeDetection.detected) {
+        console.log(`[ChatRoute] Detected ${youtubeDetection.videoIds.length} YouTube video(s), starting workflow...`);
+
+        // Save user message first
+        await conversationStorage.addMessage(sessionId, {
+          role: 'user',
+          content: message,
+          timestamp: new Date().toISOString()
+        });
+
+        // Start workflow for each video (parallel processing)
+        for (const videoId of youtubeDetection.videoIds) {
+          const videoUrl = youtubeDetection.urls.find(url => url.includes(videoId)) || '';
+          startVideoProcessing(sessionId, videoUrl, videoId).catch(error => {
+            console.error(`[ChatRoute] Workflow failed for ${videoId}:`, error);
+          });
+        }
+
+        // Return SSE stream with notification to reload conversation
+        return streamSSE(c, async (stream) => {
+          await stream.writeSSE({
+            data: JSON.stringify({
+              type: 'youtube_processing',
+              message: 'YouTube video processing started in background'
+            }),
+            event: 'youtube_processing'
+          });
+
+          await stream.writeSSE({
+            data: '[DONE]',
+            event: 'done'
+          });
+        });
       }
 
       // Save user message to conversation
@@ -71,7 +166,7 @@ export function createChatRoutes() {
 
       console.log(`[ChatRoute] Session ${sessionId}: ${contextMessages.length} context messages loaded`);
 
-      const enhancedMessage = personalityPrefix + message;
+      // Use message as-is - let orchestrator handle tone (technical by default)
       console.log('[ChatRoute] Forwarding to Cortex with style:', style, '| Message:', message);
 
       // Return SSE stream
@@ -88,42 +183,112 @@ export function createChatRoutes() {
             event: 'content_block_start'
           });
 
-          // Call Cortex
-          const response = await fetch(`${CORTEX_URL}/api/tasks`, {
+          // Strip timestamps from context messages (Claude API doesn't allow extra fields)
+          const cleanedHistory = contextMessages.map(msg => ({
+            role: msg.role,
+            content: msg.content
+          }));
+
+          // Call Cortex orchestrator's new /api/chat endpoint
+          const response = await fetch(`${CORTEX_URL}/api/chat`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-              id: `chat-${Date.now()}`,
-              type: 'user_query',
-              priority: 5,
-              payload: { query: enhancedMessage },
-              metadata: { source: 'cortex-chat', personality: style || 'standard' }
+              message: message,
+              sessionId: sessionId,
+              history: cleanedHistory
             }),
-            signal: AbortSignal.timeout(60000) // 60 second timeout
+            signal: AbortSignal.timeout(300000) // 300 second (5 minute) timeout
           });
 
           if (!response.ok) {
             throw new Error(`Cortex returned ${response.status}: ${response.statusText}`);
           }
 
-          const result = await response.json();
-          console.log('[ChatRoute] Received from Cortex:', result.status);
+          // Parse SSE stream from Cortex
+          const reader = response.body?.getReader();
+          const decoder = new TextDecoder();
+          let buffer = '';
+          let fullAnswer = '';
 
-          // Extract answer from Cortex response
-          const answer = result.result?.answer ||
-                        result.result?.output ||
-                        JSON.stringify(result.result);
+          if (!reader) {
+            throw new Error('No response body from Cortex');
+          }
 
-          assistantResponse = answer;
+          while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+
+            buffer += decoder.decode(value, { stream: true });
+            const lines = buffer.split('\n');
+            buffer = lines.pop() || '';
+
+            for (const line of lines) {
+              if (line.startsWith('data: ')) {
+                try {
+                  const jsonData = line.substring(6);
+                  const event = JSON.parse(jsonData);
+
+                  // Handle different event types from new /api/chat endpoint
+                  if (event.type === 'content_block_delta' && event.delta?.text) {
+                    fullAnswer += event.delta.text;
+                  } else if (event.type === 'error') {
+                    throw new Error(event.error || 'Unknown error from Cortex');
+                  }
+                  // Ignore other events: processing_start, tool_progress, tool_execution, message_stop
+                } catch (e) {
+                  // Skip malformed data lines
+                  console.log('[ChatRoute] Failed to parse SSE event:', e);
+                }
+              }
+            }
+          }
+
+          if (!fullAnswer || fullAnswer.trim().length === 0) {
+            throw new Error('No content received from Cortex');
+          }
+
+          // Strip all emojis from response
+          const answer = stripEmojis(fullAnswer);
+
+          // Detect issues in the response
+          console.log(`[ChatRoute] DEBUG: Full response length:`, answer.length);
+          console.log(`[ChatRoute] DEBUG: Response contains "Issues":`, answer.includes('Issues'));
+          console.log(`[ChatRoute] DEBUG: Response contains "ContainerCreating":`, answer.includes('ContainerCreating'));
+          const detectedIssues = issueDetector.detectIssues(answer);
+          console.log(`[ChatRoute] Detected ${detectedIssues.length} issues`);
+          if (detectedIssues.length > 0) {
+            console.log(`[ChatRoute] Issues found:`, detectedIssues.map(i => i.title));
+          }
+
+          // Build enhanced response with issue detection
+          let enhancedAnswer = answer;
+          if (detectedIssues.length > 0) {
+            const issuesMarkdown = issueDetector.formatIssuesAsMarkdown(detectedIssues);
+            enhancedAnswer = answer + issuesMarkdown;
+          }
+
+          assistantResponse = enhancedAnswer;
 
           // Stream the answer
           await stream.writeSSE({
             data: JSON.stringify({
               type: 'content_block_delta',
-              delta: answer
+              delta: enhancedAnswer
             }),
             event: 'content_block_delta'
           });
+
+          // If issues were detected, send them as separate events for UI to handle
+          if (detectedIssues.length > 0) {
+            await stream.writeSSE({
+              data: JSON.stringify({
+                type: 'issues_detected',
+                issues: detectedIssues
+              }),
+              event: 'issues_detected'
+            });
+          }
 
           await stream.writeSSE({
             data: JSON.stringify({
@@ -131,6 +296,26 @@ export function createChatRoutes() {
             }),
             event: 'content_block_stop'
           });
+
+          // Only send contextual suggestions if NO issues were detected
+          // When issues exist, user should see FIX buttons instead of value-adds
+          if (detectedIssues.length === 0) {
+            const suggestions = contextAnalyzer.analyzeSuggestions(message, enhancedAnswer);
+
+            // Send suggestions if any were generated
+            if (suggestions.length > 0) {
+              await stream.writeSSE({
+                data: JSON.stringify({
+                  type: 'suggestions',
+                  suggestions: suggestions
+                }),
+                event: 'suggestions'
+              });
+              console.log(`[ChatRoute] Generated ${suggestions.length} contextual suggestions`);
+            }
+          } else {
+            console.log(`[ChatRoute] Skipping suggestions - ${detectedIssues.length} issues detected, showing fix buttons instead`);
+          }
 
           await stream.writeSSE({
             data: JSON.stringify({
@@ -154,6 +339,9 @@ export function createChatRoutes() {
             });
 
             console.log(`[ChatRoute] Saved assistant response to session ${sessionId}`);
+
+            // Update conversation status to 'completed' after Cortex response
+            await conversationStorage.updateConversationStatus(sessionId, 'completed');
           }
 
         } catch (error) {
@@ -259,19 +447,56 @@ export function createChatRoutes() {
   });
 
   /**
+   * PATCH /conversations/:sessionId/status
+   * Update conversation status
+   */
+  app.patch('/conversations/:sessionId/status', async (c) => {
+    try {
+      await ensureStorage();
+
+      const sessionId = c.req.param('sessionId');
+      const body = await c.req.json();
+      const { status } = body;
+
+      if (!status || !['active', 'in_progress', 'completed'].includes(status)) {
+        return c.json({
+          error: 'Invalid status. Must be one of: active, in_progress, completed'
+        }, 400);
+      }
+
+      await conversationStorage.updateConversationStatus(sessionId, status);
+
+      return c.json({
+        success: true,
+        message: `Conversation status updated to ${status}`
+      });
+    } catch (error) {
+      console.error('[ChatRoute] Error updating conversation status:', error);
+      return c.json({
+        error: 'Failed to update conversation status',
+        message: error instanceof Error ? error.message : 'Unknown error'
+      }, 500);
+    }
+  });
+
+  /**
    * GET /conversations
-   * Get all conversations
+   * Get all conversations grouped by status
    */
   app.get('/conversations', async (c) => {
     try {
       await ensureStorage();
 
-      const conversations = await conversationStorage.getAllConversations();
+      const grouped = await conversationStorage.getGroupedConversations();
 
       return c.json({
         success: true,
-        conversations,
-        count: conversations.length
+        conversations: grouped,
+        counts: {
+          active: grouped.active.length,
+          in_progress: grouped.in_progress.length,
+          completed: grouped.completed.length
+        }
       });
     } catch (error) {
       console.error('[ChatRoute] Error getting conversations:', error);
@@ -395,4 +620,33 @@ export function createChatRoutes() {
   });
 
   return app;
+}
+
+/**
+ * Format detailed analysis for user review
+ */
+function formatDetailedAnalysis(analysis: any): string {
+  if (!analysis) {
+    return 'ERROR: Analysis data not found';
+  }
+
+  const { summary, relevance, improvements } = analysis;
+
+  let message = `**Detailed Analysis**\n\n`;
+  message += `**Video Summary:**\n${summary}\n\n`;
+  message += `**Relevance to Cortex:** ${Math.floor(relevance * 100)}%\n\n`;
+  message += `**Recommended Improvements:**\n\n`;
+
+  improvements.forEach((imp: any, idx: number) => {
+    const priorityLabel = imp.priority === 'high' ? '[HIGH]' : imp.priority === 'medium' ? '[MED]' : '[LOW]';
+    message += `**${idx + 1}. ${priorityLabel} ${imp.title}**\n`;
+    message += `${imp.description}\n\n`;
+  });
+
+  message += `**Would you like me to implement these improvements?**\n\n`;
+  message += `Reply with:\n`;
+  message += `- **"yes"** to implement all improvements\n`;
+  message += `- **"no"** to skip implementation`;
+
+  return message;
 }

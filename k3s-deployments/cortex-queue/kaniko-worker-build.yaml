@@ -1,0 +1,96 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: kaniko-worker-build
+  namespace: cortex
+spec:
+  ttlSecondsAfterFinished: 3600
+  template:
+    metadata:
+      labels:
+        app: kaniko-builder
+        build: cortex-queue-worker
+    spec:
+      restartPolicy: Never
+      containers:
+      - name: kaniko
+        image: gcr.io/kaniko-project/executor:latest
+        args:
+        - "--dockerfile=/workspace/Dockerfile"
+        - "--context=/workspace"
+        - "--destination=10.43.170.72:5000/cortex-queue-worker:latest"
+        - "--insecure"
+        - "--skip-tls-verify"
+        - "--cache=true"
+        - "--cache-ttl=24h"
+        volumeMounts:
+        - name: dockerfile
+          mountPath: /workspace/Dockerfile
+          subPath: Dockerfile
+        - name: worker-code
+          mountPath: /workspace/worker.js
+          subPath: worker.js
+        - name: package-json
+          mountPath: /workspace/package.json
+          subPath: package.json
+      volumes:
+      - name: dockerfile
+        configMap:
+          name: worker-dockerfile
+      - name: worker-code
+        configMap:
+          name: worker-code
+      - name: package-json
+        configMap:
+          name: worker-package-json
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: worker-dockerfile
+  namespace: cortex
+data:
+  Dockerfile: |
+    FROM node:18-alpine
+
+    WORKDIR /app
+
+    # Install dependencies
+    COPY package*.json ./
+    RUN npm install --only=production
+
+    # Copy application code
+    COPY worker.js ./
+
+    # Create tasks directory for dual persistence
+    RUN mkdir -p /app/tasks
+
+    # Run as non-root user
+    USER node
+
+    CMD ["node", "worker.js"]
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: worker-package-json
+  namespace: cortex
+data:
+  package.json: |
+    {
+      "name": "cortex-queue-worker",
+      "version": "1.0.0",
+      "description": "Redis-based task queue worker for Cortex",
+      "main": "worker.js",
+      "scripts": {
+        "start": "node worker.js"
+      },
+      "dependencies": {
+        "ioredis": "^5.3.2",
+        "@anthropic-ai/sdk": "^0.27.0",
+        "axios": "^1.6.2"
+      },
+      "engines": {
+        "node": ">=18.0.0"
+      }
+    }
