@@ -1,0 +1,248 @@
+apiVersion: v1
+data:
+  __init__.py: |
+    """Menu handlers."""
+  home.py: |
+    """Home menu handler."""
+    from src.state import UserState
+
+
+    def get_home_menu() -> str:
+        """Return the home menu."""
+        return """Welcome to Infrastructure Monitor!
+
+    1) Network  2) Proxmox  3) K8s  4) Security  5) Ask Claude
+
+    ? for help"""
+
+
+    def handle_home_input(state: UserState, message: str) -> str:
+        """Handle input from home menu."""
+        message = message.strip().lower()
+
+        if message in ["1", "network", "net", "n"]:
+            state.menu_context = "network"
+            return None  # Will trigger network menu
+
+        elif message in ["2", "proxmox", "pve", "p"]:
+            state.menu_context = "proxmox"
+            return None  # Will trigger proxmox menu
+
+        elif message in ["3", "k8s", "kubernetes", "k"]:
+            state.menu_context = "k8s"
+            return None  # Will trigger k8s menu
+
+        elif message in ["4", "security", "sec", "s"]:
+            state.menu_context = "security"
+            return None  # Will trigger security menu
+
+        elif message in ["5", "claude", "ai", "c"]:
+            state.menu_context = "claude"
+            state.claude_mode = True
+            return "Claude mode. Ask anything about your infra.\n'home' to exit."
+
+        elif message in ["?", "help"]:
+            return get_help_text()
+
+        else:
+            return "Invalid option. Reply 1-5 or ? for help."
+
+
+    def get_help_text() -> str:
+        """Return help text."""
+        return """Commands:
+    1-5: Select menu
+    home/h/menu: Return to main menu
+    ?: Help
+
+    Each menu has sub-options (D)etails, etc."""
+  k8s.py: |
+    """Kubernetes menu handler."""
+    from src.state import UserState
+    from src.integrations.k8s import k8s_client
+    from src.formatters import (
+        format_k8s_summary,
+        format_k8s_details,
+        format_k8s_pods
+    )
+
+
+    async def handle_k8s_menu(state: UserState, message: str) -> str:
+        """Handle K8s menu navigation."""
+        message = message.strip().lower()
+
+        # Initial entry - show summary
+        if message == "" or state.submenu is None:
+            data = await k8s_client.get_summary()
+            state.submenu = "summary"
+            return format_k8s_summary(data)
+
+        # Details submenu
+        if message in ["d", "details", "detail"]:
+            data = await k8s_client.get_details()
+            state.submenu = "details"
+            return format_k8s_details(data)
+
+        # Pods submenu
+        elif message in ["p", "pods", "pod"]:
+            pods = await k8s_client.get_pods()
+            state.submenu = "pods"
+            return format_k8s_pods(pods)
+
+        # Services submenu
+        elif message in ["s", "services", "service", "svc"]:
+            services = await k8s_client.get_services()
+            state.submenu = "services"
+
+            if not services:
+                return "No services found."
+
+            msg = f"{len(services)} service(s):\n"
+            for svc in services[:8]:
+                name = svc.get("name", "Unknown")
+                svc_type = svc.get("type", "unknown")
+                msg += f"• {name}: {svc_type}\n"
+            return msg.rstrip()
+
+        else:
+            return "Unknown option. Try: D)etails, P)ods, S)ervices"
+  network.py: |
+    """Network menu handler."""
+    from src.state import UserState
+    from src.integrations.unifi import unifi_client
+    from src.formatters import (
+        format_network_summary,
+        format_network_details,
+        format_network_alerts,
+        format_network_clients
+    )
+
+
+    async def handle_network_menu(state: UserState, message: str) -> str:
+        """Handle network menu navigation."""
+        message = message.strip().lower()
+
+        # Initial entry - show summary
+        if message == "" or state.submenu is None:
+            data = await unifi_client.get_summary()
+            state.submenu = "summary"
+            return format_network_summary(data)
+
+        # Details submenu
+        if message in ["d", "details", "detail"]:
+            data = await unifi_client.get_details()
+            state.submenu = "details"
+            return format_network_details(data)
+
+        # Alerts submenu
+        elif message in ["a", "alerts", "alert"]:
+            alerts = await unifi_client.get_alerts()
+            state.submenu = "alerts"
+            return format_network_alerts(alerts)
+
+        # Clients submenu
+        elif message in ["c", "clients", "client"]:
+            clients = await unifi_client.get_clients()
+            state.submenu = "clients"
+            return format_network_clients(clients)
+
+        else:
+            return "Unknown option. Try: D)etails, A)lerts, C)lients"
+  proxmox.py: |
+    """Proxmox menu handler."""
+    from src.state import UserState
+    from src.integrations.proxmox import proxmox_client
+    from src.formatters import (
+        format_proxmox_summary,
+        format_proxmox_details,
+        format_proxmox_vms
+    )
+
+
+    async def handle_proxmox_menu(state: UserState, message: str) -> str:
+        """Handle Proxmox menu navigation."""
+        message = message.strip().lower()
+
+        # Initial entry - show summary
+        if message == "" or state.submenu is None:
+            data = await proxmox_client.get_summary()
+            state.submenu = "summary"
+            return format_proxmox_summary(data)
+
+        # Details submenu
+        if message in ["d", "details", "detail"]:
+            data = await proxmox_client.get_details()
+            state.submenu = "details"
+            return format_proxmox_details(data)
+
+        # VMs submenu
+        elif message in ["v", "vms", "vm"]:
+            vms = await proxmox_client.get_vms()
+            state.submenu = "vms"
+            return format_proxmox_vms(vms)
+
+        # Nodes submenu
+        elif message in ["n", "nodes", "node"]:
+            nodes = await proxmox_client.get_nodes()
+            state.submenu = "nodes"
+
+            if not nodes:
+                return "No nodes found."
+
+            msg = f"{len(nodes)} node(s):\n"
+            for node in nodes[:3]:
+                name = node.get("name", "Unknown")
+                status = node.get("status", "unknown")
+                msg += f"• {name}: {status}\n"
+            return msg.rstrip()
+
+        else:
+            return "Unknown option. Try: D)etails, V)Ms, N)odes"
+  security.py: |
+    """Security menu handler."""
+    from src.state import UserState
+    from src.integrations.security import security_client
+    from src.formatters import (
+        format_security_summary,
+        format_security_alerts,
+        format_security_logs
+    )
+
+
+    async def handle_security_menu(state: UserState, message: str) -> str:
+        """Handle security menu navigation."""
+        message = message.strip().lower()
+
+        # Initial entry - show summary
+        if message == "" or state.submenu is None:
+            data = await security_client.get_summary()
+            state.submenu = "summary"
+            return format_security_summary(data)
+
+        # Alerts submenu
+        if message in ["a", "alerts", "alert"]:
+            alerts = await security_client.get_alerts()
+            state.submenu = "alerts"
+            return format_security_alerts(alerts)
+
+        # Logs submenu
+        elif message in ["l", "logs", "log"]:
+            logs = await security_client.get_logs()
+            state.submenu = "logs"
+            return format_security_logs(logs)
+
+        # Firewall submenu
+        elif message in ["f", "firewall", "fw"]:
+            fw_status = await security_client.get_firewall_status()
+            state.submenu = "firewall"
+
+            status = fw_status.get("status", "unknown")
+            rules = fw_status.get("rules", 0)
+            return f"Firewall: {status}\n{rules} active rules"
+
+        else:
+            return "Unknown option. Try: A)lerts, L)ogs, F)irewall"
+kind: ConfigMap
+metadata:
+  creationTimestamp: null
+  name: sms-relay-menus

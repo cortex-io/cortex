@@ -1,0 +1,211 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sms-relay
+  namespace: default
+  labels:
+    app: sms-relay
+    component: infrastructure
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: sms-relay
+  template:
+    metadata:
+      labels:
+        app: sms-relay
+    spec:
+      initContainers:
+      - name: install-deps
+        image: python:3.11-slim
+        command:
+        - /bin/sh
+        - -c
+        - |
+          pip install --target=/deps -r /requirements/requirements.txt
+        volumeMounts:
+        - name: requirements
+          mountPath: /requirements
+          readOnly: true
+        - name: deps
+          mountPath: /deps
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "100m"
+          limits:
+            memory: "256Mi"
+            cpu: "500m"
+
+      containers:
+      - name: sms-relay
+        image: python:3.11-slim
+        workingDir: /app
+        command:
+        - python
+        - -m
+        - uvicorn
+        - src.main:app
+        - --host
+        - "0.0.0.0"
+        - --port
+        - "8000"
+
+        ports:
+        - containerPort: 8000
+          name: http
+          protocol: TCP
+
+        env:
+        - name: PYTHONPATH
+          value: "/deps:/app"
+
+        envFrom:
+        - secretRef:
+            name: sms-relay-secrets
+        - configMapRef:
+            name: sms-relay-config
+
+        volumeMounts:
+        # Mount installed dependencies
+        - name: deps
+          mountPath: /deps
+          readOnly: true
+
+        # Mount main source files
+        - name: src-main
+          mountPath: /app/src/__init__.py
+          subPath: __init__.py
+          readOnly: true
+        - name: src-main
+          mountPath: /app/src/main.py
+          subPath: main.py
+          readOnly: true
+        - name: src-main
+          mountPath: /app/src/config.py
+          subPath: config.py
+          readOnly: true
+        - name: src-main
+          mountPath: /app/src/sms.py
+          subPath: sms.py
+          readOnly: true
+        - name: src-main
+          mountPath: /app/src/state.py
+          subPath: state.py
+          readOnly: true
+        - name: src-main
+          mountPath: /app/src/formatters.py
+          subPath: formatters.py
+          readOnly: true
+
+        # Mount integrations
+        - name: integrations
+          mountPath: /app/src/integrations/__init__.py
+          subPath: __init__.py
+          readOnly: true
+        - name: integrations
+          mountPath: /app/src/integrations/cortex.py
+          subPath: cortex.py
+          readOnly: true
+        - name: integrations
+          mountPath: /app/src/integrations/unifi.py
+          subPath: unifi.py
+          readOnly: true
+        - name: integrations
+          mountPath: /app/src/integrations/proxmox.py
+          subPath: proxmox.py
+          readOnly: true
+        - name: integrations
+          mountPath: /app/src/integrations/k8s.py
+          subPath: k8s.py
+          readOnly: true
+        - name: integrations
+          mountPath: /app/src/integrations/security.py
+          subPath: security.py
+          readOnly: true
+
+        # Mount menus
+        - name: menus
+          mountPath: /app/src/menus/__init__.py
+          subPath: __init__.py
+          readOnly: true
+        - name: menus
+          mountPath: /app/src/menus/home.py
+          subPath: home.py
+          readOnly: true
+        - name: menus
+          mountPath: /app/src/menus/network.py
+          subPath: network.py
+          readOnly: true
+        - name: menus
+          mountPath: /app/src/menus/proxmox.py
+          subPath: proxmox.py
+          readOnly: true
+        - name: menus
+          mountPath: /app/src/menus/k8s.py
+          subPath: k8s.py
+          readOnly: true
+        - name: menus
+          mountPath: /app/src/menus/security.py
+          subPath: security.py
+          readOnly: true
+
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "100m"
+          limits:
+            memory: "256Mi"
+            cpu: "500m"
+
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8000
+          initialDelaySeconds: 30
+          periodSeconds: 30
+          timeoutSeconds: 5
+          failureThreshold: 3
+
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8000
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+
+        securityContext:
+          runAsNonRoot: false  # python:3.11-slim runs as root by default
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: false  # Python needs write access for bytecode
+          capabilities:
+            drop:
+            - ALL
+
+      volumes:
+      # Requirements for init container
+      - name: requirements
+        configMap:
+          name: sms-relay-requirements
+
+      # Shared volume for installed dependencies
+      - name: deps
+        emptyDir: {}
+
+      # Source code ConfigMaps
+      - name: src-main
+        configMap:
+          name: sms-relay-src
+
+      - name: integrations
+        configMap:
+          name: sms-relay-integrations
+
+      - name: menus
+        configMap:
+          name: sms-relay-menus
+
+      restartPolicy: Always

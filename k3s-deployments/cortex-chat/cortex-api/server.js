@@ -614,17 +614,33 @@ async function makeUnifiRequest(endpoint, method, body, cookie) {
 /**
  * Call Anthropic Claude API with error handling and retry logic
  */
-async function callClaude(messages, tools, sseWriter = null, retryCount = 0) {
+async function callClaude(messages, tools, sseWriter = null, retryCount = 0, systemPrompt = null) {
   const MAX_RETRIES = 2;
   const TIMEOUT_MS = 120000; // 2 minutes
 
   return new Promise((resolve, reject) => {
-    const data = JSON.stringify({
+    const requestBody = {
       model: 'claude-sonnet-4-5-20250929',
       max_tokens: 4096,
       tools: tools || [],
       messages: messages
-    });
+    };
+
+    // Add system prompt if provided
+    if (systemPrompt) {
+      requestBody.system = systemPrompt;
+    }
+
+    const data = JSON.stringify(requestBody);
+
+    // Debug: Log request size and structure
+    console.log(`[Cortex] Claude API request - size: ${data.length} bytes`);
+    console.log(`[Cortex] Claude API request - messages: ${messages.length}, tools: ${(tools || []).length}`);
+    if (data.length > 10000) {
+      console.log(`[Cortex] WARNING: Large request (${data.length} bytes) - may be truncated`);
+      console.log(`[Cortex] Request preview (first 500 chars):`, data.substring(0, 500));
+      console.log(`[Cortex] Request preview (last 500 chars):`, data.substring(data.length - 500));
+    }
 
     const options = {
       hostname: 'api.anthropic.com',
@@ -633,7 +649,7 @@ async function callClaude(messages, tools, sseWriter = null, retryCount = 0) {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Content-Length': data.length,
+        'Content-Length': Buffer.byteLength(data, 'utf8'),
         'x-api-key': ANTHROPIC_API_KEY,
         'anthropic-version': '2023-06-01'
       },
@@ -895,6 +911,224 @@ async function querySandfly(query, sseWriter = null) {
   } catch (error) {
     console.error('[Cortex] Sandfly MCP error:', error.message);
     return { success: false, error: error.message };
+  }
+}
+
+/**
+ * Get Sandfly alerts with filtering
+ */
+async function getSandflyAlerts(filters, sseWriter = null) {
+  try {
+    const sandflyMCP = MCP_SERVERS.sandfly || 'http://sandfly-mcp-server.cortex-system.svc.cluster.local:3000';
+
+    const toolArgs = {
+      filter: {},
+      page: 1,
+      size: filters.limit || 50,
+      summary: false
+    };
+
+    // Apply filters if provided
+    if (filters.severity) {
+      toolArgs.filter.severity = filters.severity;
+    }
+    if (filters.resolved !== undefined) {
+      toolArgs.filter.resolved = filters.resolved;
+    }
+    if (filters.hostname) {
+      toolArgs.filter.hostname = filters.hostname;
+    }
+
+    console.log('[Cortex] Getting Sandfly alerts with filters:', toolArgs);
+    return await callMCPTool(sandflyMCP, 'sandfly_get_results', toolArgs, sseWriter);
+  } catch (error) {
+    console.error('[Cortex] Sandfly get_alerts error:', error.message);
+    return { success: false, error: error.message };
+  }
+}
+
+/**
+ * Get Sandfly monitored hosts
+ */
+async function getSandflyHosts(filters, sseWriter = null) {
+  try {
+    const sandflyMCP = MCP_SERVERS.sandfly || 'http://sandfly-mcp-server.cortex-system.svc.cluster.local:3000';
+
+    const toolArgs = {
+      summary: true,
+      page: 1,
+      size: filters.limit || 100
+    };
+
+    console.log('[Cortex] Getting Sandfly hosts with filters:', toolArgs);
+    return await callMCPTool(sandflyMCP, 'sandfly_list_hosts', toolArgs, sseWriter);
+  } catch (error) {
+    console.error('[Cortex] Sandfly get_hosts error:', error.message);
+    return { success: false, error: error.message };
+  }
+}
+
+/**
+ * Get processes for a specific host
+ */
+async function getSandflyProcesses(input, sseWriter = null) {
+  try {
+    const sandflyMCP = MCP_SERVERS.sandfly || 'http://sandfly-mcp-server.cortex-system.svc.cluster.local:3000';
+
+    // First, get host_id from hostname
+    const hostId = await getHostIdByName(input.hostname);
+    if (!hostId) {
+      return {
+        success: false,
+        error: `Host "${input.hostname}" not found in Sandfly. Try "sandfly_get_hosts" to see available hosts.`
+      };
+    }
+
+    const toolArgs = {
+      host_id: hostId,
+      page: 1,
+      size: input.limit || 100
+    };
+
+    console.log(`[Cortex] Getting processes for host ${input.hostname} (ID: ${hostId})`);
+    return await callMCPTool(sandflyMCP, 'sandfly_get_processes', toolArgs, sseWriter);
+  } catch (error) {
+    console.error('[Cortex] Sandfly get_processes error:', error.message);
+    return { success: false, error: error.message };
+  }
+}
+
+/**
+ * Trigger security scan on host
+ */
+async function triggerSandflyScan(input, sseWriter = null) {
+  try {
+    const sandflyMCP = MCP_SERVERS.sandfly || 'http://sandfly-mcp-server.cortex-system.svc.cluster.local:3000';
+
+    let toolArgs = {
+      host_ids: [],
+      sandfly_ids: []
+    };
+
+    // If specific hostname provided, look up host_id
+    if (input.hostname && input.hostname.toLowerCase() !== 'all') {
+      const hostId = await getHostIdByName(input.hostname);
+      if (!hostId) {
+        return {
+          success: false,
+          error: `Host "${input.hostname}" not found in Sandfly. Try "all" to scan all hosts.`
+        };
+      }
+      toolArgs.host_ids = [hostId];
+    }
+    // Otherwise scan all hosts (empty arrays = all)
+
+    console.log(`[Cortex] Triggering Sandfly scan for: ${input.hostname || 'all hosts'}`);
+    return await callMCPTool(sandflyMCP, 'sandfly_start_scan', toolArgs, sseWriter);
+  } catch (error) {
+    console.error('[Cortex] Sandfly trigger_scan error:', error.message);
+    return { success: false, error: error.message };
+  }
+}
+
+/**
+ * Query Sandfly documentation via Documentation Master
+ */
+async function querySandflyDocs(query, sseWriter = null) {
+  try {
+    const docMasterUrl = 'http://documentation-master.cortex.svc.cluster.local:8080';
+
+    console.log(`[Cortex] Querying Documentation Master for: "${query}"`);
+
+    return new Promise((resolve, reject) => {
+      const postData = JSON.stringify({
+        query: query,
+        filters: {
+          product: 'sandfly',
+          max_results: 5
+        }
+      });
+
+      const options = {
+        hostname: 'documentation-master.cortex.svc.cluster.local',
+        port: 8080,
+        path: '/query',
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Content-Length': Buffer.byteLength(postData)
+        },
+        timeout: 10000
+      };
+
+      const req = http.request(options, (res) => {
+        let responseData = '';
+
+        res.on('data', (chunk) => {
+          responseData += chunk;
+        });
+
+        res.on('end', () => {
+          try {
+            if (res.statusCode === 200) {
+              const parsed = JSON.parse(responseData);
+              resolve({
+                success: true,
+                output: JSON.stringify(parsed.results || [], null, 2)
+              });
+            } else {
+              // Documentation Master not fully ready yet - return helpful message
+              resolve({
+                success: true,
+                output: JSON.stringify({
+                  message: 'Documentation Master is indexing Sandfly documentation. Check back soon for contextual help.',
+                  query: query,
+                  status: 'indexing'
+                }, null, 2)
+              });
+            }
+          } catch (error) {
+            reject(error);
+          }
+        });
+      });
+
+      req.on('error', (error) => {
+        // Documentation Master not available - graceful fallback
+        console.warn('[Cortex] Documentation Master not available:', error.message);
+        resolve({
+          success: true,
+          output: JSON.stringify({
+            message: 'Documentation Master is not yet available. Sandfly documentation will be accessible once the system completes its first crawl.',
+            query: query,
+            tip: 'You can still use other Sandfly tools to get alerts, hosts, and processes.'
+          }, null, 2)
+        });
+      });
+
+      req.on('timeout', () => {
+        req.destroy();
+        resolve({
+          success: true,
+          output: JSON.stringify({
+            message: 'Documentation Master query timed out. The service may still be initializing.',
+            query: query
+          }, null, 2)
+        });
+      });
+
+      req.write(postData);
+      req.end();
+    });
+  } catch (error) {
+    console.error('[Cortex] Documentation Master error:', error.message);
+    return {
+      success: true,
+      output: JSON.stringify({
+        message: 'Documentation query failed, but you can still use other Sandfly tools.',
+        error: error.message
+      }, null, 2)
+    };
   }
 }
 
@@ -1419,6 +1653,21 @@ async function executeTool(toolName, input, sseWriter = null) {
     case 'sandfly_query':
       return await querySandfly(input.query, sseWriter);
 
+    case 'sandfly_get_alerts':
+      return await getSandflyAlerts(input, sseWriter);
+
+    case 'sandfly_get_hosts':
+      return await getSandflyHosts(input, sseWriter);
+
+    case 'sandfly_get_processes':
+      return await getSandflyProcesses(input, sseWriter);
+
+    case 'sandfly_trigger_scan':
+      return await triggerSandflyScan(input, sseWriter);
+
+    case 'sandfly_query_docs':
+      return await querySandflyDocs(input.query, sseWriter);
+
     case 'proxmox_query':
       // Use direct API instead of MCP wrapper
       return await queryProxmox(input.query, sseWriter);
@@ -1545,6 +1794,25 @@ async function processUserQuery(userQuery, sseWriter = null) {
 
   console.log(`[Cortex] Processing query: ${userQuery}`);
 
+  // Enhanced system prompt for pretty responses
+  const systemPrompt = `You are Cortex, an AI assistant for infrastructure management.
+
+When responding to queries:
+- Use clear section headers with markdown (##)
+- Use bullet points for lists
+- Use emojis sparingly (only for status: ✅ ❌ ⚠️)
+- Format numbers nicely (e.g., "5 pods" not just "5")
+- Group related information
+- Highlight important items in **bold**
+- Use code blocks for technical details
+- Keep responses concise but informative
+
+For canned button queries, provide a well-organized summary with:
+1. Status overview at top
+2. Key metrics
+3. Any issues or warnings
+4. Detailed breakdown if requested`;
+
   // Define tools for Claude
   const tools = [
     {
@@ -1612,6 +1880,110 @@ async function processUserQuery(userQuery, sseWriter = null) {
       }
     },
     {
+      name: 'sandfly_get_alerts',
+      description: 'Get security alerts from Sandfly with filtering by severity (critical/high/medium/low), resolved status, or hostname. More efficient than sandfly_query for getting alerts.',
+      input_schema: {
+        type: 'object',
+        properties: {
+          severity: {
+            type: 'string',
+            enum: ['critical', 'high', 'medium', 'low'],
+            description: 'Filter by alert severity'
+          },
+          resolved: {
+            type: 'boolean',
+            description: 'Filter by resolved status (true=resolved, false=active)'
+          },
+          hostname: {
+            type: 'string',
+            description: 'Filter by specific hostname'
+          },
+          limit: {
+            type: 'number',
+            description: 'Maximum alerts to return (default: 50)'
+          }
+        },
+        required: []
+      }
+    },
+    {
+      name: 'sandfly_get_hosts',
+      description: 'Get all monitored hosts from Sandfly with optional filtering by status (online/offline) or operating system.',
+      input_schema: {
+        type: 'object',
+        properties: {
+          status: {
+            type: 'string',
+            enum: ['online', 'offline', 'unknown'],
+            description: 'Filter by host status'
+          },
+          os: {
+            type: 'string',
+            description: 'Filter by operating system'
+          },
+          limit: {
+            type: 'number',
+            description: 'Maximum hosts to return (default: 100)'
+          }
+        },
+        required: []
+      }
+    },
+    {
+      name: 'sandfly_get_processes',
+      description: 'Get running processes for a specific host. Can filter to show only suspicious processes.',
+      input_schema: {
+        type: 'object',
+        properties: {
+          hostname: {
+            type: 'string',
+            description: 'Hostname to query processes for'
+          },
+          suspicious_only: {
+            type: 'boolean',
+            description: 'Only return suspicious processes (default: false)'
+          },
+          limit: {
+            type: 'number',
+            description: 'Maximum processes to return (default: 100)'
+          }
+        },
+        required: ['hostname']
+      }
+    },
+    {
+      name: 'sandfly_trigger_scan',
+      description: 'Trigger an on-demand security scan on a specific host or all hosts.',
+      input_schema: {
+        type: 'object',
+        properties: {
+          hostname: {
+            type: 'string',
+            description: 'Hostname to scan (or "all" for all hosts)'
+          },
+          policy_id: {
+            type: 'string',
+            description: 'Optional policy ID to use for the scan'
+          }
+        },
+        required: ['hostname']
+      }
+    },
+    {
+      name: 'sandfly_query_docs',
+      description: 'Query Sandfly documentation via Documentation Master for alert explanations, remediation steps, or best practices. Returns relevant documentation with context.',
+      input_schema: {
+        type: 'object',
+        properties: {
+          query: {
+            type: 'string',
+            description: 'What to search for in Sandfly documentation (e.g., "lateral movement alert remediation")'
+          }
+        },
+        required: ['query']
+      }
+    },
+    {
       name: 'proxmox_query',
       description: 'Query Proxmox for VM status, LXC containers, resource usage, node health, and virtual machine information.',
       input_schema: {
@@ -1627,12 +1999,12 @@ async function processUserQuery(userQuery, sseWriter = null) {
     }
   ];
 
-  // Initial Claude request with error handling
+  // Initial Claude request with error handling (inject system prompt)
   let response;
   try {
     response = await callClaude([{
       role: 'user',
-      content: userQuery
+      content: `${systemPrompt}\n\nUser query: ${userQuery}`
     }], tools, sseWriter);
 
     console.log(`[Cortex] Claude response - stop_reason: ${response.stop_reason}`);
@@ -1664,7 +2036,7 @@ async function processUserQuery(userQuery, sseWriter = null) {
     const allToolsUsed = [];
     let currentResponse = response;
     let iteration = 0;
-    const MAX_ITERATIONS = 10; // Increased from 5 to handle complex queries
+    const MAX_ITERATIONS = parseInt(process.env.MAX_ITERATIONS) || 50;
 
     // Multi-turn tool use loop
     while (toolUses.length > 0 && iteration < MAX_ITERATIONS) {
@@ -2563,6 +2935,579 @@ const server = http.createServer(async (req, res) => {
       }
     });
 
+    return;
+  }
+
+  // Handle /api/chat POST endpoint for streaming chat with Claude
+  if (req.url === '/api/chat' && req.method === 'POST') {
+    let body = '';
+    req.on('data', chunk => body += chunk);
+    req.on('end', async () => {
+      try {
+        const { message, sessionId, history = [] } = JSON.parse(body);
+
+        if (!message) {
+          res.writeHead(400, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: 'No message provided' }));
+          return;
+        }
+
+        console.log(`\n[CortexChat] ========================================`);
+        console.log(`[CortexChat] New chat message from session: ${sessionId}`);
+        console.log(`[CortexChat] Message: ${message}`);
+        console.log(`[CortexChat] History length: ${history.length}`);
+        console.log(`[CortexChat] ========================================\n`);
+
+        // Set up SSE streaming
+        res.writeHead(200, {
+          'Content-Type': 'text/event-stream',
+          'Cache-Control': 'no-cache',
+          'Connection': 'keep-alive',
+          'Access-Control-Allow-Origin': '*'
+        });
+
+        const sseWriter = (data) => {
+          res.write(`data: ${data}\n\n`);
+        };
+
+        // Technical system prompt - no superlatives
+        const systemPrompt = `You are Cortex, an AI assistant for infrastructure management.
+
+When responding to queries:
+- Use clear section headers with markdown (##)
+- Use bullet points for lists
+- Use emojis sparingly (only for status: ✅ ❌ ⚠️)
+- Format numbers appropriately (e.g., "5 pods")
+- Group related information
+- Highlight important items in **bold**
+- Use code blocks for technical details
+- Keep responses concise and informative
+- Maintain a technical, professional tone
+
+For infrastructure queries:
+1. Status overview at top
+2. Key metrics
+3. Any issues or warnings
+4. Detailed breakdown if requested`;
+
+        // Define all available tools including Cortex introspection tools
+        const tools = [
+          {
+            name: 'kubectl',
+            description: 'Execute kubectl commands to query the Kubernetes cluster. Use this for pod status, deployments, services, namespaces, logs, and any k8s resources.',
+            input_schema: {
+              type: 'object',
+              properties: {
+                command: {
+                  type: 'string',
+                  description: 'The kubectl command to run (e.g., "kubectl get pods -n cortex-system")'
+                }
+              },
+              required: ['command']
+            }
+          },
+          {
+            name: 'get_infrastructure_summary',
+            description: 'Get a comprehensive summary of all infrastructure in a single call: K8s cluster status, UniFi network health, Proxmox VMs, and Sandfly security alerts. This is the most efficient way to get an overview of the entire system.',
+            input_schema: {
+              type: 'object',
+              properties: {},
+              required: []
+            }
+          },
+          {
+            name: 'unifi_list_active_clients',
+            description: 'List all active WiFi and wired clients connected to the UniFi network with details like hostname, IP, MAC, signal strength, and data usage.',
+            input_schema: {
+              type: 'object',
+              properties: {},
+              required: []
+            }
+          },
+          {
+            name: 'unifi_get_device_health',
+            description: 'Get health status and details of all UniFi devices (access points, switches, gateways) including uptime, CPU, memory, and connectivity.',
+            input_schema: {
+              type: 'object',
+              properties: {},
+              required: []
+            }
+          },
+          {
+            name: 'unifi_get_client_activity',
+            description: 'Get recent client connection activity, bandwidth usage, and network statistics.',
+            input_schema: {
+              type: 'object',
+              properties: {},
+              required: []
+            }
+          },
+          {
+            name: 'sandfly_query',
+            description: 'Query Sandfly Security for Linux intrusion detection and forensics. Supports: security alerts/results, monitored hosts, processes, users, network listeners, services, scheduled tasks, kernel modules, and triggering scans. Use this for ANY security-related query about Linux hosts.',
+            input_schema: {
+              type: 'object',
+              properties: {
+                query: {
+                  type: 'string',
+                  description: 'Natural language security query (e.g., "security alerts", "processes on k3s-worker01", "network listeners", "start a scan")'
+                }
+              },
+              required: ['query']
+            }
+          },
+          {
+            name: 'sandfly_get_alerts',
+            description: 'Get security alerts from Sandfly with filtering by severity (critical/high/medium/low), resolved status, or hostname. More efficient than sandfly_query for getting alerts.',
+            input_schema: {
+              type: 'object',
+              properties: {
+                severity: {
+                  type: 'string',
+                  enum: ['critical', 'high', 'medium', 'low'],
+                  description: 'Filter by alert severity'
+                },
+                resolved: {
+                  type: 'boolean',
+                  description: 'Filter by resolved status (true=resolved, false=active)'
+                },
+                hostname: {
+                  type: 'string',
+                  description: 'Filter by specific hostname'
+                },
+                limit: {
+                  type: 'number',
+                  description: 'Maximum alerts to return (default: 50)'
+                }
+              },
+              required: []
+            }
+          },
+          {
+            name: 'sandfly_get_hosts',
+            description: 'Get all monitored hosts from Sandfly with optional filtering by status (online/offline) or operating system.',
+            input_schema: {
+              type: 'object',
+              properties: {
+                status: {
+                  type: 'string',
+                  enum: ['online', 'offline', 'unknown'],
+                  description: 'Filter by host status'
+                },
+                os: {
+                  type: 'string',
+                  description: 'Filter by operating system'
+                },
+                limit: {
+                  type: 'number',
+                  description: 'Maximum hosts to return (default: 100)'
+                }
+              },
+              required: []
+            }
+          },
+          {
+            name: 'sandfly_get_processes',
+            description: 'Get running processes for a specific host. Can filter to show only suspicious processes.',
+            input_schema: {
+              type: 'object',
+              properties: {
+                hostname: {
+                  type: 'string',
+                  description: 'Hostname to query processes for'
+                },
+                suspicious_only: {
+                  type: 'boolean',
+                  description: 'Only return suspicious processes (default: false)'
+                },
+                limit: {
+                  type: 'number',
+                  description: 'Maximum processes to return (default: 100)'
+                }
+              },
+              required: ['hostname']
+            }
+          },
+          {
+            name: 'sandfly_trigger_scan',
+            description: 'Trigger an on-demand security scan on a specific host or all hosts.',
+            input_schema: {
+              type: 'object',
+              properties: {
+                hostname: {
+                  type: 'string',
+                  description: 'Hostname to scan (or "all" for all hosts)'
+                },
+                policy_id: {
+                  type: 'string',
+                  description: 'Optional policy ID to use for the scan'
+                }
+              },
+              required: ['hostname']
+            }
+          },
+          {
+            name: 'sandfly_query_docs',
+            description: 'Query Sandfly documentation via Documentation Master for alert explanations, remediation steps, or best practices. Returns relevant documentation with context.',
+            input_schema: {
+              type: 'object',
+              properties: {
+                query: {
+                  type: 'string',
+                  description: 'What to search for in Sandfly documentation (e.g., "lateral movement alert remediation")'
+                }
+              },
+              required: ['query']
+            }
+          },
+          {
+            name: 'proxmox_query',
+            description: 'Query Proxmox for VM status, LXC containers, resource usage, node health, and virtual machine information.',
+            input_schema: {
+              type: 'object',
+              properties: {
+                query: {
+                  type: 'string',
+                  description: 'What Proxmox information to query (e.g., "list all running VMs")'
+                }
+              },
+              required: ['query']
+            }
+          },
+          {
+            name: 'cortex_list_agents',
+            description: 'List all master and worker agents in the Cortex automation system. Shows agent capabilities, status, and specializations.',
+            input_schema: {
+              type: 'object',
+              properties: {
+                type: {
+                  type: 'string',
+                  enum: ['all', 'masters', 'workers'],
+                  description: 'Filter by agent type (default: all)'
+                },
+                status: {
+                  type: 'string',
+                  enum: ['all', 'active', 'idle', 'busy'],
+                  description: 'Filter by agent status (default: all)'
+                }
+              },
+              required: []
+            }
+          },
+          {
+            name: 'cortex_get_tasks',
+            description: 'Get current and historical tasks in the Cortex system. Shows task status, priority, and metadata.',
+            input_schema: {
+              type: 'object',
+              properties: {
+                status: {
+                  type: 'string',
+                  enum: ['all', 'queued', 'in_progress', 'completed', 'failed'],
+                  description: 'Filter by task status (default: all)'
+                },
+                limit: {
+                  type: 'number',
+                  description: 'Maximum tasks to return (default: 20)'
+                }
+              },
+              required: []
+            }
+          },
+          {
+            name: 'cortex_get_metrics',
+            description: 'Get Cortex system metrics and performance data including orchestrator uptime, memory usage, and MCP server status.',
+            input_schema: {
+              type: 'object',
+              properties: {
+                time_range: {
+                  type: 'string',
+                  description: 'Time range for metrics (e.g., "1h", "24h", "7d")'
+                }
+              },
+              required: []
+            }
+          },
+          {
+            name: 'cortex_create_task',
+            description: 'Create a new task in Cortex for processing by master agents. Use this to delegate work to specialized agents.',
+            input_schema: {
+              type: 'object',
+              properties: {
+                title: {
+                  type: 'string',
+                  description: 'Brief title for the task'
+                },
+                description: {
+                  type: 'string',
+                  description: 'Detailed task description'
+                },
+                category: {
+                  type: 'string',
+                  enum: ['development', 'security', 'infrastructure', 'inventory', 'general'],
+                  description: 'Task category for routing to appropriate master'
+                },
+                priority: {
+                  type: 'string',
+                  enum: ['critical', 'high', 'medium', 'low'],
+                  description: 'Task priority (default: medium)'
+                }
+              },
+              required: ['title', 'description']
+            }
+          },
+          {
+            name: 'cortex_get_task_status',
+            description: 'Get detailed status and results for a specific task by task ID.',
+            input_schema: {
+              type: 'object',
+              properties: {
+                task_id: {
+                  type: 'string',
+                  description: 'The task ID to query'
+                }
+              },
+              required: ['task_id']
+            }
+          }
+        ];
+
+        // Build conversation messages
+        const conversationMessages = [];
+
+        // Add history if provided
+        if (history && history.length > 0) {
+          conversationMessages.push(...history);
+        }
+
+        // Add current user message (WITHOUT system prompt - pass separately)
+        conversationMessages.push({
+          role: 'user',
+          content: message
+        });
+
+        // Initial Claude request
+        let response;
+        try {
+          sseWriter(JSON.stringify({
+            type: 'processing_start',
+            message: 'Processing your query...'
+          }));
+
+          response = await callClaude(conversationMessages, tools, sseWriter, 0, systemPrompt);
+
+          console.log(`[CortexChat] Claude response - stop_reason: ${response.stop_reason}`);
+        } catch (error) {
+          console.error('[CortexChat] Claude API call failed:', error.message);
+          sseWriter(JSON.stringify({
+            type: 'error',
+            error: `Claude API error: ${error.message}`
+          }));
+          res.end();
+          return;
+        }
+
+        // Check if response is valid
+        if (!response || !response.content) {
+          console.error('[CortexChat] Invalid response from Claude:', JSON.stringify(response).substring(0, 500));
+          sseWriter(JSON.stringify({
+            type: 'error',
+            error: 'Invalid response from Claude API'
+          }));
+          res.end();
+          return;
+        }
+
+        // Stream initial content
+        const textContent = response.content.filter(block => block.type === 'text');
+        if (textContent.length > 0) {
+          for (const block of textContent) {
+            sseWriter(JSON.stringify({
+              type: 'content_block_delta',
+              delta: { type: 'text', text: block.text }
+            }));
+          }
+        }
+
+        // Check if Claude wants to use tools - multi-turn loop
+        let toolUses = response.content.filter(block => block.type === 'tool_use');
+
+        if (toolUses.length > 0) {
+          // Add assistant's response to conversation
+          conversationMessages.push({
+            role: 'assistant',
+            content: response.content
+          });
+
+          const allToolsUsed = [];
+          let currentResponse = response;
+          let iteration = 0;
+          const MAX_ITERATIONS = parseInt(process.env.MAX_ITERATIONS) || 50;
+
+          // Multi-turn tool use loop
+          while (toolUses.length > 0 && iteration < MAX_ITERATIONS) {
+            iteration++;
+            console.log(`[CortexChat] Iteration ${iteration}: Executing ${toolUses.length} tool(s)`);
+
+            // Send progress update via SSE
+            sseWriter(JSON.stringify({
+              type: 'tool_progress',
+              iteration: iteration,
+              max_iterations: MAX_ITERATIONS,
+              tools: toolUses.map(t => t.name)
+            }));
+
+            // Track tools used
+            allToolsUsed.push(...toolUses.map(t => t.name));
+
+            // Execute all tools in this turn
+            const toolResults = [];
+            for (const toolUse of toolUses) {
+              // Send individual tool execution update
+              sseWriter(JSON.stringify({
+                type: 'tool_execution',
+                tool_name: toolUse.name,
+                tool_id: toolUse.id,
+                status: 'executing',
+                input: toolUse.input
+              }));
+
+              let result;
+              // Route Cortex tools to their handlers
+              if (toolUse.name === 'cortex_list_agents') {
+                result = await handleListAgents(toolUse.input);
+                result = { success: true, output: JSON.stringify(result, null, 2) };
+              } else if (toolUse.name === 'cortex_get_tasks') {
+                result = await handleGetTasks(toolUse.input);
+                result = { success: true, output: JSON.stringify(result, null, 2) };
+              } else if (toolUse.name === 'cortex_get_metrics') {
+                result = await handleGetMetrics(toolUse.input);
+                result = { success: true, output: JSON.stringify(result, null, 2) };
+              } else if (toolUse.name === 'cortex_create_task') {
+                result = await handleCreateTask(toolUse.input);
+                result = { success: true, output: JSON.stringify(result, null, 2) };
+              } else if (toolUse.name === 'cortex_get_task_status') {
+                result = await handleGetTaskStatus(toolUse.input);
+                result = { success: true, output: JSON.stringify(result, null, 2) };
+              } else {
+                // Standard infrastructure tools
+                result = await executeTool(toolUse.name, toolUse.input, sseWriter);
+              }
+
+              // Send tool completion update
+              sseWriter(JSON.stringify({
+                type: 'tool_execution',
+                tool_name: toolUse.name,
+                tool_id: toolUse.id,
+                status: result.success ? 'completed' : 'failed',
+                error: result.error
+              }));
+
+              // Format result for Claude
+              let formattedResult;
+              if (result.success && result.output) {
+                try {
+                  const parsed = JSON.parse(result.output);
+                  formattedResult = JSON.stringify(parsed, null, 2);
+                } catch (e) {
+                  formattedResult = result.output;
+                }
+              } else if (result.partial_summary) {
+                formattedResult = JSON.stringify({
+                  status: 'partial',
+                  error: result.error,
+                  partial_data: result.partial_summary
+                }, null, 2);
+              } else if (result.output) {
+                formattedResult = JSON.stringify({
+                  status: 'error',
+                  error: result.error,
+                  output: result.output
+                }, null, 2);
+              } else {
+                formattedResult = JSON.stringify(result);
+              }
+
+              console.log(`[CortexChat] Tool result for ${toolUse.name}:`, formattedResult.substring(0, 500));
+
+              toolResults.push({
+                type: 'tool_result',
+                tool_use_id: toolUse.id,
+                content: formattedResult
+              });
+            }
+
+            // Add tool results to conversation
+            conversationMessages.push({
+              role: 'user',
+              content: toolResults
+            });
+
+            // Get Claude's next response
+            try {
+              currentResponse = await callClaude(conversationMessages, tools, sseWriter, 0, systemPrompt);
+              console.log(`[CortexChat] Iteration ${iteration} - Claude response - stop_reason: ${currentResponse.stop_reason}`);
+
+              // Stream content from this iteration
+              const iterationTextContent = currentResponse.content.filter(block => block.type === 'text');
+              if (iterationTextContent.length > 0) {
+                for (const block of iterationTextContent) {
+                  sseWriter(JSON.stringify({
+                    type: 'content_block_delta',
+                    delta: { type: 'text', text: block.text }
+                  }));
+                }
+              }
+
+              // Add assistant's response to conversation
+              conversationMessages.push({
+                role: 'assistant',
+                content: currentResponse.content
+              });
+
+              // Check for more tool uses
+              toolUses = currentResponse.content.filter(block => block.type === 'tool_use');
+
+            } catch (error) {
+              console.error(`[CortexChat] Claude API call failed on iteration ${iteration}:`, error.message);
+              sseWriter(JSON.stringify({
+                type: 'error',
+                error: `Error during tool processing: ${error.message}`
+              }));
+              res.end();
+              return;
+            }
+          }
+
+          if (iteration >= MAX_ITERATIONS) {
+            console.warn(`[CortexChat] Max iterations (${MAX_ITERATIONS}) reached`);
+            sseWriter(JSON.stringify({
+              type: 'warning',
+              message: `Reached maximum iteration limit (${MAX_ITERATIONS}). Response may be incomplete.`
+            }));
+          }
+        }
+
+        // Send completion event
+        sseWriter(JSON.stringify({
+          type: 'message_stop',
+          stop_reason: response.stop_reason
+        }));
+
+        res.end();
+
+      } catch (error) {
+        console.error('[CortexChat] Error:', error);
+        try {
+          res.write(`data: ${JSON.stringify({
+            type: 'error',
+            error: error.message
+          })}\n\n`);
+        } catch (writeError) {
+          console.error('[CortexChat] Failed to write error to response:', writeError);
+        }
+        res.end();
+      }
+    });
     return;
   }
 

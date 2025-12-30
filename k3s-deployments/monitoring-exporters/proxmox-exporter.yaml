@@ -35,6 +35,8 @@ spec:
         - --collector.cluster
         - --collector.resources
         - --collector.config
+        - --collector.qemu
+        - --collector.lxc
         image: prompve/prometheus-pve-exporter:latest
         imagePullPolicy: Always
         name: exporter

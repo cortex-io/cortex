@@ -23,6 +23,7 @@ kubectl create namespace $NAMESPACE --dry-run=client -o yaml | kubectl apply -f 
 echo "Creating ConfigMap with updated server.js..."
 kubectl create configmap cortex-api-source \
   --from-file=server.js=server.js \
+  --from-file=package.json=package.json \
   --from-file=self-heal-worker.sh=scripts/self-heal-worker.sh \
   --from-file=Dockerfile=Dockerfile \
   -n $NAMESPACE \
@@ -70,6 +71,7 @@ spec:
         echo "Copying files to build context..."
         cp /source/Dockerfile /workspace/
         cp /source/server.js /workspace/
+        cp /source/package.json /workspace/
         mkdir -p /workspace/scripts
         cp /source/self-heal-worker.sh /workspace/scripts/
         chmod +x /workspace/scripts/self-heal-worker.sh

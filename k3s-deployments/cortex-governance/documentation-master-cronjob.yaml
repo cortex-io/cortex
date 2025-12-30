@@ -1,0 +1,75 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: documentation-crawler
+  namespace: cortex
+  labels:
+    app: documentation-master
+    component: crawler
+spec:
+  schedule: "0 2 * * *"  # Daily at 2 AM UTC
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    metadata:
+      labels:
+        app: documentation-master
+        component: crawler-job
+    spec:
+      template:
+        metadata:
+          labels:
+            app: documentation-master
+            component: crawler-job
+        spec:
+          containers:
+          - name: crawler
+            image: bash:5.2-alpine3.19
+            command: ["/bin/bash"]
+            args:
+            - "-c"
+            - |
+              apk add --no-cache curl jq bc
+              /app/lib/crawler.sh schedule sandfly
+              /app/lib/indexer.sh index sandfly
+            env:
+            - name: CORTEX_ROLE
+              value: "documentation-crawler"
+            - name: KNOWLEDGE_BASE_PATH
+              value: "/data/knowledge-base"
+            - name: CACHE_PATH
+              value: "/data/cache"
+            volumeMounts:
+            - name: lib
+              mountPath: /app/lib
+              readOnly: true
+            - name: config
+              mountPath: /app/config
+              readOnly: true
+            - name: knowledge-base
+              mountPath: /data/knowledge-base
+            - name: cache
+              mountPath: /data/cache
+            resources:
+              requests:
+                memory: "256Mi"
+                cpu: "100m"
+              limits:
+                memory: "1Gi"
+                cpu: "500m"
+          restartPolicy: OnFailure
+          volumes:
+          - name: lib
+            configMap:
+              name: documentation-master-lib
+              defaultMode: 0755
+          - name: config
+            configMap:
+              name: documentation-master-config
+          - name: knowledge-base
+            persistentVolumeClaim:
+              claimName: documentation-kb-pvc
+          - name: cache
+            persistentVolumeClaim:
+              claimName: documentation-cache-pvc
