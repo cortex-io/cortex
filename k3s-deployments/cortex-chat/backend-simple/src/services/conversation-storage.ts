@@ -14,6 +14,7 @@ export interface Conversation {
   createdAt: string;
   updatedAt: string;
   messageCount: number;
+  status: 'active' | 'in_progress' | 'completed';
 }
 
 export class ConversationStorage {
@@ -68,7 +69,14 @@ export class ConversationStorage {
         return null;
       }
 
-      return JSON.parse(data) as Conversation;
+      const conversation = JSON.parse(data) as Conversation;
+
+      // Backward compatibility: set status to 'active' if not present
+      if (!conversation.status) {
+        conversation.status = 'active';
+      }
+
+      return conversation;
     } catch (error) {
       console.error('[ConversationStorage] Error getting conversation:', error);
       return null;
@@ -111,7 +119,8 @@ export class ConversationStorage {
           messages: [],
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString(),
-          messageCount: 0
+          messageCount: 0,
+          status: 'active'
         };
 
         // Auto-generate title from first user message
@@ -121,6 +130,11 @@ export class ConversationStorage {
       } else if (!conversation.title && message.role === 'user' && conversation.messages.length === 0) {
         // Set title if this is the first user message and no title exists
         conversation.title = this.generateTitle(message.content);
+      }
+
+      // Ensure status exists for backward compatibility
+      if (!conversation.status) {
+        conversation.status = 'active';
       }
 
       // Add message
@@ -153,6 +167,29 @@ export class ConversationStorage {
       console.log(`[ConversationStorage] Deleted conversation ${sessionId}`);
     } catch (error) {
       console.error('[ConversationStorage] Error deleting conversation:', error);
+      throw error;
+    }
+  }
+
+  async updateConversationStatus(
+    sessionId: string,
+    status: 'active' | 'in_progress' | 'completed'
+  ): Promise<void> {
+    try {
+      const conversation = await this.getConversation(sessionId);
+
+      if (!conversation) {
+        console.warn(`[ConversationStorage] Cannot update status: conversation ${sessionId} not found`);
+        return;
+      }
+
+      const oldStatus = conversation.status;
+      conversation.status = status;
+      await this.saveConversation(conversation);
+
+      console.log(`[ConversationStorage] Updated conversation ${sessionId} status: ${oldStatus} -> ${status}`);
+    } catch (error) {
+      console.error('[ConversationStorage] Error updating conversation status:', error);
       throw error;
     }
   }
@@ -264,7 +301,14 @@ export class ConversationStorage {
       for (const key of keys) {
         const data = await this.redis.get(key);
         if (data) {
-          conversations.push(JSON.parse(data));
+          const conversation = JSON.parse(data) as Conversation;
+
+          // Backward compatibility: set status to 'active' if not present
+          if (!conversation.status) {
+            conversation.status = 'active';
+          }
+
+          conversations.push(conversation);
         }
       }
 
@@ -277,6 +321,31 @@ export class ConversationStorage {
     } catch (error) {
       console.error('[ConversationStorage] Error getting all conversations:', error);
       return [];
+    }
+  }
+
+  async getGroupedConversations(): Promise<{
+    active: Conversation[];
+    in_progress: Conversation[];
+    completed: Conversation[];
+  }> {
+    try {
+      const allConversations = await this.getAllConversations();
+
+      const grouped = {
+        active: allConversations.filter(c => c.status === 'active'),
+        in_progress: allConversations.filter(c => c.status === 'in_progress'),
+        completed: allConversations.filter(c => c.status === 'completed')
+      };
+
+      return grouped;
+    } catch (error) {
+      console.error('[ConversationStorage] Error getting grouped conversations:', error);
+      return {
+        active: [],
+        in_progress: [],
+        completed: []
+      };
     }
   }
 }

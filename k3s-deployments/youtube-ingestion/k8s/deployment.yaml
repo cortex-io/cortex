@@ -1,0 +1,86 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: youtube-ingestion
+  namespace: cortex
+  labels:
+    app: youtube-ingestion
+    component: knowledge
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: youtube-ingestion
+  template:
+    metadata:
+      labels:
+        app: youtube-ingestion
+        component: knowledge
+    spec:
+      containers:
+      - name: youtube-ingestion
+        image: localhost/youtube-ingestion:latest
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 8080
+          name: http
+        env:
+        - name: PORT
+          value: "8080"
+        - name: REDIS_HOST
+          value: "redis-queue.cortex.svc.cluster.local"
+        - name: REDIS_PORT
+          value: "6379"
+        - name: REDIS_ENABLED
+          value: "true"
+        - name: ANTHROPIC_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: anthropic-api-key
+              key: api-key
+        - name: TRANSCRIPTS_DIR
+          value: "/data/transcripts"
+        - name: KNOWLEDGE_DIR
+          value: "/data/knowledge"
+        - name: CACHE_DIR
+          value: "/data/cache"
+        volumeMounts:
+        - name: youtube-data
+          mountPath: /data
+        - name: fixes
+          mountPath: /app/extract_transcript.py
+          subPath: extract_transcript.py
+        - name: fixes
+          mountPath: /app/src/processors/classifier.js
+          subPath: classifier.js
+        - name: fixes
+          mountPath: /app/src/ingestion-service.js
+          subPath: ingestion-service.js
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "200m"
+          limits:
+            memory: "1Gi"
+            cpu: "1000m"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 10
+          periodSeconds: 5
+          timeoutSeconds: 3
+      volumes:
+      - name: youtube-data
+        persistentVolumeClaim:
+          claimName: youtube-data-pvc
+      - name: fixes
+        configMap:
+          name: youtube-ingestion-fixes
