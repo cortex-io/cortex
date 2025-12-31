@@ -83,6 +83,7 @@ kubectl cp $SOURCE_DIR/src/services/issue-detector.ts $NAMESPACE/backend-copy-co
 kubectl cp $SOURCE_DIR/src/services/context-analyzer.ts $NAMESPACE/backend-copy-context:/workspace/src/services/context-analyzer.ts
 kubectl cp $SOURCE_DIR/src/services/youtube-detector.ts $NAMESPACE/backend-copy-context:/workspace/src/services/youtube-detector.ts
 kubectl cp $SOURCE_DIR/src/services/youtube-workflow.ts $NAMESPACE/backend-copy-context:/workspace/src/services/youtube-workflow.ts
+kubectl cp $SOURCE_DIR/src/services/error-recovery.ts $NAMESPACE/backend-copy-context:/workspace/src/services/error-recovery.ts
 kubectl cp $SOURCE_DIR/src/routes/auth.ts $NAMESPACE/backend-copy-context:/workspace/src/routes/auth.ts
 kubectl cp $SOURCE_DIR/src/routes/chat-simple.ts $NAMESPACE/backend-copy-context:/workspace/src/routes/chat-simple.ts
 kubectl cp $SOURCE_DIR/src/routes/conversations.ts $NAMESPACE/backend-copy-context:/workspace/src/routes/conversations.ts
