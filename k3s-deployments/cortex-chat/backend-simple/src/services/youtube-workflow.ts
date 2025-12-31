@@ -5,6 +5,7 @@
 
 import { conversationStorage } from './conversation-storage';
 import { detectYouTubeURLs, ingestYouTubeVideos } from './youtube-detector';
+import { runErrorDetectionAndRecovery, notifyUserOfError } from './error-recovery';
 
 const YOUTUBE_INGESTION_URL = process.env.YOUTUBE_INGESTION_URL || 'http://youtube-ingestion.cortex.svc.cluster.local:8080';
 const CORTEX_URL = process.env.CORTEX_URL || 'http://cortex-orchestrator.cortex.svc.cluster.local:8000';
@@ -98,6 +99,35 @@ async function processVideoInBackground(
 
     console.log(`[YouTubeWorkflow] Video ${videoId} ready for approval`);
 
+    // Step 4: Run error detection and auto-recovery
+    console.log(`[YouTubeWorkflow] Step 4: Running error detection`);
+    const { errorsFound, errorsFixed, errors } = await runErrorDetectionAndRecovery(sessionId, 'youtube_ingestion');
+
+    if (errorsFound > 0 && errorsFixed > 0) {
+      console.log(`[YouTubeWorkflow] Detected ${errorsFound} error(s), attempting to fix ${errorsFixed}`);
+
+      // Reprocess with fixed code
+      console.log(`[YouTubeWorkflow] Reprocessing video analysis with corrections`);
+      const reanalysis = await analyzeVideoContent(videoData);
+
+      // Post corrected analysis
+      await notifyUserOfError(sessionId, errors[0], 'completed');
+      await conversationStorage.addMessage(sessionId, {
+        role: 'assistant',
+        content: formatAnalysisSummary(videoData, reanalysis),
+        timestamp: new Date().toISOString(),
+        metadata: {
+          type: 'youtube_analysis',
+          videoId,
+          analysis: reanalysis,
+          requiresApproval: true,
+          corrected: true
+        }
+      });
+
+      console.log(`[YouTubeWorkflow] Posted corrected analysis for ${videoId}`);
+    }
+
   } catch (error: any) {
     console.error(`[YouTubeWorkflow] Processing failed:`, error);
 
@@ -143,18 +173,26 @@ async function generateImprovements(
   title: string,
   summary: string,
   concepts: string[],
-  actionables: string[],
+  actionables: any[],
   transcript: string
 ): Promise<any[]> {
   // For now, create placeholder improvements from actionable items
   // TODO: Use Claude API to generate detailed improvement plans
 
-  const improvements = actionables.slice(0, 5).map((item, idx) => ({
-    id: `imp_${Date.now()}_${idx}`,
-    title: item,
-    description: `Implement: ${item}`,
-    priority: idx < 2 ? 'high' : 'medium'
-  }));
+  const improvements = actionables.slice(0, 5).map((item, idx) => {
+    // Handle both object format (from ingestion service) and string format
+    const description = typeof item === 'object' ? item.description : item;
+    const implementationNotes = typeof item === 'object' ? item.implementation_notes : `Implement: ${item}`;
+    const type = typeof item === 'object' ? item.type : 'improvement';
+
+    return {
+      id: `imp_${Date.now()}_${idx}`,
+      title: description,
+      description: implementationNotes,
+      type,
+      priority: idx < 2 ? 'high' : 'medium'
+    };
+  });
 
   // If no actionables, create generic improvement
   if (improvements.length === 0 && title) {
@@ -162,6 +200,7 @@ async function generateImprovements(
       id: `imp_${Date.now()}_0`,
       title: `Apply learnings from: ${title}`,
       description: `Review and apply concepts from this video to Cortex architecture`,
+      type: 'improvement',
       priority: 'medium'
     });
   }
