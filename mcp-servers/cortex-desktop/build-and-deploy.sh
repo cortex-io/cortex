@@ -1,32 +1,28 @@
 #!/bin/bash
-# Build and deploy cortex-api with multi-turn tool use fix
+# Build and deploy Cortex Desktop MCP Server
 set -e
 
-echo "=== Cortex API Build and Deploy ==="
-echo "Building image with multi-turn tool use fix..."
+echo "=== Cortex Desktop MCP Server Build and Deploy ==="
 
 NAMESPACE="cortex"
-IMAGE_NAME="cortex-api"
+IMAGE_NAME="cortex-desktop-mcp"
 REGISTRY="10.43.170.72:5000"
-TAG="multi-turn-fix"
+TAG="latest"
 
-# Clean up any previous build resources
+# Clean up previous build resources
 echo "Cleaning up previous build resources..."
-kubectl delete pod cortex-api-copy-context -n $NAMESPACE --ignore-not-found=true
-kubectl delete job cortex-api-kaniko-build -n $NAMESPACE --ignore-not-found=true
-kubectl delete pvc cortex-api-build-context -n $NAMESPACE --ignore-not-found=true
+kubectl delete job cortex-desktop-mcp-build -n $NAMESPACE --ignore-not-found=true
+kubectl delete pod cortex-desktop-mcp-copy -n $NAMESPACE --ignore-not-found=true
+kubectl delete pvc cortex-desktop-mcp-context -n $NAMESPACE --ignore-not-found=true
 
-# Create namespace if it doesn't exist
+# Create namespace if needed
 kubectl create namespace $NAMESPACE --dry-run=client -o yaml | kubectl apply -f -
 
-# Create ConfigMap with updated server.js
-echo "Creating ConfigMap with updated server.js..."
-kubectl create configmap cortex-api-source \
+# Create ConfigMap with source files
+echo "Creating ConfigMap with source files..."
+kubectl create configmap cortex-desktop-mcp-source \
   --from-file=server.js=server.js \
   --from-file=package.json=package.json \
-  --from-file=token-throttle.js=token-throttle.js \
-  --from-file=prometheus-metrics.js=prometheus-metrics.js \
-  --from-file=self-heal-worker.sh=scripts/self-heal-worker.sh \
   --from-file=Dockerfile=Dockerfile \
   -n $NAMESPACE \
   --dry-run=client -o yaml | kubectl apply -f -
@@ -37,14 +33,14 @@ cat <<EOF | kubectl apply -f -
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: cortex-api-build-context
+  name: cortex-desktop-mcp-context
   namespace: $NAMESPACE
 spec:
   accessModes:
     - ReadWriteOnce
   resources:
     requests:
-      storage: 200Mi
+      storage: 100Mi
 EOF
 
 # Copy source files to PVC
@@ -53,17 +49,17 @@ cat <<EOF | kubectl apply -f -
 apiVersion: v1
 kind: Pod
 metadata:
-  name: cortex-api-copy-context
+  name: cortex-desktop-mcp-copy
   namespace: $NAMESPACE
 spec:
   restartPolicy: Never
   volumes:
   - name: build-context
     persistentVolumeClaim:
-      claimName: cortex-api-build-context
+      claimName: cortex-desktop-mcp-context
   - name: source
     configMap:
-      name: cortex-api-source
+      name: cortex-desktop-mcp-source
   containers:
   - name: copy
     image: busybox
@@ -74,14 +70,8 @@ spec:
         cp /source/Dockerfile /workspace/
         cp /source/server.js /workspace/
         cp /source/package.json /workspace/
-        cp /source/token-throttle.js /workspace/
-        cp /source/prometheus-metrics.js /workspace/
-        mkdir -p /workspace/scripts
-        cp /source/self-heal-worker.sh /workspace/scripts/
-        chmod +x /workspace/scripts/self-heal-worker.sh
         echo "Files copied:"
         ls -la /workspace/
-        ls -la /workspace/scripts/
     volumeMounts:
     - name: build-context
       mountPath: /workspace
@@ -91,9 +81,9 @@ EOF
 
 # Wait for copy to complete
 echo "Waiting for copy to complete..."
-kubectl wait --for=condition=Ready pod/cortex-api-copy-context -n $NAMESPACE --timeout=60s || true
+kubectl wait --for=condition=Ready pod/cortex-desktop-mcp-copy -n $NAMESPACE --timeout=60s || true
 sleep 5
-kubectl wait --for=jsonpath='{.status.phase}'=Succeeded pod/cortex-api-copy-context -n $NAMESPACE --timeout=60s
+kubectl wait --for=jsonpath='{.status.phase}'=Succeeded pod/cortex-desktop-mcp-copy -n $NAMESPACE --timeout=60s
 
 echo "Copy completed. Starting Kaniko build..."
 
@@ -102,7 +92,7 @@ cat <<EOF | kubectl apply -f -
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: cortex-api-kaniko-build
+  name: cortex-desktop-mcp-build
   namespace: $NAMESPACE
 spec:
   ttlSecondsAfterFinished: 600
@@ -112,7 +102,7 @@ spec:
       volumes:
       - name: build-context
         persistentVolumeClaim:
-          claimName: cortex-api-build-context
+          claimName: cortex-desktop-mcp-context
       - name: docker-config
         emptyDir: {}
       initContainers:
@@ -132,7 +122,6 @@ spec:
         args:
           - "--dockerfile=/workspace/Dockerfile"
           - "--context=/workspace"
-          - "--destination=$REGISTRY/$IMAGE_NAME:latest"
           - "--destination=$REGISTRY/$IMAGE_NAME:$TAG"
           - "--insecure"
           - "--skip-tls-verify"
@@ -144,11 +133,10 @@ spec:
           mountPath: /kaniko/.docker
 EOF
 
-echo "Kaniko build job created. Monitoring build progress..."
-echo "Run: kubectl logs -f job/cortex-api-kaniko-build -n $NAMESPACE"
+echo ""
+echo "Build job created. Monitoring progress..."
+echo "Run: kubectl logs -f job/cortex-desktop-mcp-build -n $NAMESPACE"
 echo ""
 echo "After build completes, deploy with:"
-echo "  kubectl rollout restart deployment/cortex-orchestrator -n $NAMESPACE"
-echo "  kubectl rollout status deployment/cortex-orchestrator -n $NAMESPACE"
+echo "  kubectl apply -f deployment.yaml"
 echo ""
-echo "Monitor build: kubectl get pods -n $NAMESPACE -l job-name=cortex-api-kaniko-build"

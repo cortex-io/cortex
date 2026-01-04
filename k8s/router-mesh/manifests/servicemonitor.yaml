@@ -1,0 +1,17 @@
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: router-mesh
+  namespace: router-mesh
+  labels:
+    app: router-mesh
+    prometheus: kube-prometheus
+spec:
+  selector:
+    matchLabels:
+      app: router-mesh
+  endpoints:
+  - port: metrics
+    interval: 15s
+    path: /metrics
+    scheme: http

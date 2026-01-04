@@ -1,0 +1,198 @@
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: cortex-capacity
+  labels:
+    name: cortex-capacity
+    app.kubernetes.io/part-of: cortex-itil
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: capacity-forecaster-config
+  namespace: cortex-capacity
+data:
+  PROMETHEUS_URL: "http://kube-prometheus-stack-prometheus.monitoring.svc.cluster.local:9090"
+  REDIS_HOST: "redis-master.cortex-capacity.svc.cluster.local"
+  REDIS_PORT: "6379"
+  MODEL_RETRAIN_INTERVAL_DAYS: "7"
+  HISTORICAL_DATA_DAYS: "30"
+  FORECAST_SHORT_TERM_DAYS: "7"
+  FORECAST_MEDIUM_TERM_DAYS: "30"
+  FORECAST_LONG_TERM_DAYS: "90"
+  CPU_WARNING_THRESHOLD: "0.75"
+  CPU_CRITICAL_THRESHOLD: "0.90"
+  MEMORY_WARNING_THRESHOLD: "0.80"
+  MEMORY_CRITICAL_THRESHOLD: "0.95"
+  DISK_WARNING_THRESHOLD: "0.75"
+  DISK_CRITICAL_THRESHOLD: "0.90"
+  LOG_LEVEL: "INFO"
+
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: capacity-forecaster-models
+  namespace: cortex-capacity
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 5Gi
+  storageClassName: longhorn
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: capacity-forecaster
+  namespace: cortex-capacity
+  labels:
+    app: capacity-forecaster
+    component: ml-forecasting
+spec:
+  replicas: 2
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  selector:
+    matchLabels:
+      app: capacity-forecaster
+  template:
+    metadata:
+      labels:
+        app: capacity-forecaster
+        component: ml-forecasting
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8000"
+        prometheus.io/path: "/metrics"
+    spec:
+      serviceAccountName: capacity-forecaster
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        fsGroup: 1000
+      containers:
+      - name: forecaster
+        image: capacity-forecaster:latest
+        imagePullPolicy: IfNotPresent
+        ports:
+        - name: http
+          containerPort: 8000
+          protocol: TCP
+        envFrom:
+        - configMapRef:
+            name: capacity-forecaster-config
+        env:
+        - name: MODEL_STORAGE_PATH
+          value: "/models"
+        resources:
+          requests:
+            memory: "2Gi"
+            cpu: "1000m"
+          limits:
+            memory: "4Gi"
+            cpu: "2000m"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: http
+          initialDelaySeconds: 60
+          periodSeconds: 30
+          timeoutSeconds: 10
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: http
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        volumeMounts:
+        - name: models
+          mountPath: /models
+      volumes:
+      - name: models
+        persistentVolumeClaim:
+          claimName: capacity-forecaster-models
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: capacity-forecaster
+  namespace: cortex-capacity
+  labels:
+    app: capacity-forecaster
+  annotations:
+    prometheus.io/scrape: "true"
+    prometheus.io/port: "8000"
+    prometheus.io/path: "/metrics"
+spec:
+  type: ClusterIP
+  ports:
+  - port: 8000
+    targetPort: http
+    protocol: TCP
+    name: http
+  selector:
+    app: capacity-forecaster
+
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: capacity-forecaster
+  namespace: cortex-capacity
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: capacity-forecaster
+rules:
+- apiGroups: [""]
+  resources: ["nodes", "pods", "persistentvolumeclaims"]
+  verbs: ["get", "list", "watch"]
+- apiGroups: ["metrics.k8s.io"]
+  resources: ["nodes", "pods"]
+  verbs: ["get", "list"]
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: capacity-forecaster
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: capacity-forecaster
+subjects:
+- kind: ServiceAccount
+  name: capacity-forecaster
+  namespace: cortex-capacity
+
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: capacity-forecaster
+  namespace: cortex-capacity
+  labels:
+    app: capacity-forecaster
+spec:
+  selector:
+    matchLabels:
+      app: capacity-forecaster
+  endpoints:
+  - port: http
+    path: /metrics
+    interval: 30s
+    scrapeTimeout: 10s

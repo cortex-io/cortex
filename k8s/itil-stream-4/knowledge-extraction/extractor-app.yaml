@@ -1,0 +1,399 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: knowledge-extractor-app
+  namespace: cortex-knowledge
+data:
+  extractor.py: |
+    #!/usr/bin/env python3
+    import os
+    import sys
+    import json
+    import yaml
+    import time
+    import logging
+    from datetime import datetime, timedelta
+    from collections import defaultdict
+    import re
+    from typing import Dict, List, Any
+
+    from kubernetes import client, config, watch
+    from pymongo import MongoClient
+    from elasticsearch import Elasticsearch
+    from neo4j import GraphDatabase
+    from prometheus_client import start_http_server, Counter, Gauge, Histogram
+    import nltk
+    from nltk.tokenize import word_tokenize
+    from nltk.corpus import stopwords
+    from sklearn.feature_extraction.text import TfidfVectorizer
+    from sklearn.decomposition import LatentDirichletAllocation
+
+    # Configure logging
+    logging.basicConfig(
+        level=logging.INFO,
+        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    )
+    logger = logging.getLogger('knowledge-extractor')
+
+    # Prometheus metrics
+    EXTRACTIONS = Counter('knowledge_extractions_total', 'Total knowledge extractions', ['type', 'source'])
+    KNOWLEDGE_ITEMS = Gauge('knowledge_items_total', 'Total knowledge items', ['type'])
+    EXTRACTION_DURATION = Histogram('knowledge_extraction_duration_seconds', 'Extraction duration')
+
+    class KnowledgeExtractor:
+        def __init__(self):
+            self.load_config()
+            self.setup_clients()
+            self.setup_nlp()
+
+        def load_config(self):
+            with open('/app/config/config.yaml', 'r') as f:
+                self.config = yaml.safe_load(f)
+            logger.info("Configuration loaded")
+
+        def setup_clients(self):
+            # Kubernetes
+            try:
+                config.load_incluster_config()
+            except:
+                config.load_kube_config()
+            self.k8s_core = client.CoreV1Api()
+            self.k8s_apps = client.AppsV1Api()
+            self.k8s_batch = client.BatchV1Api()
+
+            # MongoDB
+            mongo_config = self.config.get('mongodb', {})
+            self.mongo = MongoClient(
+                f"mongodb://{mongo_config.get('host', 'knowledge-mongodb')}:{mongo_config.get('port', 27017)}"
+            )
+            self.db = self.mongo[mongo_config.get('database', 'cortex_knowledge')]
+
+            # Elasticsearch
+            es_config = self.config.get('elasticsearch', {})
+            self.es = Elasticsearch(es_config.get('hosts', ['knowledge-elasticsearch:9200']))
+            self.es_prefix = es_config.get('index_prefix', 'cortex-kb')
+
+            # Neo4j
+            neo4j_config = self.config.get('neo4j', {})
+            self.neo4j = GraphDatabase.driver(
+                neo4j_config.get('uri', 'bolt://knowledge-graph:7687')
+            )
+
+            logger.info("Clients initialized")
+
+        def setup_nlp(self):
+            try:
+                self.stop_words = set(stopwords.words('english'))
+            except:
+                nltk.download('stopwords')
+                self.stop_words = set(stopwords.words('english'))
+
+            self.vectorizer = TfidfVectorizer(
+                max_features=1000,
+                stop_words='english',
+                ngram_range=(1, 2)
+            )
+
+            self.lda = LatentDirichletAllocation(
+                n_components=20,
+                random_state=42
+            )
+
+            logger.info("NLP components initialized")
+
+        def extract_from_logs(self):
+            """Extract knowledge from pod logs"""
+            logger.info("Extracting knowledge from logs")
+
+            for source in self.config['extraction']['sources']:
+                if source['type'] != 'logs':
+                    continue
+
+                for namespace in source['namespaces']:
+                    try:
+                        pods = self.k8s_core.list_namespaced_pod(namespace)
+
+                        for pod in pods.items:
+                            try:
+                                logs = self.k8s_core.read_namespaced_pod_log(
+                                    name=pod.metadata.name,
+                                    namespace=namespace,
+                                    tail_lines=1000
+                                )
+
+                                # Extract patterns
+                                knowledge = self.analyze_logs(logs, pod, namespace)
+                                if knowledge:
+                                    self.store_knowledge(knowledge)
+                                    EXTRACTIONS.labels(type='log', source=namespace).inc()
+
+                            except Exception as e:
+                                logger.debug(f"Could not read logs for {pod.metadata.name}: {e}")
+
+                    except Exception as e:
+                        logger.error(f"Error processing namespace {namespace}: {e}")
+
+        def analyze_logs(self, logs: str, pod, namespace: str) -> List[Dict]:
+            """Analyze logs and extract knowledge"""
+            knowledge_items = []
+
+            # Error pattern extraction
+            errors = re.findall(r'ERROR:?\s*(.*?)(?:\n|$)', logs, re.IGNORECASE)
+            for error in errors:
+                if len(error) > 10:  # Filter noise
+                    knowledge_items.append({
+                        'type': 'error_pattern',
+                        'content': error.strip(),
+                        'source': {
+                            'type': 'pod_log',
+                            'namespace': namespace,
+                            'pod': pod.metadata.name,
+                            'container': pod.spec.containers[0].name if pod.spec.containers else None
+                        },
+                        'timestamp': datetime.utcnow().isoformat(),
+                        'tags': ['error', 'log-analysis', namespace]
+                    })
+
+            # Solution pattern extraction
+            solutions = re.findall(
+                r'(?:fix|fixed|resolved|workaround):?\s*(.*?)(?:\n|$)',
+                logs,
+                re.IGNORECASE
+            )
+            for solution in solutions:
+                if len(solution) > 10:
+                    knowledge_items.append({
+                        'type': 'solution',
+                        'content': solution.strip(),
+                        'source': {
+                            'type': 'pod_log',
+                            'namespace': namespace,
+                            'pod': pod.metadata.name
+                        },
+                        'timestamp': datetime.utcnow().isoformat(),
+                        'tags': ['solution', 'log-analysis', namespace]
+                    })
+
+            return knowledge_items
+
+        def extract_from_events(self):
+            """Extract knowledge from Kubernetes events"""
+            logger.info("Extracting knowledge from events")
+
+            for source in self.config['extraction']['sources']:
+                if source['type'] != 'events':
+                    continue
+
+                try:
+                    # Get events from all namespaces
+                    events = self.k8s_core.list_event_for_all_namespaces()
+
+                    for event in events.items:
+                        # Focus on Warning and Error events
+                        if event.type in ['Warning', 'Error']:
+                            knowledge = {
+                                'type': 'incident_pattern',
+                                'content': event.message,
+                                'reason': event.reason,
+                                'source': {
+                                    'type': 'k8s_event',
+                                    'namespace': event.metadata.namespace,
+                                    'resource_type': event.involved_object.kind,
+                                    'resource_name': event.involved_object.name
+                                },
+                                'timestamp': event.last_timestamp.isoformat() if event.last_timestamp else datetime.utcnow().isoformat(),
+                                'count': event.count or 1,
+                                'tags': ['incident', 'k8s-event', event.type.lower()]
+                            }
+
+                            self.store_knowledge(knowledge)
+                            EXTRACTIONS.labels(type='event', source=event.metadata.namespace).inc()
+
+                except Exception as e:
+                    logger.error(f"Error extracting from events: {e}")
+
+        def extract_from_config(self):
+            """Extract knowledge from configuration files"""
+            logger.info("Extracting knowledge from configurations")
+
+            # Extract from ConfigMaps
+            try:
+                namespaces = ['cortex', 'cortex-system', 'cortex-chat', 'cortex-autonomous', 'cortex-change-mgmt']
+
+                for namespace in namespaces:
+                    try:
+                        configmaps = self.k8s_core.list_namespaced_config_map(namespace)
+
+                        for cm in configmaps.items:
+                            if cm.data:
+                                knowledge = {
+                                    'type': 'configuration_example',
+                                    'name': cm.metadata.name,
+                                    'content': cm.data,
+                                    'source': {
+                                        'type': 'configmap',
+                                        'namespace': namespace,
+                                        'name': cm.metadata.name
+                                    },
+                                    'timestamp': datetime.utcnow().isoformat(),
+                                    'tags': ['configuration', 'configmap', namespace]
+                                }
+
+                                self.store_knowledge(knowledge)
+                                EXTRACTIONS.labels(type='config', source=namespace).inc()
+
+                    except Exception as e:
+                        logger.debug(f"Could not access namespace {namespace}: {e}")
+
+            except Exception as e:
+                logger.error(f"Error extracting from config: {e}")
+
+        def perform_topic_modeling(self):
+            """Perform topic modeling on collected knowledge"""
+            logger.info("Performing topic modeling")
+
+            try:
+                # Get recent text content
+                cursor = self.db.knowledge.find(
+                    {'type': {'$in': ['error_pattern', 'incident_pattern', 'solution']}},
+                    {'content': 1}
+                ).limit(1000)
+
+                texts = [doc.get('content', '') for doc in cursor if doc.get('content')]
+
+                if len(texts) < 10:
+                    logger.info("Not enough data for topic modeling")
+                    return
+
+                # Vectorize
+                tfidf = self.vectorizer.fit_transform(texts)
+
+                # Topic modeling
+                topics = self.lda.fit_transform(tfidf)
+
+                # Extract top terms per topic
+                feature_names = self.vectorizer.get_feature_names_out()
+
+                for topic_idx, topic in enumerate(self.lda.components_):
+                    top_indices = topic.argsort()[-10:][::-1]
+                    top_terms = [feature_names[i] for i in top_indices]
+
+                    knowledge = {
+                        'type': 'topic',
+                        'topic_id': topic_idx,
+                        'terms': top_terms,
+                        'timestamp': datetime.utcnow().isoformat(),
+                        'tags': ['topic-modeling', 'analysis']
+                    }
+
+                    self.store_knowledge(knowledge)
+
+                logger.info(f"Identified {len(self.lda.components_)} topics")
+
+            except Exception as e:
+                logger.error(f"Error in topic modeling: {e}")
+
+        def store_knowledge(self, knowledge: Dict):
+            """Store knowledge in MongoDB, Elasticsearch, and Neo4j"""
+            try:
+                # MongoDB - primary storage
+                result = self.db.knowledge.insert_one(knowledge)
+                knowledge['_id'] = str(result.inserted_id)
+
+                # Elasticsearch - full-text search
+                index_name = f"{self.es_prefix}-{knowledge['type']}"
+                self.es.index(index=index_name, document=knowledge)
+
+                # Neo4j - relationships
+                self.store_in_graph(knowledge)
+
+                # Update metrics
+                KNOWLEDGE_ITEMS.labels(type=knowledge['type']).inc()
+
+            except Exception as e:
+                logger.error(f"Error storing knowledge: {e}")
+
+        def store_in_graph(self, knowledge: Dict):
+            """Store knowledge relationships in Neo4j"""
+            try:
+                with self.neo4j.session() as session:
+                    # Create knowledge node
+                    session.run(
+                        """
+                        MERGE (k:Knowledge {id: $id})
+                        SET k.type = $type,
+                            k.timestamp = $timestamp,
+                            k.content = $content
+                        """,
+                        id=knowledge.get('_id'),
+                        type=knowledge.get('type'),
+                        timestamp=knowledge.get('timestamp'),
+                        content=str(knowledge.get('content', ''))[:500]  # Limit size
+                    )
+
+                    # Create source relationships
+                    if 'source' in knowledge:
+                        source = knowledge['source']
+                        session.run(
+                            """
+                            MERGE (s:Source {type: $source_type, namespace: $namespace})
+                            WITH s
+                            MATCH (k:Knowledge {id: $id})
+                            MERGE (k)-[:FROM_SOURCE]->(s)
+                            """,
+                            source_type=source.get('type'),
+                            namespace=source.get('namespace'),
+                            id=knowledge.get('_id')
+                        )
+
+                    # Create tag relationships
+                    for tag in knowledge.get('tags', []):
+                        session.run(
+                            """
+                            MERGE (t:Tag {name: $tag})
+                            WITH t
+                            MATCH (k:Knowledge {id: $id})
+                            MERGE (k)-[:TAGGED_WITH]->(t)
+                            """,
+                            tag=tag,
+                            id=knowledge.get('_id')
+                        )
+
+            except Exception as e:
+                logger.debug(f"Could not store in graph: {e}")
+
+        def run(self):
+            """Main extraction loop"""
+            logger.info("Starting knowledge extraction service")
+
+            # Start metrics server
+            start_http_server(9090)
+
+            iteration = 0
+            while True:
+                try:
+                    iteration += 1
+                    logger.info(f"Starting extraction iteration {iteration}")
+
+                    with EXTRACTION_DURATION.time():
+                        # Extract from various sources
+                        self.extract_from_logs()
+                        self.extract_from_events()
+                        self.extract_from_config()
+
+                        # Periodic topic modeling
+                        if iteration % 10 == 0:
+                            self.perform_topic_modeling()
+
+                    logger.info(f"Completed extraction iteration {iteration}")
+
+                    # Wait before next iteration
+                    time.sleep(300)  # 5 minutes
+
+                except Exception as e:
+                    logger.error(f"Error in extraction loop: {e}")
+                    time.sleep(60)
+
+    if __name__ == '__main__':
+        extractor = KnowledgeExtractor()
+        extractor.run()

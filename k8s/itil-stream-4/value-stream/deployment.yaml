@@ -1,0 +1,182 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: value-stream-config
+  namespace: cortex-knowledge
+data:
+  config.yaml: |
+    value_streams:
+      # Define major value streams
+      - name: incident_resolution
+        description: "From incident detection to resolution"
+        stages:
+          - name: detection
+            metrics: [time_to_detect, detection_accuracy]
+          - name: triage
+            metrics: [time_to_triage, triage_accuracy]
+          - name: diagnosis
+            metrics: [time_to_diagnose, diagnosis_accuracy]
+          - name: resolution
+            metrics: [time_to_resolve, resolution_quality]
+          - name: verification
+            metrics: [verification_time, recurrence_rate]
+
+      - name: change_deployment
+        description: "From change request to production deployment"
+        stages:
+          - name: request
+            metrics: [request_time, request_completeness]
+          - name: approval
+            metrics: [approval_time, approval_rate]
+          - name: implementation
+            metrics: [implementation_time, implementation_quality]
+          - name: testing
+            metrics: [test_time, test_coverage, test_pass_rate]
+          - name: deployment
+            metrics: [deployment_time, deployment_success_rate]
+          - name: validation
+            metrics: [validation_time, rollback_rate]
+
+      - name: knowledge_creation
+        description: "From event to documented knowledge"
+        stages:
+          - name: event_capture
+            metrics: [capture_rate, capture_quality]
+          - name: extraction
+            metrics: [extraction_time, extraction_accuracy]
+          - name: validation
+            metrics: [validation_time, validation_accuracy]
+          - name: publication
+            metrics: [publication_time, knowledge_usage]
+
+      - name: service_request
+        description: "From request to fulfillment"
+        stages:
+          - name: submission
+            metrics: [submission_time, submission_quality]
+          - name: routing
+            metrics: [routing_time, routing_accuracy]
+          - name: fulfillment
+            metrics: [fulfillment_time, fulfillment_quality]
+          - name: completion
+            metrics: [completion_time, satisfaction_score]
+
+    optimization:
+      # Optimization strategies
+      techniques:
+        - name: bottleneck_analysis
+          description: "Identify and eliminate bottlenecks"
+          enabled: true
+
+        - name: waste_elimination
+          description: "Remove non-value-adding activities"
+          enabled: true
+          waste_types:
+            - waiting
+            - rework
+            - overprocessing
+            - defects
+
+        - name: flow_optimization
+          description: "Optimize flow between stages"
+          enabled: true
+
+        - name: automation
+          description: "Automate manual steps"
+          enabled: true
+
+        - name: parallelization
+          description: "Enable parallel processing"
+          enabled: true
+
+      # Performance targets
+      targets:
+        lead_time_reduction: 30  # percentage
+        cycle_time_reduction: 25
+        throughput_increase: 40
+        quality_improvement: 20
+
+    mongodb:
+      host: knowledge-mongodb
+      port: 27017
+      database: cortex_knowledge
+
+    prometheus:
+      url: http://prometheus.cortex-system:9090
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: value-stream-optimizer
+  namespace: cortex-knowledge
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: value-stream-optimizer
+  template:
+    metadata:
+      labels:
+        app: value-stream-optimizer
+        itil-component: value-stream
+    spec:
+      containers:
+      - name: optimizer
+        image: python:3.11-slim
+        command: ["/bin/bash", "-c"]
+        args:
+          - |
+            pip install --no-cache-dir \
+              pymongo \
+              prometheus-api-client \
+              prometheus-client \
+              pyyaml \
+              numpy \
+              pandas \
+              scipy \
+              matplotlib \
+              networkx \
+              fastapi \
+              uvicorn && \
+            python /app/optimizer.py
+        ports:
+        - containerPort: 8000
+        - containerPort: 9093
+        volumeMounts:
+        - name: config
+          mountPath: /app/config
+        - name: app
+          mountPath: /app
+        env:
+        - name: PYTHONUNBUFFERED
+          value: "1"
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "250m"
+          limits:
+            memory: "1Gi"
+            cpu: "1000m"
+      volumes:
+      - name: config
+        configMap:
+          name: value-stream-config
+      - name: app
+        configMap:
+          name: value-stream-optimizer-app
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: value-stream-optimizer
+  namespace: cortex-knowledge
+spec:
+  selector:
+    app: value-stream-optimizer
+  ports:
+  - name: http
+    port: 8000
+    targetPort: 8000
+  - name: metrics
+    port: 9093
+    targetPort: 9093

@@ -1,0 +1,67 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: incident-swarming-config
+  namespace: cortex-itil
+data:
+  MIN_SWARM_SIZE: "2"
+  MAX_SWARM_SIZE: "5"
+  CRITICAL_RESPONSE_TIME: "300"
+  HIGH_RESPONSE_TIME: "900"
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: event-correlation-config
+  namespace: cortex-itil
+data:
+  CORRELATION_WINDOW: "300"
+  MIN_CORRELATION_CONFIDENCE: "0.7"
+  EVENT_BUFFER_SIZE: "1000"
+  CORRELATION_INTERVAL: "30"
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: intelligent-alerting-config
+  namespace: cortex-itil
+data:
+  ALERT_DEDUP_WINDOW: "300"
+  MAX_ALERTS_PER_HOUR: "50"
+  ALERT_FATIGUE_THRESHOLD: "20"
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: problem-identification-config
+  namespace: cortex-itil
+data:
+  MIN_INCIDENT_FREQUENCY: "3"
+  TIME_WINDOW_DAYS: "30"
+  MIN_PROBLEM_CONFIDENCE: "0.75"
+  ANALYSIS_INTERVAL: "3600"
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: kedb-config
+  namespace: cortex-itil
+data:
+  MIN_SIMILARITY: "0.6"
+  AUTO_SUGGEST_THRESHOLD: "0.8"
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: python-requirements
+  namespace: cortex-itil
+data:
+  requirements.txt: |
+    # No external dependencies for base implementation
+    # All components use Python standard library only

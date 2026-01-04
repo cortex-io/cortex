@@ -1,0 +1,89 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: router-models-download
+  namespace: router-mesh
+spec:
+  backoffLimit: 2
+  activeDeadlineSeconds: 600
+  ttlSecondsAfterFinished: 300
+  template:
+    metadata:
+      labels:
+        app: router-models-download
+    spec:
+      restartPolicy: OnFailure
+      containers:
+      - name: download-models
+        image: alpine:3.19
+        env:
+        - name: HF_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: huggingface-token
+              key: HF_TOKEN
+        command: ["/bin/sh", "-c"]
+        args:
+          - |
+            set -e
+
+            echo "Installing wget and ca-certificates..."
+            apk add --no-cache wget ca-certificates
+
+            echo "Creating model directories..."
+            mkdir -p /models/smollm /models/qwen
+
+            # SmolLM download with size-based idempotency check
+            if [ -f /models/smollm/smollm-135m-instruct-q4_k_m.gguf ] && [ -s /models/smollm/smollm-135m-instruct-q4_k_m.gguf ]; then
+              echo "SmolLM already exists with non-zero size, skipping download"
+            else
+              echo "Downloading SmolLM-135M-Instruct Q4_K_M GGUF..."
+              rm -f /models/smollm/smollm-135m-instruct-q4_k_m.gguf
+              wget \
+                --header="Authorization: Bearer $HF_TOKEN" \
+                --progress=bar:force \
+                -O /models/smollm/smollm-135m-instruct-q4_k_m.gguf \
+                https://huggingface.co/HuggingFaceTB/SmolLM-135M-Instruct-GGUF/resolve/main/smollm-135m-instruct-q4_k_m.gguf
+              echo "SmolLM downloaded successfully"
+            fi
+
+            # Qwen download with size-based idempotency check
+            if [ -f /models/qwen/qwen2.5-0.5b-instruct-q4_k_m.gguf ] && [ -s /models/qwen/qwen2.5-0.5b-instruct-q4_k_m.gguf ]; then
+              echo "Qwen already exists with non-zero size, skipping download"
+            else
+              echo "Downloading Qwen2.5-0.5B-Instruct Q4_K_M GGUF..."
+              rm -f /models/qwen/qwen2.5-0.5b-instruct-q4_k_m.gguf
+              wget \
+                --header="Authorization: Bearer $HF_TOKEN" \
+                --progress=bar:force \
+                -O /models/qwen/qwen2.5-0.5b-instruct-q4_k_m.gguf \
+                https://huggingface.co/Qwen/Qwen2.5-0.5B-Instruct-GGUF/resolve/main/qwen2.5-0.5b-instruct-q4_k_m.gguf
+              echo "Qwen downloaded successfully"
+            fi
+
+            echo ""
+            echo "Models downloaded successfully:"
+            ls -lh /models/smollm/
+            ls -lh /models/qwen/
+
+            echo ""
+            echo "Calculating checksums for verification..."
+            sha256sum /models/smollm/*.gguf
+            sha256sum /models/qwen/*.gguf
+
+            echo ""
+            echo "Done!"
+        volumeMounts:
+        - name: models
+          mountPath: /models
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "500m"
+          limits:
+            memory: "512Mi"
+            cpu: "1000m"
+      volumes:
+      - name: models
+        persistentVolumeClaim:
+          claimName: router-models-pvc

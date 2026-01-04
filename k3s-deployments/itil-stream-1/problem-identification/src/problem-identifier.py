@@ -1,0 +1,452 @@
+#!/usr/bin/env python3
+"""
+Problem Identification AI
+ITIL Implementation - Stream 1, Component 4
+
+Identifies underlying problems from incident patterns:
+- Analyzes incident trends and recurring issues
+- Uses ML to detect problem signatures
+- Links related incidents to root problems
+- Predicts potential future problems
+"""
+
+import asyncio
+import json
+import logging
+import os
+import time
+from datetime import datetime, timedelta
+from typing import Dict, List, Optional, Set, Tuple
+from dataclasses import dataclass
+from collections import defaultdict, Counter
+
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
+logger = logging.getLogger('problem-identification')
+
+
+@dataclass
+class Incident:
+    id: str
+    title: str
+    category: str
+    severity: str
+    created_at: datetime
+    resolved_at: Optional[datetime]
+    root_cause: Optional[str]
+    symptoms: List[str]
+    affected_components: List[str]
+
+
+@dataclass
+class Problem:
+    id: str
+    title: str
+    description: str
+    category: str
+    confidence: float
+    related_incidents: List[str]
+    root_cause: Optional[str]
+    status: str  # open, investigating, known_error, resolved
+    created_at: datetime
+    updated_at: datetime
+    pattern_signature: str
+    impact_score: float
+    frequency: int
+
+
+class ProblemIdentificationAI:
+    """AI-driven problem identification from incident patterns"""
+
+    def __init__(self, data_dir: str = "/app/data"):
+        self.data_dir = data_dir
+        self.incidents: Dict[str, Incident] = {}
+        self.problems: Dict[str, Problem] = {}
+        self.incident_index: Dict[str, Set[str]] = defaultdict(set)  # category -> incident_ids
+
+        # Configuration
+        self.min_incident_frequency = int(os.getenv('MIN_INCIDENT_FREQUENCY', '3'))
+        self.time_window_days = int(os.getenv('TIME_WINDOW_DAYS', '30'))
+        self.min_problem_confidence = float(os.getenv('MIN_PROBLEM_CONFIDENCE', '0.75'))
+        self.analysis_interval = int(os.getenv('ANALYSIS_INTERVAL', '3600'))  # 1 hour
+
+        os.makedirs(f"{data_dir}/incidents", exist_ok=True)
+        os.makedirs(f"{data_dir}/problems", exist_ok=True)
+        os.makedirs(f"{data_dir}/analysis", exist_ok=True)
+        os.makedirs(f"{data_dir}/metrics", exist_ok=True)
+
+        logger.info("Problem Identification AI initialized")
+
+    def ingest_incident(self, incident: Incident):
+        """Ingest incident for analysis"""
+        self.incidents[incident.id] = incident
+
+        # Update index
+        self.incident_index[incident.category].add(incident.id)
+
+        logger.debug(f"Incident ingested: {incident.id} ({incident.category})")
+
+    def analyze_incident_patterns(self) -> List[Problem]:
+        """Analyze incident patterns to identify problems"""
+        logger.info("Starting incident pattern analysis")
+
+        cutoff_date = datetime.now() - timedelta(days=self.time_window_days)
+        recent_incidents = [i for i in self.incidents.values()
+                           if i.created_at > cutoff_date]
+
+        if len(recent_incidents) < self.min_incident_frequency:
+            logger.info("Insufficient incidents for pattern analysis")
+            return []
+
+        problems = []
+
+        # Pattern 1: Recurring incidents by category
+        category_problems = self._identify_category_patterns(recent_incidents)
+        problems.extend(category_problems)
+
+        # Pattern 2: Symptom clustering
+        symptom_problems = self._identify_symptom_patterns(recent_incidents)
+        problems.extend(symptom_problems)
+
+        # Pattern 3: Component failures
+        component_problems = self._identify_component_patterns(recent_incidents)
+        problems.extend(component_problems)
+
+        # Pattern 4: Temporal patterns
+        temporal_problems = self._identify_temporal_patterns(recent_incidents)
+        problems.extend(temporal_problems)
+
+        # Store identified problems
+        for problem in problems:
+            if problem.confidence >= self.min_problem_confidence:
+                self.problems[problem.id] = problem
+                self._save_problem(problem)
+
+        logger.info(f"Identified {len(problems)} potential problems")
+        return problems
+
+    def _identify_category_patterns(self, incidents: List[Incident]) -> List[Problem]:
+        """Identify problems from recurring incident categories"""
+        problems = []
+        category_counts = Counter(i.category for i in incidents)
+
+        for category, count in category_counts.items():
+            if count < self.min_incident_frequency:
+                continue
+
+            category_incidents = [i for i in incidents if i.category == category]
+
+            # Calculate confidence based on frequency and recency
+            confidence = min(1.0, count / (self.min_incident_frequency * 3))
+            recent_count = len([i for i in category_incidents
+                              if i.created_at > datetime.now() - timedelta(days=7)])
+            if recent_count > 0:
+                confidence += 0.1
+
+            # Calculate impact score
+            impact_score = self._calculate_impact(category_incidents)
+
+            # Create problem
+            problem_id = f"prob-cat-{category}-{int(time.time())}"
+            problem = Problem(
+                id=problem_id,
+                title=f"Recurring {category} incidents",
+                description=f"Multiple incidents in category {category} detected",
+                category=category,
+                confidence=min(confidence, 1.0),
+                related_incidents=[i.id for i in category_incidents],
+                root_cause=None,
+                status="open",
+                created_at=datetime.now(),
+                updated_at=datetime.now(),
+                pattern_signature=f"category:{category}",
+                impact_score=impact_score,
+                frequency=count
+            )
+
+            problems.append(problem)
+
+        return problems
+
+    def _identify_symptom_patterns(self, incidents: List[Incident]) -> List[Problem]:
+        """Identify problems from symptom clustering"""
+        problems = []
+
+        # Build symptom co-occurrence matrix
+        symptom_groups = defaultdict(list)
+
+        for incident in incidents:
+            if not incident.symptoms:
+                continue
+
+            # Create symptom signature
+            symptom_sig = frozenset(incident.symptoms)
+            if len(symptom_sig) > 0:
+                symptom_groups[symptom_sig].append(incident)
+
+        # Find frequent symptom patterns
+        for symptoms, symptom_incidents in symptom_groups.items():
+            if len(symptom_incidents) < self.min_incident_frequency:
+                continue
+
+            confidence = min(1.0, len(symptom_incidents) / (self.min_incident_frequency * 2))
+            impact_score = self._calculate_impact(symptom_incidents)
+
+            problem_id = f"prob-sym-{hash(symptoms)}-{int(time.time())}"
+            problem = Problem(
+                id=problem_id,
+                title=f"Recurring symptom pattern: {', '.join(list(symptoms)[:3])}",
+                description=f"Pattern of incidents with symptoms: {', '.join(symptoms)}",
+                category="symptom_pattern",
+                confidence=confidence,
+                related_incidents=[i.id for i in symptom_incidents],
+                root_cause=None,
+                status="open",
+                created_at=datetime.now(),
+                updated_at=datetime.now(),
+                pattern_signature=f"symptoms:{','.join(sorted(symptoms))}",
+                impact_score=impact_score,
+                frequency=len(symptom_incidents)
+            )
+
+            problems.append(problem)
+
+        return problems
+
+    def _identify_component_patterns(self, incidents: List[Incident]) -> List[Problem]:
+        """Identify problems from component failure patterns"""
+        problems = []
+
+        # Group by affected components
+        component_incidents = defaultdict(list)
+
+        for incident in incidents:
+            for component in incident.affected_components:
+                component_incidents[component].append(incident)
+
+        # Find components with frequent failures
+        for component, comp_incidents in component_incidents.items():
+            if len(comp_incidents) < self.min_incident_frequency:
+                continue
+
+            # Check if failures are increasing
+            sorted_incidents = sorted(comp_incidents, key=lambda i: i.created_at)
+            recent_half = len(sorted_incidents) // 2
+            recent_failures = len(sorted_incidents[recent_half:])
+            older_failures = len(sorted_incidents[:recent_half])
+
+            is_increasing = recent_failures > older_failures
+
+            confidence = min(1.0, len(comp_incidents) / (self.min_incident_frequency * 2))
+            if is_increasing:
+                confidence += 0.15
+
+            impact_score = self._calculate_impact(comp_incidents)
+
+            problem_id = f"prob-comp-{component}-{int(time.time())}"
+            problem = Problem(
+                id=problem_id,
+                title=f"Component reliability issue: {component}",
+                description=f"Recurring failures in component {component}",
+                category="component_reliability",
+                confidence=min(confidence, 1.0),
+                related_incidents=[i.id for i in comp_incidents],
+                root_cause=None,
+                status="open",
+                created_at=datetime.now(),
+                updated_at=datetime.now(),
+                pattern_signature=f"component:{component}",
+                impact_score=impact_score,
+                frequency=len(comp_incidents)
+            )
+
+            problems.append(problem)
+
+        return problems
+
+    def _identify_temporal_patterns(self, incidents: List[Incident]) -> List[Problem]:
+        """Identify problems from temporal patterns"""
+        problems = []
+
+        # Group incidents by hour of day
+        hour_groups = defaultdict(list)
+        for incident in incidents:
+            hour = incident.created_at.hour
+            hour_groups[hour].append(incident)
+
+        # Find hours with unusual incident concentration
+        avg_per_hour = len(incidents) / 24
+        threshold = avg_per_hour * 2
+
+        for hour, hour_incidents in hour_groups.items():
+            if len(hour_incidents) < threshold:
+                continue
+
+            if len(hour_incidents) < self.min_incident_frequency:
+                continue
+
+            confidence = min(1.0, len(hour_incidents) / (threshold * 1.5))
+            impact_score = self._calculate_impact(hour_incidents)
+
+            problem_id = f"prob-temp-{hour}-{int(time.time())}"
+            problem = Problem(
+                id=problem_id,
+                title=f"Temporal pattern: incidents at hour {hour}",
+                description=f"Unusual concentration of incidents around {hour}:00",
+                category="temporal_pattern",
+                confidence=confidence,
+                related_incidents=[i.id for i in hour_incidents],
+                root_cause=None,
+                status="open",
+                created_at=datetime.now(),
+                updated_at=datetime.now(),
+                pattern_signature=f"temporal:hour={hour}",
+                impact_score=impact_score,
+                frequency=len(hour_incidents)
+            )
+
+            problems.append(problem)
+
+        return problems
+
+    def _calculate_impact(self, incidents: List[Incident]) -> float:
+        """Calculate impact score for a set of incidents"""
+        if not incidents:
+            return 0.0
+
+        # Severity scoring
+        severity_weights = {
+            'critical': 1.0,
+            'high': 0.7,
+            'medium': 0.4,
+            'low': 0.2
+        }
+
+        severity_score = sum(
+            severity_weights.get(i.severity.lower(), 0.5)
+            for i in incidents
+        ) / len(incidents)
+
+        # Frequency component
+        frequency_score = min(1.0, len(incidents) / 10)
+
+        # Recency component
+        recent_incidents = [i for i in incidents
+                          if i.created_at > datetime.now() - timedelta(days=7)]
+        recency_score = len(recent_incidents) / max(len(incidents), 1)
+
+        # Combined impact
+        impact = (severity_score * 0.5 +
+                 frequency_score * 0.3 +
+                 recency_score * 0.2)
+
+        return min(impact, 1.0)
+
+    def link_incident_to_problem(self, incident_id: str, problem_id: str):
+        """Link an incident to an identified problem"""
+        if problem_id not in self.problems:
+            logger.warning(f"Problem {problem_id} not found")
+            return
+
+        problem = self.problems[problem_id]
+        if incident_id not in problem.related_incidents:
+            problem.related_incidents.append(incident_id)
+            problem.frequency += 1
+            problem.updated_at = datetime.now()
+
+            self._save_problem(problem)
+            logger.info(f"Linked incident {incident_id} to problem {problem_id}")
+
+    def update_problem_root_cause(self, problem_id: str, root_cause: str):
+        """Update problem with identified root cause"""
+        if problem_id not in self.problems:
+            logger.warning(f"Problem {problem_id} not found")
+            return
+
+        problem = self.problems[problem_id]
+        problem.root_cause = root_cause
+        problem.status = "known_error"
+        problem.updated_at = datetime.now()
+
+        self._save_problem(problem)
+        logger.info(f"Problem {problem_id} root cause identified: {root_cause}")
+
+    def _save_problem(self, problem: Problem):
+        """Persist problem data"""
+        problem_file = f"{self.data_dir}/problems/{problem.id}.json"
+        problem_data = {
+            'id': problem.id,
+            'title': problem.title,
+            'description': problem.description,
+            'category': problem.category,
+            'confidence': problem.confidence,
+            'related_incidents': problem.related_incidents,
+            'root_cause': problem.root_cause,
+            'status': problem.status,
+            'created_at': problem.created_at.isoformat(),
+            'updated_at': problem.updated_at.isoformat(),
+            'pattern_signature': problem.pattern_signature,
+            'impact_score': problem.impact_score,
+            'frequency': problem.frequency
+        }
+        with open(problem_file, 'w') as f:
+            json.dump(problem_data, f, indent=2)
+
+    def get_metrics(self) -> Dict:
+        """Get problem identification metrics"""
+        cutoff = datetime.now() - timedelta(days=self.time_window_days)
+        recent_problems = [p for p in self.problems.values()
+                          if p.created_at > cutoff]
+        recent_incidents = [i for i in self.incidents.values()
+                           if i.created_at > cutoff]
+
+        known_errors = [p for p in recent_problems if p.status == "known_error"]
+
+        metrics = {
+            'timestamp': datetime.now().isoformat(),
+            'total_problems': len(self.problems),
+            'recent_problems': len(recent_problems),
+            'known_errors': len(known_errors),
+            'total_incidents': len(self.incidents),
+            'recent_incidents': len(recent_incidents),
+            'avg_problem_confidence': sum(p.confidence for p in recent_problems) / max(len(recent_problems), 1),
+            'avg_incidents_per_problem': sum(p.frequency for p in recent_problems) / max(len(recent_problems), 1),
+            'high_impact_problems': len([p for p in recent_problems if p.impact_score > 0.7])
+        }
+
+        return metrics
+
+    async def run(self):
+        """Main problem identification loop"""
+        logger.info("Starting Problem Identification AI")
+
+        while True:
+            try:
+                # Analyze patterns
+                problems = self.analyze_incident_patterns()
+
+                # Get and save metrics
+                metrics = self.get_metrics()
+                metrics_file = f"{self.data_dir}/metrics/problem-metrics-{int(time.time())}.json"
+                with open(metrics_file, 'w') as f:
+                    json.dump(metrics, f, indent=2)
+
+                logger.info(f"Analysis cycle: {len(problems)} problems identified, "
+                          f"Avg confidence: {metrics['avg_problem_confidence']:.2f}")
+
+                await asyncio.sleep(self.analysis_interval)
+
+            except Exception as e:
+                logger.error(f"Error in problem identification loop: {e}", exc_info=True)
+                await asyncio.sleep(60)
+
+
+async def main():
+    identifier = ProblemIdentificationAI()
+    await identifier.run()
+
+
+if __name__ == "__main__":
+    asyncio.run(main())
