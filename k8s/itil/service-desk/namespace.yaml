@@ -1,0 +1,43 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: cortex-service-desk
+  labels:
+    app: cortex
+    component: itil
+    stream: stream-5
+    capability: service-desk
+---
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: service-desk-quota
+  namespace: cortex-service-desk
+spec:
+  hard:
+    requests.cpu: "4"
+    requests.memory: 8Gi
+    limits.cpu: "8"
+    limits.memory: 16Gi
+    persistentvolumeclaims: "10"
+---
+apiVersion: v1
+kind: LimitRange
+metadata:
+  name: service-desk-limits
+  namespace: cortex-service-desk
+spec:
+  limits:
+  - max:
+      cpu: "2"
+      memory: 4Gi
+    min:
+      cpu: "100m"
+      memory: 128Mi
+    default:
+      cpu: "500m"
+      memory: 512Mi
+    defaultRequest:
+      cpu: "250m"
+      memory: 256Mi
+    type: Container

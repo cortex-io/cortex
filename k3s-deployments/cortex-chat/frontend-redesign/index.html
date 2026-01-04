@@ -1556,8 +1556,15 @@
             detectedErrors = []; // Clear error tracking
         }
 
-        async function loadConversation(conversationId) {
+        async function loadConversation(conversationId, forceReload = false) {
             try {
+                // CRITICAL: Don't reload if actively streaming unless explicitly forced
+                // This prevents race conditions where streaming messages get cleared from DOM
+                if (isStreaming && !forceReload) {
+                    console.log('[LoadConversation] Skipping reload - streaming in progress');
+                    return;
+                }
+
                 const authToken = localStorage.getItem(STORAGE_KEYS.AUTH_TOKEN);
                 const response = await fetch(`${API_BASE}/api/conversations/${conversationId}`, {
                     headers: { 'Authorization': `Bearer ${authToken}` }
@@ -1770,14 +1777,16 @@
                                     renderSuggestions(data.suggestions, messageDiv);
                                 }
                                 else if (data.type === 'youtube_processing') {
-                                    // YouTube workflow started - reload conversation after a delay to show updates
+                                    // YouTube workflow started - update sidebar but DON'T reload conversation during streaming
+                                    // The conversation will auto-reload after streaming completes
                                     setTimeout(async () => {
-                                        await loadConversation(currentConversationId);
-                                        await loadConversations();
+                                        await loadConversations(); // Update sidebar only
+                                        // Don't call loadConversation() here - it will be called after message_stop
                                     }, 3000);
                                 }
                                 else if (data.type === 'details_posted') {
-                                    // Details command processed - reload conversation immediately
+                                    // Details command processed - but DON'T reload during active streaming
+                                    // Protection is in loadConversation() - it will skip if isStreaming=true
                                     await loadConversation(currentConversationId);
                                 }
                                 else if (data.type === 'message_stop') {
@@ -1833,6 +1842,12 @@
                 sendBtn.disabled = false;
                 isStreaming = false;
                 messageInput.focus();
+
+                // After streaming completes, reload conversation to ensure sync with backend
+                // This catches any async updates that happened during streaming
+                setTimeout(async () => {
+                    await loadConversation(currentConversationId, true); // Force reload now that streaming is done
+                }, 500);
             }
         }
 

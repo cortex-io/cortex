@@ -6,8 +6,6 @@ const execPromise = util.promisify(exec);
 const path = require('path');
 const fs = require('fs').promises;
 const Redis = require('ioredis');
-const TokenThrottle = require("./token-throttle.js");
-const metrics = require("./prometheus-metrics.js");
 
 const PORT = process.env.PORT || 8000;
 const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY;
@@ -54,9 +52,6 @@ if (REDIS_ENABLED) {
     console.log('[Redis] Ready for operations');
   });
 }
-
-// Initialize global token throttle (shared across all services)
-const tokenThrottle = new TokenThrottle(redisClient);
 
 // MCP Server endpoints
 const MCP_SERVERS = {
@@ -620,20 +615,6 @@ async function makeUnifiRequest(endpoint, method, body, cookie) {
  * Call Anthropic Claude API with error handling and retry logic
  */
 async function callClaude(messages, tools, sseWriter = null, retryCount = 0, systemPrompt = null) {
-  const requestStartTime = Date.now();
-
-  // Apply global token throttle BEFORE making API call
-  const throttleResult = await tokenThrottle.throttle(messages, tools, systemPrompt);
-  if (throttleResult.waitMs > 0) {
-    metrics.recordThrottleWait(throttleResult.waitMs / 1000, throttleResult.currentUsage);
-    if (sseWriter) {
-      sseWriter(JSON.stringify({
-        type: "throttle_wait",
-        message: `Waiting for rate limit (${throttleResult.currentUsage}/28000 tokens used)`
-      }));
-    }
-  }
-
   const MAX_RETRIES = 2;
   const TIMEOUT_MS = 120000; // 2 minutes
 
@@ -737,32 +718,9 @@ async function callClaude(messages, tools, sseWriter = null, retryCount = 0, sys
           // Check for API errors in response body
           if (parsed.error) {
             console.error('[Cortex] Claude API returned error:', parsed.error);
-            // Record failed request
-            const durationSeconds = (Date.now() - requestStartTime) / 1000;
-            metrics.recordRequest({
-              model: requestBody.model,
-              status: 'error',
-              durationSeconds
-            });
-
             reject(new Error(`Claude API error: ${parsed.error.message || JSON.stringify(parsed.error)}`));
             return;
           }
-
-          // Record successful request with usage metrics
-          const durationSeconds = (Date.now() - requestStartTime) / 1000;
-          const usage = parsed.usage || {};
-
-          metrics.recordRequest({
-            model: requestBody.model,
-            status: 'success',
-            inputTokens: usage.input_tokens || 0,
-            outputTokens: usage.output_tokens || 0,
-            cacheReadTokens: usage.cache_read_input_tokens || 0,
-            cacheCreationTokens: usage.cache_creation_input_tokens || 0,
-            durationSeconds,
-            tier: 'standard'
-          });
 
           resolve(parsed);
         } catch (error) {
@@ -2880,19 +2838,6 @@ const server = http.createServer(async (req, res) => {
         currentTask: taskProcessingState.currentTask?.id || null
       }
     }));
-    return;
-  }
-
-  // Prometheus metrics endpoint
-  if (req.url === '/metrics' && req.method === 'GET') {
-    metrics.getMetrics().then(metricsData => {
-      res.writeHead(200, { 'Content-Type': 'text/plain; version=0.0.4' });
-      res.end(metricsData);
-    }).catch(err => {
-      console.error('[Metrics] Error generating metrics:', err);
-      res.writeHead(500);
-      res.end('Error generating metrics');
-    });
     return;
   }
 
