@@ -1,0 +1,54 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: router-models-download
+  namespace: router-mesh
+spec:
+  backoffLimit: 10
+  ttlSecondsAfterFinished: 300
+  template:
+    metadata:
+      labels:
+        app: router-models-download
+    spec:
+      restartPolicy: OnFailure
+      containers:
+      - name: download-models
+        image: python:3.11-slim
+        command:
+        - /bin/bash
+        - -c
+        - |
+          set -e
+          echo "Installing wget..."
+          apt-get update && apt-get install -y wget
+
+          mkdir -p /models/smollm /models/qwen
+
+          echo "Downloading SmolLM-135M-Instruct Q4_K_M GGUF..."
+          wget -O /models/smollm/smollm-135m-instruct-q4_k_m.gguf \
+            "https://huggingface.co/HuggingFaceTB/SmolLM-135M-Instruct-GGUF/resolve/main/smollm-135m-instruct-q4_k_m.gguf"
+
+          echo "Downloading Qwen2.5-0.5B-Instruct Q4_K_M GGUF..."
+          wget -O /models/qwen/qwen2.5-0.5b-instruct-q4_k_m.gguf \
+            "https://huggingface.co/Qwen/Qwen2.5-0.5B-Instruct-GGUF/resolve/main/qwen2.5-0.5b-instruct-q4_k_m.gguf"
+
+          echo "Models downloaded successfully:"
+          ls -lh /models/smollm/
+          ls -lh /models/qwen/
+
+          echo "Done!"
+        volumeMounts:
+        - name: models
+          mountPath: /models
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "500m"
+          limits:
+            memory: "1Gi"
+            cpu: "1000m"
+      volumes:
+      - name: models
+        persistentVolumeClaim:
+          claimName: router-models-pvc

@@ -1,0 +1,161 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: router-mesh
+  namespace: router-mesh
+  labels:
+    app: router-mesh
+    app.kubernetes.io/name: router-mesh
+    app.kubernetes.io/component: llm-routing
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: router-mesh
+  template:
+    metadata:
+      labels:
+        app: router-mesh
+        app.kubernetes.io/name: router-mesh
+        app.kubernetes.io/component: llm-routing
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8080"
+        prometheus.io/path: "/metrics"
+    spec:
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            podAffinityTerm:
+              labelSelector:
+                matchExpressions:
+                - key: app
+                  operator: In
+                  values:
+                  - router-mesh
+              topologyKey: kubernetes.io/hostname
+      containers:
+      # L1 Model Server (SmolLM-135M) - Prefill Phase
+      - name: smollm
+        image: docker-registry.cortex-chat.svc.cluster.local:5000/router-model-server:latest
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 8080
+          name: smollm
+          protocol: TCP
+        env:
+        - name: MODEL_PATH
+          value: "/models/smollm/smollm-135m-instruct-q4_k_m.gguf"
+        - name: THREADS
+          value: "2"
+        volumeMounts:
+        - name: models
+          mountPath: /models
+          readOnly: true
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "200m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 20
+          periodSeconds: 5
+          timeoutSeconds: 3
+
+      # L2 Model Server (Qwen2.5-0.5B) - Decode Phase
+      - name: qwen
+        image: docker-registry.cortex-chat.svc.cluster.local:5000/router-model-server:latest
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 8081
+          name: qwen
+          protocol: TCP
+        env:
+        - name: MODEL_PATH
+          value: "/models/qwen/qwen2.5-0.5b-instruct-q4_k_m.gguf"
+        - name: THREADS
+          value: "4"
+        volumeMounts:
+        - name: models
+          mountPath: /models
+          readOnly: true
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "500m"
+          limits:
+            memory: "1Gi"
+            cpu: "1000m"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8081
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8081
+          initialDelaySeconds: 20
+          periodSeconds: 5
+          timeoutSeconds: 3
+
+      # Orchestrator - Intelligent Router with LLM-D cascade
+      - name: orchestrator
+        image: docker-registry.cortex-chat.svc.cluster.local:5000/router-orchestrator:latest
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 8082
+          name: orchestrator
+          protocol: TCP
+        - containerPort: 9090
+          name: metrics
+          protocol: TCP
+        envFrom:
+        - configMapRef:
+            name: router-config
+        env:
+        - name: L1_URL
+          value: "http://localhost:8080/classify"
+        - name: L2_URL
+          value: "http://localhost:8081/classify"
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "100m"
+          limits:
+            memory: "256Mi"
+            cpu: "500m"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8082
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          timeoutSeconds: 5
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8082
+          initialDelaySeconds: 5
+          periodSeconds: 5
+          timeoutSeconds: 3
+
+      volumes:
+      - name: models
+        persistentVolumeClaim:
+          claimName: router-models-pvc

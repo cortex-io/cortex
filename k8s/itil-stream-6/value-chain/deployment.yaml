@@ -1,0 +1,93 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: value-chain-config
+  namespace: cortex-governance
+data:
+  GOVERNANCE_URL: "http://governance-validator.cortex-governance.svc.cluster.local:8080"
+  RISK_URL: "http://risk-authorizer.cortex-governance.svc.cluster.local:8080"
+  CHANGE_MANAGER_URL: "http://change-manager.cortex-change-mgmt.svc.cluster.local:8080"
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: value-chain-orchestrator
+  namespace: cortex-governance
+  labels:
+    app: value-chain-orchestrator
+    component: itil-stream-6
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: value-chain-orchestrator
+  template:
+    metadata:
+      labels:
+        app: value-chain-orchestrator
+    spec:
+      containers:
+      - name: value-chain-orchestrator
+        image: value-chain-orchestrator:latest
+        imagePullPolicy: Never
+        ports:
+        - containerPort: 8080
+          name: http
+        env:
+        - name: GOVERNANCE_URL
+          valueFrom:
+            configMapKeyRef:
+              name: value-chain-config
+              key: GOVERNANCE_URL
+        - name: RISK_URL
+          valueFrom:
+            configMapKeyRef:
+              name: value-chain-config
+              key: RISK_URL
+        - name: CHANGE_MANAGER_URL
+          valueFrom:
+            configMapKeyRef:
+              name: value-chain-config
+              key: CHANGE_MANAGER_URL
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "200m"
+          limits:
+            memory: "1Gi"
+            cpu: "1000m"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 10
+          periodSeconds: 30
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 5
+          periodSeconds: 10
+        volumeMounts:
+        - name: stream-storage
+          mountPath: /tmp/value-streams
+      volumes:
+      - name: stream-storage
+        emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: value-chain-orchestrator
+  namespace: cortex-governance
+  labels:
+    app: value-chain-orchestrator
+spec:
+  selector:
+    app: value-chain-orchestrator
+  ports:
+  - port: 8080
+    targetPort: 8080
+    protocol: TCP
+    name: http
+  type: ClusterIP

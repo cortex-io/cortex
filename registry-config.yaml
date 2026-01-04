@@ -1,8 +1,0 @@
-mirrors:
-  "10.43.170.72:5000":
-    endpoint:
-      - "http://10.43.170.72:5000"
-configs:
-  "10.43.170.72:5000":
-    tls:
-      insecure_skip_verify: true

@@ -1,0 +1,201 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: fulfillment-workflows
+  namespace: cortex-service-desk
+data:
+  access-provisioning.yaml: |
+    name: access-provisioning
+    description: Provision user access to applications
+    steps:
+      - name: validate
+        type: validation
+        action: validate_request
+        required_fields:
+          - application
+          - access_level
+          - business_justification
+      - name: security_check
+        type: validation
+        action: check_security_requirements
+      - name: manager_approval
+        type: approval
+        action: get_approval
+        auto_approve: false
+        approver_role: manager
+      - name: provision_access
+        type: execution
+        action: execute_request
+        timeout: 300
+      - name: verify_access
+        type: verification
+        action: verify_provisioning
+      - name: notify
+        type: notification
+        action: notify_user
+        channels:
+          - email
+          - slack
+
+  password-reset-auto.yaml: |
+    name: password-reset-auto
+    description: Automated password reset
+    steps:
+      - name: validate
+        type: validation
+        action: validate_request
+        required_fields:
+          - system
+          - username
+      - name: verify_identity
+        type: validation
+        action: verify_user_identity
+      - name: auto_approve
+        type: approval
+        action: get_approval
+        auto_approve: true
+      - name: reset_password
+        type: execution
+        action: execute_request
+        timeout: 60
+      - name: send_credentials
+        type: notification
+        action: notify_user
+        channels:
+          - email
+        secure: true
+
+  software-approval-install.yaml: |
+    name: software-approval-install
+    description: Software installation with approval
+    steps:
+      - name: validate
+        type: validation
+        action: validate_request
+        required_fields:
+          - software_name
+          - license_type
+          - business_justification
+      - name: license_check
+        type: validation
+        action: check_license_availability
+      - name: security_scan
+        type: validation
+        action: security_scan_software
+      - name: manager_approval
+        type: approval
+        action: get_approval
+        auto_approve: false
+        approver_role: manager
+      - name: it_approval
+        type: approval
+        action: get_approval
+        auto_approve: false
+        approver_role: it_admin
+      - name: install_software
+        type: execution
+        action: execute_request
+        timeout: 1800
+      - name: verify_installation
+        type: verification
+        action: verify_installation
+      - name: notify
+        type: notification
+        action: notify_user
+
+  hardware-procurement.yaml: |
+    name: hardware-procurement
+    description: Hardware procurement workflow
+    steps:
+      - name: validate
+        type: validation
+        action: validate_request
+        required_fields:
+          - hardware_type
+          - specifications
+          - cost_center
+      - name: budget_check
+        type: validation
+        action: check_budget_availability
+      - name: manager_approval
+        type: approval
+        action: get_approval
+        auto_approve: false
+        approver_role: manager
+      - name: finance_approval
+        type: approval
+        action: get_approval
+        auto_approve: false
+        approver_role: finance
+        condition: cost > 1000
+      - name: create_po
+        type: execution
+        action: create_purchase_order
+      - name: notify
+        type: notification
+        action: notify_user
+
+  network-access-provisioning.yaml: |
+    name: network-access-provisioning
+    description: Network and VPN access provisioning
+    steps:
+      - name: validate
+        type: validation
+        action: validate_request
+        required_fields:
+          - access_type
+          - duration
+          - justification
+      - name: security_check
+        type: validation
+        action: check_security_clearance
+      - name: auto_approve
+        type: approval
+        action: get_approval
+        auto_approve: true
+      - name: provision_access
+        type: execution
+        action: execute_request
+        timeout: 300
+      - name: send_credentials
+        type: notification
+        action: notify_user
+        channels:
+          - email
+        secure: true
+
+  security-review-approval.yaml: |
+    name: security-review-approval
+    description: Security exception review and approval
+    steps:
+      - name: validate
+        type: validation
+        action: validate_request
+        required_fields:
+          - policy
+          - exception_reason
+          - risk_assessment
+          - duration
+      - name: risk_analysis
+        type: validation
+        action: analyze_risk
+      - name: security_approval
+        type: approval
+        action: get_approval
+        auto_approve: false
+        approver_role: security_admin
+      - name: ciso_approval
+        type: approval
+        action: get_approval
+        auto_approve: false
+        approver_role: ciso
+        condition: risk_level == high
+      - name: implement_exception
+        type: execution
+        action: execute_request
+      - name: schedule_review
+        type: execution
+        action: schedule_periodic_review
+      - name: notify
+        type: notification
+        action: notify_user
