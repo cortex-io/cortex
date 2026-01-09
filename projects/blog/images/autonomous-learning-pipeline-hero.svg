@@ -1,0 +1,311 @@
+<svg width="1200" height="630" viewBox="0 0 1200 630" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background gradient -->
+  <defs>
+    <linearGradient id="bgGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#0f172a;stop-opacity:1" />
+      <stop offset="50%" style="stop-color:#1e293b;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#334155;stop-opacity:1" />
+    </linearGradient>
+
+    <linearGradient id="accentGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#06b6d4;stop-opacity:0.4" />
+      <stop offset="100%" style="stop-color:#10b981;stop-opacity:0.4" />
+    </linearGradient>
+
+    <!-- Animated pulse for data flow -->
+    <radialGradient id="pulseGradient">
+      <stop offset="0%" style="stop-color:#06b6d4;stop-opacity:0.8">
+        <animate attributeName="stop-opacity" values="0.8;0.3;0.8" dur="3s" repeatCount="indefinite"/>
+      </stop>
+      <stop offset="100%" style="stop-color:#06b6d4;stop-opacity:0">
+        <animate attributeName="stop-opacity" values="0;0.1;0" dur="3s" repeatCount="indefinite"/>
+      </stop>
+    </radialGradient>
+
+    <!-- Glow filter -->
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="4" result="coloredBlur"/>
+      <feMerge>
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+
+    <!-- Data particle path -->
+    <path id="flowPath1" d="M 250,315 Q 400,250 550,315" fill="none"/>
+    <path id="flowPath2" d="M 550,315 Q 700,380 850,315" fill="none"/>
+    <path id="flowPath3" d="M 850,315 Q 1000,250 1150,315" fill="none"/>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1200" height="630" fill="url(#bgGradient)"/>
+
+  <!-- Decorative grid pattern -->
+  <g opacity="0.06">
+    <line x1="0" y1="150" x2="1200" y2="150" stroke="white" stroke-width="1"/>
+    <line x1="0" y1="315" x2="1200" y2="315" stroke="white" stroke-width="1"/>
+    <line x1="0" y1="480" x2="1200" y2="480" stroke="white" stroke-width="1"/>
+    <line x1="300" y1="0" x2="300" y2="630" stroke="white" stroke-width="1"/>
+    <line x1="600" y1="0" x2="600" y2="630" stroke="white" stroke-width="1"/>
+    <line x1="900" y1="0" x2="900" y2="630" stroke="white" stroke-width="1"/>
+  </g>
+
+  <!-- Pipeline Stage 1: Discovery -->
+  <g transform="translate(150, 315)">
+    <!-- Outer ring animation -->
+    <circle cx="0" cy="0" r="85" fill="none" stroke="#06b6d4" stroke-width="2" opacity="0.4" stroke-dasharray="8,6">
+      <animateTransform attributeName="transform" type="rotate" from="0 0 0" to="360 0 0" dur="20s" repeatCount="indefinite"/>
+    </circle>
+
+    <!-- Main container -->
+    <circle cx="0" cy="0" r="70" fill="#1e293b" stroke="#06b6d4" stroke-width="3" opacity="0.9"/>
+
+    <!-- Discovery icon - radar sweep -->
+    <g filter="url(#glow)">
+      <circle cx="0" cy="0" r="45" fill="#0f172a" opacity="0.8"/>
+
+      <!-- Radar sweep animation -->
+      <line x1="0" y1="0" x2="0" y2="-35" stroke="#06b6d4" stroke-width="2" opacity="0.8">
+        <animateTransform attributeName="transform" type="rotate" from="0 0 0" to="360 0 0" dur="4s" repeatCount="indefinite"/>
+      </line>
+
+      <!-- Discovery points -->
+      <circle cx="0" cy="-25" r="4" fill="#10b981">
+        <animate attributeName="opacity" values="1;0.3;1" dur="2s" repeatCount="indefinite"/>
+      </circle>
+      <circle cx="20" cy="15" r="4" fill="#06b6d4">
+        <animate attributeName="opacity" values="0.3;1;0.3" dur="2s" repeatCount="indefinite" begin="0.7s"/>
+      </circle>
+      <circle cx="-20" cy="15" r="4" fill="#10b981">
+        <animate attributeName="opacity" values="0.3;1;0.3" dur="2s" repeatCount="indefinite" begin="1.3s"/>
+      </circle>
+    </g>
+  </g>
+
+  <!-- Connecting flow line 1 -->
+  <path d="M 220,315 L 380,315" stroke="url(#accentGradient)" stroke-width="3" opacity="0.6"/>
+
+  <!-- Animated data particles 1 -->
+  <circle r="6" fill="#06b6d4" filter="url(#glow)">
+    <animateMotion dur="4s" repeatCount="indefinite">
+      <mpath href="#flowPath1"/>
+    </animateMotion>
+  </circle>
+  <circle r="4" fill="#10b981" filter="url(#glow)">
+    <animateMotion dur="4s" repeatCount="indefinite" begin="1.3s">
+      <mpath href="#flowPath1"/>
+    </animateMotion>
+  </circle>
+
+  <!-- Pipeline Stage 2: Prioritization & Queue -->
+  <g transform="translate(450, 315)">
+    <!-- Outer pulse -->
+    <circle cx="0" cy="0" r="85" fill="none" stroke="#10b981" stroke-width="2" opacity="0.3">
+      <animate attributeName="r" values="85;95;85" dur="3s" repeatCount="indefinite"/>
+      <animate attributeName="opacity" values="0.3;0;0.3" dur="3s" repeatCount="indefinite"/>
+    </circle>
+
+    <!-- Main container -->
+    <circle cx="0" cy="0" r="70" fill="#1e293b" stroke="#10b981" stroke-width="3" opacity="0.9"/>
+
+    <!-- Priority queue visualization -->
+    <g filter="url(#glow)">
+      <circle cx="0" cy="0" r="45" fill="#0f172a" opacity="0.8"/>
+
+      <!-- Stacked items -->
+      <rect x="-30" y="-25" width="60" height="12" rx="2" fill="#06b6d4" opacity="0.9">
+        <animate attributeName="y" values="-25;-30;-25" dur="2s" repeatCount="indefinite"/>
+      </rect>
+      <rect x="-30" y="-8" width="60" height="12" rx="2" fill="#06b6d4" opacity="0.7">
+        <animate attributeName="y" values="-8;-13;-8" dur="2s" repeatCount="indefinite" begin="0.2s"/>
+      </rect>
+      <rect x="-30" y="9" width="60" height="12" rx="2" fill="#10b981" opacity="0.5">
+        <animate attributeName="y" values="9;4;9" dur="2s" repeatCount="indefinite" begin="0.4s"/>
+      </rect>
+      <rect x="-30" y="26" width="60" height="12" rx="2" fill="#10b981" opacity="0.3">
+        <animate attributeName="y" values="26;21;26" dur="2s" repeatCount="indefinite" begin="0.6s"/>
+      </rect>
+
+      <!-- Priority indicator -->
+      <path d="M -35,-15 L -40,-20 L -45,-15" stroke="#10b981" stroke-width="2" fill="none" opacity="0.8">
+        <animate attributeName="opacity" values="0.8;0.3;0.8" dur="1.5s" repeatCount="indefinite"/>
+      </path>
+    </g>
+  </g>
+
+  <!-- Connecting flow line 2 -->
+  <path d="M 520,315 L 680,315" stroke="url(#accentGradient)" stroke-width="3" opacity="0.6"/>
+
+  <!-- Animated data particles 2 -->
+  <circle r="6" fill="#10b981" filter="url(#glow)">
+    <animateMotion dur="4s" repeatCount="indefinite">
+      <mpath href="#flowPath2"/>
+    </animateMotion>
+  </circle>
+  <circle r="4" fill="#06b6d4" filter="url(#glow)">
+    <animateMotion dur="4s" repeatCount="indefinite" begin="1.3s">
+      <mpath href="#flowPath2"/>
+    </animateMotion>
+  </circle>
+
+  <!-- Pipeline Stage 3: Learning Extraction -->
+  <g transform="translate(750, 315)">
+    <!-- Rotating outer ring -->
+    <circle cx="0" cy="0" r="85" fill="none" stroke="#8b5cf6" stroke-width="2" opacity="0.4" stroke-dasharray="6,8">
+      <animateTransform attributeName="transform" type="rotate" from="360 0 0" to="0 0 0" dur="15s" repeatCount="indefinite"/>
+    </circle>
+
+    <!-- Main container -->
+    <circle cx="0" cy="0" r="70" fill="#1e293b" stroke="#8b5cf6" stroke-width="3" opacity="0.9"/>
+
+    <!-- Brain/learning visualization -->
+    <g filter="url(#glow)">
+      <circle cx="0" cy="0" r="45" fill="#0f172a" opacity="0.8"/>
+
+      <!-- Neural connections -->
+      <g opacity="0.8">
+        <circle cx="-15" cy="-20" r="5" fill="#8b5cf6">
+          <animate attributeName="fill-opacity" values="1;0.3;1" dur="2s" repeatCount="indefinite"/>
+        </circle>
+        <circle cx="15" cy="-20" r="5" fill="#06b6d4">
+          <animate attributeName="fill-opacity" values="0.3;1;0.3" dur="2s" repeatCount="indefinite" begin="0.7s"/>
+        </circle>
+        <circle cx="-20" cy="5" r="5" fill="#10b981">
+          <animate attributeName="fill-opacity" values="0.3;1;0.3" dur="2s" repeatCount="indefinite" begin="0.3s"/>
+        </circle>
+        <circle cx="20" cy="5" r="5" fill="#06b6d4">
+          <animate attributeName="fill-opacity" values="0.3;1;0.3" dur="2s" repeatCount="indefinite" begin="1s"/>
+        </circle>
+        <circle cx="0" cy="20" r="5" fill="#10b981">
+          <animate attributeName="fill-opacity" values="1;0.3;1" dur="2s" repeatCount="indefinite" begin="0.5s"/>
+        </circle>
+
+        <!-- Connection lines -->
+        <line x1="-15" y1="-20" x2="0" y2="0" stroke="#8b5cf6" stroke-width="1.5" opacity="0.5">
+          <animate attributeName="opacity" values="0.5;0.1;0.5" dur="2s" repeatCount="indefinite"/>
+        </line>
+        <line x1="15" y1="-20" x2="0" y2="0" stroke="#06b6d4" stroke-width="1.5" opacity="0.5">
+          <animate attributeName="opacity" values="0.1;0.5;0.1" dur="2s" repeatCount="indefinite" begin="0.7s"/>
+        </line>
+        <line x1="-20" y1="5" x2="0" y2="0" stroke="#10b981" stroke-width="1.5" opacity="0.5">
+          <animate attributeName="opacity" values="0.1;0.5;0.1" dur="2s" repeatCount="indefinite" begin="0.3s"/>
+        </line>
+        <line x1="20" y1="5" x2="0" y2="0" stroke="#06b6d4" stroke-width="1.5" opacity="0.5">
+          <animate attributeName="opacity" values="0.1;0.5;0.1" dur="2s" repeatCount="indefinite" begin="1s"/>
+        </line>
+        <line x1="0" y1="20" x2="0" y2="0" stroke="#10b981" stroke-width="1.5" opacity="0.5">
+          <animate attributeName="opacity" values="0.5;0.1;0.5" dur="2s" repeatCount="indefinite" begin="0.5s"/>
+        </line>
+
+        <!-- Central node -->
+        <circle cx="0" cy="0" r="8" fill="#8b5cf6" opacity="0.6">
+          <animate attributeName="r" values="8;10;8" dur="2s" repeatCount="indefinite"/>
+        </circle>
+      </g>
+    </g>
+  </g>
+
+  <!-- Connecting flow line 3 -->
+  <path d="M 820,315 L 980,315" stroke="url(#accentGradient)" stroke-width="3" opacity="0.6"/>
+
+  <!-- Animated data particles 3 -->
+  <circle r="6" fill="#8b5cf6" filter="url(#glow)">
+    <animateMotion dur="4s" repeatCount="indefinite">
+      <mpath href="#flowPath3"/>
+    </animateMotion>
+  </circle>
+  <circle r="4" fill="#10b981" filter="url(#glow)">
+    <animateMotion dur="4s" repeatCount="indefinite" begin="1.3s">
+      <mpath href="#flowPath3"/>
+    </animateMotion>
+  </circle>
+
+  <!-- Pipeline Stage 4: Knowledge Interface -->
+  <g transform="translate(1050, 315)">
+    <!-- Breathing glow -->
+    <circle cx="0" cy="0" r="85" fill="url(#pulseGradient)"/>
+
+    <!-- Main container -->
+    <circle cx="0" cy="0" r="70" fill="#1e293b" stroke="#10b981" stroke-width="3" opacity="0.9"/>
+
+    <!-- Chat/interface visualization -->
+    <g filter="url(#glow)">
+      <circle cx="0" cy="0" r="45" fill="#0f172a" opacity="0.8"/>
+
+      <!-- Message bubbles -->
+      <g opacity="0.9">
+        <!-- User message -->
+        <rect x="-25" y="-25" width="35" height="15" rx="4" fill="#06b6d4" opacity="0.7">
+          <animate attributeName="opacity" values="0.7;1;0.7" dur="4s" repeatCount="indefinite"/>
+        </rect>
+
+        <!-- Response message -->
+        <rect x="-10" y="-5" width="35" height="15" rx="4" fill="#10b981" opacity="0.7">
+          <animate attributeName="opacity" values="0.7;1;0.7" dur="4s" repeatCount="indefinite" begin="1s"/>
+        </rect>
+
+        <!-- Knowledge indicator -->
+        <rect x="-25" y="15" width="35" height="15" rx="4" fill="#8b5cf6" opacity="0.7">
+          <animate attributeName="opacity" values="0.7;1;0.7" dur="4s" repeatCount="indefinite" begin="2s"/>
+        </rect>
+
+        <!-- Sparkle effect -->
+        <circle cx="25" cy="20" r="3" fill="#10b981">
+          <animate attributeName="opacity" values="0;1;0" dur="2s" repeatCount="indefinite"/>
+          <animate attributeName="r" values="3;6;3" dur="2s" repeatCount="indefinite"/>
+        </circle>
+      </g>
+    </g>
+  </g>
+
+  <!-- Decorative flowing particles in background -->
+  <g opacity="0.15">
+    <circle cx="100" cy="150" r="3" fill="#06b6d4">
+      <animate attributeName="cy" values="150;480;150" dur="8s" repeatCount="indefinite"/>
+      <animate attributeName="opacity" values="0;0.15;0" dur="8s" repeatCount="indefinite"/>
+    </circle>
+    <circle cx="300" cy="480" r="3" fill="#10b981">
+      <animate attributeName="cy" values="480;150;480" dur="10s" repeatCount="indefinite"/>
+      <animate attributeName="opacity" values="0;0.15;0" dur="10s" repeatCount="indefinite"/>
+    </circle>
+    <circle cx="500" cy="200" r="3" fill="#8b5cf6">
+      <animate attributeName="cy" values="200;430;200" dur="12s" repeatCount="indefinite"/>
+      <animate attributeName="opacity" values="0;0.15;0" dur="12s" repeatCount="indefinite"/>
+    </circle>
+    <circle cx="700" cy="450" r="3" fill="#06b6d4">
+      <animate attributeName="cy" values="450;180;450" dur="9s" repeatCount="indefinite"/>
+      <animate attributeName="opacity" values="0;0.15;0" dur="9s" repeatCount="indefinite"/>
+    </circle>
+    <circle cx="900" cy="180" r="3" fill="#10b981">
+      <animate attributeName="cy" values="180;460;180" dur="11s" repeatCount="indefinite"/>
+      <animate attributeName="opacity" values="0;0.15;0" dur="11s" repeatCount="indefinite"/>
+    </circle>
+    <circle cx="1100" cy="420" r="3" fill="#8b5cf6">
+      <animate attributeName="cy" values="420;210;420" dur="13s" repeatCount="indefinite"/>
+      <animate attributeName="opacity" values="0;0.15;0" dur="13s" repeatCount="indefinite"/>
+    </circle>
+  </g>
+
+  <!-- Stage labels -->
+  <g opacity="0.7">
+    <circle cx="150" cy="140" r="3" fill="#06b6d4"/>
+    <circle cx="450" cy="140" r="3" fill="#10b981"/>
+    <circle cx="750" cy="140" r="3" fill="#8b5cf6"/>
+    <circle cx="1050" cy="140" r="3" fill="#10b981"/>
+  </g>
+
+  <!-- Bottom accent line with animation -->
+  <rect x="0" y="620" width="1200" height="10" fill="url(#accentGradient)">
+    <animate attributeName="opacity" values="0.4;0.7;0.4" dur="3s" repeatCount="indefinite"/>
+  </rect>
+
+  <!-- Corner brand mark -->
+  <g opacity="0.6">
+    <circle cx="1140" cy="580" r="25" fill="none" stroke="#06b6d4" stroke-width="2">
+      <animateTransform attributeName="transform" type="rotate" from="0 1140 580" to="360 1140 580" dur="30s" repeatCount="indefinite"/>
+    </circle>
+    <circle cx="1140" cy="580" r="18" fill="none" stroke="#10b981" stroke-width="2" stroke-dasharray="4,4">
+      <animateTransform attributeName="transform" type="rotate" from="360 1140 580" to="0 1140 580" dur="20s" repeatCount="indefinite"/>
+    </circle>
+  </g>
+</svg>
