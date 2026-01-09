@@ -7,6 +7,7 @@ category: Platform Updates
 featured: true
 image: /projects/blog/images/cortex-ai-agents-hero-placeholder.svg
 image_alt: "Cortex AI Agents System - Autonomous, Intelligent, Safe"
+social_image: /projects/blog/images/cortex-ai-agents-social.svg
 description: "Introducing the Cortex AI Agents System: production-grade autonomous agent orchestration with advanced reasoning, multi-agent coordination, and comprehensive safety controls. Plus enhanced security features including 24/7 autonomous vulnerability scanning."
 ---
 
