@@ -35,7 +35,7 @@
     "jsonwebtoken": "^9.0.3",
     "minisearch": "^7.1.0",
     "openai": "^4.73.0",
-    "postman-cli": "^1.26.0",
+    "postman-cli": "^1.29.3",
     "tiktoken": "^1.0.17",
     "ws": "^8.18.3"
   },
