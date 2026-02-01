@@ -1,0 +1,462 @@
+# Wazuh Agent Configuration for Cortex K3s Nodes
+# Last Updated: 2025-12-11
+#
+# This configuration should be deployed to all k3s nodes running Cortex workloads
+# Deploy using DaemonSet or direct agent installation
+
+# ===========================================
+# Agent Configuration
+# ===========================================
+agent:
+  # Server connection
+  server:
+    address: 10.88.140.202
+    port: 1514
+    protocol: tcp
+
+  # Agent identification
+  name: cortex-k3s-node-${HOSTNAME}
+  groups:
+    - cortex
+    - kubernetes
+    - k3s
+
+  # Agent behavior
+  notify_time: 10
+  time_reconnect: 60
+  auto_restart: yes
+  crypto_method: aes
+
+# ===========================================
+# Log Collection Configuration
+# ===========================================
+log_collection:
+  # Cortex Agent Logs
+  - name: cortex-meta-agent
+    location: /var/log/cortex/meta-agent/*.log
+    log_format: json
+    only_future_events: yes
+    labels:
+      component: meta-agent
+      tier: core
+
+  - name: cortex-masters
+    location: /var/log/cortex/masters/**/*.log
+    log_format: json
+    only_future_events: yes
+    labels:
+      component: master
+      tier: coordination
+
+  - name: cortex-workers
+    location: /var/log/cortex/workers/**/*.log
+    log_format: json
+    only_future_events: yes
+    labels:
+      component: worker
+      tier: execution
+
+  - name: cortex-contractors
+    location: /var/log/cortex/contractors/**/*.log
+    log_format: json
+    only_future_events: yes
+    labels:
+      component: contractor
+      tier: external
+
+  # MCP Server Logs
+  - name: mcp-servers
+    location: /var/log/cortex/mcp/**/*.log
+    log_format: json
+    only_future_events: yes
+    labels:
+      component: mcp
+      tier: integration
+
+  # N8N Workflow Logs (if running on k3s)
+  - name: n8n-workflows
+    location: /var/log/n8n/*.log
+    log_format: json
+    only_future_events: yes
+    labels:
+      component: n8n
+      tier: automation
+
+  # Kubernetes Audit Logs
+  - name: k8s-audit
+    location: /var/log/kubernetes/audit/audit.log
+    log_format: json
+    only_future_events: yes
+    labels:
+      component: kubernetes
+      tier: infrastructure
+
+  # K3s Server Logs
+  - name: k3s-server
+    location: /var/log/k3s-server.log
+    log_format: syslog
+    only_future_events: yes
+    labels:
+      component: k3s-server
+      tier: infrastructure
+
+  # Container Runtime Logs
+  - name: containerd
+    location: /var/log/containerd/containerd.log
+    log_format: syslog
+    only_future_events: yes
+    labels:
+      component: containerd
+      tier: runtime
+
+  # Cortex Task Execution Logs
+  - name: cortex-tasks
+    location: /var/log/cortex/tasks/**/*.log
+    log_format: json
+    only_future_events: yes
+    labels:
+      component: task-execution
+      tier: coordination
+
+  # Cortex API Gateway Logs
+  - name: cortex-api
+    location: /var/log/cortex/api/*.log
+    log_format: json
+    only_future_events: yes
+    labels:
+      component: api-gateway
+      tier: core
+
+  # System Auth Logs
+  - name: system-auth
+    location: /var/log/auth.log
+    log_format: syslog
+    labels:
+      component: system-auth
+      tier: os
+
+  # System Syslog
+  - name: system-syslog
+    location: /var/log/syslog
+    log_format: syslog
+    labels:
+      component: system
+      tier: os
+
+# ===========================================
+# File Integrity Monitoring (FIM)
+# ===========================================
+file_integrity_monitoring:
+  # Monitor Cortex configuration files
+  - path: /etc/cortex
+    recursive: yes
+    check_all: yes
+    report_changes: yes
+    realtime: yes
+    tags:
+      - cortex-config
+
+  # Monitor Cortex coordination directory
+  - path: /opt/cortex/coordination/masters
+    recursive: yes
+    check_all: yes
+    report_changes: yes
+    realtime: yes
+    tags:
+      - cortex-coordination
+      - master-state
+
+  # Monitor Cortex worker registry
+  - path: /opt/cortex/coordination/workers
+    recursive: yes
+    check_all: yes
+    report_changes: yes
+    realtime: yes
+    tags:
+      - cortex-workers
+      - worker-registry
+
+  # Monitor Kubernetes configs
+  - path: /etc/kubernetes
+    recursive: yes
+    check_all: yes
+    report_changes: yes
+    realtime: yes
+    tags:
+      - kubernetes-config
+
+  # Monitor K3s configs
+  - path: /etc/rancher/k3s
+    recursive: yes
+    check_all: yes
+    report_changes: yes
+    realtime: yes
+    tags:
+      - k3s-config
+
+  # Monitor secrets
+  - path: /var/lib/rancher/k3s/server/tls
+    recursive: yes
+    check_all: yes
+    report_changes: yes
+    realtime: yes
+    tags:
+      - kubernetes-secrets
+      - tls-certificates
+
+  # Monitor Cortex binaries
+  - path: /usr/local/bin/cortex
+    check_all: yes
+    report_changes: yes
+    realtime: yes
+    tags:
+      - cortex-binaries
+
+  # Monitor system binaries
+  - path: /usr/bin
+    recursive: no
+    check_sha256sum: yes
+    tags:
+      - system-binaries
+
+  # Monitor critical system files
+  - path: /etc/passwd
+    check_all: yes
+    report_changes: yes
+    realtime: yes
+    tags:
+      - system-config
+
+  - path: /etc/shadow
+    check_all: yes
+    report_changes: yes
+    realtime: yes
+    tags:
+      - system-config
+      - credentials
+
+  - path: /etc/sudoers
+    check_all: yes
+    report_changes: yes
+    realtime: yes
+    tags:
+      - system-config
+      - privilege-escalation
+
+# ===========================================
+# Rootcheck Configuration
+# ===========================================
+rootcheck:
+  enabled: yes
+  frequency: 43200  # Run every 12 hours
+
+  # System audit
+  system_audit:
+    - /var/ossec/etc/shared/system_audit_rcl.txt
+    - /var/ossec/etc/shared/cis_debian_linux_rcl.txt
+    - /var/ossec/etc/shared/cis_kubernetes_rcl.txt
+
+  # Rootkit detection
+  rootkit_files: yes
+  rootkit_trojans: yes
+
+  # Check for hidden files
+  check_dev: yes
+  check_files: yes
+  check_if: yes
+  check_pids: yes
+  check_ports: yes
+  check_sys: yes
+  check_trojans: yes
+  check_unixaudit: yes
+  check_winapps: no
+  check_winaudit: no
+  check_winmalware: no
+
+# ===========================================
+# Security Configuration Assessment (SCA)
+# ===========================================
+security_configuration_assessment:
+  enabled: yes
+  scan_on_start: yes
+  interval: 12h
+  skip_nfs: yes
+
+  policies:
+    - cis_kubernetes_k3s.yml
+    - cis_debian_linux.yml
+    - pci_dss_v4.yml
+    - gdpr.yml
+    - container_security.yml
+
+# ===========================================
+# Vulnerability Detection
+# ===========================================
+vulnerability_detection:
+  enabled: yes
+  index_status: yes
+  feed_update_interval: 60m
+
+  # OS vulnerability detection
+  os:
+    enabled: yes
+
+  # Package vulnerability detection
+  packages:
+    enabled: yes
+
+  # Container image scanning
+  containers:
+    enabled: yes
+
+# ===========================================
+# Active Response
+# ===========================================
+active_response:
+  # Disable active response by default (enable per use case)
+  disabled: yes
+
+  # Example responses (commented out)
+  # - name: firewall-drop
+  #   command: firewall-drop
+  #   location: local
+  #   rules_id: 100102,100103
+  #   timeout: 600
+
+  # - name: restart-cortex
+  #   command: restart-service
+  #   location: local
+  #   rules_id: 100191,100192
+  #   timeout: 0
+
+# ===========================================
+# Command Execution Monitoring
+# ===========================================
+command_monitoring:
+  enabled: yes
+
+  # Monitor suspicious commands
+  commands:
+    - name: detect-netcat
+      command: netcat|nc
+      timeout: 30
+
+    - name: detect-nmap
+      command: nmap
+      timeout: 30
+
+    - name: detect-reverse-shell
+      command: bash -i|sh -i|/dev/tcp
+      timeout: 30
+
+    - name: detect-privilege-escalation
+      command: sudo|su -
+      timeout: 30
+
+    - name: detect-container-escape
+      command: nsenter|unshare|chroot
+      timeout: 30
+
+# ===========================================
+# Agent Modules
+# ===========================================
+modules:
+  # System inventory
+  - name: syscollector
+    enabled: yes
+    interval: 3600
+    scan_on_start: yes
+    hardware: yes
+    os: yes
+    network: yes
+    packages: yes
+    ports: yes
+    processes: yes
+
+  # CIS-CAT integration (if available)
+  - name: ciscat
+    enabled: no
+
+  # OpenSCAP integration (if available)
+  - name: oscap
+    enabled: no
+
+  # AWS integration (if running on AWS)
+  - name: aws-s3
+    enabled: no
+
+  # Docker listener
+  - name: docker-listener
+    enabled: yes
+    interval: 60
+
+  # Kubernetes integration
+  - name: kubernetes
+    enabled: yes
+    interval: 60
+    namespace: cortex
+
+# ===========================================
+# Log Analysis Configuration
+# ===========================================
+log_analysis:
+  # JSON decoder settings
+  json_decoder:
+    enabled: yes
+
+  # Regex patterns for log parsing
+  custom_patterns:
+    - name: cortex-task-id
+      pattern: 'task-[a-z]+-\d{8}-[a-f0-9]{8}'
+
+    - name: cortex-worker-id
+      pattern: 'worker-[a-z]+-\d{8}-[a-f0-9]{8}'
+
+    - name: cortex-session-id
+      pattern: 'session-[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}'
+
+# ===========================================
+# Client Buffer Configuration
+# ===========================================
+client_buffer:
+  # Prevent agent from overwhelming manager
+  disabled: no
+  queue_size: 5000
+  events_per_second: 500
+
+# ===========================================
+# Labels for Agent Classification
+# ===========================================
+labels:
+  - key: environment
+    value: production
+
+  - key: project
+    value: cortex
+
+  - key: cluster
+    value: k3s
+
+  - key: monitoring
+    value: wazuh
+
+  - key: compliance
+    value: pci-dss,gdpr
+
+# ===========================================
+# Remote Configuration
+# ===========================================
+remote_configuration:
+  enabled: yes
+
+# ===========================================
+# Agent Logging
+# ===========================================
+logging:
+  level: info  # debug, info, warning, error, critical
+
+  # Log rotation
+  rotation:
+    enabled: yes
+    max_size: 100M
+    max_files: 10

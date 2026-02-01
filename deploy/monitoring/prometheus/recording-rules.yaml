@@ -331,3 +331,192 @@ groups:
           rate(cortex_handoffs_completed_total[5m])
           /
           rate(cortex_handoffs_created_total[5m])
+
+  # Baseline Metrics for Anomaly Detection and SLO Tracking
+  - name: cortex_baselines_5m
+    interval: 300s
+    rules:
+      # Task completion rate baseline (5m average)
+      - record: cortex:task_completion_rate:5m
+        expr: rate(cortex_task_completions_total[5m])
+
+      # Error rate baseline (5m average)
+      - record: cortex:error_rate:5m
+        expr: rate(cortex_requests_total{status="error"}[5m])
+
+      # Average task duration baseline (5m)
+      - record: cortex:avg_task_duration:5m
+        expr: |
+          rate(cortex_task_duration_seconds_sum[5m])
+          /
+          rate(cortex_task_duration_seconds_count[5m])
+
+      # Token consumption rate baseline (5m)
+      - record: cortex:token_consumption_rate:5m
+        expr: rate(cortex_tokens_consumed_total[5m])
+
+      # Token consumption rate baseline (10m)
+      - record: cortex:token_consumption_rate:10m
+        expr: rate(cortex_tokens_consumed_total[10m])
+
+      # Agent availability baseline (5m)
+      - record: cortex:agent_availability:5m
+        expr: avg_over_time(up{job=~"cortex-.*"}[5m])
+
+      # Agent availability baseline (30m)
+      - record: cortex:agent_availability:30m
+        expr: avg_over_time(up{job=~"cortex-.*"}[30m])
+
+      # MCP latency p99 baseline (5m)
+      - record: cortex:mcp_latency_p99:5m
+        expr: histogram_quantile(0.99, rate(mcp_request_duration_seconds_bucket[5m]))
+
+      # Master agent task processing rate (5m)
+      - record: cortex:master_task_rate:5m
+        expr: sum by (master_type) (rate(cortex_master_tasks_processed_total[5m]))
+
+      # Worker success rate by type (5m)
+      - record: cortex:worker_success_rate:5m
+        expr: |
+          sum by (worker_type) (rate(cortex_worker_task_completions_total[5m]))
+          /
+          (
+            sum by (worker_type) (rate(cortex_worker_task_completions_total[5m]))
+            +
+            sum by (worker_type) (rate(cortex_worker_task_failures_total[5m]))
+          )
+
+      # Average tokens per task (5m)
+      - record: cortex:avg_tokens_per_task:5m
+        expr: |
+          rate(cortex_tokens_consumed_total[5m])
+          /
+          rate(cortex_task_completions_total[5m])
+
+      # System request throughput (5m)
+      - record: cortex:request_throughput:5m
+        expr: sum(rate(cortex_requests_total[5m]))
+
+      # MCP tool call success rate (5m)
+      - record: cortex:mcp_tool_success_rate:5m
+        expr: |
+          (
+            sum(rate(mcp_tool_calls_total[5m]))
+            -
+            sum(rate(mcp_tool_call_failures_total[5m]))
+          )
+          /
+          sum(rate(mcp_tool_calls_total[5m]))
+
+  # Hourly Baselines for Long-term Trending
+  - name: cortex_baselines_1h
+    interval: 3600s
+    rules:
+      # Hourly task completion rate
+      - record: cortex:task_completion_rate:1h
+        expr: rate(cortex_task_completions_total[1h])
+
+      # Hourly error rate
+      - record: cortex:error_rate:1h
+        expr: rate(cortex_requests_total{status="error"}[1h])
+
+      # Hourly average task duration
+      - record: cortex:avg_task_duration:1h
+        expr: |
+          rate(cortex_task_duration_seconds_sum[1h])
+          /
+          rate(cortex_task_duration_seconds_count[1h])
+
+      # Hourly token consumption rate
+      - record: cortex:token_consumption_rate:1h
+        expr: rate(cortex_tokens_consumed_total[1h])
+
+      # Hourly agent availability
+      - record: cortex:agent_availability:1h
+        expr: avg_over_time(up{job=~"cortex-.*"}[1h])
+
+      # Hourly system uptime percentage
+      - record: cortex:system_uptime:1h
+        expr: |
+          avg_over_time(up{job="cortex-core"}[1h]) * 100
+
+  # Daily Baselines for Historical Analysis
+  - name: cortex_baselines_24h
+    interval: 86400s
+    rules:
+      # Daily task completion rate
+      - record: cortex:task_completion_rate:24h
+        expr: rate(cortex_task_completions_total[24h])
+
+      # Daily error rate
+      - record: cortex:error_rate:24h
+        expr: rate(cortex_requests_total{status="error"}[24h])
+
+      # Daily average task duration
+      - record: cortex:avg_task_duration:24h
+        expr: |
+          rate(cortex_task_duration_seconds_sum[24h])
+          /
+          rate(cortex_task_duration_seconds_count[24h])
+
+      # Daily token consumption
+      - record: cortex:tokens_consumed:24h
+        expr: increase(cortex_tokens_consumed_total[24h])
+
+      # Daily task volume
+      - record: cortex:task_volume:24h
+        expr: increase(cortex_task_completions_total[24h])
+
+      # Daily availability by component
+      - record: cortex:availability_by_component:24h
+        expr: |
+          avg_over_time(up{job=~"cortex-.*"}[24h]) by (job) * 100
+
+  # SLO Error Budget Recording Rules
+  - name: cortex_slo_error_budget
+    interval: 300s
+    rules:
+      # Overall SLO error budget remaining (30-day window, 99.5% target)
+      - record: cortex:slo_error_budget:remaining
+        expr: |
+          1 - (
+            (1 - avg(avg_over_time(up{job=~"cortex-.*"}[30d])))
+            /
+            0.005
+          )
+
+      # Meta-agent error budget remaining (30-day window, 99.9% target)
+      - record: cortex:slo_error_budget:meta_agent:remaining
+        expr: |
+          1 - (
+            (1 - avg_over_time(up{job="cortex-core"}[30d]))
+            /
+            0.001
+          )
+
+      # Master agents error budget remaining (30-day window, 99.5% target)
+      - record: cortex:slo_error_budget:masters:remaining
+        expr: |
+          1 - (
+            (1 - avg_over_time(up{job="cortex-masters"}[30d]) by (master_type))
+            /
+            0.005
+          )
+
+      # Worker agents error budget remaining (30-day window, 99% target)
+      - record: cortex:slo_error_budget:workers:remaining
+        expr: |
+          1 - (
+            (1 - avg_over_time(up{job="cortex-workers"}[30d]) by (worker_type))
+            /
+            0.01
+          )
+
+      # MCP servers error budget remaining (30-day window, 99.5% target)
+      - record: cortex:slo_error_budget:mcp:remaining
+        expr: |
+          1 - (
+            (1 - avg_over_time(up{job="mcp-servers"}[30d]) by (mcp_type))
+            /
+            0.005
+          )
