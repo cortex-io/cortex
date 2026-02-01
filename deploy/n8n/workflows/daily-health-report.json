@@ -1,0 +1,574 @@
+{
+  "name": "Daily Health Report",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 8 * * *"
+            }
+          ]
+        }
+      },
+      "id": "cron-trigger",
+      "name": "Cron Trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [250, 300],
+      "notes": "Daily at 8:00 AM"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "report-date",
+              "name": "reportDate",
+              "value": "={{ $now.toFormat('yyyy-MM-dd') }}",
+              "type": "string"
+            },
+            {
+              "id": "start-time",
+              "name": "startTime",
+              "value": "={{ $now.minus({ days: 1 }).toISO() }}",
+              "type": "string"
+            },
+            {
+              "id": "end-time",
+              "name": "endTime",
+              "value": "={{ $now.toISO() }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "set-time-range",
+      "name": "Set Time Range",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [450, 300]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $env.PROMETHEUS_URL }}/api/v1/query",
+        "authentication": "genericCredentialType",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "query",
+              "value": "sum(rate(cortex_requests_total[24h]))"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "query-request-rate",
+      "name": "Query Request Rate",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [650, 100]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $env.PROMETHEUS_URL }}/api/v1/query",
+        "authentication": "genericCredentialType",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "query",
+              "value": "sum(rate(cortex_errors_total[24h])) / sum(rate(cortex_requests_total[24h])) * 100"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "query-error-rate",
+      "name": "Query Error Rate",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [650, 200]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $env.PROMETHEUS_URL }}/api/v1/query",
+        "authentication": "genericCredentialType",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "query",
+              "value": "histogram_quantile(0.95, rate(cortex_request_duration_seconds_bucket[24h]))"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "query-latency-p95",
+      "name": "Query Latency P95",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [650, 300]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $env.PROMETHEUS_URL }}/api/v1/query",
+        "authentication": "genericCredentialType",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "query",
+              "value": "avg(up{job=\"cortex\"}) * 100"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "query-uptime",
+      "name": "Query Uptime",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [650, 400]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $env.PROMETHEUS_URL }}/api/v1/query",
+        "authentication": "genericCredentialType",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "query",
+              "value": "sum(cortex_worker_tasks_completed_total[24h])"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "query-tasks-completed",
+      "name": "Query Tasks Completed",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [650, 500]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $env.PROMETHEUS_URL }}/api/v1/query",
+        "authentication": "genericCredentialType",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "query",
+              "value": "avg(cortex_worker_task_duration_seconds[24h])"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "query-avg-task-duration",
+      "name": "Query Avg Task Duration",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [650, 600]
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combinationMode": "mergeByPosition",
+        "options": {}
+      },
+      "id": "merge-metrics",
+      "name": "Merge Metrics",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 2.1,
+      "position": [850, 350]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Process Prometheus metrics\nconst items = $input.all();\n\n// Extract metric values\nconst requestRate = parseFloat(items[0]?.json?.data?.result?.[0]?.value?.[1] || 0);\nconst errorRate = parseFloat(items[1]?.json?.data?.result?.[0]?.value?.[1] || 0);\nconst latencyP95 = parseFloat(items[2]?.json?.data?.result?.[0]?.value?.[1] || 0);\nconst uptime = parseFloat(items[3]?.json?.data?.result?.[0]?.value?.[1] || 100);\nconst tasksCompleted = parseInt(items[4]?.json?.data?.result?.[0]?.value?.[1] || 0);\nconst avgTaskDuration = parseFloat(items[5]?.json?.data?.result?.[0]?.value?.[1] || 0);\n\n// Calculate SLO compliance\nconst sloTargets = {\n  uptime: 99.9,\n  errorRate: 1.0,\n  latencyP95: 1.0 // 1 second\n};\n\nconst sloCompliance = {\n  uptime: uptime >= sloTargets.uptime,\n  errorRate: errorRate <= sloTargets.errorRate,\n  latencyP95: latencyP95 <= sloTargets.latencyP95\n};\n\nconst sloScore = Object.values(sloCompliance).filter(v => v).length / Object.keys(sloCompliance).length * 100;\n\nreturn [{\n  json: {\n    reportDate: $now.toFormat('yyyy-MM-dd'),\n    period: 'Last 24 hours',\n    metrics: {\n      requestRate: requestRate.toFixed(2),\n      errorRate: errorRate.toFixed(2),\n      latencyP95: latencyP95.toFixed(3),\n      uptime: uptime.toFixed(2),\n      tasksCompleted: tasksCompleted,\n      avgTaskDuration: avgTaskDuration.toFixed(2)\n    },\n    sloCompliance: sloCompliance,\n    sloScore: sloScore.toFixed(1),\n    overallHealth: sloScore >= 90 ? 'Excellent' : sloScore >= 75 ? 'Good' : sloScore >= 50 ? 'Fair' : 'Poor'\n  }\n}];"
+      },
+      "id": "process-metrics",
+      "name": "Process Metrics",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1050, 350]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $env.PROMETHEUS_URL }}/api/v1/query_range",
+        "authentication": "genericCredentialType",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "query",
+              "value": "sum(rate(cortex_requests_total[1h]))"
+            },
+            {
+              "name": "start",
+              "value": "={{ $('Set Time Range').item.json.startTime }}"
+            },
+            {
+              "name": "end",
+              "value": "={{ $('Set Time Range').item.json.endTime }}"
+            },
+            {
+              "name": "step",
+              "value": "1h"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "query-trend-data",
+      "name": "Query Trend Data",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1050, 550]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Calculate trend comparisons\nconst trendData = $input.item.json.data?.result?.[0]?.values || [];\n\nif (trendData.length < 2) {\n  return [{\n    json: {\n      trend: 'insufficient_data',\n      percentChange: 0\n    }\n  }];\n}\n\nconst firstValue = parseFloat(trendData[0][1]);\nconst lastValue = parseFloat(trendData[trendData.length - 1][1]);\nconst percentChange = ((lastValue - firstValue) / firstValue * 100).toFixed(2);\n\nconst trend = percentChange > 5 ? 'increasing' : percentChange < -5 ? 'decreasing' : 'stable';\n\nreturn [{\n  json: {\n    trend: trend,\n    percentChange: percentChange,\n    firstValue: firstValue.toFixed(2),\n    lastValue: lastValue.toFixed(2),\n    dataPoints: trendData.length\n  }\n}];"
+      },
+      "id": "calculate-trends",
+      "name": "Calculate Trends",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1250, 550]
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combinationMode": "mergeByPosition",
+        "options": {}
+      },
+      "id": "merge-report-data",
+      "name": "Merge Report Data",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 2.1,
+      "position": [1450, 450]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Generate HTML report\nconst metrics = $input.first().json;\nconst trends = $input.last().json;\n\nconst healthColor = {\n  'Excellent': '#4caf50',\n  'Good': '#8bc34a',\n  'Fair': '#ff9800',\n  'Poor': '#f44336'\n}[metrics.overallHealth] || '#9e9e9e';\n\nconst html = `\n<!DOCTYPE html>\n<html>\n<head>\n  <style>\n    body { font-family: Arial, sans-serif; margin: 20px; background-color: #f5f5f5; }\n    .container { max-width: 900px; margin: 0 auto; background-color: white; padding: 30px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }\n    h1 { color: #333; border-bottom: 3px solid ${healthColor}; padding-bottom: 10px; }\n    h2 { color: #555; margin-top: 30px; }\n    .health-badge { display: inline-block; padding: 10px 20px; background-color: ${healthColor}; color: white; border-radius: 20px; font-weight: bold; }\n    .metric-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin: 20px 0; }\n    .metric-card { background-color: #f9f9f9; padding: 20px; border-radius: 8px; border-left: 4px solid #2196f3; }\n    .metric-label { font-size: 14px; color: #777; text-transform: uppercase; }\n    .metric-value { font-size: 32px; font-weight: bold; color: #333; margin: 10px 0; }\n    .metric-unit { font-size: 16px; color: #999; }\n    .slo-table { width: 100%; border-collapse: collapse; margin: 20px 0; }\n    .slo-table th, .slo-table td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd; }\n    .slo-table th { background-color: #f5f5f5; font-weight: bold; }\n    .status-pass { color: #4caf50; font-weight: bold; }\n    .status-fail { color: #f44336; font-weight: bold; }\n    .trend-up { color: #4caf50; }\n    .trend-down { color: #f44336; }\n    .trend-stable { color: #ff9800; }\n    .footer { margin-top: 30px; padding-top: 20px; border-top: 1px solid #ddd; color: #999; font-size: 12px; }\n  </style>\n</head>\n<body>\n  <div class=\"container\">\n    <h1>Cortex Daily Health Report</h1>\n    <p><strong>Report Date:</strong> ${metrics.reportDate}</p>\n    <p><strong>Period:</strong> ${metrics.period}</p>\n    <p><strong>Overall Health:</strong> <span class=\"health-badge\">${metrics.overallHealth}</span></p>\n    <p><strong>SLO Compliance Score:</strong> ${metrics.sloScore}%</p>\n    \n    <h2>Key Metrics</h2>\n    <div class=\"metric-grid\">\n      <div class=\"metric-card\">\n        <div class=\"metric-label\">Request Rate</div>\n        <div class=\"metric-value\">${metrics.metrics.requestRate} <span class=\"metric-unit\">req/s</span></div>\n      </div>\n      <div class=\"metric-card\">\n        <div class=\"metric-label\">Error Rate</div>\n        <div class=\"metric-value\">${metrics.metrics.errorRate}<span class=\"metric-unit\">%</span></div>\n      </div>\n      <div class=\"metric-card\">\n        <div class=\"metric-label\">Latency (P95)</div>\n        <div class=\"metric-value\">${metrics.metrics.latencyP95}<span class=\"metric-unit\">s</span></div>\n      </div>\n      <div class=\"metric-card\">\n        <div class=\"metric-label\">Uptime</div>\n        <div class=\"metric-value\">${metrics.metrics.uptime}<span class=\"metric-unit\">%</span></div>\n      </div>\n      <div class=\"metric-card\">\n        <div class=\"metric-label\">Tasks Completed</div>\n        <div class=\"metric-value\">${metrics.metrics.tasksCompleted}</div>\n      </div>\n      <div class=\"metric-card\">\n        <div class=\"metric-label\">Avg Task Duration</div>\n        <div class=\"metric-value\">${metrics.metrics.avgTaskDuration}<span class=\"metric-unit\">s</span></div>\n      </div>\n    </div>\n    \n    <h2>SLO Compliance</h2>\n    <table class=\"slo-table\">\n      <thead>\n        <tr>\n          <th>SLO</th>\n          <th>Target</th>\n          <th>Actual</th>\n          <th>Status</th>\n        </tr>\n      </thead>\n      <tbody>\n        <tr>\n          <td>Uptime</td>\n          <td>&gt;= 99.9%</td>\n          <td>${metrics.metrics.uptime}%</td>\n          <td class=\"${metrics.sloCompliance.uptime ? 'status-pass' : 'status-fail'}\">\n            ${metrics.sloCompliance.uptime ? 'PASS' : 'FAIL'}\n          </td>\n        </tr>\n        <tr>\n          <td>Error Rate</td>\n          <td>&lt;= 1.0%</td>\n          <td>${metrics.metrics.errorRate}%</td>\n          <td class=\"${metrics.sloCompliance.errorRate ? 'status-pass' : 'status-fail'}\">\n            ${metrics.sloCompliance.errorRate ? 'PASS' : 'FAIL'}\n          </td>\n        </tr>\n        <tr>\n          <td>Latency (P95)</td>\n          <td>&lt;= 1.0s</td>\n          <td>${metrics.metrics.latencyP95}s</td>\n          <td class=\"${metrics.sloCompliance.latencyP95 ? 'status-pass' : 'status-fail'}\">\n            ${metrics.sloCompliance.latencyP95 ? 'PASS' : 'FAIL'}\n          </td>\n        </tr>\n      </tbody>\n    </table>\n    \n    <h2>Trend Analysis</h2>\n    <p><strong>Request Rate Trend:</strong> \n      <span class=\"trend-${trends.trend}\">\n        ${trends.trend.toUpperCase()} (${trends.percentChange > 0 ? '+' : ''}${trends.percentChange}%)\n      </span>\n    </p>\n    <p>Changed from ${trends.firstValue} to ${trends.lastValue} req/s over ${trends.dataPoints} data points.</p>\n    \n    <div class=\"footer\">\n      <p>Generated automatically by Cortex N8N Health Monitoring</p>\n      <p>Report generated at: ${new Date().toISOString()}</p>\n    </div>\n  </div>\n</body>\n</html>\n`;\n\nreturn [{\n  json: {\n    ...metrics,\n    trends: trends,\n    htmlReport: html\n  }\n}];"
+      },
+      "id": "generate-html-report",
+      "name": "Generate HTML Report",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1650, 450]
+    },
+    {
+      "parameters": {
+        "fromEmail": "={{ $env.REPORT_FROM_EMAIL }}",
+        "toEmail": "={{ $env.REPORT_TO_EMAIL }}",
+        "subject": "=Cortex Daily Health Report - {{ $json.reportDate }} - {{ $json.overallHealth }}",
+        "emailFormat": "html",
+        "text": "={{ $json.htmlReport }}",
+        "options": {}
+      },
+      "id": "send-email-report",
+      "name": "Send Email Report",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [1850, 350]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.SLACK_WEBHOOK_REPORTS }}",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "text",
+              "value": "=Daily Health Report - {{ $json.overallHealth }}"
+            },
+            {
+              "name": "blocks",
+              "value": "=[{\"type\":\"header\",\"text\":{\"type\":\"plain_text\",\"text\":\"📊 Daily Health Report - {{ $json.reportDate }}\"}},{\"type\":\"section\",\"fields\":[{\"type\":\"mrkdwn\",\"text\":\"*Overall Health:*\\n{{ $json.overallHealth }}\"},{\"type\":\"mrkdwn\",\"text\":\"*SLO Score:*\\n{{ $json.sloScore }}%\"},{\"type\":\"mrkdwn\",\"text\":\"*Request Rate:*\\n{{ $json.metrics.requestRate }} req/s\"},{\"type\":\"mrkdwn\",\"text\":\"*Error Rate:*\\n{{ $json.metrics.errorRate }}%\"},{\"type\":\"mrkdwn\",\"text\":\"*Uptime:*\\n{{ $json.metrics.uptime }}%\"},{\"type\":\"mrkdwn\",\"text\":\"*Tasks Completed:*\\n{{ $json.metrics.tasksCompleted }}\"}]},{\"type\":\"section\",\"text\":{\"type\":\"mrkdwn\",\"text\":\"*Trend:* {{ $json.trends.trend }} ({{ $json.trends.percentChange }}% change)\"}},{\"type\":\"divider\"},{\"type\":\"context\",\"elements\":[{\"type\":\"mrkdwn\",\"text\":\"Full report sent via email | Generated at {{ $now.toISO() }}\"}]}]"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "send-slack-summary",
+      "name": "Send Slack Summary",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1850, 550]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.AUDIT_LOG_API }}",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "type",
+              "value": "daily_health_report"
+            },
+            {
+              "name": "report",
+              "value": "={{ { reportDate: $json.reportDate, sloScore: $json.sloScore, overallHealth: $json.overallHealth, metrics: $json.metrics } }}"
+            },
+            {
+              "name": "timestamp",
+              "value": "={{ $now.toISO() }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "log-report-audit",
+      "name": "Log Report to Audit",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [2050, 450]
+    }
+  ],
+  "connections": {
+    "Cron Trigger": {
+      "main": [
+        [
+          {
+            "node": "Set Time Range",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Time Range": {
+      "main": [
+        [
+          {
+            "node": "Query Request Rate",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Query Error Rate",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Query Latency P95",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Query Uptime",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Query Tasks Completed",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Query Avg Task Duration",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Query Request Rate": {
+      "main": [
+        [
+          {
+            "node": "Merge Metrics",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Query Error Rate": {
+      "main": [
+        [
+          {
+            "node": "Merge Metrics",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Query Latency P95": {
+      "main": [
+        [
+          {
+            "node": "Merge Metrics",
+            "type": "main",
+            "index": 2
+          }
+        ]
+      ]
+    },
+    "Query Uptime": {
+      "main": [
+        [
+          {
+            "node": "Merge Metrics",
+            "type": "main",
+            "index": 3
+          }
+        ]
+      ]
+    },
+    "Query Tasks Completed": {
+      "main": [
+        [
+          {
+            "node": "Merge Metrics",
+            "type": "main",
+            "index": 4
+          }
+        ]
+      ]
+    },
+    "Query Avg Task Duration": {
+      "main": [
+        [
+          {
+            "node": "Merge Metrics",
+            "type": "main",
+            "index": 5
+          }
+        ]
+      ]
+    },
+    "Merge Metrics": {
+      "main": [
+        [
+          {
+            "node": "Process Metrics",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Process Metrics": {
+      "main": [
+        [
+          {
+            "node": "Query Trend Data",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Merge Report Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Query Trend Data": {
+      "main": [
+        [
+          {
+            "node": "Calculate Trends",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Calculate Trends": {
+      "main": [
+        [
+          {
+            "node": "Merge Report Data",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Merge Report Data": {
+      "main": [
+        [
+          {
+            "node": "Generate HTML Report",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate HTML Report": {
+      "main": [
+        [
+          {
+            "node": "Send Email Report",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Send Slack Summary",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Email Report": {
+      "main": [
+        [
+          {
+            "node": "Log Report to Audit",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Slack Summary": {
+      "main": [
+        [
+          {
+            "node": "Log Report to Audit",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": [
+    {
+      "name": "reporting",
+      "id": "reporting-tag-1"
+    },
+    {
+      "name": "health-check",
+      "id": "health-tag-1"
+    }
+  ],
+  "triggerCount": 1,
+  "updatedAt": "2025-12-11T00:00:00.000Z",
+  "versionId": "1"
+}

@@ -1,0 +1,372 @@
+# Prometheus Alert Rules for N8N Workflows
+# These alerts are designed to trigger the N8N workflows
+
+groups:
+  - name: cortex_pod_alerts
+    interval: 30s
+    rules:
+      - alert: CortexPodCrashLooping
+        expr: |
+          rate(kube_pod_container_status_restarts_total{namespace="cortex"}[5m]) > 0.5
+        for: 2m
+        labels:
+          severity: critical
+          service: "{{ $labels.pod }}"
+          namespace: "{{ $labels.namespace }}"
+        annotations:
+          summary: "Pod {{ $labels.pod }} is crash looping"
+          description: "Pod {{ $labels.pod }} in namespace {{ $labels.namespace }} has restarted {{ $value }} times in the last 5 minutes"
+          runbook_url: "https://docs.cortex.local/runbooks/pod-crash-looping"
+
+      - alert: CortexPodNotReady
+        expr: |
+          kube_pod_status_phase{namespace="cortex", phase!="Running"} > 0
+        for: 5m
+        labels:
+          severity: warning
+          service: "{{ $labels.pod }}"
+          namespace: "{{ $labels.namespace }}"
+        annotations:
+          summary: "Pod {{ $labels.pod }} is not ready"
+          description: "Pod {{ $labels.pod }} in namespace {{ $labels.namespace }} has been in {{ $labels.phase }} state for more than 5 minutes"
+
+  - name: cortex_resource_alerts
+    interval: 30s
+    rules:
+      - alert: CortexHighMemoryUsage
+        expr: |
+          (container_memory_working_set_bytes{namespace="cortex"} / container_spec_memory_limit_bytes{namespace="cortex"}) > 0.85
+        for: 5m
+        labels:
+          severity: warning
+          service: "{{ $labels.pod }}"
+          namespace: "{{ $labels.namespace }}"
+          container: "{{ $labels.container }}"
+        annotations:
+          summary: "High memory usage for {{ $labels.pod }}"
+          description: "Container {{ $labels.container }} in pod {{ $labels.pod }} is using {{ $value | humanizePercentage }} of memory limit"
+          runbook_url: "https://docs.cortex.local/runbooks/high-memory-usage"
+
+      - alert: CortexHighCPUUsage
+        expr: |
+          (rate(container_cpu_usage_seconds_total{namespace="cortex"}[5m]) / container_spec_cpu_quota{namespace="cortex"} * 100000) > 85
+        for: 10m
+        labels:
+          severity: warning
+          service: "{{ $labels.pod }}"
+          namespace: "{{ $labels.namespace }}"
+        annotations:
+          summary: "High CPU usage for {{ $labels.pod }}"
+          description: "Container {{ $labels.container }} in pod {{ $labels.pod }} is using {{ $value }}% of CPU limit"
+
+  - name: cortex_worker_alerts
+    interval: 30s
+    rules:
+      - alert: CortexWorkerStuck
+        expr: |
+          (time() - cortex_worker_last_heartbeat_timestamp) > 300
+        for: 5m
+        labels:
+          severity: critical
+          service: cortex-worker
+          namespace: cortex
+        annotations:
+          summary: "Cortex worker {{ $labels.worker_id }} appears stuck"
+          description: "Worker {{ $labels.worker_id }} has not sent heartbeat for {{ $value }} seconds"
+          runbook_url: "https://docs.cortex.local/runbooks/worker-stuck"
+
+      - alert: CortexWorkerQueueBacklog
+        expr: |
+          cortex_worker_queue_length > 100
+        for: 15m
+        labels:
+          severity: warning
+          service: cortex-worker
+          namespace: cortex
+        annotations:
+          summary: "High worker queue backlog"
+          description: "Worker queue has {{ $value }} pending tasks for more than 15 minutes"
+
+      - alert: CortexWorkerHighFailureRate
+        expr: |
+          (rate(cortex_worker_tasks_failed_total[5m]) / rate(cortex_worker_tasks_total[5m])) > 0.1
+        for: 5m
+        labels:
+          severity: warning
+          service: cortex-worker
+          namespace: cortex
+        annotations:
+          summary: "High worker task failure rate"
+          description: "Worker task failure rate is {{ $value | humanizePercentage }} over the last 5 minutes"
+
+  - name: cortex_api_alerts
+    interval: 30s
+    rules:
+      - alert: CortexAPIHighErrorRate
+        expr: |
+          (sum(rate(cortex_http_requests_total{status=~"5.."}[5m])) / sum(rate(cortex_http_requests_total[5m]))) > 0.05
+        for: 5m
+        labels:
+          severity: critical
+          service: cortex-api
+          namespace: cortex
+        annotations:
+          summary: "High API error rate"
+          description: "API error rate is {{ $value | humanizePercentage }} over the last 5 minutes (threshold: 5%)"
+          runbook_url: "https://docs.cortex.local/runbooks/high-error-rate"
+
+      - alert: CortexAPIHighLatency
+        expr: |
+          histogram_quantile(0.95, rate(cortex_http_request_duration_seconds_bucket[5m])) > 1.0
+        for: 10m
+        labels:
+          severity: warning
+          service: cortex-api
+          namespace: cortex
+        annotations:
+          summary: "High API latency (P95)"
+          description: "95th percentile API latency is {{ $value }}s (threshold: 1.0s)"
+
+      - alert: CortexAPIDown
+        expr: |
+          up{job="cortex-api"} == 0
+        for: 2m
+        labels:
+          severity: critical
+          service: cortex-api
+          namespace: cortex
+        annotations:
+          summary: "Cortex API is down"
+          description: "Cortex API instance {{ $labels.instance }} has been down for more than 2 minutes"
+
+  - name: cortex_storage_alerts
+    interval: 30s
+    rules:
+      - alert: CortexHighDiskUsage
+        expr: |
+          (node_filesystem_avail_bytes{mountpoint="/",job="node"} / node_filesystem_size_bytes{mountpoint="/",job="node"}) < 0.15
+        for: 5m
+        labels:
+          severity: warning
+          service: cortex-storage
+          namespace: cortex
+        annotations:
+          summary: "High disk usage on {{ $labels.instance }}"
+          description: "Disk usage is {{ $value | humanizePercentage }} on {{ $labels.instance }}"
+
+      - alert: CortexPVCAlmostFull
+        expr: |
+          (kubelet_volume_stats_available_bytes{namespace="cortex"} / kubelet_volume_stats_capacity_bytes{namespace="cortex"}) < 0.1
+        for: 5m
+        labels:
+          severity: critical
+          service: cortex-storage
+          namespace: cortex
+        annotations:
+          summary: "PVC {{ $labels.persistentvolumeclaim }} almost full"
+          description: "PVC {{ $labels.persistentvolumeclaim }} has less than 10% space remaining"
+
+  - name: cortex_database_alerts
+    interval: 30s
+    rules:
+      - alert: CortexDatabaseConnectionPoolExhausted
+        expr: |
+          (cortex_db_connections_active / cortex_db_connections_max) > 0.9
+        for: 5m
+        labels:
+          severity: critical
+          service: cortex-database
+          namespace: cortex
+        annotations:
+          summary: "Database connection pool exhausted"
+          description: "Database connection pool is {{ $value | humanizePercentage }} utilized"
+
+      - alert: CortexDatabaseSlowQueries
+        expr: |
+          rate(cortex_db_query_duration_seconds_sum[5m]) / rate(cortex_db_query_duration_seconds_count[5m]) > 1.0
+        for: 10m
+        labels:
+          severity: warning
+          service: cortex-database
+          namespace: cortex
+        annotations:
+          summary: "Database queries are slow"
+          description: "Average query duration is {{ $value }}s (threshold: 1.0s)"
+
+  - name: cortex_master_alerts
+    interval: 30s
+    rules:
+      - alert: CortexMasterNotResponding
+        expr: |
+          (time() - cortex_master_last_heartbeat_timestamp) > 120
+        for: 2m
+        labels:
+          severity: critical
+          service: "{{ $labels.master_type }}"
+          namespace: cortex
+        annotations:
+          summary: "Cortex master {{ $labels.master_type }} not responding"
+          description: "Master {{ $labels.master_type }} has not sent heartbeat for {{ $value }} seconds"
+          runbook_url: "https://docs.cortex.local/runbooks/master-not-responding"
+
+      - alert: CortexMasterHighTaskBacklog
+        expr: |
+          cortex_master_pending_tasks > 50
+        for: 15m
+        labels:
+          severity: warning
+          service: "{{ $labels.master_type }}"
+          namespace: cortex
+        annotations:
+          summary: "High task backlog for {{ $labels.master_type }} master"
+          description: "Master {{ $labels.master_type }} has {{ $value }} pending tasks"
+
+  - name: cortex_coordination_alerts
+    interval: 30s
+    rules:
+      - alert: CortexCoordinatorNotResponding
+        expr: |
+          (time() - cortex_coordinator_last_heartbeat_timestamp) > 120
+        for: 2m
+        labels:
+          severity: critical
+          service: cortex-coordinator
+          namespace: cortex
+        annotations:
+          summary: "Cortex coordinator not responding"
+          description: "Coordinator has not sent heartbeat for {{ $value }} seconds"
+
+      - alert: CortexHandoffStuck
+        expr: |
+          (time() - cortex_handoff_last_processed_timestamp) > 600
+        for: 5m
+        labels:
+          severity: warning
+          service: cortex-coordinator
+          namespace: cortex
+        annotations:
+          summary: "Handoff processing appears stuck"
+          description: "No handoffs have been processed for {{ $value }} seconds"
+
+  - name: cortex_slo_alerts
+    interval: 1m
+    rules:
+      - alert: CortexSLOUptimeViolation
+        expr: |
+          avg_over_time(up{job="cortex"}[1h]) < 0.999
+        for: 5m
+        labels:
+          severity: critical
+          service: cortex
+          namespace: cortex
+          slo: uptime
+        annotations:
+          summary: "SLO violation: Uptime below 99.9%"
+          description: "Current uptime over last hour is {{ $value | humanizePercentage }}"
+
+      - alert: CortexSLOErrorRateViolation
+        expr: |
+          (sum(rate(cortex_requests_total{status=~"5.."}[1h])) / sum(rate(cortex_requests_total[1h]))) > 0.01
+        for: 5m
+        labels:
+          severity: critical
+          service: cortex
+          namespace: cortex
+          slo: error_rate
+        annotations:
+          summary: "SLO violation: Error rate above 1%"
+          description: "Current error rate over last hour is {{ $value | humanizePercentage }}"
+
+      - alert: CortexSLOLatencyViolation
+        expr: |
+          histogram_quantile(0.95, rate(cortex_request_duration_seconds_bucket[1h])) > 1.0
+        for: 5m
+        labels:
+          severity: warning
+          service: cortex
+          namespace: cortex
+          slo: latency
+        annotations:
+          summary: "SLO violation: P95 latency above 1.0s"
+          description: "Current P95 latency over last hour is {{ $value }}s"
+
+  - name: cortex_security_alerts
+    interval: 30s
+    rules:
+      - alert: CortexUnauthorizedAccess
+        expr: |
+          rate(cortex_http_requests_total{status="401"}[5m]) > 10
+        for: 2m
+        labels:
+          severity: warning
+          service: cortex-api
+          namespace: cortex
+        annotations:
+          summary: "High rate of unauthorized access attempts"
+          description: "{{ $value }} unauthorized access attempts per second over last 5 minutes"
+
+      - alert: CortexSuspiciousActivity
+        expr: |
+          rate(cortex_security_events_total{type="suspicious"}[5m]) > 5
+        for: 2m
+        labels:
+          severity: critical
+          service: cortex-security
+          namespace: cortex
+        annotations:
+          summary: "Suspicious security activity detected"
+          description: "{{ $value }} suspicious events per second detected"
+
+  - name: cortex_dashboard_alerts
+    interval: 30s
+    rules:
+      - alert: CortexDashboardNotUpdating
+        expr: |
+          (time() - cortex_dashboard_last_update_timestamp) > 600
+        for: 5m
+        labels:
+          severity: warning
+          service: cortex-dashboard
+          namespace: cortex
+        annotations:
+          summary: "Dashboard not updating"
+          description: "Dashboard has not been updated for {{ $value }} seconds"
+
+      - alert: CortexDashboardBuildFailed
+        expr: |
+          cortex_dashboard_build_status == 0
+        for: 2m
+        labels:
+          severity: critical
+          service: cortex-dashboard
+          namespace: cortex
+        annotations:
+          summary: "Dashboard build failed"
+          description: "Dashboard build has failed. Check CI/CD pipeline logs"
+
+  - name: cortex_governance_alerts
+    interval: 30s
+    rules:
+      - alert: CortexGovernanceViolation
+        expr: |
+          cortex_governance_violations_total > 0
+        for: 1m
+        labels:
+          severity: critical
+          service: cortex-governance
+          namespace: cortex
+        annotations:
+          summary: "Governance policy violation detected"
+          description: "{{ $value }} governance violations detected in last check"
+
+      - alert: CortexComplianceCheckFailed
+        expr: |
+          cortex_compliance_check_status == 0
+        for: 2m
+        labels:
+          severity: warning
+          service: cortex-governance
+          namespace: cortex
+        annotations:
+          summary: "Compliance check failed"
+          description: "Compliance check for {{ $labels.policy }} has failed"

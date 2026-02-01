@@ -1,0 +1,771 @@
+{
+  "name": "Governance Audit Workflow",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "governance-audit",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "webhook-trigger",
+      "name": "Webhook Trigger",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [250, 300],
+      "webhookId": "governance-audit-webhook",
+      "notes": "Triggered by configuration changes or security events"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Parse governance event\nconst event = $input.item.json.body;\n\nreturn [{\n  json: {\n    eventType: event.type || 'config_change',\n    source: event.source || 'unknown',\n    timestamp: event.timestamp || new Date().toISOString(),\n    user: event.user || 'system',\n    resource: event.resource || {},\n    changes: event.changes || [],\n    metadata: event.metadata || {},\n    severity: event.severity || 'info',\n    rawEvent: event\n  }\n}];"
+      },
+      "id": "parse-event",
+      "name": "Parse Governance Event",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [450, 300]
+    },
+    {
+      "parameters": {
+        "mode": "chooseBranch",
+        "output": "={{ $json.eventType }}",
+        "options": {}
+      },
+      "id": "route-event-type",
+      "name": "Route by Event Type",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3,
+      "position": [650, 300]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "config-change",
+              "name": "eventCategory",
+              "value": "configuration",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "case-config-change",
+      "name": "Configuration Change",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [850, 100]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "security-event",
+              "name": "eventCategory",
+              "value": "security",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "case-security-event",
+      "name": "Security Event",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [850, 250]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "compliance-check",
+              "name": "eventCategory",
+              "value": "compliance",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "case-compliance-check",
+      "name": "Compliance Check",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [850, 400]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "access-control",
+              "name": "eventCategory",
+              "value": "access_control",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "case-access-control",
+      "name": "Access Control",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [850, 550]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $env.GOVERNANCE_API }}/policies",
+        "authentication": "genericCredentialType",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "category",
+              "value": "={{ $json.eventCategory }}"
+            },
+            {
+              "name": "active",
+              "value": "true"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "load-governance-policies",
+      "name": "Load Governance Policies",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1050, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Validate event against governance policies\nconst event = $input.first().json;\nconst policies = $input.last().json.policies || [];\n\nconst violations = [];\nconst warnings = [];\nconst passed = [];\n\npolicies.forEach(policy => {\n  const policyId = policy.id;\n  const policyName = policy.name;\n  const rules = policy.rules || [];\n  \n  rules.forEach(rule => {\n    let result = { policyId, policyName, rule: rule.name, status: 'pass' };\n    \n    try {\n      // Example policy validations\n      switch (rule.type) {\n        case 'require_approval':\n          if (!event.metadata?.approvedBy) {\n            result.status = 'violation';\n            result.message = 'Change requires approval but none found';\n          }\n          break;\n          \n        case 'allowed_users':\n          if (!rule.allowedUsers?.includes(event.user)) {\n            result.status = 'violation';\n            result.message = `User ${event.user} not authorized for this change`;\n          }\n          break;\n          \n        case 'change_window':\n          const currentHour = new Date().getHours();\n          if (currentHour < rule.startHour || currentHour > rule.endHour) {\n            result.status = 'warning';\n            result.message = `Change outside approved window (${rule.startHour}:00-${rule.endHour}:00)`;\n          }\n          break;\n          \n        case 'require_documentation':\n          if (!event.metadata?.documentation) {\n            result.status = 'warning';\n            result.message = 'Change lacks documentation';\n          }\n          break;\n          \n        case 'prohibited_resources':\n          const resourceType = event.resource?.type;\n          if (rule.prohibited?.includes(resourceType)) {\n            result.status = 'violation';\n            result.message = `Resource type ${resourceType} is prohibited`;\n          }\n          break;\n          \n        case 'require_testing':\n          if (!event.metadata?.testResults) {\n            result.status = 'warning';\n            result.message = 'No test results provided';\n          }\n          break;\n      }\n    } catch (error) {\n      result.status = 'error';\n      result.message = `Policy validation error: ${error.message}`;\n    }\n    \n    if (result.status === 'violation') {\n      violations.push(result);\n    } else if (result.status === 'warning') {\n      warnings.push(result);\n    } else {\n      passed.push(result);\n    }\n  });\n});\n\nconst complianceStatus = violations.length > 0 ? 'non_compliant' : warnings.length > 0 ? 'compliant_with_warnings' : 'compliant';\n\nreturn [{\n  json: {\n    ...event,\n    validationResults: {\n      complianceStatus: complianceStatus,\n      violationCount: violations.length,\n      warningCount: warnings.length,\n      passedCount: passed.length,\n      violations: violations,\n      warnings: warnings,\n      passed: passed\n    },\n    requiresIntervention: violations.length > 0\n  }\n}];"
+      },
+      "id": "validate-policies",
+      "name": "Validate Against Policies",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1250, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.AUDIT_LOG_API }}/governance",
+        "authentication": "genericCredentialType",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "event_id",
+              "value": "={{ $now.toMillis() }}-{{ $json.user }}"
+            },
+            {
+              "name": "event_type",
+              "value": "={{ $json.eventType }}"
+            },
+            {
+              "name": "event_category",
+              "value": "={{ $json.eventCategory }}"
+            },
+            {
+              "name": "user",
+              "value": "={{ $json.user }}"
+            },
+            {
+              "name": "source",
+              "value": "={{ $json.source }}"
+            },
+            {
+              "name": "resource",
+              "value": "={{ $json.resource }}"
+            },
+            {
+              "name": "changes",
+              "value": "={{ $json.changes }}"
+            },
+            {
+              "name": "compliance_status",
+              "value": "={{ $json.validationResults.complianceStatus }}"
+            },
+            {
+              "name": "violations",
+              "value": "={{ $json.validationResults.violations }}"
+            },
+            {
+              "name": "warnings",
+              "value": "={{ $json.validationResults.warnings }}"
+            },
+            {
+              "name": "timestamp",
+              "value": "={{ $json.timestamp }}"
+            },
+            {
+              "name": "audit_timestamp",
+              "value": "={{ $now.toISO() }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "log-audit-trail",
+      "name": "Log to Audit Trail",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1450, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.validationResults.violationCount }}",
+              "rightValue": 0,
+              "operator": {
+                "type": "number",
+                "operation": "gt"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "check-violations",
+      "name": "Has Violations?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [1650, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.SLACK_WEBHOOK_GOVERNANCE }}",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "text",
+              "value": "=🚨 GOVERNANCE VIOLATION: {{ $json.eventType }}"
+            },
+            {
+              "name": "blocks",
+              "value": "=[{\"type\":\"header\",\"text\":{\"type\":\"plain_text\",\"text\":\"🚨 Governance Policy Violation\"}},{\"type\":\"section\",\"fields\":[{\"type\":\"mrkdwn\",\"text\":\"*Event Type:*\\n{{ $json.eventType }}\"},{\"type\":\"mrkdwn\",\"text\":\"*User:*\\n{{ $json.user }}\"},{\"type\":\"mrkdwn\",\"text\":\"*Source:*\\n{{ $json.source }}\"},{\"type\":\"mrkdwn\",\"text\":\"*Violations:*\\n{{ $json.validationResults.violationCount }}\"}]},{\"type\":\"section\",\"text\":{\"type\":\"mrkdwn\",\"text\":\"*Violation Details:*\\n{{ $json.validationResults.violations.map(v => `• ${v.policyName}: ${v.message}`).join('\\\\n') }}\"}},{\"type\":\"divider\"},{\"type\":\"context\",\"elements\":[{\"type\":\"mrkdwn\",\"text\":\"⚠️ Immediate review required | Timestamp: {{ $json.timestamp }}\"}]}]"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "alert-violations",
+      "name": "Alert on Violations",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1850, 200]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.eventCategory }}",
+              "rightValue": "security",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "check-security-event",
+      "name": "Is Security Event?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [1850, 400]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.WAZUH_API }}/security/events",
+        "authentication": "genericCredentialType",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $env.WAZUH_API_TOKEN }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "agent",
+              "value": "n8n-governance-agent"
+            },
+            {
+              "name": "rule_id",
+              "value": "100001"
+            },
+            {
+              "name": "level",
+              "value": "={{ $json.severity === 'critical' ? 12 : $json.severity === 'high' ? 10 : 7 }}"
+            },
+            {
+              "name": "description",
+              "value": "=Governance event: {{ $json.eventType }}"
+            },
+            {
+              "name": "data",
+              "value": "={{ { user: $json.user, source: $json.source, eventType: $json.eventType, complianceStatus: $json.validationResults.complianceStatus, violations: $json.validationResults.violations } }}"
+            },
+            {
+              "name": "timestamp",
+              "value": "={{ $json.timestamp }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "integrate-wazuh",
+      "name": "Integrate with Wazuh",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [2050, 350],
+      "notes": "Send security events to Wazuh SIEM"
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combinationMode": "mergeByPosition",
+        "options": {}
+      },
+      "id": "merge-responses",
+      "name": "Merge Responses",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 2.1,
+      "position": [2250, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Generate compliance report summary\nconst event = $input.item.json;\n\nconst summary = {\n  eventId: `${Date.now()}-${event.user}`,\n  eventType: event.eventType,\n  complianceStatus: event.validationResults.complianceStatus,\n  summary: {\n    total_checks: event.validationResults.passedCount + event.validationResults.warningCount + event.validationResults.violationCount,\n    passed: event.validationResults.passedCount,\n    warnings: event.validationResults.warningCount,\n    violations: event.validationResults.violationCount\n  },\n  actionRequired: event.validationResults.violationCount > 0,\n  actionDetails: event.validationResults.violations.length > 0 \n    ? `Review ${event.validationResults.violations.length} policy violation(s)` \n    : 'No action required',\n  timestamp: event.timestamp,\n  processedAt: new Date().toISOString()\n};\n\nreturn [{ json: summary }];"
+      },
+      "id": "generate-summary",
+      "name": "Generate Compliance Summary",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [2450, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.GOVERNANCE_API }}/reports",
+        "authentication": "genericCredentialType",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "report",
+              "value": "={{ $json }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "store-compliance-report",
+      "name": "Store Compliance Report",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [2650, 300]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json }}",
+        "options": {}
+      },
+      "id": "webhook-response",
+      "name": "Webhook Response",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [2850, 300]
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 0 * * 0"
+            }
+          ]
+        }
+      },
+      "id": "weekly-compliance-scan",
+      "name": "Weekly Compliance Scan",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [250, 600],
+      "notes": "Weekly full compliance audit"
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $env.GOVERNANCE_API }}/audit/weekly",
+        "authentication": "genericCredentialType",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "days",
+              "value": "7"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "get-weekly-audit-data",
+      "name": "Get Weekly Audit Data",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [450, 600]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Analyze weekly compliance data\nconst auditData = $input.item.json;\n\nconst stats = {\n  totalEvents: auditData.events?.length || 0,\n  compliantEvents: auditData.events?.filter(e => e.complianceStatus === 'compliant').length || 0,\n  violationEvents: auditData.events?.filter(e => e.complianceStatus === 'non_compliant').length || 0,\n  warningEvents: auditData.events?.filter(e => e.complianceStatus === 'compliant_with_warnings').length || 0\n};\n\nstats.complianceRate = stats.totalEvents > 0 ? ((stats.compliantEvents / stats.totalEvents) * 100).toFixed(2) : 100;\n\nconst topViolations = {};\nauditData.events?.forEach(event => {\n  event.violations?.forEach(violation => {\n    const key = violation.policyName;\n    topViolations[key] = (topViolations[key] || 0) + 1;\n  });\n});\n\nconst sortedViolations = Object.entries(topViolations)\n  .sort((a, b) => b[1] - a[1])\n  .slice(0, 5)\n  .map(([policy, count]) => ({ policy, count }));\n\nreturn [{\n  json: {\n    weeklyReport: {\n      period: 'Last 7 days',\n      generatedAt: new Date().toISOString(),\n      statistics: stats,\n      topViolations: sortedViolations,\n      trend: stats.complianceRate >= 95 ? 'excellent' : stats.complianceRate >= 85 ? 'good' : stats.complianceRate >= 70 ? 'needs_improvement' : 'critical'\n    }\n  }\n}];"
+      },
+      "id": "analyze-weekly-compliance",
+      "name": "Analyze Weekly Compliance",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [650, 600]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.SLACK_WEBHOOK_GOVERNANCE }}",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "text",
+              "value": "=Weekly Governance Report - Compliance Rate: {{ $json.weeklyReport.statistics.complianceRate }}%"
+            },
+            {
+              "name": "blocks",
+              "value": "=[{\"type\":\"header\",\"text\":{\"type\":\"plain_text\",\"text\":\"📋 Weekly Governance Compliance Report\"}},{\"type\":\"section\",\"fields\":[{\"type\":\"mrkdwn\",\"text\":\"*Period:*\\n{{ $json.weeklyReport.period }}\"},{\"type\":\"mrkdwn\",\"text\":\"*Compliance Rate:*\\n{{ $json.weeklyReport.statistics.complianceRate }}%\"},{\"type\":\"mrkdwn\",\"text\":\"*Total Events:*\\n{{ $json.weeklyReport.statistics.totalEvents }}\"},{\"type\":\"mrkdwn\",\"text\":\"*Violations:*\\n{{ $json.weeklyReport.statistics.violationEvents }}\"}]},{\"type\":\"section\",\"text\":{\"type\":\"mrkdwn\",\"text\":\"*Top Policy Violations:*\\n{{ $json.weeklyReport.topViolations.map(v => `• ${v.policy}: ${v.count} occurrences`).join('\\\\n') || 'None' }}\"}},{\"type\":\"section\",\"text\":{\"type\":\"mrkdwn\",\"text\":\"*Trend:* {{ $json.weeklyReport.trend.toUpperCase() }}\"}}]"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "send-weekly-report",
+      "name": "Send Weekly Report",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [850, 600]
+    }
+  ],
+  "connections": {
+    "Webhook Trigger": {
+      "main": [
+        [
+          {
+            "node": "Parse Governance Event",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Governance Event": {
+      "main": [
+        [
+          {
+            "node": "Route by Event Type",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Route by Event Type": {
+      "main": [
+        [
+          {
+            "node": "Configuration Change",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Security Event",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Compliance Check",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Access Control",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Configuration Change": {
+      "main": [
+        [
+          {
+            "node": "Load Governance Policies",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Security Event": {
+      "main": [
+        [
+          {
+            "node": "Load Governance Policies",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Compliance Check": {
+      "main": [
+        [
+          {
+            "node": "Load Governance Policies",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Access Control": {
+      "main": [
+        [
+          {
+            "node": "Load Governance Policies",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Load Governance Policies": {
+      "main": [
+        [
+          {
+            "node": "Validate Against Policies",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate Against Policies": {
+      "main": [
+        [
+          {
+            "node": "Log to Audit Trail",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Log to Audit Trail": {
+      "main": [
+        [
+          {
+            "node": "Has Violations?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Has Violations?": {
+      "main": [
+        [
+          {
+            "node": "Alert on Violations",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Is Security Event?",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Merge Responses",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Alert on Violations": {
+      "main": [
+        [
+          {
+            "node": "Merge Responses",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Is Security Event?": {
+      "main": [
+        [
+          {
+            "node": "Integrate with Wazuh",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Merge Responses",
+            "type": "main",
+            "index": 2
+          }
+        ]
+      ]
+    },
+    "Integrate with Wazuh": {
+      "main": [
+        [
+          {
+            "node": "Merge Responses",
+            "type": "main",
+            "index": 3
+          }
+        ]
+      ]
+    },
+    "Merge Responses": {
+      "main": [
+        [
+          {
+            "node": "Generate Compliance Summary",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate Compliance Summary": {
+      "main": [
+        [
+          {
+            "node": "Store Compliance Report",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Store Compliance Report": {
+      "main": [
+        [
+          {
+            "node": "Webhook Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Weekly Compliance Scan": {
+      "main": [
+        [
+          {
+            "node": "Get Weekly Audit Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Weekly Audit Data": {
+      "main": [
+        [
+          {
+            "node": "Analyze Weekly Compliance",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Analyze Weekly Compliance": {
+      "main": [
+        [
+          {
+            "node": "Send Weekly Report",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": [
+    {
+      "name": "governance",
+      "id": "governance-tag-1"
+    },
+    {
+      "name": "compliance",
+      "id": "compliance-tag-1"
+    },
+    {
+      "name": "audit",
+      "id": "audit-tag-1"
+    }
+  ],
+  "triggerCount": 2,
+  "updatedAt": "2025-12-11T00:00:00.000Z",
+  "versionId": "1"
+}
