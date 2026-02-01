@@ -1,0 +1,471 @@
+# Prometheus Wazuh Exporter Configuration
+# Exposes Wazuh security metrics to Prometheus
+# Last Updated: 2025-12-11
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: wazuh-exporter-config
+  namespace: cortex-monitoring
+  labels:
+    app: wazuh-exporter
+    component: monitoring
+data:
+  config.yaml: |
+    # Wazuh API connection
+    wazuh:
+      url: https://10.88.140.202:55000
+      username: ${WAZUH_API_USER}
+      password: ${WAZUH_API_PASSWORD}
+      verify_ssl: false
+      timeout: 30
+
+    # Exporter settings
+    exporter:
+      port: 9140
+      listen_address: 0.0.0.0
+      metrics_path: /metrics
+      log_level: info
+
+    # Metrics collection configuration
+    metrics:
+      # Agent metrics
+      agents:
+        enabled: true
+        interval: 60
+        labels:
+          - name
+          - ip
+          - status
+          - os_platform
+          - os_version
+          - group
+
+      # Alert metrics
+      alerts:
+        enabled: true
+        interval: 30
+        lookback_period: 300  # 5 minutes
+        group_by:
+          - rule_id
+          - rule_level
+          - agent_name
+          - rule_group
+
+      # Rule trigger metrics
+      rules:
+        enabled: true
+        interval: 60
+        top_rules: 50
+
+      # Manager metrics
+      manager:
+        enabled: true
+        interval: 60
+
+      # Security events
+      events:
+        enabled: true
+        interval: 30
+        event_types:
+          - authentication
+          - privilege_escalation
+          - configuration_change
+          - file_integrity
+          - malware
+          - vulnerability
+
+      # Vulnerability metrics
+      vulnerabilities:
+        enabled: true
+        interval: 300
+        group_by_severity: true
+
+      # SCA (Security Configuration Assessment)
+      sca:
+        enabled: true
+        interval: 300
+
+      # FIM (File Integrity Monitoring)
+      fim:
+        enabled: true
+        interval: 60
+
+    # Metric filters
+    filters:
+      # Only include Cortex-related agents
+      agent_groups:
+        - cortex
+        - kubernetes
+        - k3s
+
+      # Alert level thresholds
+      min_alert_level: 3
+
+      # Rule groups to track
+      rule_groups:
+        - cortex
+        - authentication_failed
+        - privilege_escalation
+        - config_change
+        - api_abuse
+        - k8s_audit
+        - container_security
+        - secrets_access
+        - data_exfiltration
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: wazuh-exporter
+  namespace: cortex-monitoring
+  labels:
+    app: wazuh-exporter
+    component: monitoring
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: wazuh-exporter
+  template:
+    metadata:
+      labels:
+        app: wazuh-exporter
+        component: monitoring
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "9140"
+        prometheus.io/path: "/metrics"
+    spec:
+      containers:
+      - name: wazuh-exporter
+        image: wazuh/wazuh-prometheus-exporter:latest
+        ports:
+        - containerPort: 9140
+          name: metrics
+          protocol: TCP
+        env:
+        - name: WAZUH_API_USER
+          valueFrom:
+            secretKeyRef:
+              name: wazuh-api-credentials
+              key: username
+        - name: WAZUH_API_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: wazuh-api-credentials
+              key: password
+        volumeMounts:
+        - name: config
+          mountPath: /etc/wazuh-exporter
+          readOnly: true
+        resources:
+          requests:
+            cpu: 100m
+            memory: 128Mi
+          limits:
+            cpu: 200m
+            memory: 256Mi
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: 9140
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /ready
+            port: 9140
+          initialDelaySeconds: 5
+          periodSeconds: 5
+      volumes:
+      - name: config
+        configMap:
+          name: wazuh-exporter-config
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: wazuh-exporter
+  namespace: cortex-monitoring
+  labels:
+    app: wazuh-exporter
+    component: monitoring
+  annotations:
+    prometheus.io/scrape: "true"
+    prometheus.io/port: "9140"
+spec:
+  type: ClusterIP
+  ports:
+  - port: 9140
+    targetPort: 9140
+    protocol: TCP
+    name: metrics
+  selector:
+    app: wazuh-exporter
+
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: wazuh-api-credentials
+  namespace: cortex-monitoring
+type: Opaque
+stringData:
+  username: "cortex-prometheus"
+  password: "CHANGE_ME"  # Replace with actual password
+
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: wazuh-exporter
+  namespace: cortex-monitoring
+  labels:
+    app: wazuh-exporter
+    release: prometheus
+spec:
+  selector:
+    matchLabels:
+      app: wazuh-exporter
+  endpoints:
+  - port: metrics
+    interval: 30s
+    path: /metrics
+    scheme: http
+
+---
+# Prometheus Recording Rules for Wazuh Metrics
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: wazuh-recording-rules
+  namespace: cortex-monitoring
+  labels:
+    app: wazuh
+    prometheus: cortex
+    role: recording-rules
+spec:
+  groups:
+  - name: wazuh_aggregations
+    interval: 30s
+    rules:
+    # Total alerts by severity
+    - record: wazuh:alerts:total_by_severity
+      expr: sum(wazuh_alerts_total) by (severity)
+
+    # Alert rate by agent
+    - record: wazuh:alerts:rate_by_agent
+      expr: rate(wazuh_alerts_total[5m]) by (agent_name)
+
+    # Critical alerts rate
+    - record: wazuh:alerts:critical_rate
+      expr: rate(wazuh_alerts_total{severity="critical"}[5m])
+
+    # High alerts rate
+    - record: wazuh:alerts:high_rate
+      expr: rate(wazuh_alerts_total{severity="high"}[5m])
+
+    # Top triggered rules
+    - record: wazuh:rules:top_triggered
+      expr: topk(10, sum(rate(wazuh_rule_triggers_total[5m])) by (rule_id, rule_description))
+
+    # Agent health status
+    - record: wazuh:agents:active_count
+      expr: count(wazuh_agent_status{status="active"})
+
+    - record: wazuh:agents:disconnected_count
+      expr: count(wazuh_agent_status{status="disconnected"})
+
+    # Authentication failures rate
+    - record: wazuh:security:auth_failures_rate
+      expr: rate(wazuh_alerts_total{rule_group=~".*authentication_failed.*"}[5m])
+
+    # Privilege escalation rate
+    - record: wazuh:security:privilege_escalation_rate
+      expr: rate(wazuh_alerts_total{rule_group=~".*privilege_escalation.*"}[5m])
+
+    # Container security events rate
+    - record: wazuh:security:container_events_rate
+      expr: rate(wazuh_alerts_total{rule_group=~".*container_security.*"}[5m])
+
+    # API abuse rate
+    - record: wazuh:security:api_abuse_rate
+      expr: rate(wazuh_alerts_total{rule_group=~".*api_abuse.*"}[5m])
+
+    # Secrets access rate
+    - record: wazuh:security:secrets_access_rate
+      expr: rate(wazuh_alerts_total{rule_group=~".*secrets.*"}[5m])
+
+    # FIM changes rate
+    - record: wazuh:fim:changes_rate
+      expr: rate(wazuh_fim_events_total[5m])
+
+    # Vulnerability counts by severity
+    - record: wazuh:vulnerabilities:count_by_severity
+      expr: sum(wazuh_vulnerability_count) by (severity)
+
+    # SCA failed checks
+    - record: wazuh:sca:failed_checks_count
+      expr: sum(wazuh_sca_checks{status="failed"}) by (policy)
+
+---
+# Prometheus Alerting Rules for Wazuh
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: wazuh-alerting-rules
+  namespace: cortex-monitoring
+  labels:
+    app: wazuh
+    prometheus: cortex
+    role: alerting-rules
+spec:
+  groups:
+  - name: wazuh_alerts
+    interval: 30s
+    rules:
+    # Critical Wazuh alerts
+    - alert: WazuhCriticalAlert
+      expr: rate(wazuh_alerts_total{severity="critical"}[5m]) > 0
+      for: 1m
+      labels:
+        severity: critical
+        component: security
+      annotations:
+        summary: "Critical security alert from Wazuh"
+        description: "Wazuh detected {{ $value }} critical alerts per second from {{ $labels.agent_name }}"
+
+    # High rate of authentication failures
+    - alert: WazuhHighAuthFailureRate
+      expr: rate(wazuh_alerts_total{rule_group=~".*authentication_failed.*"}[5m]) > 0.5
+      for: 5m
+      labels:
+        severity: warning
+        component: security
+      annotations:
+        summary: "High authentication failure rate detected"
+        description: "{{ $value }} authentication failures per second detected by Wazuh"
+
+    # Privilege escalation detected
+    - alert: WazuhPrivilegeEscalation
+      expr: rate(wazuh_alerts_total{rule_group=~".*privilege_escalation.*"}[5m]) > 0
+      for: 1m
+      labels:
+        severity: critical
+        component: security
+      annotations:
+        summary: "Privilege escalation detected"
+        description: "Wazuh detected privilege escalation on {{ $labels.agent_name }}"
+
+    # Agent disconnected
+    - alert: WazuhAgentDisconnected
+      expr: wazuh_agent_status{status="disconnected", group=~".*cortex.*"} == 1
+      for: 5m
+      labels:
+        severity: warning
+        component: monitoring
+      annotations:
+        summary: "Wazuh agent disconnected"
+        description: "Agent {{ $labels.agent_name }} ({{ $labels.ip }}) has been disconnected for 5 minutes"
+
+    # Container security event
+    - alert: WazuhContainerSecurityEvent
+      expr: rate(wazuh_alerts_total{rule_group=~".*container_security.*",severity=~"critical|high"}[5m]) > 0
+      for: 1m
+      labels:
+        severity: critical
+        component: security
+      annotations:
+        summary: "Container security event detected"
+        description: "Wazuh detected container security event: {{ $labels.rule_description }}"
+
+    # Secrets accessed
+    - alert: WazuhSecretsAccessed
+      expr: rate(wazuh_alerts_total{rule_group=~".*secrets.*"}[5m]) > 0.1
+      for: 2m
+      labels:
+        severity: high
+        component: security
+      annotations:
+        summary: "Abnormal secrets access detected"
+        description: "Wazuh detected {{ $value }} secrets access events per second"
+
+    # File integrity violation
+    - alert: WazuhFileIntegrityViolation
+      expr: rate(wazuh_fim_events_total[5m]) > 1
+      for: 5m
+      labels:
+        severity: warning
+        component: security
+      annotations:
+        summary: "High rate of file integrity changes"
+        description: "{{ $value }} file changes per second detected by Wazuh FIM"
+
+    # Critical vulnerabilities detected
+    - alert: WazuhCriticalVulnerabilities
+      expr: wazuh_vulnerability_count{severity="critical"} > 0
+      for: 5m
+      labels:
+        severity: critical
+        component: security
+      annotations:
+        summary: "Critical vulnerabilities detected"
+        description: "{{ $value }} critical vulnerabilities detected on {{ $labels.agent_name }}"
+
+    # SCA policy failures
+    - alert: WazuhSCAFailures
+      expr: wazuh_sca_checks{status="failed"} / wazuh_sca_checks_total > 0.3
+      for: 10m
+      labels:
+        severity: warning
+        component: compliance
+      annotations:
+        summary: "High SCA failure rate"
+        description: "{{ $value | humanizePercentage }} of SCA checks failing for policy {{ $labels.policy }}"
+
+    # Malware detected
+    - alert: WazuhMalwareDetected
+      expr: rate(wazuh_alerts_total{rule_group=~".*malware.*"}[5m]) > 0
+      for: 1m
+      labels:
+        severity: critical
+        component: security
+      annotations:
+        summary: "Malware detected by Wazuh"
+        description: "Malware detected on {{ $labels.agent_name }}: {{ $labels.rule_description }}"
+
+    # Data exfiltration attempt
+    - alert: WazuhDataExfiltration
+      expr: rate(wazuh_alerts_total{rule_group=~".*data_exfiltration.*"}[5m]) > 0
+      for: 1m
+      labels:
+        severity: critical
+        component: security
+      annotations:
+        summary: "Possible data exfiltration detected"
+        description: "Wazuh detected possible data exfiltration from {{ $labels.agent_name }}"
+
+    # Wazuh manager issues
+    - alert: WazuhManagerDown
+      expr: up{job="wazuh-exporter"} == 0
+      for: 2m
+      labels:
+        severity: critical
+        component: monitoring
+      annotations:
+        summary: "Wazuh manager or exporter is down"
+        description: "Cannot reach Wazuh manager or exporter for 2 minutes"
+
+    # High API latency
+    - alert: WazuhHighAPILatency
+      expr: wazuh_api_request_duration_seconds > 5
+      for: 5m
+      labels:
+        severity: warning
+        component: monitoring
+      annotations:
+        summary: "High Wazuh API latency"
+        description: "Wazuh API requests taking {{ $value }}s to complete"

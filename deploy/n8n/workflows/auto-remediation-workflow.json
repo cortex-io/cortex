@@ -1,0 +1,807 @@
+{
+  "name": "Auto-Remediation Workflow",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "auto-remediation",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "webhook-trigger",
+      "name": "Webhook Trigger",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [250, 300],
+      "webhookId": "auto-remediation-webhook"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Parse alert payload\nconst alert = $input.item.json.body.alert || $input.item.json.body;\n\nreturn [{\n  json: {\n    alertname: alert.labels?.alertname || alert.alertname,\n    severity: alert.labels?.severity || alert.severity,\n    service: alert.labels?.service || alert.labels?.job,\n    namespace: alert.labels?.namespace || 'default',\n    pod: alert.labels?.pod || alert.labels?.pod_name,\n    instance: alert.labels?.instance,\n    container: alert.labels?.container,\n    summary: alert.annotations?.summary || '',\n    description: alert.annotations?.description || '',\n    fingerprint: alert.fingerprint || '',\n    rawAlert: alert\n  }\n}];"
+      },
+      "id": "parse-alert",
+      "name": "Parse Alert",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [450, 300]
+    },
+    {
+      "parameters": {
+        "mode": "chooseBranch",
+        "output": "={{ $json.alertname }}",
+        "options": {}
+      },
+      "id": "route-by-alert-type",
+      "name": "Route by Alert Type",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3,
+      "position": [650, 300]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "crash-loop-branch",
+              "name": "branch",
+              "value": 0,
+              "type": "number"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "case-crash-loop",
+      "name": "CortexPodCrashLooping",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [850, 100]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "memory-branch",
+              "name": "branch",
+              "value": 1,
+              "type": "number"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "case-high-memory",
+      "name": "CortexHighMemoryUsage",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [850, 250]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "worker-stuck-branch",
+              "name": "branch",
+              "value": 2,
+              "type": "number"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "case-worker-stuck",
+      "name": "CortexWorkerStuck",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [850, 400]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "default-branch",
+              "name": "branch",
+              "value": 3,
+              "type": "number"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "case-default",
+      "name": "Default - No Remediation",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [850, 550]
+    },
+    {
+      "parameters": {
+        "command": "kubectl logs -n {{ $json.namespace }} {{ $json.pod }} --tail=100 --previous",
+        "options": {}
+      },
+      "id": "collect-crash-logs",
+      "name": "Collect Crash Logs",
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [1050, 100]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Analyze crash logs for common issues\nconst alert = $input.first().json;\nconst logs = $input.last().json.stdout || '';\n\nconst patterns = [\n  { pattern: /OOMKilled|Out of memory/i, issue: 'out_of_memory', action: 'increase_memory_limit' },\n  { pattern: /CrashLoopBackOff/i, issue: 'crash_loop', action: 'check_config' },\n  { pattern: /Error: ECONNREFUSED/i, issue: 'connection_refused', action: 'check_dependencies' },\n  { pattern: /permission denied/i, issue: 'permission_error', action: 'check_rbac' },\n  { pattern: /Failed to pull image/i, issue: 'image_pull_error', action: 'check_registry' }\n];\n\nlet detectedIssue = 'unknown';\nlet recommendedAction = 'restart_pod';\n\nfor (const p of patterns) {\n  if (p.pattern.test(logs)) {\n    detectedIssue = p.issue;\n    recommendedAction = p.action;\n    break;\n  }\n}\n\nreturn [{\n  json: {\n    ...alert,\n    logs: logs.substring(0, 2000), // Truncate logs\n    detectedIssue: detectedIssue,\n    recommendedAction: recommendedAction,\n    canAutoRemediate: recommendedAction === 'restart_pod'\n  }\n}];"
+      },
+      "id": "analyze-crash-logs",
+      "name": "Analyze Crash Logs",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1250, 100]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.canAutoRemediate }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "check-auto-remediate-crash",
+      "name": "Can Auto-Remediate?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [1450, 100]
+    },
+    {
+      "parameters": {
+        "command": "kubectl delete pod -n {{ $json.namespace }} {{ $json.pod }}",
+        "options": {}
+      },
+      "id": "restart-pod",
+      "name": "Restart Pod",
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [1650, 50]
+    },
+    {
+      "parameters": {
+        "command": "kubectl get pod -n {{ $json.namespace }} {{ $json.pod }} -o json",
+        "options": {}
+      },
+      "id": "get-pod-status",
+      "name": "Get Pod Status",
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [1050, 250]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Check if HPA exists and can scale\nconst alert = $input.first().json;\nconst podInfo = JSON.parse($input.last().json.stdout || '{}');\n\nconst memoryUsage = podInfo.status?.containerStatuses?.[0]?.resources?.requests?.memory || 'unknown';\nconst hasHPA = false; // Placeholder - check actual HPA\n\nreturn [{\n  json: {\n    ...alert,\n    currentMemoryUsage: memoryUsage,\n    hasHPA: hasHPA,\n    canScale: hasHPA,\n    recommendedAction: hasHPA ? 'trigger_hpa' : 'increase_replicas'\n  }\n}];"
+      },
+      "id": "check-hpa-available",
+      "name": "Check HPA Available",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1250, 250]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.hasHPA }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "check-hpa-exists",
+      "name": "HPA Exists?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [1450, 250]
+    },
+    {
+      "parameters": {
+        "command": "kubectl autoscale deployment -n {{ $json.namespace }} {{ $json.service }} --min=2 --max=10 --cpu-percent=80",
+        "options": {}
+      },
+      "id": "create-hpa",
+      "name": "Create HPA",
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [1650, 200]
+    },
+    {
+      "parameters": {
+        "command": "kubectl scale deployment -n {{ $json.namespace }} {{ $json.service }} --replicas=3",
+        "options": {}
+      },
+      "id": "scale-replicas",
+      "name": "Scale Replicas",
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [1650, 300]
+    },
+    {
+      "parameters": {
+        "command": "kubectl get pod -n {{ $json.namespace }} -l app={{ $json.service }} -o json",
+        "options": {}
+      },
+      "id": "get-worker-pods",
+      "name": "Get Worker Pods",
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [1050, 400]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Identify stuck worker pod\nconst alert = $input.first().json;\nconst podsInfo = JSON.parse($input.last().json.stdout || '{}');\nconst pods = podsInfo.items || [];\n\n// Find pod that matches alert instance or is in bad state\nconst stuckPod = pods.find(pod => {\n  const podName = pod.metadata?.name;\n  const status = pod.status?.phase;\n  \n  // Check if pod name matches or if pod is in problematic state\n  return podName?.includes(alert.instance) || status === 'Unknown' || status === 'Pending';\n});\n\nif (stuckPod) {\n  return [{\n    json: {\n      ...alert,\n      stuckPodName: stuckPod.metadata?.name,\n      stuckPodStatus: stuckPod.status?.phase,\n      canTerminate: true\n    }\n  }];\n}\n\nreturn [{\n  json: {\n    ...alert,\n    canTerminate: false,\n    reason: 'No stuck pod found'\n  }\n}];"
+      },
+      "id": "identify-stuck-worker",
+      "name": "Identify Stuck Worker",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1250, 400]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.canTerminate }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "check-can-terminate",
+      "name": "Can Terminate?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [1450, 400]
+    },
+    {
+      "parameters": {
+        "command": "kubectl delete pod -n {{ $json.namespace }} {{ $json.stuckPodName }} --grace-period=0 --force",
+        "options": {}
+      },
+      "id": "force-terminate-worker",
+      "name": "Force Terminate Worker",
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [1650, 400]
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combinationMode": "mergeByPosition",
+        "options": {}
+      },
+      "id": "merge-remediation-results",
+      "name": "Merge Remediation Results",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 2.1,
+      "position": [1850, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Determine remediation success\nconst item = $input.item.json;\n\nconst success = !item.stderr && item.exitCode === 0;\nconst action = item.command || 'unknown';\n\nreturn [{\n  json: {\n    ...item,\n    remediationSuccess: success,\n    remediationAction: action,\n    remediationTimestamp: new Date().toISOString(),\n    remediationOutput: item.stdout || item.stderr || 'No output'\n  }\n}];"
+      },
+      "id": "evaluate-remediation",
+      "name": "Evaluate Remediation",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [2050, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.AUDIT_LOG_API }}",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "type",
+              "value": "auto_remediation"
+            },
+            {
+              "name": "remediation",
+              "value": "={{ $json }}"
+            },
+            {
+              "name": "timestamp",
+              "value": "={{ $now.toISO() }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "log-remediation-audit",
+      "name": "Log Remediation to Audit",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [2250, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.remediationSuccess }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "check-remediation-success",
+      "name": "Remediation Success?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [2450, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.SLACK_WEBHOOK_REMEDIATION }}",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "text",
+              "value": "=✅ Auto-Remediation Success: {{ $json.alertname }}"
+            },
+            {
+              "name": "blocks",
+              "value": "=[{\"type\":\"header\",\"text\":{\"type\":\"plain_text\",\"text\":\"✅ Auto-Remediation Success\"}},{\"type\":\"section\",\"fields\":[{\"type\":\"mrkdwn\",\"text\":\"*Alert:*\\n{{ $json.alertname }}\"},{\"type\":\"mrkdwn\",\"text\":\"*Service:*\\n{{ $json.service }}\"},{\"type\":\"mrkdwn\",\"text\":\"*Action:*\\n{{ $json.remediationAction }}\"},{\"type\":\"mrkdwn\",\"text\":\"*Namespace:*\\n{{ $json.namespace }}\"}]},{\"type\":\"section\",\"text\":{\"type\":\"mrkdwn\",\"text\":\"*Output:*\\n```{{ $json.remediationOutput }}```\"}}]"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "notify-success",
+      "name": "Notify Success",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [2650, 200]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.SLACK_WEBHOOK_REMEDIATION }}",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "text",
+              "value": "=❌ Auto-Remediation Failed: {{ $json.alertname }}"
+            },
+            {
+              "name": "blocks",
+              "value": "=[{\"type\":\"header\",\"text\":{\"type\":\"plain_text\",\"text\":\"❌ Auto-Remediation Failed\"}},{\"type\":\"section\",\"fields\":[{\"type\":\"mrkdwn\",\"text\":\"*Alert:*\\n{{ $json.alertname }}\"},{\"type\":\"mrkdwn\",\"text\":\"*Service:*\\n{{ $json.service }}\"},{\"type\":\"mrkdwn\",\"text\":\"*Attempted Action:*\\n{{ $json.remediationAction }}\"},{\"type\":\"mrkdwn\",\"text\":\"*Namespace:*\\n{{ $json.namespace }}\"}]},{\"type\":\"section\",\"text\":{\"type\":\"mrkdwn\",\"text\":\"*Error:*\\n```{{ $json.remediationOutput }}```\"}},{\"type\":\"section\",\"text\":{\"type\":\"mrkdwn\",\"text\":\"⚠️ *Manual intervention required*\"}}]"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "notify-failure",
+      "name": "Notify Failure",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [2650, 400]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { \"status\": $json.remediationSuccess ? \"success\" : \"failed\", \"action\": $json.remediationAction, \"alert\": $json.alertname } }}",
+        "options": {}
+      },
+      "id": "webhook-response",
+      "name": "Webhook Response",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [2850, 300]
+    }
+  ],
+  "connections": {
+    "Webhook Trigger": {
+      "main": [
+        [
+          {
+            "node": "Parse Alert",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Alert": {
+      "main": [
+        [
+          {
+            "node": "Route by Alert Type",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Route by Alert Type": {
+      "main": [
+        [
+          {
+            "node": "CortexPodCrashLooping",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "CortexHighMemoryUsage",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "CortexWorkerStuck",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Default - No Remediation",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "CortexPodCrashLooping": {
+      "main": [
+        [
+          {
+            "node": "Collect Crash Logs",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "CortexHighMemoryUsage": {
+      "main": [
+        [
+          {
+            "node": "Get Pod Status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "CortexWorkerStuck": {
+      "main": [
+        [
+          {
+            "node": "Get Worker Pods",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Collect Crash Logs": {
+      "main": [
+        [
+          {
+            "node": "Analyze Crash Logs",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Analyze Crash Logs": {
+      "main": [
+        [
+          {
+            "node": "Can Auto-Remediate?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Can Auto-Remediate?": {
+      "main": [
+        [
+          {
+            "node": "Restart Pod",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Merge Remediation Results",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Restart Pod": {
+      "main": [
+        [
+          {
+            "node": "Merge Remediation Results",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Get Pod Status": {
+      "main": [
+        [
+          {
+            "node": "Check HPA Available",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check HPA Available": {
+      "main": [
+        [
+          {
+            "node": "HPA Exists?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HPA Exists?": {
+      "main": [
+        [
+          {
+            "node": "Create HPA",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Scale Replicas",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create HPA": {
+      "main": [
+        [
+          {
+            "node": "Merge Remediation Results",
+            "type": "main",
+            "index": 2
+          }
+        ]
+      ]
+    },
+    "Scale Replicas": {
+      "main": [
+        [
+          {
+            "node": "Merge Remediation Results",
+            "type": "main",
+            "index": 3
+          }
+        ]
+      ]
+    },
+    "Get Worker Pods": {
+      "main": [
+        [
+          {
+            "node": "Identify Stuck Worker",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Identify Stuck Worker": {
+      "main": [
+        [
+          {
+            "node": "Can Terminate?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Can Terminate?": {
+      "main": [
+        [
+          {
+            "node": "Force Terminate Worker",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Merge Remediation Results",
+            "type": "main",
+            "index": 4
+          }
+        ]
+      ]
+    },
+    "Force Terminate Worker": {
+      "main": [
+        [
+          {
+            "node": "Merge Remediation Results",
+            "type": "main",
+            "index": 5
+          }
+        ]
+      ]
+    },
+    "Default - No Remediation": {
+      "main": [
+        [
+          {
+            "node": "Merge Remediation Results",
+            "type": "main",
+            "index": 6
+          }
+        ]
+      ]
+    },
+    "Merge Remediation Results": {
+      "main": [
+        [
+          {
+            "node": "Evaluate Remediation",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Evaluate Remediation": {
+      "main": [
+        [
+          {
+            "node": "Log Remediation to Audit",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Log Remediation to Audit": {
+      "main": [
+        [
+          {
+            "node": "Remediation Success?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Remediation Success?": {
+      "main": [
+        [
+          {
+            "node": "Notify Success",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Notify Failure",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Notify Success": {
+      "main": [
+        [
+          {
+            "node": "Webhook Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Notify Failure": {
+      "main": [
+        [
+          {
+            "node": "Webhook Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": [
+    {
+      "name": "remediation",
+      "id": "remediation-tag-1"
+    },
+    {
+      "name": "automation",
+      "id": "automation-tag-1"
+    }
+  ],
+  "triggerCount": 1,
+  "updatedAt": "2025-12-11T00:00:00.000Z",
+  "versionId": "1"
+}

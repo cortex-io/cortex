@@ -1,0 +1,244 @@
+# Wazuh Integration for Cortex - File Overview
+
+## Created Files Summary
+
+This directory contains a complete Wazuh SIEM integration for Cortex security monitoring, connecting to the existing Wazuh server at 10.88.140.202.
+
+### Core Configuration Files (4)
+
+1. **wazuh-cortex-rules.xml** (20KB)
+   - 95 custom security rules (IDs 100100-100199)
+   - 10 rule categories covering all Cortex threat vectors
+   - MITRE ATT&CK framework mappings
+   - PCI-DSS and GDPR compliance tags
+   - Frequency-based composite rules for brute force detection
+
+2. **wazuh-cortex-decoders.xml** (15KB)
+   - 20+ JSON decoders for Cortex log formats
+   - Parsers for: agents, tasks, MCP servers, N8N workflows
+   - Kubernetes audit log decoder
+   - Container runtime and network activity decoders
+   - Secrets access and FIM event decoders
+
+3. **wazuh-agent-config.yaml** (9.8KB)
+   - Complete agent configuration for k3s nodes
+   - 11+ log collection sources
+   - File Integrity Monitoring for critical paths
+   - Rootcheck and SCA configuration
+   - Vulnerability detection settings
+   - Docker/Kubernetes integration modules
+
+4. **prometheus-wazuh-exporter.yaml** (12KB)
+   - Kubernetes manifests for Wazuh metrics exporter
+   - ConfigMap, Deployment, Service, ServiceMonitor
+   - 15+ Prometheus recording rules
+   - 12+ alerting rules for security events
+   - Secret management for Wazuh API credentials
+
+5. **alertmanager-wazuh-receiver.yaml** (10KB)
+   - Bidirectional Prometheus ↔ Wazuh integration
+   - Webhook receiver deployment manifests
+   - Python Flask app for alert transformation
+   - Alert enrichment and rate limiting
+   - Complete Dockerfile and requirements.txt
+
+### Documentation Files (2)
+
+6. **README.md** (23KB)
+   - Complete integration documentation
+   - Architecture diagrams and component descriptions
+   - Step-by-step installation guide
+   - Configuration and tuning instructions
+   - Troubleshooting guide with solutions
+   - Maintenance schedules and procedures
+   - Compliance reporting (PCI-DSS, GDPR, CIS)
+   - 30+ code examples and CLI commands
+
+7. **QUICK-REFERENCE.md** (11KB)
+   - Fast lookup reference for daily operations
+   - Common commands and queries
+   - Rule ID quick reference table
+   - Severity level guidelines
+   - Prometheus query examples
+   - Troubleshooting cheat sheet
+   - Log locations and API endpoints
+   - Useful one-liners
+
+### Automation Scripts (2)
+
+8. **deploy-wazuh-integration.sh** (13KB, executable)
+   - Automated deployment script
+   - Prerequisites checking
+   - Deploys to Wazuh manager + Kubernetes
+   - Interactive prompts for credentials
+   - Dry-run mode for validation
+   - Rollback capabilities
+   - Colored output and progress tracking
+
+9. **test-integration.sh** (14KB, executable)
+   - Comprehensive test suite
+   - 18 individual test cases
+   - Tests all integration components
+   - Validates connectivity and functionality
+   - Generates test security alerts
+   - Summary report with pass/fail counts
+   - Automated verification
+
+## Key Features
+
+### Security Coverage
+
+- **95 Custom Rules** across 10 threat categories
+- **MITRE ATT&CK** framework alignment
+- **Container Security** monitoring and escape detection
+- **Kubernetes Audit** log analysis
+- **Secrets Access** monitoring and alerting
+- **File Integrity Monitoring** for critical configs
+- **Compliance Scanning** (PCI-DSS, GDPR, CIS)
+
+### Integration Points
+
+- **Wazuh Manager**: 10.88.140.202 (existing infrastructure)
+- **K3s Cluster**: DaemonSet deployment on all nodes
+- **Prometheus**: Metrics exporter with recording/alerting rules
+- **Alertmanager**: Webhook receiver for bidirectional correlation
+- **Grafana**: Dashboard-ready metrics
+- **N8N**: Workflow automation integration ready
+
+### Architecture Components
+
+```
+┌─────────────────┐
+│  Wazuh Manager  │ ← Rules, Decoders
+│  10.88.140.202  │
+└────────┬────────┘
+         │
+    ┌────┴────┐
+    │ Agents  │ ← Agent Config
+    │ (k3s)   │
+    └────┬────┘
+         │
+    ┌────┴────────┐
+    │  Prometheus │ ← Exporter, Rules
+    │ Alertmanager│ ← Webhook Receiver
+    └─────────────┘
+```
+
+## Deployment Steps
+
+1. **Deploy to Wazuh Manager** (rules, decoders)
+2. **Deploy Kubernetes Components** (agents, exporter, webhook)
+3. **Configure Integrations** (Prometheus, Alertmanager)
+4. **Validate** (test suite)
+5. **Tune** (alert thresholds, false positives)
+
+## Quick Start
+
+```bash
+# Automated deployment
+./deploy-wazuh-integration.sh
+
+# Run tests
+./test-integration.sh
+
+# View documentation
+cat README.md
+cat QUICK-REFERENCE.md
+```
+
+## File Dependencies
+
+```
+wazuh-cortex-rules.xml
+  └─ Requires: wazuh-cortex-decoders.xml
+  └─ Deployed to: /var/ossec/etc/rules/ on Wazuh manager
+
+wazuh-cortex-decoders.xml
+  └─ Deployed to: /var/ossec/etc/decoders/ on Wazuh manager
+
+wazuh-agent-config.yaml
+  └─ Used by: deploy-wazuh-integration.sh
+  └─ Creates: ConfigMap in Kubernetes
+  └─ Mounted by: Wazuh agent DaemonSet
+
+prometheus-wazuh-exporter.yaml
+  └─ Requires: wazuh-api-credentials secret
+  └─ Provides: Metrics on port 9140
+  └─ Scraped by: Prometheus ServiceMonitor
+
+alertmanager-wazuh-receiver.yaml
+  └─ Requires: wazuh-api-credentials secret
+  └─ Requires: wazuh-webhook-credentials secret
+  └─ Receives: Alertmanager webhooks
+  └─ Forwards to: Wazuh manager API
+```
+
+## Metrics & Monitoring
+
+### Exposed Metrics
+
+- `wazuh_alerts_total` - Total alerts by severity/rule
+- `wazuh_agent_status` - Agent health (active/disconnected)
+- `wazuh_rule_triggers_total` - Rule trigger counts
+- `wazuh_fim_events_total` - File integrity events
+- `wazuh_vulnerability_count` - Vulnerabilities by severity
+- `wazuh_sca_checks` - Security configuration assessment
+
+### Alerting Rules
+
+- Critical security events (level 15)
+- Authentication failures (brute force)
+- Privilege escalation attempts
+- Container security violations
+- Secrets access anomalies
+- Agent health issues
+
+## Compliance & Standards
+
+- **PCI-DSS v4.0**: Requirements 10.x, 11.x
+- **GDPR**: Articles 32.2, 35.7.d
+- **CIS Kubernetes Benchmark**: Automated scanning
+- **MITRE ATT&CK**: 20+ technique mappings
+- **NIST**: Security event logging
+
+## Support Matrix
+
+| Component | Version | Status |
+|-----------|---------|--------|
+| Wazuh Manager | 4.7.0 | Supported |
+| Wazuh Agent | 4.7.0 | Supported |
+| Kubernetes | 1.25+ | Supported |
+| K3s | 1.25+ | Supported |
+| Prometheus | 2.40+ | Supported |
+| Alertmanager | 0.25+ | Supported |
+
+## Maintenance
+
+- **Daily**: Check agent connectivity, review critical alerts
+- **Weekly**: Update agents, tune rules, backup configs
+- **Monthly**: Update rules, audit compliance, archive alerts
+
+## Version
+
+- **Integration Version**: 1.0.0
+- **Created**: 2025-12-11
+- **Author**: Claude Opus 4.5 (Security Master)
+- **Total Files**: 9
+- **Total Size**: ~144KB
+- **Lines of Code**: ~3,500
+
+## Next Steps
+
+1. Review README.md for detailed documentation
+2. Run deploy-wazuh-integration.sh to deploy
+3. Execute test-integration.sh to validate
+4. Consult QUICK-REFERENCE.md for daily operations
+5. Tune alerts based on your environment
+6. Integrate with existing monitoring dashboards
+
+## Related Documentation
+
+- Cortex Security Master: /Users/ryandahlberg/Projects/cortex/coordination/masters/security/
+- Monitoring Deployment: /Users/ryandahlberg/Projects/cortex/deploy/monitoring/
+- Infrastructure Docs: /Users/ryandahlberg/Projects/cortex/coordination/masters/inventory/
+- Proxmox Infrastructure: 10.88.140.151 (Wazuh running on VM 101)
