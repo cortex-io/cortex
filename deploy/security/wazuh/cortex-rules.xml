@@ -1,0 +1,311 @@
+<!--
+  Cortex Security Rules for Wazuh
+  Rule ID Range: 100100-100199 (Reserved for Cortex)
+
+  Integration: Deploy to /var/ossec/etc/rules/local_rules.xml on Wazuh server
+  Server: 10.88.140.202
+
+  Rule Levels:
+  - 0-4: Informational
+  - 5-7: Low-Medium (Review daily)
+  - 8-11: Medium-High (Review within 1 hour)
+  - 12+: Critical (Immediate action required)
+-->
+
+<group name="cortex,automation">
+
+  <!-- ======================================= -->
+  <!-- Rule 100100-100109: Agent Failures     -->
+  <!-- ======================================= -->
+
+  <rule id="100100" level="10">
+    <if_group>cortex</if_group>
+    <match>agent.*failed|agent.*crashed|agent.*error</match>
+    <description>Cortex agent failure detected - Critical system error</description>
+    <group>cortex_errors,agent_failures,</group>
+    <options>no_email_alert</options>
+  </rule>
+
+  <rule id="100101" level="12">
+    <if_sid>100100</if_sid>
+    <match>security.*agent|master.*agent</match>
+    <description>Critical: Cortex Security or Master agent failure</description>
+    <group>cortex_critical,agent_failures,</group>
+  </rule>
+
+  <rule id="100102" level="8">
+    <if_group>cortex</if_group>
+    <match>agent.*restart|agent.*recovering</match>
+    <description>Cortex agent restart detected - Monitoring recovery</description>
+    <group>cortex_operations,agent_recovery,</group>
+    <options>no_log</options>
+  </rule>
+
+  <!-- ======================================= -->
+  <!-- Rule 100110-100119: Token Management   -->
+  <!-- ======================================= -->
+
+  <rule id="100110" level="7">
+    <if_group>cortex</if_group>
+    <match>token.*exhausted|token.*limit.*exceeded|token.*budget</match>
+    <description>Cortex token consumption threshold exceeded</description>
+    <group>cortex_performance,token_management,</group>
+  </rule>
+
+  <rule id="100111" level="9">
+    <if_sid>100110</if_sid>
+    <frequency>3</frequency>
+    <timeframe>300</timeframe>
+    <description>Multiple token exhaustion events - Investigate agent efficiency</description>
+    <group>cortex_performance,token_abuse,</group>
+  </rule>
+
+  <rule id="100112" level="5">
+    <if_group>cortex</if_group>
+    <match>token.*warning|token.*\d{2}%</match>
+    <description>Cortex token usage approaching limit (warning threshold)</description>
+    <group>cortex_performance,token_warning,</group>
+    <options>no_email_alert</options>
+  </rule>
+
+  <!-- ======================================= -->
+  <!-- Rule 100120-100129: Worker Management  -->
+  <!-- ======================================= -->
+
+  <rule id="100120" level="8">
+    <if_group>cortex</if_group>
+    <match>worker.*timeout|worker.*stuck|worker.*hung</match>
+    <description>Cortex worker process stuck or timed out</description>
+    <group>cortex_errors,worker_timeout,</group>
+  </rule>
+
+  <rule id="100121" level="9">
+    <if_sid>100120</if_sid>
+    <frequency>2</frequency>
+    <timeframe>600</timeframe>
+    <description>Multiple worker timeouts detected - System degradation likely</description>
+    <group>cortex_errors,worker_failures,</group>
+  </rule>
+
+  <rule id="100122" level="6">
+    <if_group>cortex</if_group>
+    <match>worker.*spawned|worker.*created</match>
+    <description>Cortex worker spawned successfully</description>
+    <group>cortex_operations,worker_lifecycle,</group>
+    <options>no_log</options>
+  </rule>
+
+  <rule id="100123" level="6">
+    <if_group>cortex</if_group>
+    <match>worker.*completed|worker.*success</match>
+    <description>Cortex worker task completed successfully</description>
+    <group>cortex_operations,worker_success,</group>
+    <options>no_log</options>
+  </rule>
+
+  <!-- ======================================= -->
+  <!-- Rule 100130-100139: MCP Integration    -->
+  <!-- ======================================= -->
+
+  <rule id="100130" level="9">
+    <if_group>cortex</if_group>
+    <match>MCP.*connection.*failed|MCP.*unavailable|MCP.*timeout</match>
+    <description>MCP server connection failure detected</description>
+    <group>cortex_errors,mcp_failures,</group>
+  </rule>
+
+  <rule id="100131" level="11">
+    <if_sid>100130</if_sid>
+    <frequency>3</frequency>
+    <timeframe>300</timeframe>
+    <description>Critical: Repeated MCP server failures - Service unavailable</description>
+    <group>cortex_critical,mcp_down,</group>
+  </rule>
+
+  <rule id="100132" level="7">
+    <if_group>cortex</if_group>
+    <match>MCP.*slow|MCP.*latency|MCP.*degraded</match>
+    <description>MCP server performance degradation detected</description>
+    <group>cortex_performance,mcp_latency,</group>
+  </rule>
+
+  <rule id="100133" level="5">
+    <if_group>cortex</if_group>
+    <match>MCP.*connected|MCP.*ready</match>
+    <description>MCP server connection established</description>
+    <group>cortex_operations,mcp_status,</group>
+    <options>no_log</options>
+  </rule>
+
+  <!-- ======================================= -->
+  <!-- Rule 100140-100149: Security Events    -->
+  <!-- ======================================= -->
+
+  <rule id="100140" level="12">
+    <if_group>authentication_failed</if_group>
+    <match>cortex|n8n|coordination</match>
+    <description>Critical: Unauthorized access attempt to Cortex system</description>
+    <group>cortex_security,authentication_failures,intrusion_attempt,</group>
+  </rule>
+
+  <rule id="100141" level="14">
+    <if_sid>100140</if_sid>
+    <frequency>5</frequency>
+    <timeframe>300</timeframe>
+    <description>Critical: Multiple unauthorized access attempts - Possible attack</description>
+    <group>cortex_security,brute_force,intrusion_attempt,</group>
+  </rule>
+
+  <rule id="100142" level="10">
+    <if_group>cortex</if_group>
+    <match>unauthorized.*api|invalid.*token|forbidden.*access</match>
+    <description>Unauthorized API access attempt detected</description>
+    <group>cortex_security,api_abuse,</group>
+  </rule>
+
+  <rule id="100143" level="8">
+    <if_group>cortex</if_group>
+    <match>security.*scan.*failed|vulnerability.*check.*error</match>
+    <description>Cortex security scan failure - Monitoring gap</description>
+    <group>cortex_security,scan_failures,</group>
+  </rule>
+
+  <!-- ======================================= -->
+  <!-- Rule 100150-100159: Config Management  -->
+  <!-- ======================================= -->
+
+  <rule id="100150" level="8">
+    <if_group>cortex</if_group>
+    <match>configuration.*drift|config.*mismatch|config.*changed</match>
+    <description>Configuration drift detected in Cortex system</description>
+    <group>cortex_configuration,config_drift,</group>
+  </rule>
+
+  <rule id="100151" level="10">
+    <if_sid>100150</if_sid>
+    <match>master.*config|coordinator.*config|security.*config</match>
+    <description>Critical configuration drift in core Cortex component</description>
+    <group>cortex_configuration,critical_drift,</group>
+  </rule>
+
+  <rule id="100152" level="6">
+    <if_group>cortex</if_group>
+    <match>configuration.*updated|config.*applied</match>
+    <description>Cortex configuration updated successfully</description>
+    <group>cortex_configuration,config_update,</group>
+    <options>no_log</options>
+  </rule>
+
+  <!-- ======================================= -->
+  <!-- Rule 100160-100169: Performance        -->
+  <!-- ======================================= -->
+
+  <rule id="100160" level="9">
+    <if_group>cortex</if_group>
+    <match>high.*error.*rate|errors.*threshold|error.*spike</match>
+    <description>High error rate detected in Cortex operations</description>
+    <group>cortex_performance,error_rate,</group>
+  </rule>
+
+  <rule id="100161" level="10">
+    <if_sid>100160</if_sid>
+    <frequency>2</frequency>
+    <timeframe>300</timeframe>
+    <description>Critical: Sustained high error rate - System degradation</description>
+    <group>cortex_performance,system_degradation,</group>
+  </rule>
+
+  <rule id="100162" level="7">
+    <if_group>cortex</if_group>
+    <match>task.*queue.*overflow|queue.*full|backlog.*critical</match>
+    <description>Cortex task queue overflow detected</description>
+    <group>cortex_performance,queue_overflow,</group>
+  </rule>
+
+  <rule id="100163" level="8">
+    <if_group>cortex</if_group>
+    <match>memory.*leak|memory.*exhausted|OOM</match>
+    <description>Memory exhaustion detected in Cortex component</description>
+    <group>cortex_performance,memory_issues,</group>
+  </rule>
+
+  <!-- ======================================= -->
+  <!-- Rule 100170-100179: N8N Integration    -->
+  <!-- ======================================= -->
+
+  <rule id="100170" level="8">
+    <if_group>n8n</if_group>
+    <match>workflow.*failed|execution.*error</match>
+    <description>N8N workflow execution failure</description>
+    <group>cortex_n8n,workflow_failures,</group>
+  </rule>
+
+  <rule id="100171" level="9">
+    <if_sid>100170</if_sid>
+    <match>cortex.*workflow|automation.*workflow</match>
+    <description>Critical N8N Cortex automation workflow failed</description>
+    <group>cortex_n8n,critical_workflow,</group>
+  </rule>
+
+  <rule id="100172" level="7">
+    <if_group>n8n</if_group>
+    <match>webhook.*failed|trigger.*error</match>
+    <description>N8N webhook or trigger failure</description>
+    <group>cortex_n8n,webhook_failures,</group>
+  </rule>
+
+  <!-- ======================================= -->
+  <!-- Rule 100180-100189: Dashboard/Metrics  -->
+  <!-- ======================================= -->
+
+  <rule id="100180" level="7">
+    <if_group>cortex</if_group>
+    <match>dashboard.*deployment.*failed|metrics.*unavailable</match>
+    <description>Cortex dashboard deployment or metrics failure</description>
+    <group>cortex_operations,dashboard_failures,</group>
+  </rule>
+
+  <rule id="100181" level="5">
+    <if_group>cortex</if_group>
+    <match>dashboard.*deployed|metrics.*updated</match>
+    <description>Cortex dashboard deployed successfully</description>
+    <group>cortex_operations,dashboard_success,</group>
+    <options>no_log</options>
+  </rule>
+
+  <!-- ======================================= -->
+  <!-- Rule 100190-100199: General Operations -->
+  <!-- ======================================= -->
+
+  <rule id="100190" level="5">
+    <if_group>cortex</if_group>
+    <match>task.*completed|task.*success</match>
+    <description>Cortex task completed successfully</description>
+    <group>cortex_operations,task_success,</group>
+    <options>no_log</options>
+  </rule>
+
+  <rule id="100191" level="7">
+    <if_group>cortex</if_group>
+    <match>task.*failed|task.*error</match>
+    <description>Cortex task execution failed</description>
+    <group>cortex_operations,task_failures,</group>
+  </rule>
+
+  <rule id="100192" level="4">
+    <if_group>cortex</if_group>
+    <match>initialized|started|ready</match>
+    <description>Cortex component initialized successfully</description>
+    <group>cortex_operations,startup,</group>
+    <options>no_log</options>
+  </rule>
+
+  <rule id="100193" level="6">
+    <if_group>cortex</if_group>
+    <match>handoff.*created|handoff.*received</match>
+    <description>Cortex inter-master handoff initiated</description>
+    <group>cortex_operations,handoffs,</group>
+    <options>no_log</options>
+  </rule>
+
+</group>

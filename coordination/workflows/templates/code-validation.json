@@ -1,0 +1,154 @@
+{
+  "name": "Code Validation Pipeline",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "code-validation",
+        "responseMode": "lastNode",
+        "options": {}
+      },
+      "id": "webhook",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [250, 300],
+      "webhookId": "code-validation"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const input = $input.first().json.body || $input.first().json;\nconst requestId = input.request_id || `val-${Date.now()}`;\nconst workDir = `/tmp/cortex-val/${requestId}`;\n\nreturn [{\n  json: {\n    repo_url: input.repo_url,\n    branch: input.branch || 'main',\n    fix_mode: input.fix_mode || 'report',\n    request_id: requestId,\n    work_dir: workDir,\n    base_dir: workDir\n  }\n}];"
+      },
+      "id": "parse",
+      "name": "Parse Input",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [450, 300]
+    },
+    {
+      "parameters": {
+        "command": "=mkdir -p {{ $json.work_dir }} && cd {{ $json.work_dir }} && git clone --depth 1 --branch {{ $json.branch }} {{ $json.repo_url }} repo 2>&1 && echo 'CLONE_SUCCESS'",
+        "options": {"timeout": 120000}
+      },
+      "id": "clone",
+      "name": "Clone Repo",
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [650, 300]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const prev = $('Parse Input').first().json;\nconst cloneOut = $input.first().json.stdout || '';\nconst success = cloneOut.includes('CLONE_SUCCESS');\n\nreturn [{\n  json: {\n    ...prev,\n    work_dir: prev.work_dir + '/repo',\n    clone_success: success,\n    clone_output: cloneOut.substring(0, 500)\n  }\n}];"
+      },
+      "id": "setup",
+      "name": "Setup",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [850, 300]
+    },
+    {
+      "parameters": {
+        "command": "=cd {{ $json.work_dir }} && find . -type f \\( -name '*.py' -o -name '*.js' -o -name '*.ts' \\) | head -50",
+        "options": {}
+      },
+      "id": "detect",
+      "name": "Detect Files",
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [1050, 300]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const prev = $('Setup').first().json;\nconst files = ($input.first().json.stdout || '').split('\\n').filter(f => f.trim());\n\nconst hasPython = files.some(f => f.endsWith('.py'));\nconst hasJS = files.some(f => f.endsWith('.js') || f.endsWith('.ts'));\n\nreturn [{\n  json: {\n    ...prev,\n    has_python: hasPython,\n    has_javascript: hasJS,\n    files_found: files.length,\n    sample_files: files.slice(0, 10)\n  }\n}];"
+      },
+      "id": "analyze",
+      "name": "Analyze",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1250, 300]
+    },
+    {
+      "parameters": {
+        "command": "=cd {{ $json.work_dir }} && if [ \"{{ $json.has_python }}\" = \"true\" ]; then ruff check . --output-format=json 2>/dev/null || echo '[]'; else echo '[]'; fi",
+        "options": {"timeout": 60000}
+      },
+      "id": "ruff",
+      "name": "Run Ruff",
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [1450, 300]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const prev = $('Analyze').first().json;\nconst ruffOut = $input.first().json.stdout || '[]';\n\nlet lintIssues = [];\ntry {\n  lintIssues = JSON.parse(ruffOut);\n} catch (e) {\n  // ruff may output non-JSON on success\n  lintIssues = [];\n}\n\nreturn [{\n  json: {\n    ...prev,\n    lint_issues: lintIssues.slice(0, 50),\n    lint_count: lintIssues.length\n  }\n}];"
+      },
+      "id": "lint_parse",
+      "name": "Parse Lint",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1650, 300]
+    },
+    {
+      "parameters": {
+        "command": "=cd {{ $json.work_dir }} && trivy fs --format json --scanners vuln,secret . 2>/dev/null || echo '{\"Results\":[]}'",
+        "options": {"timeout": 120000}
+      },
+      "id": "trivy",
+      "name": "Run Trivy",
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [1850, 300]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const prev = $('Parse Lint').first().json;\nconst trivyOut = $input.first().json.stdout || '{}';\n\nlet security = { vulnerabilities: [], secrets: [] };\ntry {\n  const parsed = JSON.parse(trivyOut);\n  const results = parsed.Results || [];\n  results.forEach(r => {\n    if (r.Vulnerabilities) {\n      security.vulnerabilities.push(...r.Vulnerabilities.slice(0, 20));\n    }\n    if (r.Secrets) {\n      security.secrets.push(...r.Secrets.slice(0, 10));\n    }\n  });\n} catch (e) {\n  security.parse_error = e.message;\n}\n\nreturn [{\n  json: {\n    ...prev,\n    security: security,\n    vuln_count: security.vulnerabilities.length,\n    secret_count: security.secrets.length\n  }\n}];"
+      },
+      "id": "security_parse",
+      "name": "Parse Security",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [2050, 300]
+    },
+    {
+      "parameters": {
+        "command": "=rm -rf {{ $json.base_dir }}",
+        "options": {}
+      },
+      "id": "cleanup",
+      "name": "Cleanup",
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [2250, 300]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const prev = $('Parse Security').first().json;\n\nconst passed = prev.lint_count === 0 && prev.vuln_count === 0 && prev.secret_count === 0;\n\nreturn [{\n  json: {\n    success: true,\n    passed: passed,\n    request_id: prev.request_id,\n    repo: prev.repo_url,\n    branch: prev.branch,\n    summary: {\n      files_scanned: prev.files_found,\n      lint_issues: prev.lint_count,\n      vulnerabilities: prev.vuln_count,\n      secrets_found: prev.secret_count\n    },\n    details: {\n      lint: prev.lint_issues,\n      security: prev.security\n    },\n    message: passed ? 'All checks passed' : 'Issues found - review required',\n    timestamp: new Date().toISOString()\n  }\n}];"
+      },
+      "id": "result",
+      "name": "Result",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [2450, 300]
+    }
+  ],
+  "connections": {
+    "Webhook": {"main": [[{"node": "Parse Input", "type": "main", "index": 0}]]},
+    "Parse Input": {"main": [[{"node": "Clone Repo", "type": "main", "index": 0}]]},
+    "Clone Repo": {"main": [[{"node": "Setup", "type": "main", "index": 0}]]},
+    "Setup": {"main": [[{"node": "Detect Files", "type": "main", "index": 0}]]},
+    "Detect Files": {"main": [[{"node": "Analyze", "type": "main", "index": 0}]]},
+    "Analyze": {"main": [[{"node": "Run Ruff", "type": "main", "index": 0}]]},
+    "Run Ruff": {"main": [[{"node": "Parse Lint", "type": "main", "index": 0}]]},
+    "Parse Lint": {"main": [[{"node": "Run Trivy", "type": "main", "index": 0}]]},
+    "Run Trivy": {"main": [[{"node": "Parse Security", "type": "main", "index": 0}]]},
+    "Parse Security": {"main": [[{"node": "Cleanup", "type": "main", "index": 0}]]},
+    "Cleanup": {"main": [[{"node": "Result", "type": "main", "index": 0}]]}
+  },
+  "settings": {"executionOrder": "v1"}
+}

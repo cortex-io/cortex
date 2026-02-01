@@ -1,3 +1,16 @@
+---
+title: "Cortex Builds Cortex: Self-Optimization Through Meta-Execution"
+date: 2025-12-05
+author: Ryan Dahlberg
+tags: [AI, Meta-Learning, Self-Optimization, Autonomous Systems, MoE]
+category: Platform Updates
+featured: true
+image: /projects/blog/images/cortex-builds-cortex-hero.svg
+image_alt: "Cortex Building Itself - Meta-Execution and Self-Optimization"
+social_image: /projects/blog/images/cortex-builds-cortex-hero.svg
+description: "We used Cortex to implement Cortex's own self-optimization framework. By submitting 16 development tasks across 5 parallel tracks, the AI agent system is now building the very capabilities that will make it smarter, faster, and more efficient. This is self-directed evolution in action."
+---
+
 # Cortex Builds Cortex: Self-Optimization Through Meta-Execution
 
 **December 5, 2025** | Ryan Dahlberg

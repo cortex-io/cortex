@@ -1,0 +1,190 @@
+<svg width="1200" height="630" viewBox="0 0 1200 630" xmlns="http://www.w3.org/2000/svg">
+  <!-- Simpler social sharing version - more focused, less detail -->
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#0f172a;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#1e3a5f;stop-opacity:1" />
+    </linearGradient>
+
+    <linearGradient id="glowGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#06b6d4;stop-opacity:0.6" />
+      <stop offset="100%" style="stop-color:#10b981;stop-opacity:0.6" />
+    </linearGradient>
+
+    <filter id="softGlow">
+      <feGaussianBlur stdDeviation="8" result="coloredBlur"/>
+      <feMerge>
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1200" height="630" fill="url(#bgGrad)"/>
+
+  <!-- Subtle grid -->
+  <g opacity="0.03">
+    <line x1="0" y1="210" x2="1200" y2="210" stroke="white" stroke-width="1"/>
+    <line x1="0" y1="420" x2="1200" y2="420" stroke="white" stroke-width="1"/>
+    <line x1="400" y1="0" x2="400" y2="630" stroke="white" stroke-width="1"/>
+    <line x1="800" y1="0" x2="800" y2="630" stroke="white" stroke-width="1"/>
+  </g>
+
+  <!-- Central flow visualization -->
+  <g transform="translate(600, 315)">
+    <!-- Large central circle with glow -->
+    <circle cx="0" cy="0" r="180" fill="url(#glowGrad)" opacity="0.2" filter="url(#softGlow)">
+      <animate attributeName="r" values="180;200;180" dur="4s" repeatCount="indefinite"/>
+    </circle>
+
+    <!-- Main pipeline circle -->
+    <circle cx="0" cy="0" r="140" fill="none" stroke="#06b6d4" stroke-width="3" opacity="0.6" stroke-dasharray="20,10">
+      <animateTransform attributeName="transform" type="rotate" from="0 0 0" to="360 0 0" dur="30s" repeatCount="indefinite"/>
+    </circle>
+
+    <!-- Inner circle -->
+    <circle cx="0" cy="0" r="100" fill="none" stroke="#10b981" stroke-width="2" opacity="0.5" stroke-dasharray="15,8">
+      <animateTransform attributeName="transform" type="rotate" from="360 0 0" to="0 0 0" dur="20s" repeatCount="indefinite"/>
+    </circle>
+
+    <!-- Core -->
+    <circle cx="0" cy="0" r="60" fill="#1e293b" opacity="0.9"/>
+
+    <!-- Four orbital nodes representing pipeline stages -->
+
+    <!-- Discovery node (top) -->
+    <g transform="translate(0, -100)">
+      <circle cx="0" cy="0" r="28" fill="#0f172a" stroke="#06b6d4" stroke-width="2.5"/>
+      <circle cx="0" cy="0" r="15" fill="#06b6d4" opacity="0.3">
+        <animate attributeName="r" values="15;20;15" dur="2s" repeatCount="indefinite"/>
+        <animate attributeName="opacity" values="0.3;0;0.3" dur="2s" repeatCount="indefinite"/>
+      </circle>
+      <circle cx="0" cy="0" r="6" fill="#06b6d4"/>
+    </g>
+
+    <!-- Prioritization node (right) -->
+    <g transform="translate(100, 0)">
+      <circle cx="0" cy="0" r="28" fill="#0f172a" stroke="#10b981" stroke-width="2.5"/>
+      <g opacity="0.8">
+        <rect x="-12" y="-10" width="24" height="5" rx="1" fill="#10b981">
+          <animate attributeName="opacity" values="1;0.4;1" dur="2s" repeatCount="indefinite"/>
+        </rect>
+        <rect x="-12" y="-3" width="24" height="5" rx="1" fill="#10b981" opacity="0.7">
+          <animate attributeName="opacity" values="0.7;0.3;0.7" dur="2s" repeatCount="indefinite" begin="0.3s"/>
+        </rect>
+        <rect x="-12" y="4" width="24" height="5" rx="1" fill="#06b6d4" opacity="0.5">
+          <animate attributeName="opacity" values="0.5;0.2;0.5" dur="2s" repeatCount="indefinite" begin="0.6s"/>
+        </rect>
+      </g>
+    </g>
+
+    <!-- Learning node (bottom) -->
+    <g transform="translate(0, 100)">
+      <circle cx="0" cy="0" r="28" fill="#0f172a" stroke="#8b5cf6" stroke-width="2.5"/>
+      <!-- Brain icon -->
+      <g opacity="0.8">
+        <circle cx="-8" cy="-5" r="3" fill="#8b5cf6">
+          <animate attributeName="opacity" values="1;0.3;1" dur="1.5s" repeatCount="indefinite"/>
+        </circle>
+        <circle cx="8" cy="-5" r="3" fill="#06b6d4">
+          <animate attributeName="opacity" values="0.3;1;0.3" dur="1.5s" repeatCount="indefinite" begin="0.5s"/>
+        </circle>
+        <circle cx="-8" cy="5" r="3" fill="#10b981">
+          <animate attributeName="opacity" values="0.3;1;0.3" dur="1.5s" repeatCount="indefinite" begin="0.75s"/>
+        </circle>
+        <circle cx="8" cy="5" r="3" fill="#06b6d4">
+          <animate attributeName="opacity" values="0.3;1;0.3" dur="1.5s" repeatCount="indefinite" begin="1s"/>
+        </circle>
+        <circle cx="0" cy="0" r="5" fill="#8b5cf6" opacity="0.4"/>
+      </g>
+    </g>
+
+    <!-- Knowledge node (left) -->
+    <g transform="translate(-100, 0)">
+      <circle cx="0" cy="0" r="28" fill="#0f172a" stroke="#10b981" stroke-width="2.5"/>
+      <!-- Chat bubbles -->
+      <g opacity="0.8">
+        <rect x="-10" y="-8" width="14" height="8" rx="2" fill="#06b6d4">
+          <animate attributeName="opacity" values="0.8;1;0.8" dur="3s" repeatCount="indefinite"/>
+        </rect>
+        <rect x="-4" y="0" width="14" height="8" rx="2" fill="#10b981">
+          <animate attributeName="opacity" values="0.8;1;0.8" dur="3s" repeatCount="indefinite" begin="1s"/>
+        </rect>
+        <!-- Sparkle -->
+        <circle cx="12" cy="8" r="2" fill="#10b981">
+          <animate attributeName="opacity" values="0;1;0" dur="2s" repeatCount="indefinite"/>
+        </circle>
+      </g>
+    </g>
+
+    <!-- Center icon - infinity loop for continuous learning -->
+    <path d="M -25,0 Q -15,-15 0,0 Q 15,15 25,0 Q 15,-15 0,0 Q -15,15 -25,0"
+          fill="none" stroke="#06b6d4" stroke-width="2.5" opacity="0.6">
+      <animate attributeName="opacity" values="0.6;1;0.6" dur="3s" repeatCount="indefinite"/>
+    </path>
+  </g>
+
+  <!-- Data flow particles around the edge -->
+  <g opacity="0.4">
+    <!-- Top particles -->
+    <circle cx="400" cy="100" r="4" fill="#06b6d4">
+      <animate attributeName="cx" values="400;800;400" dur="8s" repeatCount="indefinite"/>
+      <animate attributeName="opacity" values="0;0.4;0" dur="8s" repeatCount="indefinite"/>
+    </circle>
+    <circle cx="200" cy="150" r="3" fill="#10b981">
+      <animate attributeName="cx" values="200;1000;200" dur="10s" repeatCount="indefinite"/>
+      <animate attributeName="opacity" values="0;0.4;0" dur="10s" repeatCount="indefinite"/>
+    </circle>
+
+    <!-- Bottom particles -->
+    <circle cx="800" cy="530" r="4" fill="#8b5cf6">
+      <animate attributeName="cx" values="800;400;800" dur="9s" repeatCount="indefinite"/>
+      <animate attributeName="opacity" values="0;0.4;0" dur="9s" repeatCount="indefinite"/>
+    </circle>
+    <circle cx="1000" cy="480" r="3" fill="#06b6d4">
+      <animate attributeName="cx" values="1000;200;1000" dur="11s" repeatCount="indefinite"/>
+      <animate attributeName="opacity" values="0;0.4;0" dur="11s" repeatCount="indefinite"/>
+    </circle>
+  </g>
+
+  <!-- Accent corners -->
+  <g opacity="0.4">
+    <!-- Top left -->
+    <circle cx="60" cy="60" r="20" fill="none" stroke="#06b6d4" stroke-width="2">
+      <animateTransform attributeName="transform" type="rotate" from="0 60 60" to="360 60 60" dur="20s" repeatCount="indefinite"/>
+    </circle>
+
+    <!-- Top right -->
+    <circle cx="1140" cy="60" r="20" fill="none" stroke="#10b981" stroke-width="2" stroke-dasharray="6,4">
+      <animateTransform attributeName="transform" type="rotate" from="360 1140 60" to="0 1140 60" dur="15s" repeatCount="indefinite"/>
+    </circle>
+
+    <!-- Bottom right -->
+    <circle cx="1140" cy="570" r="20" fill="none" stroke="#8b5cf6" stroke-width="2">
+      <animateTransform attributeName="transform" type="rotate" from="0 1140 570" to="360 1140 570" dur="25s" repeatCount="indefinite"/>
+    </circle>
+
+    <!-- Bottom left -->
+    <circle cx="60" cy="570" r="20" fill="none" stroke="#06b6d4" stroke-width="2" stroke-dasharray="6,4">
+      <animateTransform attributeName="transform" type="rotate" from="360 60 570" to="0 60 570" dur="18s" repeatCount="indefinite"/>
+    </circle>
+  </g>
+
+  <!-- Stats indicators (abstract) -->
+  <g transform="translate(120, 250)" opacity="0.5">
+    <rect x="0" y="0" width="3" height="30" fill="#06b6d4" opacity="0.6"/>
+    <rect x="8" y="10" width="3" height="20" fill="#06b6d4" opacity="0.7"/>
+    <rect x="16" y="5" width="3" height="25" fill="#10b981" opacity="0.8">
+      <animate attributeName="height" values="25;35;25" dur="2s" repeatCount="indefinite"/>
+      <animate attributeName="y" values="5;0;5" dur="2s" repeatCount="indefinite"/>
+    </rect>
+    <rect x="24" y="8" width="3" height="22" fill="#10b981" opacity="0.7"/>
+    <rect x="32" y="12" width="3" height="18" fill="#06b6d4" opacity="0.6"/>
+  </g>
+
+  <!-- Bottom accent -->
+  <rect x="0" y="620" width="1200" height="10" fill="url(#glowGrad)">
+    <animate attributeName="opacity" values="0.6;1;0.6" dur="3s" repeatCount="indefinite"/>
+  </rect>
+</svg>

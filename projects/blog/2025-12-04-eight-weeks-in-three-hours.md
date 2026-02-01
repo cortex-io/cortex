@@ -1,3 +1,16 @@
+---
+title: "Eight Weeks of Development in Three Hours: Building a Production Observability Pipeline with AI"
+date: 2025-12-04
+author: Ryan Dahlberg
+tags: [AI, Development Productivity, Observability, Testing, Claude Code]
+category: Engineering
+featured: true
+image: /projects/blog/images/eight-weeks-three-hours-social.svg
+image_alt: "80-100x Development Speed - Building an Observability Pipeline with AI"
+social_image: /projects/blog/images/eight-weeks-three-hours-social.svg
+description: "Using Cortex with Claude Code, we implemented a complete, production-ready observability pipeline in ~3 hours that would traditionally take 6-8 weeks. A deep dive into the 80-100x productivity transformation and what it means for software development."
+---
+
 # Eight Weeks of Development in Three Hours: Building a Production Observability Pipeline with AI
 
 **December 4, 2025** | Ryan Dahlberg
