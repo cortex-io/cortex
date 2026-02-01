@@ -37,7 +37,7 @@
     "openai": "^4.73.0",
     "postman-cli": "^1.26.0",
     "tiktoken": "^1.0.17",
-    "ws": "^8.18.3"
+    "ws": "^8.19.0"
   },
   "devDependencies": {
     "@types/jest": "^29.5.11",
