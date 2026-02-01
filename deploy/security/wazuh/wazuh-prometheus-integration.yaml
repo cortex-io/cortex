@@ -1,0 +1,397 @@
+# Wazuh Prometheus Integration Configuration
+#
+# Purpose: Export Wazuh security alerts as Prometheus metrics
+# Architecture:
+#   Wazuh API -> Python Exporter -> Prometheus -> Alertmanager -> Grafana
+#
+# Components:
+#   1. Wazuh API: Source of security events
+#   2. wazuh-exporter: Custom Python exporter (converts alerts to metrics)
+#   3. Prometheus: Scrapes metrics from exporter
+#   4. Alertmanager: Routes alerts based on severity
+#   5. Grafana: Visualizes security metrics
+
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: security-monitoring
+  labels:
+    name: security-monitoring
+    component: wazuh-integration
+
+---
+# ConfigMap: Wazuh Exporter Configuration
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: wazuh-exporter-config
+  namespace: security-monitoring
+data:
+  config.yaml: |
+    # Wazuh API Configuration
+    wazuh:
+      host: "10.88.140.202"
+      port: 55000
+      protocol: "https"
+      username: "admin"
+      # Password should be in secret
+      verify_ssl: false
+
+    # Prometheus Exporter Settings
+    exporter:
+      port: 9100
+      host: "0.0.0.0"
+      log_level: "info"
+
+    # Metrics Collection
+    metrics:
+      # Collect alerts from last N seconds
+      collection_interval: 60
+
+      # Alert severity mapping
+      severity_levels:
+        - level: 0-4
+          severity: "informational"
+        - level: 5-7
+          severity: "low"
+        - level: 8-11
+          severity: "medium"
+        - level: 12-14
+          severity: "high"
+        - level: 15+
+          severity: "critical"
+
+      # Rule groups to track
+      rule_groups:
+        - "cortex"
+        - "cortex_errors"
+        - "cortex_security"
+        - "cortex_performance"
+        - "authentication_failures"
+        - "syscheck"
+        - "vulnerability-detector"
+
+      # Agents to monitor
+      agents:
+        - id: "000"
+          name: "wazuh-server"
+        - id: "001"
+          name: "k3s-worker-1"
+        - id: "002"
+          name: "k3s-worker-2"
+        - id: "003"
+          name: "k3s-master"
+
+---
+# Secret: Wazuh API Credentials
+apiVersion: v1
+kind: Secret
+metadata:
+  name: wazuh-api-credentials
+  namespace: security-monitoring
+type: Opaque
+stringData:
+  username: "admin"
+  password: "*B96Y7a0t8Ep9cw+z0RSevdRHwLnsiay"  # Change in production
+  api-token: ""  # Optional: Use token-based auth
+
+---
+# Deployment: Wazuh Prometheus Exporter
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: wazuh-exporter
+  namespace: security-monitoring
+  labels:
+    app: wazuh-exporter
+    component: metrics-exporter
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: wazuh-exporter
+  template:
+    metadata:
+      labels:
+        app: wazuh-exporter
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "9100"
+        prometheus.io/path: "/metrics"
+    spec:
+      containers:
+      - name: wazuh-exporter
+        # Custom Python exporter image (build separately)
+        image: ryops/wazuh-prometheus-exporter:latest
+        imagePullPolicy: Always
+        ports:
+        - name: metrics
+          containerPort: 9100
+          protocol: TCP
+        env:
+        - name: WAZUH_API_HOST
+          value: "10.88.140.202"
+        - name: WAZUH_API_PORT
+          value: "55000"
+        - name: WAZUH_API_USERNAME
+          valueFrom:
+            secretKeyRef:
+              name: wazuh-api-credentials
+              key: username
+        - name: WAZUH_API_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: wazuh-api-credentials
+              key: password
+        - name: EXPORTER_PORT
+          value: "9100"
+        - name: LOG_LEVEL
+          value: "info"
+        volumeMounts:
+        - name: config
+          mountPath: /etc/wazuh-exporter
+          readOnly: true
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "100m"
+          limits:
+            memory: "256Mi"
+            cpu: "500m"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 9100
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /ready
+            port: 9100
+          initialDelaySeconds: 10
+          periodSeconds: 5
+      volumes:
+      - name: config
+        configMap:
+          name: wazuh-exporter-config
+
+---
+# Service: Expose Wazuh Exporter Metrics
+apiVersion: v1
+kind: Service
+metadata:
+  name: wazuh-exporter
+  namespace: security-monitoring
+  labels:
+    app: wazuh-exporter
+spec:
+  type: ClusterIP
+  ports:
+  - port: 9100
+    targetPort: 9100
+    protocol: TCP
+    name: metrics
+  selector:
+    app: wazuh-exporter
+
+---
+# ServiceMonitor: Prometheus Scrape Configuration
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: wazuh-exporter
+  namespace: security-monitoring
+  labels:
+    app: wazuh-exporter
+    release: prometheus
+spec:
+  selector:
+    matchLabels:
+      app: wazuh-exporter
+  endpoints:
+  - port: metrics
+    interval: 30s
+    path: /metrics
+    scheme: http
+
+---
+# ConfigMap: Prometheus Alert Rules for Wazuh Metrics
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: wazuh-prometheus-rules
+  namespace: monitoring
+data:
+  wazuh-alerts.yaml: |
+    groups:
+    - name: wazuh_security_alerts
+      interval: 30s
+      rules:
+
+      # Wazuh Agent Status
+      - alert: WazuhAgentDisconnected
+        expr: wazuh_agent_status{status="disconnected"} == 1
+        for: 5m
+        labels:
+          severity: warning
+          component: wazuh
+          team: security
+        annotations:
+          summary: "Wazuh agent {{ $labels.agent_name }} disconnected"
+          description: "Agent {{ $labels.agent_id }} ({{ $labels.agent_name }}) has been disconnected for 5 minutes"
+
+      # Critical Security Alerts
+      - alert: WazuhCriticalSecurityAlert
+        expr: rate(wazuh_alerts_total{severity="critical"}[5m]) > 0
+        for: 1m
+        labels:
+          severity: critical
+          component: wazuh
+          team: security
+        annotations:
+          summary: "Critical security alert detected"
+          description: "{{ $value }} critical alerts per second from rule {{ $labels.rule_id }}"
+
+      # High Alert Rate
+      - alert: WazuhHighAlertRate
+        expr: rate(wazuh_alerts_total[5m]) > 10
+        for: 5m
+        labels:
+          severity: warning
+          component: wazuh
+          team: security
+        annotations:
+          summary: "High Wazuh alert rate detected"
+          description: "Alert rate is {{ $value }} per second, exceeding threshold of 10/s"
+
+      # Cortex-Specific Alerts
+      - alert: CortexAgentFailure
+        expr: rate(wazuh_alerts_total{rule_group="cortex_errors"}[5m]) > 0
+        for: 2m
+        labels:
+          severity: high
+          component: cortex
+          team: automation
+        annotations:
+          summary: "Cortex agent failures detected"
+          description: "{{ $value }} Cortex agent errors per second"
+
+      - alert: CortexTokenExhaustion
+        expr: rate(wazuh_alerts_total{rule_id="100110"}[5m]) > 0.1
+        for: 5m
+        labels:
+          severity: warning
+          component: cortex
+          team: automation
+        annotations:
+          summary: "Cortex token exhaustion events"
+          description: "Multiple token exhaustion events detected, review agent efficiency"
+
+      - alert: CortexWorkerTimeout
+        expr: rate(wazuh_alerts_total{rule_id="100120"}[10m]) > 0
+        for: 5m
+        labels:
+          severity: high
+          component: cortex
+          team: automation
+        annotations:
+          summary: "Cortex worker timeouts detected"
+          description: "Workers are timing out, investigate system performance"
+
+      - alert: CortexMCPFailure
+        expr: rate(wazuh_alerts_total{rule_id="100130"}[5m]) > 0
+        for: 2m
+        labels:
+          severity: critical
+          component: cortex
+          team: automation
+        annotations:
+          summary: "MCP server connection failures"
+          description: "MCP server connectivity issues detected"
+
+      - alert: CortexUnauthorizedAccess
+        expr: rate(wazuh_alerts_total{rule_id="100140"}[5m]) > 0
+        for: 1m
+        labels:
+          severity: critical
+          component: cortex
+          team: security
+        annotations:
+          summary: "Unauthorized access attempts to Cortex"
+          description: "Multiple unauthorized access attempts detected"
+
+      # File Integrity Monitoring
+      - alert: WazuhFileIntegrityViolation
+        expr: rate(wazuh_fim_events_total{event_type="modified"}[5m]) > 1
+        for: 2m
+        labels:
+          severity: warning
+          component: wazuh
+          team: security
+        annotations:
+          summary: "High rate of file modifications detected"
+          description: "{{ $value }} file modifications per second on {{ $labels.agent_name }}"
+
+      - alert: WazuhCriticalFileModified
+        expr: rate(wazuh_fim_events_total{path=~".*/coordination/.*"}[5m]) > 0
+        for: 1m
+        labels:
+          severity: high
+          component: cortex
+          team: automation
+        annotations:
+          summary: "Critical Cortex configuration file modified"
+          description: "File {{ $labels.path }} modified on {{ $labels.agent_name }}"
+
+      # Vulnerability Detection
+      - alert: WazuhCriticalVulnerability
+        expr: wazuh_vulnerabilities_total{severity="Critical"} > 0
+        for: 1h
+        labels:
+          severity: high
+          component: wazuh
+          team: security
+        annotations:
+          summary: "Critical vulnerabilities detected"
+          description: "{{ $value }} critical CVEs detected on {{ $labels.agent_name }}"
+
+---
+# Prometheus scrape config addition
+# Add this to prometheus-values.yaml under additionalScrapeConfigs:
+#
+# additionalScrapeConfigs:
+#   - job_name: 'wazuh-exporter'
+#     static_configs:
+#       - targets: ['wazuh-exporter.security-monitoring.svc.cluster.local:9100']
+#     scrape_interval: 30s
+#     scrape_timeout: 10s
+#     metrics_path: /metrics
+
+---
+# Example Python Exporter Script (wazuh_exporter.py)
+# This would be built into the ryops/wazuh-prometheus-exporter:latest image
+#
+# from prometheus_client import start_http_server, Gauge, Counter
+# import requests
+# import time
+# import os
+# from requests.packages.urllib3.exceptions import InsecureRequestWarning
+# requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
+#
+# # Prometheus Metrics
+# wazuh_alerts_total = Counter('wazuh_alerts_total', 'Total Wazuh alerts', ['severity', 'rule_id', 'rule_group', 'agent_id'])
+# wazuh_agent_status = Gauge('wazuh_agent_status', 'Wazuh agent status', ['agent_id', 'agent_name', 'status'])
+# wazuh_fim_events_total = Counter('wazuh_fim_events_total', 'File integrity monitoring events', ['agent_id', 'event_type', 'path'])
+# wazuh_vulnerabilities_total = Gauge('wazuh_vulnerabilities_total', 'Detected vulnerabilities', ['agent_id', 'severity', 'cve_id'])
+#
+# def collect_alerts():
+#     """Collect alerts from Wazuh API"""
+#     # Implementation here
+#     pass
+#
+# if __name__ == '__main__':
+#     start_http_server(9100)
+#     while True:
+#         collect_alerts()
+#         time.sleep(30)

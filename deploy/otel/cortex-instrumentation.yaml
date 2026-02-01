@@ -1,0 +1,422 @@
+---
+# OpenTelemetry Instrumentation for Cortex Applications
+# This configuration enables automatic instrumentation for Cortex agents
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: cortex-otel-config
+  namespace: cortex-system
+  labels:
+    app.kubernetes.io/name: cortex-instrumentation
+    app.kubernetes.io/component: config
+    app.kubernetes.io/part-of: cortex
+data:
+  # Environment variables for auto-instrumentation
+  otel-env-vars: |
+    # OTLP Exporter Configuration
+    OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-agent.cortex-observability.svc.cluster.local:4318
+    OTEL_EXPORTER_OTLP_PROTOCOL=http/protobuf
+
+    # Service Configuration
+    OTEL_SERVICE_NAME=cortex-agent
+    OTEL_SERVICE_NAMESPACE=cortex
+
+    # Resource Attributes
+    OTEL_RESOURCE_ATTRIBUTES=deployment.environment=production,service.version=1.0.0
+
+    # Trace Configuration
+    OTEL_TRACES_SAMPLER=parentbased_traceidratio
+    OTEL_TRACES_SAMPLER_ARG=0.1
+
+    # Metric Configuration
+    OTEL_METRICS_EXPORTER=otlp
+    OTEL_METRIC_EXPORT_INTERVAL=60000
+
+    # Log Configuration
+    OTEL_LOGS_EXPORTER=otlp
+
+    # SDK Configuration
+    OTEL_SDK_DISABLED=false
+    OTEL_TRACES_EXPORTER=otlp
+    OTEL_PROPAGATORS=tracecontext,baggage
+
+  # Node.js specific configuration
+  nodejs-config.js: |
+    const { NodeSDK } = require('@opentelemetry/sdk-node');
+    const { OTLPTraceExporter } = require('@opentelemetry/exporter-trace-otlp-http');
+    const { OTLPMetricExporter } = require('@opentelemetry/exporter-metrics-otlp-http');
+    const { PeriodicExportingMetricReader } = require('@opentelemetry/sdk-metrics');
+    const { Resource } = require('@opentelemetry/resources');
+    const { SemanticResourceAttributes } = require('@opentelemetry/semantic-conventions');
+    const { getNodeAutoInstrumentations } = require('@opentelemetry/auto-instrumentations-node');
+
+    // Create resource with Cortex-specific attributes
+    const resource = new Resource({
+      [SemanticResourceAttributes.SERVICE_NAME]: process.env.CORTEX_AGENT_TYPE || 'cortex-agent',
+      [SemanticResourceAttributes.SERVICE_NAMESPACE]: 'cortex',
+      [SemanticResourceAttributes.SERVICE_VERSION]: process.env.CORTEX_VERSION || '1.0.0',
+      [SemanticResourceAttributes.DEPLOYMENT_ENVIRONMENT]: process.env.NODE_ENV || 'production',
+      // Cortex-specific attributes
+      'cortex.agent.type': process.env.CORTEX_AGENT_TYPE,
+      'cortex.master.type': process.env.CORTEX_MASTER_TYPE,
+      'cortex.worker.id': process.env.CORTEX_WORKER_ID,
+      'cortex.task.id': process.env.CORTEX_TASK_ID,
+      'cortex.session.id': process.env.CORTEX_SESSION_ID,
+    });
+
+    // Configure SDK
+    const sdk = new NodeSDK({
+      resource: resource,
+      traceExporter: new OTLPTraceExporter({
+        url: process.env.OTEL_EXPORTER_OTLP_ENDPOINT || 'http://otel-agent:4318/v1/traces',
+      }),
+      metricReader: new PeriodicExportingMetricReader({
+        exporter: new OTLPMetricExporter({
+          url: process.env.OTEL_EXPORTER_OTLP_ENDPOINT || 'http://otel-agent:4318/v1/metrics',
+        }),
+        exportIntervalMillis: 60000,
+      }),
+      instrumentations: [
+        getNodeAutoInstrumentations({
+          // Configure instrumentations
+          '@opentelemetry/instrumentation-http': {
+            requestHook: (span, request) => {
+              // Add Cortex-specific attributes to HTTP spans
+              span.setAttribute('cortex.agent.type', process.env.CORTEX_AGENT_TYPE || 'unknown');
+              if (process.env.CORTEX_TASK_ID) {
+                span.setAttribute('cortex.task.id', process.env.CORTEX_TASK_ID);
+              }
+            },
+          },
+          '@opentelemetry/instrumentation-express': {
+            requestHook: (span, request) => {
+              // Add route information
+              if (request.route?.path) {
+                span.setAttribute('http.route', request.route.path);
+              }
+            },
+          },
+        }),
+      ],
+    });
+
+    // Initialize SDK
+    sdk.start();
+
+    // Graceful shutdown
+    process.on('SIGTERM', () => {
+      sdk.shutdown()
+        .then(() => console.log('Tracing terminated'))
+        .catch((error) => console.log('Error terminating tracing', error))
+        .finally(() => process.exit(0));
+    });
+
+    module.exports = sdk;
+
+  # Python specific configuration
+  python-config.py: |
+    """
+    OpenTelemetry instrumentation for Python-based Cortex agents
+    """
+    import os
+    from opentelemetry import trace, metrics
+    from opentelemetry.sdk.trace import TracerProvider
+    from opentelemetry.sdk.trace.export import BatchSpanProcessor
+    from opentelemetry.sdk.metrics import MeterProvider
+    from opentelemetry.sdk.metrics.export import PeriodicExportingMetricReader
+    from opentelemetry.sdk.resources import Resource, SERVICE_NAME, SERVICE_NAMESPACE, SERVICE_VERSION, DEPLOYMENT_ENVIRONMENT
+    from opentelemetry.exporter.otlp.proto.http.trace_exporter import OTLPSpanExporter
+    from opentelemetry.exporter.otlp.proto.http.metric_exporter import OTLPMetricExporter
+    from opentelemetry.instrumentation.requests import RequestsInstrumentor
+    from opentelemetry.instrumentation.flask import FlaskInstrumentor
+    from opentelemetry.instrumentation.logging import LoggingInstrumentor
+
+    def initialize_tracing():
+        """Initialize OpenTelemetry tracing for Cortex agents"""
+
+        # Create resource with Cortex-specific attributes
+        resource = Resource.create({
+            SERVICE_NAME: os.getenv('CORTEX_AGENT_TYPE', 'cortex-agent'),
+            SERVICE_NAMESPACE: 'cortex',
+            SERVICE_VERSION: os.getenv('CORTEX_VERSION', '1.0.0'),
+            DEPLOYMENT_ENVIRONMENT: os.getenv('DEPLOYMENT_ENV', 'production'),
+            'cortex.agent.type': os.getenv('CORTEX_AGENT_TYPE'),
+            'cortex.master.type': os.getenv('CORTEX_MASTER_TYPE'),
+            'cortex.worker.id': os.getenv('CORTEX_WORKER_ID'),
+            'cortex.task.id': os.getenv('CORTEX_TASK_ID'),
+            'cortex.session.id': os.getenv('CORTEX_SESSION_ID'),
+        })
+
+        # Set up tracer provider
+        tracer_provider = TracerProvider(resource=resource)
+        trace.set_tracer_provider(tracer_provider)
+
+        # Configure OTLP exporter
+        otlp_endpoint = os.getenv(
+            'OTEL_EXPORTER_OTLP_ENDPOINT',
+            'http://otel-agent.cortex-observability.svc.cluster.local:4318'
+        )
+        span_exporter = OTLPSpanExporter(endpoint=f"{otlp_endpoint}/v1/traces")
+        span_processor = BatchSpanProcessor(span_exporter)
+        tracer_provider.add_span_processor(span_processor)
+
+        # Set up meter provider
+        metric_reader = PeriodicExportingMetricReader(
+            OTLPMetricExporter(endpoint=f"{otlp_endpoint}/v1/metrics"),
+            export_interval_millis=60000
+        )
+        meter_provider = MeterProvider(resource=resource, metric_readers=[metric_reader])
+        metrics.set_meter_provider(meter_provider)
+
+        # Auto-instrument common libraries
+        RequestsInstrumentor().instrument()
+        LoggingInstrumentor().instrument()
+
+        return tracer_provider, meter_provider
+
+    # Initialize on import
+    tracer_provider, meter_provider = initialize_tracing()
+
+  # Bash/Shell script instrumentation helpers
+  bash-tracing.sh: |
+    #!/bin/bash
+    # OpenTelemetry tracing helpers for Bash scripts
+    # Source this file in your Cortex agent scripts
+
+    # Set default OTLP endpoint
+    export OTEL_EXPORTER_OTLP_ENDPOINT="${OTEL_EXPORTER_OTLP_ENDPOINT:-http://otel-agent.cortex-observability.svc.cluster.local:4318}"
+
+    # Function to send a trace span via OTLP HTTP
+    otel_trace_span() {
+      local span_name="$1"
+      local start_time="$2"
+      local end_time="$3"
+      local status="${4:-OK}"
+      local attributes="$5"
+
+      # Generate trace and span IDs
+      local trace_id=$(openssl rand -hex 16)
+      local span_id=$(openssl rand -hex 8)
+
+      # Create OTLP JSON payload
+      local payload=$(cat <<EOF
+    {
+      "resourceSpans": [{
+        "resource": {
+          "attributes": [
+            {"key": "service.name", "value": {"stringValue": "${CORTEX_AGENT_TYPE:-cortex-shell}"}},
+            {"key": "service.namespace", "value": {"stringValue": "cortex"}},
+            {"key": "cortex.agent.type", "value": {"stringValue": "${CORTEX_AGENT_TYPE}"}},
+            {"key": "cortex.task.id", "value": {"stringValue": "${CORTEX_TASK_ID}"}}
+          ]
+        },
+        "scopeSpans": [{
+          "spans": [{
+            "traceId": "${trace_id}",
+            "spanId": "${span_id}",
+            "name": "${span_name}",
+            "startTimeUnixNano": "${start_time}000000",
+            "endTimeUnixNano": "${end_time}000000",
+            "kind": 1,
+            "status": {"code": "${status}"}
+          }]
+        }]
+      }]
+    }
+    EOF
+    )
+
+      # Send to OTLP collector
+      curl -s -X POST \
+        "${OTEL_EXPORTER_OTLP_ENDPOINT}/v1/traces" \
+        -H "Content-Type: application/json" \
+        -d "${payload}" > /dev/null 2>&1
+    }
+
+    # Function to wrap command execution with tracing
+    otel_exec() {
+      local command="$*"
+      local start=$(date +%s)
+
+      # Execute command
+      eval "$command"
+      local exit_code=$?
+
+      local end=$(date +%s)
+      local status="OK"
+      [[ $exit_code -ne 0 ]] && status="ERROR"
+
+      # Send trace span
+      otel_trace_span "bash.command" "$start" "$end" "$status" "command=${command}"
+
+      return $exit_code
+    }
+
+---
+# Instrumentation specification for OpenTelemetry Operator
+# Requires OpenTelemetry Operator to be installed
+apiVersion: opentelemetry.io/v1alpha1
+kind: Instrumentation
+metadata:
+  name: cortex-instrumentation
+  namespace: cortex-system
+  labels:
+    app.kubernetes.io/name: cortex-instrumentation
+    app.kubernetes.io/component: instrumentation
+    app.kubernetes.io/part-of: cortex
+spec:
+  # Exporter configuration
+  exporter:
+    endpoint: http://otel-agent.cortex-observability.svc.cluster.local:4318
+
+  # Propagators
+  propagators:
+    - tracecontext
+    - baggage
+
+  # Sampler configuration
+  sampler:
+    type: parentbased_traceidratio
+    argument: "0.1"
+
+  # Resource attributes
+  resource:
+    attributes:
+      service.namespace: cortex
+      deployment.environment: production
+
+  # Node.js instrumentation
+  nodejs:
+    env:
+      - name: OTEL_NODEJS_DEBUG
+        value: "false"
+      - name: OTEL_INSTRUMENTATION_COMMON_DEFAULT_ENABLED
+        value: "true"
+    resourceRequirements:
+      limits:
+        cpu: 100m
+        memory: 128Mi
+      requests:
+        cpu: 50m
+        memory: 64Mi
+
+  # Python instrumentation
+  python:
+    env:
+      - name: OTEL_PYTHON_LOG_CORRELATION
+        value: "true"
+      - name: OTEL_PYTHON_LOGGING_AUTO_INSTRUMENTATION_ENABLED
+        value: "true"
+    resourceRequirements:
+      limits:
+        cpu: 100m
+        memory: 128Mi
+      requests:
+        cpu: 50m
+        memory: 64Mi
+
+---
+# ConfigMap with trace sampling rules
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: cortex-trace-sampling
+  namespace: cortex-system
+  labels:
+    app.kubernetes.io/name: cortex-trace-sampling
+    app.kubernetes.io/component: config
+    app.kubernetes.io/part-of: cortex
+data:
+  sampling-rules.yaml: |
+    # Cortex Trace Sampling Rules
+    # These rules determine which traces to sample
+
+    rules:
+      # Always sample errors
+      - name: error-sampling
+        match:
+          span_kind: [SERVER, CLIENT, INTERNAL]
+          status: ERROR
+        sample_rate: 1.0
+        priority: 100
+
+      # Always sample slow operations (>1s)
+      - name: slow-operations
+        match:
+          span_kind: [SERVER, CLIENT, INTERNAL]
+          duration_ms: ">1000"
+        sample_rate: 1.0
+        priority: 90
+
+      # High sampling for task executions
+      - name: cortex-tasks
+        match:
+          attributes:
+            cortex.task.id: ".*"
+        sample_rate: 0.5
+        priority: 80
+
+      # High sampling for master operations
+      - name: cortex-masters
+        match:
+          attributes:
+            cortex.master.type: ["coordinator", "development", "inventory", "security"]
+        sample_rate: 0.3
+        priority: 70
+
+      # Medium sampling for worker operations
+      - name: cortex-workers
+        match:
+          attributes:
+            cortex.worker.id: ".*"
+        sample_rate: 0.2
+        priority: 60
+
+      # Low sampling for health checks
+      - name: health-checks
+        match:
+          attributes:
+            http.route: ["/health", "/ready", "/live"]
+        sample_rate: 0.01
+        priority: 10
+
+      # Default sampling (10%)
+      - name: default-sampling
+        match: {}
+        sample_rate: 0.1
+        priority: 0
+
+  span-attributes.yaml: |
+    # Standard span attributes for Cortex operations
+
+    # Agent attributes
+    cortex.agent.type: string          # Type of agent (master, worker, coordinator)
+    cortex.agent.id: string            # Unique agent identifier
+    cortex.agent.version: string       # Agent version
+
+    # Master attributes
+    cortex.master.type: string         # Master type (coordinator, development, etc.)
+    cortex.master.session_id: string   # Master session identifier
+
+    # Worker attributes
+    cortex.worker.id: string           # Worker identifier
+    cortex.worker.type: string         # Worker specialization
+    cortex.worker.parent_master: string # Parent master type
+
+    # Task attributes
+    cortex.task.id: string             # Task identifier
+    cortex.task.type: string           # Task type
+    cortex.task.priority: int          # Task priority
+    cortex.task.status: string         # Task status
+    cortex.task.result: string         # Task result
+
+    # Context attributes
+    cortex.context.workflow_id: string # Workflow identifier
+    cortex.context.handoff_id: string  # Handoff identifier
+    cortex.context.tokens_used: int    # Tokens consumed
+    cortex.context.execution_time_ms: int # Execution time
+
+    # Resource attributes
+    cortex.resource.type: string       # Resource type (compute, storage, etc.)
+    cortex.resource.allocation: string # Resource allocation details

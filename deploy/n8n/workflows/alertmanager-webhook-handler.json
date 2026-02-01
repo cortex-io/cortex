@@ -1,0 +1,421 @@
+{
+  "name": "Alertmanager Webhook Handler",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "alertmanager",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "webhook-trigger",
+      "name": "Webhook Trigger",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [250, 300],
+      "webhookId": "alertmanager-webhook"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Parse Alertmanager webhook payload\nconst payload = $input.item.json.body;\nconst alerts = payload.alerts || [];\n\n// Process each alert\nconst processedAlerts = alerts.map(alert => {\n  return {\n    alertname: alert.labels?.alertname || 'Unknown',\n    severity: alert.labels?.severity || 'info',\n    service: alert.labels?.service || alert.labels?.job || 'unknown',\n    instance: alert.labels?.instance || 'unknown',\n    namespace: alert.labels?.namespace || 'default',\n    status: alert.status || 'firing',\n    startsAt: alert.startsAt,\n    endsAt: alert.endsAt,\n    summary: alert.annotations?.summary || '',\n    description: alert.annotations?.description || '',\n    fingerprint: alert.fingerprint || '',\n    generatorURL: alert.generatorURL || '',\n    // Create deduplication key\n    dedupKey: `${alert.labels?.alertname}-${alert.labels?.service}-${alert.labels?.instance}`,\n    // Group key for alert grouping\n    groupKey: `${alert.labels?.alertname}-${alert.labels?.service}`,\n    rawAlert: alert\n  };\n});\n\nreturn processedAlerts.map(alert => ({ json: alert }));"
+      },
+      "id": "parse-payload",
+      "name": "Parse Alertmanager Payload",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [450, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.severity }}",
+              "rightValue": "critical",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "route-critical",
+      "name": "Route Critical",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [650, 200]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.severity }}",
+              "rightValue": "warning",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "route-warning",
+      "name": "Route Warning",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [650, 400]
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combinationMode": "mergeByPosition",
+        "options": {}
+      },
+      "id": "merge-routes",
+      "name": "Merge Routes",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 2.1,
+      "position": [850, 500]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Deduplication logic using in-memory cache simulation\n// In production, use Redis or database\nconst alert = $input.item.json;\nconst dedupKey = alert.dedupKey;\nconst currentTime = new Date().getTime();\n\n// Check if alert was seen in last 5 minutes\n// This is a placeholder - implement actual dedup storage\nconst isDuplicate = false; // Replace with actual dedup check\n\nif (isDuplicate) {\n  return [];\n}\n\nreturn [{\n  json: {\n    ...alert,\n    deduped: true,\n    dedupTimestamp: currentTime\n  }\n}];"
+      },
+      "id": "deduplication",
+      "name": "Deduplication",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1050, 500]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Group alerts by alertname and service\nconst alerts = $input.all();\nconst grouped = {};\n\nalerts.forEach(item => {\n  const alert = item.json;\n  const groupKey = alert.groupKey;\n  \n  if (!grouped[groupKey]) {\n    grouped[groupKey] = {\n      groupKey: groupKey,\n      alertname: alert.alertname,\n      service: alert.service,\n      severity: alert.severity,\n      count: 0,\n      instances: [],\n      alerts: []\n    };\n  }\n  \n  grouped[groupKey].count++;\n  grouped[groupKey].instances.push(alert.instance);\n  grouped[groupKey].alerts.push(alert);\n  \n  // Escalate severity if any critical\n  if (alert.severity === 'critical') {\n    grouped[groupKey].severity = 'critical';\n  }\n});\n\nreturn Object.values(grouped).map(group => ({ json: group }));"
+      },
+      "id": "group-alerts",
+      "name": "Group Alerts",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1250, 500]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.SLACK_WEBHOOK_CRITICAL }}",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "text",
+              "value": "=🚨 CRITICAL ALERT: {{ $json.alertname }}"
+            },
+            {
+              "name": "blocks",
+              "value": "=[{\"type\":\"header\",\"text\":{\"type\":\"plain_text\",\"text\":\"🚨 Critical Alert: {{ $json.alertname }}\"}},{\"type\":\"section\",\"fields\":[{\"type\":\"mrkdwn\",\"text\":\"*Service:*\\n{{ $json.service }}\"},{\"type\":\"mrkdwn\",\"text\":\"*Severity:*\\n{{ $json.severity }}\"},{\"type\":\"mrkdwn\",\"text\":\"*Instance:*\\n{{ $json.instance }}\"},{\"type\":\"mrkdwn\",\"text\":\"*Namespace:*\\n{{ $json.namespace }}\"}]},{\"type\":\"section\",\"text\":{\"type\":\"mrkdwn\",\"text\":\"*Summary:*\\n{{ $json.summary }}\\n\\n*Description:*\\n{{ $json.description }}\"}},{\"type\":\"section\",\"text\":{\"type\":\"mrkdwn\",\"text\":\"<{{ $json.generatorURL }}|View in Prometheus>\"}}]"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "notify-critical-slack",
+      "name": "Notify Critical - Slack",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [850, 100]
+    },
+    {
+      "parameters": {
+        "fromEmail": "={{ $env.ALERT_FROM_EMAIL }}",
+        "toEmail": "={{ $env.ONCALL_EMAIL }}",
+        "subject": "=🚨 CRITICAL: {{ $json.alertname }} - {{ $json.service }}",
+        "emailFormat": "html",
+        "text": "=<html>\n<body>\n<h2 style=\"color: #d32f2f;\">🚨 Critical Alert</h2>\n<table style=\"border-collapse: collapse; width: 100%;\">\n<tr><td style=\"padding: 8px; border: 1px solid #ddd;\"><strong>Alert Name:</strong></td><td style=\"padding: 8px; border: 1px solid #ddd;\">{{ $json.alertname }}</td></tr>\n<tr><td style=\"padding: 8px; border: 1px solid #ddd;\"><strong>Severity:</strong></td><td style=\"padding: 8px; border: 1px solid #ddd;\">{{ $json.severity }}</td></tr>\n<tr><td style=\"padding: 8px; border: 1px solid #ddd;\"><strong>Service:</strong></td><td style=\"padding: 8px; border: 1px solid #ddd;\">{{ $json.service }}</td></tr>\n<tr><td style=\"padding: 8px; border: 1px solid #ddd;\"><strong>Instance:</strong></td><td style=\"padding: 8px; border: 1px solid #ddd;\">{{ $json.instance }}</td></tr>\n<tr><td style=\"padding: 8px; border: 1px solid #ddd;\"><strong>Namespace:</strong></td><td style=\"padding: 8px; border: 1px solid #ddd;\">{{ $json.namespace }}</td></tr>\n</table>\n<h3>Summary</h3>\n<p>{{ $json.summary }}</p>\n<h3>Description</h3>\n<p>{{ $json.description }}</p>\n<p><a href=\"{{ $json.generatorURL }}\">View in Prometheus</a></p>\n</body>\n</html>",
+        "options": {}
+      },
+      "id": "notify-critical-email",
+      "name": "Notify Critical - Email",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [850, 200]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.SLACK_WEBHOOK_TEAM }}",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "text",
+              "value": "=⚠️ WARNING: {{ $json.alertname }}"
+            },
+            {
+              "name": "blocks",
+              "value": "=[{\"type\":\"header\",\"text\":{\"type\":\"plain_text\",\"text\":\"⚠️ Warning: {{ $json.alertname }}\"}},{\"type\":\"section\",\"fields\":[{\"type\":\"mrkdwn\",\"text\":\"*Service:*\\n{{ $json.service }}\"},{\"type\":\"mrkdwn\",\"text\":\"*Instance:*\\n{{ $json.instance }}\"}]},{\"type\":\"section\",\"text\":{\"type\":\"mrkdwn\",\"text\":\"{{ $json.summary }}\"}}]"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "notify-warning-slack",
+      "name": "Notify Warning - Slack",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [850, 400]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.AUDIT_LOG_API }}",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "type",
+              "value": "alert_info"
+            },
+            {
+              "name": "alert",
+              "value": "={{ $json }}"
+            },
+            {
+              "name": "timestamp",
+              "value": "={{ $now.toISO() }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "log-info-audit",
+      "name": "Log Info to Audit",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [850, 600]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { \"status\": \"received\", \"alerts_processed\": $input.all().length } }}",
+        "options": {}
+      },
+      "id": "webhook-response",
+      "name": "Webhook Response",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [1450, 500]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.AUDIT_LOG_API }}",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "type",
+              "value": "alert_grouped"
+            },
+            {
+              "name": "group",
+              "value": "={{ $json }}"
+            },
+            {
+              "name": "timestamp",
+              "value": "={{ $now.toISO() }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "log-grouped-alerts",
+      "name": "Log Grouped Alerts",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1450, 300]
+    }
+  ],
+  "connections": {
+    "Webhook Trigger": {
+      "main": [
+        [
+          {
+            "node": "Parse Alertmanager Payload",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Alertmanager Payload": {
+      "main": [
+        [
+          {
+            "node": "Route Critical",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Route Warning",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Route Critical": {
+      "main": [
+        [
+          {
+            "node": "Notify Critical - Slack",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Notify Critical - Email",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Merge Routes",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Route Warning": {
+      "main": [
+        [
+          {
+            "node": "Notify Warning - Slack",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Log Info to Audit",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Notify Critical - Slack": {
+      "main": [
+        [
+          {
+            "node": "Merge Routes",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Notify Critical - Email": {
+      "main": [
+        [
+          {
+            "node": "Merge Routes",
+            "type": "main",
+            "index": 2
+          }
+        ]
+      ]
+    },
+    "Notify Warning - Slack": {
+      "main": [
+        [
+          {
+            "node": "Merge Routes",
+            "type": "main",
+            "index": 3
+          }
+        ]
+      ]
+    },
+    "Log Info to Audit": {
+      "main": [
+        [
+          {
+            "node": "Merge Routes",
+            "type": "main",
+            "index": 4
+          }
+        ]
+      ]
+    },
+    "Merge Routes": {
+      "main": [
+        [
+          {
+            "node": "Deduplication",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Deduplication": {
+      "main": [
+        [
+          {
+            "node": "Group Alerts",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Group Alerts": {
+      "main": [
+        [
+          {
+            "node": "Log Grouped Alerts",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Webhook Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": [
+    {
+      "name": "alerting",
+      "id": "alert-tag-1"
+    },
+    {
+      "name": "monitoring",
+      "id": "monitor-tag-1"
+    }
+  ],
+  "triggerCount": 1,
+  "updatedAt": "2025-12-11T00:00:00.000Z",
+  "versionId": "1"
+}

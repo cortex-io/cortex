@@ -1,0 +1,244 @@
+---
+# OpenTelemetry Auto-Instrumentation Configuration for Cortex
+# This file configures automatic instrumentation for different language runtimes
+
+# First, install the OpenTelemetry Operator:
+# kubectl apply -f https://github.com/open-telemetry/opentelemetry-operator/releases/latest/download/opentelemetry-operator.yaml
+
+---
+apiVersion: opentelemetry.io/v1alpha1
+kind: Instrumentation
+metadata:
+  name: cortex-instrumentation
+  namespace: cortex
+  labels:
+    app: cortex
+    component: instrumentation
+spec:
+  # Default configuration for all languages
+  exporter:
+    endpoint: http://otel-collector.monitoring.svc.cluster.local:4318
+
+  # Propagators for distributed tracing context
+  propagators:
+    - tracecontext
+    - baggage
+    - b3
+
+  # Sampling configuration
+  sampler:
+    type: parentbased_traceidratio
+    argument: "0.1"  # Sample 10% of traces by default
+
+  # Python auto-instrumentation
+  python:
+    image: ghcr.io/open-telemetry/opentelemetry-operator/autoinstrumentation-python:latest
+    env:
+      - name: OTEL_EXPORTER_OTLP_ENDPOINT
+        value: http://otel-collector.monitoring.svc.cluster.local:4318
+      - name: OTEL_EXPORTER_OTLP_PROTOCOL
+        value: http/protobuf
+      - name: OTEL_TRACES_EXPORTER
+        value: otlp
+      - name: OTEL_METRICS_EXPORTER
+        value: otlp
+      - name: OTEL_LOGS_EXPORTER
+        value: otlp
+      - name: OTEL_PYTHON_LOGGING_AUTO_INSTRUMENTATION_ENABLED
+        value: "true"
+      - name: OTEL_TRACES_SAMPLER
+        value: parentbased_traceidratio
+      - name: OTEL_TRACES_SAMPLER_ARG
+        value: "0.1"
+      # Error sampling - always sample errors
+      - name: OTEL_PYTHON_EXCLUDED_URLS
+        value: /health,/healthz,/readyz,/livez
+      # Custom Cortex attributes
+      - name: OTEL_RESOURCE_ATTRIBUTES
+        value: service.namespace=cortex,cortex.system=true,deployment.environment=production
+
+  # Node.js auto-instrumentation
+  nodejs:
+    image: ghcr.io/open-telemetry/opentelemetry-operator/autoinstrumentation-nodejs:latest
+    env:
+      - name: OTEL_EXPORTER_OTLP_ENDPOINT
+        value: http://otel-collector.monitoring.svc.cluster.local:4318
+      - name: OTEL_EXPORTER_OTLP_PROTOCOL
+        value: http/protobuf
+      - name: OTEL_TRACES_EXPORTER
+        value: otlp
+      - name: OTEL_METRICS_EXPORTER
+        value: otlp
+      - name: OTEL_LOGS_EXPORTER
+        value: otlp
+      - name: OTEL_TRACES_SAMPLER
+        value: parentbased_traceidratio
+      - name: OTEL_TRACES_SAMPLER_ARG
+        value: "0.1"
+      # Custom Cortex attributes
+      - name: OTEL_RESOURCE_ATTRIBUTES
+        value: service.namespace=cortex,cortex.system=true,deployment.environment=production
+      # Instrumentation modules
+      - name: OTEL_NODE_ENABLED_INSTRUMENTATIONS
+        value: http,https,express,grpc,dns,net,redis,mongodb,mysql,postgresql
+
+  # Go auto-instrumentation
+  go:
+    image: ghcr.io/open-telemetry/opentelemetry-operator/autoinstrumentation-go:latest
+    env:
+      - name: OTEL_EXPORTER_OTLP_ENDPOINT
+        value: http://otel-collector.monitoring.svc.cluster.local:4318
+      - name: OTEL_EXPORTER_OTLP_PROTOCOL
+        value: http/protobuf
+      - name: OTEL_TRACES_EXPORTER
+        value: otlp
+      - name: OTEL_METRICS_EXPORTER
+        value: otlp
+      - name: OTEL_LOGS_EXPORTER
+        value: otlp
+      - name: OTEL_TRACES_SAMPLER
+        value: parentbased_traceidratio
+      - name: OTEL_TRACES_SAMPLER_ARG
+        value: "0.1"
+      # Custom Cortex attributes
+      - name: OTEL_RESOURCE_ATTRIBUTES
+        value: service.namespace=cortex,cortex.system=true,deployment.environment=production
+
+  # Java auto-instrumentation (if needed)
+  java:
+    image: ghcr.io/open-telemetry/opentelemetry-operator/autoinstrumentation-java:latest
+    env:
+      - name: OTEL_EXPORTER_OTLP_ENDPOINT
+        value: http://otel-collector.monitoring.svc.cluster.local:4318
+      - name: OTEL_EXPORTER_OTLP_PROTOCOL
+        value: http/protobuf
+      - name: OTEL_TRACES_EXPORTER
+        value: otlp
+      - name: OTEL_METRICS_EXPORTER
+        value: otlp
+      - name: OTEL_LOGS_EXPORTER
+        value: otlp
+      - name: OTEL_TRACES_SAMPLER
+        value: parentbased_traceidratio
+      - name: OTEL_TRACES_SAMPLER_ARG
+        value: "0.1"
+      # Custom Cortex attributes
+      - name: OTEL_RESOURCE_ATTRIBUTES
+        value: service.namespace=cortex,cortex.system=true,deployment.environment=production
+
+---
+# Special instrumentation for critical services (100% error sampling)
+apiVersion: opentelemetry.io/v1alpha1
+kind: Instrumentation
+metadata:
+  name: cortex-critical-instrumentation
+  namespace: cortex
+  labels:
+    app: cortex
+    component: instrumentation
+    tier: critical
+spec:
+  exporter:
+    endpoint: http://otel-collector.monitoring.svc.cluster.local:4318
+
+  propagators:
+    - tracecontext
+    - baggage
+    - b3
+
+  # Always sample errors, 10% for normal requests
+  sampler:
+    type: parentbased_traceidratio
+    argument: "0.1"
+
+  python:
+    image: ghcr.io/open-telemetry/opentelemetry-operator/autoinstrumentation-python:latest
+    env:
+      - name: OTEL_EXPORTER_OTLP_ENDPOINT
+        value: http://otel-collector.monitoring.svc.cluster.local:4318
+      - name: OTEL_TRACES_SAMPLER
+        value: parentbased_traceidratio
+      - name: OTEL_TRACES_SAMPLER_ARG
+        value: "1.0"  # 100% sampling for critical services
+      - name: OTEL_RESOURCE_ATTRIBUTES
+        value: service.namespace=cortex,cortex.system=true,cortex.tier=critical,deployment.environment=production
+
+---
+# Example: Annotate a deployment to enable auto-instrumentation
+# Add these annotations to your pod template:
+#
+# apiVersion: apps/v1
+# kind: Deployment
+# metadata:
+#   name: cortex-agent
+#   namespace: cortex
+# spec:
+#   template:
+#     metadata:
+#       annotations:
+#         # Enable auto-instrumentation
+#         instrumentation.opentelemetry.io/inject-python: "true"
+#         # Or for Node.js:
+#         # instrumentation.opentelemetry.io/inject-nodejs: "true"
+#         # Or for Go:
+#         # instrumentation.opentelemetry.io/inject-go: "true"
+#
+#         # Override service name
+#         instrumentation.opentelemetry.io/otel-service-name: "cortex-agent"
+#
+#         # Use specific instrumentation configuration
+#         instrumentation.opentelemetry.io/instrumentation: "cortex-instrumentation"
+#
+#         # For critical services, use:
+#         # instrumentation.opentelemetry.io/instrumentation: "cortex-critical-instrumentation"
+
+---
+# ConfigMap with environment variables for manual instrumentation
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: otel-env-config
+  namespace: cortex
+  labels:
+    app: cortex
+    component: instrumentation-config
+data:
+  OTEL_EXPORTER_OTLP_ENDPOINT: "http://otel-collector.monitoring.svc.cluster.local:4318"
+  OTEL_EXPORTER_OTLP_PROTOCOL: "http/protobuf"
+  OTEL_TRACES_EXPORTER: "otlp"
+  OTEL_METRICS_EXPORTER: "otlp"
+  OTEL_LOGS_EXPORTER: "otlp"
+  OTEL_SERVICE_NAME: "cortex-service"
+  OTEL_RESOURCE_ATTRIBUTES: "service.namespace=cortex,cortex.system=true,deployment.environment=production"
+  OTEL_TRACES_SAMPLER: "parentbased_traceidratio"
+  OTEL_TRACES_SAMPLER_ARG: "0.1"
+  OTEL_PROPAGATORS: "tracecontext,baggage,b3"
+  OTEL_PYTHON_EXCLUDED_URLS: "/health,/healthz,/readyz,/livez"
+
+---
+# Example of using the ConfigMap in a deployment
+# apiVersion: apps/v1
+# kind: Deployment
+# metadata:
+#   name: cortex-worker
+#   namespace: cortex
+# spec:
+#   template:
+#     spec:
+#       containers:
+#         - name: worker
+#           image: cortex-worker:latest
+#           envFrom:
+#             - configMapRef:
+#                 name: otel-env-config
+#           env:
+#             # Override service name
+#             - name: OTEL_SERVICE_NAME
+#               value: "cortex-worker"
+#             # Add pod-specific attributes
+#             - name: OTEL_RESOURCE_ATTRIBUTES
+#               value: "service.namespace=cortex,cortex.system=true,k8s.pod.name=$(POD_NAME)"
+#             - name: POD_NAME
+#               valueFrom:
+#                 fieldRef:
+#                   fieldPath: metadata.name

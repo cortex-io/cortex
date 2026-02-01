@@ -19,6 +19,7 @@ alerting:
 rule_files:
   - /etc/prometheus/alerting-rules.yaml
   - /etc/prometheus/recording-rules.yaml
+  - /etc/prometheus/cortex-slo-rules.yaml
 
 # Scrape configurations
 scrape_configs:

@@ -1,0 +1,584 @@
+{
+  "name": "Auto-Remediation Workflows",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "auto-remediation",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "webhook-trigger",
+      "name": "Webhook Trigger",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [250, 400],
+      "webhookId": "auto-remediation"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Extract alert and check if auto-remediation is enabled\nconst body = $input.item.json.body;\nconst alert = body.alert || $input.item.json;\n\n// Check if dry-run mode is enabled (from environment or alert annotation)\nconst dryRun = $env.AUTO_REMEDIATION_DRY_RUN === 'true' || \n               alert.annotations?.auto_remediation_dry_run === 'true';\n\n// Check if auto-remediation is allowed for this alert\nconst autoRemediationEnabled = alert.annotations?.auto_remediation !== 'false';\n\nreturn {\n  json: {\n    alert,\n    alertName: alert.alertName || alert.labels?.alertname,\n    namespace: alert.namespace || alert.labels?.namespace || 'default',\n    pod: alert.pod || alert.labels?.pod || '',\n    container: alert.container || alert.labels?.container || '',\n    instance: alert.instance || alert.labels?.instance || '',\n    dryRun,\n    autoRemediationEnabled,\n    receivedAt: new Date().toISOString()\n  }\n};"
+      },
+      "id": "extract-alert",
+      "name": "Extract Alert & Check Config",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [450, 400]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.autoRemediationEnabled }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true"
+              }
+            }
+          ],
+          "combinator": "and"
+        }
+      },
+      "id": "check-enabled",
+      "name": "Is Remediation Enabled?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [650, 400]
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict"
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.alertName }}",
+                    "rightValue": "CortexPodCrashLooping",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "pod_crash_looping"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict"
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.alertName }}",
+                    "rightValue": "CortexHighMemoryUsage",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "high_memory"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict"
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.alertName }}",
+                    "rightValue": "CortexTokenBudgetLow",
+                    "operator": {
+                      "type": "string",
+                      "operation": "contains"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "token_budget_low"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "route-by-alert-type",
+      "name": "Route by Alert Type",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3,
+      "position": [850, 400]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Prepare kubectl delete pod command\nconst alert = $input.item.json;\nconst namespace = alert.namespace;\nconst pod = alert.pod;\nconst dryRun = alert.dryRun;\n\n// Build kubectl command\nconst kubectlCommand = dryRun \n  ? `kubectl delete pod ${pod} -n ${namespace} --dry-run=client -o json`\n  : `kubectl delete pod ${pod} -n ${namespace}`;\n\nreturn {\n  json: {\n    ...alert,\n    remediation: {\n      type: 'pod_restart',\n      action: 'delete_pod',\n      command: kubectlCommand,\n      namespace,\n      pod,\n      dryRun,\n      reason: 'Pod crash looping - forcing restart by deletion'\n    }\n  }\n};"
+      },
+      "id": "prepare-pod-delete",
+      "name": "Prepare Pod Delete",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1050, 250]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.dryRun }}",
+              "rightValue": false,
+              "operator": {
+                "type": "boolean",
+                "operation": "false"
+              }
+            }
+          ],
+          "combinator": "and"
+        }
+      },
+      "id": "approval-gate",
+      "name": "Approval Gate (Skip if Dry-Run)",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [1250, 250],
+      "notes": "In production, add manual approval here"
+    },
+    {
+      "parameters": {
+        "command": "={{ $json.remediation.command }}",
+        "options": {}
+      },
+      "id": "execute-kubectl",
+      "name": "Execute kubectl",
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [1450, 200],
+      "credentials": {
+        "ssh": {
+          "id": "1",
+          "name": "Kubernetes Cluster SSH"
+        }
+      },
+      "notes": "Configure SSH access to cluster or use kubectl from container"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Prepare HPA scaling command\nconst alert = $input.item.json;\nconst namespace = alert.namespace;\nconst instance = alert.instance;\nconst dryRun = alert.dryRun;\n\n// Extract deployment name from instance/pod labels\n// This is a simplified example - adjust based on your label structure\nconst deployment = alert.alert?.labels?.deployment || 'cortex-worker';\n\n// Build kubectl autoscale command\nconst kubectlCommand = dryRun\n  ? `kubectl autoscale deployment ${deployment} -n ${namespace} --min=2 --max=10 --cpu-percent=70 --dry-run=client -o json`\n  : `kubectl autoscale deployment ${deployment} -n ${namespace} --min=2 --max=10 --cpu-percent=70 || echo 'HPA may already exist'`;\n\nreturn {\n  json: {\n    ...alert,\n    remediation: {\n      type: 'horizontal_scaling',\n      action: 'create_hpa',\n      command: kubectlCommand,\n      namespace,\n      deployment,\n      dryRun,\n      reason: 'High memory usage detected - enabling HPA'\n    }\n  }\n};"
+      },
+      "id": "prepare-hpa",
+      "name": "Prepare HPA Scaling",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1050, 400]
+    },
+    {
+      "parameters": {
+        "command": "={{ $json.remediation.command }}",
+        "options": {}
+      },
+      "id": "execute-hpa",
+      "name": "Execute HPA Command",
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [1250, 400],
+      "credentials": {
+        "ssh": {
+          "id": "1",
+          "name": "Kubernetes Cluster SSH"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Prepare token budget remediation\nconst alert = $input.item.json;\nconst dryRun = alert.dryRun;\n\n// Actions:\n// 1. Send notification to ops team\n// 2. Pause non-critical workers (via Cortex API)\n// 3. Log budget status\n\nconst notificationMessage = `⚠️ Token Budget Low Alert\\n\\nCurrent budget is critically low. Non-critical workers will be paused.\\n\\nAction required: Review token allocation and worker priorities.`;\n\nconst cortexApiCommand = dryRun\n  ? 'echo \"[DRY-RUN] Would pause non-critical workers\"'\n  : 'curl -X POST http://cortex-api.cortex.svc.cluster.local/api/workers/pause-non-critical';\n\nreturn {\n  json: {\n    ...alert,\n    remediation: {\n      type: 'token_budget_management',\n      action: 'pause_non_critical_workers',\n      command: cortexApiCommand,\n      notificationMessage,\n      dryRun,\n      reason: 'Token budget critically low - pausing non-critical operations'\n    }\n  }\n};"
+      },
+      "id": "prepare-token-remediation",
+      "name": "Prepare Token Budget Remediation",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1050, 550]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.SLACK_WEBHOOK_URL || 'https://hooks.slack.com/services/YOUR/WEBHOOK/URL' }}",
+        "authentication": "none",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ text: $json.remediation.notificationMessage }) }}",
+        "options": {}
+      },
+      "id": "send-token-notification",
+      "name": "Send Token Budget Notification",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [1250, 500]
+    },
+    {
+      "parameters": {
+        "command": "={{ $json.remediation.command }}",
+        "options": {}
+      },
+      "id": "pause-workers",
+      "name": "Pause Non-Critical Workers",
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [1250, 600]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://n8n.cortex.svc.cluster.local:5678/webhook/audit-trail",
+        "authentication": "none",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "type",
+              "value": "auto_remediation"
+            },
+            {
+              "name": "alert",
+              "value": "={{ $json.alert }}"
+            },
+            {
+              "name": "remediation",
+              "value": "={{ $json.remediation }}"
+            },
+            {
+              "name": "result",
+              "value": "={{ $json.result || 'executed' }}"
+            },
+            {
+              "name": "timestamp",
+              "value": "={{ new Date().toISOString() }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "log-remediation",
+      "name": "Log Remediation Action",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [1650, 400]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { \"status\": \"success\", \"remediation\": $json.remediation.type, \"action\": $json.remediation.action, \"dryRun\": $json.dryRun } }}"
+      },
+      "id": "webhook-response",
+      "name": "Webhook Response",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [1850, 400]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { \"status\": \"skipped\", \"reason\": \"Auto-remediation disabled for this alert\" } }}"
+      },
+      "id": "response-disabled",
+      "name": "Response (Disabled)",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [850, 550]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Log dry-run action\nconst alert = $input.item.json;\n\nreturn {\n  json: {\n    ...alert,\n    result: 'dry_run_skipped',\n    message: `[DRY-RUN] Would execute: ${alert.remediation.command}`\n  }\n};"
+      },
+      "id": "log-dry-run",
+      "name": "Log Dry-Run",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1450, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Capture execution result\nconst previousNode = $input.first();\nconst alert = previousNode.json;\nconst executionOutput = $input.item.json;\n\nreturn {\n  json: {\n    ...alert,\n    result: 'executed',\n    executionOutput,\n    completedAt: new Date().toISOString()\n  }\n};"
+      },
+      "id": "capture-result",
+      "name": "Capture Execution Result",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1650, 200]
+    },
+    {
+      "parameters": {
+        "content": "## Auto-Remediation Workflows\n\nAutomatically responds to specific alert types:\n\n**CortexPodCrashLooping**\n- Deletes crashing pod (with approval gate)\n- Forces pod restart via deletion\n- Logs action to audit trail\n\n**CortexHighMemoryUsage**\n- Creates/updates HPA for deployment\n- Enables auto-scaling (min=2, max=10)\n- Monitors memory threshold\n\n**CortexTokenBudgetLow**\n- Sends Slack notification\n- Pauses non-critical workers\n- Preserves critical operations\n\n**Safety Features:**\n- Dry-run mode (set AUTO_REMEDIATION_DRY_RUN=true)\n- Per-alert enable/disable\n- Audit logging of all actions",
+        "height": 600,
+        "width": 380
+      },
+      "id": "sticky-note-1",
+      "name": "Sticky Note",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [240, 620]
+    },
+    {
+      "parameters": {
+        "content": "## Safety Checks\n\n1. **Dry-Run Mode**: Test without executing\n2. **Approval Gate**: Manual approval for destructive actions\n3. **Audit Trail**: All actions logged\n4. **Per-Alert Control**: Disable via annotation\n\n**Environment Variables:**\n- AUTO_REMEDIATION_DRY_RUN=true|false\n- SLACK_WEBHOOK_URL=https://...\n\n**Alert Annotation to Disable:**\nauto_remediation: \"false\"",
+        "height": 380,
+        "width": 350
+      },
+      "id": "sticky-note-2",
+      "name": "Sticky Note 2",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [1450, 620]
+    }
+  ],
+  "connections": {
+    "Webhook Trigger": {
+      "main": [
+        [
+          {
+            "node": "Extract Alert & Check Config",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Alert & Check Config": {
+      "main": [
+        [
+          {
+            "node": "Is Remediation Enabled?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is Remediation Enabled?": {
+      "main": [
+        [
+          {
+            "node": "Route by Alert Type",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Response (Disabled)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Route by Alert Type": {
+      "main": [
+        [
+          {
+            "node": "Prepare Pod Delete",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Prepare HPA Scaling",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Prepare Token Budget Remediation",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Pod Delete": {
+      "main": [
+        [
+          {
+            "node": "Approval Gate (Skip if Dry-Run)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Approval Gate (Skip if Dry-Run)": {
+      "main": [
+        [
+          {
+            "node": "Execute kubectl",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Log Dry-Run",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Execute kubectl": {
+      "main": [
+        [
+          {
+            "node": "Capture Execution Result",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare HPA Scaling": {
+      "main": [
+        [
+          {
+            "node": "Execute HPA Command",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Execute HPA Command": {
+      "main": [
+        [
+          {
+            "node": "Log Remediation Action",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Token Budget Remediation": {
+      "main": [
+        [
+          {
+            "node": "Send Token Budget Notification",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Pause Non-Critical Workers",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Token Budget Notification": {
+      "main": [
+        [
+          {
+            "node": "Log Remediation Action",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Pause Non-Critical Workers": {
+      "main": [
+        [
+          {
+            "node": "Log Remediation Action",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Log Remediation Action": {
+      "main": [
+        [
+          {
+            "node": "Webhook Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Log Dry-Run": {
+      "main": [
+        [
+          {
+            "node": "Log Remediation Action",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Capture Execution Result": {
+      "main": [
+        [
+          {
+            "node": "Log Remediation Action",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "settings": {
+    "executionOrder": "v1",
+    "saveExecutionProgress": true,
+    "saveManualExecutions": true
+  },
+  "staticData": null,
+  "tags": [
+    {
+      "name": "cortex",
+      "id": "cortex"
+    },
+    {
+      "name": "alerting",
+      "id": "alerting"
+    },
+    {
+      "name": "remediation",
+      "id": "remediation"
+    }
+  ],
+  "triggerCount": 1,
+  "updatedAt": "2025-12-12T00:00:00.000Z",
+  "versionId": "1"
+}

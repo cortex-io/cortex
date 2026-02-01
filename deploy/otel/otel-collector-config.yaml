@@ -1,0 +1,378 @@
+# OpenTelemetry Collector Configuration for Cortex
+# Phase 3: Advanced Observability
+#
+# This configuration provides comprehensive telemetry collection for the Cortex
+# automation system, including metrics, traces, and logs.
+
+receivers:
+  # OTLP receiver for application instrumentation
+  otlp:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:4317
+      http:
+        endpoint: 0.0.0.0:4318
+        cors:
+          allowed_origins:
+            - http://*
+            - https://*
+
+  # Prometheus receiver for scraping existing metrics
+  prometheus:
+    config:
+      scrape_configs:
+        # Self-monitoring
+        - job_name: 'otel-collector'
+          scrape_interval: 30s
+          static_configs:
+            - targets: ['localhost:8888']
+          metric_relabel_configs:
+            - source_labels: [__name__]
+              regex: 'otelcol_.*'
+              action: keep
+
+        # Cortex master agents
+        - job_name: 'cortex-masters'
+          scrape_interval: 15s
+          kubernetes_sd_configs:
+            - role: pod
+              namespaces:
+                names:
+                  - cortex-system
+          relabel_configs:
+            - source_labels: [__meta_kubernetes_pod_label_app_kubernetes_io_component]
+              regex: 'master'
+              action: keep
+            - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_scrape]
+              regex: 'true'
+              action: keep
+            - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_path]
+              target_label: __metrics_path__
+              regex: (.+)
+            - source_labels: [__address__, __meta_kubernetes_pod_annotation_prometheus_io_port]
+              regex: ([^:]+)(?::\d+)?;(\d+)
+              replacement: $1:$2
+              target_label: __address__
+
+        # Cortex worker agents
+        - job_name: 'cortex-workers'
+          scrape_interval: 15s
+          kubernetes_sd_configs:
+            - role: pod
+              namespaces:
+                names:
+                  - cortex-system
+          relabel_configs:
+            - source_labels: [__meta_kubernetes_pod_label_app_kubernetes_io_component]
+              regex: 'worker'
+              action: keep
+            - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_scrape]
+              regex: 'true'
+              action: keep
+
+        # n8n workflow engine
+        - job_name: 'n8n'
+          scrape_interval: 30s
+          kubernetes_sd_configs:
+            - role: pod
+              namespaces:
+                names:
+                  - cortex-system
+          relabel_configs:
+            - source_labels: [__meta_kubernetes_pod_label_app]
+              regex: 'n8n'
+              action: keep
+
+  # Kubernetes cluster receiver for cluster-level metrics
+  k8s_cluster:
+    auth_type: serviceAccount
+    node_conditions_to_report: [Ready, MemoryPressure, DiskPressure, PIDPressure, NetworkUnavailable]
+    allocatable_types_to_report: [cpu, memory, storage, ephemeral-storage]
+    metadata_collection_interval: 60s
+
+  # Host metrics receiver (when running as DaemonSet)
+  hostmetrics:
+    collection_interval: 30s
+    scrapers:
+      cpu:
+        metrics:
+          system.cpu.utilization:
+            enabled: true
+      memory:
+        metrics:
+          system.memory.utilization:
+            enabled: true
+      disk:
+      filesystem:
+        metrics:
+          system.filesystem.utilization:
+            enabled: true
+      network:
+      load:
+      paging:
+
+  # File log receiver for container logs
+  filelog:
+    include:
+      - /var/log/pods/cortex-system_*/*/*.log
+    include_file_path: true
+    include_file_name: false
+    operators:
+      # Parse CRI-O / containerd log format
+      - type: regex_parser
+        regex: '^(?P<time>[^ ^Z]+Z) (?P<stream>stdout|stderr) (?P<logtag>[^ ]*) ?(?P<log>.*)$'
+        timestamp:
+          parse_from: attributes.time
+          layout: '%Y-%m-%dT%H:%M:%S.%LZ'
+      # Extract Kubernetes metadata from file path
+      - type: regex_parser
+        regex: '^.*\/(?P<namespace>[^_]+)_(?P<pod_name>[^_]+)_(?P<uid>[^\/]+)\/(?P<container_name>[^\/]+)\/.*\.log$'
+        parse_from: attributes["log.file.path"]
+      # Move log content to body
+      - type: move
+        from: attributes.log
+        to: body
+
+processors:
+  # Memory limiter to prevent OOM
+  memory_limiter:
+    check_interval: 1s
+    limit_percentage: 75
+    spike_limit_percentage: 25
+
+  # Batch processor for better performance
+  batch:
+    timeout: 10s
+    send_batch_size: 1024
+    send_batch_max_size: 2048
+
+  # Kubernetes attributes processor for enrichment
+  k8sattributes:
+    auth_type: serviceAccount
+    passthrough: false
+    filter:
+      node_from_env_var: KUBE_NODE_NAME
+    extract:
+      metadata:
+        - k8s.namespace.name
+        - k8s.deployment.name
+        - k8s.statefulset.name
+        - k8s.daemonset.name
+        - k8s.cronjob.name
+        - k8s.job.name
+        - k8s.node.name
+        - k8s.pod.name
+        - k8s.pod.uid
+        - k8s.pod.start_time
+      labels:
+        - tag_name: app.kubernetes.io/name
+          key: app.kubernetes.io/name
+          from: pod
+        - tag_name: app.kubernetes.io/component
+          key: app.kubernetes.io/component
+          from: pod
+        - tag_name: app.kubernetes.io/instance
+          key: app.kubernetes.io/instance
+          from: pod
+        - tag_name: cortex.agent.type
+          key: cortex.agent.type
+          from: pod
+        - tag_name: cortex.master.type
+          key: cortex.master.type
+          from: pod
+        - tag_name: cortex.worker.id
+          key: cortex.worker.id
+          from: pod
+      annotations:
+        - tag_name: cortex.task.id
+          key: cortex.task.id
+          from: pod
+        - tag_name: cortex.session.id
+          key: cortex.session.id
+          from: pod
+
+  # Resource processor for Cortex-specific attributes
+  resource:
+    attributes:
+      - key: service.namespace
+        value: cortex
+        action: upsert
+      - key: deployment.environment
+        from_attribute: k8s.namespace.name
+        action: insert
+
+  # Resource detection processor
+  resourcedetection:
+    detectors: [env, system, docker, k8s]
+    timeout: 5s
+    override: false
+
+  # Attribute filtering for sensitive data
+  attributes:
+    actions:
+      # Remove potentially sensitive attributes
+      - key: http.request.header.authorization
+        action: delete
+      - key: http.request.header.cookie
+        action: delete
+      - key: http.response.header.set_cookie
+        action: delete
+
+  # Span metrics processor (generates RED metrics from traces)
+  spanmetrics:
+    metrics_exporter: prometheus
+    latency_histogram_buckets: [2ms, 5ms, 10ms, 25ms, 50ms, 100ms, 250ms, 500ms, 1s, 2s, 5s, 10s]
+    dimensions:
+      - name: http.method
+      - name: http.status_code
+      - name: cortex.agent.type
+      - name: cortex.master.type
+    dimensions_cache_size: 1000
+
+  # Tail sampling for intelligent trace sampling
+  tail_sampling:
+    decision_wait: 10s
+    num_traces: 100
+    expected_new_traces_per_sec: 10
+    policies:
+      # Always sample errors
+      - name: error-sampling
+        type: status_code
+        status_code:
+          status_codes:
+            - ERROR
+      # Always sample slow requests
+      - name: slow-requests
+        type: latency
+        latency:
+          threshold_ms: 1000
+      # Sample Cortex task executions
+      - name: cortex-tasks
+        type: string_attribute
+        string_attribute:
+          key: cortex.task.id
+          values:
+            - ".*"
+          enabled_regex_matching: true
+      # Probabilistic sampling for everything else (10%)
+      - name: probabilistic-sampling
+        type: probabilistic
+        probabilistic:
+          sampling_percentage: 10
+
+exporters:
+  # Prometheus exporter for Grafana
+  prometheus:
+    endpoint: 0.0.0.0:8889
+    namespace: cortex
+    const_labels:
+      environment: production
+      cluster: cortex-k8s
+    send_timestamps: true
+    metric_expiration: 5m
+    resource_to_telemetry_conversion:
+      enabled: true
+
+  # OTLP exporter for future backends (Tempo, Jaeger, etc.)
+  otlp:
+    endpoint: tempo.cortex-system.svc.cluster.local:4317
+    tls:
+      insecure: true
+    sending_queue:
+      enabled: true
+      num_consumers: 10
+      queue_size: 1000
+    retry_on_failure:
+      enabled: true
+      initial_interval: 5s
+      max_interval: 30s
+      max_elapsed_time: 300s
+
+  # OTLP HTTP exporter for logs to Loki
+  otlphttp/loki:
+    endpoint: http://loki.cortex-system.svc.cluster.local:3100/otlp
+    tls:
+      insecure: true
+
+  # Logging exporter for debugging
+  logging:
+    verbosity: detailed
+    sampling_initial: 5
+    sampling_thereafter: 200
+
+  # Debug exporter (disabled in production)
+  # debug:
+  #   verbosity: detailed
+
+extensions:
+  # Health check extension
+  health_check:
+    endpoint: 0.0.0.0:13133
+    path: /health
+
+  # Performance profiler
+  pprof:
+    endpoint: 0.0.0.0:1777
+
+  # zpages for debugging
+  zpages:
+    endpoint: 0.0.0.0:55679
+
+  # Memory ballast for stable memory usage
+  memory_ballast:
+    size_mib: 165
+
+service:
+  extensions: [health_check, pprof, zpages, memory_ballast]
+
+  pipelines:
+    # Metrics pipeline
+    metrics:
+      receivers: [otlp, prometheus, k8s_cluster, hostmetrics]
+      processors:
+        - memory_limiter
+        - k8sattributes
+        - resource
+        - resourcedetection
+        - batch
+      exporters: [prometheus, logging]
+
+    # Traces pipeline
+    traces:
+      receivers: [otlp]
+      processors:
+        - memory_limiter
+        - k8sattributes
+        - resource
+        - resourcedetection
+        - attributes
+        - tail_sampling
+        - spanmetrics
+        - batch
+      exporters: [otlp, logging]
+
+    # Logs pipeline
+    logs:
+      receivers: [otlp, filelog]
+      processors:
+        - memory_limiter
+        - k8sattributes
+        - resource
+        - resourcedetection
+        - batch
+      exporters: [otlphttp/loki, logging]
+
+  telemetry:
+    logs:
+      level: info
+      development: false
+      encoding: json
+      disable_caller: false
+      disable_stacktrace: false
+      output_paths:
+        - stdout
+      error_output_paths:
+        - stderr
+    metrics:
+      level: detailed
+      address: 0.0.0.0:8888
