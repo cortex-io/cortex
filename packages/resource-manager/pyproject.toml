@@ -28,6 +28,10 @@ dependencies = [
     "kubernetes>=30.0.0",
     "pydantic>=2.0.0",
     "python-dotenv>=1.0.0",
+    # Security fixes
+    "urllib3>=2.2.2",  # Fix CVE-2024-37891 decompression bomb
+    "python-multipart>=0.0.18",  # Fix CVE-2024-47874 arbitrary file write
+    "pyasn1>=0.6.1",  # Fix CVE-2024-6119 DoS vulnerability
 ]
 
 [project.optional-dependencies]
