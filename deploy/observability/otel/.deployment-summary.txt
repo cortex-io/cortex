@@ -1,0 +1,210 @@
+OpenTelemetry Integration for Cortex - Deployment Summary
+=========================================================
+
+Created: 2025-12-12
+Location: /Users/ryandahlberg/Projects/cortex/deploy/observability/otel/
+
+Files Created (11 total):
+-------------------------
+
+1. otel-collector-config.yaml (9.9 KB)
+   - Complete OTel Collector configuration
+   - Receivers: OTLP, Prometheus, Filelog, K8s Events
+   - Processors: Memory limiter, batch, resource, k8s attributes, tail sampling
+   - Exporters: Prometheus, OTLP/traces, Loki, logging
+   - Service pipelines: metrics, traces, logs
+
+2. otel-collector-deployment.yaml (7.1 KB)
+   - Kubernetes deployment manifests
+   - Namespace, ConfigMap, Service, Deployment
+   - ServiceAccount, ClusterRole, ClusterRoleBinding
+   - HorizontalPodAutoscaler
+   - Resource limits: 500m CPU, 512Mi memory
+
+3. otel-instrumentation.yaml (7.9 KB)
+   - Auto-instrumentation CRDs
+   - Python, Node.js, Go, Java configurations
+   - Environment variables for Cortex pods
+   - Sampling: 100% errors, 10% normal
+   - ConfigMap for manual instrumentation
+
+4. cortex-tracing-config.ts (9.1 KB)
+   - TypeScript SDK for manual instrumentation
+   - Initialize OTel tracer provider
+   - Configure OTLP exporter
+   - Custom Cortex span attributes
+   - Helper functions: traceAgentOperation, traceLLMCall, traceWorkerOperation
+   - HTTP, gRPC instrumentation
+
+5. servicemonitor-otel.yaml (8.1 KB)
+   - Prometheus ServiceMonitor
+   - PodMonitor for collector pods
+   - PrometheusRule with 6 alerts
+   - Grafana dashboard ConfigMap
+   - Scrape configuration
+
+6. distributed-tracing-guide.md (15 KB)
+   - Complete implementation guide
+   - Span naming conventions
+   - Required attributes for Cortex spans
+   - Implementation examples (coordinator, master, worker, LLM)
+   - Trace correlation with metrics and logs
+   - Query examples (Jaeger, TraceQL, PromQL)
+   - Troubleshooting section
+
+7. deploy-otel.sh (5.2 KB)
+   - Automated deployment script
+   - Creates ConfigMap from config file
+   - Deploys collector and ServiceMonitor
+   - Optional auto-instrumentation deployment
+   - Verification and testing
+   - Access information display
+
+8. README.md (13 KB)
+   - Comprehensive overview
+   - Quick start guide
+   - Configuration details
+   - Integration with existing Prometheus
+   - Cortex-specific features
+   - Performance tuning
+   - Troubleshooting
+   - Maintenance procedures
+
+9. package.json (1.6 KB)
+   - NPM package for TypeScript SDK
+   - OpenTelemetry dependencies
+   - Instrumentation libraries
+   - Development dependencies
+
+10. ARCHITECTURE.md (15+ KB)
+    - System architecture diagrams
+    - Data flow visualization
+    - Trace hierarchy examples
+    - Sampling decision tree
+    - Resource requirements
+    - Network topology
+    - Security model
+    - Performance characteristics
+
+11. QUICK-REFERENCE.md (8+ KB)
+    - One-line commands
+    - Endpoint reference
+    - Environment variables
+    - Auto-instrumentation annotations
+    - TypeScript SDK quick start
+    - Query examples
+    - Troubleshooting checklist
+
+Features:
+---------
+
+Receivers:
+  - OTLP gRPC (port 4317)
+  - OTLP HTTP (port 4318)
+  - Prometheus scraping (existing targets)
+  - Filelog (/var/log/pods)
+  - Kubernetes events
+
+Processors:
+  - Memory limiter (400 MiB, prevent OOM)
+  - Batch processor (10s timeout, 1000 items)
+  - Resource processor (cluster, environment labels)
+  - K8s attributes (pod, deployment metadata)
+  - Filter (drop health checks)
+  - Tail sampling (100% errors, 10% normal)
+  - Cortex attributes (cortex.* namespace)
+
+Exporters:
+  - Prometheus (port 8889)
+  - OTLP/Traces (Jaeger/Tempo)
+  - Loki (logs)
+  - Logging (debug)
+
+Integration:
+  - Prometheus: ServiceMonitor scrapes collector metrics
+  - Grafana: Pre-configured dashboard
+  - Alertmanager: 6 alerts for collector health
+  - Existing monitoring stack (prometheus-values.yaml)
+
+Cortex-Specific:
+  - Agent tracing (coordinator → master → worker)
+  - LLM call tracking (Claude API, token counting)
+  - Task correlation (cortex.task.id)
+  - Worker operations tracking
+  - RAG retrieval tracing
+  - Custom span attributes (cortex.agent.id, cortex.worker.id, etc.)
+
+Deployment Instructions:
+------------------------
+
+1. Quick Deploy:
+   cd /Users/ryandahlberg/Projects/cortex/deploy/observability/otel
+   ./deploy-otel.sh
+
+2. Manual Deploy:
+   kubectl create configmap otel-collector-config --from-file=otel-collector-config.yaml -n monitoring
+   kubectl apply -f otel-collector-deployment.yaml
+   kubectl apply -f servicemonitor-otel.yaml
+   kubectl apply -f otel-instrumentation.yaml
+
+3. Verify:
+   kubectl get pods -n monitoring -l app=otel-collector
+   kubectl logs -n monitoring -l app=otel-collector -f
+
+4. Add Instrumentation:
+   - Auto (Python): Add annotation to pod: instrumentation.opentelemetry.io/inject-python: "true"
+   - Manual (TypeScript): Use cortex-tracing-config.ts
+
+Endpoints:
+----------
+  OTLP gRPC:   otel-collector.monitoring.svc.cluster.local:4317
+  OTLP HTTP:   otel-collector.monitoring.svc.cluster.local:4318
+  Prometheus:  otel-collector.monitoring.svc.cluster.local:8889
+  Health:      otel-collector.monitoring.svc.cluster.local:13133
+
+Monitoring:
+-----------
+  - ServiceMonitor: otel-collector (Prometheus scraping)
+  - Alerts: 6 alerts for collector health
+  - Dashboard: Grafana dashboard in ConfigMap
+  - Metrics: otelcol_receiver_*, otelcol_processor_*, otelcol_exporter_*
+
+Next Steps:
+-----------
+1. Deploy OTel stack: ./deploy-otel.sh
+2. Add instrumentation to Cortex services
+3. Deploy Jaeger/Tempo for trace visualization (optional)
+4. Deploy Loki for log aggregation (optional)
+5. Configure Grafana dashboards
+6. Set up alerts in Alertmanager
+
+Documentation:
+--------------
+  - README.md: Complete overview and setup guide
+  - distributed-tracing-guide.md: Implementation guide with examples
+  - ARCHITECTURE.md: System architecture and design
+  - QUICK-REFERENCE.md: Quick reference for common tasks
+
+Support:
+--------
+  - Check collector logs: kubectl logs -n monitoring -l app=otel-collector
+  - View ServiceMonitor: kubectl get servicemonitor -n monitoring
+  - Test endpoints: kubectl run test --rm -it --image=curlimages/curl --restart=Never -- curl http://otel-collector.monitoring.svc.cluster.local:13133/health
+  - Prometheus targets: http://prometheus:9090/targets
+
+Integration Points:
+-------------------
+  - Prometheus: /Users/ryandahlberg/Projects/cortex/deploy/monitoring/prometheus-values.yaml
+  - Cortex agents: Auto-instrumentation via annotations
+  - TypeScript services: Manual instrumentation via SDK
+  - Kubernetes: ServiceAccount, RBAC, NetworkPolicies
+
+Configuration References:
+-------------------------
+  - Cluster: cortex-talos
+  - Environment: production
+  - Namespace: monitoring (collector), cortex (applications)
+  - Sampling: 100% errors, 10% normal, tail sampling enabled
+  - Resource limits: 500m CPU, 512Mi memory
+  - Scaling: HPA 1-3 replicas
+

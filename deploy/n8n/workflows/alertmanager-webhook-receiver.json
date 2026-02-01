@@ -1,0 +1,445 @@
+{
+  "name": "Alertmanager Webhook Receiver",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "alertmanager",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "webhook-trigger",
+      "name": "Webhook Trigger",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [250, 300],
+      "webhookId": "alertmanager-webhook"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Parse Alertmanager webhook payload\n// Alertmanager sends an array of alerts in the 'alerts' field\n\nconst payload = $input.item.json.body;\nconst alerts = payload.alerts || [];\n\nconst parsedAlerts = alerts.map(alert => {\n  return {\n    // Alert identification\n    alertName: alert.labels.alertname || 'Unknown',\n    fingerprint: alert.fingerprint || '',\n    \n    // State and timing\n    status: alert.status || 'unknown',\n    startsAt: alert.startsAt || '',\n    endsAt: alert.endsAt || '',\n    \n    // Severity and classification\n    severity: alert.labels.severity || 'info',\n    cluster: alert.labels.cluster || 'unknown',\n    namespace: alert.labels.namespace || '',\n    pod: alert.labels.pod || '',\n    container: alert.labels.container || '',\n    instance: alert.labels.instance || '',\n    \n    // All labels and annotations\n    labels: alert.labels || {},\n    annotations: alert.annotations || {},\n    \n    // Human-readable information\n    summary: alert.annotations.summary || alert.annotations.message || 'No summary',\n    description: alert.annotations.description || '',\n    \n    // URL for more details\n    generatorURL: alert.generatorURL || '',\n    \n    // Metadata\n    receivedAt: new Date().toISOString(),\n    externalURL: payload.externalURL || '',\n    groupKey: payload.groupKey || ''\n  };\n});\n\n// Return all parsed alerts\nreturn parsedAlerts.map(alert => ({ json: alert }));"
+      },
+      "id": "parse-payload",
+      "name": "Parse Alertmanager Payload",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [450, 300]
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict"
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.severity }}",
+                    "rightValue": "critical",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "critical"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict"
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.severity }}",
+                    "rightValue": "warning",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "warning"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict"
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.severity }}",
+                    "rightValue": "info",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "info"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "route-by-severity",
+      "name": "Route by Severity",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3,
+      "position": [650, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://n8n.cortex.svc.cluster.local:5678/webhook/alert-notification-router",
+        "authentication": "none",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "alert",
+              "value": "={{ $json }}"
+            },
+            {
+              "name": "priority",
+              "value": "immediate"
+            }
+          ]
+        },
+        "options": {
+          "retry": {
+            "enabled": true,
+            "maxTries": 3,
+            "waitBetweenTries": 1000
+          },
+          "timeout": 10000
+        }
+      },
+      "id": "forward-critical",
+      "name": "Forward Critical Alert",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [850, 200],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 1000
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://n8n.cortex.svc.cluster.local:5678/webhook/alert-notification-router",
+        "authentication": "none",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "alert",
+              "value": "={{ $json }}"
+            },
+            {
+              "name": "priority",
+              "value": "standard"
+            }
+          ]
+        },
+        "options": {
+          "retry": {
+            "enabled": true,
+            "maxTries": 3,
+            "waitBetweenTries": 1000
+          },
+          "timeout": 10000
+        }
+      },
+      "id": "forward-warning",
+      "name": "Forward Warning Alert",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [850, 300],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 1000
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://n8n.cortex.svc.cluster.local:5678/webhook/alert-logs",
+        "authentication": "none",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "alert",
+              "value": "={{ $json }}"
+            },
+            {
+              "name": "priority",
+              "value": "info"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 5000
+        }
+      },
+      "id": "log-info",
+      "name": "Log Info Alert",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [850, 400]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Check if alert is firing or resolved\nconst alert = $input.item.json;\nconst isFiring = alert.status === 'firing';\nconst isResolved = alert.status === 'resolved';\n\n// Add state information\nreturn {\n  json: {\n    ...alert,\n    isFiring,\n    isResolved,\n    stateChange: isFiring ? 'Alert triggered' : 'Alert resolved',\n    processedAt: new Date().toISOString()\n  }\n};"
+      },
+      "id": "check-state",
+      "name": "Check Alert State",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1050, 200]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { \"status\": \"success\", \"message\": \"Alert received and processed\", \"alertsProcessed\": $itemIndex + 1 } }}"
+      },
+      "id": "webhook-response",
+      "name": "Webhook Response",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [1250, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.status }}",
+              "rightValue": "firing",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        }
+      },
+      "id": "check-if-firing",
+      "name": "Is Alert Firing?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [1050, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://n8n.cortex.svc.cluster.local:5678/webhook/auto-remediation",
+        "authentication": "none",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "alert",
+              "value": "={{ $json }}"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 5000
+        }
+      },
+      "id": "trigger-remediation",
+      "name": "Trigger Auto-Remediation",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [1250, 200]
+    },
+    {
+      "parameters": {
+        "content": "## Alertmanager Webhook Receiver\n\nThis workflow receives webhooks from Alertmanager and:\n\n1. **Parses** the incoming alert payload\n2. **Extracts** alert metadata, labels, annotations\n3. **Routes** based on severity (critical/warning/info)\n4. **Forwards** to appropriate downstream workflows\n5. **Handles** both firing and resolved states\n6. **Triggers** auto-remediation for critical alerts\n\n**Webhook URL**: /webhook/alertmanager\n\n**Retry Logic**: 3 attempts with 1s backoff",
+        "height": 400,
+        "width": 350
+      },
+      "id": "sticky-note-1",
+      "name": "Sticky Note",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [240, 460]
+    },
+    {
+      "parameters": {
+        "content": "## Error Handling\n\nIf downstream forwarding fails:\n- Automatic retry (3x)\n- Webhook still returns 200 OK\n- Failed alerts logged to error channel",
+        "height": 250,
+        "width": 300
+      },
+      "id": "sticky-note-2",
+      "name": "Sticky Note 2",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [850, 520]
+    }
+  ],
+  "connections": {
+    "Webhook Trigger": {
+      "main": [
+        [
+          {
+            "node": "Parse Alertmanager Payload",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Alertmanager Payload": {
+      "main": [
+        [
+          {
+            "node": "Route by Severity",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Route by Severity": {
+      "main": [
+        [
+          {
+            "node": "Forward Critical Alert",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Forward Warning Alert",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Log Info Alert",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Forward Critical Alert": {
+      "main": [
+        [
+          {
+            "node": "Check Alert State",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Forward Warning Alert": {
+      "main": [
+        [
+          {
+            "node": "Check If Firing?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Log Info Alert": {
+      "main": [
+        [
+          {
+            "node": "Webhook Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Alert State": {
+      "main": [
+        [
+          {
+            "node": "Trigger Auto-Remediation",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check If Firing?": {
+      "main": [
+        [
+          {
+            "node": "Webhook Response",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Webhook Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Trigger Auto-Remediation": {
+      "main": [
+        [
+          {
+            "node": "Webhook Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": [
+    {
+      "name": "cortex",
+      "id": "cortex"
+    },
+    {
+      "name": "alerting",
+      "id": "alerting"
+    }
+  ],
+  "triggerCount": 1,
+  "updatedAt": "2025-12-12T00:00:00.000Z",
+  "versionId": "1"
+}

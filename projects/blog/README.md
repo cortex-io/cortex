@@ -4,6 +4,28 @@ Engineering blog posts and technical updates from the Cortex team.
 
 ## Latest Posts
 
+### 2026-01-09: [Building an Autonomous Learning Pipeline: From Video Intelligence to Knowledge Integration](./2026-01-09-autonomous-learning-pipeline.md)
+
+We've implemented a complete autonomous learning pipeline that transforms passive content consumption into active, prioritized knowledge acquisition. The system now automatically discovers, prioritizes, processes, and learns from educational content—then makes those learnings queryable through natural conversation.
+
+**What we built:**
+- Intelligent content discovery with smart prioritization (1,500+ items indexed)
+- Learning tracker system with category-based organization
+- Conversational knowledge interface ("What did you learn today?")
+- Document processing service with 16+ format support
+- Production-grade K3s deployment with full observability
+
+**Key Stats:**
+- 3 microservices deployed
+- 2,500+ lines of code
+- 15+ API endpoints
+- 10 items/hour processing rate
+- Zero failed processing attempts
+
+[Read the full post →](./2026-01-09-autonomous-learning-pipeline.md)
+
+---
+
 ### 2025-12-05: [Cortex Builds Cortex: Self-Optimization Through Meta-Execution](./2025-12-05-cortex-builds-cortex.md)
 
 We used Cortex to implement Cortex's own self-optimization framework. By submitting 16 development tasks across 5 parallel tracks, the AI agent system is now building the very capabilities that will make it smarter, faster, and more efficient. This is self-directed evolution in action.
@@ -117,10 +139,11 @@ Content...
 
 ## Archive
 
+- [2026-01-09 - Building an Autonomous Learning Pipeline: From Video Intelligence to Knowledge Integration](./2026-01-09-autonomous-learning-pipeline.md)
 - [2025-12-05 - Cortex Builds Cortex: Self-Optimization Through Meta-Execution](./2025-12-05-cortex-builds-cortex.md)
 - [2025-12-04 - Eight Weeks of Development in Three Hours](./2025-12-04-eight-weeks-in-three-hours.md)
 - [2025-12-03 - Cortex AI Agents System Launch](./2025-12-03-cortex-ai-agents-security-updates.md)
 
 ---
 
-*Last updated: December 5, 2025*
+*Last updated: January 9, 2026*

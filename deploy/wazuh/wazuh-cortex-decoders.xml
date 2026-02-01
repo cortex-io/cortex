@@ -1,0 +1,459 @@
+<!--
+  Wazuh Custom Decoders for Cortex Log Parsing
+  Last Updated: 2025-12-11
+-->
+
+<decoder name="cortex-json">
+  <prematch>^\s*{.*"component":</prematch>
+  <plugin_decoder>JSON_Decoder</plugin_decoder>
+</decoder>
+
+<!-- ========================================
+     Cortex Agent Log Decoder
+     Matches: JSON logs from Cortex agents (meta, masters, workers, contractors)
+     ======================================== -->
+
+<decoder name="cortex-agent">
+  <parent>cortex-json</parent>
+  <use_own_name>true</use_own_name>
+  <plugin_decoder offset="after_parent">JSON_Decoder</plugin_decoder>
+  <field name="component">meta-agent|master|worker|contractor</field>
+</decoder>
+
+<decoder name="cortex-agent-metadata">
+  <parent>cortex-agent</parent>
+  <use_own_name>true</use_own_name>
+  <plugin_decoder offset="after_parent">JSON_Decoder</plugin_decoder>
+  <field name="timestamp" />
+  <field name="level" />
+  <field name="message" />
+  <field name="agent_id" />
+  <field name="session_id" />
+</decoder>
+
+<!-- ========================================
+     Cortex Task Execution Log Decoder
+     Matches: Task lifecycle events
+     ======================================== -->
+
+<decoder name="cortex-task">
+  <parent>cortex-json</parent>
+  <use_own_name>true</use_own_name>
+  <plugin_decoder offset="after_parent">JSON_Decoder</plugin_decoder>
+  <field name="event_type">task_started|task_completed|task_failed|task_spawned</field>
+</decoder>
+
+<decoder name="cortex-task-details">
+  <parent>cortex-task</parent>
+  <use_own_name>true</use_own_name>
+  <plugin_decoder offset="after_parent">JSON_Decoder</plugin_decoder>
+  <field name="task_id" />
+  <field name="task_type" />
+  <field name="task_status" />
+  <field name="parent_master" />
+  <field name="worker_id" />
+  <field name="task_duration" />
+  <field name="token_consumption" />
+  <field name="error_message" />
+</decoder>
+
+<!-- ========================================
+     Cortex Authentication Log Decoder
+     Matches: Authentication and authorization events
+     ======================================== -->
+
+<decoder name="cortex-auth">
+  <parent>cortex-json</parent>
+  <use_own_name>true</use_own_name>
+  <plugin_decoder offset="after_parent">JSON_Decoder</plugin_decoder>
+  <field name="event_type">authentication_success|authentication_failed|authorization_denied|privilege_escalation|role_change</field>
+</decoder>
+
+<decoder name="cortex-auth-details">
+  <parent>cortex-auth</parent>
+  <use_own_name>true</use_own_name>
+  <plugin_decoder offset="after_parent">JSON_Decoder</plugin_decoder>
+  <field name="username" />
+  <field name="user_type" />
+  <field name="source_ip" />
+  <field name="source_location" />
+  <field name="auth_method" />
+  <field name="new_role" />
+  <field name="previous_role" />
+  <field name="reason" />
+</decoder>
+
+<!-- ========================================
+     Cortex Configuration Change Decoder
+     Matches: Configuration modification events
+     ======================================== -->
+
+<decoder name="cortex-config">
+  <parent>cortex-json</parent>
+  <use_own_name>true</use_own_name>
+  <plugin_decoder offset="after_parent">JSON_Decoder</plugin_decoder>
+  <field name="event_type">config_change|state_change|registry_update</field>
+</decoder>
+
+<decoder name="cortex-config-details">
+  <parent>cortex-config</parent>
+  <use_own_name>true</use_own_name>
+  <plugin_decoder offset="after_parent">JSON_Decoder</plugin_decoder>
+  <field name="config_file" />
+  <field name="change_type" />
+  <field name="changed_by" />
+  <field name="old_value" />
+  <field name="new_value" />
+  <field name="change_reason" />
+</decoder>
+
+<!-- ========================================
+     MCP Server Log Decoder
+     Matches: MCP server events and tool calls
+     ======================================== -->
+
+<decoder name="mcp-server">
+  <parent>cortex-json</parent>
+  <use_own_name>true</use_own_name>
+  <plugin_decoder offset="after_parent">JSON_Decoder</plugin_decoder>
+  <field name="component">mcp|mcp-server</field>
+</decoder>
+
+<decoder name="mcp-server-request">
+  <parent>mcp-server</parent>
+  <use_own_name>true</use_own_name>
+  <plugin_decoder offset="after_parent">JSON_Decoder</plugin_decoder>
+  <field name="mcp_type" />
+  <field name="mcp_method" />
+  <field name="tool_name" />
+  <field name="request_id" />
+  <field name="client_id" />
+</decoder>
+
+<decoder name="mcp-server-response">
+  <parent>mcp-server</parent>
+  <use_own_name>true</use_own_name>
+  <plugin_decoder offset="after_parent">JSON_Decoder</plugin_decoder>
+  <field name="status_code" />
+  <field name="response_time" />
+  <field name="error_type" />
+  <field name="error_message" />
+  <field name="tool_result" />
+</decoder>
+
+<decoder name="mcp-tool-call">
+  <parent>mcp-server</parent>
+  <use_own_name>true</use_own_name>
+  <plugin_decoder offset="after_parent">JSON_Decoder</plugin_decoder>
+  <field name="event_type">tool_call|tool_success|tool_failure</field>
+  <field name="tool_name" />
+  <field name="tool_parameters" />
+  <field name="execution_time" />
+</decoder>
+
+<!-- ========================================
+     N8N Workflow Log Decoder
+     Matches: N8N workflow execution logs
+     ======================================== -->
+
+<decoder name="n8n-workflow">
+  <prematch>^\s*{.*"workflowId":</prematch>
+  <plugin_decoder>JSON_Decoder</plugin_decoder>
+</decoder>
+
+<decoder name="n8n-workflow-execution">
+  <parent>n8n-workflow</parent>
+  <use_own_name>true</use_own_name>
+  <plugin_decoder offset="after_parent">JSON_Decoder</plugin_decoder>
+  <field name="workflowId" />
+  <field name="workflowName" />
+  <field name="executionId" />
+  <field name="mode" />
+  <field name="status" />
+  <field name="finished" />
+  <field name="startedAt" />
+</decoder>
+
+<decoder name="n8n-workflow-node">
+  <parent>n8n-workflow</parent>
+  <use_own_name>true</use_own_name>
+  <plugin_decoder offset="after_parent">JSON_Decoder</plugin_decoder>
+  <field name="nodeName" />
+  <field name="nodeType" />
+  <field name="error" />
+</decoder>
+
+<decoder name="n8n-webhook">
+  <parent>n8n-workflow</parent>
+  <use_own_name>true</use_own_name>
+  <plugin_decoder offset="after_parent">JSON_Decoder</plugin_decoder>
+  <field name="event_type">webhook_received|webhook_processed</field>
+  <field name="webhookPath" />
+  <field name="httpMethod" />
+  <field name="sourceIp" />
+</decoder>
+
+<!-- ========================================
+     Cortex API Log Decoder
+     Matches: API gateway and endpoint logs
+     ======================================== -->
+
+<decoder name="cortex-api">
+  <parent>cortex-json</parent>
+  <use_own_name>true</use_own_name>
+  <plugin_decoder offset="after_parent">JSON_Decoder</plugin_decoder>
+  <field name="component">api|gateway|endpoint</field>
+</decoder>
+
+<decoder name="cortex-api-request">
+  <parent>cortex-api</parent>
+  <use_own_name>true</use_own_name>
+  <plugin_decoder offset="after_parent">JSON_Decoder</plugin_decoder>
+  <field name="http_method" />
+  <field name="api_method" />
+  <field name="api_endpoint" />
+  <field name="api_version" />
+  <field name="client_id" />
+  <field name="request_size" />
+</decoder>
+
+<decoder name="cortex-api-response">
+  <parent>cortex-api</parent>
+  <use_own_name>true</use_own_name>
+  <plugin_decoder offset="after_parent">JSON_Decoder</plugin_decoder>
+  <field name="http_status" />
+  <field name="response_time" />
+  <field name="response_size" />
+  <field name="cache_hit" />
+</decoder>
+
+<!-- ========================================
+     Kubernetes Audit Log Decoder
+     Matches: k8s audit events for Cortex namespace
+     ======================================== -->
+
+<decoder name="k8s-audit">
+  <prematch>^\s*{.*"kind":"Event".*"apiVersion":"audit.k8s.io</prematch>
+  <plugin_decoder>JSON_Decoder</plugin_decoder>
+</decoder>
+
+<decoder name="k8s-audit-cortex">
+  <parent>k8s-audit</parent>
+  <use_own_name>true</use_own_name>
+  <plugin_decoder offset="after_parent">JSON_Decoder</plugin_decoder>
+  <field name="objectRef.namespace">cortex</field>
+</decoder>
+
+<decoder name="k8s-audit-details">
+  <parent>k8s-audit-cortex</parent>
+  <use_own_name>true</use_own_name>
+  <plugin_decoder offset="after_parent">JSON_Decoder</plugin_decoder>
+  <field name="verb" />
+  <field name="objectRef.resource" />
+  <field name="objectRef.name" />
+  <field name="user.username" />
+  <field name="user.groups" />
+  <field name="sourceIPs" />
+  <field name="userAgent" />
+  <field name="responseStatus.code" />
+  <field name="responseStatus.reason" />
+</decoder>
+
+<!-- ========================================
+     Container Runtime Log Decoder
+     Matches: Container lifecycle and security events
+     ======================================== -->
+
+<decoder name="cortex-container">
+  <parent>cortex-json</parent>
+  <use_own_name>true</use_own_name>
+  <plugin_decoder offset="after_parent">JSON_Decoder</plugin_decoder>
+  <field name="component">container|pod|runtime</field>
+</decoder>
+
+<decoder name="cortex-container-event">
+  <parent>cortex-container</parent>
+  <use_own_name>true</use_own_name>
+  <plugin_decoder offset="after_parent">JSON_Decoder</plugin_decoder>
+  <field name="event_type" />
+  <field name="container_id" />
+  <field name="container_name" />
+  <field name="image" />
+  <field name="namespace" />
+  <field name="pod_name" />
+</decoder>
+
+<decoder name="cortex-container-security">
+  <parent>cortex-container</parent>
+  <use_own_name>true</use_own_name>
+  <plugin_decoder offset="after_parent">JSON_Decoder</plugin_decoder>
+  <field name="privileged" />
+  <field name="capability" />
+  <field name="securityContext" />
+  <field name="mount_point" />
+  <field name="volume_type" />
+</decoder>
+
+<!-- ========================================
+     Network Activity Decoder
+     Matches: Network connections and data transfers
+     ======================================== -->
+
+<decoder name="cortex-network">
+  <parent>cortex-json</parent>
+  <use_own_name>true</use_own_name>
+  <plugin_decoder offset="after_parent">JSON_Decoder</plugin_decoder>
+  <field name="event_type">network_connection|data_transfer|dns_query</field>
+</decoder>
+
+<decoder name="cortex-network-details">
+  <parent>cortex-network</parent>
+  <use_own_name>true</use_own_name>
+  <plugin_decoder offset="after_parent">JSON_Decoder</plugin_decoder>
+  <field name="source_ip" />
+  <field name="source_port" />
+  <field name="destination" />
+  <field name="destination_ip" />
+  <field name="destination_port" />
+  <field name="protocol" />
+  <field name="bytes_sent" />
+  <field name="bytes_received" />
+  <field name="bytes_transferred" />
+  <field name="connection_state" />
+</decoder>
+
+<decoder name="cortex-dns">
+  <parent>cortex-network</parent>
+  <use_own_name>true</use_own_name>
+  <plugin_decoder offset="after_parent">JSON_Decoder</plugin_decoder>
+  <field name="event_type">dns_query</field>
+  <field name="query_name" />
+  <field name="query_type" />
+  <field name="query_length" />
+  <field name="response_code" />
+  <field name="response_ip" />
+</decoder>
+
+<!-- ========================================
+     Secrets Access Decoder
+     Matches: Secret and credential access events
+     ======================================== -->
+
+<decoder name="cortex-secrets">
+  <parent>cortex-json</parent>
+  <use_own_name>true</use_own_name>
+  <plugin_decoder offset="after_parent">JSON_Decoder</plugin_decoder>
+  <field name="event_type">secret_access|secret_create|secret_update|secret_delete|secret_export|secret_download</field>
+</decoder>
+
+<decoder name="cortex-secrets-details">
+  <parent>cortex-secrets</parent>
+  <use_own_name>true</use_own_name>
+  <plugin_decoder offset="after_parent">JSON_Decoder</plugin_decoder>
+  <field name="secret_name" />
+  <field name="secret_type" />
+  <field name="secret_path" />
+  <field name="accessed_by" />
+  <field name="access_method" />
+  <field name="access_reason" />
+</decoder>
+
+<!-- ========================================
+     File Integrity Monitoring Decoder
+     Matches: File system changes and integrity checks
+     ======================================== -->
+
+<decoder name="cortex-fim">
+  <parent>cortex-json</parent>
+  <use_own_name>true</use_own_name>
+  <plugin_decoder offset="after_parent">JSON_Decoder</plugin_decoder>
+  <field name="event_type">file_created|file_modified|file_deleted|file_integrity|integrity_check</field>
+</decoder>
+
+<decoder name="cortex-fim-details">
+  <parent>cortex-fim</parent>
+  <use_own_name>true</use_own_name>
+  <plugin_decoder offset="after_parent">JSON_Decoder</plugin_decoder>
+  <field name="file_path" />
+  <field name="file_type" />
+  <field name="file_hash" />
+  <field name="previous_hash" />
+  <field name="file_owner" />
+  <field name="file_permissions" />
+  <field name="modified_by" />
+  <field name="integrity_check" />
+</decoder>
+
+<!-- ========================================
+     Worker Spawn & Lifecycle Decoder
+     Matches: Worker spawning and termination events
+     ======================================== -->
+
+<decoder name="cortex-worker-lifecycle">
+  <parent>cortex-json</parent>
+  <use_own_name>true</use_own_name>
+  <plugin_decoder offset="after_parent">JSON_Decoder</plugin_decoder>
+  <field name="event_type">worker_spawn|worker_started|worker_completed|worker_terminated|worker_failed</field>
+</decoder>
+
+<decoder name="cortex-worker-details">
+  <parent>cortex-worker-lifecycle</parent>
+  <use_own_name>true</use_own_name>
+  <plugin_decoder offset="after_parent">JSON_Decoder</plugin_decoder>
+  <field name="worker_id" />
+  <field name="worker_type" />
+  <field name="spawned_by" />
+  <field name="parent_master" />
+  <field name="task_count" />
+  <field name="uptime" />
+  <field name="termination_reason" />
+</decoder>
+
+<!-- ========================================
+     Performance & Resource Decoder
+     Matches: Performance metrics and resource usage
+     ======================================== -->
+
+<decoder name="cortex-performance">
+  <parent>cortex-json</parent>
+  <use_own_name>true</use_own_name>
+  <plugin_decoder offset="after_parent">JSON_Decoder</plugin_decorator>
+  <field name="event_type">performance_metric|resource_usage|threshold_exceeded</field>
+</decoder>
+
+<decoder name="cortex-performance-details">
+  <parent>cortex-performance</parent>
+  <use_own_name>true</use_own_name>
+  <plugin_decoder offset="after_parent">JSON_Decoder</plugin_decoder>
+  <field name="metric_name" />
+  <field name="metric_value" />
+  <field name="threshold" />
+  <field name="cpu_usage" />
+  <field name="memory_usage" />
+  <field name="disk_usage" />
+  <field name="network_throughput" />
+</decoder>
+
+<!-- ========================================
+     Error & Exception Decoder
+     Matches: Application errors and exceptions
+     ======================================== -->
+
+<decoder name="cortex-error">
+  <parent>cortex-json</parent>
+  <use_own_name>true</use_own_name>
+  <plugin_decoder offset="after_parent">JSON_Decoder</plugin_decoder>
+  <field name="level">error|critical|fatal|ERROR|CRITICAL|FATAL</field>
+</decoder>
+
+<decoder name="cortex-error-details">
+  <parent>cortex-error</parent>
+  <use_own_name>true</use_own_name>
+  <plugin_decoder offset="after_parent">JSON_Decoder</plugin_decoder>
+  <field name="error_type" />
+  <field name="error_code" />
+  <field name="error_message" />
+  <field name="stack_trace" />
+  <field name="error_context" />
+</decoder>
+
