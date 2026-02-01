@@ -1,0 +1,262 @@
+---
+# ServiceMonitor for OpenTelemetry Collector
+# This configures Prometheus to scrape metrics from the OTel collector
+
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: otel-collector
+  namespace: monitoring
+  labels:
+    app: otel-collector
+    component: monitoring
+    prometheus: kube-prometheus
+spec:
+  # Select the OTel collector service
+  selector:
+    matchLabels:
+      app: otel-collector
+
+  # Namespace where the service is located
+  namespaceSelector:
+    matchNames:
+      - monitoring
+
+  # Endpoints to scrape
+  endpoints:
+    # Scrape Prometheus exporter endpoint (application metrics)
+    - port: prometheus
+      interval: 30s
+      path: /metrics
+      scheme: http
+      scrapeTimeout: 10s
+      relabelings:
+        # Add source label
+        - sourceLabels: [__meta_kubernetes_pod_name]
+          targetLabel: pod
+        - sourceLabels: [__meta_kubernetes_namespace]
+          targetLabel: namespace
+        # Add collector label
+        - targetLabel: job
+          replacement: otel-collector
+        - targetLabel: collector
+          replacement: opentelemetry
+      metricRelabelings:
+        # Drop high-cardinality metrics
+        - sourceLabels: [__name__]
+          regex: 'otel_collector_rpc_.*'
+          action: drop
+
+    # Scrape internal collector metrics (self-monitoring)
+    - port: metrics
+      interval: 30s
+      path: /metrics
+      scheme: http
+      scrapeTimeout: 10s
+      relabelings:
+        - sourceLabels: [__meta_kubernetes_pod_name]
+          targetLabel: pod
+        - sourceLabels: [__meta_kubernetes_namespace]
+          targetLabel: namespace
+        - targetLabel: job
+          replacement: otel-collector-internal
+      metricRelabelings:
+        # Keep only important internal metrics
+        - sourceLabels: [__name__]
+          regex: 'otelcol_(receiver|processor|exporter)_.*'
+          action: keep
+
+---
+# PodMonitor for OTel collector pods (alternative to ServiceMonitor)
+apiVersion: monitoring.coreos.com/v1
+kind: PodMonitor
+metadata:
+  name: otel-collector-pods
+  namespace: monitoring
+  labels:
+    app: otel-collector
+    component: monitoring
+spec:
+  # Select OTel collector pods
+  selector:
+    matchLabels:
+      app: otel-collector
+
+  # Namespace selector
+  namespaceSelector:
+    matchNames:
+      - monitoring
+
+  # Pod metrics endpoints
+  podMetricsEndpoints:
+    - port: prometheus
+      interval: 30s
+      path: /metrics
+      relabelings:
+        - sourceLabels: [__meta_kubernetes_pod_name]
+          targetLabel: pod
+        - sourceLabels: [__meta_kubernetes_namespace]
+          targetLabel: namespace
+        - sourceLabels: [__meta_kubernetes_pod_label_version]
+          targetLabel: version
+        - targetLabel: job
+          replacement: otel-collector
+
+---
+# PrometheusRule for OTel collector alerts
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: otel-collector-alerts
+  namespace: monitoring
+  labels:
+    app: otel-collector
+    component: alerts
+    prometheus: kube-prometheus
+spec:
+  groups:
+    - name: otel-collector.rules
+      interval: 30s
+      rules:
+        # Alert if collector is down
+        - alert: OtelCollectorDown
+          expr: up{job="otel-collector"} == 0
+          for: 5m
+          labels:
+            severity: critical
+            component: otel-collector
+          annotations:
+            summary: "OpenTelemetry Collector is down"
+            description: "OTel Collector {{ $labels.pod }} in namespace {{ $labels.namespace }} has been down for more than 5 minutes."
+
+        # Alert if collector is dropping data
+        - alert: OtelCollectorDroppingData
+          expr: rate(otelcol_processor_dropped_spans_total[5m]) > 0
+          for: 10m
+          labels:
+            severity: warning
+            component: otel-collector
+          annotations:
+            summary: "OTel Collector is dropping spans"
+            description: "OTel Collector {{ $labels.pod }} is dropping {{ $value }} spans per second."
+
+        # Alert if collector memory is high
+        - alert: OtelCollectorHighMemory
+          expr: |
+            (container_memory_working_set_bytes{pod=~"otel-collector-.*", container="otel-collector"}
+            / container_spec_memory_limit_bytes{pod=~"otel-collector-.*", container="otel-collector"}) > 0.85
+          for: 15m
+          labels:
+            severity: warning
+            component: otel-collector
+          annotations:
+            summary: "OTel Collector high memory usage"
+            description: "OTel Collector {{ $labels.pod }} memory usage is above 85% ({{ $value | humanizePercentage }})."
+
+        # Alert if collector CPU is high
+        - alert: OtelCollectorHighCPU
+          expr: |
+            rate(container_cpu_usage_seconds_total{pod=~"otel-collector-.*", container="otel-collector"}[5m]) > 0.8
+          for: 15m
+          labels:
+            severity: warning
+            component: otel-collector
+          annotations:
+            summary: "OTel Collector high CPU usage"
+            description: "OTel Collector {{ $labels.pod }} CPU usage is above 80% ({{ $value | humanizePercentage }})."
+
+        # Alert if exporter is failing
+        - alert: OtelCollectorExporterFailing
+          expr: rate(otelcol_exporter_send_failed_metric_points_total[5m]) > 0
+          for: 10m
+          labels:
+            severity: warning
+            component: otel-collector
+          annotations:
+            summary: "OTel Collector exporter failing"
+            description: "OTel Collector {{ $labels.pod }} exporter {{ $labels.exporter }} is failing to send data."
+
+        # Alert if receiver is rejecting data
+        - alert: OtelCollectorReceiverRefusing
+          expr: rate(otelcol_receiver_refused_spans_total[5m]) > 0
+          for: 10m
+          labels:
+            severity: warning
+            component: otel-collector
+          annotations:
+            summary: "OTel Collector receiver refusing data"
+            description: "OTel Collector {{ $labels.pod }} receiver {{ $labels.receiver }} is refusing {{ $value }} spans per second."
+
+        # Alert if queue is filling up
+        - alert: OtelCollectorQueueAlmostFull
+          expr: |
+            (otelcol_exporter_queue_size / otelcol_exporter_queue_capacity) > 0.9
+          for: 15m
+          labels:
+            severity: warning
+            component: otel-collector
+          annotations:
+            summary: "OTel Collector queue almost full"
+            description: "OTel Collector {{ $labels.pod }} queue for exporter {{ $labels.exporter }} is {{ $value | humanizePercentage }} full."
+
+---
+# Grafana Dashboard ConfigMap for OTel Collector
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: otel-collector-dashboard
+  namespace: monitoring
+  labels:
+    grafana_dashboard: "1"
+    app: otel-collector
+data:
+  otel-collector-dashboard.json: |
+    {
+      "dashboard": {
+        "title": "OpenTelemetry Collector - Cortex",
+        "tags": ["opentelemetry", "cortex", "observability"],
+        "timezone": "browser",
+        "panels": [
+          {
+            "title": "Received Spans",
+            "targets": [
+              {
+                "expr": "rate(otelcol_receiver_accepted_spans_total{job='otel-collector'}[5m])",
+                "legendFormat": "{{receiver}}"
+              }
+            ],
+            "type": "graph"
+          },
+          {
+            "title": "Exported Spans",
+            "targets": [
+              {
+                "expr": "rate(otelcol_exporter_sent_spans_total{job='otel-collector'}[5m])",
+                "legendFormat": "{{exporter}}"
+              }
+            ],
+            "type": "graph"
+          },
+          {
+            "title": "Dropped Spans",
+            "targets": [
+              {
+                "expr": "rate(otelcol_processor_dropped_spans_total{job='otel-collector'}[5m])",
+                "legendFormat": "{{processor}}"
+              }
+            ],
+            "type": "graph"
+          },
+          {
+            "title": "Memory Usage",
+            "targets": [
+              {
+                "expr": "process_runtime_go_mem_heap_alloc_bytes{job='otel-collector-internal'}",
+                "legendFormat": "{{pod}}"
+              }
+            ],
+            "type": "graph"
+          }
+        ]
+      }
+    }
