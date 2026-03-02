@@ -5,7 +5,7 @@
   "worker_id": "worker-scan-024",
   "audit_type": "comprehensive_security_scan",
   "scope": {
-    "repository": "/Users/ryandahlberg/Projects/commit-relay",
+    "repository": "/Users/ryandahlberg/Projects/cortex",
     "files_scanned": 8216,
     "scan_types": [
       "secrets_detection",

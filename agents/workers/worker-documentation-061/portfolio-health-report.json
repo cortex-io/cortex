@@ -121,7 +121,7 @@
   ],
   "repository_details": [
     {
-      "name": "ry-ops/commit-relay",
+      "name": "ry-ops/cortex",
       "language": "JavaScript",
       "visibility": "private",
       "health_status": "pending_catalog",

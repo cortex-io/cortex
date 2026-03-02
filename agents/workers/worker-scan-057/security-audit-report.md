@@ -3,13 +3,13 @@
 **Task ID:** moe-test-ddqd-v5-1763690307-f45f4c85
 **Worker ID:** worker-scan-057
 **Audit Date:** 2025-11-20
-**Scope:** commit-relay production systems
+**Scope:** cortex production systems
 
 ---
 
 ## 1. Executive Summary
 
-This security audit identified **2 CRITICAL**, **4 HIGH**, **3 MEDIUM**, and **5 LOW** priority security issues across the commit-relay codebase. The most severe findings involve exposed API keys in committed files and insecure command execution patterns.
+This security audit identified **2 CRITICAL**, **4 HIGH**, **3 MEDIUM**, and **5 LOW** priority security issues across the cortex codebase. The most severe findings involve exposed API keys in committed files and insecure command execution patterns.
 
 ### Overall Security Posture: **NEEDS IMMEDIATE ATTENTION**
 
@@ -21,8 +21,8 @@ The codebase has good security practices in many areas (rate limiting, helmet he
 
 ### CRITICAL-001: Exposed Anthropic API Key in Configuration File
 **Severity:** CRITICAL (CVSS 9.8)
-**Location:** `/Users/ryandahlberg/Projects/commit-relay/.claude/settings.local.json` (lines 45-46)
-**Location:** `/Users/ryandahlberg/Projects/commit-relay/llm-mesh/.env` (line 8)
+**Location:** `/Users/ryandahlberg/Projects/cortex/.claude/settings.local.json` (lines 45-46)
+**Location:** `/Users/ryandahlberg/Projects/cortex/llm-mesh/.env` (line 8)
 
 **Description:**
 Hardcoded Anthropic API key exposed in committed files:
@@ -47,7 +47,7 @@ sk-ant-api03-a3tTTiVEgcdBqdN7BcY570Q7Y4uk2U3Fl-JWTO6tZot6e9sOpAwujJTvfNDFN_ASF3m
 
 ### CRITICAL-002: Insecure Command Execution with User Input
 **Severity:** CRITICAL (CVSS 9.1)
-**Location:** `/Users/ryandahlberg/Projects/commit-relay/dashboard/server/index.js`
+**Location:** `/Users/ryandahlberg/Projects/cortex/dashboard/server/index.js`
 
 **Vulnerable Code Patterns:**
 - Line 2643: `execSync(\`${eventScript} task_created ${taskId} "Repair task created from health alert ${alert.id}"\``
@@ -71,7 +71,7 @@ Alert messages and task descriptions are interpolated directly into shell comman
 
 ### HIGH-001: Development Mode Bypasses Authentication
 **Severity:** HIGH (CVSS 7.5)
-**Location:** `/Users/ryandahlberg/Projects/commit-relay/dashboard/server/middleware/auth.js` (lines 20-23)
+**Location:** `/Users/ryandahlberg/Projects/cortex/dashboard/server/middleware/auth.js` (lines 20-23)
 
 **Description:**
 In development mode without API_KEY set, all authentication is bypassed with only a console warning:
@@ -95,7 +95,7 @@ if (!expectedKey && process.env.NODE_ENV === 'development') {
 
 ### HIGH-002: Excessive execSync Usage Without Shell Safety
 **Severity:** HIGH (CVSS 7.2)
-**Location:** Multiple locations in `/Users/ryandahlberg/Projects/commit-relay/dashboard/server/index.js`
+**Location:** Multiple locations in `/Users/ryandahlberg/Projects/cortex/dashboard/server/index.js`
 
 **Count:** 40+ instances of `execSync()` calls
 
@@ -115,7 +115,7 @@ While processName values are currently hardcoded, this pattern is risky if expan
 
 ### HIGH-003: Missing Rate Limiting on Service Control Endpoints
 **Severity:** HIGH (CVSS 7.1)
-**Location:** `/Users/ryandahlberg/Projects/commit-relay/dashboard/server/middleware/rateLimiter.js` (lines 17-34)
+**Location:** `/Users/ryandahlberg/Projects/cortex/dashboard/server/middleware/rateLimiter.js` (lines 17-34)
 
 **Description:**
 The `controlLimiter` for service management has been intentionally disabled:
@@ -143,7 +143,7 @@ const controlLimiter = rateLimit({
 
 ### HIGH-004: .env Files Not Fully Gitignored
 **Severity:** HIGH (CVSS 7.0)
-**Location:** `/Users/ryandahlberg/Projects/commit-relay/.gitignore`
+**Location:** `/Users/ryandahlberg/Projects/cortex/.gitignore`
 
 **Description:**
 The .gitignore only ignores `.env` and `.env.local`, but:
@@ -167,7 +167,7 @@ The .gitignore only ignores `.env` and `.env.local`, but:
 
 ### MEDIUM-001: Permissive CORS Configuration in Tests
 **Severity:** MEDIUM (CVSS 5.3)
-**Location:** `/Users/ryandahlberg/Projects/commit-relay/testing/dashboard/server.test.js` (line 28)
+**Location:** `/Users/ryandahlberg/Projects/cortex/testing/dashboard/server.test.js` (line 28)
 
 **Description:**
 Test file sets `Access-Control-Allow-Origin: *` which could leak into production if test configs are reused.

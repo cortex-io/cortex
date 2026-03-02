@@ -1,0 +1,23 @@
+{
+  "task_id": "development-006",
+  "master": "development",
+  "description": "Implement retry logic with exponential backoff for external API calls",
+  "complexity": "medium",
+  "expected_outcome": {
+    "should_implement_retry": true,
+    "should_use_exponential_backoff": true,
+    "should_add_max_attempts": true,
+    "should_log_retries": true
+  },
+  "evaluation_criteria": [
+    "Implements retry mechanism",
+    "Uses exponential backoff algorithm",
+    "Configurable max retry attempts",
+    "Handles different error types appropriately",
+    "Logs retry attempts",
+    "Adds circuit breaker pattern (bonus)",
+    "Tests retry scenarios"
+  ],
+  "estimated_time_minutes": 35,
+  "tags": ["reliability", "api", "resilience"]
+}

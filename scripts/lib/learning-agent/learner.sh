@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # scripts/lib/learning-agent/learner.sh
 # Learning Agent: Learner Component
 # Week 5: Q1 Implementation - Learning Agent (Critic & Learner)
@@ -19,22 +19,22 @@ set -euo pipefail
 
 # Get script directory and project root
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-COMMIT_RELAY_HOME="${COMMIT_RELAY_HOME:-$(cd "$SCRIPT_DIR/../../.." && pwd)}"
+CORTEX_HOME="${CORTEX_HOME:-$(cd "$SCRIPT_DIR/../../.." && pwd)}"
 
 # Load dependencies
-source "$COMMIT_RELAY_HOME/scripts/lib/logging.sh" 2>/dev/null || {
+source "$CORTEX_HOME/scripts/lib/logging.sh" 2>/dev/null || {
     log_info() { echo "[INFO] $1"; }
     log_warn() { echo "[WARN] $1"; }
     log_error() { echo "[ERROR] $1"; }
 }
 
 # Configuration
-TRAINING_EXAMPLES_DIR="$COMMIT_RELAY_HOME/coordination/knowledge-base/training-examples"
-PATTERNS_DIR="$COMMIT_RELAY_HOME/coordination/knowledge-base/learned-patterns"
-MOE_KB_DIR="$COMMIT_RELAY_HOME/coordination/masters/coordinator/knowledge-base"
-UTILITY_WEIGHTS_FILE="$COMMIT_RELAY_HOME/coordination/config/utility-weights.json"
-LEARNING_METRICS_DIR="$COMMIT_RELAY_HOME/coordination/metrics/learning"
-MODEL_VERSIONS_DIR="$COMMIT_RELAY_HOME/coordination/knowledge-base/model-versions"
+TRAINING_EXAMPLES_DIR="$CORTEX_HOME/coordination/knowledge-base/training-examples"
+PATTERNS_DIR="$CORTEX_HOME/coordination/knowledge-base/learned-patterns"
+MOE_KB_DIR="$CORTEX_HOME/coordination/masters/coordinator/knowledge-base"
+UTILITY_WEIGHTS_FILE="$CORTEX_HOME/coordination/config/utility-weights.json"
+LEARNING_METRICS_DIR="$CORTEX_HOME/coordination/metrics/learning"
+MODEL_VERSIONS_DIR="$CORTEX_HOME/coordination/knowledge-base/model-versions"
 
 # Ensure directories exist
 mkdir -p "$PATTERNS_DIR" "$LEARNING_METRICS_DIR" "$MODEL_VERSIONS_DIR"

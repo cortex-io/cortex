@@ -1,6 +1,6 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # scripts/lib/git-automation.sh
-# Git automation library for commit-relay workers
+# Git automation library for cortex workers
 # Provides automatic commit, push, and PR creation capabilities
 
 # Colors for output
@@ -63,7 +63,7 @@ $commit_type: $description
 
 Task: $task_id
 Worker: $worker_type$file_info
-Autonomous: commit-relay CI/CD
+Autonomous: cortex CI/CD
 
 🤖 Generated with [Claude Code](https://claude.com/claude-code)
 

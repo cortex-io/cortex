@@ -1,6 +1,6 @@
 # ML-Powered Insights Guide
 
-This guide covers the machine learning capabilities in the commit-relay Python SDK.
+This guide covers the machine learning capabilities in the cortex Python SDK.
 
 ## Overview
 
@@ -12,7 +12,7 @@ The ML module provides three main capabilities:
 ## Installation
 
 ```bash
-pip install -e /path/to/commit-relay/python-sdk
+pip install -e /path/to/cortex/python-sdk
 ```
 
 ## Task Failure Prediction
@@ -78,7 +78,7 @@ Models are automatically saved to disk:
 
 ```python
 # Save location
-/Users/ryandahlberg/commit-relay/python-sdk/models/task_failure_model.pkl
+/Users/ryandahlberg/cortex/python-sdk/models/task_failure_model.pkl
 
 # Load existing model
 predictor.load_model()
@@ -327,4 +327,4 @@ while True:
 ## API Reference
 
 See inline documentation in:
-- `/Users/ryandahlberg/commit-relay/python-sdk/commit_relay/ml/task_predictor.py`
+- `/Users/ryandahlberg/cortex/python-sdk/commit_relay/ml/task_predictor.py`

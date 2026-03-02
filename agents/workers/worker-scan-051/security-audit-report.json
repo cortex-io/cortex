@@ -4,7 +4,7 @@
   "worker_id": "worker-scan-051",
   "timestamp": "2025-11-21T01:22:35Z",
   "scan_type": "security_audit_compliance",
-  "target": "commit-relay production systems",
+  "target": "cortex production systems",
   "summary": {
     "overall_risk_level": "LOW",
     "total_findings": 4,

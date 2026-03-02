@@ -2,7 +2,7 @@
 
 ## Overview
 
-Comprehensive testing strategy for commit-relay ensuring reliability, maintainability, and confidence in deployments.
+Comprehensive testing strategy for cortex ensuring reliability, maintainability, and confidence in deployments.
 
 **Testing Pyramid**: Unit (70%) → Integration (20%) → E2E (10%)
 

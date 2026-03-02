@@ -119,7 +119,7 @@ The repository has 9 other vulnerabilities (6 low, 3 moderate) in development de
 
 ## Files Generated
 
-1. **Full Report**: `/Users/ryandahlberg/Projects/commit-relay/coordination/masters/security/reports/cara-js-yaml-analysis-2025-11-19.md`
+1. **Full Report**: `/Users/ryandahlberg/Projects/cortex/coordination/masters/security/reports/cara-js-yaml-analysis-2025-11-19.md`
 2. **Knowledge Base**: Updated vulnerability patterns and false positives
 3. **Dashboard Event**: Logged security scan completion
 4. **Handoff**: Created completion handoff to coordinator
@@ -136,4 +136,4 @@ The ry-ops/cara repository does **NOT** require any security fixes for the repor
 ---
 
 For detailed technical analysis, see the full report at:
-`/Users/ryandahlberg/Projects/commit-relay/coordination/masters/security/reports/cara-js-yaml-analysis-2025-11-19.md`
+`/Users/ryandahlberg/Projects/cortex/coordination/masters/security/reports/cara-js-yaml-analysis-2025-11-19.md`

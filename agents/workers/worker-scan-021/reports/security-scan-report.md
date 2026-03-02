@@ -6,7 +6,7 @@
 
 ## Executive Summary
 
-This security scan was conducted to identify and assess the vulnerability CVE-2024-12345 in the authentication module of the commit-relay system. The scan focused on authentication middleware and related security controls.
+This security scan was conducted to identify and assess the vulnerability CVE-2024-12345 in the authentication module of the cortex system. The scan focused on authentication middleware and related security controls.
 
 ## Scope
 
@@ -22,7 +22,7 @@ This security scan was conducted to identify and assess the vulnerability CVE-20
 
 ### Authentication Module Analysis
 
-**File**: `/Users/ryandahlberg/Projects/commit-relay/dashboard/server/middleware/auth.js`
+**File**: `/Users/ryandahlberg/Projects/cortex/dashboard/server/middleware/auth.js`
 
 #### Security Strengths:
 1. API key authentication implemented for protected endpoints
@@ -103,7 +103,7 @@ This security scan was conducted to identify and assess the vulnerability CVE-20
 
 ## Conclusion
 
-The authentication module in commit-relay implements basic security controls adequately for the current use case. While CVE-2024-12345 is a synthetic test identifier, the security review revealed several areas for improvement to harden the authentication system against real-world attacks.
+The authentication module in cortex implements basic security controls adequately for the current use case. While CVE-2024-12345 is a synthetic test identifier, the security review revealed several areas for improvement to harden the authentication system against real-world attacks.
 
 The system successfully routed this security task through the MoE system to the appropriate security worker, demonstrating proper task classification and worker assignment.
 

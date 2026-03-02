@@ -1,0 +1,21 @@
+{
+  "task_id": "security-001",
+  "master": "security",
+  "description": "Scan repository for CVE-2024-28849 vulnerability in lodash package",
+  "complexity": "medium",
+  "expected_outcome": {
+    "should_find_vulnerability": true,
+    "should_suggest_upgrade": true,
+    "should_identify_impact": true,
+    "should_check_transitive_deps": true
+  },
+  "evaluation_criteria": [
+    "Correctly identifies vulnerable package version",
+    "Suggests appropriate fix (upgrade path to 4.17.21+)",
+    "Assesses impact on codebase",
+    "Checks both direct and transitive dependencies",
+    "Provides actionable remediation steps"
+  ],
+  "estimated_time_minutes": 10,
+  "tags": ["cve", "dependency-scan", "security"]
+}

@@ -1,0 +1,60 @@
+{
+  "scheduled_updates": {
+    "high_priority": "daily",
+    "medium_priority": "weekly",
+    "low_priority": "monthly",
+    "cron_schedules": {
+      "high_priority": "0 2 * * *",
+      "medium_priority": "0 3 * * 0",
+      "low_priority": "0 4 1 * *"
+    }
+  },
+  "triggered_updates": {
+    "knowledge_gap_detected": true,
+    "api_version_change": true,
+    "task_failure_threshold": 3,
+    "auto_trigger_on_gap": true,
+    "gap_threshold_hours": 24
+  },
+  "version_tracking": {
+    "detect_new_releases": true,
+    "changelog_monitoring": true,
+    "check_frequency_hours": 24,
+    "version_sources": [
+      "CHANGELOG",
+      "CHANGELOG.md",
+      "releases",
+      "version.txt",
+      "VERSION"
+    ]
+  },
+  "crawl_boundaries": {
+    "max_depth_override": 10,
+    "allow_external_links": false,
+    "follow_redirects": true,
+    "max_redirects": 3,
+    "respect_nofollow": true
+  },
+  "content_filtering": {
+    "min_word_count": 10,
+    "max_content_size_kb": 512,
+    "allowed_content_types": [
+      "text/html",
+      "text/plain",
+      "application/xhtml+xml"
+    ],
+    "exclude_patterns": [
+      "/login",
+      "/signup",
+      "/cart",
+      "/checkout",
+      "/admin"
+    ]
+  },
+  "incremental_crawling": {
+    "enabled": true,
+    "check_etag": true,
+    "check_last_modified": true,
+    "skip_unchanged_pages": true
+  }
+}

@@ -2,7 +2,7 @@
 
 ## Overview
 
-Comprehensive logging strategy for commit-relay ensuring observability, debugging, and compliance.
+Comprehensive logging strategy for cortex ensuring observability, debugging, and compliance.
 
 **Log Formats**: JSONL (structured), Plain text (human-readable)  
 **Log Levels**: ERROR, WARN, INFO, DEBUG, TRACE  
@@ -211,7 +211,7 @@ logger.add(new ElasticsearchTransport({
       apiKey: process.env.ELASTICSEARCH_API_KEY
     }
   },
-  index: 'commit-relay-logs'
+  index: 'cortex-logs'
 }));
 ```
 
@@ -362,7 +362,7 @@ if (shouldLog('api_request')) {
   "input": {
     "search": {
       "request": {
-        "indices": ["commit-relay-logs"],
+        "indices": ["cortex-logs"],
         "body": {
           "query": {
             "bool": {

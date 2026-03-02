@@ -1,0 +1,403 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: fulfillment-engine-code
+  namespace: cortex-service-desk
+data:
+  fulfillment_engine.py: |
+    import os
+    import json
+    import time
+    import threading
+    from datetime import datetime, timedelta
+    from flask import Flask, request, jsonify
+    import redis
+    from prometheus_client import Counter, Histogram, Gauge, generate_latest
+    import yaml
+
+    app = Flask(__name__)
+
+    # Redis connection
+    redis_client = redis.Redis(
+        host=os.getenv('REDIS_HOST', 'localhost'),
+        port=int(os.getenv('REDIS_PORT', 6379)),
+        decode_responses=True
+    )
+
+    # Prometheus metrics
+    fulfillment_requests = Counter('fulfillment_requests_total', 'Total fulfillment requests', ['workflow', 'status'])
+    fulfillment_duration = Histogram('fulfillment_duration_seconds', 'Fulfillment duration', ['workflow'])
+    active_workflows = Gauge('fulfillment_active_workflows', 'Active workflows')
+    approval_pending = Gauge('fulfillment_approval_pending', 'Pending approvals')
+    auto_fulfilled = Counter('fulfillment_auto_fulfilled_total', 'Auto-fulfilled requests', ['service'])
+
+    # Load workflows
+    with open('/config/catalog/catalog.json', 'r') as f:
+        service_catalog = json.load(f)
+
+    class WorkflowEngine:
+        def __init__(self):
+            self.workflows = self.load_workflows()
+            self.running = True
+
+        def load_workflows(self):
+            workflows = {}
+
+            # Load workflow definitions
+            workflow_files = [
+                'access-provisioning',
+                'password-reset-auto',
+                'software-approval-install',
+                'hardware-procurement',
+                'network-access-provisioning',
+                'security-review-approval'
+            ]
+
+            for wf_name in workflow_files:
+                try:
+                    with open(f'/workflows/{wf_name}.yaml', 'r') as f:
+                        workflows[wf_name] = yaml.safe_load(f)
+                except:
+                    # Create default workflow
+                    workflows[wf_name] = self.create_default_workflow(wf_name)
+
+            return workflows
+
+        def create_default_workflow(self, name):
+            return {
+                'name': name,
+                'steps': [
+                    {
+                        'name': 'validate',
+                        'type': 'validation',
+                        'action': 'validate_request'
+                    },
+                    {
+                        'name': 'approve',
+                        'type': 'approval',
+                        'action': 'get_approval',
+                        'auto_approve': name.endswith('-auto')
+                    },
+                    {
+                        'name': 'execute',
+                        'type': 'execution',
+                        'action': 'execute_request'
+                    },
+                    {
+                        'name': 'notify',
+                        'type': 'notification',
+                        'action': 'notify_user'
+                    }
+                ]
+            }
+
+        def process_queue(self):
+            print("Starting fulfillment queue processor...")
+            while self.running:
+                try:
+                    # Get request from queue (blocking with timeout)
+                    result = redis_client.brpop('fulfillment:queue', timeout=5)
+
+                    if not result:
+                        continue
+
+                    _, request_id = result
+
+                    # Process the request
+                    self.process_request(request_id)
+
+                except Exception as e:
+                    print(f"Error processing queue: {e}")
+                    time.sleep(1)
+
+        def process_request(self, request_id):
+            print(f"Processing request: {request_id}")
+
+            # Get request data
+            request_data_str = redis_client.get(f"request:{request_id}")
+            if not request_data_str:
+                print(f"Request {request_id} not found")
+                return
+
+            request_data = json.loads(request_data_str)
+
+            # Find service
+            service = None
+            for svc in service_catalog['services']:
+                if svc['id'] == request_data['service_id']:
+                    service = svc
+                    break
+
+            if not service:
+                print(f"Service {request_data['service_id']} not found")
+                return
+
+            workflow_name = service.get('workflow', 'default')
+            workflow = self.workflows.get(workflow_name)
+
+            if not workflow:
+                print(f"Workflow {workflow_name} not found")
+                return
+
+            active_workflows.inc()
+            start_time = time.time()
+
+            try:
+                # Execute workflow
+                result = self.execute_workflow(workflow, request_data, service)
+
+                # Update request status
+                request_data['status'] = result['status']
+                request_data['completed_at'] = datetime.now().isoformat()
+                request_data['result'] = result
+
+                redis_client.setex(
+                    f"request:{request_id}",
+                    86400,
+                    json.dumps(request_data)
+                )
+
+                # Record metrics
+                duration = time.time() - start_time
+                fulfillment_duration.labels(workflow=workflow_name).observe(duration)
+                fulfillment_requests.labels(
+                    workflow=workflow_name,
+                    status=result['status']
+                ).inc()
+
+                if result.get('auto_fulfilled'):
+                    auto_fulfilled.labels(service=service['name']).inc()
+
+            except Exception as e:
+                print(f"Error executing workflow: {e}")
+                request_data['status'] = 'failed'
+                request_data['error'] = str(e)
+                redis_client.setex(
+                    f"request:{request_id}",
+                    86400,
+                    json.dumps(request_data)
+                )
+
+            finally:
+                active_workflows.dec()
+
+        def execute_workflow(self, workflow, request_data, service):
+            result = {
+                'steps_completed': [],
+                'status': 'pending'
+            }
+
+            for step in workflow['steps']:
+                step_result = self.execute_step(step, request_data, service)
+                result['steps_completed'].append({
+                    'step': step['name'],
+                    'status': step_result['status'],
+                    'timestamp': datetime.now().isoformat()
+                })
+
+                if step_result['status'] == 'failed':
+                    result['status'] = 'failed'
+                    result['failed_step'] = step['name']
+                    return result
+
+                if step_result['status'] == 'pending_approval':
+                    result['status'] = 'pending_approval'
+                    result['approval_required'] = True
+                    return result
+
+            result['status'] = 'completed'
+            result['auto_fulfilled'] = service.get('auto_fulfill', False)
+            return result
+
+        def execute_step(self, step, request_data, service):
+            step_type = step['type']
+            action = step['action']
+
+            if step_type == 'validation':
+                return self.validate_request(request_data, service)
+            elif step_type == 'approval':
+                return self.get_approval(step, request_data, service)
+            elif step_type == 'execution':
+                return self.execute_request(request_data, service)
+            elif step_type == 'notification':
+                return self.notify_user(request_data, service)
+            else:
+                return {'status': 'completed'}
+
+        def validate_request(self, request_data, service):
+            # Validate all required fields are present
+            required_fields = [f['name'] for f in service['fields'] if f.get('required')]
+
+            for field in required_fields:
+                if field not in request_data.get('fields', {}):
+                    return {
+                        'status': 'failed',
+                        'reason': f'Missing required field: {field}'
+                    }
+
+            return {'status': 'completed'}
+
+        def get_approval(self, step, request_data, service):
+            auto_approve = step.get('auto_approve', False)
+
+            if auto_approve or service.get('auto_fulfill', False):
+                # Auto-approve
+                return {
+                    'status': 'completed',
+                    'approved': True,
+                    'approver': 'system',
+                    'auto_approved': True
+                }
+
+            # Check priority and risk
+            priority = service.get('priority', 'medium')
+            auto_threshold = os.getenv('AUTO_APPROVE_THRESHOLD', 'low')
+
+            if priority == 'low' or (priority == 'medium' and auto_threshold == 'medium'):
+                return {
+                    'status': 'completed',
+                    'approved': True,
+                    'approver': 'system',
+                    'auto_approved': True
+                }
+
+            # Requires manual approval
+            approval_pending.inc()
+            return {
+                'status': 'pending_approval',
+                'requires_manual_approval': True
+            }
+
+        def execute_request(self, request_data, service):
+            # Simulate execution
+            service_id = request_data['service_id']
+
+            if service_id == 'srv-002':  # Password reset
+                return self.execute_password_reset(request_data)
+            elif service_id == 'srv-001':  # Access request
+                return self.execute_access_provisioning(request_data)
+            elif service_id == 'srv-005':  # Network access
+                return self.execute_network_access(request_data)
+            else:
+                # Generic execution
+                return {
+                    'status': 'completed',
+                    'message': 'Request executed successfully'
+                }
+
+        def execute_password_reset(self, request_data):
+            # Simulate password reset
+            fields = request_data.get('fields', {})
+            system = fields.get('system', 'unknown')
+            username = fields.get('username', 'unknown')
+
+            # In real implementation, this would call actual password reset APIs
+            return {
+                'status': 'completed',
+                'message': f'Password reset for {username} on {system}',
+                'new_password': 'tempPassword123!',
+                'must_change_on_login': True
+            }
+
+        def execute_access_provisioning(self, request_data):
+            fields = request_data.get('fields', {})
+            application = fields.get('application', 'unknown')
+            access_level = fields.get('access_level', 'read')
+
+            return {
+                'status': 'completed',
+                'message': f'Access granted to {application} with {access_level} permissions',
+                'effective_date': datetime.now().isoformat()
+            }
+
+        def execute_network_access(self, request_data):
+            fields = request_data.get('fields', {})
+            access_type = fields.get('access_type', 'vpn')
+
+            return {
+                'status': 'completed',
+                'message': f'{access_type} access provisioned',
+                'credentials': 'Sent to user email',
+                'expiration': (datetime.now() + timedelta(days=90)).isoformat()
+            }
+
+        def notify_user(self, request_data, service):
+            # Simulate notification
+            user_id = request_data.get('user_id')
+            request_id = request_data.get('request_id')
+
+            notification = {
+                'user_id': user_id,
+                'request_id': request_id,
+                'service': service['name'],
+                'status': 'completed',
+                'message': f'Your request for {service["name"]} has been completed.'
+            }
+
+            # Store notification
+            redis_client.lpush(
+                f'notifications:{user_id}',
+                json.dumps(notification)
+            )
+
+            return {'status': 'completed'}
+
+    engine = WorkflowEngine()
+
+    # Start background worker
+    worker_thread = threading.Thread(target=engine.process_queue, daemon=True)
+    worker_thread.start()
+
+    @app.route('/health', methods=['GET'])
+    def health():
+        return jsonify({'status': 'healthy'}), 200
+
+    @app.route('/ready', methods=['GET'])
+    def ready():
+        try:
+            redis_client.ping()
+            return jsonify({'status': 'ready'}), 200
+        except:
+            return jsonify({'status': 'not ready'}), 503
+
+    @app.route('/api/v1/workflow/<workflow_name>', methods=['GET'])
+    def get_workflow(workflow_name):
+        workflow = engine.workflows.get(workflow_name)
+        if not workflow:
+            return jsonify({'error': 'Workflow not found'}), 404
+        return jsonify(workflow), 200
+
+    @app.route('/api/v1/approve/<request_id>', methods=['POST'])
+    def approve_request(request_id):
+        data = request.json
+        approver = data.get('approver', 'unknown')
+
+        # Get request
+        request_data_str = redis_client.get(f"request:{request_id}")
+        if not request_data_str:
+            return jsonify({'error': 'Request not found'}), 404
+
+        request_data = json.loads(request_data_str)
+
+        # Update and requeue
+        request_data['approved'] = True
+        request_data['approver'] = approver
+        request_data['approved_at'] = datetime.now().isoformat()
+
+        redis_client.setex(
+            f"request:{request_id}",
+            86400,
+            json.dumps(request_data)
+        )
+
+        redis_client.lpush('fulfillment:queue', request_id)
+        approval_pending.dec()
+
+        return jsonify({'status': 'approved', 'request_id': request_id}), 200
+
+    @app.route('/metrics', methods=['GET'])
+    def metrics():
+        return generate_latest(), 200
+
+    if __name__ == '__main__':
+        app.run(host='0.0.0.0', port=5002, debug=False)

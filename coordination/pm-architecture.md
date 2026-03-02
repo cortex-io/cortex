@@ -133,7 +133,7 @@ The PM system implements a daemon-based monitoring architecture with:
 ### 1.3 File System Layout
 
 ```
-commit-relay/
+cortex/
 ├── coordination/
 │   ├── worker-checkins/              # NEW: Worker check-in files
 │   │   ├── dev-worker-ABC123-20251106T120000Z.json
@@ -971,7 +971,7 @@ See `agents/prompts/workers/CHECKIN-INSTRUCTIONS.md` for full guide.
 
 ## Appendix B: File Locations
 
-All paths relative to commit-relay project root:
+All paths relative to cortex project root:
 
 ```
 coordination/pm-architecture.md              # This document

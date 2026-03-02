@@ -1,5 +1,5 @@
 """
-Orchestration module for commit-relay.
+Orchestration module for cortex.
 
 This module provides programmatic task creation, delegation, workflow orchestration,
 execution monitoring, health checking, event streaming, and complete lifecycle management.

@@ -14,17 +14,17 @@
     {
       "type": "catalog",
       "file": "repository-metadata-catalog.json",
-      "path": "/Users/ryandahlberg/Projects/commit-relay/agents/workers/worker-documentation-060/repository-metadata-catalog.json",
+      "path": "/Users/ryandahlberg/Projects/cortex/agents/workers/worker-documentation-060/repository-metadata-catalog.json",
       "description": "Comprehensive repository metadata and dependencies catalog"
     }
   ],
   "findings": {
     "repository_info": {
-      "name": "commit-relay",
+      "name": "cortex",
       "description": "AI-powered commit automation system with master-worker architecture",
       "license": "MIT",
       "author": "ry-ops",
-      "remote": "https://github.com/ry-ops/commit-relay.git"
+      "remote": "https://github.com/ry-ops/cortex.git"
     },
     "package_counts": {
       "node_packages": 2,

@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # scripts/lib/risk-scorer.sh
 # Risk Scorer Library - Phase 3 Item 29
 # Scores tasks by risk and allocates resources accordingly
@@ -10,7 +10,7 @@
 #   - Risk-based prioritization
 #
 # Usage:
-#   source "$COMMIT_RELAY_HOME/scripts/lib/risk-scorer.sh"
+#   source "$CORTEX_HOME/scripts/lib/risk-scorer.sh"
 #   risk=$(score_task_risk --task-description "..." --worker-type "implementation-worker")
 
 set -euo pipefail
@@ -19,14 +19,14 @@ set -euo pipefail
 # Configuration
 # ============================================================================
 
-COMMIT_RELAY_HOME="${COMMIT_RELAY_HOME:-$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)}"
+CORTEX_HOME="${CORTEX_HOME:-$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)}"
 
 # Risk configuration
-RISK_CONFIG_FILE="${COMMIT_RELAY_HOME}/coordination/config/risk-scoring-policy.json"
+RISK_CONFIG_FILE="${CORTEX_HOME}/coordination/config/risk-scoring-policy.json"
 
 # Historical data
-RISK_HISTORY_FILE="${COMMIT_RELAY_HOME}/coordination/metrics/risk-scoring-history.jsonl"
-TASK_OUTCOMES_FILE="${COMMIT_RELAY_HOME}/coordination/metrics/task-outcomes.jsonl"
+RISK_HISTORY_FILE="${CORTEX_HOME}/coordination/metrics/risk-scoring-history.jsonl"
+TASK_OUTCOMES_FILE="${CORTEX_HOME}/coordination/metrics/task-outcomes.jsonl"
 
 # Create directories
 mkdir -p "$(dirname "$RISK_HISTORY_FILE")"

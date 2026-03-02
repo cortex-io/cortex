@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # scripts/lib/learning-agent/problem-generator.sh
 # Learning Agent: Problem Generator Component
 # Week 6: Q1 Implementation - Problem Generator & Exploration
@@ -18,20 +18,20 @@ set -euo pipefail
 
 # Get script directory and project root
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-COMMIT_RELAY_HOME="${COMMIT_RELAY_HOME:-$(cd "$SCRIPT_DIR/../../.." && pwd)}"
+CORTEX_HOME="${CORTEX_HOME:-$(cd "$SCRIPT_DIR/../../.." && pwd)}"
 
 # Load dependencies
-source "$COMMIT_RELAY_HOME/scripts/lib/logging.sh" 2>/dev/null || {
+source "$CORTEX_HOME/scripts/lib/logging.sh" 2>/dev/null || {
     log_info() { echo "[INFO] $1"; }
     log_warn() { echo "[WARN] $1"; }
     log_error() { echo "[ERROR] $1"; }
 }
 
 # Configuration
-EXPLORATION_DIR="$COMMIT_RELAY_HOME/coordination/knowledge-base/exploration"
-TRAINING_EXAMPLES_DIR="$COMMIT_RELAY_HOME/coordination/knowledge-base/training-examples"
-PATTERNS_DIR="$COMMIT_RELAY_HOME/coordination/knowledge-base/learned-patterns"
-TASK_QUEUE_FILE="$COMMIT_RELAY_HOME/coordination/task-queue.json"
+EXPLORATION_DIR="$CORTEX_HOME/coordination/knowledge-base/exploration"
+TRAINING_EXAMPLES_DIR="$CORTEX_HOME/coordination/knowledge-base/training-examples"
+PATTERNS_DIR="$CORTEX_HOME/coordination/knowledge-base/learned-patterns"
+TASK_QUEUE_FILE="$CORTEX_HOME/coordination/task-queue.json"
 EXPLORATION_RATE=0.10  # 10% of tasks are exploratory
 
 # Ensure directories exist

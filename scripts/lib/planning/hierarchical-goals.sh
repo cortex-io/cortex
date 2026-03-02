@@ -1,18 +1,18 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # Hierarchical Goal Decomposition
 # Phase 5 Item #59: Nested task hierarchies with parent-child relationships
 
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-COMMIT_RELAY_HOME="${COMMIT_RELAY_HOME:-$(cd "$SCRIPT_DIR/../../.." && pwd)}"
+CORTEX_HOME="${CORTEX_HOME:-$(cd "$SCRIPT_DIR/../../.." && pwd)}"
 
-source "$COMMIT_RELAY_HOME/scripts/lib/logging.sh" 2>/dev/null || {
+source "$CORTEX_HOME/scripts/lib/logging.sh" 2>/dev/null || {
     log_info() { echo "[INFO] $1"; }
 }
 
 # Goals directory
-GOALS_DIR="$COMMIT_RELAY_HOME/coordination/goals"
+GOALS_DIR="$CORTEX_HOME/coordination/goals"
 mkdir -p "$GOALS_DIR"
 
 # Create a hierarchical goal

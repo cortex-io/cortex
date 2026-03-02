@@ -1,10 +1,10 @@
 {
   "repositories": [
     {
-      "id": "ry-ops-commit-relay-1763927340317",
-      "url": "https://github.com/ry-ops/commit-relay",
+      "id": "ry-ops-cortex-1763927340317",
+      "url": "https://github.com/ry-ops/cortex",
       "owner": "ry-ops",
-      "name": "commit-relay",
+      "name": "cortex",
       "branch": "main",
       "auto_scan": true,
       "added_at": "2025-11-23T19:49:00.317Z",

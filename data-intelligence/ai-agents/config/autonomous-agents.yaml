@@ -1,0 +1,199 @@
+# Autonomous Agent Configurations
+#
+# Defines autonomous agents and their triggers
+# Agents act without human initiation based on these triggers
+
+agents:
+  # Security Scanner - Autonomous vulnerability scanning
+  - id: security-scanner-001
+    type: security-master
+    autonomous_enabled: true
+    description: "Automatically scans for security vulnerabilities"
+
+    triggers:
+      # Daily security scan at 2 AM
+      - type: cron
+        condition:
+          type: time
+          value: "02:00"
+        action:
+          type: security_scan
+          scope: full_repository
+          notify: true
+
+      # Scan when new CVE published
+      - type: event
+        condition:
+          type: event
+          value: new_cve_published
+        action:
+          type: cve_scan
+          priority: high
+          notify: true
+
+      # Scan when dependency updated
+      - type: event
+        condition:
+          type: event
+          value: dependency_updated
+        action:
+          type: dependency_scan
+          priority: medium
+          notify: false
+
+  # Quality Monitor - Autonomous quality tracking
+  - id: quality-monitor-001
+    type: development-master
+    autonomous_enabled: true
+    description: "Monitors code quality and test coverage"
+
+    triggers:
+      # Check quality when PR created
+      - type: event
+        condition:
+          type: event
+          value: pull_request_opened
+        action:
+          type: quality_check
+          checks:
+            - lint
+            - test_coverage
+            - complexity
+          block_merge_if_failed: false
+
+      # Alert when test coverage drops
+      - type: threshold
+        condition:
+          type: threshold
+          metric: test_coverage_percent
+          operator: "<"
+          threshold: 80
+        action:
+          type: alert
+          severity: warning
+          message: "Test coverage below 80%"
+
+  # Cost Optimizer - Autonomous cost monitoring
+  - id: cost-optimizer-001
+    type: coordinator-master
+    autonomous_enabled: false  # Start disabled
+    description: "Monitors and optimizes AI agent costs"
+
+    triggers:
+      # Alert when daily cost exceeds budget
+      - type: threshold
+        condition:
+          type: threshold
+          metric: daily_cost_usd
+          operator: ">"
+          threshold: 100.0
+        action:
+          type: alert
+          severity: high
+          message: "Daily AI cost exceeded $100"
+
+      # Optimize model selection when cost spikes
+      - type: threshold
+        condition:
+          type: threshold
+          metric: cost_per_task
+          operator: ">"
+          threshold: 1.0
+        action:
+          type: optimize_model_selection
+          strategy: cost_efficient
+
+  # Performance Monitor - Autonomous performance tracking
+  - id: performance-monitor-001
+    type: development-master
+    autonomous_enabled: true
+    description: "Monitors agent performance and latency"
+
+    triggers:
+      # Alert when agent latency spikes
+      - type: threshold
+        condition:
+          type: threshold
+          metric: average_latency_ms
+          operator: ">"
+          threshold: 5000
+        action:
+          type: alert
+          severity: warning
+          message: "Agent latency above 5 seconds"
+
+      # Alert when error rate increases
+      - type: threshold
+        condition:
+          type: threshold
+          metric: error_rate_percent
+          operator: ">"
+          threshold: 10
+        action:
+          type: alert
+          severity: high
+          message: "Agent error rate above 10%"
+
+# Autonomous Execution Safety Settings
+safety:
+  # Require governance approval for all autonomous actions
+  require_governance: true
+
+  # Maximum autonomous actions per hour (rate limiting)
+  max_actions_per_hour: 100
+
+  # Autonomous actions that require human approval
+  require_human_approval:
+    - deploy
+    - delete_data
+    - modify_infrastructure
+    - access_production
+
+  # Notification settings
+  notifications:
+    email: true
+    slack: true
+    dashboard: true
+
+  # Audit all autonomous actions
+  audit_log: true
+  audit_retention_days: 90
+
+# Agent Permissions
+# Defines what each agent type can do autonomously
+permissions:
+  security-master:
+    allowed_actions:
+      - security_scan
+      - cve_scan
+      - dependency_scan
+      - vulnerability_report
+    autonomy_level: execute_low_risk
+
+  development-master:
+    allowed_actions:
+      - quality_check
+      - lint
+      - test_coverage
+      - code_analysis
+    autonomy_level: suggest
+
+  coordinator-master:
+    allowed_actions:
+      - alert
+      - optimize_model_selection
+      - route_task
+    autonomy_level: execute_medium_risk
+
+  cicd-master:
+    allowed_actions:
+      - run_tests
+      - build
+    autonomy_level: suggest
+
+  inventory-master:
+    allowed_actions:
+      - catalog_repository
+      - track_dependencies
+      - generate_documentation
+    autonomy_level: execute_low_risk

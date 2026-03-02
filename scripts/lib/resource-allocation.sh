@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # scripts/lib/resource-allocation.sh
 # Context-Aware Resource Allocation - Phase 4 Item 24
 #
@@ -22,11 +22,11 @@ RESOURCE_ALLOCATION_LOADED=1
 
 # Load dependencies
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-COMMIT_RELAY_HOME="${COMMIT_RELAY_HOME:-$(cd "$SCRIPT_DIR/../.." && pwd)}"
+CORTEX_HOME="${CORTEX_HOME:-$(cd "$SCRIPT_DIR/../.." && pwd)}"
 
 # Allocation history and config
-ALLOCATION_HISTORY="$COMMIT_RELAY_HOME/coordination/metrics/allocation-history.jsonl"
-ALLOCATION_CONFIG="$COMMIT_RELAY_HOME/coordination/config/resource-allocation.json"
+ALLOCATION_HISTORY="$CORTEX_HOME/coordination/metrics/allocation-history.jsonl"
+ALLOCATION_CONFIG="$CORTEX_HOME/coordination/config/resource-allocation.json"
 
 # Ensure directories exist
 mkdir -p "$(dirname "$ALLOCATION_HISTORY")"
@@ -481,6 +481,6 @@ export -f get_allocation_stats
 export -f optimize_allocation
 
 # Log that library is loaded
-if [ "${COMMIT_RELAY_LOG_LEVEL:-1}" -le 0 ] 2>/dev/null; then
+if [ "${CORTEX_LOG_LEVEL:-1}" -le 0 ] 2>/dev/null; then
     echo "[RESOURCE-ALLOC] Resource allocation library loaded" >&2
 fi

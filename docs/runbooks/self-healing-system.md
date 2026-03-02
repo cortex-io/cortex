@@ -19,21 +19,21 @@ The self-healing system automatically detects and recovers from failures using t
 ### Heartbeat Monitor Daemon
 
 - **Script**: `scripts/daemons/heartbeat-monitor-daemon.sh`
-- **PID File**: `/tmp/commit-relay-heartbeat.pid`
+- **PID File**: `/tmp/cortex-heartbeat.pid`
 - **Log**: `agents/logs/system/heartbeat-monitor-daemon.log`
 - **Events**: `coordination/events/heartbeat-events.jsonl`
 
 ### Failure Pattern Daemon
 
 - **Script**: `scripts/daemons/failure-pattern-daemon.sh`
-- **PID File**: `/tmp/commit-relay-failure-pattern.pid`
+- **PID File**: `/tmp/cortex-failure-pattern.pid`
 - **Log**: `agents/logs/system/failure-pattern-daemon.log`
 - **Patterns**: `coordination/patterns/failure-patterns.jsonl`
 
 ### Auto-Fix Daemon
 
 - **Script**: `scripts/daemons/auto-fix-daemon.sh`
-- **PID File**: `/tmp/commit-relay-auto-fix.pid`
+- **PID File**: `/tmp/cortex-auto-fix.pid`
 - **Log**: `agents/logs/system/auto-fix-daemon.log`
 - **History**: `coordination/metrics/auto-fix-history.jsonl`
 
@@ -289,7 +289,7 @@ jq '.heartbeat_timeout_seconds = 180 | .zombie_threshold_seconds = 600' \
 mv /tmp/policy.json $COMMIT_RELAY_HOME/coordination/config/heartbeat-policy.json
 
 # Restart daemon to apply
-kill $(cat /tmp/commit-relay-heartbeat.pid) && \
+kill $(cat /tmp/cortex-heartbeat.pid) && \
 ./scripts/daemons/heartbeat-monitor-daemon.sh &
 ```
 
@@ -399,9 +399,9 @@ After configuration changes:
 
 ```bash
 # 1. Restart all self-healing daemons
-kill $(cat /tmp/commit-relay-heartbeat.pid) 2>/dev/null
-kill $(cat /tmp/commit-relay-failure-pattern.pid) 2>/dev/null
-kill $(cat /tmp/commit-relay-auto-fix.pid) 2>/dev/null
+kill $(cat /tmp/cortex-heartbeat.pid) 2>/dev/null
+kill $(cat /tmp/cortex-failure-pattern.pid) 2>/dev/null
+kill $(cat /tmp/cortex-auto-fix.pid) 2>/dev/null
 
 ./scripts/daemons/heartbeat-monitor-daemon.sh &
 ./scripts/daemons/failure-pattern-daemon.sh &

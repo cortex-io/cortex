@@ -1,0 +1,137 @@
+---
+title: "Cortex Cost Analysis Report"
+subtitle: "Token Usage and Cost Optimization"
+date: now
+format:
+  html:
+    code-fold: true
+    toc: true
+    embed-resources: true
+execute:
+  echo: false
+---
+
+## Cost Overview
+
+```{python}
+import polars as pl
+from pathlib import Path
+from datetime import datetime, timedelta
+import pytz
+
+# Load worker performance data for token usage
+coordination_dir = Path("../coordination")
+metrics_file = coordination_dir / "metrics" / "worker-performance.jsonl"
+
+# Date range for this month (timezone-aware)
+month_start = datetime.now(pytz.UTC) - timedelta(days=30)
+
+metrics_df = pl.DataFrame()
+if metrics_file.exists():
+    metrics_df = pl.read_ndjson(metrics_file)
+    if 'timestamp' in metrics_df.columns:
+        try:
+            metrics_df = metrics_df.with_columns(
+                pl.col('timestamp').str.to_datetime(format="%Y-%m-%dT%H:%M:%S%z", strict=False)
+            ).filter(
+                pl.col('timestamp') > month_start
+            )
+        except:
+            pass  # Skip filtering if timestamp parsing fails
+
+# Calculate token usage
+total_tokens = 0
+if 'tokens_used' in metrics_df.columns and len(metrics_df) > 0:
+    total_tokens = metrics_df.select('tokens_used').sum()[0, 0] or 0
+
+# Estimate costs (rough estimates, adjust based on actual pricing)
+# Assuming average of $3 per 1M tokens (mix of input/output)
+estimated_cost = (total_tokens / 1_000_000) * 3
+task_count = len(metrics_df) if len(metrics_df) > 0 else 1  # Avoid division by zero
+cost_per_task = estimated_cost / task_count if task_count > 0 else 0
+
+print(f"""
+### Monthly Cost Summary
+
+- **Total Tokens Used**: {total_tokens:,}
+- **Estimated Cost**: ${estimated_cost:.2f}
+- **Average Daily Cost**: ${estimated_cost / 30:.2f}
+- **Tasks Processed**: {task_count:,}
+- **Cost per Task**: ${cost_per_task:.4f}
+""")
+```
+
+## Token Usage Trends
+
+```{python}
+import plotly.express as px
+
+if len(metrics_df) > 0 and 'timestamp' in metrics_df.columns and 'tokens_used' in metrics_df.columns:
+    daily_tokens = metrics_df.with_columns(
+        pl.col('timestamp').dt.date().alias('date')
+    ).group_by('date').agg(
+        pl.col('tokens_used').sum().alias('total_tokens')
+    ).sort('date')
+
+    # Add cost column
+    daily_tokens = daily_tokens.with_columns(
+        (pl.col('total_tokens') / 1_000_000 * 3).alias('estimated_cost')
+    )
+
+    fig = px.line(
+        daily_tokens.to_pandas(),
+        x='date',
+        y='estimated_cost',
+        title='Daily Cost Trends',
+        labels={'estimated_cost': 'Estimated Cost ($)', 'date': 'Date'}
+    )
+    fig.show()
+else:
+    print("*No token usage data available*")
+```
+
+## Cost by Master
+
+```{python}
+if len(metrics_df) > 0 and 'master' in metrics_df.columns and 'tokens_used' in metrics_df.columns:
+    master_costs = metrics_df.group_by('master').agg([
+        pl.col('tokens_used').sum().alias('total_tokens'),
+        pl.count().alias('task_count')
+    ]).with_columns(
+        (pl.col('total_tokens') / 1_000_000 * 3).alias('estimated_cost')
+    ).sort('estimated_cost', descending=True)
+
+    fig = px.bar(
+        master_costs.to_pandas(),
+        x='master',
+        y='estimated_cost',
+        title='Cost by Master Component',
+        labels={'estimated_cost': 'Estimated Cost ($)', 'master': 'Master'},
+        hover_data=['total_tokens', 'task_count']
+    )
+    fig.update_layout(xaxis_tickangle=-45)
+    fig.show()
+else:
+    print("*No cost by master data available*")
+```
+
+## Optimization Opportunities
+
+```{python}
+print("""
+### Cost Optimization Recommendations
+
+1. **Prompt Optimization**: Review high-token tasks for prompt efficiency
+2. **Model Selection**: Consider using faster models for simple tasks
+3. **Caching**: Implement response caching for repeated queries
+4. **Batching**: Group similar tasks to reduce overhead
+5. **Monitoring**: Set up cost alerts for unusual spikes
+""")
+```
+
+---
+
+```{python}
+from datetime import datetime
+print(f"*Cost report generated on {datetime.now().strftime('%Y-%m-%d %H:%M:%S')} by Cortex Event-Driven Architecture*")
+```

@@ -1,0 +1,23 @@
+{
+  "task_id": "integration-002",
+  "master": "coordinator",
+  "description": "Handle task failure and retry with backoff strategy",
+  "complexity": "high",
+  "expected_outcome": {
+    "should_detect_failure": true,
+    "should_retry_task": true,
+    "should_use_backoff": true,
+    "should_escalate_if_max_retries": true
+  },
+  "evaluation_criteria": [
+    "Detects task failure from master",
+    "Implements retry logic with exponential backoff",
+    "Tracks retry count",
+    "Respects maximum retry limit",
+    "Escalates to human after max retries",
+    "Logs retry attempts and reasons",
+    "Preserves task context across retries"
+  ],
+  "estimated_time_minutes": 45,
+  "tags": ["reliability", "error-handling", "coordination"]
+}

@@ -14,7 +14,7 @@
     "created_at": "2025-11-05T16:13:41Z",
     "created_by": "create-task-cli",
     "context": {
-      "repository": "ry-ops/commit-relay",
+      "repository": "ry-ops/cortex",
       "branch": "main",
       "description": "Add last updated timestamp to all dashboard cards and charts. Display human-readable date/time (e.g., '2 minutes ago', 'Last updated: 12:15 PM') on each card and chart. Update dashboard/public/dashboard-v2.js and dashboard/server/index.js to include timestamps in API responses and render them in the UI.",
       "requirements": []
@@ -32,8 +32,8 @@
       "testing"
     ],
     "knowledge_base_refs": {
-      "implementation_patterns": "/Users/ryandahlberg/commit-relay/scripts/../coordination/masters/development/knowledge-base/implementation-patterns.jsonl",
-      "architecture_docs": "/Users/ryandahlberg/commit-relay/scripts/../coordination/masters/development/knowledge-base/codebase-architecture.json"
+      "implementation_patterns": "/Users/ryandahlberg/cortex/scripts/../coordination/masters/development/knowledge-base/implementation-patterns.jsonl",
+      "architecture_docs": "/Users/ryandahlberg/cortex/scripts/../coordination/masters/development/knowledge-base/codebase-architecture.json"
     }
   },
   "resources": {

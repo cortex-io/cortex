@@ -1,13 +1,13 @@
 {
   "version": "1.0.0",
-  "description": "RAG connector configurations for commit-relay",
+  "description": "RAG connector configurations for cortex",
   "connectors": [
     {
-      "name": "github-commit-relay",
+      "name": "github-cortex",
       "type": "github",
       "enabled": true,
       "owner": "ry-ops",
-      "repo": "commit-relay",
+      "repo": "cortex",
       "branch": "main",
       "schedule": "1h",
       "includePatterns": [
@@ -76,7 +76,7 @@
     },
     "standard": {
       "interval": "1h",
-      "connectors": ["github-commit-relay"]
+      "connectors": ["github-cortex"]
     },
     "low-frequency": {
       "interval": "6h",

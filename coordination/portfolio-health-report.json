@@ -12,8 +12,8 @@
 
   "repositories": [
     {
-      "name": "commit-relay",
-      "url": "https://github.com/ry-ops/commit-relay.git",
+      "name": "cortex",
+      "url": "https://github.com/ry-ops/cortex.git",
       "branch": "main",
       "description": "AI-powered commit automation system with master-worker architecture",
       "license": "MIT",

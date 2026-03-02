@@ -1,10 +1,10 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # scripts/lib/heartbeat.sh
 # Worker Heartbeat Library - Phase 4.1 Self-Healing Implementation
 # Provides heartbeat emission and health monitoring capabilities for workers
 #
 # Usage:
-#   source "$COMMIT_RELAY_HOME/scripts/lib/heartbeat.sh"
+#   source "$CORTEX_HOME/scripts/lib/heartbeat.sh"
 #   init_heartbeat "$WORKER_ID"
 #   emit_heartbeat "$WORKER_ID" "Processing task analysis"
 #
@@ -36,7 +36,7 @@ init_heartbeat() {
         return 1
     fi
 
-    local worker_spec="$COMMIT_RELAY_HOME/coordination/worker-specs/active/${worker_id}.json"
+    local worker_spec="$CORTEX_HOME/coordination/worker-specs/active/${worker_id}.json"
 
     if [ ! -f "$worker_spec" ]; then
         echo "[ERROR] init_heartbeat: Worker spec not found: $worker_spec" >&2
@@ -175,7 +175,7 @@ get_health_status_from_score() {
 # Returns: 0 if due, 1 if not due
 is_heartbeat_due() {
     local worker_id="$1"
-    local worker_spec="$COMMIT_RELAY_HOME/coordination/worker-specs/active/${worker_id}.json"
+    local worker_spec="$CORTEX_HOME/coordination/worker-specs/active/${worker_id}.json"
 
     if [ ! -f "$worker_spec" ]; then
         return 0  # No spec means no heartbeat yet, so it's due
@@ -213,7 +213,7 @@ emit_heartbeat() {
         return 1
     fi
 
-    local worker_spec="$COMMIT_RELAY_HOME/coordination/worker-specs/active/${worker_id}.json"
+    local worker_spec="$CORTEX_HOME/coordination/worker-specs/active/${worker_id}.json"
 
     if [ ! -f "$worker_spec" ]; then
         echo "[WARN] emit_heartbeat: Worker spec not found, initializing: $worker_spec" >&2
@@ -293,7 +293,7 @@ emit_heartbeat() {
 # Returns: Seconds since last heartbeat
 get_time_since_heartbeat() {
     local worker_id="$1"
-    local worker_spec="$COMMIT_RELAY_HOME/coordination/worker-specs/active/${worker_id}.json"
+    local worker_spec="$CORTEX_HOME/coordination/worker-specs/active/${worker_id}.json"
 
     if [ ! -f "$worker_spec" ]; then
         echo "9999"  # Return high value if spec doesn't exist

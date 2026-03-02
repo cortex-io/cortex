@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # scripts/lib/goal-decomposition.sh
 # Goal Decomposition with Verification Checkpoints - Phase 4 Item 23
 #
@@ -22,11 +22,11 @@ GOAL_DECOMPOSITION_LOADED=1
 
 # Load dependencies
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-COMMIT_RELAY_HOME="${COMMIT_RELAY_HOME:-$(cd "$SCRIPT_DIR/../.." && pwd)}"
+CORTEX_HOME="${CORTEX_HOME:-$(cd "$SCRIPT_DIR/../.." && pwd)}"
 
 # Verification checkpoint storage
-CHECKPOINTS_DIR="$COMMIT_RELAY_HOME/coordination/checkpoints"
-DECOMPOSITION_LOG="$COMMIT_RELAY_HOME/coordination/goal-decompositions.jsonl"
+CHECKPOINTS_DIR="$CORTEX_HOME/coordination/checkpoints"
+DECOMPOSITION_LOG="$CORTEX_HOME/coordination/goal-decompositions.jsonl"
 
 # Ensure directories exist
 mkdir -p "$CHECKPOINTS_DIR"
@@ -761,6 +761,6 @@ export -f get_decomposition_status
 export -f integrate_with_task_spec
 
 # Log that library is loaded
-if [ "${COMMIT_RELAY_LOG_LEVEL:-1}" -le 0 ] 2>/dev/null; then
+if [ "${CORTEX_LOG_LEVEL:-1}" -le 0 ] 2>/dev/null; then
     echo "[GOAL-DECOMP] Goal decomposition library loaded" >&2
 fi

@@ -1,6 +1,6 @@
 {
   "version": "1.0.0",
-  "description": "Embeddings provider configuration for commit-relay RAG system",
+  "description": "Embeddings provider configuration for cortex RAG system",
   "active_provider": "mock",
   "providers": {
     "openai": {
@@ -22,7 +22,7 @@
       "maxBatchSize": 100,
       "rateLimitDelay": 10,
       "latency": 0,
-      "seed": "commit-relay-rag"
+      "seed": "cortex-rag"
     }
   },
   "global_settings": {

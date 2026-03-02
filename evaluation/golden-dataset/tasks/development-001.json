@@ -1,0 +1,23 @@
+{
+  "task_id": "development-001",
+  "master": "development",
+  "description": "Implement a new API endpoint for task status retrieval with pagination",
+  "complexity": "medium",
+  "expected_outcome": {
+    "should_create_endpoint": true,
+    "should_implement_pagination": true,
+    "should_add_tests": true,
+    "should_update_docs": true
+  },
+  "evaluation_criteria": [
+    "Creates new endpoint with proper routing",
+    "Implements pagination (limit/offset or cursor-based)",
+    "Adds input validation",
+    "Includes unit and integration tests",
+    "Updates API documentation",
+    "Follows existing code patterns",
+    "Handles edge cases (empty results, invalid params)"
+  ],
+  "estimated_time_minutes": 45,
+  "tags": ["api", "feature", "backend"]
+}

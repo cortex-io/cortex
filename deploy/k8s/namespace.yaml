@@ -1,0 +1,20 @@
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: cortex
+  labels:
+    name: cortex
+    app.kubernetes.io/name: cortex
+    app.kubernetes.io/component: orchestration
+    app.kubernetes.io/part-of: cortex-platform
+    environment: production
+    managed-by: talos
+    # Enable pod security standards
+    pod-security.kubernetes.io/enforce: restricted
+    pod-security.kubernetes.io/audit: restricted
+    pod-security.kubernetes.io/warn: restricted
+  annotations:
+    description: "Cortex AI orchestration platform - Self-improving development automation with MoE"
+    contact: "ry-ops"
+    documentation: "https://github.com/ry-ops/cortex"

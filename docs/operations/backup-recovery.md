@@ -2,7 +2,7 @@
 
 ## Overview
 
-Comprehensive backup and disaster recovery strategy for commit-relay ensuring data protection and business continuity.
+Comprehensive backup and disaster recovery strategy for cortex ensuring data protection and business continuity.
 
 **RTO (Recovery Time Objective)**: < 4 hours
 **RPO (Recovery Point Objective)**: < 1 hour
@@ -50,8 +50,8 @@ Comprehensive backup and disaster recovery strategy for commit-relay ensuring da
 
 set -euo pipefail
 
-BACKUP_DIR="/tmp/commit-relay-backup-$(date +%Y%m%d-%H%M%S)"
-S3_BUCKET="s3://commit-relay-backups"
+BACKUP_DIR="/tmp/cortex-backup-$(date +%Y%m%d-%H%M%S)"
+S3_BUCKET="s3://cortex-backups"
 TIMESTAMP=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
 
 # Create backup directory
@@ -108,10 +108,10 @@ echo "Backup completed: $S3_BUCKET/$TIMESTAMP/"
 
 ```bash
 # List available backups
-aws s3 ls s3://commit-relay-backups/
+aws s3 ls s3://cortex-backups/
 
 # Download latest backup
-aws s3 sync s3://commit-relay-backups/TIMESTAMP/ /tmp/restore/
+aws s3 sync s3://cortex-backups/TIMESTAMP/ /tmp/restore/
 
 # Stop services
 pm2 stop all
@@ -145,21 +145,21 @@ curl http://localhost:5001/api/achievements/progress
 2. **Install dependencies**:
 ```bash
 # Clone repository
-git clone https://github.com/ry-ops/commit-relay.git
-cd commit-relay
+git clone https://github.com/ry-ops/cortex.git
+cd cortex
 npm install
 ```
 
 3. **Restore from backup**:
 ```bash
 # Download latest full backup
-aws s3 sync s3://commit-relay-backups/LATEST/ /tmp/restore/
+aws s3 sync s3://cortex-backups/LATEST/ /tmp/restore/
 
 # Extract all backups
 cd /tmp/restore
-tar -xzf knowledge-base.tar.gz -C /path/to/commit-relay/
-tar -xzf config.tar.gz -C /path/to/commit-relay/
-tar -xzf metrics.tar.gz -C /path/to/commit-relay/
+tar -xzf knowledge-base.tar.gz -C /path/to/cortex/
+tar -xzf config.tar.gz -C /path/to/cortex/
+tar -xzf metrics.tar.gz -C /path/to/cortex/
 ```
 
 4. **Start services**:
@@ -344,7 +344,7 @@ echo "Backup verified: $BACKUP_PATH"
 
 ```bash
 # Check last backup time
-aws s3 ls s3://commit-relay-backups/ | tail -1
+aws s3 ls s3://cortex-backups/ | tail -1
 
 # Alert if no backup in 2 hours
 if [ $(find /var/backups -mmin +120 | wc -l) -gt 0 ]; then

@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # scripts/lib/worker-heartbeat-emitter.sh
 # Background heartbeat emitter for running workers
 # Phase 4.1 - Self-Healing Implementation
@@ -18,10 +18,19 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-COMMIT_RELAY_HOME="${COMMIT_RELAY_HOME:-$(cd "$SCRIPT_DIR/../.." && pwd)}"
+CORTEX_HOME="${CORTEX_HOME:-$(cd "$SCRIPT_DIR/../.." && pwd)}"
 
 # Load heartbeat library
-source "$COMMIT_RELAY_HOME/scripts/lib/heartbeat.sh"
+source "$CORTEX_HOME/scripts/lib/heartbeat.sh"
+
+# Load event logger if available
+EVENT_LOGGER="$CORTEX_HOME/scripts/events/lib/event-logger.sh"
+if [ -f "$EVENT_LOGGER" ]; then
+    source "$EVENT_LOGGER"
+    EVENTS_ENABLED=true
+else
+    EVENTS_ENABLED=false
+fi
 
 # Configuration
 WORKER_ID="${1:-}"
@@ -40,7 +49,7 @@ if [ -z "$WORKER_PID" ]; then
 fi
 
 # Log file
-LOG_FILE="$COMMIT_RELAY_HOME/agents/workers/$WORKER_ID/logs/heartbeat-emitter.log"
+LOG_FILE="$CORTEX_HOME/agents/workers/$WORKER_ID/logs/heartbeat-emitter.log"
 mkdir -p "$(dirname "$LOG_FILE")"
 exec >> "$LOG_FILE" 2>&1
 
@@ -64,7 +73,7 @@ while true; do
     fi
 
     # Determine current activity by checking recent log output
-    WORKER_LOGS="$COMMIT_RELAY_HOME/agents/workers/$WORKER_ID/logs/stdout.log"
+    WORKER_LOGS="$CORTEX_HOME/agents/workers/$WORKER_ID/logs/stdout.log"
     if [ -f "$WORKER_LOGS" ]; then
         # Get last non-empty line from logs as activity indicator
         RECENT_ACTIVITY=$(tail -n 5 "$WORKER_LOGS" 2>/dev/null | grep -v '^$' | tail -n 1 | cut -c1-100 || echo "Processing task")
@@ -81,6 +90,39 @@ while true; do
         log_heartbeat "SUCCESS: Heartbeat #$HEARTBEAT_COUNT emitted successfully"
     else
         log_heartbeat "ERROR: Failed to emit heartbeat #$HEARTBEAT_COUNT"
+    fi
+
+    # Emit worker.heartbeat event (non-blocking)
+    if [ "$EVENTS_ENABLED" = true ]; then
+        (
+            WORKER_SPEC="$CORTEX_HOME/coordination/worker-specs/active/${WORKER_ID}.json"
+            if [ -f "$WORKER_SPEC" ]; then
+                WORKER_TYPE=$(jq -r '.worker_type' "$WORKER_SPEC" 2>/dev/null || echo "unknown")
+                TASK_ID=$(jq -r '.task_id' "$WORKER_SPEC" 2>/dev/null || echo "unknown")
+                STATUS=$(jq -r '.status' "$WORKER_SPEC" 2>/dev/null || echo "running")
+
+                EVENT_PAYLOAD=$(jq -n \
+                    --arg worker_id "$WORKER_ID" \
+                    --arg worker_type "$WORKER_TYPE" \
+                    --arg task_id "$TASK_ID" \
+                    --arg status "$STATUS" \
+                    --arg activity "$LAST_ACTIVITY" \
+                    --argjson count "$HEARTBEAT_COUNT" \
+                    '{
+                        worker_id: $worker_id,
+                        worker_type: $worker_type,
+                        task_id: $task_id,
+                        status: $status,
+                        activity: $activity,
+                        heartbeat_count: $count
+                    }')
+
+                EVENT_JSON=$("$EVENT_LOGGER" --create "worker.heartbeat" "worker-heartbeat-emitter" "$EVENT_PAYLOAD" "$TASK_ID" "low" 2>/dev/null)
+                if [ -n "$EVENT_JSON" ]; then
+                    "$EVENT_LOGGER" "$EVENT_JSON" 2>/dev/null || true
+                fi
+            fi
+        ) &
     fi
 
     # Sleep until next heartbeat

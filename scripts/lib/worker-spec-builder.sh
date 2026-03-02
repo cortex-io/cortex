@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # scripts/lib/worker-spec-builder.sh
 # Worker Specification Builder - Safe worker spec creation with validation
 #
@@ -24,7 +24,7 @@ WORKER_SPEC_BUILDER_LOADED=1
 
 # Load dependencies
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-COMMIT_RELAY_HOME="$(cd "$SCRIPT_DIR/../.." && pwd)"
+CORTEX_HOME="$(cd "$SCRIPT_DIR/../.." && pwd)"
 
 # Simple validation functions (standalone - doesn't require full init-common.sh)
 validate_json_syntax() {
@@ -285,7 +285,7 @@ build_worker_spec() {
     local worker_id=""
     local worker_type=""
     local task_id=""
-    local created_by="${COMMIT_RELAY_PRINCIPAL:-system}"
+    local created_by="${CORTEX_PRINCIPAL:-system}"
     local execution_manager="null"
     local scope_json="$DEFAULT_SCOPE"
     local context_json="$DEFAULT_CONTEXT"
@@ -422,7 +422,7 @@ build_worker_spec() {
     "max_retries": $max_retries
   },
   "deliverables": [],
-  "prompt_template": "agents/prompts/workers/${worker_type}.md",
+  "prompt_template": "coordination/prompts/workers/${worker_type}.md",
   "execution": {
     "started_at": null,
     "completed_at": null,
@@ -520,6 +520,6 @@ export -f create_test_worker 2>/dev/null || true
 export -f create_documentation_worker 2>/dev/null || true
 
 # Log that builder is loaded
-if [ "${COMMIT_RELAY_LOG_LEVEL:-1}" -le 0 ] 2>/dev/null; then
+if [ "${CORTEX_LOG_LEVEL:-1}" -le 0 ] 2>/dev/null; then
     echo "[BUILDER] Worker spec builder loaded" >&2
 fi

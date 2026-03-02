@@ -31,7 +31,7 @@ if [[ -f "$TRACER_SCRIPT_DIR/../observability/lib/event-emitter.sh" ]]; then
 fi
 
 # Span stack for nested spans (stored in temp file)
-readonly SPAN_STACK_FILE="/tmp/commit-relay-span-stack-$$.txt"
+readonly SPAN_STACK_FILE="/tmp/cortex-span-stack-$$.txt"
 touch "$SPAN_STACK_FILE"
 
 #

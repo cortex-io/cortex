@@ -1,0 +1,717 @@
+apiVersion: v1
+data:
+  __init__.py: |
+    """MCP server integrations."""
+  claude.py: |
+    """Claude integration for complex queries."""
+    import anthropic
+    from src.config import settings
+
+
+    class ClaudeClient:
+        """Client for Claude AI queries."""
+
+        def __init__(self):
+            self.client = anthropic.Anthropic(api_key=settings.anthropic_api_key)
+            self.model = "claude-sonnet-4-5-20250929"
+            self.max_tokens = 300  # Keep responses short for SMS
+
+        async def query(self, message: str, context: str = "") -> str:
+            """Query Claude with infrastructure context."""
+            try:
+                system_prompt = """You are an infrastructure assistant. Provide concise answers (max 2-3 sentences) suitable for SMS.
+    Focus on actionable information. Be direct and technical."""
+
+                if context:
+                    system_prompt += f"\n\nContext: {context}"
+
+                response = self.client.messages.create(
+                    model=self.model,
+                    max_tokens=self.max_tokens,
+                    system=system_prompt,
+                    messages=[
+                        {"role": "user", "content": message}
+                    ]
+                )
+
+                if response.content and len(response.content) > 0:
+                    return response.content[0].text
+
+                return "Unable to process query."
+
+            except Exception as e:
+                print(f"Claude error: {e}")
+                return f"Error: {str(e)[:50]}"
+
+
+    # Global Claude client instance
+    claude_client = ClaudeClient()
+  k8s.py: |
+    """Kubernetes MCP integration."""
+    import httpx
+    from typing import Dict, Any
+    from src.config import settings
+
+
+    class K8sClient:
+        """Client for Kubernetes MCP server."""
+
+        def __init__(self):
+            self.base_url = settings.k8s_mcp_url
+            self.timeout = 10.0
+
+        async def get_summary(self) -> Dict[str, Any]:
+            """Get K8s summary."""
+            try:
+                async with httpx.AsyncClient(timeout=self.timeout) as client:
+                    response = await client.post(
+                        f"{self.base_url}/mcp",
+                        json={
+                            "method": "tools/call",
+                            "params": {
+                                "name": "get_cluster_status",
+                                "arguments": {}
+                            }
+                        }
+                    )
+                    response.raise_for_status()
+                    data = response.json()
+
+                    result = data.get("result", {})
+                    content = result.get("content", [])
+
+                    if content and len(content) > 0:
+                        text = content[0].get("text", "{}")
+                        import json
+                        return json.loads(text)
+
+                    return self._mock_summary()
+
+            except Exception as e:
+                print(f"K8s error: {e}")
+                return self._mock_summary()
+
+        async def get_details(self) -> Dict[str, Any]:
+            """Get detailed K8s info."""
+            try:
+                async with httpx.AsyncClient(timeout=self.timeout) as client:
+                    response = await client.post(
+                        f"{self.base_url}/mcp",
+                        json={
+                            "method": "tools/call",
+                            "params": {
+                                "name": "get_namespaces",
+                                "arguments": {}
+                            }
+                        }
+                    )
+                    response.raise_for_status()
+                    data = response.json()
+
+                    result = data.get("result", {})
+                    content = result.get("content", [])
+
+                    if content and len(content) > 0:
+                        text = content[0].get("text", "{}")
+                        import json
+                        return json.loads(text)
+
+                    return self._mock_details()
+
+            except Exception as e:
+                print(f"K8s error: {e}")
+                return self._mock_details()
+
+        async def get_pods(self, namespace: str = "all") -> list:
+            """Get pod list."""
+            try:
+                async with httpx.AsyncClient(timeout=self.timeout) as client:
+                    response = await client.post(
+                        f"{self.base_url}/mcp",
+                        json={
+                            "method": "tools/call",
+                            "params": {
+                                "name": "list_pods",
+                                "arguments": {"namespace": namespace}
+                            }
+                        }
+                    )
+                    response.raise_for_status()
+                    data = response.json()
+
+                    result = data.get("result", {})
+                    content = result.get("content", [])
+
+                    if content and len(content) > 0:
+                        text = content[0].get("text", "[]")
+                        import json
+                        return json.loads(text)
+
+                    return self._mock_pods()
+
+            except Exception as e:
+                print(f"K8s error: {e}")
+                return self._mock_pods()
+
+        async def get_services(self, namespace: str = "all") -> list:
+            """Get service list."""
+            try:
+                async with httpx.AsyncClient(timeout=self.timeout) as client:
+                    response = await client.post(
+                        f"{self.base_url}/mcp",
+                        json={
+                            "method": "tools/call",
+                            "params": {
+                                "name": "list_services",
+                                "arguments": {"namespace": namespace}
+                            }
+                        }
+                    )
+                    response.raise_for_status()
+                    data = response.json()
+
+                    result = data.get("result", {})
+                    content = result.get("content", [])
+
+                    if content and len(content) > 0:
+                        text = content[0].get("text", "[]")
+                        import json
+                        return json.loads(text)
+
+                    return []
+
+            except Exception as e:
+                print(f"K8s error: {e}")
+                return []
+
+        def _mock_summary(self) -> Dict[str, Any]:
+            """Mock summary for testing."""
+            return {
+                "healthy": True,
+                "pod_count": 47,
+                "pending_count": 0,
+                "failed_count": 0
+            }
+
+        def _mock_details(self) -> Dict[str, Any]:
+            """Mock details for testing."""
+            return {
+                "namespaces": [
+                    {"name": "default", "pod_count": 3},
+                    {"name": "kube-system", "pod_count": 12},
+                    {"name": "cortex-chat", "pod_count": 8},
+                    {"name": "monitoring", "pod_count": 15},
+                    {"name": "ingress-nginx", "pod_count": 9}
+                ]
+            }
+
+        def _mock_pods(self) -> list:
+            """Mock pods for testing."""
+            return [
+                {"name": "cortex-api-7d5f6b8c9d-4xk2p", "status": "Running"},
+                {"name": "cortex-frontend-65d8c7b9f-8h7m5", "status": "Running"},
+                {"name": "postgres-0", "status": "Running"},
+                {"name": "redis-0", "status": "Running"},
+                {"name": "monitoring-prometheus-0", "status": "Running"}
+            ]
+
+
+    # Global K8s client instance
+    k8s_client = K8sClient()
+  proxmox.py: |
+    """Proxmox MCP integration."""
+    import httpx
+    from typing import Dict, Any
+    from src.config import settings
+
+
+    class ProxmoxClient:
+        """Client for Proxmox MCP server."""
+
+        def __init__(self):
+            self.base_url = settings.proxmox_mcp_url
+            self.timeout = 10.0
+
+        async def get_summary(self) -> Dict[str, Any]:
+            """Get Proxmox summary."""
+            try:
+                async with httpx.AsyncClient(timeout=self.timeout) as client:
+                    response = await client.post(
+                        f"{self.base_url}/mcp",
+                        json={
+                            "method": "tools/call",
+                            "params": {
+                                "name": "get_cluster_status",
+                                "arguments": {}
+                            }
+                        }
+                    )
+                    response.raise_for_status()
+                    data = response.json()
+
+                    result = data.get("result", {})
+                    content = result.get("content", [])
+
+                    if content and len(content) > 0:
+                        text = content[0].get("text", "{}")
+                        import json
+                        return json.loads(text)
+
+                    return self._mock_summary()
+
+            except Exception as e:
+                print(f"Proxmox error: {e}")
+                return self._mock_summary()
+
+        async def get_details(self) -> Dict[str, Any]:
+            """Get detailed Proxmox info."""
+            try:
+                async with httpx.AsyncClient(timeout=self.timeout) as client:
+                    response = await client.post(
+                        f"{self.base_url}/mcp",
+                        json={
+                            "method": "tools/call",
+                            "params": {
+                                "name": "get_nodes",
+                                "arguments": {}
+                            }
+                        }
+                    )
+                    response.raise_for_status()
+                    data = response.json()
+
+                    result = data.get("result", {})
+                    content = result.get("content", [])
+
+                    if content and len(content) > 0:
+                        text = content[0].get("text", "{}")
+                        import json
+                        return json.loads(text)
+
+                    return self._mock_details()
+
+            except Exception as e:
+                print(f"Proxmox error: {e}")
+                return self._mock_details()
+
+        async def get_vms(self) -> list:
+            """Get VM list."""
+            try:
+                async with httpx.AsyncClient(timeout=self.timeout) as client:
+                    response = await client.post(
+                        f"{self.base_url}/mcp",
+                        json={
+                            "method": "tools/call",
+                            "params": {
+                                "name": "list_vms",
+                                "arguments": {}
+                            }
+                        }
+                    )
+                    response.raise_for_status()
+                    data = response.json()
+
+                    result = data.get("result", {})
+                    content = result.get("content", [])
+
+                    if content and len(content) > 0:
+                        text = content[0].get("text", "[]")
+                        import json
+                        return json.loads(text)
+
+                    return self._mock_vms()
+
+            except Exception as e:
+                print(f"Proxmox error: {e}")
+                return self._mock_vms()
+
+        async def get_nodes(self) -> list:
+            """Get node list."""
+            try:
+                async with httpx.AsyncClient(timeout=self.timeout) as client:
+                    response = await client.post(
+                        f"{self.base_url}/mcp",
+                        json={
+                            "method": "tools/call",
+                            "params": {
+                                "name": "get_nodes",
+                                "arguments": {}
+                            }
+                        }
+                    )
+                    response.raise_for_status()
+                    data = response.json()
+
+                    result = data.get("result", {})
+                    content = result.get("content", [])
+
+                    if content and len(content) > 0:
+                        text = content[0].get("text", "[]")
+                        import json
+                        nodes = json.loads(text)
+                        return nodes.get("nodes", [])
+
+                    return []
+
+            except Exception as e:
+                print(f"Proxmox error: {e}")
+                return []
+
+        def _mock_summary(self) -> Dict[str, Any]:
+            """Mock summary for testing."""
+            return {
+                "healthy": True,
+                "node_count": 3,
+                "vm_count": 12,
+                "lxc_count": 8,
+                "cpu_usage": 23,
+                "ram_usage": 64,
+                "storage_usage": 71
+            }
+
+        def _mock_details(self) -> Dict[str, Any]:
+            """Mock details for testing."""
+            return {
+                "nodes": [
+                    {"name": "pve1", "status": "online", "cpu": 18, "ram": 54},
+                    {"name": "pve2", "status": "online", "cpu": 31, "ram": 72},
+                    {"name": "pve3", "status": "online", "cpu": 20, "ram": 65}
+                ]
+            }
+
+        def _mock_vms(self) -> list:
+            """Mock VMs for testing."""
+            return [
+                {"name": "k3s-master", "status": "running"},
+                {"name": "k3s-worker-1", "status": "running"},
+                {"name": "k3s-worker-2", "status": "running"},
+                {"name": "docker-host", "status": "running"},
+                {"name": "test-vm", "status": "stopped"}
+            ]
+
+
+    # Global Proxmox client instance
+    proxmox_client = ProxmoxClient()
+  security.py: |
+    """Security MCP integration."""
+    import httpx
+    from typing import Dict, Any
+    from src.config import settings
+
+
+    class SecurityClient:
+        """Client for Security MCP server."""
+
+        def __init__(self):
+            self.base_url = settings.security_mcp_url
+            self.timeout = 10.0
+
+        async def get_summary(self) -> Dict[str, Any]:
+            """Get security summary."""
+            try:
+                async with httpx.AsyncClient(timeout=self.timeout) as client:
+                    response = await client.post(
+                        f"{self.base_url}/mcp",
+                        json={
+                            "method": "tools/call",
+                            "params": {
+                                "name": "get_security_status",
+                                "arguments": {}
+                            }
+                        }
+                    )
+                    response.raise_for_status()
+                    data = response.json()
+
+                    result = data.get("result", {})
+                    content = result.get("content", [])
+
+                    if content and len(content) > 0:
+                        text = content[0].get("text", "{}")
+                        import json
+                        return json.loads(text)
+
+                    return self._mock_summary()
+
+            except Exception as e:
+                print(f"Security error: {e}")
+                return self._mock_summary()
+
+        async def get_alerts(self) -> list:
+            """Get security alerts."""
+            try:
+                async with httpx.AsyncClient(timeout=self.timeout) as client:
+                    response = await client.post(
+                        f"{self.base_url}/mcp",
+                        json={
+                            "method": "tools/call",
+                            "params": {
+                                "name": "get_alerts",
+                                "arguments": {}
+                            }
+                        }
+                    )
+                    response.raise_for_status()
+                    data = response.json()
+
+                    result = data.get("result", {})
+                    content = result.get("content", [])
+
+                    if content and len(content) > 0:
+                        text = content[0].get("text", "[]")
+                        import json
+                        return json.loads(text)
+
+                    return self._mock_alerts()
+
+            except Exception as e:
+                print(f"Security error: {e}")
+                return self._mock_alerts()
+
+        async def get_logs(self) -> list:
+            """Get recent security logs."""
+            try:
+                async with httpx.AsyncClient(timeout=self.timeout) as client:
+                    response = await client.post(
+                        f"{self.base_url}/mcp",
+                        json={
+                            "method": "tools/call",
+                            "params": {
+                                "name": "get_recent_logs",
+                                "arguments": {"limit": 10}
+                            }
+                        }
+                    )
+                    response.raise_for_status()
+                    data = response.json()
+
+                    result = data.get("result", {})
+                    content = result.get("content", [])
+
+                    if content and len(content) > 0:
+                        text = content[0].get("text", "[]")
+                        import json
+                        return json.loads(text)
+
+                    return []
+
+            except Exception as e:
+                print(f"Security error: {e}")
+                return []
+
+        async def get_firewall_status(self) -> Dict[str, Any]:
+            """Get firewall status."""
+            try:
+                async with httpx.AsyncClient(timeout=self.timeout) as client:
+                    response = await client.post(
+                        f"{self.base_url}/mcp",
+                        json={
+                            "method": "tools/call",
+                            "params": {
+                                "name": "get_firewall_status",
+                                "arguments": {}
+                            }
+                        }
+                    )
+                    response.raise_for_status()
+                    data = response.json()
+
+                    result = data.get("result", {})
+                    content = result.get("content", [])
+
+                    if content and len(content) > 0:
+                        text = content[0].get("text", "{}")
+                        import json
+                        return json.loads(text)
+
+                    return {"status": "active", "rules": 42}
+
+            except Exception as e:
+                print(f"Security error: {e}")
+                return {"status": "unknown", "rules": 0}
+
+        def _mock_summary(self) -> Dict[str, Any]:
+            """Mock summary for testing."""
+            return {
+                "healthy": True,
+                "critical_count": 0,
+                "warning_count": 2
+            }
+
+        def _mock_alerts(self) -> list:
+            """Mock alerts for testing."""
+            return [
+                {"severity": "warning", "message": "High CPU on k3s-master"},
+                {"severity": "warning", "message": "Disk usage 85% on pve2"}
+            ]
+
+
+    # Global Security client instance
+    security_client = SecurityClient()
+  unifi.py: |
+    """UniFi MCP integration."""
+    import httpx
+    from typing import Dict, Any
+    from src.config import settings
+
+
+    class UniFiClient:
+        """Client for UniFi MCP server."""
+
+        def __init__(self):
+            self.base_url = settings.unifi_mcp_url
+            self.timeout = 10.0
+
+        async def get_summary(self) -> Dict[str, Any]:
+            """Get network summary."""
+            try:
+                async with httpx.AsyncClient(timeout=self.timeout) as client:
+                    response = await client.post(
+                        f"{self.base_url}/mcp",
+                        json={
+                            "method": "tools/call",
+                            "params": {
+                                "name": "get_network_status",
+                                "arguments": {}
+                            }
+                        }
+                    )
+                    response.raise_for_status()
+                    data = response.json()
+
+                    # Parse MCP response
+                    result = data.get("result", {})
+                    content = result.get("content", [])
+
+                    if content and len(content) > 0:
+                        text = content[0].get("text", "{}")
+                        import json
+                        return json.loads(text)
+
+                    return self._mock_summary()
+
+            except Exception as e:
+                print(f"UniFi error: {e}")
+                return self._mock_summary()
+
+        async def get_details(self) -> Dict[str, Any]:
+            """Get detailed network info."""
+            try:
+                async with httpx.AsyncClient(timeout=self.timeout) as client:
+                    response = await client.post(
+                        f"{self.base_url}/mcp",
+                        json={
+                            "method": "tools/call",
+                            "params": {
+                                "name": "get_network_details",
+                                "arguments": {}
+                            }
+                        }
+                    )
+                    response.raise_for_status()
+                    data = response.json()
+
+                    result = data.get("result", {})
+                    content = result.get("content", [])
+
+                    if content and len(content) > 0:
+                        text = content[0].get("text", "{}")
+                        import json
+                        return json.loads(text)
+
+                    return self._mock_details()
+
+            except Exception as e:
+                print(f"UniFi error: {e}")
+                return self._mock_details()
+
+        async def get_alerts(self) -> list:
+            """Get network alerts."""
+            try:
+                async with httpx.AsyncClient(timeout=self.timeout) as client:
+                    response = await client.post(
+                        f"{self.base_url}/mcp",
+                        json={
+                            "method": "tools/call",
+                            "params": {
+                                "name": "get_alerts",
+                                "arguments": {}
+                            }
+                        }
+                    )
+                    response.raise_for_status()
+                    data = response.json()
+
+                    result = data.get("result", {})
+                    content = result.get("content", [])
+
+                    if content and len(content) > 0:
+                        text = content[0].get("text", "[]")
+                        import json
+                        return json.loads(text)
+
+                    return []
+
+            except Exception as e:
+                print(f"UniFi error: {e}")
+                return []
+
+        async def get_clients(self) -> list:
+            """Get connected clients."""
+            try:
+                async with httpx.AsyncClient(timeout=self.timeout) as client:
+                    response = await client.post(
+                        f"{self.base_url}/mcp",
+                        json={
+                            "method": "tools/call",
+                            "params": {
+                                "name": "get_clients",
+                                "arguments": {}
+                            }
+                        }
+                    )
+                    response.raise_for_status()
+                    data = response.json()
+
+                    result = data.get("result", {})
+                    content = result.get("content", [])
+
+                    if content and len(content) > 0:
+                        text = content[0].get("text", "[]")
+                        import json
+                        return json.loads(text)
+
+                    return []
+
+            except Exception as e:
+                print(f"UniFi error: {e}")
+                return []
+
+        def _mock_summary(self) -> Dict[str, Any]:
+            """Mock summary for testing."""
+            return {
+                "healthy": True,
+                "device_count": 47,
+                "ap_count": 2,
+                "alert_count": 0
+            }
+
+        def _mock_details(self) -> Dict[str, Any]:
+            """Mock details for testing."""
+            return {
+                "uptime": "14d 3h 22m",
+                "bandwidth": {
+                    "wan_rx": "125 Mbps",
+                    "wan_tx": "45 Mbps",
+                    "lan_rx": "1.2 Gbps",
+                    "lan_tx": "890 Mbps"
+                }
+            }
+
+
+    # Global UniFi client instance
+    unifi_client = UniFiClient()
+kind: ConfigMap
+metadata:
+  creationTimestamp: null
+  name: sms-relay-integrations

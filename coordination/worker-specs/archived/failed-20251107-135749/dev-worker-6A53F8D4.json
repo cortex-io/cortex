@@ -15,7 +15,7 @@
     "assigned_at": "2025-11-04T18:30:00Z",
     "created_at": "2025-11-04T18:15:00Z",
     "created_by": "user",
-    "repository": "ry-ops/commit-relay",
+    "repository": "ry-ops/cortex",
     "context": {
       "description": "Consolidate the dashboard overview by merging tasks into the real-time events feed, making events show ALL system activity (workers, tasks, system events). Remove the Recent Tasks card and move detailed task information to the dedicated Tasks page.",
       "current_issues": [
@@ -87,8 +87,8 @@
       "testing"
     ],
     "knowledge_base_refs": {
-      "implementation_patterns": "/Users/ryandahlberg/commit-relay/scripts/../coordination/masters/development/knowledge-base/implementation-patterns.jsonl",
-      "architecture_docs": "/Users/ryandahlberg/commit-relay/scripts/../coordination/masters/development/knowledge-base/codebase-architecture.json"
+      "implementation_patterns": "/Users/ryandahlberg/cortex/scripts/../coordination/masters/development/knowledge-base/implementation-patterns.jsonl",
+      "architecture_docs": "/Users/ryandahlberg/cortex/scripts/../coordination/masters/development/knowledge-base/codebase-architecture.json"
     }
   },
   "resources": {

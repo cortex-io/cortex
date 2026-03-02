@@ -1,6 +1,6 @@
 {
   "worker_id": "worker-scan-037",
-  "repository": "/Users/ryandahlberg/Projects/commit-relay",
+  "repository": "/Users/ryandahlberg/Projects/cortex",
   "scan_date": "2025-11-23T18:49:00Z",
   "scan_types": ["dependencies", "secrets", "configuration"],
   "summary": {

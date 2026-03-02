@@ -1,7 +1,7 @@
 """
-Commit-Relay Python SDK
+Cortex Python SDK
 
-A comprehensive SDK for interacting with the commit-relay automation system,
+A comprehensive SDK for interacting with the cortex automation system,
 providing API access, analytics, monitoring, and reporting capabilities.
 
 Quick Start:
@@ -14,7 +14,7 @@ For more examples, see the examples/ directory.
 """
 
 __version__ = '0.1.0'
-__author__ = 'Commit-Relay Team'
+__author__ = 'Cortex Team'
 
 from .client import CommitRelayClient
 from .exceptions import (

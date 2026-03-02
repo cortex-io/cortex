@@ -1,0 +1,583 @@
+---
+# Proxmox Prometheus Exporter
+# Exports comprehensive metrics from Proxmox VE cluster for Grafana dashboards
+# Created by Daryl-1 Agent for Cortex Holdings monitoring infrastructure
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: proxmox-exporter-script
+  namespace: monitoring
+data:
+  exporter.py: |
+    #!/usr/bin/env python3
+    """
+    Proxmox VE Prometheus Exporter
+    Monitors Proxmox cluster health, VMs, containers, storage, and node resources
+    Created by Daryl-1 for Cortex Holdings monitoring infrastructure
+    """
+    import os
+    import time
+    import requests
+    from urllib3.exceptions import InsecureRequestWarning
+    from prometheus_client import start_http_server, Gauge, Counter, Info
+    from datetime import datetime
+
+    requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
+
+    # Configuration
+    PROXMOX_HOST = os.getenv('PROXMOX_HOST', '10.88.140.164:8006')
+    PROXMOX_TOKEN_ID = os.getenv('PROXMOX_TOKEN_ID', 'root@pam!automation')
+    PROXMOX_TOKEN_SECRET = os.getenv('PROXMOX_TOKEN_SECRET', '')
+    PROXMOX_NODE = os.getenv('PROXMOX_NODE', 'pve01')
+    VERIFY_SSL = os.getenv('VERIFY_SSL', 'false').lower() == 'true'
+    SCRAPE_INTERVAL = int(os.getenv('SCRAPE_INTERVAL', '60'))
+    EXPORTER_PORT = int(os.getenv('EXPORTER_PORT', '9221'))
+
+    # Prometheus Metrics
+    proxmox_info = Info('proxmox', 'Proxmox VE cluster information')
+    proxmox_up = Gauge('proxmox_up', 'Proxmox API scrape success (1=up, 0=down)')
+
+    # Cluster-wide metrics
+    proxmox_cluster_nodes_total = Gauge('proxmox_cluster_nodes_total', 'Total number of nodes in cluster')
+    proxmox_cluster_nodes_online = Gauge('proxmox_cluster_nodes_online', 'Number of online nodes')
+    proxmox_cluster_quorate = Gauge('proxmox_cluster_quorate', 'Cluster quorum status (1=quorate, 0=not quorate)')
+
+    # Node metrics
+    proxmox_node_info = Info('proxmox_node', 'Node information', ['node'])
+    proxmox_node_status = Gauge('proxmox_node_status', 'Node online status (1=online, 0=offline)', ['node'])
+    proxmox_node_uptime_seconds = Gauge('proxmox_node_uptime_seconds', 'Node uptime in seconds', ['node'])
+    proxmox_node_cpu_usage_ratio = Gauge('proxmox_node_cpu_usage_ratio', 'Node CPU usage (0-1)', ['node'])
+    proxmox_node_cpu_cores = Gauge('proxmox_node_cpu_cores', 'Number of CPU cores', ['node'])
+    proxmox_node_memory_total_bytes = Gauge('proxmox_node_memory_total_bytes', 'Total memory in bytes', ['node'])
+    proxmox_node_memory_used_bytes = Gauge('proxmox_node_memory_used_bytes', 'Used memory in bytes', ['node'])
+    proxmox_node_memory_free_bytes = Gauge('proxmox_node_memory_free_bytes', 'Free memory in bytes', ['node'])
+    proxmox_node_swap_total_bytes = Gauge('proxmox_node_swap_total_bytes', 'Total swap in bytes', ['node'])
+    proxmox_node_swap_used_bytes = Gauge('proxmox_node_swap_used_bytes', 'Used swap in bytes', ['node'])
+    proxmox_node_disk_total_bytes = Gauge('proxmox_node_disk_total_bytes', 'Total disk space in bytes', ['node'])
+    proxmox_node_disk_used_bytes = Gauge('proxmox_node_disk_used_bytes', 'Used disk space in bytes', ['node'])
+    proxmox_node_load_1m = Gauge('proxmox_node_load_1m', '1 minute load average', ['node'])
+    proxmox_node_load_5m = Gauge('proxmox_node_load_5m', '5 minute load average', ['node'])
+    proxmox_node_load_15m = Gauge('proxmox_node_load_15m', '15 minute load average', ['node'])
+
+    # VM metrics
+    proxmox_vms_total = Gauge('proxmox_vms_total', 'Total number of VMs', ['node'])
+    proxmox_vms_running = Gauge('proxmox_vms_running', 'Number of running VMs', ['node'])
+    proxmox_vms_stopped = Gauge('proxmox_vms_stopped', 'Number of stopped VMs', ['node'])
+
+    proxmox_vm_info = Info('proxmox_vm', 'VM information', ['node', 'vmid', 'name'])
+    proxmox_vm_status = Gauge('proxmox_vm_status', 'VM status (1=running, 0=stopped)', ['node', 'vmid', 'name'])
+    proxmox_vm_uptime_seconds = Gauge('proxmox_vm_uptime_seconds', 'VM uptime in seconds', ['node', 'vmid', 'name'])
+    proxmox_vm_cpu_usage_ratio = Gauge('proxmox_vm_cpu_usage_ratio', 'VM CPU usage (0-1)', ['node', 'vmid', 'name'])
+    proxmox_vm_cpu_cores = Gauge('proxmox_vm_cpu_cores', 'Number of CPU cores allocated', ['node', 'vmid', 'name'])
+    proxmox_vm_memory_total_bytes = Gauge('proxmox_vm_memory_total_bytes', 'Total memory allocated in bytes', ['node', 'vmid', 'name'])
+    proxmox_vm_memory_used_bytes = Gauge('proxmox_vm_memory_used_bytes', 'Used memory in bytes', ['node', 'vmid', 'name'])
+    proxmox_vm_disk_read_bytes_total = Counter('proxmox_vm_disk_read_bytes_total', 'Total disk read bytes', ['node', 'vmid', 'name'])
+    proxmox_vm_disk_write_bytes_total = Counter('proxmox_vm_disk_write_bytes_total', 'Total disk write bytes', ['node', 'vmid', 'name'])
+    proxmox_vm_network_in_bytes_total = Counter('proxmox_vm_network_in_bytes_total', 'Total network received bytes', ['node', 'vmid', 'name'])
+    proxmox_vm_network_out_bytes_total = Counter('proxmox_vm_network_out_bytes_total', 'Total network transmitted bytes', ['node', 'vmid', 'name'])
+
+    # Container metrics
+    proxmox_containers_total = Gauge('proxmox_containers_total', 'Total number of LXC containers', ['node'])
+    proxmox_containers_running = Gauge('proxmox_containers_running', 'Number of running containers', ['node'])
+    proxmox_containers_stopped = Gauge('proxmox_containers_stopped', 'Number of stopped containers', ['node'])
+
+    proxmox_container_info = Info('proxmox_container', 'Container information', ['node', 'vmid', 'name'])
+    proxmox_container_status = Gauge('proxmox_container_status', 'Container status (1=running, 0=stopped)', ['node', 'vmid', 'name'])
+    proxmox_container_uptime_seconds = Gauge('proxmox_container_uptime_seconds', 'Container uptime in seconds', ['node', 'vmid', 'name'])
+    proxmox_container_cpu_usage_ratio = Gauge('proxmox_container_cpu_usage_ratio', 'Container CPU usage (0-1)', ['node', 'vmid', 'name'])
+    proxmox_container_memory_used_bytes = Gauge('proxmox_container_memory_used_bytes', 'Used memory in bytes', ['node', 'vmid', 'name'])
+    proxmox_container_memory_total_bytes = Gauge('proxmox_container_memory_total_bytes', 'Total memory allocated in bytes', ['node', 'vmid', 'name'])
+
+    # Storage metrics
+    proxmox_storage_total_bytes = Gauge('proxmox_storage_total_bytes', 'Total storage in bytes', ['node', 'storage', 'type'])
+    proxmox_storage_used_bytes = Gauge('proxmox_storage_used_bytes', 'Used storage in bytes', ['node', 'storage', 'type'])
+    proxmox_storage_available_bytes = Gauge('proxmox_storage_available_bytes', 'Available storage in bytes', ['node', 'storage', 'type'])
+    proxmox_storage_usage_ratio = Gauge('proxmox_storage_usage_ratio', 'Storage usage ratio (0-1)', ['node', 'storage', 'type'])
+
+    # Task metrics
+    proxmox_tasks_total = Counter('proxmox_tasks_total', 'Total number of tasks', ['node', 'type', 'status'])
+    proxmox_tasks_running = Gauge('proxmox_tasks_running', 'Number of currently running tasks', ['node'])
+
+    # Backup metrics
+    proxmox_backup_last_success_timestamp = Gauge('proxmox_backup_last_success_timestamp', 'Last successful backup timestamp', ['node', 'vmid', 'name'])
+    proxmox_backup_last_duration_seconds = Gauge('proxmox_backup_last_duration_seconds', 'Last backup duration in seconds', ['node', 'vmid', 'name'])
+
+    # Scrape metrics
+    proxmox_scrape_duration_seconds = Gauge('proxmox_scrape_duration_seconds', 'Time taken to scrape Proxmox metrics')
+    proxmox_scrape_errors_total = Counter('proxmox_scrape_errors_total', 'Total number of scrape errors')
+
+    class ProxmoxAPI:
+        def __init__(self):
+            self.base_url = f"https://{PROXMOX_HOST}/api2/json"
+            self.headers = {
+                "Authorization": f"PVEAPIToken={PROXMOX_TOKEN_ID}={PROXMOX_TOKEN_SECRET}"
+            }
+
+        def _request(self, endpoint, method='GET', data=None):
+            """Make API request to Proxmox"""
+            try:
+                url = f"{self.base_url}{endpoint}"
+                if method == 'GET':
+                    response = requests.get(url, headers=self.headers, verify=VERIFY_SSL, timeout=10)
+                elif method == 'POST':
+                    response = requests.post(url, headers=self.headers, json=data, verify=VERIFY_SSL, timeout=10)
+
+                response.raise_for_status()
+                result = response.json()
+                return result.get('data', {})
+            except Exception as e:
+                print(f"Error calling {endpoint}: {e}")
+                return None
+
+        def get_version(self):
+            """Get Proxmox version info"""
+            return self._request('/version')
+
+        def get_cluster_status(self):
+            """Get cluster status"""
+            return self._request('/cluster/status')
+
+        def get_cluster_resources(self):
+            """Get all cluster resources (nodes, VMs, containers, storage)"""
+            return self._request('/cluster/resources')
+
+        def get_nodes(self):
+            """Get list of nodes"""
+            return self._request('/nodes')
+
+        def get_node_status(self, node):
+            """Get detailed node status"""
+            return self._request(f'/nodes/{node}/status')
+
+        def get_node_vms(self, node):
+            """Get list of VMs on a node"""
+            return self._request(f'/nodes/{node}/qemu')
+
+        def get_vm_status(self, node, vmid):
+            """Get detailed VM status"""
+            return self._request(f'/nodes/{node}/qemu/{vmid}/status/current')
+
+        def get_node_containers(self, node):
+            """Get list of LXC containers on a node"""
+            return self._request(f'/nodes/{node}/lxc')
+
+        def get_container_status(self, node, vmid):
+            """Get detailed container status"""
+            return self._request(f'/nodes/{node}/lxc/{vmid}/status/current')
+
+        def get_node_storage(self, node):
+            """Get storage status for a node"""
+            return self._request(f'/nodes/{node}/storage')
+
+        def get_storage_status(self, node, storage):
+            """Get detailed storage status"""
+            return self._request(f'/nodes/{node}/storage/{storage}/status')
+
+        def get_node_tasks(self, node):
+            """Get task list for a node"""
+            return self._request(f'/nodes/{node}/tasks')
+
+    def collect_metrics():
+        """Collect comprehensive metrics from Proxmox VE - Created by Daryl-1"""
+        start_time = time.time()
+        scrape_success = 0
+
+        try:
+            api = ProxmoxAPI()
+            print(f"[{datetime.now().isoformat()}] Starting Proxmox metric collection...")
+
+            # 1. Get version info
+            version_info = api.get_version()
+            if version_info:
+                proxmox_info.info({
+                    'version': str(version_info.get('version', 'unknown')),
+                    'release': str(version_info.get('release', 'unknown')),
+                    'repoid': str(version_info.get('repoid', 'unknown')),
+                    'host': PROXMOX_HOST
+                })
+                print(f"  ✓ Version: {version_info.get('version')}")
+
+            # 2. Get cluster status
+            cluster_status = api.get_cluster_status()
+            if cluster_status:
+                nodes_online = sum(1 for item in cluster_status if item.get('type') == 'node' and item.get('online', 0) == 1)
+                total_nodes = sum(1 for item in cluster_status if item.get('type') == 'node')
+                quorate = next((item.get('quorate', 0) for item in cluster_status if item.get('type') == 'cluster'), 0)
+
+                proxmox_cluster_nodes_total.set(total_nodes)
+                proxmox_cluster_nodes_online.set(nodes_online)
+                proxmox_cluster_quorate.set(quorate)
+
+                print(f"  ✓ Cluster: {nodes_online}/{total_nodes} nodes online, quorate: {bool(quorate)}")
+
+            # 3. Get cluster resources (comprehensive view)
+            resources = api.get_cluster_resources()
+
+            # Count VMs and containers
+            vms = [r for r in resources if r.get('type') == 'qemu']
+            containers = [r for r in resources if r.get('type') == 'lxc']
+
+            vms_running = sum(1 for vm in vms if vm.get('status') == 'running')
+            vms_stopped = len(vms) - vms_running
+            containers_running = sum(1 for ct in containers if ct.get('status') == 'running')
+            containers_stopped = len(containers) - containers_running
+
+            proxmox_vms_total.labels(node=PROXMOX_NODE).set(len(vms))
+            proxmox_vms_running.labels(node=PROXMOX_NODE).set(vms_running)
+            proxmox_vms_stopped.labels(node=PROXMOX_NODE).set(vms_stopped)
+
+            proxmox_containers_total.labels(node=PROXMOX_NODE).set(len(containers))
+            proxmox_containers_running.labels(node=PROXMOX_NODE).set(containers_running)
+            proxmox_containers_stopped.labels(node=PROXMOX_NODE).set(containers_stopped)
+
+            print(f"  ✓ Resources: {len(vms)} VMs ({vms_running} running), {len(containers)} containers ({containers_running} running)")
+
+            # 4. Get detailed node status
+            nodes = api.get_nodes()
+            if nodes:
+                for node_info in nodes:
+                    node = node_info.get('node')
+                    if not node:
+                        continue
+
+                    # Node online status
+                    is_online = node_info.get('status') == 'online'
+                    proxmox_node_status.labels(node=node).set(1 if is_online else 0)
+
+                    if is_online:
+                        # Get detailed status
+                        node_status = api.get_node_status(node)
+                        if node_status:
+                            # CPU metrics
+                            cpu_usage = node_status.get('cpu', 0)
+                            cpus = node_status.get('cpuinfo', {}).get('cpus', 1)
+                            proxmox_node_cpu_usage_ratio.labels(node=node).set(cpu_usage)
+                            proxmox_node_cpu_cores.labels(node=node).set(cpus)
+
+                            # Memory metrics
+                            memory = node_status.get('memory', {})
+                            memory_total = memory.get('total', 0)
+                            memory_used = memory.get('used', 0)
+                            memory_free = memory.get('free', 0)
+                            proxmox_node_memory_total_bytes.labels(node=node).set(memory_total)
+                            proxmox_node_memory_used_bytes.labels(node=node).set(memory_used)
+                            proxmox_node_memory_free_bytes.labels(node=node).set(memory_free)
+
+                            # Swap metrics
+                            swap = node_status.get('swap', {})
+                            swap_total = swap.get('total', 0)
+                            swap_used = swap.get('used', 0)
+                            proxmox_node_swap_total_bytes.labels(node=node).set(swap_total)
+                            proxmox_node_swap_used_bytes.labels(node=node).set(swap_used)
+
+                            # Root filesystem metrics
+                            rootfs = node_status.get('rootfs', {})
+                            disk_total = rootfs.get('total', 0)
+                            disk_used = rootfs.get('used', 0)
+                            proxmox_node_disk_total_bytes.labels(node=node).set(disk_total)
+                            proxmox_node_disk_used_bytes.labels(node=node).set(disk_used)
+
+                            # Load average
+                            loadavg = node_status.get('loadavg', [0, 0, 0])
+                            if len(loadavg) >= 3:
+                                proxmox_node_load_1m.labels(node=node).set(loadavg[0])
+                                proxmox_node_load_5m.labels(node=node).set(loadavg[1])
+                                proxmox_node_load_15m.labels(node=node).set(loadavg[2])
+
+                            # Uptime
+                            uptime = node_status.get('uptime', 0)
+                            proxmox_node_uptime_seconds.labels(node=node).set(uptime)
+
+                            # Node info
+                            kversion = node_status.get('kversion', 'unknown')
+                            pveversion = node_status.get('pveversion', 'unknown')
+                            proxmox_node_info.labels(node=node).info({
+                                'kernel': str(kversion),
+                                'pve_version': str(pveversion)
+                            })
+
+                            print(f"  ✓ Node {node}: CPU {cpu_usage*100:.1f}%, Memory {memory_used/(1024**3):.1f}GB/{memory_total/(1024**3):.1f}GB")
+
+            # 5. Get detailed VM metrics
+            vms_list = api.get_node_vms(PROXMOX_NODE)
+            if vms_list:
+                for vm in vms_list:
+                    vmid = str(vm.get('vmid'))
+                    name = vm.get('name', f'vm-{vmid}')
+                    status = vm.get('status', 'unknown')
+
+                    # VM status
+                    is_running = status == 'running'
+                    proxmox_vm_status.labels(node=PROXMOX_NODE, vmid=vmid, name=name).set(1 if is_running else 0)
+
+                    # VM info
+                    proxmox_vm_info.labels(node=PROXMOX_NODE, vmid=vmid, name=name).info({
+                        'status': status,
+                        'template': str(vm.get('template', 0))
+                    })
+
+                    if is_running:
+                        # Get detailed VM status
+                        vm_status = api.get_vm_status(PROXMOX_NODE, vmid)
+                        if vm_status:
+                            # CPU
+                            cpu_usage = vm_status.get('cpu', 0)
+                            cpus = vm_status.get('cpus', 1)
+                            proxmox_vm_cpu_usage_ratio.labels(node=PROXMOX_NODE, vmid=vmid, name=name).set(cpu_usage)
+                            proxmox_vm_cpu_cores.labels(node=PROXMOX_NODE, vmid=vmid, name=name).set(cpus)
+
+                            # Memory
+                            maxmem = vm_status.get('maxmem', 0)
+                            mem = vm_status.get('mem', 0)
+                            proxmox_vm_memory_total_bytes.labels(node=PROXMOX_NODE, vmid=vmid, name=name).set(maxmem)
+                            proxmox_vm_memory_used_bytes.labels(node=PROXMOX_NODE, vmid=vmid, name=name).set(mem)
+
+                            # Uptime
+                            uptime = vm_status.get('uptime', 0)
+                            proxmox_vm_uptime_seconds.labels(node=PROXMOX_NODE, vmid=vmid, name=name).set(uptime)
+
+                            # Disk I/O (counter metrics)
+                            diskread = vm_status.get('diskread', 0)
+                            diskwrite = vm_status.get('diskwrite', 0)
+                            proxmox_vm_disk_read_bytes_total.labels(node=PROXMOX_NODE, vmid=vmid, name=name).inc(diskread)
+                            proxmox_vm_disk_write_bytes_total.labels(node=PROXMOX_NODE, vmid=vmid, name=name).inc(diskwrite)
+
+                            # Network I/O (counter metrics)
+                            netin = vm_status.get('netin', 0)
+                            netout = vm_status.get('netout', 0)
+                            proxmox_vm_network_in_bytes_total.labels(node=PROXMOX_NODE, vmid=vmid, name=name).inc(netin)
+                            proxmox_vm_network_out_bytes_total.labels(node=PROXMOX_NODE, vmid=vmid, name=name).inc(netout)
+
+                print(f"  ✓ VM metrics collected for {len(vms_list)} VMs")
+
+            # 6. Get detailed container metrics
+            containers_list = api.get_node_containers(PROXMOX_NODE)
+            if containers_list:
+                for ct in containers_list:
+                    vmid = str(ct.get('vmid'))
+                    name = ct.get('name', f'ct-{vmid}')
+                    status = ct.get('status', 'unknown')
+
+                    # Container status
+                    is_running = status == 'running'
+                    proxmox_container_status.labels(node=PROXMOX_NODE, vmid=vmid, name=name).set(1 if is_running else 0)
+
+                    # Container info
+                    proxmox_container_info.labels(node=PROXMOX_NODE, vmid=vmid, name=name).info({
+                        'status': status,
+                        'template': str(ct.get('template', 0))
+                    })
+
+                    if is_running:
+                        # Get detailed container status
+                        ct_status = api.get_container_status(PROXMOX_NODE, vmid)
+                        if ct_status:
+                            # CPU
+                            cpu_usage = ct_status.get('cpu', 0)
+                            proxmox_container_cpu_usage_ratio.labels(node=PROXMOX_NODE, vmid=vmid, name=name).set(cpu_usage)
+
+                            # Memory
+                            maxmem = ct_status.get('maxmem', 0)
+                            mem = ct_status.get('mem', 0)
+                            proxmox_container_memory_total_bytes.labels(node=PROXMOX_NODE, vmid=vmid, name=name).set(maxmem)
+                            proxmox_container_memory_used_bytes.labels(node=PROXMOX_NODE, vmid=vmid, name=name).set(mem)
+
+                            # Uptime
+                            uptime = ct_status.get('uptime', 0)
+                            proxmox_container_uptime_seconds.labels(node=PROXMOX_NODE, vmid=vmid, name=name).set(uptime)
+
+                print(f"  ✓ Container metrics collected for {len(containers_list)} containers")
+
+            # 7. Get storage metrics
+            storage_list = api.get_node_storage(PROXMOX_NODE)
+            if storage_list:
+                for storage in storage_list:
+                    storage_name = storage.get('storage')
+                    storage_type = storage.get('type', 'unknown')
+
+                    if storage.get('active', 0) == 1:
+                        total = storage.get('total', 0)
+                        used = storage.get('used', 0)
+                        avail = storage.get('avail', 0)
+
+                        proxmox_storage_total_bytes.labels(node=PROXMOX_NODE, storage=storage_name, type=storage_type).set(total)
+                        proxmox_storage_used_bytes.labels(node=PROXMOX_NODE, storage=storage_name, type=storage_type).set(used)
+                        proxmox_storage_available_bytes.labels(node=PROXMOX_NODE, storage=storage_name, type=storage_type).set(avail)
+
+                        if total > 0:
+                            usage_ratio = used / total
+                            proxmox_storage_usage_ratio.labels(node=PROXMOX_NODE, storage=storage_name, type=storage_type).set(usage_ratio)
+
+                print(f"  ✓ Storage metrics collected for {len(storage_list)} storage pools")
+
+            # 8. Get task metrics
+            tasks = api.get_node_tasks(PROXMOX_NODE)
+            if tasks:
+                running_tasks = [t for t in tasks if t.get('status') == 'running']
+                proxmox_tasks_running.labels(node=PROXMOX_NODE).set(len(running_tasks))
+
+                # Count tasks by type and status
+                task_counts = {}
+                for task in tasks[:100]:  # Last 100 tasks
+                    task_type = task.get('type', 'unknown')
+                    task_status = task.get('status', 'unknown')
+                    key = (task_type, task_status)
+                    task_counts[key] = task_counts.get(key, 0) + 1
+
+                for (task_type, task_status), count in task_counts.items():
+                    proxmox_tasks_total.labels(node=PROXMOX_NODE, type=task_type, status=task_status).inc(count)
+
+                print(f"  ✓ Task metrics: {len(running_tasks)} running, {len(tasks)} total recent tasks")
+
+            # Success!
+            scrape_success = 1
+
+            # Record scrape duration
+            duration = time.time() - start_time
+            proxmox_scrape_duration_seconds.set(duration)
+            proxmox_up.set(scrape_success)
+            print(f"[{datetime.now().isoformat()}] Scrape completed successfully in {duration:.2f}s")
+            print("")
+
+        except Exception as e:
+            print(f"[{datetime.now().isoformat()}] ✗ Error collecting metrics: {e}")
+            import traceback
+            traceback.print_exc()
+            proxmox_scrape_errors_total.inc()
+            proxmox_up.set(0)
+            print("")
+
+    if __name__ == '__main__':
+        print(f"Starting Proxmox VE Prometheus Exporter on port {EXPORTER_PORT}")
+        print(f"Proxmox Host: {PROXMOX_HOST}")
+        print(f"Proxmox Node: {PROXMOX_NODE}")
+        print(f"Token ID: {PROXMOX_TOKEN_ID}")
+        print(f"SSL Verification: {VERIFY_SSL}")
+        print(f"Scrape interval: {SCRAPE_INTERVAL}s")
+        print("")
+
+        # Start HTTP server
+        start_http_server(EXPORTER_PORT)
+        print(f"Metrics endpoint available at http://localhost:{EXPORTER_PORT}/metrics")
+        print("")
+
+        # Collect metrics in a loop
+        while True:
+            collect_metrics()
+            time.sleep(SCRAPE_INTERVAL)
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: proxmox-exporter
+  namespace: monitoring
+  labels:
+    app: proxmox-exporter
+    component: metrics
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: proxmox-exporter
+  template:
+    metadata:
+      labels:
+        app: proxmox-exporter
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "9221"
+        prometheus.io/path: "/metrics"
+    spec:
+      containers:
+      - name: exporter
+        image: python:3.11-slim
+        command:
+          - /bin/bash
+          - -c
+          - |
+            pip install --no-cache-dir prometheus-client requests urllib3
+            python /app/exporter.py
+        ports:
+        - name: metrics
+          containerPort: 9221
+          protocol: TCP
+        env:
+        - name: PROXMOX_HOST
+          value: "10.88.140.164:8006"
+        - name: PROXMOX_TOKEN_ID
+          value: "root@pam!automation"
+        - name: PROXMOX_TOKEN_SECRET
+          value: "ca1e11fa-7499-449e-a9aa-176fdd823405"
+        - name: PROXMOX_NODE
+          value: "pve01"
+        - name: VERIFY_SSL
+          value: "false"
+        - name: SCRAPE_INTERVAL
+          value: "60"
+        - name: EXPORTER_PORT
+          value: "9221"
+        volumeMounts:
+        - name: script
+          mountPath: /app
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "100m"
+          limits:
+            memory: "256Mi"
+            cpu: "200m"
+        livenessProbe:
+          httpGet:
+            path: /metrics
+            port: 9221
+          initialDelaySeconds: 30
+          periodSeconds: 30
+        readinessProbe:
+          httpGet:
+            path: /metrics
+            port: 9221
+          initialDelaySeconds: 10
+          periodSeconds: 10
+      volumes:
+      - name: script
+        configMap:
+          name: proxmox-exporter-script
+          defaultMode: 0755
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: proxmox-exporter
+  namespace: monitoring
+  labels:
+    app: proxmox-exporter
+  annotations:
+    prometheus.io/scrape: "true"
+    prometheus.io/port: "9221"
+    prometheus.io/path: "/metrics"
+spec:
+  type: ClusterIP
+  ports:
+  - name: metrics
+    port: 9221
+    targetPort: 9221
+    protocol: TCP
+  selector:
+    app: proxmox-exporter
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: proxmox-exporter
+  namespace: monitoring
+  labels:
+    app: proxmox-exporter
+    release: kube-prometheus-stack
+spec:
+  selector:
+    matchLabels:
+      app: proxmox-exporter
+  endpoints:
+  - port: metrics
+    interval: 60s
+    path: /metrics

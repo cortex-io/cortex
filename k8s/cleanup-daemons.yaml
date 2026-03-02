@@ -1,0 +1,215 @@
+---
+# Zombie Cleanup Daemon
+# Automatically detects and cleans up orphaned/unknown pods
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: zombie-cleanup-daemon
+  namespace: cortex-system
+  labels:
+    app: zombie-cleanup-daemon
+    cortex.component: automation
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: zombie-cleanup-daemon
+  template:
+    metadata:
+      labels:
+        app: zombie-cleanup-daemon
+    spec:
+      serviceAccountName: cortex-cleanup-sa
+      containers:
+      - name: cleanup
+        image: bitnami/kubectl:latest
+        command: ["/bin/bash", "-c"]
+        args:
+        - |
+          #!/bin/bash
+          set -e
+
+          echo "[Zombie Cleanup] Starting daemon..."
+          echo "[Zombie Cleanup] Check interval: 60 seconds"
+
+          while true; do
+            echo "[$(date)] Checking for zombie pods..."
+
+            # Find Unknown pods older than 5 minutes
+            UNKNOWN_PODS=$(kubectl get pods -A --field-selector status.phase=Unknown -o json | \
+              jq -r '.items[] | select(.metadata.creationTimestamp | . as $t | (now - ($t | fromdateiso8601)) > 300) | "\(.metadata.namespace)/\(.metadata.name)"')
+
+            if [ -n "$UNKNOWN_PODS" ]; then
+              echo "[Zombie Cleanup] Found zombie pods:"
+              echo "$UNKNOWN_PODS"
+
+              echo "$UNKNOWN_PODS" | while read pod; do
+                NAMESPACE=$(echo $pod | cut -d/ -f1)
+                NAME=$(echo $pod | cut -d/ -f2)
+                echo "  → Deleting $NAMESPACE/$NAME"
+                kubectl delete pod -n $NAMESPACE $NAME --force --grace-period=0 || echo "  ✗ Failed to delete"
+              done
+            else
+              echo "  ✓ No zombie pods found"
+            fi
+
+            # Find CrashLoopBackOff pods with >100 restarts
+            CRASH_PODS=$(kubectl get pods -A -o json | \
+              jq -r '.items[] | select(.status.containerStatuses != null) | select(.status.containerStatuses[0].restartCount > 100) | "\(.metadata.namespace)/\(.metadata.name)/\(.status.containerStatuses[0].restartCount)"')
+
+            if [ -n "$CRASH_PODS" ]; then
+              echo "[Zombie Cleanup] Found excessive CrashLoop pods:"
+              echo "$CRASH_PODS" | while read pod; do
+                NAMESPACE=$(echo $pod | cut -d/ -f1)
+                NAME=$(echo $pod | cut -d/ -f2)
+                RESTARTS=$(echo $pod | cut -d/ -f3)
+                echo "  → Scaling down $NAMESPACE/$NAME ($RESTARTS restarts)"
+
+                # Try to scale down deployment
+                DEPLOYMENT=$(kubectl get pod -n $NAMESPACE $NAME -o jsonpath='{.metadata.ownerReferences[0].name}' 2>/dev/null || echo "")
+                if [ -n "$DEPLOYMENT" ]; then
+                  kubectl scale deployment $DEPLOYMENT -n $NAMESPACE --replicas=0 || echo "  ✗ Failed to scale"
+                fi
+              done
+            else
+              echo "  ✓ No excessive CrashLoop pods"
+            fi
+
+            echo ""
+            sleep 60
+          done
+        env:
+        - name: CLEANUP_INTERVAL
+          value: "60"
+---
+# Auto-Fix Daemon
+# Automatically fixes common issues (stuck volumes, failed deployments, etc)
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: auto-fix-daemon
+  namespace: cortex-system
+  labels:
+    app: auto-fix-daemon
+    cortex.component: automation
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: auto-fix-daemon
+  template:
+    metadata:
+      labels:
+        app: auto-fix-daemon
+    spec:
+      serviceAccountName: cortex-cleanup-sa
+      containers:
+      - name: auto-fix
+        image: bitnami/kubectl:latest
+        command: ["/bin/bash", "-c"]
+        args:
+        - |
+          #!/bin/bash
+          set -e
+
+          echo "[Auto-Fix] Starting daemon..."
+          echo "[Auto-Fix] Check interval: 120 seconds"
+
+          while true; do
+            echo "[$(date)] Running auto-fix checks..."
+
+            # Fix 1: Clean up stuck volume attachments
+            echo "  → Checking for stuck volume attachments..."
+            STUCK_VOLS=$(kubectl get volumeattachment -o json | \
+              jq -r '.items[] | select(.status.attached == false) | select(.metadata.creationTimestamp | . as $t | (now - ($t | fromdateiso8601)) > 300) | .metadata.name')
+
+            if [ -n "$STUCK_VOLS" ]; then
+              echo "    Found stuck volumes:"
+              echo "$STUCK_VOLS" | while read vol; do
+                echo "      → Deleting $vol"
+                kubectl delete volumeattachment $vol || echo "      ✗ Failed"
+              done
+            else
+              echo "    ✓ No stuck volumes"
+            fi
+
+            # Fix 2: Restart pods stuck in ContainerCreating for >10 minutes
+            echo "  → Checking for stuck ContainerCreating pods..."
+            STUCK_CREATING=$(kubectl get pods -A -o json | \
+              jq -r '.items[] | select(.status.phase == "Pending") | select(.status.conditions != null) | select(.status.conditions[] | select(.type == "PodScheduled" and .status == "True")) | select(.metadata.creationTimestamp | . as $t | (now - ($t | fromdateiso8601)) > 600) | "\(.metadata.namespace)/\(.metadata.name)"')
+
+            if [ -n "$STUCK_CREATING" ]; then
+              echo "    Found stuck pods:"
+              echo "$STUCK_CREATING" | while read pod; do
+                NAMESPACE=$(echo $pod | cut -d/ -f1)
+                NAME=$(echo $pod | cut -d/ -f2)
+                echo "      → Restarting $NAMESPACE/$NAME"
+                kubectl delete pod -n $NAMESPACE $NAME --grace-period=30 || echo "      ✗ Failed"
+              done
+            else
+              echo "    ✓ No stuck ContainerCreating pods"
+            fi
+
+            # Fix 3: Restart ImagePullBackOff pods stuck for >15 minutes
+            echo "  → Checking for stuck ImagePullBackOff pods..."
+            IMAGE_PULL_ERRORS=$(kubectl get pods -A -o json | \
+              jq -r '.items[] | select(.status.containerStatuses != null) | select(.status.containerStatuses[].state.waiting.reason == "ImagePullBackOff") | select(.metadata.creationTimestamp | . as $t | (now - ($t | fromdateiso8601)) > 900) | "\(.metadata.namespace)/\(.metadata.name)"')
+
+            if [ -n "$IMAGE_PULL_ERRORS" ]; then
+              echo "    Found stuck ImagePullBackOff pods:"
+              echo "$IMAGE_PULL_ERRORS" | while read pod; do
+                NAMESPACE=$(echo $pod | cut -d/ -f1)
+                NAME=$(echo $pod | cut -d/ -f2)
+                echo "      → Restarting $NAMESPACE/$NAME"
+                kubectl delete pod -n $NAMESPACE $NAME --grace-period=30 || echo "      ✗ Failed"
+              done
+            else
+              echo "    ✓ No stuck ImagePullBackOff pods"
+            fi
+
+            echo ""
+            sleep 120
+          done
+        env:
+        - name: FIX_INTERVAL
+          value: "120"
+---
+# Service Account for cleanup daemons
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: cortex-cleanup-sa
+  namespace: cortex-system
+---
+# ClusterRole for cleanup operations
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: cortex-cleanup-role
+rules:
+- apiGroups: [""]
+  resources: ["pods"]
+  verbs: ["get", "list", "delete"]
+- apiGroups: ["apps"]
+  resources: ["deployments", "statefulsets"]
+  verbs: ["get", "list", "patch"]
+- apiGroups: ["storage.k8s.io"]
+  resources: ["volumeattachments"]
+  verbs: ["get", "list", "delete"]
+- apiGroups: [""]
+  resources: ["pods/log"]
+  verbs: ["get"]
+---
+# ClusterRoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: cortex-cleanup-binding
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: cortex-cleanup-role
+subjects:
+- kind: ServiceAccount
+  name: cortex-cleanup-sa
+  namespace: cortex-system

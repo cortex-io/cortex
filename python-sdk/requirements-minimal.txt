@@ -1,0 +1,17 @@
+# Core dependencies only
+requests>=2.32.2
+PyGithub>=1.59.0
+
+# Security patches (Snyk recommendations)
+pillow>=10.3.0
+tornado>=6.5
+anyio>=4.4.0
+setuptools>=78.1.1
+urllib3>=2.5.0
+
+# Development dependencies (install separately with -r requirements-dev.txt)
+# pytest>=7.0
+# pytest-cov>=4.0
+# black>=22.0
+# mypy>=0.991
+# flake8>=5.0

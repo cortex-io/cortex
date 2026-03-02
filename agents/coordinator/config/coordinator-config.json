@@ -1,0 +1,101 @@
+{
+  "$schema": "../config-schema.json",
+  "version": "1.0.0",
+  "coordinator": {
+    "id": "coordinator-main",
+    "name": "Cortex Coordinator Agent",
+    "description": "Routes tasks to contractors and spawns PM agents for complex projects"
+  },
+  "divisions": {
+    "infrastructure": {
+      "daily_tokens": 20000,
+      "emergency_reserve_percentage": 0.15
+    },
+    "containers": {
+      "daily_tokens": 15000,
+      "emergency_reserve_percentage": 0.15
+    },
+    "workflows": {
+      "daily_tokens": 12000,
+      "emergency_reserve_percentage": 0.15
+    },
+    "monitoring": {
+      "daily_tokens": 18000,
+      "emergency_reserve_percentage": 0.15
+    }
+  },
+  "contractors": {
+    "infrastructure-contractor": {
+      "max_concurrent_tasks": 5,
+      "max_token_budget": 25000,
+      "max_session_hours": 8
+    },
+    "talos-contractor": {
+      "max_concurrent_tasks": 4,
+      "max_token_budget": 20000,
+      "max_session_hours": 8
+    },
+    "n8n-contractor": {
+      "max_concurrent_tasks": 5,
+      "max_token_budget": 25000,
+      "max_session_hours": 8
+    },
+    "security-contractor": {
+      "max_concurrent_tasks": 3,
+      "max_token_budget": 15000,
+      "max_session_hours": 6
+    },
+    "configuration-contractor": {
+      "max_concurrent_tasks": 4,
+      "max_token_budget": 18000,
+      "max_session_hours": 6
+    }
+  },
+  "sla": {
+    "p0_critical": {
+      "response_sla_minutes": 15,
+      "completion_sla_hours": 1
+    },
+    "p1_high": {
+      "response_sla_minutes": 60,
+      "completion_sla_hours": 4
+    },
+    "p2_medium": {
+      "response_sla_minutes": 240,
+      "completion_sla_hours": 24
+    },
+    "p3_low": {
+      "response_sla_minutes": 1440,
+      "completion_sla_hours": 72
+    }
+  },
+  "load_balancing": {
+    "available_threshold": 0.80,
+    "busy_threshold": 0.90,
+    "overloaded_threshold": 1.0
+  },
+  "queue_management": {
+    "starvation_prevention": {
+      "p2_promotion_hours": 8,
+      "p3_promotion_hours": 48
+    },
+    "max_queue_depth": 50,
+    "queue_processing_interval_minutes": 5
+  },
+  "pm_spawning": {
+    "complexity_threshold": 7.0,
+    "min_token_budget": 50000,
+    "max_token_budget": 200000,
+    "default_buffer_percentage": 0.20
+  },
+  "escalation": {
+    "auto_escalate_on_overload": true,
+    "escalation_target": "coo",
+    "escalation_sla_minutes": 30
+  },
+  "monitoring": {
+    "metrics_collection_interval_seconds": 60,
+    "health_check_interval_seconds": 30,
+    "log_level": "info"
+  }
+}

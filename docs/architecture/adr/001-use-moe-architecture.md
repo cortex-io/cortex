@@ -7,7 +7,7 @@
 
 ## Context
 
-commit-relay needs to manage multiple repositories efficiently with specialized expertise for different types of tasks (development, security, CI/CD, inventory management). A single monolithic approach would lack the specialization needed for optimal task execution.
+cortex needs to manage multiple repositories efficiently with specialized expertise for different types of tasks (development, security, CI/CD, inventory management). A single monolithic approach would lack the specialization needed for optimal task execution.
 
 ## Decision
 
@@ -102,4 +102,4 @@ function routeTask(task) {
 ## References
 
 - [Mixture of Experts Paper](https://arxiv.org/abs/1701.06538)
-- [MoE Implementation Guide](https://github.com/ry-ops/commit-relay/wiki/MoE-Architecture)
+- [MoE Implementation Guide](https://github.com/ry-ops/cortex/wiki/MoE-Architecture)

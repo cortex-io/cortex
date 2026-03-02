@@ -31,7 +31,7 @@
 ### Primary Artifact
 
 **File**: `REPOSITORY_CATALOG.md`
-**Location**: `/Users/ryandahlberg/Projects/commit-relay/agents/workers/worker-documentation-037/REPOSITORY_CATALOG.md`
+**Location**: `/Users/ryandahlberg/Projects/cortex/agents/workers/worker-documentation-037/REPOSITORY_CATALOG.md`
 **Size**: 500+ lines
 **Format**: Markdown documentation
 
@@ -222,7 +222,7 @@
 
 ## Conclusion
 
-Worker documentation-037 has successfully completed the repository cataloging task. Generated a comprehensive 500+ line catalog documenting all aspects of the commit-relay system including:
+Worker documentation-037 has successfully completed the repository cataloging task. Generated a comprehensive 500+ line catalog documenting all aspects of the cortex system including:
 
 - Complete dependency inventory (Node.js + Python)
 - Full architecture documentation (v5.0 Hybrid RAG+CAG)

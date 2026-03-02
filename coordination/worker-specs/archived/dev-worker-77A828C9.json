@@ -12,7 +12,7 @@
     "status": "assigned",
     "description": "Add validation layer to automatically fix malformed JSON before writing. Current issue: Frequent JSON parsing errors causing dashboard disruptions. Solution: Implement pre-write validation that detects and repairs common JSON errors (missing commas, trailing commas, unclosed brackets). Add validation to emit-event.sh and dashboard server. Include error recovery and logging. Technical: Use jq for validation, add JSON repair utilities, implement validation hooks in event emission pipeline. Benefits: Prevents dashboard crashes, eliminates data corruption, improves reliability.",
     "context": {
-      "repository": "ry-ops/commit-relay",
+      "repository": "ry-ops/cortex",
       "branch": "main",
       "requirements": [],
       "technical_approach": {
@@ -47,8 +47,8 @@
     "expertise_area": "",
     "skills_required": [],
     "knowledge_base_refs": {
-      "implementation_patterns": "/Users/ryandahlberg/commit-relay/scripts/../coordination/masters/development/knowledge-base/implementation-patterns.jsonl",
-      "architecture_docs": "/Users/ryandahlberg/commit-relay/scripts/../coordination/masters/development/knowledge-base/codebase-architecture.json"
+      "implementation_patterns": "/Users/ryandahlberg/cortex/scripts/../coordination/masters/development/knowledge-base/implementation-patterns.jsonl",
+      "architecture_docs": "/Users/ryandahlberg/cortex/scripts/../coordination/masters/development/knowledge-base/codebase-architecture.json"
     }
   },
   "resources": {
