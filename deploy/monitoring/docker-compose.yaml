@@ -1,0 +1,112 @@
+version: '3.8'
+
+networks:
+  cortex-monitoring:
+    driver: bridge
+
+volumes:
+  prometheus-data:
+  grafana-data:
+  alertmanager-data:
+
+services:
+  prometheus:
+    image: prom/prometheus:v2.48.0
+    container_name: cortex-prometheus
+    restart: unless-stopped
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--storage.tsdb.retention.time=15d'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--web.enable-lifecycle'
+      - '--web.enable-admin-api'
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus/prometheus-config.yaml:/etc/prometheus/prometheus.yml:ro
+      - ./prometheus/alerting-rules.yaml:/etc/prometheus/alerting-rules.yaml:ro
+      - ./prometheus/recording-rules.yaml:/etc/prometheus/recording-rules.yaml:ro
+      - prometheus-data:/prometheus
+    networks:
+      - cortex-monitoring
+    depends_on:
+      - alertmanager
+
+  alertmanager:
+    image: prom/alertmanager:v0.26.0
+    container_name: cortex-alertmanager
+    restart: unless-stopped
+    command:
+      - '--config.file=/etc/alertmanager/config.yml'
+      - '--storage.path=/alertmanager'
+    ports:
+      - "9093:9093"
+    volumes:
+      - ./alertmanager-config.yaml:/etc/alertmanager/config.yml:ro
+      - alertmanager-data:/alertmanager
+    networks:
+      - cortex-monitoring
+
+  grafana:
+    image: grafana/grafana:10.2.2
+    container_name: cortex-grafana
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_INSTALL_PLUGINS=grafana-piechart-panel
+      - GF_USERS_ALLOW_SIGN_UP=false
+      - GF_SERVER_ROOT_URL=http://localhost:3000
+      - GF_AUTH_ANONYMOUS_ENABLED=false
+    volumes:
+      - ./grafana/datasources.yaml:/etc/grafana/provisioning/datasources/datasources.yaml:ro
+      - ./grafana/dashboards:/etc/grafana/provisioning/dashboards:ro
+      - ./grafana/dashboard-provider.yaml:/etc/grafana/provisioning/dashboards/provider.yaml:ro
+      - grafana-data:/var/lib/grafana
+    networks:
+      - cortex-monitoring
+    depends_on:
+      - prometheus
+
+  node-exporter:
+    image: prom/node-exporter:v1.7.0
+    container_name: cortex-node-exporter
+    restart: unless-stopped
+    command:
+      - '--path.rootfs=/host'
+    ports:
+      - "9100:9100"
+    volumes:
+      - '/:/host:ro,rslave'
+    networks:
+      - cortex-monitoring
+
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor:v0.47.2
+    container_name: cortex-cadvisor
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:ro
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+      - /dev/disk/:/dev/disk:ro
+    privileged: true
+    networks:
+      - cortex-monitoring
+
+  # Mock cortex services for testing
+  cortex-core-mock:
+    image: prom/pushgateway:v1.6.2
+    container_name: cortex-core-mock
+    restart: unless-stopped
+    ports:
+      - "9091:9091"
+    networks:
+      - cortex-monitoring

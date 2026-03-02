@@ -1,0 +1,336 @@
+name: CD Pipeline
+
+on:
+  push:
+    branches:
+      - main
+    tags:
+      - 'v*.*.*'
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Deployment environment'
+        required: true
+        type: choice
+        options:
+          - staging
+          - production
+      package:
+        description: 'Package to deploy (leave empty for all)'
+        required: false
+        type: string
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  # Build and push Docker images
+  build-and-push:
+    name: Build & Push (${{ matrix.package }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      packages: write
+
+    strategy:
+      matrix:
+        package:
+          - mcp-k8s-orchestrator
+          - mcp-n8n-workflow
+          - mcp-talos-node
+          - mcp-s3-storage
+          - mcp-postgres-data
+      fail-fast: false
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/${{ matrix.package }}
+          tags: |
+            type=ref,event=branch
+            type=ref,event=pr
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=semver,pattern={{major}}
+            type=sha,prefix={{branch}}-
+            type=raw,value=latest,enable={{is_default_branch}}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: packages/${{ matrix.package }}/Dockerfile
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=registry,ref=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/${{ matrix.package }}:buildcache
+          cache-to: type=registry,ref=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/${{ matrix.package }}:buildcache,mode=max
+          build-args: |
+            NODE_VERSION=20.x
+            PACKAGE_NAME=${{ matrix.package }}
+            BUILD_DATE=${{ github.event.head_commit.timestamp }}
+            VCS_REF=${{ github.sha }}
+            VERSION=${{ steps.meta.outputs.version }}
+
+      - name: Sign container image
+        if: github.ref == 'refs/heads/main'
+        uses: sigstore/cosign-installer@v3
+
+      - name: Cosign sign image
+        if: github.ref == 'refs/heads/main'
+        run: |
+          cosign sign --yes ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/${{ matrix.package }}@${{ steps.meta.outputs.digest }}
+
+  # Update ArgoCD manifests
+  update-manifests:
+    name: Update ArgoCD Manifests
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    needs: build-and-push
+    if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/')
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Update image tags
+        run: |
+          # Extract version from tag or use commit SHA
+          if [[ "${{ github.ref }}" == refs/tags/* ]]; then
+            VERSION="${{ github.ref_name }}"
+          else
+            VERSION="main-${{ github.sha }}"
+          fi
+
+          # Update image tags in ArgoCD ApplicationSet
+          sed -i "s|image: ghcr.io/${{ github.repository }}/.*:.*|image: ghcr.io/${{ github.repository }}/{{name}}:${VERSION}|g" \
+            deploy/argocd/applicationset.yaml
+
+          # Commit and push changes
+          git add deploy/argocd/applicationset.yaml
+          git diff --staged --quiet || git commit -m "chore: update image tags to ${VERSION}"
+          git push origin main
+
+  # Deploy to staging
+  deploy-staging:
+    name: Deploy to Staging
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    needs: update-manifests
+    if: github.ref == 'refs/heads/main'
+    environment:
+      name: staging
+      url: https://staging.cortex.local
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup kubectl
+        uses: azure/setup-kubectl@v4
+        with:
+          version: 'v1.28.0'
+
+      - name: Setup ArgoCD CLI
+        run: |
+          curl -sSL -o argocd-linux-amd64 https://github.com/argoproj/argo-cd/releases/latest/download/argocd-linux-amd64
+          sudo install -m 555 argocd-linux-amd64 /usr/local/bin/argocd
+          rm argocd-linux-amd64
+
+      - name: Configure kubeconfig
+        run: |
+          mkdir -p ~/.kube
+          echo "${{ secrets.KUBECONFIG_STAGING }}" | base64 -d > ~/.kube/config
+          chmod 600 ~/.kube/config
+
+      - name: Login to ArgoCD
+        run: |
+          argocd login ${{ secrets.ARGOCD_SERVER }} \
+            --username ${{ secrets.ARGOCD_USERNAME }} \
+            --password ${{ secrets.ARGOCD_PASSWORD }} \
+            --grpc-web
+
+      - name: Sync ArgoCD applications
+        run: |
+          # Sync all cortex MCP applications
+          argocd app sync -l app.kubernetes.io/instance=cortex-mcp \
+            --timeout 600 \
+            --retry-limit 3
+
+      - name: Wait for healthy status
+        run: |
+          argocd app wait -l app.kubernetes.io/instance=cortex-mcp \
+            --health \
+            --timeout 600
+
+      - name: Verify deployment
+        run: |
+          kubectl get pods -n cortex-mcp
+          kubectl get svc -n cortex-mcp
+
+      - name: Run smoke tests
+        run: |
+          # Basic health check
+          kubectl run smoke-test --image=curlimages/curl:latest --rm -i --restart=Never \
+            -- curl -f http://mcp-k8s-orchestrator.cortex-mcp.svc.cluster.local:3000/health || exit 1
+
+  # Deploy to production
+  deploy-production:
+    name: Deploy to Production
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    needs: deploy-staging
+    if: startsWith(github.ref, 'refs/tags/')
+    environment:
+      name: production
+      url: https://cortex.production.local
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup kubectl
+        uses: azure/setup-kubectl@v4
+        with:
+          version: 'v1.28.0'
+
+      - name: Setup ArgoCD CLI
+        run: |
+          curl -sSL -o argocd-linux-amd64 https://github.com/argoproj/argo-cd/releases/latest/download/argocd-linux-amd64
+          sudo install -m 555 argocd-linux-amd64 /usr/local/bin/argocd
+          rm argocd-linux-amd64
+
+      - name: Configure kubeconfig
+        run: |
+          mkdir -p ~/.kube
+          echo "${{ secrets.KUBECONFIG_PRODUCTION }}" | base64 -d > ~/.kube/config
+          chmod 600 ~/.kube/config
+
+      - name: Login to ArgoCD
+        run: |
+          argocd login ${{ secrets.ARGOCD_SERVER_PROD }} \
+            --username ${{ secrets.ARGOCD_USERNAME }} \
+            --password ${{ secrets.ARGOCD_PASSWORD }} \
+            --grpc-web
+
+      - name: Create backup before deployment
+        run: |
+          # Backup current deployment state
+          kubectl get all -n cortex-mcp -o yaml > backup-${{ github.sha }}.yaml
+
+      - name: Sync ArgoCD applications (canary)
+        run: |
+          # Deploy with canary rollout
+          argocd app sync cortex-mcp-k8s-orchestrator \
+            --timeout 600 \
+            --retry-limit 3 \
+            --strategy canary
+
+      - name: Wait for canary health
+        run: |
+          argocd app wait cortex-mcp-k8s-orchestrator --health --timeout 300
+
+      - name: Run production smoke tests
+        run: |
+          # Comprehensive health checks
+          kubectl run prod-smoke-test --image=curlimages/curl:latest --rm -i --restart=Never \
+            -- curl -f http://mcp-k8s-orchestrator.cortex-mcp.svc.cluster.local:3000/health || exit 1
+
+      - name: Promote canary to full deployment
+        run: |
+          # Sync remaining applications
+          argocd app sync -l app.kubernetes.io/instance=cortex-mcp \
+            --timeout 600 \
+            --retry-limit 3
+
+      - name: Wait for all applications healthy
+        run: |
+          argocd app wait -l app.kubernetes.io/instance=cortex-mcp \
+            --health \
+            --timeout 900
+
+      - name: Verify production deployment
+        run: |
+          kubectl get pods -n cortex-mcp
+          kubectl get svc -n cortex-mcp
+          kubectl top pods -n cortex-mcp
+
+      - name: Upload backup artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: production-backup-${{ github.sha }}
+          path: backup-${{ github.sha }}.yaml
+          retention-days: 30
+
+  # Rollback on failure
+  rollback:
+    name: Rollback Deployment
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    needs: deploy-production
+    if: failure()
+
+    steps:
+      - name: Setup kubectl
+        uses: azure/setup-kubectl@v4
+        with:
+          version: 'v1.28.0'
+
+      - name: Setup ArgoCD CLI
+        run: |
+          curl -sSL -o argocd-linux-amd64 https://github.com/argoproj/argo-cd/releases/latest/download/argocd-linux-amd64
+          sudo install -m 555 argocd-linux-amd64 /usr/local/bin/argocd
+          rm argocd-linux-amd64
+
+      - name: Configure kubeconfig
+        run: |
+          mkdir -p ~/.kube
+          echo "${{ secrets.KUBECONFIG_PRODUCTION }}" | base64 -d > ~/.kube/config
+
+      - name: Login to ArgoCD
+        run: |
+          argocd login ${{ secrets.ARGOCD_SERVER_PROD }} \
+            --username ${{ secrets.ARGOCD_USERNAME }} \
+            --password ${{ secrets.ARGOCD_PASSWORD }} \
+            --grpc-web
+
+      - name: Rollback applications
+        run: |
+          # Rollback to previous version
+          argocd app rollback -l app.kubernetes.io/instance=cortex-mcp \
+            --timeout 600
+
+      - name: Notify rollback
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: 'Production deployment failed and was rolled back automatically.'
+            })

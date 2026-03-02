@@ -1,0 +1,131 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: fulfillment-engine
+  namespace: cortex-service-desk
+  labels:
+    app: fulfillment-engine
+    component: automation
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: fulfillment-engine
+  template:
+    metadata:
+      labels:
+        app: fulfillment-engine
+        component: automation
+    spec:
+      containers:
+      - name: fulfillment
+        image: python:3.11-slim
+        command: ["/bin/sh"]
+        args:
+          - -c
+          - |
+            pip install --no-cache-dir flask redis kubernetes prometheus-client pyyaml requests && \
+            python /app/fulfillment_engine.py
+        ports:
+        - containerPort: 5002
+          name: http
+          protocol: TCP
+        env:
+        - name: REDIS_HOST
+          value: "redis.cortex-system.svc.cluster.local"
+        - name: REDIS_PORT
+          value: "6379"
+        - name: KUBERNETES_SERVICE_HOST
+          value: "kubernetes.default.svc"
+        - name: AUTO_APPROVE_THRESHOLD
+          valueFrom:
+            configMapKeyRef:
+              name: service-desk-config
+              key: fulfillment.auto.approve.threshold
+        volumeMounts:
+        - name: app-code
+          mountPath: /app
+        - name: workflows
+          mountPath: /workflows
+        - name: service-catalog
+          mountPath: /config/catalog
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "250m"
+          limits:
+            memory: "1Gi"
+            cpu: "500m"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 5002
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /ready
+            port: 5002
+          initialDelaySeconds: 15
+          periodSeconds: 5
+      volumes:
+      - name: app-code
+        configMap:
+          name: fulfillment-engine-code
+      - name: workflows
+        configMap:
+          name: fulfillment-workflows
+      - name: service-catalog
+        configMap:
+          name: service-catalog
+      serviceAccountName: fulfillment-engine-sa
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: fulfillment-engine
+  namespace: cortex-service-desk
+  labels:
+    app: fulfillment-engine
+spec:
+  type: ClusterIP
+  ports:
+  - port: 80
+    targetPort: 5002
+    protocol: TCP
+    name: http
+  selector:
+    app: fulfillment-engine
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: fulfillment-engine-sa
+  namespace: cortex-service-desk
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: fulfillment-engine-role
+  namespace: cortex-service-desk
+rules:
+- apiGroups: [""]
+  resources: ["configmaps", "secrets"]
+  verbs: ["get", "list", "watch"]
+- apiGroups: [""]
+  resources: ["pods", "services"]
+  verbs: ["get", "list", "create", "update"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: fulfillment-engine-binding
+  namespace: cortex-service-desk
+subjects:
+- kind: ServiceAccount
+  name: fulfillment-engine-sa
+  namespace: cortex-service-desk
+roleRef:
+  kind: Role
+  name: fulfillment-engine-role
+  apiGroup: rbac.authorization.k8s.io

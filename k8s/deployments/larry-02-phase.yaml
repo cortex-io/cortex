@@ -1,0 +1,665 @@
+---
+# Larry-02: Security & Compliance
+# Master Node: k3s-master02
+# Worker Node: k3s-worker02 (4 workers)
+# Domain: Security posture and vulnerability remediation
+
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: larry-02
+  labels:
+    larry-instance: "larry-02"
+    phase: "security"
+
+---
+# Shared PVC for coordination state
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: larry-02-coordination-pvc
+  namespace: larry-02
+spec:
+  accessModes:
+  - ReadWriteMany
+  storageClassName: longhorn
+  resources:
+    requests:
+      storage: 10Gi
+
+---
+# ConfigMap with Larry-02 configuration
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: larry-02-config
+  namespace: larry-02
+data:
+  larry-id: "larry-02"
+  phase: "security"
+  redis-host: "redis-cluster.redis-ha.svc.cluster.local"
+  redis-port: "6379"
+  coordination-path: "/coordination"
+  master-agents: "security-master"
+  worker-count: "4"
+  worker-node: "k3s-worker02"
+  token-budget-personal: "30000"
+  token-budget-workers: "36000"
+  cvss-threshold: "7.0"
+  scan-namespaces: "database,monitoring,n8n,ingress,ai-agents,redis-ha,storage"
+
+---
+# Larry-02 Coordinator Deployment (runs on k3s-master02)
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: larry-02-coordinator
+  namespace: larry-02
+  labels:
+    app: larry-coordinator
+    larry-instance: "larry-02"
+    role: coordinator
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: larry-coordinator
+      larry-instance: "larry-02"
+  template:
+    metadata:
+      labels:
+        app: larry-coordinator
+        larry-instance: "larry-02"
+        role: coordinator
+    spec:
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: node-role.kubernetes.io/master
+                operator: Exists
+              - key: kubernetes.io/hostname
+                operator: In
+                values:
+                - k3s-master02
+      serviceAccountName: larry-02-sa
+      containers:
+      - name: larry-coordinator
+        image: ghcr.io/cortex-holdings/security-master:latest
+        imagePullPolicy: IfNotPresent
+        env:
+        - name: LARRY_ID
+          valueFrom:
+            configMapKeyRef:
+              name: larry-02-config
+              key: larry-id
+        - name: PHASE
+          valueFrom:
+            configMapKeyRef:
+              name: larry-02-config
+              key: phase
+        - name: REDIS_HOST
+          valueFrom:
+            configMapKeyRef:
+              name: larry-02-config
+              key: redis-host
+        - name: REDIS_PORT
+          valueFrom:
+            configMapKeyRef:
+              name: larry-02-config
+              key: redis-port
+        - name: COORDINATION_PATH
+          valueFrom:
+            configMapKeyRef:
+              name: larry-02-config
+              key: coordination-path
+        - name: MASTER_AGENTS
+          valueFrom:
+            configMapKeyRef:
+              name: larry-02-config
+              key: master-agents
+        - name: TOKEN_BUDGET_PERSONAL
+          valueFrom:
+            configMapKeyRef:
+              name: larry-02-config
+              key: token-budget-personal
+        - name: TOKEN_BUDGET_WORKERS
+          valueFrom:
+            configMapKeyRef:
+              name: larry-02-config
+              key: token-budget-workers
+        - name: CVSS_THRESHOLD
+          valueFrom:
+            configMapKeyRef:
+              name: larry-02-config
+              key: cvss-threshold
+        - name: SCAN_NAMESPACES
+          valueFrom:
+            configMapKeyRef:
+              name: larry-02-config
+              key: scan-namespaces
+        - name: GITHUB_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: github-credentials
+              key: token
+        resources:
+          requests:
+            memory: "4Gi"
+            cpu: "2000m"
+          limits:
+            memory: "8Gi"
+            cpu: "4000m"
+        volumeMounts:
+        - name: coordination
+          mountPath: /coordination
+        - name: scripts
+          mountPath: /scripts
+      volumes:
+      - name: coordination
+        persistentVolumeClaim:
+          claimName: larry-02-coordination-pvc
+      - name: scripts
+        configMap:
+          name: larry-02-scripts
+          defaultMode: 0755
+
+---
+# ServiceAccount with RBAC for cluster scanning
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: larry-02-sa
+  namespace: larry-02
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: larry-02-security-scanner
+rules:
+- apiGroups: [""]
+  resources: ["pods", "services", "configmaps", "secrets", "namespaces"]
+  verbs: ["get", "list", "watch"]
+- apiGroups: ["apps"]
+  resources: ["deployments", "statefulsets", "daemonsets"]
+  verbs: ["get", "list", "watch"]
+- apiGroups: ["batch"]
+  resources: ["jobs", "cronjobs"]
+  verbs: ["get", "list", "watch"]
+- apiGroups: ["networking.k8s.io"]
+  resources: ["ingresses", "networkpolicies"]
+  verbs: ["get", "list", "watch"]
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: larry-02-security-scanner-binding
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: larry-02-security-scanner
+subjects:
+- kind: ServiceAccount
+  name: larry-02-sa
+  namespace: larry-02
+
+---
+# Larry-02 Scripts ConfigMap
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: larry-02-scripts
+  namespace: larry-02
+data:
+  orchestrate.sh: |
+    #!/bin/bash
+    set -euo pipefail
+
+    echo "[Larry-02] Starting Security & Compliance Phase"
+    echo "[Larry-02] Coordination via Redis at $REDIS_HOST:$REDIS_PORT"
+    echo "[Larry-02] CVSS threshold: $CVSS_THRESHOLD"
+
+    # Initialize Redis state
+    redis-cli -h $REDIS_HOST -p $REDIS_PORT SET phase:larry-02:status "in_progress"
+    redis-cli -h $REDIS_HOST -p $REDIS_PORT SET phase:larry-02:progress 0
+    redis-cli -h $REDIS_HOST -p $REDIS_PORT SET phase:larry-02:started_at "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+    redis-cli -h $REDIS_HOST -p $REDIS_PORT HSET phase:larry-02:findings critical 0 high 0 medium 0 low 0
+
+    # Publish start event
+    redis-cli -h $REDIS_HOST -p $REDIS_PORT PUBLISH larry:coordination "{\"from\":\"larry-02\",\"event\":\"phase_started\",\"timestamp\":\"$(date -u +%Y-%m-%dT%H:%M:%SZ)\"}"
+
+    # Spawn workers
+    echo "[Larry-02] Spawning 4 security workers on k3s-worker02..."
+    kubectl create -f /scripts/workers.yaml
+
+    # Monitor worker progress
+    while true; do
+      completed=$(kubectl get jobs -n larry-02 -l larry-instance=larry-02 --field-selector status.successful=1 -o json | jq '.items | length')
+      total=4
+      progress=$(( completed * 100 / total ))
+
+      redis-cli -h $REDIS_HOST -p $REDIS_PORT SET phase:larry-02:progress $progress
+      redis-cli -h $REDIS_HOST -p $REDIS_PORT PUBLISH larry:coordination "{\"from\":\"larry-02\",\"event\":\"progress_update\",\"progress\":$progress,\"message\":\"$completed/$total security workers completed\",\"timestamp\":\"$(date -u +%Y-%m-%dT%H:%M:%SZ)\"}"
+
+      if [ $completed -eq $total ]; then
+        echo "[Larry-02] All security workers completed!"
+        break
+      fi
+
+      sleep 10
+    done
+
+    # Aggregate security findings
+    echo "[Larry-02] Aggregating security findings..."
+    python3 /scripts/aggregate-findings.py
+
+    # Generate final report
+    echo "[Larry-02] Generating final security report..."
+    python3 /scripts/generate-report.py
+
+    # Mark complete
+    redis-cli -h $REDIS_HOST -p $REDIS_PORT SET phase:larry-02:status "completed"
+    redis-cli -h $REDIS_HOST -p $REDIS_PORT SET phase:larry-02:completed_at "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+    redis-cli -h $REDIS_HOST -p $REDIS_PORT PUBLISH larry:coordination "{\"from\":\"larry-02\",\"event\":\"phase_complete\",\"timestamp\":\"$(date -u +%Y-%m-%dT%H:%M:%SZ)\"}"
+
+    echo "[Larry-02] Security phase complete!"
+
+  workers.yaml: |
+    ---
+    # Worker 1: scan-worker-01 (Database, Monitoring, n8n, Ingress)
+    apiVersion: batch/v1
+    kind: Job
+    metadata:
+      name: larry-02-scan-worker-01
+      namespace: larry-02
+      labels:
+        app: larry-worker
+        larry-instance: "larry-02"
+        worker-type: scan
+    spec:
+      backoffLimit: 3
+      template:
+        metadata:
+          labels:
+            app: larry-worker
+            larry-instance: "larry-02"
+            worker-type: scan
+        spec:
+          serviceAccountName: larry-02-sa
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                - matchExpressions:
+                  - key: kubernetes.io/hostname
+                    operator: In
+                    values:
+                    - k3s-worker02
+          restartPolicy: OnFailure
+          containers:
+          - name: scan-worker
+            image: ghcr.io/cortex-holdings/security-worker:latest
+            env:
+            - name: WORKER_TYPE
+              value: "scan"
+            - name: WORKER_ID
+              value: "scan-01"
+            - name: TASK_ID
+              value: "security-scan-group-01"
+            - name: LARRY_ID
+              value: "larry-02"
+            - name: TOKEN_BUDGET
+              value: "8000"
+            - name: TIMEOUT_MINUTES
+              value: "15"
+            - name: SCAN_NAMESPACES
+              value: "database,monitoring,n8n,ingress"
+            - name: CVSS_THRESHOLD
+              value: "7.0"
+            resources:
+              requests:
+                memory: "2Gi"
+                cpu: "1000m"
+              limits:
+                memory: "4Gi"
+                cpu: "2000m"
+            volumeMounts:
+            - name: coordination
+              mountPath: /coordination
+          volumes:
+          - name: coordination
+            persistentVolumeClaim:
+              claimName: larry-02-coordination-pvc
+    ---
+    # Worker 2: scan-worker-02 (AI Agents, Redis, Storage)
+    apiVersion: batch/v1
+    kind: Job
+    metadata:
+      name: larry-02-scan-worker-02
+      namespace: larry-02
+      labels:
+        app: larry-worker
+        larry-instance: "larry-02"
+        worker-type: scan
+    spec:
+      backoffLimit: 3
+      template:
+        metadata:
+          labels:
+            app: larry-worker
+            larry-instance: "larry-02"
+            worker-type: scan
+        spec:
+          serviceAccountName: larry-02-sa
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                - matchExpressions:
+                  - key: kubernetes.io/hostname
+                    operator: In
+                    values:
+                    - k3s-worker02
+          restartPolicy: OnFailure
+          containers:
+          - name: scan-worker
+            image: ghcr.io/cortex-holdings/security-worker:latest
+            env:
+            - name: WORKER_TYPE
+              value: "scan"
+            - name: WORKER_ID
+              value: "scan-02"
+            - name: TASK_ID
+              value: "security-scan-group-02"
+            - name: LARRY_ID
+              value: "larry-02"
+            - name: TOKEN_BUDGET
+              value: "8000"
+            - name: TIMEOUT_MINUTES
+              value: "15"
+            - name: SCAN_NAMESPACES
+              value: "ai-agents,redis-ha,storage"
+            - name: CVSS_THRESHOLD
+              value: "7.0"
+            resources:
+              requests:
+                memory: "2Gi"
+                cpu: "1000m"
+              limits:
+                memory: "4Gi"
+                cpu: "2000m"
+            volumeMounts:
+            - name: coordination
+              mountPath: /coordination
+          volumes:
+          - name: coordination
+            persistentVolumeClaim:
+              claimName: larry-02-coordination-pvc
+    ---
+    # Worker 3: audit-worker (Dependency audit & compliance)
+    apiVersion: batch/v1
+    kind: Job
+    metadata:
+      name: larry-02-audit-worker
+      namespace: larry-02
+      labels:
+        app: larry-worker
+        larry-instance: "larry-02"
+        worker-type: audit
+    spec:
+      backoffLimit: 3
+      template:
+        metadata:
+          labels:
+            app: larry-worker
+            larry-instance: "larry-02"
+            worker-type: audit
+        spec:
+          serviceAccountName: larry-02-sa
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                - matchExpressions:
+                  - key: kubernetes.io/hostname
+                    operator: In
+                    values:
+                    - k3s-worker02
+          restartPolicy: OnFailure
+          containers:
+          - name: audit-worker
+            image: ghcr.io/cortex-holdings/security-worker:latest
+            env:
+            - name: WORKER_TYPE
+              value: "audit"
+            - name: TASK_ID
+              value: "dependency-audit"
+            - name: LARRY_ID
+              value: "larry-02"
+            - name: TOKEN_BUDGET
+              value: "10000"
+            - name: TIMEOUT_MINUTES
+              value: "20"
+            resources:
+              requests:
+                memory: "2Gi"
+                cpu: "1000m"
+              limits:
+                memory: "4Gi"
+                cpu: "2000m"
+            volumeMounts:
+            - name: coordination
+              mountPath: /coordination
+          volumes:
+          - name: coordination
+            persistentVolumeClaim:
+              claimName: larry-02-coordination-pvc
+    ---
+    # Worker 4: remediation-worker (Generate automated fix PRs)
+    apiVersion: batch/v1
+    kind: Job
+    metadata:
+      name: larry-02-remediation-worker
+      namespace: larry-02
+      labels:
+        app: larry-worker
+        larry-instance: "larry-02"
+        worker-type: remediation
+    spec:
+      backoffLimit: 3
+      template:
+        metadata:
+          labels:
+            app: larry-worker
+            larry-instance: "larry-02"
+            worker-type: remediation
+        spec:
+          serviceAccountName: larry-02-sa
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                - matchExpressions:
+                  - key: kubernetes.io/hostname
+                    operator: In
+                    values:
+                    - k3s-worker02
+          restartPolicy: OnFailure
+          containers:
+          - name: remediation-worker
+            image: ghcr.io/cortex-holdings/security-worker:latest
+            env:
+            - name: WORKER_TYPE
+              value: "remediation"
+            - name: TASK_ID
+              value: "automated-remediation"
+            - name: LARRY_ID
+              value: "larry-02"
+            - name: TOKEN_BUDGET
+              value: "10000"
+            - name: TIMEOUT_MINUTES
+              value: "25"
+            - name: GITHUB_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: github-credentials
+                  key: token
+            resources:
+              requests:
+                memory: "2Gi"
+                cpu: "1000m"
+              limits:
+                memory: "4Gi"
+                cpu: "2000m"
+            volumeMounts:
+            - name: coordination
+              mountPath: /coordination
+          volumes:
+          - name: coordination
+            persistentVolumeClaim:
+              claimName: larry-02-coordination-pvc
+
+  aggregate-findings.py: |
+    #!/usr/bin/env python3
+    import json
+    import os
+    import redis
+
+    larry_id = "larry-02"
+    coordination_path = "/coordination"
+    r = redis.Redis(host=os.getenv('REDIS_HOST'), port=int(os.getenv('REDIS_PORT')))
+
+    # Aggregate findings from all scan workers
+    scan_workers = ["scan-01", "scan-02"]
+    all_cves = []
+
+    for worker in scan_workers:
+        findings_file = f"{coordination_path}/security/findings/{larry_id}-{worker}-findings.json"
+        if os.path.exists(findings_file):
+            with open(findings_file, 'r') as f:
+                findings = json.load(f)
+                all_cves.extend(findings.get('cves', []))
+
+    # Count by severity
+    severity_counts = {
+        'critical': len([c for c in all_cves if c['cvss'] >= 9.0]),
+        'high': len([c for c in all_cves if 7.0 <= c['cvss'] < 9.0]),
+        'medium': len([c for c in all_cves if 4.0 <= c['cvss'] < 7.0]),
+        'low': len([c for c in all_cves if c['cvss'] < 4.0])
+    }
+
+    # Update Redis
+    r.hset(f"phase:{larry_id}:findings", mapping=severity_counts)
+
+    # Save aggregated findings
+    aggregated = {
+        "larry_id": larry_id,
+        "total_cves": len(all_cves),
+        "severity_breakdown": severity_counts,
+        "cves": all_cves
+    }
+
+    aggregated_file = f"{coordination_path}/security/aggregated-findings.json"
+    os.makedirs(os.path.dirname(aggregated_file), exist_ok=True)
+    with open(aggregated_file, 'w') as f:
+        json.dump(aggregated, f, indent=2)
+
+    print(f"Aggregated {len(all_cves)} CVEs")
+    print(f"Critical: {severity_counts['critical']}, High: {severity_counts['high']}, Medium: {severity_counts['medium']}, Low: {severity_counts['low']}")
+
+  generate-report.py: |
+    #!/usr/bin/env python3
+    import json
+    import os
+    from datetime import datetime
+
+    larry_id = "larry-02"
+    coordination_path = "/coordination"
+
+    # Load aggregated findings
+    with open(f"{coordination_path}/security/aggregated-findings.json", 'r') as f:
+        findings = json.load(f)
+
+    # Load remediation results
+    remediation_file = f"{coordination_path}/security/remediation-results.json"
+    remediation = {}
+    if os.path.exists(remediation_file):
+        with open(remediation_file, 'r') as f:
+            remediation = json.load(f)
+
+    # Load audit results
+    audit_file = f"{coordination_path}/security/audit-results.json"
+    audit = {}
+    if os.path.exists(audit_file):
+        with open(audit_file, 'r') as f:
+            audit = json.load(f)
+
+    # Generate comprehensive report
+    report = {
+        "larry_id": larry_id,
+        "phase": "security",
+        "completed_at": datetime.utcnow().isoformat() + "Z",
+        "summary": {
+            "total_cves_found": findings['total_cves'],
+            "critical_cves": findings['severity_breakdown']['critical'],
+            "high_cves": findings['severity_breakdown']['high'],
+            "medium_cves": findings['severity_breakdown']['medium'],
+            "low_cves": findings['severity_breakdown']['low'],
+            "prs_created": remediation.get('prs_created', 0),
+            "compliance_status": audit.get('compliance_status', 'unknown')
+        },
+        "findings": findings,
+        "remediation": remediation,
+        "audit": audit,
+        "recommendations": [
+            "Review and merge automated fix PRs",
+            "Schedule manual review for critical CVEs",
+            "Update dependency lockfiles",
+            "Implement automated scanning in CI/CD pipeline"
+        ]
+    }
+
+    # Save report
+    report_file = f"{coordination_path}/reports/larry-02-final.json"
+    os.makedirs(os.path.dirname(report_file), exist_ok=True)
+    with open(report_file, 'w') as f:
+        json.dump(report, f, indent=2)
+
+    print(f"Security report saved to {report_file}")
+
+---
+# Service for Larry-02 coordinator
+apiVersion: v1
+kind: Service
+metadata:
+  name: larry-02-coordinator
+  namespace: larry-02
+spec:
+  selector:
+    app: larry-coordinator
+    larry-instance: "larry-02"
+  ports:
+  - name: http
+    port: 8080
+    targetPort: 8080
+  type: ClusterIP
+
+---
+# ServiceMonitor for Prometheus scraping
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: larry-02-metrics
+  namespace: larry-02
+spec:
+  selector:
+    matchLabels:
+      app: larry-coordinator
+      larry-instance: "larry-02"
+  endpoints:
+  - port: http
+    interval: 15s
+    path: /metrics

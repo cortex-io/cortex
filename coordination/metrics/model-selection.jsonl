@@ -168,3 +168,243 @@
   "sensitivity_level": "none",
   "reasoning": "Selected claude-sonnet-4 from balanced tier"
 }
+{
+  "timestamp": "2025-12-01T12:50:18-0600",
+  "task_id": "resumate-builder-core",
+  "model": "claude-sonnet-4",
+  "provider": "anthropic",
+  "tier": "balanced",
+  "complexity_score": 6,
+  "sensitivity_level": "none",
+  "reasoning": "Selected claude-sonnet-4 from balanced tier"
+}
+{
+  "timestamp": "2025-12-01T12:50:21-0600",
+  "task_id": "resumate-preview-engine",
+  "model": "claude-sonnet-4",
+  "provider": "anthropic",
+  "tier": "balanced",
+  "complexity_score": 5,
+  "sensitivity_level": "none",
+  "reasoning": "Selected claude-sonnet-4 from balanced tier"
+}
+{
+  "timestamp": "2025-12-01T12:50:27-0600",
+  "task_id": "resumate-templates-core",
+  "model": "claude-sonnet-4",
+  "provider": "anthropic",
+  "tier": "balanced",
+  "complexity_score": 5,
+  "sensitivity_level": "none",
+  "reasoning": "Selected claude-sonnet-4 from balanced tier"
+}
+{
+  "timestamp": "2025-12-01T12:50:30-0600",
+  "task_id": "resumate-ai-writer",
+  "model": "claude-sonnet-4",
+  "provider": "anthropic",
+  "tier": "balanced",
+  "complexity_score": 5,
+  "sensitivity_level": "none",
+  "reasoning": "Selected claude-sonnet-4 from balanced tier"
+}
+{
+  "timestamp": "2025-12-01T12:50:34-0600",
+  "task_id": "resumate-security-audit",
+  "model": "llama2-70b",
+  "provider": "ollama",
+  "tier": "local",
+  "complexity_score": 8,
+  "sensitivity_level": "high",
+  "reasoning": "Selected llama2-70b from local tier (forced local for high sensitivity)"
+}
+{
+  "timestamp": "2025-12-01T12:50:37-0600",
+  "task_id": "resumate-parser",
+  "model": "claude-sonnet-4",
+  "provider": "anthropic",
+  "tier": "balanced",
+  "complexity_score": 5,
+  "sensitivity_level": "none",
+  "reasoning": "Selected claude-sonnet-4 from balanced tier"
+}
+{
+  "timestamp": "2025-12-03T11:44:02-0600",
+  "task_id": "cleanup-analysis-001",
+  "model": "claude-sonnet-4",
+  "provider": "anthropic",
+  "tier": "balanced",
+  "complexity_score": 5,
+  "sensitivity_level": "low",
+  "reasoning": "Selected claude-sonnet-4 from balanced tier"
+}
+{
+  "timestamp": "2025-12-03T11:52:35-0600",
+  "task_id": "cve-scan-cortex-001",
+  "model": "claude-opus-4",
+  "provider": "anthropic",
+  "tier": "powerful",
+  "complexity_score": 8,
+  "sensitivity_level": "none",
+  "reasoning": "Selected claude-opus-4 from powerful tier (high complexity score: 8)"
+}
+{
+  "timestamp": "2025-12-03T12:07:55-0600",
+  "task_id": "package-updates-001",
+  "model": "claude-sonnet-4",
+  "provider": "anthropic",
+  "tier": "balanced",
+  "complexity_score": 5,
+  "sensitivity_level": "none",
+  "reasoning": "Selected claude-sonnet-4 from balanced tier"
+}
+{
+  "timestamp": "2025-12-03T12:11:59-0600",
+  "task_id": "vuln-remediation-001",
+  "model": "claude-opus-4",
+  "provider": "anthropic",
+  "tier": "powerful",
+  "complexity_score": 8,
+  "sensitivity_level": "none",
+  "reasoning": "Selected claude-opus-4 from powerful tier (high complexity score: 8)"
+}
+{
+  "timestamp": "2025-12-03T12:34:00-0600",
+  "task_id": "data-intelligence-phase1-foundation",
+  "model": "claude-sonnet-4",
+  "provider": "anthropic",
+  "tier": "balanced",
+  "complexity_score": 6,
+  "sensitivity_level": "none",
+  "reasoning": "Selected claude-sonnet-4 from balanced tier"
+}
+{
+  "timestamp": "2025-12-03T12:34:03-0600",
+  "task_id": "data-intelligence-phase2-intelligence",
+  "model": "claude-sonnet-4",
+  "provider": "anthropic",
+  "tier": "balanced",
+  "complexity_score": 6,
+  "sensitivity_level": "none",
+  "reasoning": "Selected claude-sonnet-4 from balanced tier"
+}
+{
+  "timestamp": "2025-12-03T12:34:06-0600",
+  "task_id": "data-intelligence-phase3-scale",
+  "model": "llama2-70b",
+  "provider": "ollama",
+  "tier": "local",
+  "complexity_score": 6,
+  "sensitivity_level": "high",
+  "reasoning": "Selected llama2-70b from local tier (forced local for high sensitivity)"
+}
+{
+  "timestamp": "2025-12-03T12:34:09-0600",
+  "task_id": "data-intelligence-phase4-collaboration",
+  "model": "claude-sonnet-4",
+  "provider": "anthropic",
+  "tier": "balanced",
+  "complexity_score": 5,
+  "sensitivity_level": "none",
+  "reasoning": "Selected claude-sonnet-4 from balanced tier"
+}
+{
+  "timestamp": "2025-12-03T12:34:14-0600",
+  "task_id": "data-intelligence-integration",
+  "model": "claude-sonnet-4",
+  "provider": "anthropic",
+  "tier": "balanced",
+  "complexity_score": 5,
+  "sensitivity_level": "none",
+  "reasoning": "Selected claude-sonnet-4 from balanced tier"
+}
+{
+  "timestamp": "2025-12-03T12:34:18-0600",
+  "task_id": "data-intelligence-documentation",
+  "model": "claude-sonnet-4",
+  "provider": "anthropic",
+  "tier": "balanced",
+  "complexity_score": 6,
+  "sensitivity_level": "none",
+  "reasoning": "Selected claude-sonnet-4 from balanced tier"
+}
+{
+  "timestamp": "2025-12-04T11:23:31-0600",
+  "task_id": "linkedin-phase-1",
+  "model": "claude-sonnet-4",
+  "provider": "anthropic",
+  "tier": "balanced",
+  "complexity_score": 6,
+  "sensitivity_level": "none",
+  "reasoning": "Selected claude-sonnet-4 from balanced tier"
+}
+{
+  "timestamp": "2025-12-04T11:23:36-0600",
+  "task_id": "linkedin-phase-2",
+  "model": "claude-sonnet-4",
+  "provider": "anthropic",
+  "tier": "balanced",
+  "complexity_score": 5,
+  "sensitivity_level": "none",
+  "reasoning": "Selected claude-sonnet-4 from balanced tier"
+}
+{
+  "timestamp": "2025-12-05T08:26:31-0600",
+  "task_id": "self-opt-timeout-001",
+  "model": "claude-sonnet-4",
+  "provider": "anthropic",
+  "tier": "balanced",
+  "complexity_score": 5,
+  "sensitivity_level": "none",
+  "reasoning": "Selected claude-sonnet-4 from balanced tier"
+}
+{
+  "timestamp": "2025-12-05T08:26:32-0600",
+  "task_id": "self-opt-timeout-002",
+  "model": "claude-sonnet-4",
+  "provider": "anthropic",
+  "tier": "balanced",
+  "complexity_score": 5,
+  "sensitivity_level": "none",
+  "reasoning": "Selected claude-sonnet-4 from balanced tier"
+}
+{
+  "timestamp": "2025-12-05T08:26:35-0600",
+  "task_id": "self-opt-timeout-003",
+  "model": "claude-sonnet-4",
+  "provider": "anthropic",
+  "tier": "balanced",
+  "complexity_score": 5,
+  "sensitivity_level": "none",
+  "reasoning": "Selected claude-sonnet-4 from balanced tier"
+}
+{
+  "timestamp": "2025-12-05T08:26:35-0600",
+  "task_id": "self-opt-timeout-003",
+  "model": "claude-sonnet-4",
+  "provider": "anthropic",
+  "tier": "balanced",
+  "complexity_score": 5,
+  "sensitivity_level": "none",
+  "reasoning": "Selected claude-sonnet-4 from balanced tier"
+}
+{
+  "timestamp": "2025-12-05T08:27:30-0600",
+  "task_id": "self-opt-timeout-003",
+  "model": "claude-sonnet-4",
+  "provider": "anthropic",
+  "tier": "balanced",
+  "complexity_score": 5,
+  "sensitivity_level": "none",
+  "reasoning": "Selected claude-sonnet-4 from balanced tier"
+}
+{
+  "timestamp": "2025-12-20T14:03:10-0600",
+  "task_id": "fix-k3s-master03-ip-1734739200",
+  "model": "claude-sonnet-4",
+  "provider": "anthropic",
+  "tier": "balanced",
+  "complexity_score": 5,
+  "sensitivity_level": "low",
+  "reasoning": "Selected claude-sonnet-4 from balanced tier"
+}

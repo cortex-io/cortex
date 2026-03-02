@@ -1,0 +1,30 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: kaniko-frontend-redesign-build
+  namespace: cortex-chat
+spec:
+  ttlSecondsAfterFinished: 300
+  template:
+    spec:
+      restartPolicy: Never
+      containers:
+      - name: kaniko
+        image: gcr.io/kaniko-project/executor:latest
+        args:
+        - "--dockerfile=/workspace/Dockerfile"
+        - "--context=/workspace"
+        - "--destination=10.43.170.72:5000/cortex-chat-frontend:latest"
+        - "--skip-tls-verify"
+        - "--insecure"
+        - "--cache=false"
+        volumeMounts:
+        - name: frontend-source
+          mountPath: /workspace
+      volumes:
+      - name: frontend-source
+        hostPath:
+          path: /tmp/cortex-chat/frontend-redesign
+          type: Directory
+      nodeSelector:
+        kubernetes.io/hostname: k3s-master03

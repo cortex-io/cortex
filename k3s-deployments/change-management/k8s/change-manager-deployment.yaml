@@ -1,0 +1,240 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: cortex-change-mgmt
+  labels:
+    app.kubernetes.io/name: cortex-change-management
+    app.kubernetes.io/part-of: cortex
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: change-config
+  namespace: cortex-change-mgmt
+data:
+  change-config.sh: |
+    #!/bin/bash
+    # Cortex Change Management Configuration
+    export CHANGE_MGMT_ENABLED=true
+    export REQUIRE_CHANGE_APPROVAL=true
+    export AUTO_APPROVE_LOW_RISK=true
+
+    # Risk thresholds
+    export RISK_THRESHOLD_LOW=30
+    export RISK_THRESHOLD_MEDIUM=60
+    export RISK_THRESHOLD_HIGH=80
+    export AUTO_APPROVE_THRESHOLD=25
+
+    # CAB settings
+    export CAB_MEETING_SCHEDULE="0 14 * * 4"
+    export CAB_MEMBERS="tech-lead,security-lead,ops-lead,product-lead"
+    export CAB_MIN_APPROVALS=2
+    export ECAB_MEMBERS="tech-lead-oncall,security-oncall"
+
+    # Approval timeouts
+    export TECH_LEAD_APPROVAL_TIMEOUT=14400
+    export CAB_APPROVAL_TIMEOUT=604800
+    export AUTO_REJECT_ON_TIMEOUT=false
+
+    # Implementation
+    export AUTO_IMPLEMENT=true
+    export IMPLEMENTATION_DELAY=300
+    export AUTO_ROLLBACK_ENABLED=true
+    export ROLLBACK_TIMEOUT=300
+
+    # Monitoring
+    export VALIDATION_PERIOD=1800
+    export HEALTH_CHECK_INTERVAL=60
+    export ERROR_RATE_THRESHOLD=5
+    export LATENCY_THRESHOLD=200
+
+    # Compliance
+    export SOC2_COMPLIANCE=true
+    export HIPAA_COMPLIANCE=false
+    export ISO27001_COMPLIANCE=false
+    export SEGREGATION_OF_DUTIES=true
+    export REQUIRE_DOCUMENTATION=true
+    export REQUIRE_ROLLBACK_PLAN=true
+
+    # Metrics
+    export METRICS_ENABLED=true
+    export METRICS_BACKEND=prometheus
+    export PROMETHEUS_PUSHGATEWAY=http://prometheus-pushgateway.monitoring:9091
+    export AUDIT_LOGGING=true
+    export AUDIT_RETENTION_DAYS=90
+
+    # Integration
+    export CMDB_ENABLED=true
+    export GOVERNANCE_ENABLED=true
+    export MOE_ROUTER_ENABLED=true
+
+    # Standard change models
+    export STD_WORKER_RESTART_ENABLED=true
+    export STD_WORKER_RESTART_MAX_FREQ=3
+    export STD_AUTOSCALE_ENABLED=true
+    export STD_AUTOSCALE_MIN_REPLICAS=1
+    export STD_AUTOSCALE_MAX_REPLICAS=10
+    export STD_SECURITY_PATCH_ENABLED=true
+    export STD_SECURITY_PATCH_MAX_SEVERITY=high
+    export STD_CONFIG_UPDATE_ENABLED=true
+    export STD_CONFIG_UPDATE_TOLERANCE=20
+
+    # Emergency changes
+    export EMERGENCY_CHANGE_ENABLED=true
+    export EMERGENCY_AUTO_APPROVE=true
+    export EMERGENCY_CAB_REVIEW_SLA=24
+
+    # DevOps integration
+    export CICD_AUTO_CHANGE=true
+    export K8S_EVENT_INTEGRATION=true
+
+    # Feature flags
+    export AI_RISK_ASSESSMENT=true
+    export ML_PREDICTION=true
+    export AUTO_DEPENDENCY_ANALYSIS=true
+    export AUTO_ROLLBACK_DECISION=true
+    export SELF_HEALING=true
+
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: change-data
+  namespace: cortex-change-mgmt
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: longhorn
+  resources:
+    requests:
+      storage: 5Gi
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: change-manager
+  namespace: cortex-change-mgmt
+  labels:
+    app: change-manager
+    component: change-management
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: change-manager
+  template:
+    metadata:
+      labels:
+        app: change-manager
+        component: change-management
+    spec:
+      volumes:
+        - name: change-data
+          persistentVolumeClaim:
+            claimName: change-data
+        - name: config
+          configMap:
+            name: change-config
+            defaultMode: 0755
+        - name: scripts
+          configMap:
+            name: change-scripts
+            defaultMode: 0755
+      containers:
+        - name: change-manager
+          image: alpine:3.19
+          command: ["/bin/sh", "-c"]
+          args:
+            - |
+              apk add --no-cache bash jq curl openssl bc
+              mkdir -p /app/changes/{pending,approved,rejected,implemented,closed,cab_queue}
+              mkdir -p /app/policies /app/audit
+              echo "Cortex Change Manager started"
+              tail -f /dev/null
+          volumeMounts:
+            - name: change-data
+              mountPath: /app
+            - name: config
+              mountPath: /app/config
+            - name: scripts
+              mountPath: /app/scripts
+          env:
+            - name: SCRIPT_DIR
+              value: "/app"
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "100m"
+            limits:
+              memory: "256Mi"
+              cpu: "200m"
+          livenessProbe:
+            exec:
+              command: ["sh", "-c", "test -d /app/changes"]
+            initialDelaySeconds: 10
+            periodSeconds: 30
+          readinessProbe:
+            exec:
+              command: ["sh", "-c", "test -d /app/changes && test -f /app/config/change-config.sh"]
+            initialDelaySeconds: 5
+            periodSeconds: 10
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: change-manager
+  namespace: cortex-change-mgmt
+  labels:
+    app: change-manager
+spec:
+  type: ClusterIP
+  ports:
+    - port: 8080
+      targetPort: 8080
+      protocol: TCP
+      name: http
+  selector:
+    app: change-manager
+
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: change-manager
+  namespace: cortex-change-mgmt
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: change-manager-role
+rules:
+  - apiGroups: [""]
+    resources: ["pods", "services", "configmaps", "secrets"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: ["apps"]
+    resources: ["deployments", "statefulsets", "daemonsets"]
+    verbs: ["get", "list", "watch", "update", "patch"]
+  - apiGroups: ["batch"]
+    resources: ["jobs", "cronjobs"]
+    verbs: ["get", "list", "watch", "create"]
+  - apiGroups: [""]
+    resources: ["events"]
+    verbs: ["get", "list", "watch", "create"]
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: change-manager-binding
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: change-manager-role
+subjects:
+  - kind: ServiceAccount
+    name: change-manager
+    namespace: cortex-change-mgmt

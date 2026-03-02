@@ -1,0 +1,60 @@
+{
+  "version": "1.0.0",
+  "description": "Custom alert-to-intent mappings for Cortex orchestrator",
+  "rules": {
+    "K3sNodeStorageLow": "k3s_storage_expansion",
+    "K3sStorageFull": "k3s_storage_expansion",
+    "K3sStorageCritical": "k3s_storage_expansion",
+    "PVCPending": "k3s_storage_expansion",
+    "K3sHighCPU": "k3s_node_scale",
+    "K3sPendingPods": "k3s_node_scale",
+    "K3sNodePressure": "k3s_node_scale",
+    "K3sNodeNotReady": "k3s_node_scale",
+    "MCPServerDown": "mcp_server_lifecycle",
+    "MCPServerUnhealthy": "mcp_server_lifecycle",
+    "MCPServerHighLatency": "mcp_server_lifecycle",
+    "CertExpiringSoon": "certificate_renewal",
+    "CertExpired": "certificate_renewal",
+    "CertRenewalFailed": "certificate_renewal",
+    "BackupFailed": "backup_restore",
+    "BackupMissing": "backup_restore",
+    "BackupStale": "backup_restore",
+    "CodeQualityFailed": "code_validation",
+    "LintErrors": "code_validation",
+    "TestFailure": "code_validation",
+    "SecurityVulnerability": "code_validation",
+    "DependencyOutdated": "code_validation",
+    "ProxmoxVMDown": "proxmox_vm_provision",
+    "ProxmoxVMUnhealthy": "proxmox_vm_provision",
+    "CortexPodCrashLooping": "auto_remediation",
+    "CortexHighMemoryUsage": "auto_remediation",
+    "CortexWorkerStuck": "auto_remediation"
+  },
+  "thresholds": {
+    "storage_expansion": {
+      "warning_percent": 80,
+      "critical_percent": 90,
+      "default_expansion_gb": 50,
+      "max_expansion_gb": 500
+    },
+    "node_scale": {
+      "cpu_threshold_percent": 85,
+      "pending_pods_threshold": 5,
+      "max_scale_up": 3,
+      "cooldown_minutes": 10
+    },
+    "certificate_renewal": {
+      "warning_days": 30,
+      "critical_days": 7
+    }
+  },
+  "exclusions": {
+    "alerts": ["InfoOnly", "TestAlert", "Heartbeat"],
+    "namespaces": ["kube-system"],
+    "times": {
+      "maintenance_windows": [
+        {"day": "sunday", "start": "02:00", "end": "06:00"}
+      ]
+    }
+  }
+}

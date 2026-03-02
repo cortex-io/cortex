@@ -1,0 +1,484 @@
+---
+# ConfigMap for OpenTelemetry Agent configuration
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: otel-agent-config
+  namespace: cortex-observability
+  labels:
+    app.kubernetes.io/name: otel-agent
+    app.kubernetes.io/component: agent
+    app.kubernetes.io/part-of: cortex
+data:
+  otel-agent-config.yaml: |
+    receivers:
+      # OTLP receiver for local applications
+      otlp:
+        protocols:
+          grpc:
+            endpoint: 0.0.0.0:4317
+          http:
+            endpoint: 0.0.0.0:4318
+
+      # Host metrics receiver
+      hostmetrics:
+        collection_interval: 30s
+        scrapers:
+          cpu:
+            metrics:
+              system.cpu.utilization:
+                enabled: true
+              system.cpu.logical.count:
+                enabled: true
+          memory:
+            metrics:
+              system.memory.utilization:
+                enabled: true
+          disk:
+            metrics:
+              system.disk.operations:
+                enabled: true
+          filesystem:
+            metrics:
+              system.filesystem.utilization:
+                enabled: true
+          network:
+            metrics:
+              system.network.connections:
+                enabled: true
+          load:
+          paging:
+            metrics:
+              system.paging.operations:
+                enabled: true
+          processes:
+            metrics:
+              process.count:
+                enabled: true
+
+      # Kubelet stats receiver
+      kubeletstats:
+        collection_interval: 30s
+        auth_type: serviceAccount
+        endpoint: "https://${env:KUBE_NODE_NAME}:10250"
+        insecure_skip_verify: true
+        metric_groups:
+          - node
+          - pod
+          - container
+        metrics:
+          k8s.pod.cpu.utilization:
+            enabled: true
+          k8s.pod.memory.working_set:
+            enabled: true
+          k8s.container.cpu.utilization:
+            enabled: true
+          k8s.container.memory.working_set:
+            enabled: true
+
+      # File log receiver for container logs
+      filelog:
+        include:
+          - /var/log/pods/cortex-system_*/*/*.log
+        include_file_path: true
+        include_file_name: false
+        start_at: end
+        operators:
+          # Parse CRI-O / containerd format
+          - type: regex_parser
+            id: parser-crio
+            regex: '^(?P<time>[^ ^Z]+Z) (?P<stream>stdout|stderr) (?P<logtag>[^ ]*) ?(?P<log>.*)$'
+            timestamp:
+              parse_from: attributes.time
+              layout: '%Y-%m-%dT%H:%M:%S.%LZ'
+          # Extract Kubernetes metadata
+          - type: regex_parser
+            id: parser-containerd
+            regex: '^.*\/(?P<namespace>[^_]+)_(?P<pod_name>[^_]+)_(?P<uid>[^\/]+)\/(?P<container_name>[^\/]+)\/.*\.log$'
+            parse_from: attributes["log.file.path"]
+          # Move log to body
+          - type: move
+            from: attributes.log
+            to: body
+          # Parse JSON logs if applicable
+          - type: json_parser
+            id: parser-json
+            parse_from: body
+            if: 'body matches "^\\{"'
+
+    processors:
+      # Memory limiter (smaller limits for agent)
+      memory_limiter:
+        check_interval: 1s
+        limit_percentage: 65
+        spike_limit_percentage: 20
+
+      # Batch processor
+      batch:
+        timeout: 10s
+        send_batch_size: 512
+        send_batch_max_size: 1024
+
+      # Resource processor to add node information
+      resource:
+        attributes:
+          - key: service.name
+            value: otel-agent
+            action: insert
+          - key: service.namespace
+            value: cortex
+            action: insert
+          - key: deployment.environment
+            value: production
+            action: insert
+          - key: k8s.node.name
+            from_attribute: env:KUBE_NODE_NAME
+            action: insert
+
+      # Resource detection
+      resourcedetection:
+        detectors: [env, system, docker]
+        timeout: 5s
+        override: false
+
+      # Kubernetes attributes processor
+      k8sattributes:
+        auth_type: serviceAccount
+        passthrough: false
+        filter:
+          node_from_env_var: KUBE_NODE_NAME
+        extract:
+          metadata:
+            - k8s.namespace.name
+            - k8s.pod.name
+            - k8s.pod.uid
+            - k8s.node.name
+          labels:
+            - tag_name: app.kubernetes.io/name
+              key: app.kubernetes.io/name
+              from: pod
+            - tag_name: app.kubernetes.io/component
+              key: app.kubernetes.io/component
+              from: pod
+            - tag_name: cortex.agent.type
+              key: cortex.agent.type
+              from: pod
+
+    exporters:
+      # Forward to central collector
+      otlp:
+        endpoint: otel-collector.cortex-observability.svc.cluster.local:4317
+        tls:
+          insecure: true
+        sending_queue:
+          enabled: true
+          num_consumers: 5
+          queue_size: 500
+        retry_on_failure:
+          enabled: true
+          initial_interval: 5s
+          max_interval: 30s
+          max_elapsed_time: 300s
+
+      # Logging for debugging (sampling to reduce noise)
+      logging:
+        verbosity: normal
+        sampling_initial: 2
+        sampling_thereafter: 500
+
+    extensions:
+      health_check:
+        endpoint: 0.0.0.0:13133
+
+      memory_ballast:
+        size_mib: 64
+
+    service:
+      extensions: [health_check, memory_ballast]
+
+      pipelines:
+        metrics:
+          receivers: [otlp, hostmetrics, kubeletstats]
+          processors:
+            - memory_limiter
+            - resource
+            - resourcedetection
+            - k8sattributes
+            - batch
+          exporters: [otlp]
+
+        traces:
+          receivers: [otlp]
+          processors:
+            - memory_limiter
+            - resource
+            - resourcedetection
+            - k8sattributes
+            - batch
+          exporters: [otlp]
+
+        logs:
+          receivers: [otlp, filelog]
+          processors:
+            - memory_limiter
+            - resource
+            - resourcedetection
+            - k8sattributes
+            - batch
+          exporters: [otlp]
+
+      telemetry:
+        logs:
+          level: info
+        metrics:
+          level: basic
+          address: 0.0.0.0:8888
+
+---
+# ServiceAccount for OpenTelemetry Agent
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: otel-agent
+  namespace: cortex-observability
+  labels:
+    app.kubernetes.io/name: otel-agent
+    app.kubernetes.io/component: agent
+    app.kubernetes.io/part-of: cortex
+
+---
+# ClusterRole for OpenTelemetry Agent
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: otel-agent
+  labels:
+    app.kubernetes.io/name: otel-agent
+    app.kubernetes.io/component: agent
+    app.kubernetes.io/part-of: cortex
+rules:
+  # Required for kubeletstats receiver
+  - apiGroups: [""]
+    resources:
+      - nodes/stats
+      - nodes/proxy
+    verbs: ["get"]
+  # Required for k8sattributes processor
+  - apiGroups: [""]
+    resources:
+      - pods
+      - namespaces
+    verbs: ["get", "list", "watch"]
+
+---
+# ClusterRoleBinding for OpenTelemetry Agent
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: otel-agent
+  labels:
+    app.kubernetes.io/name: otel-agent
+    app.kubernetes.io/component: agent
+    app.kubernetes.io/part-of: cortex
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: otel-agent
+subjects:
+  - kind: ServiceAccount
+    name: otel-agent
+    namespace: cortex-observability
+
+---
+# DaemonSet for OpenTelemetry Agent
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: otel-agent
+  namespace: cortex-observability
+  labels:
+    app.kubernetes.io/name: otel-agent
+    app.kubernetes.io/component: agent
+    app.kubernetes.io/part-of: cortex
+    app.kubernetes.io/version: "0.91.0"
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: otel-agent
+      app.kubernetes.io/component: agent
+  updateStrategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: otel-agent
+        app.kubernetes.io/component: agent
+        app.kubernetes.io/part-of: cortex
+        app.kubernetes.io/version: "0.91.0"
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8888"
+        prometheus.io/path: "/metrics"
+    spec:
+      serviceAccountName: otel-agent
+      hostNetwork: true
+      hostPID: true
+      dnsPolicy: ClusterFirstWithHostNet
+      securityContext:
+        runAsNonRoot: false
+        runAsUser: 0
+      containers:
+        - name: otel-agent
+          image: otel/opentelemetry-collector-contrib:0.91.0
+          imagePullPolicy: IfNotPresent
+          command:
+            - /otelcol-contrib
+            - --config=/conf/otel-agent-config.yaml
+          ports:
+            - name: otlp-grpc
+              containerPort: 4317
+              hostPort: 4317
+              protocol: TCP
+            - name: otlp-http
+              containerPort: 4318
+              hostPort: 4318
+              protocol: TCP
+            - name: metrics
+              containerPort: 8888
+              protocol: TCP
+            - name: health
+              containerPort: 13133
+              protocol: TCP
+          env:
+            - name: KUBE_NODE_NAME
+              valueFrom:
+                fieldRef:
+                  apiVersion: v1
+                  fieldPath: spec.nodeName
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  apiVersion: v1
+                  fieldPath: metadata.name
+            - name: POD_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  apiVersion: v1
+                  fieldPath: metadata.namespace
+            - name: GOMEMLIMIT
+              value: "384MiB"
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+          volumeMounts:
+            - name: config
+              mountPath: /conf
+              readOnly: true
+            - name: varlog
+              mountPath: /var/log
+              readOnly: true
+            - name: varlibdockercontainers
+              mountPath: /var/lib/docker/containers
+              readOnly: true
+            - name: hostfs
+              mountPath: /hostfs
+              readOnly: true
+              mountPropagation: HostToContainer
+          livenessProbe:
+            httpGet:
+              path: /
+              port: health
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /
+              port: health
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            timeoutSeconds: 3
+            failureThreshold: 3
+      volumes:
+        - name: config
+          configMap:
+            name: otel-agent-config
+            items:
+              - key: otel-agent-config.yaml
+                path: otel-agent-config.yaml
+        - name: varlog
+          hostPath:
+            path: /var/log
+        - name: varlibdockercontainers
+          hostPath:
+            path: /var/lib/docker/containers
+        - name: hostfs
+          hostPath:
+            path: /
+      tolerations:
+        # Tolerate all taints to run on all nodes
+        - effect: NoSchedule
+          operator: Exists
+        - effect: NoExecute
+          operator: Exists
+
+---
+# Service for OpenTelemetry Agent (optional, for direct access)
+apiVersion: v1
+kind: Service
+metadata:
+  name: otel-agent
+  namespace: cortex-observability
+  labels:
+    app.kubernetes.io/name: otel-agent
+    app.kubernetes.io/component: agent
+    app.kubernetes.io/part-of: cortex
+spec:
+  type: ClusterIP
+  clusterIP: None
+  ports:
+    - name: otlp-grpc
+      port: 4317
+      targetPort: otlp-grpc
+      protocol: TCP
+    - name: otlp-http
+      port: 4318
+      targetPort: otlp-http
+      protocol: TCP
+    - name: metrics
+      port: 8888
+      targetPort: metrics
+      protocol: TCP
+  selector:
+    app.kubernetes.io/name: otel-agent
+    app.kubernetes.io/component: agent
+
+---
+# ServiceMonitor for Prometheus Operator
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: otel-agent
+  namespace: cortex-observability
+  labels:
+    app.kubernetes.io/name: otel-agent
+    app.kubernetes.io/component: agent
+    app.kubernetes.io/part-of: cortex
+    prometheus: kube-prometheus
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: otel-agent
+      app.kubernetes.io/component: agent
+  endpoints:
+    - port: metrics
+      interval: 30s
+      path: /metrics
+      scheme: http

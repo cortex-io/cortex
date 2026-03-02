@@ -1,0 +1,2402 @@
+apiVersion: v1
+items:
+- apiVersion: apps/v1
+  kind: Deployment
+  metadata:
+    annotations:
+      deployment.kubernetes.io/revision: "1"
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"apps/v1","kind":"Deployment","metadata":{"annotations":{},"labels":{"app":"auto-fix-daemon","cortex.component":"automation"},"name":"auto-fix-daemon","namespace":"cortex-system"},"spec":{"replicas":1,"selector":{"matchLabels":{"app":"auto-fix-daemon"}},"template":{"metadata":{"labels":{"app":"auto-fix-daemon"}},"spec":{"containers":[{"args":["#!/bin/bash\nset -e\n\necho \"[Auto-Fix] Starting daemon...\"\necho \"[Auto-Fix] Check interval: 120 seconds\"\n\nwhile true; do\n  echo \"[$(date)] Running auto-fix checks...\"\n\n  # Fix 1: Clean up stuck volume attachments\n  echo \"  → Checking for stuck volume attachments...\"\n  STUCK_VOLS=$(kubectl get volumeattachment -o json | \\\n    jq -r '.items[] | select(.status.attached == false) | select(.metadata.creationTimestamp | . as $t | (now - ($t | fromdateiso8601)) \u003e 300) | .metadata.name')\n\n  if [ -n \"$STUCK_VOLS\" ]; then\n    echo \"    Found stuck volumes:\"\n    echo \"$STUCK_VOLS\" | while read vol; do\n      echo \"      → Deleting $vol\"\n      kubectl delete volumeattachment $vol || echo \"      ✗ Failed\"\n    done\n  else\n    echo \"    ✓ No stuck volumes\"\n  fi\n\n  # Fix 2: Restart pods stuck in ContainerCreating for \u003e10 minutes\n  echo \"  → Checking for stuck ContainerCreating pods...\"\n  STUCK_CREATING=$(kubectl get pods -A -o json | \\\n    jq -r '.items[] | select(.status.phase == \"Pending\") | select(.status.conditions != null) | select(.status.conditions[] | select(.type == \"PodScheduled\" and .status == \"True\")) | select(.metadata.creationTimestamp | . as $t | (now - ($t | fromdateiso8601)) \u003e 600) | \"\\(.metadata.namespace)/\\(.metadata.name)\"')\n\n  if [ -n \"$STUCK_CREATING\" ]; then\n    echo \"    Found stuck pods:\"\n    echo \"$STUCK_CREATING\" | while read pod; do\n      NAMESPACE=$(echo $pod | cut -d/ -f1)\n      NAME=$(echo $pod | cut -d/ -f2)\n      echo \"      → Restarting $NAMESPACE/$NAME\"\n      kubectl delete pod -n $NAMESPACE $NAME --grace-period=30 || echo \"      ✗ Failed\"\n    done\n  else\n    echo \"    ✓ No stuck ContainerCreating pods\"\n  fi\n\n  # Fix 3: Restart ImagePullBackOff pods stuck for \u003e15 minutes\n  echo \"  → Checking for stuck ImagePullBackOff pods...\"\n  IMAGE_PULL_ERRORS=$(kubectl get pods -A -o json | \\\n    jq -r '.items[] | select(.status.containerStatuses != null) | select(.status.containerStatuses[].state.waiting.reason == \"ImagePullBackOff\") | select(.metadata.creationTimestamp | . as $t | (now - ($t | fromdateiso8601)) \u003e 900) | \"\\(.metadata.namespace)/\\(.metadata.name)\"')\n\n  if [ -n \"$IMAGE_PULL_ERRORS\" ]; then\n    echo \"    Found stuck ImagePullBackOff pods:\"\n    echo \"$IMAGE_PULL_ERRORS\" | while read pod; do\n      NAMESPACE=$(echo $pod | cut -d/ -f1)\n      NAME=$(echo $pod | cut -d/ -f2)\n      echo \"      → Restarting $NAMESPACE/$NAME\"\n      kubectl delete pod -n $NAMESPACE $NAME --grace-period=30 || echo \"      ✗ Failed\"\n    done\n  else\n    echo \"    ✓ No stuck ImagePullBackOff pods\"\n  fi\n\n  echo \"\"\n  sleep 120\ndone\n"],"command":["/bin/bash","-c"],"env":[{"name":"FIX_INTERVAL","value":"120"}],"image":"bitnami/kubectl:latest","name":"auto-fix"}],"serviceAccountName":"cortex-cleanup-sa"}}}}
+    creationTimestamp: "2025-12-24T22:14:59Z"
+    generation: 1
+    labels:
+      app: auto-fix-daemon
+      cortex.component: automation
+    name: auto-fix-daemon
+    namespace: cortex-system
+    resourceVersion: "20467989"
+    uid: b2be3faf-7435-4fd0-8be3-5b910d50b2d4
+  spec:
+    progressDeadlineSeconds: 600
+    replicas: 1
+    revisionHistoryLimit: 10
+    selector:
+      matchLabels:
+        app: auto-fix-daemon
+    strategy:
+      rollingUpdate:
+        maxSurge: 25%
+        maxUnavailable: 25%
+      type: RollingUpdate
+    template:
+      metadata:
+        creationTimestamp: null
+        labels:
+          app: auto-fix-daemon
+      spec:
+        containers:
+        - args:
+          - |
+            #!/bin/bash
+            set -e
+
+            echo "[Auto-Fix] Starting daemon..."
+            echo "[Auto-Fix] Check interval: 120 seconds"
+
+            while true; do
+              echo "[$(date)] Running auto-fix checks..."
+
+              # Fix 1: Clean up stuck volume attachments
+              echo "  → Checking for stuck volume attachments..."
+              STUCK_VOLS=$(kubectl get volumeattachment -o json | \
+                jq -r '.items[] | select(.status.attached == false) | select(.metadata.creationTimestamp | . as $t | (now - ($t | fromdateiso8601)) > 300) | .metadata.name')
+
+              if [ -n "$STUCK_VOLS" ]; then
+                echo "    Found stuck volumes:"
+                echo "$STUCK_VOLS" | while read vol; do
+                  echo "      → Deleting $vol"
+                  kubectl delete volumeattachment $vol || echo "      ✗ Failed"
+                done
+              else
+                echo "    ✓ No stuck volumes"
+              fi
+
+              # Fix 2: Restart pods stuck in ContainerCreating for >10 minutes
+              echo "  → Checking for stuck ContainerCreating pods..."
+              STUCK_CREATING=$(kubectl get pods -A -o json | \
+                jq -r '.items[] | select(.status.phase == "Pending") | select(.status.conditions != null) | select(.status.conditions[] | select(.type == "PodScheduled" and .status == "True")) | select(.metadata.creationTimestamp | . as $t | (now - ($t | fromdateiso8601)) > 600) | "\(.metadata.namespace)/\(.metadata.name)"')
+
+              if [ -n "$STUCK_CREATING" ]; then
+                echo "    Found stuck pods:"
+                echo "$STUCK_CREATING" | while read pod; do
+                  NAMESPACE=$(echo $pod | cut -d/ -f1)
+                  NAME=$(echo $pod | cut -d/ -f2)
+                  echo "      → Restarting $NAMESPACE/$NAME"
+                  kubectl delete pod -n $NAMESPACE $NAME --grace-period=30 || echo "      ✗ Failed"
+                done
+              else
+                echo "    ✓ No stuck ContainerCreating pods"
+              fi
+
+              # Fix 3: Restart ImagePullBackOff pods stuck for >15 minutes
+              echo "  → Checking for stuck ImagePullBackOff pods..."
+              IMAGE_PULL_ERRORS=$(kubectl get pods -A -o json | \
+                jq -r '.items[] | select(.status.containerStatuses != null) | select(.status.containerStatuses[].state.waiting.reason == "ImagePullBackOff") | select(.metadata.creationTimestamp | . as $t | (now - ($t | fromdateiso8601)) > 900) | "\(.metadata.namespace)/\(.metadata.name)"')
+
+              if [ -n "$IMAGE_PULL_ERRORS" ]; then
+                echo "    Found stuck ImagePullBackOff pods:"
+                echo "$IMAGE_PULL_ERRORS" | while read pod; do
+                  NAMESPACE=$(echo $pod | cut -d/ -f1)
+                  NAME=$(echo $pod | cut -d/ -f2)
+                  echo "      → Restarting $NAMESPACE/$NAME"
+                  kubectl delete pod -n $NAMESPACE $NAME --grace-period=30 || echo "      ✗ Failed"
+                done
+              else
+                echo "    ✓ No stuck ImagePullBackOff pods"
+              fi
+
+              echo ""
+              sleep 120
+            done
+          command:
+          - /bin/bash
+          - -c
+          env:
+          - name: FIX_INTERVAL
+            value: "120"
+          image: bitnami/kubectl:latest
+          imagePullPolicy: Always
+          name: auto-fix
+          resources: {}
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+        dnsPolicy: ClusterFirst
+        restartPolicy: Always
+        schedulerName: default-scheduler
+        securityContext: {}
+        serviceAccount: cortex-cleanup-sa
+        serviceAccountName: cortex-cleanup-sa
+        terminationGracePeriodSeconds: 30
+  status:
+    availableReplicas: 1
+    conditions:
+    - lastTransitionTime: "2025-12-24T22:15:02Z"
+      lastUpdateTime: "2025-12-24T22:15:02Z"
+      message: Deployment has minimum availability.
+      reason: MinimumReplicasAvailable
+      status: "True"
+      type: Available
+    - lastTransitionTime: "2025-12-24T22:14:59Z"
+      lastUpdateTime: "2025-12-24T22:15:02Z"
+      message: ReplicaSet "auto-fix-daemon-7d67f8f579" has successfully progressed.
+      reason: NewReplicaSetAvailable
+      status: "True"
+      type: Progressing
+    observedGeneration: 1
+    readyReplicas: 1
+    replicas: 1
+    updatedReplicas: 1
+- apiVersion: apps/v1
+  kind: Deployment
+  metadata:
+    annotations:
+      deployment.kubernetes.io/revision: "1"
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"apps/v1","kind":"Deployment","metadata":{"annotations":{},"labels":{"app":"cloudflare-mcp-server"},"name":"cloudflare-mcp-server","namespace":"cortex-system"},"spec":{"replicas":1,"selector":{"matchLabels":{"app":"cloudflare-mcp-server"}},"template":{"metadata":{"labels":{"app":"cloudflare-mcp-server"}},"spec":{"containers":[{"args":["set -e\npip install --no-cache-dir mcp\u003e=1.9.4 httpx\u003e=0.27.0 cloudflare\u003e=2.0.0 pydantic\u003e=2.0.0 python-dotenv\u003e=1.0.0\necho \"MCP server ready for stdio connections\"\ntail -f /dev/null\n"],"command":["/bin/bash","-c"],"env":[{"name":"CLOUDFLARE_API_TOKEN","value":"placeholder-token"}],"image":"python:3.11-slim","name":"app","volumeMounts":[{"mountPath":"/app","name":"repo"}],"workingDir":"/app"}],"initContainers":[{"args":["clone","--single-branch","--","https://github.com/ry-ops/cloudflare-mcp-server.git","/repo"],"image":"alpine/git","name":"git-clone","volumeMounts":[{"mountPath":"/repo","name":"repo"}]}],"volumes":[{"emptyDir":{},"name":"repo"}]}}}}
+    creationTimestamp: "2025-12-20T22:31:35Z"
+    generation: 1
+    labels:
+      app: cloudflare-mcp-server
+    name: cloudflare-mcp-server
+    namespace: cortex-system
+    resourceVersion: "20443268"
+    uid: b2d2e255-f4a5-482e-9210-6c0ec31b713b
+  spec:
+    progressDeadlineSeconds: 600
+    replicas: 1
+    revisionHistoryLimit: 10
+    selector:
+      matchLabels:
+        app: cloudflare-mcp-server
+    strategy:
+      rollingUpdate:
+        maxSurge: 25%
+        maxUnavailable: 25%
+      type: RollingUpdate
+    template:
+      metadata:
+        creationTimestamp: null
+        labels:
+          app: cloudflare-mcp-server
+      spec:
+        containers:
+        - args:
+          - |
+            set -e
+            pip install --no-cache-dir mcp>=1.9.4 httpx>=0.27.0 cloudflare>=2.0.0 pydantic>=2.0.0 python-dotenv>=1.0.0
+            echo "MCP server ready for stdio connections"
+            tail -f /dev/null
+          command:
+          - /bin/bash
+          - -c
+          env:
+          - name: CLOUDFLARE_API_TOKEN
+            value: placeholder-token
+          image: python:3.11-slim
+          imagePullPolicy: IfNotPresent
+          name: app
+          resources: {}
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+          volumeMounts:
+          - mountPath: /app
+            name: repo
+          workingDir: /app
+        dnsPolicy: ClusterFirst
+        initContainers:
+        - args:
+          - clone
+          - --single-branch
+          - --
+          - https://github.com/ry-ops/cloudflare-mcp-server.git
+          - /repo
+          image: alpine/git
+          imagePullPolicy: Always
+          name: git-clone
+          resources: {}
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+          volumeMounts:
+          - mountPath: /repo
+            name: repo
+        restartPolicy: Always
+        schedulerName: default-scheduler
+        securityContext: {}
+        terminationGracePeriodSeconds: 30
+        volumes:
+        - emptyDir: {}
+          name: repo
+  status:
+    availableReplicas: 1
+    conditions:
+    - lastTransitionTime: "2025-12-20T22:31:35Z"
+      lastUpdateTime: "2025-12-20T22:31:43Z"
+      message: ReplicaSet "cloudflare-mcp-server-f6cf798fd" has successfully progressed.
+      reason: NewReplicaSetAvailable
+      status: "True"
+      type: Progressing
+    - lastTransitionTime: "2025-12-24T22:09:29Z"
+      lastUpdateTime: "2025-12-24T22:09:29Z"
+      message: Deployment has minimum availability.
+      reason: MinimumReplicasAvailable
+      status: "True"
+      type: Available
+    observedGeneration: 1
+    readyReplicas: 1
+    replicas: 1
+    updatedReplicas: 1
+- apiVersion: apps/v1
+  kind: Deployment
+  metadata:
+    annotations:
+      deployment.kubernetes.io/revision: "6"
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"apps/v1","kind":"Deployment","metadata":{"annotations":{},"labels":{"app":"cortex-mcp-server","component":"mcp-gateway","version":"v1"},"name":"cortex-mcp-server","namespace":"cortex-system"},"spec":{"replicas":1,"selector":{"matchLabels":{"app":"cortex-mcp-server"}},"strategy":{"rollingUpdate":{"maxSurge":1,"maxUnavailable":0},"type":"RollingUpdate"},"template":{"metadata":{"annotations":{"prometheus.io/path":"/metrics","prometheus.io/port":"8080","prometheus.io/scrape":"true"},"labels":{"app":"cortex-mcp-server","component":"mcp-gateway","version":"v1"}},"spec":{"containers":[{"command":["sh","-c","set -e\necho \"Starting Cortex MCP Server...\"\n\ncd /app\n\n# Install dependencies\necho \"Installing dependencies...\"\nnpm install --production\n\n# Create required directories if they don't exist\nmkdir -p /app/coordination/masters\nmkdir -p /app/coordination/workers\nmkdir -p /app/coordination/tasks\n\n# Create a simple HTTP wrapper and health endpoint\ncat \u003e /app/http-server.cjs \u003c\u003c 'EOF'\nconst http = require('http');\nconst { spawn } = require('child_process');\n\nconst PORT = parseInt(process.env.MCP_PORT || '3000');\nconst HEALTH_PORT = parseInt(process.env.HEALTH_PORT || '8080');\n\n// Start MCP stdio server process\nlet mcpProcess = null;\n\nfunction startMCPServer() {\n  mcpProcess = spawn('node', ['src/index.js'], {\n    cwd: '/app'\n  });\n\n  mcpProcess.stdout.on('data', (data) =\u003e {\n    console.log('[MCP stdout]', data.toString());\n  });\n\n  mcpProcess.stderr.on('data', (data) =\u003e {\n    console.error('[MCP stderr]', data.toString());\n  });\n\n  mcpProcess.on('exit', (code) =\u003e {\n    console.error(`[MCP] Process exited with code ${code}`);\n    // Restart if it crashes\n    setTimeout(startMCPServer, 1000);\n  });\n\n  // Keep stdin open\n  setInterval(() =\u003e {\n    try {\n      mcpProcess.stdin.write('\\n');\n    } catch (err) {\n      // Ignore\n    }\n  }, 30000);\n}\n\n// Health check server\nconst healthServer = http.createServer((req, res) =\u003e {\n  if (req.url === '/health') {\n    res.writeHead(200, { 'Content-Type': 'application/json' });\n    res.end(JSON.stringify({\n      status: 'healthy',\n      server: 'cortex-mcp-server',\n      mode: 'stdio-wrapper',\n      mcp_running: mcpProcess \u0026\u0026 !mcpProcess.killed\n    }));\n  } else if (req.url === '/metrics') {\n    res.writeHead(200, { 'Content-Type': 'text/plain' });\n    res.end('# Cortex MCP Server Metrics\\ncortex_mcp_up 1\\n');\n  } else {\n    res.writeHead(404);\n    res.end();\n  }\n});\n\nhealthServer.listen(HEALTH_PORT, '0.0.0.0', () =\u003e {\n  console.log(`[Health] HTTP server listening on port ${HEALTH_PORT}`);\n});\n\n// MCP query server (simple passthrough for now)\nconst mcpServer = http.createServer((req, res) =\u003e {\n  if (req.url === '/query' \u0026\u0026 req.method === 'POST') {\n    let body = '';\n    req.on('data', chunk =\u003e { body += chunk; });\n    req.on('end', () =\u003e {\n      res.writeHead(200, { 'Content-Type': 'application/json' });\n      res.end(JSON.stringify({\n        message: 'Cortex MCP Server - stdio mode',\n        note: 'Use stdio protocol to interact with MCP server'\n      }));\n    });\n  } else {\n    res.writeHead(404);\n    res.end();\n  }\n});\n\nmcpServer.listen(PORT, '0.0.0.0', () =\u003e {\n  console.log(`[MCP] HTTP wrapper listening on port ${PORT}`);\n  startMCPServer();\n});\n\nprocess.on('SIGTERM', () =\u003e {\n  console.log('[Wrapper] Received SIGTERM, shutting down...');\n  if (mcpProcess) mcpProcess.kill();\n  process.exit(0);\n});\nEOF\n\n# Start the HTTP wrapper\necho \"Starting HTTP wrapper...\"\nexec node /app/http-server.cjs\n"],"env":[{"name":"UNIFI_MCP_URL","valueFrom":{"configMapKeyRef":{"key":"UNIFI_MCP_URL","name":"cortex-mcp-config"}}},{"name":"PROXMOX_MCP_URL","valueFrom":{"configMapKeyRef":{"key":"PROXMOX_MCP_URL","name":"cortex-mcp-config"}}},{"name":"WAZUH_MCP_URL","valueFrom":{"configMapKeyRef":{"key":"WAZUH_MCP_URL","name":"cortex-mcp-config"}}},{"name":"WORKER_POOL_SIZE","valueFrom":{"configMapKeyRef":{"key":"WORKER_POOL_SIZE","name":"cortex-mcp-config"}}},{"name":"MAX_CONCURRENT_WORKERS","valueFrom":{"configMapKeyRef":{"key":"MAX_CONCURRENT_WORKERS","name":"cortex-mcp-config"}}},{"name":"WORKER_TIMEOUT_MINUTES","valueFrom":{"configMapKeyRef":{"key":"WORKER_TIMEOUT_MINUTES","name":"cortex-mcp-config"}}},{"name":"MOE_ENABLED","valueFrom":{"configMapKeyRef":{"key":"MOE_ENABLED","name":"cortex-mcp-config"}}},{"name":"MOE_STRATEGY","valueFrom":{"configMapKeyRef":{"key":"MOE_STRATEGY","name":"cortex-mcp-config"}}},{"name":"LOG_LEVEL","valueFrom":{"configMapKeyRef":{"key":"LOG_LEVEL","name":"cortex-mcp-config"}}},{"name":"LOG_FORMAT","valueFrom":{"configMapKeyRef":{"key":"LOG_FORMAT","name":"cortex-mcp-config"}}},{"name":"MCP_PORT","valueFrom":{"configMapKeyRef":{"key":"MCP_PORT","name":"cortex-mcp-config"}}},{"name":"HEALTH_PORT","valueFrom":{"configMapKeyRef":{"key":"HEALTH_PORT","name":"cortex-mcp-config"}}},{"name":"NODE_ENV","valueFrom":{"configMapKeyRef":{"key":"NODE_ENV","name":"cortex-mcp-config"}}}],"image":"node:18-alpine","imagePullPolicy":"IfNotPresent","livenessProbe":{"failureThreshold":3,"httpGet":{"path":"/health","port":"health"},"initialDelaySeconds":60,"periodSeconds":10,"timeoutSeconds":5},"name":"cortex-mcp-server","ports":[{"containerPort":3000,"name":"mcp","protocol":"TCP"},{"containerPort":8080,"name":"health","protocol":"TCP"}],"readinessProbe":{"failureThreshold":2,"httpGet":{"path":"/health","port":"health"},"initialDelaySeconds":30,"periodSeconds":5,"timeoutSeconds":3},"resources":{"limits":{"cpu":"1000m","memory":"1Gi"},"requests":{"cpu":"200m","memory":"256Mi"}},"volumeMounts":[{"mountPath":"/app","name":"workspace"},{"mountPath":"/app/coordination","name":"coordination"},{"mountPath":"/tmp","name":"tmp"}],"workingDir":"/app"}],"initContainers":[{"command":["sh","-c","set -e\necho \"Preparing Cortex MCP Server workspace...\"\n\n# Create directory structure\nmkdir -p /app/src/clients\nmkdir -p /app/src/worker-pool\nmkdir -p /app/src/masters\nmkdir -p /app/src/tools\nmkdir -p /app/config\nmkdir -p /app/coordination/masters\nmkdir -p /app/coordination/workers\nmkdir -p /app/coordination/tasks\n\n# Copy root files\necho \"Copying root files...\"\ncp /source/package.json /app/\ncp /source/Dockerfile /app/\n\n# Copy src files to correct locations\necho \"Copying src files...\"\ncp /source/index.js /app/src/\ncp /source/moe-router.js /app/src/\n\n# Copy client files\necho \"Copying client files...\"\ncp /source/k8s.js /app/src/clients/\ncp /source/proxmox.js /app/src/clients/\ncp /source/unifi.js /app/src/clients/\ncp /source/wazuh.js /app/src/clients/\n\n# Copy tool files\necho \"Copying tool files...\"\ncp /source/query.js /app/src/tools/\ncp /source/status.js /app/src/tools/\n\n# Copy worker-pool files\necho \"Copying worker-pool files...\"\ncp /source/coordinator.js /app/src/worker-pool/\ncp /source/monitor.js /app/src/worker-pool/\ncp /source/spawner.js /app/src/worker-pool/\n\n# List what we have\necho \"Workspace contents:\"\nls -la /app/\necho \"\"\necho \"Source structure:\"\nls -laR /app/src/\n\necho \"Workspace preparation complete!\"\n"],"image":"busybox:latest","name":"prepare-workspace","volumeMounts":[{"mountPath":"/app","name":"workspace"},{"mountPath":"/source","name":"source"}]}],"serviceAccountName":"cortex-mcp-server","volumes":[{"emptyDir":{},"name":"workspace"},{"configMap":{"name":"cortex-mcp-src"},"name":"source"},{"emptyDir":{},"name":"coordination"},{"emptyDir":{},"name":"tmp"}]}}}}
+    creationTimestamp: "2025-12-24T23:00:49Z"
+    generation: 6
+    labels:
+      app: cortex-mcp-server
+      component: mcp-gateway
+      version: v1
+    name: cortex-mcp-server
+    namespace: cortex-system
+    resourceVersion: "24156524"
+    uid: 2a02e397-a9da-461a-b5ff-2aeca839929b
+  spec:
+    progressDeadlineSeconds: 600
+    replicas: 1
+    revisionHistoryLimit: 10
+    selector:
+      matchLabels:
+        app: cortex-mcp-server
+    strategy:
+      rollingUpdate:
+        maxSurge: 1
+        maxUnavailable: 0
+      type: RollingUpdate
+    template:
+      metadata:
+        annotations:
+          prometheus.io/path: /metrics
+          prometheus.io/port: "8080"
+          prometheus.io/scrape: "true"
+        creationTimestamp: null
+        labels:
+          app: cortex-mcp-server
+          component: mcp-gateway
+          version: v1
+      spec:
+        containers:
+        - command:
+          - sh
+          - -c
+          - |
+            set -e
+            echo "Starting Cortex MCP Server..."
+
+            cd /app
+
+            # Install dependencies
+            echo "Installing dependencies..."
+            npm install --production
+
+            # Create required directories if they don't exist
+            mkdir -p /app/coordination/masters
+            mkdir -p /app/coordination/workers
+            mkdir -p /app/coordination/tasks
+
+            # Create a simple HTTP wrapper and health endpoint
+            cat > /app/http-server.cjs << 'EOF'
+            const http = require('http');
+            const { spawn } = require('child_process');
+
+            const PORT = parseInt(process.env.MCP_PORT || '3000');
+            const HEALTH_PORT = parseInt(process.env.HEALTH_PORT || '8080');
+
+            // Start MCP stdio server process
+            let mcpProcess = null;
+
+            function startMCPServer() {
+              mcpProcess = spawn('node', ['src/index.js'], {
+                cwd: '/app'
+              });
+
+              mcpProcess.stdout.on('data', (data) => {
+                console.log('[MCP stdout]', data.toString());
+              });
+
+              mcpProcess.stderr.on('data', (data) => {
+                console.error('[MCP stderr]', data.toString());
+              });
+
+              mcpProcess.on('exit', (code) => {
+                console.error(`[MCP] Process exited with code ${code}`);
+                // Restart if it crashes
+                setTimeout(startMCPServer, 1000);
+              });
+
+              // Keep stdin open
+              setInterval(() => {
+                try {
+                  mcpProcess.stdin.write('\n');
+                } catch (err) {
+                  // Ignore
+                }
+              }, 30000);
+            }
+
+            // Health check server
+            const healthServer = http.createServer((req, res) => {
+              if (req.url === '/health') {
+                res.writeHead(200, { 'Content-Type': 'application/json' });
+                res.end(JSON.stringify({
+                  status: 'healthy',
+                  server: 'cortex-mcp-server',
+                  mode: 'stdio-wrapper',
+                  mcp_running: mcpProcess && !mcpProcess.killed
+                }));
+              } else if (req.url === '/metrics') {
+                res.writeHead(200, { 'Content-Type': 'text/plain' });
+                res.end('# Cortex MCP Server Metrics\ncortex_mcp_up 1\n');
+              } else {
+                res.writeHead(404);
+                res.end();
+              }
+            });
+
+            healthServer.listen(HEALTH_PORT, '0.0.0.0', () => {
+              console.log(`[Health] HTTP server listening on port ${HEALTH_PORT}`);
+            });
+
+            // MCP query server (simple passthrough for now)
+            const mcpServer = http.createServer((req, res) => {
+              if (req.url === '/query' && req.method === 'POST') {
+                let body = '';
+                req.on('data', chunk => { body += chunk; });
+                req.on('end', () => {
+                  res.writeHead(200, { 'Content-Type': 'application/json' });
+                  res.end(JSON.stringify({
+                    message: 'Cortex MCP Server - stdio mode',
+                    note: 'Use stdio protocol to interact with MCP server'
+                  }));
+                });
+              } else {
+                res.writeHead(404);
+                res.end();
+              }
+            });
+
+            mcpServer.listen(PORT, '0.0.0.0', () => {
+              console.log(`[MCP] HTTP wrapper listening on port ${PORT}`);
+              startMCPServer();
+            });
+
+            process.on('SIGTERM', () => {
+              console.log('[Wrapper] Received SIGTERM, shutting down...');
+              if (mcpProcess) mcpProcess.kill();
+              process.exit(0);
+            });
+            EOF
+
+            # Start the HTTP wrapper
+            echo "Starting HTTP wrapper..."
+            exec node /app/http-server.cjs
+          env:
+          - name: UNIFI_MCP_URL
+            valueFrom:
+              configMapKeyRef:
+                key: UNIFI_MCP_URL
+                name: cortex-mcp-config
+          - name: PROXMOX_MCP_URL
+            valueFrom:
+              configMapKeyRef:
+                key: PROXMOX_MCP_URL
+                name: cortex-mcp-config
+          - name: WAZUH_MCP_URL
+            valueFrom:
+              configMapKeyRef:
+                key: WAZUH_MCP_URL
+                name: cortex-mcp-config
+          - name: WORKER_POOL_SIZE
+            valueFrom:
+              configMapKeyRef:
+                key: WORKER_POOL_SIZE
+                name: cortex-mcp-config
+          - name: MAX_CONCURRENT_WORKERS
+            valueFrom:
+              configMapKeyRef:
+                key: MAX_CONCURRENT_WORKERS
+                name: cortex-mcp-config
+          - name: WORKER_TIMEOUT_MINUTES
+            valueFrom:
+              configMapKeyRef:
+                key: WORKER_TIMEOUT_MINUTES
+                name: cortex-mcp-config
+          - name: MOE_ENABLED
+            valueFrom:
+              configMapKeyRef:
+                key: MOE_ENABLED
+                name: cortex-mcp-config
+          - name: MOE_STRATEGY
+            valueFrom:
+              configMapKeyRef:
+                key: MOE_STRATEGY
+                name: cortex-mcp-config
+          - name: LOG_LEVEL
+            valueFrom:
+              configMapKeyRef:
+                key: LOG_LEVEL
+                name: cortex-mcp-config
+          - name: LOG_FORMAT
+            valueFrom:
+              configMapKeyRef:
+                key: LOG_FORMAT
+                name: cortex-mcp-config
+          - name: MCP_PORT
+            valueFrom:
+              configMapKeyRef:
+                key: MCP_PORT
+                name: cortex-mcp-config
+          - name: HEALTH_PORT
+            valueFrom:
+              configMapKeyRef:
+                key: HEALTH_PORT
+                name: cortex-mcp-config
+          - name: NODE_ENV
+            valueFrom:
+              configMapKeyRef:
+                key: NODE_ENV
+                name: cortex-mcp-config
+          image: node:18-alpine
+          imagePullPolicy: IfNotPresent
+          livenessProbe:
+            failureThreshold: 3
+            httpGet:
+              path: /health
+              port: health
+              scheme: HTTP
+            initialDelaySeconds: 60
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 5
+          name: cortex-mcp-server
+          ports:
+          - containerPort: 3000
+            name: mcp
+            protocol: TCP
+          - containerPort: 8080
+            name: health
+            protocol: TCP
+          readinessProbe:
+            failureThreshold: 2
+            httpGet:
+              path: /health
+              port: health
+              scheme: HTTP
+            initialDelaySeconds: 30
+            periodSeconds: 5
+            successThreshold: 1
+            timeoutSeconds: 3
+          resources:
+            limits:
+              cpu: "1"
+              memory: 1Gi
+            requests:
+              cpu: 200m
+              memory: 256Mi
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+          volumeMounts:
+          - mountPath: /app
+            name: workspace
+          - mountPath: /app/coordination
+            name: coordination
+          - mountPath: /tmp
+            name: tmp
+          workingDir: /app
+        dnsPolicy: ClusterFirst
+        initContainers:
+        - command:
+          - sh
+          - -c
+          - |
+            set -e
+            echo "Preparing Cortex MCP Server workspace..."
+
+            # Create directory structure
+            mkdir -p /app/src/clients
+            mkdir -p /app/src/worker-pool
+            mkdir -p /app/src/masters
+            mkdir -p /app/src/tools
+            mkdir -p /app/config
+            mkdir -p /app/coordination/masters
+            mkdir -p /app/coordination/workers
+            mkdir -p /app/coordination/tasks
+
+            # Copy root files
+            echo "Copying root files..."
+            cp /source/package.json /app/
+            cp /source/Dockerfile /app/
+
+            # Copy src files to correct locations
+            echo "Copying src files..."
+            cp /source/index.js /app/src/
+            cp /source/moe-router.js /app/src/
+
+            # Copy client files
+            echo "Copying client files..."
+            cp /source/k8s.js /app/src/clients/
+            cp /source/proxmox.js /app/src/clients/
+            cp /source/unifi.js /app/src/clients/
+            cp /source/wazuh.js /app/src/clients/
+
+            # Copy tool files
+            echo "Copying tool files..."
+            cp /source/query.js /app/src/tools/
+            cp /source/status.js /app/src/tools/
+
+            # Copy worker-pool files
+            echo "Copying worker-pool files..."
+            cp /source/coordinator.js /app/src/worker-pool/
+            cp /source/monitor.js /app/src/worker-pool/
+            cp /source/spawner.js /app/src/worker-pool/
+
+            # List what we have
+            echo "Workspace contents:"
+            ls -la /app/
+            echo ""
+            echo "Source structure:"
+            ls -laR /app/src/
+
+            echo "Workspace preparation complete!"
+          image: busybox:latest
+          imagePullPolicy: Always
+          name: prepare-workspace
+          resources: {}
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+          volumeMounts:
+          - mountPath: /app
+            name: workspace
+          - mountPath: /source
+            name: source
+        restartPolicy: Always
+        schedulerName: default-scheduler
+        securityContext: {}
+        serviceAccount: cortex-mcp-server
+        serviceAccountName: cortex-mcp-server
+        terminationGracePeriodSeconds: 30
+        volumes:
+        - emptyDir: {}
+          name: workspace
+        - configMap:
+            defaultMode: 420
+            name: cortex-mcp-src
+          name: source
+        - emptyDir: {}
+          name: coordination
+        - emptyDir: {}
+          name: tmp
+  status:
+    availableReplicas: 1
+    conditions:
+    - lastTransitionTime: "2025-12-24T23:00:49Z"
+      lastUpdateTime: "2025-12-25T09:04:46Z"
+      message: ReplicaSet "cortex-mcp-server-669948b6d4" has successfully progressed.
+      reason: NewReplicaSetAvailable
+      status: "True"
+      type: Progressing
+    - lastTransitionTime: "2025-12-25T11:22:28Z"
+      lastUpdateTime: "2025-12-25T11:22:28Z"
+      message: Deployment has minimum availability.
+      reason: MinimumReplicasAvailable
+      status: "True"
+      type: Available
+    observedGeneration: 6
+    readyReplicas: 1
+    replicas: 1
+    updatedReplicas: 1
+- apiVersion: apps/v1
+  kind: Deployment
+  metadata:
+    annotations:
+      deployment.kubernetes.io/revision: "1"
+      field.cattle.io/publicEndpoints: '[{"addresses":["10.88.145.204"],"port":8080,"protocol":"TCP","serviceName":"cortex-system:cortex-resource-manager","allNodes":false}]'
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"apps/v1","kind":"Deployment","metadata":{"annotations":{},"labels":{"app":"cortex-resource-manager"},"name":"cortex-resource-manager","namespace":"cortex-system"},"spec":{"replicas":1,"selector":{"matchLabels":{"app":"cortex-resource-manager"}},"template":{"metadata":{"labels":{"app":"cortex-resource-manager"}},"spec":{"containers":[{"args":["set -e\n# Install dependencies from pyproject.toml\npip install --no-cache-dir mcp\u003e=1.9.4 httpx\u003e=0.27.0 kubernetes\u003e=30.0.0 pydantic\u003e=2.0.0 python-dotenv\u003e=1.0.0\n# Keep container running - MCP server will be invoked via kubectl exec\necho \"MCP server ready for stdio connections\"\ntail -f /dev/null\n"],"command":["/bin/bash","-c"],"env":[{"name":"DATABASE_URL","value":"postgresql://postgres:cortex123@postgres-postgresql:5432/postgres"},{"name":"REDIS_URL","value":"redis://:cortex123@redis-master:6379"}],"image":"python:3.11-slim","name":"app","volumeMounts":[{"mountPath":"/app","name":"repo"}],"workingDir":"/app"}],"initContainers":[{"args":["clone","--single-branch","--","https://github.com/ry-ops/cortex-resource-manager.git","/repo"],"image":"alpine/git","name":"git-clone","volumeMounts":[{"mountPath":"/repo","name":"repo"}]}],"volumes":[{"emptyDir":{},"name":"repo"}]}}}}
+    creationTimestamp: "2025-12-20T22:31:32Z"
+    generation: 2
+    labels:
+      app: cortex-resource-manager
+    name: cortex-resource-manager
+    namespace: cortex-system
+    resourceVersion: "20443256"
+    uid: 51e2f570-5a16-4776-9802-9cf9f1e04d39
+  spec:
+    progressDeadlineSeconds: 600
+    replicas: 1
+    revisionHistoryLimit: 10
+    selector:
+      matchLabels:
+        app: cortex-resource-manager
+    strategy:
+      rollingUpdate:
+        maxSurge: 25%
+        maxUnavailable: 25%
+      type: RollingUpdate
+    template:
+      metadata:
+        creationTimestamp: null
+        labels:
+          app: cortex-resource-manager
+      spec:
+        containers:
+        - args:
+          - |
+            set -e
+            # Install dependencies from pyproject.toml
+            pip install --no-cache-dir mcp>=1.9.4 httpx>=0.27.0 kubernetes>=30.0.0 pydantic>=2.0.0 python-dotenv>=1.0.0
+            # Keep container running - MCP server will be invoked via kubectl exec
+            echo "MCP server ready for stdio connections"
+            tail -f /dev/null
+          command:
+          - /bin/bash
+          - -c
+          env:
+          - name: DATABASE_URL
+            value: postgresql://postgres:cortex123@postgres-postgresql:5432/postgres
+          - name: REDIS_URL
+            value: redis://:cortex123@redis-master:6379
+          image: python:3.11-slim
+          imagePullPolicy: IfNotPresent
+          name: app
+          resources: {}
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+          volumeMounts:
+          - mountPath: /app
+            name: repo
+          workingDir: /app
+        dnsPolicy: ClusterFirst
+        initContainers:
+        - args:
+          - clone
+          - --single-branch
+          - --
+          - https://github.com/ry-ops/cortex-resource-manager.git
+          - /repo
+          image: alpine/git
+          imagePullPolicy: Always
+          name: git-clone
+          resources: {}
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+          volumeMounts:
+          - mountPath: /repo
+            name: repo
+        restartPolicy: Always
+        schedulerName: default-scheduler
+        securityContext: {}
+        terminationGracePeriodSeconds: 30
+        volumes:
+        - emptyDir: {}
+          name: repo
+  status:
+    availableReplicas: 1
+    conditions:
+    - lastTransitionTime: "2025-12-20T22:31:32Z"
+      lastUpdateTime: "2025-12-20T22:31:38Z"
+      message: ReplicaSet "cortex-resource-manager-86f6dcf6" has successfully progressed.
+      reason: NewReplicaSetAvailable
+      status: "True"
+      type: Progressing
+    - lastTransitionTime: "2025-12-24T22:09:29Z"
+      lastUpdateTime: "2025-12-24T22:09:29Z"
+      message: Deployment has minimum availability.
+      reason: MinimumReplicasAvailable
+      status: "True"
+      type: Available
+    observedGeneration: 2
+    readyReplicas: 1
+    replicas: 1
+    updatedReplicas: 1
+- apiVersion: apps/v1
+  kind: Deployment
+  metadata:
+    annotations:
+      deployment.kubernetes.io/revision: "1"
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"apps/v1","kind":"Deployment","metadata":{"annotations":{},"labels":{"app":"pgadmin"},"name":"pgadmin","namespace":"cortex-system"},"spec":{"replicas":1,"selector":{"matchLabels":{"app":"pgadmin"}},"template":{"metadata":{"labels":{"app":"pgadmin"}},"spec":{"containers":[{"env":[{"name":"PGADMIN_DEFAULT_EMAIL","value":"admin@cortex.local"},{"name":"PGADMIN_DEFAULT_PASSWORD","value":"cortex_admin_123"},{"name":"PGADMIN_CONFIG_SERVER_MODE","value":"False"},{"name":"PGADMIN_CONFIG_MASTER_PASSWORD_REQUIRED","value":"False"}],"image":"dpage/pgadmin4:latest","name":"pgadmin","ports":[{"containerPort":80,"name":"http"}],"resources":{"limits":{"cpu":"500m","memory":"512Mi"},"requests":{"cpu":"100m","memory":"256Mi"}}}]}}}}
+    creationTimestamp: "2025-12-22T02:18:00Z"
+    generation: 2
+    labels:
+      app: pgadmin
+    name: pgadmin
+    namespace: cortex-system
+    resourceVersion: "20441951"
+    uid: dfb7ee16-f772-4581-9da1-b282a75eb33d
+  spec:
+    progressDeadlineSeconds: 600
+    replicas: 0
+    revisionHistoryLimit: 10
+    selector:
+      matchLabels:
+        app: pgadmin
+    strategy:
+      rollingUpdate:
+        maxSurge: 25%
+        maxUnavailable: 25%
+      type: RollingUpdate
+    template:
+      metadata:
+        creationTimestamp: null
+        labels:
+          app: pgadmin
+      spec:
+        containers:
+        - env:
+          - name: PGADMIN_DEFAULT_EMAIL
+            value: admin@cortex.local
+          - name: PGADMIN_DEFAULT_PASSWORD
+            value: cortex_admin_123
+          - name: PGADMIN_CONFIG_SERVER_MODE
+            value: "False"
+          - name: PGADMIN_CONFIG_MASTER_PASSWORD_REQUIRED
+            value: "False"
+          image: dpage/pgadmin4:latest
+          imagePullPolicy: Always
+          name: pgadmin
+          ports:
+          - containerPort: 80
+            name: http
+            protocol: TCP
+          resources:
+            limits:
+              cpu: 500m
+              memory: 512Mi
+            requests:
+              cpu: 100m
+              memory: 256Mi
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+        dnsPolicy: ClusterFirst
+        restartPolicy: Always
+        schedulerName: default-scheduler
+        securityContext: {}
+        terminationGracePeriodSeconds: 30
+  status:
+    conditions:
+    - lastTransitionTime: "2025-12-22T02:18:00Z"
+      lastUpdateTime: "2025-12-22T02:18:14Z"
+      message: ReplicaSet "pgadmin-5746cd95b5" has successfully progressed.
+      reason: NewReplicaSetAvailable
+      status: "True"
+      type: Progressing
+    - lastTransitionTime: "2025-12-24T22:09:09Z"
+      lastUpdateTime: "2025-12-24T22:09:09Z"
+      message: Deployment has minimum availability.
+      reason: MinimumReplicasAvailable
+      status: "True"
+      type: Available
+    observedGeneration: 2
+- apiVersion: apps/v1
+  kind: Deployment
+  metadata:
+    annotations:
+      deployment.kubernetes.io/revision: "1"
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"apps/v1","kind":"Deployment","metadata":{"annotations":{},"labels":{"app":"postgres-exporter"},"name":"postgres-exporter","namespace":"cortex-system"},"spec":{"replicas":1,"selector":{"matchLabels":{"app":"postgres-exporter"}},"template":{"metadata":{"labels":{"app":"postgres-exporter"}},"spec":{"containers":[{"env":[{"name":"DATA_SOURCE_NAME","value":"postgresql://cortex:cortex_postgres_123@postgres.cortex-system.svc.cluster.local:5432/cortex?sslmode=disable"}],"image":"prometheuscommunity/postgres-exporter:latest","name":"postgres-exporter","ports":[{"containerPort":9187,"name":"metrics"}],"resources":{"limits":{"cpu":"200m","memory":"256Mi"},"requests":{"cpu":"50m","memory":"64Mi"}}}]}}}}
+    creationTimestamp: "2025-12-22T02:17:59Z"
+    generation: 1
+    labels:
+      app: postgres-exporter
+    name: postgres-exporter
+    namespace: cortex-system
+    resourceVersion: "20352241"
+    uid: 2b104a94-9716-4cac-95b6-8d18b2f1e4b6
+  spec:
+    progressDeadlineSeconds: 600
+    replicas: 1
+    revisionHistoryLimit: 10
+    selector:
+      matchLabels:
+        app: postgres-exporter
+    strategy:
+      rollingUpdate:
+        maxSurge: 25%
+        maxUnavailable: 25%
+      type: RollingUpdate
+    template:
+      metadata:
+        creationTimestamp: null
+        labels:
+          app: postgres-exporter
+      spec:
+        containers:
+        - env:
+          - name: DATA_SOURCE_NAME
+            value: postgresql://cortex:cortex_postgres_123@postgres.cortex-system.svc.cluster.local:5432/cortex?sslmode=disable
+          image: prometheuscommunity/postgres-exporter:latest
+          imagePullPolicy: Always
+          name: postgres-exporter
+          ports:
+          - containerPort: 9187
+            name: metrics
+            protocol: TCP
+          resources:
+            limits:
+              cpu: 200m
+              memory: 256Mi
+            requests:
+              cpu: 50m
+              memory: 64Mi
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+        dnsPolicy: ClusterFirst
+        restartPolicy: Always
+        schedulerName: default-scheduler
+        securityContext: {}
+        terminationGracePeriodSeconds: 30
+  status:
+    availableReplicas: 1
+    conditions:
+    - lastTransitionTime: "2025-12-22T02:17:59Z"
+      lastUpdateTime: "2025-12-22T02:18:04Z"
+      message: ReplicaSet "postgres-exporter-fdf49d564" has successfully progressed.
+      reason: NewReplicaSetAvailable
+      status: "True"
+      type: Progressing
+    - lastTransitionTime: "2025-12-24T21:42:31Z"
+      lastUpdateTime: "2025-12-24T21:42:31Z"
+      message: Deployment has minimum availability.
+      reason: MinimumReplicasAvailable
+      status: "True"
+      type: Available
+    observedGeneration: 1
+    readyReplicas: 1
+    replicas: 1
+    updatedReplicas: 1
+- apiVersion: apps/v1
+  kind: Deployment
+  metadata:
+    annotations:
+      deployment.kubernetes.io/revision: "19"
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"apps/v1","kind":"Deployment","metadata":{"annotations":{},"labels":{"app":"proxmox-mcp-server"},"name":"proxmox-mcp-server","namespace":"cortex-system"},"spec":{"replicas":1,"selector":{"matchLabels":{"app":"proxmox-mcp-server"}},"template":{"metadata":{"labels":{"app":"proxmox-mcp-server"}},"spec":{"containers":[{"args":["set -e\npip install --no-cache-dir mcp\u003e=1.9.4 httpx\u003e=0.27.0 proxmoxer\u003e=2.0.0 pydantic\u003e=2.0.0 python-dotenv\u003e=1.0.0\n\n# Copy fixed server.py from ConfigMap over the broken one (force overwrite)\ncp -f /fixed/server.py /app/proxmox_mcp_server/server.py\n\necho \"Starting Proxmox MCP HTTP Server on port 3000...\"\npython3 /wrapper/mcp-http-wrapper.py\n"],"command":["/bin/bash","-c"],"env":[{"name":"PROXMOX_HOST","value":"10.88.145.100"},{"name":"PROXMOX_USER","value":"root@pam"},{"name":"PROXMOX_TOKEN_NAME","value":"automation"},{"name":"PROXMOX_TOKEN_VALUE","value":"9c7c90e1-5d8c-4e32-afe9-8c27f0651f9e"},{"name":"PROXMOX_VERIFY_SSL","value":"false"},{"name":"MCP_COMMAND","value":"python -m proxmox_mcp_server.server"},{"name":"MCP_PORT","value":"3000"}],"image":"python:3.11-slim","name":"app","ports":[{"containerPort":3000,"name":"mcp"}],"volumeMounts":[{"mountPath":"/app","name":"repo"},{"mountPath":"/wrapper","name":"http-wrapper"},{"mountPath":"/fixed","name":"fixed-server"}],"workingDir":"/app"}],"initContainers":[{"args":["clone","--single-branch","--","https://github.com/ry-ops/proxmox-mcp-server.git","/repo"],"image":"alpine/git","name":"git-clone","volumeMounts":[{"mountPath":"/repo","name":"repo"}]}],"volumes":[{"emptyDir":{},"name":"repo"},{"configMap":{"name":"mcp-http-wrapper"},"name":"http-wrapper"},{"configMap":{"name":"proxmox-server-fixed"},"name":"fixed-server"}]}}}}
+    creationTimestamp: "2025-12-20T22:31:34Z"
+    generation: 21
+    labels:
+      app: proxmox-mcp-server
+    name: proxmox-mcp-server
+    namespace: cortex-system
+    resourceVersion: "30685224"
+    uid: ba38c267-2314-46c3-8f81-1c3739f9be6d
+  spec:
+    progressDeadlineSeconds: 600
+    replicas: 1
+    revisionHistoryLimit: 10
+    selector:
+      matchLabels:
+        app: proxmox-mcp-server
+    strategy:
+      rollingUpdate:
+        maxSurge: 25%
+        maxUnavailable: 25%
+      type: RollingUpdate
+    template:
+      metadata:
+        creationTimestamp: null
+        labels:
+          app: proxmox-mcp-server
+      spec:
+        containers:
+        - args:
+          - |
+            set -e
+            pip install --no-cache-dir mcp>=1.9.4 httpx>=0.27.0 proxmoxer>=2.0.0 pydantic>=2.0.0 python-dotenv>=1.0.0
+
+            # Copy fixed server.py from ConfigMap over the broken one
+            cp -f /fixed/server.py /app/proxmox_mcp_server/server.py
+
+            echo "Starting Proxmox MCP HTTP Server on port 3000..."
+            python3 /wrapper/mcp-http-wrapper.py
+          command:
+          - /bin/bash
+          - -c
+          env:
+          - name: PROXMOX_HOST
+            value: 10.88.140.164
+          - name: PROXMOX_USER
+            value: pveauditor@pve
+          - name: PROXMOX_TOKEN_NAME
+            value: monitoring
+          - name: PROXMOX_TOKEN_VALUE
+            value: 81282773-5b9a-4c1a-8483-d1c91d0faf4e
+          - name: PROXMOX_VERIFY_SSL
+            value: "false"
+          - name: MCP_COMMAND
+            value: python -m proxmox_mcp_server.server
+          - name: MCP_PORT
+            value: "3000"
+          - name: PORT
+            value: "3000"
+          image: python:3.11-slim
+          imagePullPolicy: IfNotPresent
+          name: app
+          ports:
+          - containerPort: 3000
+            name: mcp
+            protocol: TCP
+          resources: {}
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+          volumeMounts:
+          - mountPath: /app
+            name: repo
+          - mountPath: /wrapper
+            name: http-wrapper
+          - mountPath: /fixed
+            name: fixed-server
+          workingDir: /app
+        dnsPolicy: ClusterFirst
+        initContainers:
+        - args:
+          - clone
+          - --single-branch
+          - --
+          - https://github.com/ry-ops/proxmox-mcp-server.git
+          - /repo
+          env:
+          - name: MCP_COMMAND
+            value: python -m proxmox_mcp_server.server
+          - name: PROXMOX_USER
+            value: pveauditor@pve
+          - name: PROXMOX_TOKEN_NAME
+            value: monitoring
+          - name: PROXMOX_TOKEN_VALUE
+            value: 81282773-5b9a-4c1a-8483-d1c91d0faf4e
+          - name: PROXMOX_VERIFY_SSL
+            value: "false"
+          - name: PORT
+            value: "3000"
+          - name: PROXMOX_HOST
+            value: 10.88.140.164
+          image: alpine/git
+          imagePullPolicy: Always
+          name: git-clone
+          resources: {}
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+          volumeMounts:
+          - mountPath: /repo
+            name: repo
+        restartPolicy: Always
+        schedulerName: default-scheduler
+        securityContext: {}
+        terminationGracePeriodSeconds: 30
+        volumes:
+        - emptyDir: {}
+          name: repo
+        - configMap:
+            defaultMode: 420
+            name: mcp-http-wrapper
+          name: http-wrapper
+        - configMap:
+            defaultMode: 420
+            name: proxmox-server-fixed
+          name: fixed-server
+        - configMap:
+            defaultMode: 420
+            name: proxmox-server-fix
+          name: server-fix
+  status:
+    availableReplicas: 1
+    conditions:
+    - lastTransitionTime: "2025-12-26T12:58:42Z"
+      lastUpdateTime: "2025-12-26T12:58:42Z"
+      message: Deployment has minimum availability.
+      reason: MinimumReplicasAvailable
+      status: "True"
+      type: Available
+    - lastTransitionTime: "2025-12-20T22:31:34Z"
+      lastUpdateTime: "2025-12-26T18:33:46Z"
+      message: ReplicaSet "proxmox-mcp-server-5984fd44f7" has successfully progressed.
+      reason: NewReplicaSetAvailable
+      status: "True"
+      type: Progressing
+    observedGeneration: 21
+    readyReplicas: 1
+    replicas: 1
+    updatedReplicas: 1
+- apiVersion: apps/v1
+  kind: Deployment
+  metadata:
+    annotations:
+      deployment.kubernetes.io/revision: "1"
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"apps/v1","kind":"Deployment","metadata":{"annotations":{},"labels":{"app":"redis","component":"chat-persistence"},"name":"redis","namespace":"cortex-system"},"spec":{"replicas":1,"selector":{"matchLabels":{"app":"redis"}},"template":{"metadata":{"labels":{"app":"redis","component":"chat-persistence"}},"spec":{"containers":[{"image":"redis:7-alpine","livenessProbe":{"initialDelaySeconds":10,"periodSeconds":10,"tcpSocket":{"port":6379}},"name":"redis","ports":[{"containerPort":6379,"name":"redis"}],"readinessProbe":{"exec":{"command":["redis-cli","ping"]},"initialDelaySeconds":5,"periodSeconds":5},"resources":{"limits":{"cpu":"500m","memory":"512Mi"},"requests":{"cpu":"100m","memory":"128Mi"}},"volumeMounts":[{"mountPath":"/data","name":"redis-data"}]}],"volumes":[{"emptyDir":{},"name":"redis-data"}]}}}}
+    creationTimestamp: "2025-12-25T23:01:15Z"
+    generation: 1
+    labels:
+      app: redis
+      component: chat-persistence
+    name: redis
+    namespace: cortex-system
+    resourceVersion: "26804595"
+    uid: 8468e808-152a-404f-90e9-e71e9e9ec305
+  spec:
+    progressDeadlineSeconds: 600
+    replicas: 1
+    revisionHistoryLimit: 10
+    selector:
+      matchLabels:
+        app: redis
+    strategy:
+      rollingUpdate:
+        maxSurge: 25%
+        maxUnavailable: 25%
+      type: RollingUpdate
+    template:
+      metadata:
+        creationTimestamp: null
+        labels:
+          app: redis
+          component: chat-persistence
+      spec:
+        containers:
+        - image: redis:7-alpine
+          imagePullPolicy: IfNotPresent
+          livenessProbe:
+            failureThreshold: 3
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            successThreshold: 1
+            tcpSocket:
+              port: 6379
+            timeoutSeconds: 1
+          name: redis
+          ports:
+          - containerPort: 6379
+            name: redis
+            protocol: TCP
+          readinessProbe:
+            exec:
+              command:
+              - redis-cli
+              - ping
+            failureThreshold: 3
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            successThreshold: 1
+            timeoutSeconds: 1
+          resources:
+            limits:
+              cpu: 500m
+              memory: 512Mi
+            requests:
+              cpu: 100m
+              memory: 128Mi
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+          volumeMounts:
+          - mountPath: /data
+            name: redis-data
+        dnsPolicy: ClusterFirst
+        restartPolicy: Always
+        schedulerName: default-scheduler
+        securityContext: {}
+        terminationGracePeriodSeconds: 30
+        volumes:
+        - emptyDir: {}
+          name: redis-data
+  status:
+    availableReplicas: 1
+    conditions:
+    - lastTransitionTime: "2025-12-25T23:01:22Z"
+      lastUpdateTime: "2025-12-25T23:01:22Z"
+      message: Deployment has minimum availability.
+      reason: MinimumReplicasAvailable
+      status: "True"
+      type: Available
+    - lastTransitionTime: "2025-12-25T23:01:15Z"
+      lastUpdateTime: "2025-12-25T23:01:22Z"
+      message: ReplicaSet "redis-5d897bd6c5" has successfully progressed.
+      reason: NewReplicaSetAvailable
+      status: "True"
+      type: Progressing
+    observedGeneration: 1
+    readyReplicas: 1
+    replicas: 1
+    updatedReplicas: 1
+- apiVersion: apps/v1
+  kind: Deployment
+  metadata:
+    annotations:
+      deployment.kubernetes.io/revision: "1"
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"apps/v1","kind":"Deployment","metadata":{"annotations":{},"labels":{"app":"redis-postgres-sync","component":"middleware"},"name":"redis-postgres-sync","namespace":"cortex-system"},"spec":{"replicas":1,"selector":{"matchLabels":{"app":"redis-postgres-sync"}},"template":{"metadata":{"labels":{"app":"redis-postgres-sync","component":"middleware"}},"spec":{"containers":[{"args":["pip install --no-cache-dir redis==5.0.1 psycopg2-binary==2.9.9\npython3 /app/sync.py\n"],"command":["/bin/sh","-c"],"env":[{"name":"REDIS_HOST","value":"redis-master.cortex-system.svc.cluster.local"},{"name":"REDIS_PORT","value":"6379"},{"name":"REDIS_PASSWORD","value":"cortex123"},{"name":"POSTGRES_HOST","value":"postgres.cortex-system.svc.cluster.local"},{"name":"POSTGRES_PORT","value":"5432"},{"name":"POSTGRES_DB","value":"cortex"},{"name":"POSTGRES_USER","value":"cortex"},{"name":"POSTGRES_PASSWORD","value":"cortex"}],"image":"python:3.11-slim","name":"sync-middleware","resources":{"limits":{"cpu":"250m","memory":"512Mi"},"requests":{"cpu":"100m","memory":"256Mi"}},"volumeMounts":[{"mountPath":"/app","name":"script"}]}],"volumes":[{"configMap":{"name":"sync-middleware-script"},"name":"script"}]}}}}
+    creationTimestamp: "2025-12-22T11:29:46Z"
+    generation: 2
+    labels:
+      app: redis-postgres-sync
+      component: middleware
+    name: redis-postgres-sync
+    namespace: cortex-system
+    resourceVersion: "20441971"
+    uid: 92852e0e-de7f-4361-b3a1-b123e5436a0e
+  spec:
+    progressDeadlineSeconds: 600
+    replicas: 0
+    revisionHistoryLimit: 10
+    selector:
+      matchLabels:
+        app: redis-postgres-sync
+    strategy:
+      rollingUpdate:
+        maxSurge: 25%
+        maxUnavailable: 25%
+      type: RollingUpdate
+    template:
+      metadata:
+        creationTimestamp: null
+        labels:
+          app: redis-postgres-sync
+          component: middleware
+      spec:
+        containers:
+        - args:
+          - |
+            pip install --no-cache-dir redis==5.0.1 psycopg2-binary==2.9.9
+            python3 /app/sync.py
+          command:
+          - /bin/sh
+          - -c
+          env:
+          - name: REDIS_HOST
+            value: redis-master.cortex-system.svc.cluster.local
+          - name: REDIS_PORT
+            value: "6379"
+          - name: REDIS_PASSWORD
+            value: cortex123
+          - name: POSTGRES_HOST
+            value: postgres.cortex-system.svc.cluster.local
+          - name: POSTGRES_PORT
+            value: "5432"
+          - name: POSTGRES_DB
+            value: cortex
+          - name: POSTGRES_USER
+            value: cortex
+          - name: POSTGRES_PASSWORD
+            value: cortex
+          image: python:3.11-slim
+          imagePullPolicy: IfNotPresent
+          name: sync-middleware
+          resources:
+            limits:
+              cpu: 250m
+              memory: 512Mi
+            requests:
+              cpu: 100m
+              memory: 256Mi
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+          volumeMounts:
+          - mountPath: /app
+            name: script
+        dnsPolicy: ClusterFirst
+        restartPolicy: Always
+        schedulerName: default-scheduler
+        securityContext: {}
+        terminationGracePeriodSeconds: 30
+        volumes:
+        - configMap:
+            defaultMode: 420
+            name: sync-middleware-script
+          name: script
+  status:
+    conditions:
+    - lastTransitionTime: "2025-12-22T11:29:46Z"
+      lastUpdateTime: "2025-12-22T11:29:48Z"
+      message: ReplicaSet "redis-postgres-sync-659697dffd" has successfully progressed.
+      reason: NewReplicaSetAvailable
+      status: "True"
+      type: Progressing
+    - lastTransitionTime: "2025-12-24T22:09:09Z"
+      lastUpdateTime: "2025-12-24T22:09:09Z"
+      message: Deployment has minimum availability.
+      reason: MinimumReplicasAvailable
+      status: "True"
+      type: Available
+    observedGeneration: 2
+- apiVersion: apps/v1
+  kind: Deployment
+  metadata:
+    annotations:
+      deployment.kubernetes.io/revision: "1"
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"apps/v1","kind":"Deployment","metadata":{"annotations":{},"labels":{"app":"sandfly-mcp-server"},"name":"sandfly-mcp-server","namespace":"cortex-system"},"spec":{"replicas":1,"selector":{"matchLabels":{"app":"sandfly-mcp-server"}},"template":{"metadata":{"labels":{"app":"sandfly-mcp-server"}},"spec":{"containers":[{"args":["set -e\necho \"Installing dependencies...\"\npip install --no-cache-dir mcp\u003e=1.9.4 httpx\u003e=0.27.0 pydantic\u003e=2.0.0\n\necho \"Copying HTTP wrapper...\"\ncp /wrapper/mcp-http-wrapper.py /repo/wrapper.py\n\necho \"Starting Sandfly MCP HTTP Server on port 3000...\"\npython /repo/wrapper.py\n"],"command":["/bin/bash","-c"],"env":[{"name":"SANDFLY_HOST","value":"10.88.140.176"},{"name":"SANDFLY_USERNAME","value":"admin"},{"name":"SANDFLY_PASSWORD","value":"emphasize-art-nibble-arguable-paradox-flick-unpack"},{"name":"SANDFLY_VERIFY_SSL","value":"false"},{"name":"MCP_COMMAND","value":"python -m mcp_sandfly.server"},{"name":"PORT","value":"3000"}],"image":"python:3.11-slim","imagePullPolicy":"IfNotPresent","name":"app","ports":[{"containerPort":3000,"name":"http"}],"volumeMounts":[{"mountPath":"/repo","name":"repo"},{"mountPath":"/wrapper","name":"http-wrapper"}],"workingDir":"/repo"}],"initContainers":[{"command":["sh","-c","mkdir -p /repo/mcp_sandfly\ncp /source-server/server.py /repo/mcp_sandfly/\ncp /source-init/__init__.py /repo/mcp_sandfly/\necho \"Source files copied\"\nls -laR /repo\n"],"image":"busybox","name":"setup-source","volumeMounts":[{"mountPath":"/repo","name":"repo"},{"mountPath":"/source-server","name":"source-server"},{"mountPath":"/source-init","name":"source-init"}]}],"volumes":[{"emptyDir":{},"name":"repo"},{"configMap":{"name":"mcp-http-wrapper"},"name":"http-wrapper"},{"configMap":{"name":"sandfly-mcp-server-py"},"name":"source-server"},{"configMap":{"name":"sandfly-mcp-init-py"},"name":"source-init"}]}}}}
+    creationTimestamp: "2025-12-26T10:39:51Z"
+    generation: 1
+    labels:
+      app: sandfly-mcp-server
+    name: sandfly-mcp-server
+    namespace: cortex-system
+    resourceVersion: "30450338"
+    uid: ed1e9339-2c02-4490-a996-61c0c5f140c4
+  spec:
+    progressDeadlineSeconds: 600
+    replicas: 1
+    revisionHistoryLimit: 10
+    selector:
+      matchLabels:
+        app: sandfly-mcp-server
+    strategy:
+      rollingUpdate:
+        maxSurge: 25%
+        maxUnavailable: 25%
+      type: RollingUpdate
+    template:
+      metadata:
+        creationTimestamp: null
+        labels:
+          app: sandfly-mcp-server
+      spec:
+        containers:
+        - args:
+          - |
+            set -e
+            echo "Installing dependencies..."
+            pip install --no-cache-dir mcp>=1.9.4 httpx>=0.27.0 pydantic>=2.0.0
+
+            echo "Copying HTTP wrapper..."
+            cp /wrapper/mcp-http-wrapper.py /repo/wrapper.py
+
+            echo "Starting Sandfly MCP HTTP Server on port 3000..."
+            python /repo/wrapper.py
+          command:
+          - /bin/bash
+          - -c
+          env:
+          - name: SANDFLY_HOST
+            value: 10.88.140.176
+          - name: SANDFLY_USERNAME
+            value: admin
+          - name: SANDFLY_PASSWORD
+            value: emphasize-art-nibble-arguable-paradox-flick-unpack
+          - name: SANDFLY_VERIFY_SSL
+            value: "false"
+          - name: MCP_COMMAND
+            value: python -m mcp_sandfly.server
+          - name: PORT
+            value: "3000"
+          image: python:3.11-slim
+          imagePullPolicy: IfNotPresent
+          name: app
+          ports:
+          - containerPort: 3000
+            name: http
+            protocol: TCP
+          resources: {}
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+          volumeMounts:
+          - mountPath: /repo
+            name: repo
+          - mountPath: /wrapper
+            name: http-wrapper
+          workingDir: /repo
+        dnsPolicy: ClusterFirst
+        initContainers:
+        - command:
+          - sh
+          - -c
+          - |
+            mkdir -p /repo/mcp_sandfly
+            cp /source-server/server.py /repo/mcp_sandfly/
+            cp /source-init/__init__.py /repo/mcp_sandfly/
+            echo "Source files copied"
+            ls -laR /repo
+          image: busybox
+          imagePullPolicy: Always
+          name: setup-source
+          resources: {}
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+          volumeMounts:
+          - mountPath: /repo
+            name: repo
+          - mountPath: /source-server
+            name: source-server
+          - mountPath: /source-init
+            name: source-init
+        restartPolicy: Always
+        schedulerName: default-scheduler
+        securityContext: {}
+        terminationGracePeriodSeconds: 30
+        volumes:
+        - emptyDir: {}
+          name: repo
+        - configMap:
+            defaultMode: 420
+            name: mcp-http-wrapper
+          name: http-wrapper
+        - configMap:
+            defaultMode: 420
+            name: sandfly-mcp-server-py
+          name: source-server
+        - configMap:
+            defaultMode: 420
+            name: sandfly-mcp-init-py
+          name: source-init
+  status:
+    availableReplicas: 1
+    conditions:
+    - lastTransitionTime: "2025-12-26T10:39:51Z"
+      lastUpdateTime: "2025-12-26T10:39:55Z"
+      message: ReplicaSet "sandfly-mcp-server-5cf8ffc9b" has successfully progressed.
+      reason: NewReplicaSetAvailable
+      status: "True"
+      type: Progressing
+    - lastTransitionTime: "2025-12-26T17:22:26Z"
+      lastUpdateTime: "2025-12-26T17:22:26Z"
+      message: Deployment has minimum availability.
+      reason: MinimumReplicasAvailable
+      status: "True"
+      type: Available
+    observedGeneration: 1
+    readyReplicas: 1
+    replicas: 1
+    updatedReplicas: 1
+- apiVersion: apps/v1
+  kind: Deployment
+  metadata:
+    annotations:
+      deployment.kubernetes.io/revision: "1"
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"apps/v1","kind":"Deployment","metadata":{"annotations":{},"labels":{"app":"security-master","component":"mcp-server"},"name":"security-master","namespace":"cortex-system"},"spec":{"replicas":1,"selector":{"matchLabels":{"app":"security-master"}},"template":{"metadata":{"labels":{"app":"security-master","component":"mcp-server"}},"spec":{"containers":[{"args":["npm install -g npm-audit pip-audit\nwhile true; do sleep 3600; done\n"],"command":["/bin/sh","-c"],"env":[{"name":"MASTER_ID","value":"security-master"},{"name":"MASTER_ROLE","value":"specialist"},{"name":"TOKEN_BUDGET","value":"35000"}],"image":"node:20-alpine","name":"security-master","ports":[{"containerPort":8080,"name":"http"}],"resources":{"limits":{"cpu":"500m","memory":"1Gi"},"requests":{"cpu":"250m","memory":"512Mi"}}}]}}}}
+    creationTimestamp: "2025-12-21T14:09:51Z"
+    generation: 1
+    labels:
+      app: security-master
+      component: mcp-server
+    name: security-master
+    namespace: cortex-system
+    resourceVersion: "20371899"
+    uid: 21fb472a-2cc3-4a2e-9c2a-ae24c34af75d
+  spec:
+    progressDeadlineSeconds: 600
+    replicas: 1
+    revisionHistoryLimit: 10
+    selector:
+      matchLabels:
+        app: security-master
+    strategy:
+      rollingUpdate:
+        maxSurge: 25%
+        maxUnavailable: 25%
+      type: RollingUpdate
+    template:
+      metadata:
+        creationTimestamp: null
+        labels:
+          app: security-master
+          component: mcp-server
+      spec:
+        containers:
+        - args:
+          - |
+            npm install -g npm-audit pip-audit
+            while true; do sleep 3600; done
+          command:
+          - /bin/sh
+          - -c
+          env:
+          - name: MASTER_ID
+            value: security-master
+          - name: MASTER_ROLE
+            value: specialist
+          - name: TOKEN_BUDGET
+            value: "35000"
+          image: node:20-alpine
+          imagePullPolicy: IfNotPresent
+          name: security-master
+          ports:
+          - containerPort: 8080
+            name: http
+            protocol: TCP
+          resources:
+            limits:
+              cpu: 500m
+              memory: 1Gi
+            requests:
+              cpu: 250m
+              memory: 512Mi
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+        dnsPolicy: ClusterFirst
+        restartPolicy: Always
+        schedulerName: default-scheduler
+        securityContext: {}
+        terminationGracePeriodSeconds: 30
+  status:
+    availableReplicas: 1
+    conditions:
+    - lastTransitionTime: "2025-12-21T14:09:52Z"
+      lastUpdateTime: "2025-12-21T14:09:58Z"
+      message: ReplicaSet "security-master-7bb9d59d" has successfully progressed.
+      reason: NewReplicaSetAvailable
+      status: "True"
+      type: Progressing
+    - lastTransitionTime: "2025-12-24T21:48:42Z"
+      lastUpdateTime: "2025-12-24T21:48:42Z"
+      message: Deployment has minimum availability.
+      reason: MinimumReplicasAvailable
+      status: "True"
+      type: Available
+    observedGeneration: 1
+    readyReplicas: 1
+    replicas: 1
+    updatedReplicas: 1
+- apiVersion: apps/v1
+  kind: Deployment
+  metadata:
+    annotations:
+      deployment.kubernetes.io/revision: "21"
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"apps/v1","kind":"Deployment","metadata":{"annotations":{},"labels":{"app":"unifi-mcp-server"},"name":"unifi-mcp-server","namespace":"cortex-system"},"spec":{"replicas":1,"selector":{"matchLabels":{"app":"unifi-mcp-server"}},"template":{"metadata":{"labels":{"app":"unifi-mcp-server"}},"spec":{"containers":[{"args":["set -e\npip install --no-cache-dir mcp\u003e=1.9.4 httpx\u003e=0.27.0 pyunifi\u003e=2.0.0 pydantic\u003e=2.0.0 python-dotenv\u003e=1.0.0 requests\u003e=2.0.0\necho \"MCP server ready for stdio connections\"\ntail -f /dev/null\n"],"command":["/bin/bash","-c"],"env":[{"name":"UNIFI_HOST","value":"10.88.145.1"},{"name":"UNIFI_USERNAME","value":"admin"},{"name":"UNIFI_PASSWORD","value":"placeholder"},{"name":"UNIFI_PORT","value":"8443"}],"image":"python:3.11-slim","name":"app","volumeMounts":[{"mountPath":"/app","name":"repo"}],"workingDir":"/app"}],"initContainers":[{"args":["clone","--single-branch","--","https://github.com/ry-ops/unifi-mcp-server.git","/repo"],"image":"alpine/git","name":"git-clone","volumeMounts":[{"mountPath":"/repo","name":"repo"}]}],"volumes":[{"emptyDir":{},"name":"repo"}]}}}}
+    creationTimestamp: "2025-12-20T22:31:37Z"
+    generation: 21
+    labels:
+      app: unifi-mcp-server
+    name: unifi-mcp-server
+    namespace: cortex-system
+    resourceVersion: "34539569"
+    uid: c51ff567-5523-4817-9a71-6f34223d3aaa
+  spec:
+    progressDeadlineSeconds: 600
+    replicas: 1
+    revisionHistoryLimit: 10
+    selector:
+      matchLabels:
+        app: unifi-mcp-server
+    strategy:
+      rollingUpdate:
+        maxSurge: 25%
+        maxUnavailable: 25%
+      type: RollingUpdate
+    template:
+      metadata:
+        annotations:
+          kubectl.kubernetes.io/restartedAt: "2025-12-27T07:58:54-06:00"
+        creationTimestamp: null
+        labels:
+          app: unifi-mcp-server
+      spec:
+        containers:
+        - args:
+          - |
+            set -e
+            pip install --no-cache-dir mcp>=1.9.4 httpx>=0.27.0 pyunifi>=2.0.0 pydantic>=2.0.0 python-dotenv>=1.0.0 requests>=2.0.0
+            cp /wrapper/mcp-http-wrapper.py /app/wrapper.py
+            echo "Starting UniFi MCP HTTP Server on port 3000..."
+            python /app/wrapper.py
+          command:
+          - /bin/bash
+          - -c
+          env:
+          - name: UNIFI_HOST
+            value: 10.88.140.144
+          - name: UNIFI_USERNAME
+            value: api-local
+          - name: UNIFI_PASSWORD
+            value: H9sV51HqdwgPQfhe*vB$vx3teeUe12
+          - name: UNIFI_PORT
+            value: "443"
+          - name: UNIFI_GATEWAY_HOST
+            value: 10.88.140.144
+          - name: UNIFI_GATEWAY_PORT
+            value: "443"
+          - name: UNIFI_API_KEY
+            value: pWaYDpDS2bS7BcIHLuFPjCk_FYMdX9ii
+          - name: UNIFI_SITEMGR_BASE
+            value: https://api.ui.com
+          - name: UNIFI_SITEMGR_PREFIX
+            value: /v1
+          - name: UNIFI_VERIFY_TLS
+            value: "false"
+          - name: UNIFI_SITEMGR_TOKEN
+            value: pWaYDpDS2bS7BcIHLuFPjCk_FYMdX9ii
+          image: python:3.11-slim
+          imagePullPolicy: IfNotPresent
+          name: app
+          resources: {}
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+          volumeMounts:
+          - mountPath: /app
+            name: repo
+          - mountPath: /wrapper
+            name: http-wrapper
+          workingDir: /app
+        dnsPolicy: ClusterFirst
+        hostNetwork: true
+        initContainers:
+        - args:
+          - clone
+          - --single-branch
+          - --
+          - https://github.com/ry-ops/unifi-mcp-server.git
+          - /repo
+          env:
+          - name: UNIFI_HOST
+            value: 10.88.140.144
+          - name: UNIFI_USERNAME
+            value: api-local
+          - name: UNIFI_PASSWORD
+            value: H9sV51HqdwgPQfhe*vB$vx3teeUe12
+          - name: UNIFI_GATEWAY_HOST
+            value: 10.88.140.144
+          - name: UNIFI_GATEWAY_PORT
+            value: "443"
+          - name: UNIFI_API_KEY
+            value: pWaYDpDS2bS7BcIHLuFPjCk_FYMdX9ii
+          - name: UNIFI_PORT
+            value: "443"
+          - name: UNIFI_SITEMGR_BASE
+            value: https://api.ui.com
+          - name: UNIFI_SITEMGR_PREFIX
+            value: /v1
+          - name: UNIFI_VERIFY_TLS
+            value: "false"
+          - name: UNIFI_SITEMGR_TOKEN
+            value: pWaYDpDS2bS7BcIHLuFPjCk_FYMdX9ii
+          image: alpine/git
+          imagePullPolicy: Always
+          name: git-clone
+          resources: {}
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+          volumeMounts:
+          - mountPath: /repo
+            name: repo
+        - command:
+          - cp
+          - /fixed/main.py
+          - /repo/main.py
+          env:
+          - name: UNIFI_SITEMGR_BASE
+            value: https://api.ui.com
+          - name: UNIFI_SITEMGR_PREFIX
+            value: /v1
+          - name: UNIFI_VERIFY_TLS
+            value: "false"
+          - name: UNIFI_SITEMGR_TOKEN
+            value: pWaYDpDS2bS7BcIHLuFPjCk_FYMdX9ii
+          image: busybox
+          imagePullPolicy: Always
+          name: copy-fixed-code
+          resources: {}
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+          volumeMounts:
+          - mountPath: /fixed
+            name: fixed-code
+          - mountPath: /repo
+            name: repo
+        restartPolicy: Always
+        schedulerName: default-scheduler
+        securityContext: {}
+        terminationGracePeriodSeconds: 30
+        volumes:
+        - emptyDir: {}
+          name: repo
+        - configMap:
+            defaultMode: 420
+            name: mcp-http-wrapper
+          name: http-wrapper
+        - configMap:
+            defaultMode: 420
+            name: unifi-mcp-fixed-code
+          name: fixed-code
+  status:
+    availableReplicas: 1
+    conditions:
+    - lastTransitionTime: "2025-12-27T13:11:56Z"
+      lastUpdateTime: "2025-12-27T13:11:56Z"
+      message: Deployment has minimum availability.
+      reason: MinimumReplicasAvailable
+      status: "True"
+      type: Available
+    - lastTransitionTime: "2025-12-20T22:31:37Z"
+      lastUpdateTime: "2025-12-27T13:58:59Z"
+      message: ReplicaSet "unifi-mcp-server-5f6d6495f5" has successfully progressed.
+      reason: NewReplicaSetAvailable
+      status: "True"
+      type: Progressing
+    observedGeneration: 21
+    readyReplicas: 1
+    replicas: 1
+    updatedReplicas: 1
+- apiVersion: apps/v1
+  kind: Deployment
+  metadata:
+    annotations:
+      deployment.kubernetes.io/revision: "1"
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"apps/v1","kind":"Deployment","metadata":{"annotations":{},"labels":{"app":"zombie-cleanup-daemon","cortex.component":"automation"},"name":"zombie-cleanup-daemon","namespace":"cortex-system"},"spec":{"replicas":1,"selector":{"matchLabels":{"app":"zombie-cleanup-daemon"}},"template":{"metadata":{"labels":{"app":"zombie-cleanup-daemon"}},"spec":{"containers":[{"args":["#!/bin/bash\nset -e\n\necho \"[Zombie Cleanup] Starting daemon...\"\necho \"[Zombie Cleanup] Check interval: 60 seconds\"\n\nwhile true; do\n  echo \"[$(date)] Checking for zombie pods...\"\n\n  # Find Unknown pods older than 5 minutes\n  UNKNOWN_PODS=$(kubectl get pods -A --field-selector status.phase=Unknown -o json | \\\n    jq -r '.items[] | select(.metadata.creationTimestamp | . as $t | (now - ($t | fromdateiso8601)) \u003e 300) | \"\\(.metadata.namespace)/\\(.metadata.name)\"')\n\n  if [ -n \"$UNKNOWN_PODS\" ]; then\n    echo \"[Zombie Cleanup] Found zombie pods:\"\n    echo \"$UNKNOWN_PODS\"\n\n    echo \"$UNKNOWN_PODS\" | while read pod; do\n      NAMESPACE=$(echo $pod | cut -d/ -f1)\n      NAME=$(echo $pod | cut -d/ -f2)\n      echo \"  → Deleting $NAMESPACE/$NAME\"\n      kubectl delete pod -n $NAMESPACE $NAME --force --grace-period=0 || echo \"  ✗ Failed to delete\"\n    done\n  else\n    echo \"  ✓ No zombie pods found\"\n  fi\n\n  # Find CrashLoopBackOff pods with \u003e100 restarts\n  CRASH_PODS=$(kubectl get pods -A -o json | \\\n    jq -r '.items[] | select(.status.containerStatuses != null) | select(.status.containerStatuses[0].restartCount \u003e 100) | \"\\(.metadata.namespace)/\\(.metadata.name)/\\(.status.containerStatuses[0].restartCount)\"')\n\n  if [ -n \"$CRASH_PODS\" ]; then\n    echo \"[Zombie Cleanup] Found excessive CrashLoop pods:\"\n    echo \"$CRASH_PODS\" | while read pod; do\n      NAMESPACE=$(echo $pod | cut -d/ -f1)\n      NAME=$(echo $pod | cut -d/ -f2)\n      RESTARTS=$(echo $pod | cut -d/ -f3)\n      echo \"  → Scaling down $NAMESPACE/$NAME ($RESTARTS restarts)\"\n\n      # Try to scale down deployment\n      DEPLOYMENT=$(kubectl get pod -n $NAMESPACE $NAME -o jsonpath='{.metadata.ownerReferences[0].name}' 2\u003e/dev/null || echo \"\")\n      if [ -n \"$DEPLOYMENT\" ]; then\n        kubectl scale deployment $DEPLOYMENT -n $NAMESPACE --replicas=0 || echo \"  ✗ Failed to scale\"\n      fi\n    done\n  else\n    echo \"  ✓ No excessive CrashLoop pods\"\n  fi\n\n  echo \"\"\n  sleep 60\ndone\n"],"command":["/bin/bash","-c"],"env":[{"name":"CLEANUP_INTERVAL","value":"60"}],"image":"bitnami/kubectl:latest","name":"cleanup"}],"serviceAccountName":"cortex-cleanup-sa"}}}}
+    creationTimestamp: "2025-12-24T22:14:59Z"
+    generation: 1
+    labels:
+      app: zombie-cleanup-daemon
+      cortex.component: automation
+    name: zombie-cleanup-daemon
+    namespace: cortex-system
+    resourceVersion: "20468356"
+    uid: d09a15db-4d3c-4afd-8ee3-daeab8f840f6
+  spec:
+    progressDeadlineSeconds: 600
+    replicas: 1
+    revisionHistoryLimit: 10
+    selector:
+      matchLabels:
+        app: zombie-cleanup-daemon
+    strategy:
+      rollingUpdate:
+        maxSurge: 25%
+        maxUnavailable: 25%
+      type: RollingUpdate
+    template:
+      metadata:
+        creationTimestamp: null
+        labels:
+          app: zombie-cleanup-daemon
+      spec:
+        containers:
+        - args:
+          - |
+            #!/bin/bash
+            set -e
+
+            echo "[Zombie Cleanup] Starting daemon..."
+            echo "[Zombie Cleanup] Check interval: 60 seconds"
+
+            while true; do
+              echo "[$(date)] Checking for zombie pods..."
+
+              # Find Unknown pods older than 5 minutes
+              UNKNOWN_PODS=$(kubectl get pods -A --field-selector status.phase=Unknown -o json | \
+                jq -r '.items[] | select(.metadata.creationTimestamp | . as $t | (now - ($t | fromdateiso8601)) > 300) | "\(.metadata.namespace)/\(.metadata.name)"')
+
+              if [ -n "$UNKNOWN_PODS" ]; then
+                echo "[Zombie Cleanup] Found zombie pods:"
+                echo "$UNKNOWN_PODS"
+
+                echo "$UNKNOWN_PODS" | while read pod; do
+                  NAMESPACE=$(echo $pod | cut -d/ -f1)
+                  NAME=$(echo $pod | cut -d/ -f2)
+                  echo "  → Deleting $NAMESPACE/$NAME"
+                  kubectl delete pod -n $NAMESPACE $NAME --force --grace-period=0 || echo "  ✗ Failed to delete"
+                done
+              else
+                echo "  ✓ No zombie pods found"
+              fi
+
+              # Find CrashLoopBackOff pods with >100 restarts
+              CRASH_PODS=$(kubectl get pods -A -o json | \
+                jq -r '.items[] | select(.status.containerStatuses != null) | select(.status.containerStatuses[0].restartCount > 100) | "\(.metadata.namespace)/\(.metadata.name)/\(.status.containerStatuses[0].restartCount)"')
+
+              if [ -n "$CRASH_PODS" ]; then
+                echo "[Zombie Cleanup] Found excessive CrashLoop pods:"
+                echo "$CRASH_PODS" | while read pod; do
+                  NAMESPACE=$(echo $pod | cut -d/ -f1)
+                  NAME=$(echo $pod | cut -d/ -f2)
+                  RESTARTS=$(echo $pod | cut -d/ -f3)
+                  echo "  → Scaling down $NAMESPACE/$NAME ($RESTARTS restarts)"
+
+                  # Try to scale down deployment
+                  DEPLOYMENT=$(kubectl get pod -n $NAMESPACE $NAME -o jsonpath='{.metadata.ownerReferences[0].name}' 2>/dev/null || echo "")
+                  if [ -n "$DEPLOYMENT" ]; then
+                    kubectl scale deployment $DEPLOYMENT -n $NAMESPACE --replicas=0 || echo "  ✗ Failed to scale"
+                  fi
+                done
+              else
+                echo "  ✓ No excessive CrashLoop pods"
+              fi
+
+              echo ""
+              sleep 60
+            done
+          command:
+          - /bin/bash
+          - -c
+          env:
+          - name: CLEANUP_INTERVAL
+            value: "60"
+          image: bitnami/kubectl:latest
+          imagePullPolicy: Always
+          name: cleanup
+          resources: {}
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+        dnsPolicy: ClusterFirst
+        restartPolicy: Always
+        schedulerName: default-scheduler
+        securityContext: {}
+        serviceAccount: cortex-cleanup-sa
+        serviceAccountName: cortex-cleanup-sa
+        terminationGracePeriodSeconds: 30
+  status:
+    availableReplicas: 1
+    conditions:
+    - lastTransitionTime: "2025-12-24T22:15:07Z"
+      lastUpdateTime: "2025-12-24T22:15:07Z"
+      message: Deployment has minimum availability.
+      reason: MinimumReplicasAvailable
+      status: "True"
+      type: Available
+    - lastTransitionTime: "2025-12-24T22:14:59Z"
+      lastUpdateTime: "2025-12-24T22:15:07Z"
+      message: ReplicaSet "zombie-cleanup-daemon-6d5bbd894" has successfully progressed.
+      reason: NewReplicaSetAvailable
+      status: "True"
+      type: Progressing
+    observedGeneration: 1
+    readyReplicas: 1
+    replicas: 1
+    updatedReplicas: 1
+- apiVersion: v1
+  kind: Service
+  metadata:
+    annotations:
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"v1","kind":"Service","metadata":{"annotations":{},"name":"cloudflare-mcp-server","namespace":"cortex-system"},"spec":{"ports":[{"port":3000,"targetPort":3000}],"selector":{"app":"cloudflare-mcp-server"},"type":"ClusterIP"}}
+    creationTimestamp: "2025-12-20T22:19:11Z"
+    name: cloudflare-mcp-server
+    namespace: cortex-system
+    resourceVersion: "23415"
+    uid: 50c8b72e-2884-479b-82bb-0c67f8a4d571
+  spec:
+    clusterIP: 10.43.183.185
+    clusterIPs:
+    - 10.43.183.185
+    internalTrafficPolicy: Cluster
+    ipFamilies:
+    - IPv4
+    ipFamilyPolicy: SingleStack
+    ports:
+    - port: 3000
+      protocol: TCP
+      targetPort: 3000
+    selector:
+      app: cloudflare-mcp-server
+    sessionAffinity: None
+    type: ClusterIP
+  status:
+    loadBalancer: {}
+- apiVersion: v1
+  kind: Service
+  metadata:
+    annotations:
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"v1","kind":"Service","metadata":{"annotations":{},"labels":{"app":"cortex-mcp-server","component":"mcp-gateway"},"name":"cortex-mcp-server","namespace":"cortex-system"},"spec":{"ports":[{"name":"mcp","port":3000,"protocol":"TCP","targetPort":"mcp"},{"name":"health","port":8080,"protocol":"TCP","targetPort":"health"}],"selector":{"app":"cortex-mcp-server"},"type":"ClusterIP"}}
+    creationTimestamp: "2025-12-24T22:46:37Z"
+    labels:
+      app: cortex-mcp-server
+      component: mcp-gateway
+    name: cortex-mcp-server
+    namespace: cortex-system
+    resourceVersion: "20604921"
+    uid: d947d969-5379-4297-93a6-3010e7147315
+  spec:
+    clusterIP: 10.43.41.79
+    clusterIPs:
+    - 10.43.41.79
+    internalTrafficPolicy: Cluster
+    ipFamilies:
+    - IPv4
+    ipFamilyPolicy: SingleStack
+    ports:
+    - name: mcp
+      port: 3000
+      protocol: TCP
+      targetPort: mcp
+    - name: health
+      port: 8080
+      protocol: TCP
+      targetPort: health
+    selector:
+      app: cortex-mcp-server
+    sessionAffinity: None
+    type: ClusterIP
+  status:
+    loadBalancer: {}
+- apiVersion: v1
+  kind: Service
+  metadata:
+    annotations:
+      field.cattle.io/publicEndpoints: '[{"addresses":["10.88.145.204"],"port":8080,"protocol":"TCP","serviceName":"cortex-system:cortex-resource-manager","allNodes":false}]'
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"v1","kind":"Service","metadata":{"annotations":{},"name":"cortex-resource-manager","namespace":"cortex-system"},"spec":{"ports":[{"port":8080,"targetPort":8080}],"selector":{"app":"cortex-resource-manager"},"type":"LoadBalancer"}}
+      metallb.io/ip-allocated-from-pool: default-pool
+    creationTimestamp: "2025-12-20T22:18:45Z"
+    name: cortex-resource-manager
+    namespace: cortex-system
+    resourceVersion: "22130"
+    uid: 04519727-b940-4ce8-9995-faa359ec95ac
+  spec:
+    allocateLoadBalancerNodePorts: true
+    clusterIP: 10.43.193.51
+    clusterIPs:
+    - 10.43.193.51
+    externalTrafficPolicy: Cluster
+    internalTrafficPolicy: Cluster
+    ipFamilies:
+    - IPv4
+    ipFamilyPolicy: SingleStack
+    ports:
+    - nodePort: 30884
+      port: 8080
+      protocol: TCP
+      targetPort: 8080
+    selector:
+      app: cortex-resource-manager
+    sessionAffinity: None
+    type: LoadBalancer
+  status:
+    loadBalancer:
+      ingress:
+      - ip: 10.88.145.204
+        ipMode: VIP
+- apiVersion: v1
+  kind: Service
+  metadata:
+    annotations:
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"v1","kind":"Service","metadata":{"annotations":{},"labels":{"app":"pgadmin"},"name":"pgadmin","namespace":"cortex-system"},"spec":{"ports":[{"name":"http","port":80,"protocol":"TCP","targetPort":80}],"selector":{"app":"pgadmin"},"type":"ClusterIP"}}
+    creationTimestamp: "2025-12-22T02:18:00Z"
+    labels:
+      app: pgadmin
+    name: pgadmin
+    namespace: cortex-system
+    resourceVersion: "5823393"
+    uid: 5de92e0b-6dc3-4ce1-a7e7-7d2f27cfce58
+  spec:
+    clusterIP: 10.43.27.208
+    clusterIPs:
+    - 10.43.27.208
+    internalTrafficPolicy: Cluster
+    ipFamilies:
+    - IPv4
+    ipFamilyPolicy: SingleStack
+    ports:
+    - name: http
+      port: 80
+      protocol: TCP
+      targetPort: 80
+    selector:
+      app: pgadmin
+    sessionAffinity: None
+    type: ClusterIP
+  status:
+    loadBalancer: {}
+- apiVersion: v1
+  kind: Service
+  metadata:
+    annotations:
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"v1","kind":"Service","metadata":{"annotations":{},"labels":{"app":"postgres"},"name":"postgres","namespace":"cortex-system"},"spec":{"ports":[{"name":"postgres","port":5432,"protocol":"TCP","targetPort":5432}],"selector":{"app":"postgres"},"type":"ClusterIP"}}
+    creationTimestamp: "2025-12-22T02:17:59Z"
+    labels:
+      app: postgres
+    name: postgres
+    namespace: cortex-system
+    resourceVersion: "5823275"
+    uid: d52dc96b-616a-4e2b-bf30-e8a84c8f10cd
+  spec:
+    clusterIP: 10.43.163.35
+    clusterIPs:
+    - 10.43.163.35
+    internalTrafficPolicy: Cluster
+    ipFamilies:
+    - IPv4
+    ipFamilyPolicy: SingleStack
+    ports:
+    - name: postgres
+      port: 5432
+      protocol: TCP
+      targetPort: 5432
+    selector:
+      app: postgres
+    sessionAffinity: None
+    type: ClusterIP
+  status:
+    loadBalancer: {}
+- apiVersion: v1
+  kind: Service
+  metadata:
+    annotations:
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"v1","kind":"Service","metadata":{"annotations":{},"labels":{"app":"postgres-exporter"},"name":"postgres-exporter","namespace":"cortex-system"},"spec":{"ports":[{"name":"metrics","port":9187,"protocol":"TCP","targetPort":9187}],"selector":{"app":"postgres-exporter"},"type":"ClusterIP"}}
+    creationTimestamp: "2025-12-22T02:17:59Z"
+    labels:
+      app: postgres-exporter
+    name: postgres-exporter
+    namespace: cortex-system
+    resourceVersion: "5823324"
+    uid: 0a5030f8-dae6-4f8e-ab82-b1db587a1f97
+  spec:
+    clusterIP: 10.43.208.2
+    clusterIPs:
+    - 10.43.208.2
+    internalTrafficPolicy: Cluster
+    ipFamilies:
+    - IPv4
+    ipFamilyPolicy: SingleStack
+    ports:
+    - name: metrics
+      port: 9187
+      protocol: TCP
+      targetPort: 9187
+    selector:
+      app: postgres-exporter
+    sessionAffinity: None
+    type: ClusterIP
+  status:
+    loadBalancer: {}
+- apiVersion: v1
+  kind: Service
+  metadata:
+    annotations:
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"v1","kind":"Service","metadata":{"annotations":{},"labels":{"app":"postgres"},"name":"postgres-headless","namespace":"cortex-system"},"spec":{"clusterIP":"None","ports":[{"name":"postgres","port":5432,"protocol":"TCP","targetPort":5432}],"selector":{"app":"postgres"},"type":"ClusterIP"}}
+    creationTimestamp: "2025-12-22T02:17:59Z"
+    labels:
+      app: postgres
+    name: postgres-headless
+    namespace: cortex-system
+    resourceVersion: "5823283"
+    uid: b55d50e4-b39f-4e43-b86e-d352bf894dd1
+  spec:
+    clusterIP: None
+    clusterIPs:
+    - None
+    internalTrafficPolicy: Cluster
+    ipFamilies:
+    - IPv4
+    ipFamilyPolicy: SingleStack
+    ports:
+    - name: postgres
+      port: 5432
+      protocol: TCP
+      targetPort: 5432
+    selector:
+      app: postgres
+    sessionAffinity: None
+    type: ClusterIP
+  status:
+    loadBalancer: {}
+- apiVersion: v1
+  kind: Service
+  metadata:
+    annotations:
+      meta.helm.sh/release-name: postgres
+      meta.helm.sh/release-namespace: cortex-system
+    creationTimestamp: "2025-12-20T22:15:57Z"
+    labels:
+      app.kubernetes.io/component: primary
+      app.kubernetes.io/instance: postgres
+      app.kubernetes.io/managed-by: Helm
+      app.kubernetes.io/name: postgresql
+      app.kubernetes.io/version: 18.1.0
+      helm.sh/chart: postgresql-18.1.15
+    name: postgres-postgresql
+    namespace: cortex-system
+    resourceVersion: "11341"
+    uid: a0221f94-a71d-4dd9-9163-fe92a992e049
+  spec:
+    clusterIP: 10.43.135.206
+    clusterIPs:
+    - 10.43.135.206
+    internalTrafficPolicy: Cluster
+    ipFamilies:
+    - IPv4
+    ipFamilyPolicy: SingleStack
+    ports:
+    - name: tcp-postgresql
+      port: 5432
+      protocol: TCP
+      targetPort: tcp-postgresql
+    selector:
+      app.kubernetes.io/component: primary
+      app.kubernetes.io/instance: postgres
+      app.kubernetes.io/name: postgresql
+    sessionAffinity: None
+    type: ClusterIP
+  status:
+    loadBalancer: {}
+- apiVersion: v1
+  kind: Service
+  metadata:
+    annotations:
+      meta.helm.sh/release-name: postgres
+      meta.helm.sh/release-namespace: cortex-system
+    creationTimestamp: "2025-12-20T22:15:57Z"
+    labels:
+      app.kubernetes.io/component: primary
+      app.kubernetes.io/instance: postgres
+      app.kubernetes.io/managed-by: Helm
+      app.kubernetes.io/name: postgresql
+      app.kubernetes.io/version: 18.1.0
+      helm.sh/chart: postgresql-18.1.15
+    name: postgres-postgresql-hl
+    namespace: cortex-system
+    resourceVersion: "11335"
+    uid: 0690de07-32be-4f11-9869-161d0cda1a00
+  spec:
+    clusterIP: None
+    clusterIPs:
+    - None
+    internalTrafficPolicy: Cluster
+    ipFamilies:
+    - IPv4
+    ipFamilyPolicy: SingleStack
+    ports:
+    - name: tcp-postgresql
+      port: 5432
+      protocol: TCP
+      targetPort: tcp-postgresql
+    publishNotReadyAddresses: true
+    selector:
+      app.kubernetes.io/component: primary
+      app.kubernetes.io/instance: postgres
+      app.kubernetes.io/name: postgresql
+    sessionAffinity: None
+    type: ClusterIP
+  status:
+    loadBalancer: {}
+- apiVersion: v1
+  kind: Service
+  metadata:
+    annotations:
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"v1","kind":"Service","metadata":{"annotations":{},"creationTimestamp":null,"labels":{"app":"proxmox-mcp"},"name":"proxmox-mcp","namespace":"cortex-system"},"spec":{"ports":[{"name":"3000-3000","port":3000,"protocol":"TCP","targetPort":3000}],"selector":{"app":"proxmox-mcp"},"type":"ClusterIP"},"status":{"loadBalancer":{}}}
+    creationTimestamp: "2025-12-24T22:04:29Z"
+    labels:
+      app: proxmox-mcp
+    name: proxmox-mcp
+    namespace: cortex-system
+    resourceVersion: "20424765"
+    uid: bf0986b3-62db-4979-9f8c-25b438c9e00b
+  spec:
+    clusterIP: 10.43.147.206
+    clusterIPs:
+    - 10.43.147.206
+    internalTrafficPolicy: Cluster
+    ipFamilies:
+    - IPv4
+    ipFamilyPolicy: SingleStack
+    ports:
+    - name: 3000-3000
+      port: 3000
+      protocol: TCP
+      targetPort: 3000
+    selector:
+      app: proxmox-mcp-server
+    sessionAffinity: None
+    type: ClusterIP
+  status:
+    loadBalancer: {}
+- apiVersion: v1
+  kind: Service
+  metadata:
+    annotations:
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"v1","kind":"Service","metadata":{"annotations":{},"name":"proxmox-mcp-server","namespace":"cortex-system"},"spec":{"ports":[{"name":"mcp","port":3000,"targetPort":3000}],"selector":{"app":"proxmox-mcp-server"}}}
+    creationTimestamp: "2025-12-20T22:19:08Z"
+    name: proxmox-mcp-server
+    namespace: cortex-system
+    resourceVersion: "25274938"
+    uid: 19d9c640-63a8-4392-be74-0d6d64af78f4
+  spec:
+    clusterIP: 10.43.19.252
+    clusterIPs:
+    - 10.43.19.252
+    internalTrafficPolicy: Cluster
+    ipFamilies:
+    - IPv4
+    ipFamilyPolicy: SingleStack
+    ports:
+    - name: mcp
+      port: 3000
+      protocol: TCP
+      targetPort: 3000
+    selector:
+      app: proxmox-mcp-server
+    sessionAffinity: None
+    type: ClusterIP
+  status:
+    loadBalancer: {}
+- apiVersion: v1
+  kind: Service
+  metadata:
+    annotations:
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"v1","kind":"Service","metadata":{"annotations":{},"labels":{"app":"redis","component":"chat-persistence"},"name":"redis","namespace":"cortex-system"},"spec":{"ports":[{"name":"redis","port":6379,"targetPort":6379}],"selector":{"app":"redis"},"type":"ClusterIP"}}
+    creationTimestamp: "2025-12-25T23:01:15Z"
+    labels:
+      app: redis
+      component: chat-persistence
+    name: redis
+    namespace: cortex-system
+    resourceVersion: "26804155"
+    uid: 21cde39a-78aa-46b3-9c3c-00172a1a1e30
+  spec:
+    clusterIP: 10.43.214.90
+    clusterIPs:
+    - 10.43.214.90
+    internalTrafficPolicy: Cluster
+    ipFamilies:
+    - IPv4
+    ipFamilyPolicy: SingleStack
+    ports:
+    - name: redis
+      port: 6379
+      protocol: TCP
+      targetPort: 6379
+    selector:
+      app: redis
+    sessionAffinity: None
+    type: ClusterIP
+  status:
+    loadBalancer: {}
+- apiVersion: v1
+  kind: Service
+  metadata:
+    annotations:
+      meta.helm.sh/release-name: redis
+      meta.helm.sh/release-namespace: cortex-system
+    creationTimestamp: "2025-12-20T22:16:07Z"
+    labels:
+      app.kubernetes.io/instance: redis
+      app.kubernetes.io/managed-by: Helm
+      app.kubernetes.io/name: redis
+      app.kubernetes.io/version: 8.4.0
+      helm.sh/chart: redis-24.1.0
+    name: redis-headless
+    namespace: cortex-system
+    resourceVersion: "12059"
+    uid: ddff303e-a516-4da2-9370-ad3154e1bfd1
+  spec:
+    clusterIP: None
+    clusterIPs:
+    - None
+    internalTrafficPolicy: Cluster
+    ipFamilies:
+    - IPv4
+    ipFamilyPolicy: SingleStack
+    ports:
+    - name: tcp-redis
+      port: 6379
+      protocol: TCP
+      targetPort: redis
+    selector:
+      app.kubernetes.io/instance: redis
+      app.kubernetes.io/name: redis
+    sessionAffinity: None
+    type: ClusterIP
+  status:
+    loadBalancer: {}
+- apiVersion: v1
+  kind: Service
+  metadata:
+    annotations:
+      meta.helm.sh/release-name: redis
+      meta.helm.sh/release-namespace: cortex-system
+    creationTimestamp: "2025-12-20T22:16:07Z"
+    labels:
+      app.kubernetes.io/component: master
+      app.kubernetes.io/instance: redis
+      app.kubernetes.io/managed-by: Helm
+      app.kubernetes.io/name: redis
+      app.kubernetes.io/version: 8.4.0
+      helm.sh/chart: redis-24.1.0
+    name: redis-master
+    namespace: cortex-system
+    resourceVersion: "12081"
+    uid: 4560c6b9-d0b8-4b77-a8d3-4e866492d710
+  spec:
+    clusterIP: 10.43.48.239
+    clusterIPs:
+    - 10.43.48.239
+    internalTrafficPolicy: Cluster
+    ipFamilies:
+    - IPv4
+    ipFamilyPolicy: SingleStack
+    ports:
+    - name: tcp-redis
+      port: 6379
+      protocol: TCP
+      targetPort: redis
+    selector:
+      app.kubernetes.io/component: master
+      app.kubernetes.io/instance: redis
+      app.kubernetes.io/name: redis
+    sessionAffinity: None
+    type: ClusterIP
+  status:
+    loadBalancer: {}
+- apiVersion: v1
+  kind: Service
+  metadata:
+    annotations:
+      meta.helm.sh/release-name: redis
+      meta.helm.sh/release-namespace: cortex-system
+    creationTimestamp: "2025-12-20T22:16:07Z"
+    labels:
+      app.kubernetes.io/component: replica
+      app.kubernetes.io/instance: redis
+      app.kubernetes.io/managed-by: Helm
+      app.kubernetes.io/name: redis
+      app.kubernetes.io/version: 8.4.0
+      helm.sh/chart: redis-24.1.0
+    name: redis-replicas
+    namespace: cortex-system
+    resourceVersion: "12071"
+    uid: 8612c3d9-4d45-4424-9208-8343fe1035c9
+  spec:
+    clusterIP: 10.43.134.95
+    clusterIPs:
+    - 10.43.134.95
+    internalTrafficPolicy: Cluster
+    ipFamilies:
+    - IPv4
+    ipFamilyPolicy: SingleStack
+    ports:
+    - name: tcp-redis
+      port: 6379
+      protocol: TCP
+      targetPort: redis
+    selector:
+      app.kubernetes.io/component: replica
+      app.kubernetes.io/instance: redis
+      app.kubernetes.io/name: redis
+    sessionAffinity: None
+    type: ClusterIP
+  status:
+    loadBalancer: {}
+- apiVersion: v1
+  kind: Service
+  metadata:
+    annotations:
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"v1","kind":"Service","metadata":{"annotations":{},"labels":{"app":"sandfly-mcp-server"},"name":"sandfly-mcp-server","namespace":"cortex-system"},"spec":{"ports":[{"name":"http","port":3000,"protocol":"TCP","targetPort":3000}],"selector":{"app":"sandfly-mcp-server"},"type":"ClusterIP"}}
+    creationTimestamp: "2025-12-26T01:52:22Z"
+    labels:
+      app: sandfly-mcp-server
+    name: sandfly-mcp-server
+    namespace: cortex-system
+    resourceVersion: "27371844"
+    uid: 11fa8b6b-636d-4466-982a-c41d83307787
+  spec:
+    clusterIP: 10.43.143.53
+    clusterIPs:
+    - 10.43.143.53
+    internalTrafficPolicy: Cluster
+    ipFamilies:
+    - IPv4
+    ipFamilyPolicy: SingleStack
+    ports:
+    - name: http
+      port: 3000
+      protocol: TCP
+      targetPort: 3000
+    selector:
+      app: sandfly-mcp-server
+    sessionAffinity: None
+    type: ClusterIP
+  status:
+    loadBalancer: {}
+- apiVersion: v1
+  kind: Service
+  metadata:
+    annotations:
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"v1","kind":"Service","metadata":{"annotations":{},"name":"security-master","namespace":"cortex-system"},"spec":{"ports":[{"name":"http","port":8080,"targetPort":8080}],"selector":{"app":"security-master"}}}
+    creationTimestamp: "2025-12-21T14:09:52Z"
+    name: security-master
+    namespace: cortex-system
+    resourceVersion: "3237773"
+    uid: 5ecff444-3fc1-4dbb-864b-b7ef2f1456a3
+  spec:
+    clusterIP: 10.43.173.115
+    clusterIPs:
+    - 10.43.173.115
+    internalTrafficPolicy: Cluster
+    ipFamilies:
+    - IPv4
+    ipFamilyPolicy: SingleStack
+    ports:
+    - name: http
+      port: 8080
+      protocol: TCP
+      targetPort: 8080
+    selector:
+      app: security-master
+    sessionAffinity: None
+    type: ClusterIP
+  status:
+    loadBalancer: {}
+- apiVersion: v1
+  kind: Service
+  metadata:
+    annotations:
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"v1","kind":"Service","metadata":{"annotations":{},"creationTimestamp":null,"labels":{"app":"unifi-mcp"},"name":"unifi-mcp","namespace":"cortex-system"},"spec":{"ports":[{"name":"3000-3000","port":3000,"protocol":"TCP","targetPort":3000}],"selector":{"app":"unifi-mcp"},"type":"ClusterIP"},"status":{"loadBalancer":{}}}
+    creationTimestamp: "2025-12-24T22:04:16Z"
+    labels:
+      app: unifi-mcp
+    name: unifi-mcp
+    namespace: cortex-system
+    resourceVersion: "20423951"
+    uid: 7fb4838f-4b52-4274-9cae-319e3932b3de
+  spec:
+    clusterIP: 10.43.183.85
+    clusterIPs:
+    - 10.43.183.85
+    internalTrafficPolicy: Cluster
+    ipFamilies:
+    - IPv4
+    ipFamilyPolicy: SingleStack
+    ports:
+    - name: 3000-3000
+      port: 3000
+      protocol: TCP
+      targetPort: 3000
+    selector:
+      app: unifi-mcp-server
+    sessionAffinity: None
+    type: ClusterIP
+  status:
+    loadBalancer: {}
+- apiVersion: v1
+  kind: Service
+  metadata:
+    annotations:
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"v1","kind":"Service","metadata":{"annotations":{},"name":"unifi-mcp-server","namespace":"cortex-system"},"spec":{"ports":[{"port":3000,"targetPort":3000}],"selector":{"app":"unifi-mcp-server"},"type":"ClusterIP"}}
+    creationTimestamp: "2025-12-20T22:19:13Z"
+    name: unifi-mcp-server
+    namespace: cortex-system
+    resourceVersion: "23534"
+    uid: da09d7a1-0e38-4a8b-982e-694354af0b65
+  spec:
+    clusterIP: 10.43.178.37
+    clusterIPs:
+    - 10.43.178.37
+    internalTrafficPolicy: Cluster
+    ipFamilies:
+    - IPv4
+    ipFamilyPolicy: SingleStack
+    ports:
+    - port: 3000
+      protocol: TCP
+      targetPort: 3000
+    selector:
+      app: unifi-mcp-server
+    sessionAffinity: None
+    type: ClusterIP
+  status:
+    loadBalancer: {}
+kind: List
+metadata:
+  resourceVersion: ""

@@ -1,0 +1,469 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: improvement-detector-app
+  namespace: cortex-knowledge
+data:
+  detector.py: |
+    #!/usr/bin/env python3
+    import os
+    import sys
+    import json
+    import yaml
+    import time
+    import logging
+    from datetime import datetime, timedelta
+    from collections import defaultdict, Counter
+    from typing import Dict, List, Any, Optional
+
+    from pymongo import MongoClient
+    from neo4j import GraphDatabase
+    from prometheus_api_client import PrometheusConnect
+    from prometheus_client import start_http_server, Counter as PromCounter, Gauge
+    import numpy as np
+    import pandas as pd
+    from sklearn.cluster import DBSCAN
+
+    # Logging
+    logging.basicConfig(
+        level=logging.INFO,
+        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    )
+    logger = logging.getLogger('improvement-detector')
+
+    # Prometheus metrics
+    IMPROVEMENTS_DETECTED = PromCounter('improvements_detected_total', 'Total improvements detected', ['category'])
+    IMPROVEMENT_SCORE = Gauge('improvement_score', 'Improvement opportunity score', ['category'])
+    ACTIVE_IMPROVEMENTS = Gauge('active_improvements_total', 'Active improvement opportunities')
+
+    class ImprovementDetector:
+        def __init__(self):
+            self.load_config()
+            self.setup_clients()
+
+        def load_config(self):
+            with open('/app/config/config.yaml', 'r') as f:
+                self.config = yaml.safe_load(f)
+            logger.info("Configuration loaded")
+
+        def setup_clients(self):
+            # MongoDB
+            mongo_config = self.config.get('mongodb', {})
+            self.mongo = MongoClient(
+                f"mongodb://{mongo_config.get('host', 'knowledge-mongodb')}:{mongo_config.get('port', 27017)}"
+            )
+            self.db = self.mongo[mongo_config.get('database', 'cortex_knowledge')]
+
+            # Neo4j
+            neo4j_config = self.config.get('neo4j', {})
+            self.neo4j = GraphDatabase.driver(
+                neo4j_config.get('uri', 'bolt://knowledge-graph:7687')
+            )
+
+            # Prometheus
+            prom_config = self.config.get('prometheus', {})
+            try:
+                self.prometheus = PrometheusConnect(
+                    url=prom_config.get('url', 'http://prometheus.cortex-system:9090'),
+                    disable_ssl=True
+                )
+            except Exception as e:
+                logger.warning(f"Could not connect to Prometheus: {e}")
+                self.prometheus = None
+
+            logger.info("Clients initialized")
+
+        def detect_pattern_improvements(self) -> List[Dict]:
+            """Detect recurring patterns that need systematic fixes"""
+            logger.info("Detecting pattern-based improvements")
+            improvements = []
+
+            try:
+                # Find recurring errors
+                pipeline = [
+                    {
+                        '$match': {
+                            'type': 'error_pattern'
+                        }
+                    },
+                    {
+                        '$group': {
+                            '_id': '$content',
+                            'count': {'$sum': 1},
+                            'first_seen': {'$min': '$timestamp'},
+                            'last_seen': {'$max': '$timestamp'},
+                            'sources': {'$addToSet': '$source.namespace'}
+                        }
+                    },
+                    {
+                        '$match': {
+                            'count': {'$gte': self.config['detection']['strategies'][0]['threshold']}
+                        }
+                    },
+                    {
+                        '$sort': {'count': -1}
+                    }
+                ]
+
+                recurring_errors = list(self.db.knowledge.aggregate(pipeline))
+
+                for error in recurring_errors:
+                    improvement = {
+                        'type': 'recurring_error_fix',
+                        'category': 'reliability',
+                        'title': f"Fix recurring error: {error['_id'][:100]}",
+                        'description': f"Error occurred {error['count']} times across {len(error['sources'])} namespaces",
+                        'details': {
+                            'error_pattern': error['_id'],
+                            'occurrences': error['count'],
+                            'affected_namespaces': error['sources'],
+                            'first_seen': error['first_seen'],
+                            'last_seen': error['last_seen']
+                        },
+                        'impact': 'high' if error['count'] > 10 else 'medium',
+                        'effort': 'medium',
+                        'timestamp': datetime.utcnow().isoformat()
+                    }
+
+                    improvement['score'] = self.calculate_roi(improvement)
+                    improvements.append(improvement)
+
+                logger.info(f"Found {len(improvements)} pattern-based improvements")
+
+            except Exception as e:
+                logger.error(f"Error in pattern detection: {e}")
+
+            return improvements
+
+        def detect_performance_improvements(self) -> List[Dict]:
+            """Detect performance optimization opportunities"""
+            logger.info("Detecting performance improvements")
+            improvements = []
+
+            if not self.prometheus:
+                return improvements
+
+            try:
+                # Check CPU usage
+                cpu_query = 'sum(rate(container_cpu_usage_seconds_total[5m])) by (namespace, pod)'
+                cpu_data = self.prometheus.custom_query(cpu_query)
+
+                for item in cpu_data:
+                    value = float(item['value'][1])
+                    if value > 0.8:  # 80% CPU usage
+                        improvement = {
+                            'type': 'performance_optimization',
+                            'category': 'optimization',
+                            'title': f"High CPU usage in {item['metric']['namespace']}/{item['metric']['pod']}",
+                            'description': f"Pod is using {value*100:.1f}% CPU",
+                            'details': {
+                                'namespace': item['metric']['namespace'],
+                                'pod': item['metric']['pod'],
+                                'cpu_usage': value,
+                                'metric': 'cpu'
+                            },
+                            'impact': 'medium',
+                            'effort': 'low',
+                            'timestamp': datetime.utcnow().isoformat()
+                        }
+
+                        improvement['score'] = self.calculate_roi(improvement)
+                        improvements.append(improvement)
+
+                # Check memory usage
+                mem_query = 'sum(container_memory_working_set_bytes) by (namespace, pod) / sum(container_spec_memory_limit_bytes) by (namespace, pod)'
+                mem_data = self.prometheus.custom_query(mem_query)
+
+                for item in mem_data:
+                    value = float(item['value'][1])
+                    if value > 0.85:  # 85% memory usage
+                        improvement = {
+                            'type': 'performance_optimization',
+                            'category': 'optimization',
+                            'title': f"High memory usage in {item['metric']['namespace']}/{item['metric']['pod']}",
+                            'description': f"Pod is using {value*100:.1f}% memory",
+                            'details': {
+                                'namespace': item['metric']['namespace'],
+                                'pod': item['metric']['pod'],
+                                'memory_usage': value,
+                                'metric': 'memory'
+                            },
+                            'impact': 'medium',
+                            'effort': 'low',
+                            'timestamp': datetime.utcnow().isoformat()
+                        }
+
+                        improvement['score'] = self.calculate_roi(improvement)
+                        improvements.append(improvement)
+
+                logger.info(f"Found {len(improvements)} performance improvements")
+
+            except Exception as e:
+                logger.error(f"Error in performance detection: {e}")
+
+            return improvements
+
+        def detect_knowledge_gaps(self) -> List[Dict]:
+            """Identify areas with insufficient knowledge"""
+            logger.info("Detecting knowledge gaps")
+            improvements = []
+
+            try:
+                # Find namespaces with few knowledge items
+                pipeline = [
+                    {
+                        '$match': {
+                            'source.namespace': {'$exists': True}
+                        }
+                    },
+                    {
+                        '$group': {
+                            '_id': '$source.namespace',
+                            'count': {'$sum': 1},
+                            'types': {'$addToSet': '$type'}
+                        }
+                    },
+                    {
+                        '$match': {
+                            'count': {'$lt': 5}
+                        }
+                    }
+                ]
+
+                gaps = list(self.db.knowledge.aggregate(pipeline))
+
+                for gap in gaps:
+                    improvement = {
+                        'type': 'knowledge_gap',
+                        'category': 'documentation',
+                        'title': f"Insufficient knowledge for {gap['_id']} namespace",
+                        'description': f"Only {gap['count']} knowledge items for this namespace",
+                        'details': {
+                            'namespace': gap['_id'],
+                            'knowledge_count': gap['count'],
+                            'knowledge_types': gap['types']
+                        },
+                        'impact': 'low',
+                        'effort': 'low',
+                        'timestamp': datetime.utcnow().isoformat()
+                    }
+
+                    improvement['score'] = self.calculate_roi(improvement)
+                    improvements.append(improvement)
+
+                logger.info(f"Found {len(improvements)} knowledge gaps")
+
+            except Exception as e:
+                logger.error(f"Error in knowledge gap detection: {e}")
+
+            return improvements
+
+        def detect_automation_opportunities(self) -> List[Dict]:
+            """Identify manual processes that can be automated"""
+            logger.info("Detecting automation opportunities")
+            improvements = []
+
+            try:
+                # Find recurring manual interventions
+                pipeline = [
+                    {
+                        '$match': {
+                            'type': 'solution',
+                            'content': {'$regex': '(?i)(manual|manually|hand)', '$options': 'i'}
+                        }
+                    },
+                    {
+                        '$group': {
+                            '_id': '$content',
+                            'count': {'$sum': 1}
+                        }
+                    },
+                    {
+                        '$match': {
+                            'count': {'$gte': 2}
+                        }
+                    }
+                ]
+
+                manual_tasks = list(self.db.knowledge.aggregate(pipeline))
+
+                for task in manual_tasks:
+                    improvement = {
+                        'type': 'automation_opportunity',
+                        'category': 'automation',
+                        'title': f"Automate recurring manual task",
+                        'description': f"Manual intervention required {task['count']} times",
+                        'details': {
+                            'task': task['_id'],
+                            'occurrences': task['count']
+                        },
+                        'impact': 'high',
+                        'effort': 'medium',
+                        'timestamp': datetime.utcnow().isoformat()
+                    }
+
+                    improvement['score'] = self.calculate_roi(improvement)
+                    improvements.append(improvement)
+
+                logger.info(f"Found {len(improvements)} automation opportunities")
+
+            except Exception as e:
+                logger.error(f"Error in automation detection: {e}")
+
+            return improvements
+
+        def detect_trend_improvements(self) -> List[Dict]:
+            """Detect negative trends requiring intervention"""
+            logger.info("Detecting trend-based improvements")
+            improvements = []
+
+            try:
+                # Analyze error trends
+                lookback = datetime.utcnow() - timedelta(
+                    days=self.config['detection']['strategies'][4]['lookback_days']
+                )
+
+                pipeline = [
+                    {
+                        '$match': {
+                            'type': 'error_pattern',
+                            'timestamp': {'$gte': lookback.isoformat()}
+                        }
+                    },
+                    {
+                        '$group': {
+                            '_id': {
+                                '$dateToString': {
+                                    'format': '%Y-%m-%d',
+                                    'date': {'$dateFromString': {'dateString': '$timestamp'}}
+                                }
+                            },
+                            'count': {'$sum': 1}
+                        }
+                    },
+                    {
+                        '$sort': {'_id': 1}
+                    }
+                ]
+
+                trend_data = list(self.db.knowledge.aggregate(pipeline))
+
+                if len(trend_data) >= 3:
+                    dates = [item['_id'] for item in trend_data]
+                    counts = [item['count'] for item in trend_data]
+
+                    # Simple linear regression to detect trend
+                    x = np.arange(len(counts))
+                    slope = np.polyfit(x, counts, 1)[0]
+
+                    # Increasing error trend
+                    if slope > 0.5:
+                        improvement = {
+                            'type': 'negative_trend',
+                            'category': 'reliability',
+                            'title': "Increasing error rate trend detected",
+                            'description': f"Error rate increasing by {slope:.1f} per day",
+                            'details': {
+                                'trend_slope': slope,
+                                'period_days': len(counts),
+                                'current_rate': counts[-1],
+                                'data_points': list(zip(dates, counts))
+                            },
+                            'impact': 'high',
+                            'effort': 'medium',
+                            'timestamp': datetime.utcnow().isoformat()
+                        }
+
+                        improvement['score'] = self.calculate_roi(improvement)
+                        improvements.append(improvement)
+
+                logger.info(f"Found {len(improvements)} trend-based improvements")
+
+            except Exception as e:
+                logger.error(f"Error in trend detection: {e}")
+
+            return improvements
+
+        def calculate_roi(self, improvement: Dict) -> float:
+            """Calculate ROI score for improvement"""
+            scoring = self.config['detection']['scoring']
+
+            impact = scoring['impact'].get(improvement.get('impact', 'medium'), 5)
+            effort = scoring['effort'].get(improvement.get('effort', 'medium'), 3)
+
+            roi = impact / effort if effort > 0 else 0
+
+            return round(roi, 2)
+
+        def store_improvement(self, improvement: Dict):
+            """Store improvement opportunity"""
+            try:
+                # Add ROI if not present
+                if 'score' not in improvement:
+                    improvement['score'] = self.calculate_roi(improvement)
+
+                # Check if meets minimum ROI
+                if improvement['score'] < self.config['detection']['scoring']['min_roi']:
+                    logger.debug(f"Improvement below minimum ROI: {improvement['score']}")
+                    return
+
+                # Store in MongoDB
+                improvement['status'] = 'identified'
+                improvement['created_at'] = datetime.utcnow().isoformat()
+
+                self.db.improvements.insert_one(improvement)
+
+                # Update metrics
+                IMPROVEMENTS_DETECTED.labels(category=improvement['category']).inc()
+                IMPROVEMENT_SCORE.labels(category=improvement['category']).set(improvement['score'])
+
+                logger.info(f"Stored improvement: {improvement['title']} (ROI: {improvement['score']})")
+
+            except Exception as e:
+                logger.error(f"Error storing improvement: {e}")
+
+        def run(self):
+            """Main detection loop"""
+            logger.info("Starting improvement detection service")
+
+            # Start metrics server
+            start_http_server(9092)
+
+            iteration = 0
+            while True:
+                try:
+                    iteration += 1
+                    logger.info(f"Starting detection iteration {iteration}")
+
+                    all_improvements = []
+
+                    # Run all detection strategies
+                    all_improvements.extend(self.detect_pattern_improvements())
+                    all_improvements.extend(self.detect_performance_improvements())
+                    all_improvements.extend(self.detect_knowledge_gaps())
+                    all_improvements.extend(self.detect_automation_opportunities())
+
+                    # Periodic trend analysis
+                    if iteration % 4 == 0:  # Every 4 iterations
+                        all_improvements.extend(self.detect_trend_improvements())
+
+                    # Store improvements
+                    for improvement in all_improvements:
+                        self.store_improvement(improvement)
+
+                    # Update active improvements count
+                    active_count = self.db.improvements.count_documents({'status': 'identified'})
+                    ACTIVE_IMPROVEMENTS.set(active_count)
+
+                    logger.info(f"Iteration {iteration}: Detected {len(all_improvements)} improvements")
+
+                    # Wait before next iteration
+                    time.sleep(600)  # 10 minutes
+
+                except Exception as e:
+                    logger.error(f"Error in detection loop: {e}")
+                    time.sleep(60)
+
+    if __name__ == '__main__':
+        detector = ImprovementDetector()
+        detector.run()

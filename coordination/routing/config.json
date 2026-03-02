@@ -51,6 +51,7 @@
     "security-master",
     "inventory-master",
     "cicd-master",
+    "resource-manager",
     "coordinator-master"
   ],
   "performance_tracking": {

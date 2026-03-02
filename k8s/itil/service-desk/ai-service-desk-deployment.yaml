@@ -1,0 +1,124 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ai-service-desk
+  namespace: cortex-service-desk
+  labels:
+    app: ai-service-desk
+    component: nlp-engine
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: ai-service-desk
+  template:
+    metadata:
+      labels:
+        app: ai-service-desk
+        component: nlp-engine
+    spec:
+      containers:
+      - name: service-desk
+        image: python:3.11-slim
+        command: ["/bin/sh"]
+        args:
+          - -c
+          - |
+            pip install --no-cache-dir flask flask-cors flask-socketio transformers torch spacy scikit-learn redis prometheus-client && \
+            python -m spacy download en_core_web_sm && \
+            python /app/service_desk.py
+        ports:
+        - containerPort: 5000
+          name: http
+          protocol: TCP
+        - containerPort: 5001
+          name: websocket
+          protocol: TCP
+        env:
+        - name: FLASK_ENV
+          value: "production"
+        - name: REDIS_HOST
+          value: "redis.cortex-system.svc.cluster.local"
+        - name: REDIS_PORT
+          value: "6379"
+        - name: NLP_MODEL
+          value: "distilbert-base-uncased-finetuned-sst-2-english"
+        - name: CONFIDENCE_THRESHOLD
+          valueFrom:
+            configMapKeyRef:
+              name: service-desk-config
+              key: nlp.intent.confidence.threshold
+        volumeMounts:
+        - name: app-code
+          mountPath: /app
+        - name: service-catalog
+          mountPath: /config/catalog
+        - name: nlp-intents
+          mountPath: /config/intents
+        resources:
+          requests:
+            memory: "1Gi"
+            cpu: "500m"
+          limits:
+            memory: "2Gi"
+            cpu: "1000m"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 5000
+          initialDelaySeconds: 60
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /ready
+            port: 5000
+          initialDelaySeconds: 30
+          periodSeconds: 5
+      volumes:
+      - name: app-code
+        configMap:
+          name: service-desk-code
+      - name: service-catalog
+        configMap:
+          name: service-catalog
+      - name: nlp-intents
+        configMap:
+          name: nlp-intents
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ai-service-desk
+  namespace: cortex-service-desk
+  labels:
+    app: ai-service-desk
+spec:
+  type: ClusterIP
+  ports:
+  - port: 80
+    targetPort: 5000
+    protocol: TCP
+    name: http
+  - port: 5001
+    targetPort: 5001
+    protocol: TCP
+    name: websocket
+  selector:
+    app: ai-service-desk
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ai-service-desk-metrics
+  namespace: cortex-service-desk
+  labels:
+    app: ai-service-desk
+spec:
+  type: ClusterIP
+  ports:
+  - port: 9090
+    targetPort: 9090
+    protocol: TCP
+    name: metrics
+  selector:
+    app: ai-service-desk

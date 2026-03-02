@@ -1,9 +1,9 @@
 {
   "total_budget": 500000,
-  "allocated": 1064000,
-  "in_use": 1064000,
-  "available": -564000,
-  "updated_at": "2025-11-30T13:05:49-0600",
+  "allocated": 1243000,
+  "in_use": 1243000,
+  "available": -743000,
+  "updated_at": "2025-12-04T16:02:30-0600",
   "allocations": {
     "worker-scan-037": {
       "master": "security-master",
@@ -314,6 +314,86 @@
       "master": "development-master",
       "tokens": 10000,
       "allocated_at": "2025-11-30T13:05:49-0600"
+    },
+    "worker-scan-147": {
+      "master": "security-master",
+      "tokens": 8000,
+      "allocated_at": "2025-12-03T11:53:34-0600"
+    },
+    "worker-implementation-148": {
+      "master": "development-master",
+      "tokens": 10000,
+      "allocated_at": "2025-12-03T12:34:36-0600"
+    },
+    "worker-analysis-148": {
+      "master": "coordinator-master",
+      "tokens": 5000,
+      "allocated_at": "2025-12-03T12:34:36-0600"
+    },
+    "worker-documentation-148": {
+      "master": "inventory-master",
+      "tokens": 6000,
+      "allocated_at": "2025-12-03T12:34:36-0600"
+    },
+    "worker-implementation-001": {
+      "master": "development-master",
+      "tokens": 10000,
+      "allocated_at": "2025-12-04T15:59:01-0600"
+    },
+    "worker-implementation-002": {
+      "master": "development-master",
+      "tokens": 10000,
+      "allocated_at": "2025-12-04T16:01:46-0600"
+    },
+    "worker-implementation-003": {
+      "master": "development-master",
+      "tokens": 10000,
+      "allocated_at": "2025-12-04T16:01:49-0600"
+    },
+    "worker-implementation-004": {
+      "master": "development-master",
+      "tokens": 10000,
+      "allocated_at": "2025-12-04T16:01:51-0600"
+    },
+    "worker-implementation-005": {
+      "master": "development-master",
+      "tokens": 10000,
+      "allocated_at": "2025-12-04T16:01:54-0600"
+    },
+    "worker-implementation-006": {
+      "master": "development-master",
+      "tokens": 10000,
+      "allocated_at": "2025-12-04T16:01:56-0600"
+    },
+    "worker-implementation-007": {
+      "master": "development-master",
+      "tokens": 10000,
+      "allocated_at": "2025-12-04T16:01:58-0600"
+    },
+    "worker-implementation-008": {
+      "master": "development-master",
+      "tokens": 10000,
+      "allocated_at": "2025-12-04T16:02:01-0600"
+    },
+    "worker-implementation-009": {
+      "master": "development-master",
+      "tokens": 10000,
+      "allocated_at": "2025-12-04T16:02:03-0600"
+    },
+    "worker-implementation-010": {
+      "master": "development-master",
+      "tokens": 10000,
+      "allocated_at": "2025-12-04T16:02:05-0600"
+    },
+    "worker-implementation-011": {
+      "master": "development-master",
+      "tokens": 10000,
+      "allocated_at": "2025-12-04T16:02:08-0600"
+    },
+    "worker-implementation-012": {
+      "master": "development-master",
+      "tokens": 10000,
+      "allocated_at": "2025-12-04T16:02:30-0600"
     }
   },
   "reclamation_log": [

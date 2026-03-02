@@ -1,0 +1,137 @@
+{
+  "name": "GitHub PR Validation",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "github-webhook",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "webhook",
+      "name": "GitHub Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [250, 300],
+      "webhookId": "github-webhook"
+    },
+    {
+      "parameters": {
+        "respondWith": "text",
+        "responseBody": "=Received",
+        "options": {}
+      },
+      "id": "respond",
+      "name": "Respond Immediately",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [450, 200]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const payload = $input.first().json.body || $input.first().json;\nconst event = $input.first().json.headers?.['x-github-event'] || 'unknown';\n\n// Only process pull_request events with relevant actions\nconst validActions = ['opened', 'synchronize', 'reopened'];\nconst action = payload.action || '';\nconst isPR = event === 'pull_request' && validActions.includes(action);\n\nif (!isPR) {\n  return [{ json: { skip: true, reason: `Not a PR event: ${event}/${action}` } }];\n}\n\nconst pr = payload.pull_request || {};\nconst repo = payload.repository || {};\n\nreturn [{\n  json: {\n    skip: false,\n    event: event,\n    action: action,\n    pr_number: pr.number,\n    pr_title: pr.title,\n    pr_branch: pr.head?.ref || 'unknown',\n    base_branch: pr.base?.ref || 'main',\n    repo_url: repo.clone_url || repo.html_url,\n    repo_full_name: repo.full_name,\n    pr_url: pr.html_url,\n    statuses_url: pr.statuses_url,\n    sha: pr.head?.sha\n  }\n}];"
+      },
+      "id": "parse",
+      "name": "Parse GitHub Event",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [450, 400]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {"caseSensitive": true, "leftValue": "", "typeValidation": "strict"},
+          "conditions": [
+            {
+              "id": "skip_check",
+              "leftValue": "={{ $json.skip }}",
+              "rightValue": false,
+              "operator": {"type": "boolean", "operation": "equals"}
+            }
+          ]
+        }
+      },
+      "id": "filter",
+      "name": "Should Process?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [650, 400]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=http://localhost:5678/webhook/code-validation",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"repo_url\": \"{{ $json.repo_url }}\",\n  \"branch\": \"{{ $json.pr_branch }}\",\n  \"fix_mode\": \"report\",\n  \"request_id\": \"pr-{{ $json.pr_number }}-{{ Date.now() }}\",\n  \"pr_number\": {{ $json.pr_number }},\n  \"sha\": \"{{ $json.sha }}\",\n  \"statuses_url\": \"{{ $json.statuses_url }}\"\n}",
+        "options": {"timeout": 300000}
+      },
+      "id": "trigger_validation",
+      "name": "Trigger Validation",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [900, 350]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const prev = $('Parse GitHub Event').first().json;\nconst validation = $input.first().json;\n\nconst passed = validation.passed === true;\nconst state = passed ? 'success' : 'failure';\nconst description = passed \n  ? 'All checks passed' \n  : `Found ${validation.summary?.lint_issues || 0} lint, ${validation.summary?.vulnerabilities || 0} vuln, ${validation.summary?.secrets_found || 0} secrets`;\n\nreturn [{\n  json: {\n    sha: prev.sha,\n    statuses_url: prev.statuses_url,\n    repo_full_name: prev.repo_full_name,\n    pr_number: prev.pr_number,\n    state: state,\n    description: description,\n    validation: validation\n  }\n}];"
+      },
+      "id": "prepare_status",
+      "name": "Prepare Status",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1100, 350]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://api.github.com/repos/{{ $json.repo_full_name }}/statuses/{{ $json.sha }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"state\": \"{{ $json.state }}\",\n  \"target_url\": \"http://10.88.140.196:5678\",\n  \"description\": \"{{ $json.description }}\",\n  \"context\": \"cortex/code-validation\"\n}",
+        "options": {}
+      },
+      "id": "update_status",
+      "name": "Update GitHub Status",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1300, 350]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const prev = $('Prepare Status').first().json;\n\nreturn [{\n  json: {\n    success: true,\n    pr_number: prev.pr_number,\n    state: prev.state,\n    description: prev.description,\n    validation_summary: prev.validation?.summary,\n    timestamp: new Date().toISOString()\n  }\n}];"
+      },
+      "id": "result",
+      "name": "Result",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1500, 350]
+    }
+  ],
+  "connections": {
+    "GitHub Webhook": {
+      "main": [
+        [
+          {"node": "Respond Immediately", "type": "main", "index": 0},
+          {"node": "Parse GitHub Event", "type": "main", "index": 0}
+        ]
+      ]
+    },
+    "Parse GitHub Event": {"main": [[{"node": "Should Process?", "type": "main", "index": 0}]]},
+    "Should Process?": {
+      "main": [
+        [{"node": "Trigger Validation", "type": "main", "index": 0}],
+        []
+      ]
+    },
+    "Trigger Validation": {"main": [[{"node": "Prepare Status", "type": "main", "index": 0}]]},
+    "Prepare Status": {"main": [[{"node": "Update GitHub Status", "type": "main", "index": 0}]]},
+    "Update GitHub Status": {"main": [[{"node": "Result", "type": "main", "index": 0}]]}
+  },
+  "settings": {"executionOrder": "v1"}
+}

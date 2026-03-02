@@ -1,0 +1,352 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: cortex-dashboard
+  namespace: argocd
+  labels:
+    app.kubernetes.io/name: cortex-dashboard
+    app.kubernetes.io/instance: cortex
+    app.kubernetes.io/component: dashboard
+    app.kubernetes.io/part-of: cortex
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
+    notifications.argoproj.io/subscribe.on-deployed.slack: cortex-deployments
+    notifications.argoproj.io/subscribe.on-health-degraded.slack: cortex-alerts
+
+spec:
+  # Project reference
+  project: cortex
+
+  # Source configuration
+  source:
+    repoURL: https://github.com/ryandahlberg/cortex.git
+    targetRevision: main
+    path: packages/cortex-dashboard/k8s
+
+    # Helm chart configuration
+    helm:
+      releaseName: cortex-dashboard
+
+      # Values file
+      valueFiles:
+        - values.yaml
+        - values-production.yaml
+
+      # Override values
+      values: |
+        image:
+          repository: ghcr.io/ryandahlberg/cortex/cortex-dashboard
+          tag: latest
+          pullPolicy: IfNotPresent
+
+        replicaCount: 2
+
+        resources:
+          limits:
+            cpu: 500m
+            memory: 512Mi
+          requests:
+            cpu: 100m
+            memory: 128Mi
+
+        autoscaling:
+          enabled: true
+          minReplicas: 2
+          maxReplicas: 10
+          targetCPUUtilizationPercentage: 80
+          targetMemoryUtilizationPercentage: 80
+
+        service:
+          type: ClusterIP
+          port: 80
+          targetPort: 3000
+
+        ingress:
+          enabled: true
+          className: nginx
+          annotations:
+            cert-manager.io/cluster-issuer: letsencrypt-prod
+            nginx.ingress.kubernetes.io/ssl-redirect: "true"
+            nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+          hosts:
+            - host: dashboard.cortex.local
+              paths:
+                - path: /
+                  pathType: Prefix
+          tls:
+            - secretName: cortex-dashboard-tls
+              hosts:
+                - dashboard.cortex.local
+
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: http
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+
+        readinessProbe:
+          httpGet:
+            path: /ready
+            port: http
+          initialDelaySeconds: 10
+          periodSeconds: 5
+          timeoutSeconds: 3
+          failureThreshold: 3
+
+        env:
+          - name: NODE_ENV
+            value: production
+          - name: LOG_LEVEL
+            value: info
+          - name: API_BASE_URL
+            value: http://mcp-k8s-orchestrator:3000
+
+        nodeSelector:
+          workload-type: application
+
+        tolerations:
+          - key: workload-type
+            operator: Equal
+            value: application
+            effect: NoSchedule
+
+  # Destination
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: cortex-dashboard
+
+  # Sync policy
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+      allowEmpty: false
+
+    syncOptions:
+      - CreateNamespace=true
+      - PrunePropagationPolicy=foreground
+      - PruneLast=true
+      - RespectIgnoreDifferences=true
+      - ServerSideApply=true
+
+    retry:
+      limit: 5
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 3m
+
+  # Ignore differences
+  ignoreDifferences:
+    - group: apps
+      kind: Deployment
+      jsonPointers:
+        - /spec/replicas
+
+  # Health assessment
+  info:
+    - name: URL
+      value: https://dashboard.cortex.local
+    - name: Deployment Type
+      value: GitOps with ArgoCD
+    - name: Sync Wave
+      value: "1"
+
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: cortex-mcp-orchestrator
+  namespace: argocd
+  labels:
+    app.kubernetes.io/name: mcp-k8s-orchestrator
+    app.kubernetes.io/instance: cortex-mcp
+    app.kubernetes.io/component: orchestrator
+    app.kubernetes.io/part-of: cortex
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+  annotations:
+    argocd.argoproj.io/sync-wave: "2"
+
+spec:
+  project: cortex
+
+  source:
+    repoURL: https://github.com/ryandahlberg/cortex.git
+    targetRevision: main
+    path: packages/mcp-k8s-orchestrator/k8s
+
+    helm:
+      releaseName: mcp-k8s-orchestrator
+      values: |
+        image:
+          repository: ghcr.io/ryandahlberg/cortex/mcp-k8s-orchestrator
+          tag: latest
+
+        replicaCount: 3
+
+        resources:
+          limits:
+            cpu: 1000m
+            memory: 1Gi
+          requests:
+            cpu: 200m
+            memory: 256Mi
+
+        autoscaling:
+          enabled: true
+          minReplicas: 3
+          maxReplicas: 20
+
+        service:
+          type: ClusterIP
+          port: 3000
+
+        env:
+          - name: MCP_SERVER_MODE
+            value: orchestrator
+          - name: KUBERNETES_ENABLED
+            value: "true"
+
+        rbac:
+          create: true
+          rules:
+            - apiGroups: [""]
+              resources: ["pods", "services", "configmaps"]
+              verbs: ["get", "list", "watch", "create", "update", "delete"]
+            - apiGroups: ["apps"]
+              resources: ["deployments", "statefulsets"]
+              verbs: ["get", "list", "watch", "create", "update", "delete"]
+
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: cortex-mcp
+
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true
+    retry:
+      limit: 5
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 3m
+
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: cortex-monitoring
+  namespace: argocd
+  labels:
+    app.kubernetes.io/name: cortex-monitoring
+    app.kubernetes.io/instance: cortex
+    app.kubernetes.io/component: monitoring
+    app.kubernetes.io/part-of: cortex
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+  annotations:
+    argocd.argoproj.io/sync-wave: "0"
+
+spec:
+  project: cortex
+
+  source:
+    repoURL: https://prometheus-community.github.io/helm-charts
+    targetRevision: 25.8.0
+    chart: kube-prometheus-stack
+
+    helm:
+      releaseName: cortex-monitoring
+      values: |
+        prometheus:
+          prometheusSpec:
+            retention: 30d
+            storageSpec:
+              volumeClaimTemplate:
+                spec:
+                  accessModes: ["ReadWriteOnce"]
+                  resources:
+                    requests:
+                      storage: 50Gi
+
+            additionalScrapeConfigs:
+              - job_name: cortex-mcp-servers
+                kubernetes_sd_configs:
+                  - role: pod
+                    namespaces:
+                      names:
+                        - cortex-mcp
+                relabel_configs:
+                  - source_labels: [__meta_kubernetes_pod_label_app]
+                    regex: mcp-.*
+                    action: keep
+
+        grafana:
+          enabled: true
+          adminPassword: changeme
+
+          dashboardProviders:
+            dashboardproviders.yaml:
+              apiVersion: 1
+              providers:
+                - name: cortex
+                  orgId: 1
+                  folder: Cortex
+                  type: file
+                  disableDeletion: false
+                  updateIntervalSeconds: 10
+                  options:
+                    path: /var/lib/grafana/dashboards/cortex
+
+          dashboards:
+            cortex:
+              cortex-overview:
+                url: https://raw.githubusercontent.com/ryandahlberg/cortex/main/monitoring/dashboards/cortex-overview.json
+              mcp-servers:
+                url: https://raw.githubusercontent.com/ryandahlberg/cortex/main/monitoring/dashboards/mcp-servers.json
+
+        alertmanager:
+          enabled: true
+          config:
+            global:
+              resolve_timeout: 5m
+            route:
+              group_by: ['alertname', 'cluster', 'service']
+              group_wait: 10s
+              group_interval: 10s
+              repeat_interval: 12h
+              receiver: 'slack'
+            receivers:
+              - name: 'slack'
+                slack_configs:
+                  - api_url: '{{ .Values.alertmanager.slackWebhookUrl }}'
+                    channel: '#cortex-alerts'
+                    title: 'Cortex Alert'
+
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: cortex-monitoring
+
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true
+    retry:
+      limit: 5
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 3m

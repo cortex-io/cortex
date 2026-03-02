@@ -1,0 +1,73 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    deployment.kubernetes.io/revision: "3"
+      {"apiVersion":"apps/v1","kind":"Deployment","metadata":{"annotations":{},"labels":{"app":"redis-exporter"},"name":"redis-exporter","namespace":"monitoring-exporters"},"spec":{"replicas":1,"selector":{"matchLabels":{"app":"redis-exporter"}},"template":{"metadata":{"labels":{"app":"redis-exporter"}},"spec":{"containers":[{"env":[{"name":"REDIS_ADDR","value":"redis://cortex-redis.cortex-system.svc.cluster.local:6379"}],"image":"oliver006/redis_exporter:latest","name":"exporter","ports":[{"containerPort":9121,"name":"metrics"}],"resources":{"limits":{"cpu":"100m","memory":"128Mi"},"requests":{"cpu":"50m","memory":"64Mi"}}}]}}}}
+  labels:
+    app: redis-exporter
+  name: redis-exporter
+  namespace: monitoring-exporters
+spec:
+  progressDeadlineSeconds: 600
+  replicas: 1
+  revisionHistoryLimit: 10
+  selector:
+    matchLabels:
+      app: redis-exporter
+  strategy:
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 25%
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        app: redis-exporter
+    spec:
+      containers:
+      - env:
+        - name: REDIS_ADDR
+          value: redis://redis-master.cortex-system.svc.cluster.local:6379
+        - name: REDIS_PASSWORD
+          value: cortex123
+        image: oliver006/redis_exporter:latest
+        imagePullPolicy: Always
+        name: exporter
+        ports:
+        - containerPort: 9121
+          name: metrics
+          protocol: TCP
+        resources:
+          limits:
+            cpu: 100m
+            memory: 128Mi
+          requests:
+            cpu: 50m
+            memory: 64Mi
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+      dnsPolicy: ClusterFirst
+      restartPolicy: Always
+      schedulerName: default-scheduler
+      securityContext: {}
+      terminationGracePeriodSeconds: 30
+status:
+  availableReplicas: 1
+  conditions:
+  - lastTransitionTime: "2025-12-21T00:48:44Z"
+    lastUpdateTime: "2025-12-21T00:48:44Z"
+    message: Deployment has minimum availability.
+    reason: MinimumReplicasAvailable
+    status: "True"
+    type: Available
+  - lastTransitionTime: "2025-12-21T00:48:38Z"
+    lastUpdateTime: "2025-12-21T22:28:31Z"
+    message: ReplicaSet "redis-exporter-b669887f5" has successfully progressed.
+    reason: NewReplicaSetAvailable
+    status: "True"
+    type: Progressing
+  observedGeneration: 3
+  readyReplicas: 1
+  replicas: 1
+  updatedReplicas: 1

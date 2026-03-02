@@ -1,0 +1,22 @@
+# Cortex AI Agents System - Python Dependencies
+
+# Core AI functionality
+anthropic>=0.18.0
+
+# Data processing
+numpy>=1.24.0
+pandas>=2.0.0
+
+# Configuration
+pyyaml>=6.0
+
+# Vector storage (for RAG integration)
+chromadb>=0.4.0
+
+# Testing
+pytest>=7.4.0
+pytest-cov>=4.1.0
+
+# Optional: For advanced features
+# dataclasses-json>=0.6.0  # Structured data
+# pydantic>=2.0.0          # Data validation
