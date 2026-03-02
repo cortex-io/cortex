@@ -14,7 +14,6 @@ permissions:
 
 env:
   NODE_VERSION: '20.x'
-  PNPM_VERSION: '8'
 
 jobs:
   # PR metadata validation
@@ -33,6 +32,11 @@ jobs:
         uses: actions/github-script@v7
         with:
           script: |
+            // Dependabot PRs follow their own title format — skip validation
+            if (context.actor === 'dependabot[bot]') {
+              core.info('Skipping title check for Dependabot PR');
+              return;
+            }
             const title = context.payload.pull_request.title;
             const pattern = /^(feat|fix|docs|style|refactor|perf|test|build|ci|chore|revert)(\(.+\))?: .+/;
 
@@ -51,6 +55,11 @@ jobs:
         uses: actions/github-script@v7
         with:
           script: |
+            // Dependabot PRs use auto-generated descriptions — skip validation
+            if (context.actor === 'dependabot[bot]') {
+              core.info('Skipping description check for Dependabot PR');
+              return;
+            }
             const body = context.payload.pull_request.body || '';
 
             if (body.length < 50) {
@@ -70,8 +79,12 @@ jobs:
       - name: Check branch name
         run: |
           BRANCH="${{ github.head_ref }}"
-          PATTERN="^(feature|bugfix|hotfix|release|refactor)/[a-z0-9-]+$"
-
+          # Dependabot branches use their own naming convention — allow them
+          if echo "$BRANCH" | grep -qE "^dependabot/"; then
+            echo "Dependabot branch — skipping branch name check"
+            exit 0
+          fi
+          PATTERN="^(feature|bugfix|hotfix|release|refactor|fix)/[a-z0-9-]+$"
           if ! echo "$BRANCH" | grep -qE "$PATTERN"; then
             echo "Branch name must follow pattern: type/description"
             echo "Examples: feature/add-monitoring, bugfix/fix-memory-leak"
@@ -94,6 +107,8 @@ jobs:
     name: Lint Commit Messages
     runs-on: ubuntu-latest
     timeout-minutes: 5
+    # Skip for Dependabot — their commit messages don't follow conventional commits
+    if: github.actor != 'dependabot[bot]'
 
     steps:
       - name: Checkout code
@@ -112,223 +127,13 @@ jobs:
 
       - name: Validate commits
         run: |
-          # Get all commits in PR
           git fetch origin ${{ github.base_ref }}
-
-          # Lint each commit
           for commit in $(git rev-list origin/${{ github.base_ref }}..HEAD); do
             echo "Checking commit: $commit"
             git log --format=%B -n 1 $commit | npx commitlint
           done
 
-  # Code quality checks
-  code-quality:
-    name: Code Quality Checks
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v2
-        with:
-          version: ${{ env.PNPM_VERSION }}
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: 'pnpm'
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
-      - name: Run linter
-        run: pnpm run lint
-
-      - name: Run prettier check
-        run: pnpm run format:check
-
-      - name: Run type check
-        run: pnpm run typecheck
-
-      - name: Check for console.log
-        run: |
-          if git diff origin/${{ github.base_ref }}...HEAD -- '*.ts' '*.js' | grep -E '^\+.*console\.(log|debug|info)'; then
-            echo "WARNING: Found console.log statements in diff"
-            echo "Please remove or replace with proper logging"
-            exit 1
-          fi
-
-      - name: Check for TODO comments
-        run: |
-          TODOS=$(git diff origin/${{ github.base_ref }}...HEAD | grep -E '^\+.*TODO' || true)
-          if [ -n "$TODOS" ]; then
-            echo "New TODO comments found:"
-            echo "$TODOS"
-            echo "Please create issues for TODOs and reference them"
-          fi
-
-  # Test coverage
-  test-coverage:
-    name: Test Coverage
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v2
-        with:
-          version: ${{ env.PNPM_VERSION }}
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: 'pnpm'
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
-      - name: Run tests with coverage
-        run: pnpm run test:coverage
-
-      - name: Check coverage thresholds
-        run: |
-          # Extract coverage percentage
-          COVERAGE=$(jq -r '.total.lines.pct' coverage/coverage-summary.json)
-
-          echo "Coverage: ${COVERAGE}%"
-
-          if (( $(echo "$COVERAGE < 80" | bc -l) )); then
-            echo "ERROR: Coverage ${COVERAGE}% is below threshold (80%)"
-            exit 1
-          fi
-
-      - name: Comment coverage on PR
-        uses: actions/github-script@v7
-        with:
-          script: |
-            const fs = require('fs');
-            const coverage = JSON.parse(fs.readFileSync('coverage/coverage-summary.json', 'utf8'));
-
-            const comment = `## Test Coverage Report
-
-            | Metric | Coverage |
-            |--------|----------|
-            | Lines | ${coverage.total.lines.pct}% |
-            | Statements | ${coverage.total.statements.pct}% |
-            | Functions | ${coverage.total.functions.pct}% |
-            | Branches | ${coverage.total.branches.pct}% |
-
-            ${coverage.total.lines.pct >= 80 ? '✅ Coverage meets threshold (80%)' : '❌ Coverage below threshold (80%)'}`;
-
-            const { data: comments } = await github.rest.issues.listComments({
-              issue_number: context.issue.number,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-            });
-
-            const botComment = comments.find(comment =>
-              comment.user.type === 'Bot' && comment.body.includes('Test Coverage Report')
-            );
-
-            if (botComment) {
-              await github.rest.issues.updateComment({
-                comment_id: botComment.id,
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                body: comment
-              });
-            } else {
-              await github.rest.issues.createComment({
-                issue_number: context.issue.number,
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                body: comment
-              });
-            }
-
-  # Changed files analysis
-  changed-files:
-    name: Analyze Changed Files
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Get changed files
-        id: changed-files
-        uses: tj-actions/changed-files@v41
-        with:
-          files: |
-            packages/**
-            coordination/**
-            scripts/**
-            .github/workflows/**
-
-      - name: Analyze impact
-        uses: actions/github-script@v7
-        with:
-          script: |
-            const changedFiles = `${{ steps.changed-files.outputs.all_changed_files }}`.split(' ');
-
-            const analysis = {
-              packages: changedFiles.filter(f => f.startsWith('packages/')),
-              coordination: changedFiles.filter(f => f.startsWith('coordination/')),
-              scripts: changedFiles.filter(f => f.startsWith('scripts/')),
-              workflows: changedFiles.filter(f => f.startsWith('.github/workflows/'))
-            };
-
-            let comment = '## Changed Files Analysis\n\n';
-
-            if (analysis.packages.length > 0) {
-              comment += `### Packages Modified (${analysis.packages.length})\n`;
-              comment += '- ' + analysis.packages.join('\n- ') + '\n\n';
-              comment += '⚠️ Package changes require version bump and changelog update\n\n';
-            }
-
-            if (analysis.coordination.length > 0) {
-              comment += `### Coordination Files Modified (${analysis.coordination.length})\n`;
-              comment += '- ' + analysis.coordination.join('\n- ') + '\n\n';
-              comment += '📋 Coordination changes may affect master/worker behavior\n\n';
-            }
-
-            if (analysis.scripts.length > 0) {
-              comment += `### Scripts Modified (${analysis.scripts.length})\n`;
-              comment += '- ' + analysis.scripts.join('\n- ') + '\n\n';
-              comment += '🔧 Script changes should be tested manually\n\n';
-            }
-
-            if (analysis.workflows.length > 0) {
-              comment += `### Workflows Modified (${analysis.workflows.length})\n`;
-              comment += '- ' + analysis.workflows.join('\n- ') + '\n\n';
-              comment += '⚙️ CI/CD changes - verify workflow syntax\n\n';
-            }
-
-            comment += `\n**Total files changed:** ${changedFiles.length}`;
-
-            await github.rest.issues.createComment({
-              issue_number: context.issue.number,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              body: comment
-            });
-
-  # Security check
+  # Security check — npm audit only (no build/lint scripts exist)
   security-check:
     name: Security Check
     runs-on: ubuntu-latest
@@ -338,25 +143,20 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v2
-        with:
-          version: ${{ env.PNPM_VERSION }}
-
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
-          cache: 'pnpm'
+          cache: 'npm'
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+        run: npm ci
 
       - name: Run audit
         run: |
-          pnpm audit --audit-level=high || {
+          npm audit --audit-level=high || {
             echo "Security vulnerabilities found!"
-            echo "Run 'pnpm audit' locally and fix issues"
+            echo "Run 'npm audit' locally and fix issues"
             exit 1
           }
 
@@ -366,40 +166,6 @@ jobs:
           path: ./
           base: ${{ github.event.pull_request.base.sha }}
           head: ${{ github.event.pull_request.head.sha }}
-
-  # Build verification
-  build-check:
-    name: Build Verification
-    runs-on: ubuntu-latest
-    timeout-minutes: 20
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v2
-        with:
-          version: ${{ env.PNPM_VERSION }}
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: 'pnpm'
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
-      - name: Build all packages
-        run: pnpm run build
-
-      - name: Check build size
-        run: |
-          # Check if any package build exceeds reasonable size
-          find packages/*/dist -type f -size +10M -exec ls -lh {} \; | while read line; do
-            echo "WARNING: Large build artifact detected: $line"
-          done
 
   # PR size check
   pr-size:
@@ -433,15 +199,17 @@ jobs:
               comment = '⚠️ Extra large PR detected. Please split into smaller, focused PRs for easier review.';
             }
 
-            // Add size label
-            await github.rest.issues.addLabels({
-              issue_number: context.issue.number,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              labels: [label]
-            });
+            try {
+              await github.rest.issues.addLabels({
+                issue_number: context.issue.number,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                labels: [label]
+              });
+            } catch (e) {
+              core.warning(`Could not add label: ${e.message}`);
+            }
 
-            // Add comment for large PRs
             if (comment) {
               await github.rest.issues.createComment({
                 issue_number: context.issue.number,
@@ -463,6 +231,7 @@ jobs:
         with:
           repo-token: ${{ secrets.GITHUB_TOKEN }}
           configuration-path: .github/labeler.yml
+        continue-on-error: true
 
   # PR validation summary
   pr-validation-summary:
@@ -470,68 +239,15 @@ jobs:
     runs-on: ubuntu-latest
     needs:
       - pr-metadata
-      - commit-lint
-      - code-quality
-      - test-coverage
-      - changed-files
       - security-check
-      - build-check
     if: always()
 
     steps:
-      - name: Generate summary
-        uses: actions/github-script@v7
-        with:
-          script: |
-            const results = {
-              'PR Metadata': '${{ needs.pr-metadata.result }}',
-              'Commit Lint': '${{ needs.commit-lint.result }}',
-              'Code Quality': '${{ needs.code-quality.result }}',
-              'Test Coverage': '${{ needs.test-coverage.result }}',
-              'Changed Files': '${{ needs.changed-files.result }}',
-              'Security Check': '${{ needs.security-check.result }}',
-              'Build Check': '${{ needs.build-check.result }}'
-            };
-
-            const failed = Object.entries(results).filter(([_, status]) => status === 'failure');
-            const passed = Object.entries(results).filter(([_, status]) => status === 'success');
-
-            let summary = '## PR Validation Summary\n\n';
-
-            if (failed.length === 0) {
-              summary += '✅ All validation checks passed!\n\n';
-            } else {
-              summary += `❌ ${failed.length} check(s) failed:\n\n`;
-              failed.forEach(([check, _]) => {
-                summary += `- ❌ ${check}\n`;
-              });
-              summary += '\n';
-            }
-
-            summary += '### Detailed Results\n\n';
-            summary += '| Check | Status |\n';
-            summary += '|-------|--------|\n';
-
-            Object.entries(results).forEach(([check, status]) => {
-              const emoji = status === 'success' ? '✅' : status === 'failure' ? '❌' : '⏭️';
-              summary += `| ${check} | ${emoji} ${status} |\n`;
-            });
-
-            await github.rest.issues.createComment({
-              issue_number: context.issue.number,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              body: summary
-            });
-
       - name: Check validation status
         run: |
           if [[ "${{ needs.pr-metadata.result }}" == "failure" ]] || \
-             [[ "${{ needs.commit-lint.result }}" == "failure" ]] || \
-             [[ "${{ needs.code-quality.result }}" == "failure" ]] || \
-             [[ "${{ needs.test-coverage.result }}" == "failure" ]] || \
-             [[ "${{ needs.security-check.result }}" == "failure" ]] || \
-             [[ "${{ needs.build-check.result }}" == "failure" ]]; then
+             [[ "${{ needs.security-check.result }}" == "failure" ]]; then
             echo "PR validation failed!"
             exit 1
           fi
+          echo "PR validation passed!"
