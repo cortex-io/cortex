@@ -1,0 +1,105 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: shadow-ai-scanner
+  namespace: cortex
+spec:
+  schedule: "0 2 * * *"  # Daily at 2 AM
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      template:
+        metadata:
+          labels:
+            app: shadow-ai-scanner
+            component: governance
+        spec:
+          serviceAccountName: shadow-ai-scanner
+          restartPolicy: OnFailure
+          containers:
+          - name: scanner
+            image: node:18-alpine
+            command:
+            - /bin/sh
+            - -c
+            - |
+              # Install kubectl
+              apk add --no-cache curl
+              curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+              chmod +x kubectl
+              mv kubectl /usr/local/bin/
+
+              # Run scanner
+              cd /app
+              node shadow-ai-scanner.js
+            volumeMounts:
+            - name: scanner-code
+              mountPath: /app/shadow-ai-scanner.js
+              subPath: shadow-ai-scanner.js
+            - name: policies
+              mountPath: /app/policies.json
+              subPath: policies.json
+            - name: reports
+              mountPath: /app
+            resources:
+              requests:
+                memory: "128Mi"
+                cpu: "100m"
+              limits:
+                memory: "512Mi"
+                cpu: "500m"
+          volumes:
+          - name: scanner-code
+            configMap:
+              name: scanner-code
+          - name: policies
+            configMap:
+              name: governance-policies
+          - name: reports
+            persistentVolumeClaim:
+              claimName: governance-reports-pvc
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: shadow-ai-scanner
+  namespace: cortex
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: shadow-ai-scanner
+rules:
+- apiGroups: [""]
+  resources: ["pods", "services", "configmaps", "secrets"]
+  verbs: ["get", "list"]
+- apiGroups: ["apps"]
+  resources: ["deployments", "statefulsets", "daemonsets"]
+  verbs: ["get", "list"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: shadow-ai-scanner
+subjects:
+- kind: ServiceAccount
+  name: shadow-ai-scanner
+  namespace: cortex
+roleRef:
+  kind: ClusterRole
+  name: shadow-ai-scanner
+  apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: governance-reports-pvc
+  namespace: cortex
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 5Gi
+  storageClassName: local-path

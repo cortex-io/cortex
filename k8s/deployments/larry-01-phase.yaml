@@ -1,0 +1,517 @@
+---
+# Larry-01: Infrastructure & Database Operations
+# Master Node: k3s-master01
+# Worker Node: k3s-worker01 (4 workers)
+# Domain: Infrastructure reliability and database optimization
+
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: larry-01
+  labels:
+    larry-instance: "larry-01"
+    phase: "infrastructure"
+
+---
+# Shared PVC for coordination state
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: larry-01-coordination-pvc
+  namespace: larry-01
+spec:
+  accessModes:
+  - ReadWriteMany
+  storageClassName: longhorn
+  resources:
+    requests:
+      storage: 10Gi
+
+---
+# ConfigMap with Larry-01 configuration
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: larry-01-config
+  namespace: larry-01
+data:
+  larry-id: "larry-01"
+  phase: "infrastructure"
+  redis-host: "redis-cluster.redis-ha.svc.cluster.local"
+  redis-port: "6379"
+  coordination-path: "/coordination"
+  master-agents: "cicd-master,monitoring-master"
+  worker-count: "4"
+  worker-node: "k3s-worker01"
+  token-budget-personal: "50000"
+  token-budget-workers: "36000"
+
+---
+# Larry-01 Coordinator Deployment (runs on k3s-master01)
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: larry-01-coordinator
+  namespace: larry-01
+  labels:
+    app: larry-coordinator
+    larry-instance: "larry-01"
+    role: coordinator
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: larry-coordinator
+      larry-instance: "larry-01"
+  template:
+    metadata:
+      labels:
+        app: larry-coordinator
+        larry-instance: "larry-01"
+        role: coordinator
+    spec:
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: node-role.kubernetes.io/master
+                operator: Exists
+              - key: kubernetes.io/hostname
+                operator: In
+                values:
+                - k3s-master01
+      containers:
+      - name: larry-coordinator
+        image: ghcr.io/cortex-holdings/coordinator-master:latest
+        imagePullPolicy: IfNotPresent
+        env:
+        - name: LARRY_ID
+          valueFrom:
+            configMapKeyRef:
+              name: larry-01-config
+              key: larry-id
+        - name: PHASE
+          valueFrom:
+            configMapKeyRef:
+              name: larry-01-config
+              key: phase
+        - name: REDIS_HOST
+          valueFrom:
+            configMapKeyRef:
+              name: larry-01-config
+              key: redis-host
+        - name: REDIS_PORT
+          valueFrom:
+            configMapKeyRef:
+              name: larry-01-config
+              key: redis-port
+        - name: COORDINATION_PATH
+          valueFrom:
+            configMapKeyRef:
+              name: larry-01-config
+              key: coordination-path
+        - name: MASTER_AGENTS
+          valueFrom:
+            configMapKeyRef:
+              name: larry-01-config
+              key: master-agents
+        - name: TOKEN_BUDGET_PERSONAL
+          valueFrom:
+            configMapKeyRef:
+              name: larry-01-config
+              key: token-budget-personal
+        - name: TOKEN_BUDGET_WORKERS
+          valueFrom:
+            configMapKeyRef:
+              name: larry-01-config
+              key: token-budget-workers
+        resources:
+          requests:
+            memory: "4Gi"
+            cpu: "2000m"
+          limits:
+            memory: "8Gi"
+            cpu: "4000m"
+        volumeMounts:
+        - name: coordination
+          mountPath: /coordination
+        - name: scripts
+          mountPath: /scripts
+      volumes:
+      - name: coordination
+        persistentVolumeClaim:
+          claimName: larry-01-coordination-pvc
+      - name: scripts
+        configMap:
+          name: larry-01-scripts
+          defaultMode: 0755
+
+---
+# Larry-01 Scripts ConfigMap
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: larry-01-scripts
+  namespace: larry-01
+data:
+  orchestrate.sh: |
+    #!/bin/bash
+    set -euo pipefail
+
+    echo "[Larry-01] Starting Infrastructure & Database Operations Phase"
+    echo "[Larry-01] Coordination via Redis at $REDIS_HOST:$REDIS_PORT"
+
+    # Initialize Redis state
+    redis-cli -h $REDIS_HOST -p $REDIS_PORT SET phase:larry-01:status "in_progress"
+    redis-cli -h $REDIS_HOST -p $REDIS_PORT SET phase:larry-01:progress 0
+    redis-cli -h $REDIS_HOST -p $REDIS_PORT SET phase:larry-01:started_at "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+
+    # Publish start event
+    redis-cli -h $REDIS_HOST -p $REDIS_PORT PUBLISH larry:coordination "{\"from\":\"larry-01\",\"event\":\"phase_started\",\"timestamp\":\"$(date -u +%Y-%m-%dT%H:%M:%SZ)\"}"
+
+    # Spawn workers
+    echo "[Larry-01] Spawning 4 workers on k3s-worker01..."
+    kubectl create -f /scripts/workers.yaml
+
+    # Monitor worker progress
+    while true; do
+      completed=$(kubectl get jobs -n larry-01 -l larry-instance=larry-01 --field-selector status.successful=1 -o json | jq '.items | length')
+      total=4
+      progress=$(( completed * 100 / total ))
+
+      redis-cli -h $REDIS_HOST -p $REDIS_PORT SET phase:larry-01:progress $progress
+      redis-cli -h $REDIS_HOST -p $REDIS_PORT PUBLISH larry:coordination "{\"from\":\"larry-01\",\"event\":\"progress_update\",\"progress\":$progress,\"message\":\"$completed/$total workers completed\",\"timestamp\":\"$(date -u +%Y-%m-%dT%H:%M:%SZ)\"}"
+
+      if [ $completed -eq $total ]; then
+        echo "[Larry-01] All workers completed!"
+        break
+      fi
+
+      sleep 10
+    done
+
+    # Generate final report
+    echo "[Larry-01] Generating final report..."
+    python3 /scripts/generate-report.py
+
+    # Mark complete
+    redis-cli -h $REDIS_HOST -p $REDIS_PORT SET phase:larry-01:status "completed"
+    redis-cli -h $REDIS_HOST -p $REDIS_PORT SET phase:larry-01:completed_at "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+    redis-cli -h $REDIS_HOST -p $REDIS_PORT PUBLISH larry:coordination "{\"from\":\"larry-01\",\"event\":\"phase_complete\",\"timestamp\":\"$(date -u +%Y-%m-%dT%H:%M:%SZ)\"}"
+
+    echo "[Larry-01] Phase complete!"
+
+  workers.yaml: |
+    ---
+    # Worker 1: cleanup-worker (Fix PgAdmin CrashLoopBackOff)
+    apiVersion: batch/v1
+    kind: Job
+    metadata:
+      name: larry-01-cleanup-worker
+      namespace: larry-01
+      labels:
+        app: larry-worker
+        larry-instance: "larry-01"
+        worker-type: cleanup
+    spec:
+      backoffLimit: 3
+      template:
+        metadata:
+          labels:
+            app: larry-worker
+            larry-instance: "larry-01"
+            worker-type: cleanup
+        spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                - matchExpressions:
+                  - key: kubernetes.io/hostname
+                    operator: In
+                    values:
+                    - k3s-worker01
+          restartPolicy: OnFailure
+          containers:
+          - name: cleanup-worker
+            image: ghcr.io/cortex-holdings/worker:latest
+            env:
+            - name: WORKER_TYPE
+              value: "cleanup"
+            - name: TASK_ID
+              value: "fix-pgadmin-crashloop"
+            - name: LARRY_ID
+              value: "larry-01"
+            - name: TOKEN_BUDGET
+              value: "8000"
+            - name: TIMEOUT_MINUTES
+              value: "15"
+            resources:
+              requests:
+                memory: "2Gi"
+                cpu: "1000m"
+              limits:
+                memory: "4Gi"
+                cpu: "2000m"
+            volumeMounts:
+            - name: coordination
+              mountPath: /coordination
+          volumes:
+          - name: coordination
+            persistentVolumeClaim:
+              claimName: larry-01-coordination-pvc
+    ---
+    # Worker 2: consolidation-worker (PostgreSQL consolidation)
+    apiVersion: batch/v1
+    kind: Job
+    metadata:
+      name: larry-01-consolidation-worker
+      namespace: larry-01
+      labels:
+        app: larry-worker
+        larry-instance: "larry-01"
+        worker-type: consolidation
+    spec:
+      backoffLimit: 3
+      template:
+        metadata:
+          labels:
+            app: larry-worker
+            larry-instance: "larry-01"
+            worker-type: consolidation
+        spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                - matchExpressions:
+                  - key: kubernetes.io/hostname
+                    operator: In
+                    values:
+                    - k3s-worker01
+          restartPolicy: OnFailure
+          containers:
+          - name: consolidation-worker
+            image: ghcr.io/cortex-holdings/worker:latest
+            env:
+            - name: WORKER_TYPE
+              value: "consolidation"
+            - name: TASK_ID
+              value: "consolidate-postgresql"
+            - name: LARRY_ID
+              value: "larry-01"
+            - name: TOKEN_BUDGET
+              value: "10000"
+            - name: TIMEOUT_MINUTES
+              value: "20"
+            resources:
+              requests:
+                memory: "2Gi"
+                cpu: "1000m"
+              limits:
+                memory: "4Gi"
+                cpu: "2000m"
+            volumeMounts:
+            - name: coordination
+              mountPath: /coordination
+          volumes:
+          - name: coordination
+            persistentVolumeClaim:
+              claimName: larry-01-coordination-pvc
+    ---
+    # Worker 3: optimization-worker (Database performance)
+    apiVersion: batch/v1
+    kind: Job
+    metadata:
+      name: larry-01-optimization-worker
+      namespace: larry-01
+      labels:
+        app: larry-worker
+        larry-instance: "larry-01"
+        worker-type: optimization
+    spec:
+      backoffLimit: 3
+      template:
+        metadata:
+          labels:
+            app: larry-worker
+            larry-instance: "larry-01"
+            worker-type: optimization
+        spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                - matchExpressions:
+                  - key: kubernetes.io/hostname
+                    operator: In
+                    values:
+                    - k3s-worker01
+          restartPolicy: OnFailure
+          containers:
+          - name: optimization-worker
+            image: ghcr.io/cortex-holdings/worker:latest
+            env:
+            - name: WORKER_TYPE
+              value: "optimization"
+            - name: TASK_ID
+              value: "optimize-postgresql"
+            - name: LARRY_ID
+              value: "larry-01"
+            - name: TOKEN_BUDGET
+              value: "8000"
+            - name: TIMEOUT_MINUTES
+              value: "15"
+            resources:
+              requests:
+                memory: "2Gi"
+                cpu: "1000m"
+              limits:
+                memory: "4Gi"
+                cpu: "2000m"
+            volumeMounts:
+            - name: coordination
+              mountPath: /coordination
+          volumes:
+          - name: coordination
+            persistentVolumeClaim:
+              claimName: larry-01-coordination-pvc
+    ---
+    # Worker 4: monitoring-worker (Grafana dashboards)
+    apiVersion: batch/v1
+    kind: Job
+    metadata:
+      name: larry-01-monitoring-worker
+      namespace: larry-01
+      labels:
+        app: larry-worker
+        larry-instance: "larry-01"
+        worker-type: monitoring
+    spec:
+      backoffLimit: 3
+      template:
+        metadata:
+          labels:
+            app: larry-worker
+            larry-instance: "larry-01"
+            worker-type: monitoring
+        spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                - matchExpressions:
+                  - key: kubernetes.io/hostname
+                    operator: In
+                    values:
+                    - k3s-worker01
+          restartPolicy: OnFailure
+          containers:
+          - name: monitoring-worker
+            image: ghcr.io/cortex-holdings/worker:latest
+            env:
+            - name: WORKER_TYPE
+              value: "monitoring"
+            - name: TASK_ID
+              value: "setup-monitoring"
+            - name: LARRY_ID
+              value: "larry-01"
+            - name: TOKEN_BUDGET
+              value: "10000"
+            - name: TIMEOUT_MINUTES
+              value: "20"
+            resources:
+              requests:
+                memory: "2Gi"
+                cpu: "1000m"
+              limits:
+                memory: "4Gi"
+                cpu: "2000m"
+            volumeMounts:
+            - name: coordination
+              mountPath: /coordination
+          volumes:
+          - name: coordination
+            persistentVolumeClaim:
+              claimName: larry-01-coordination-pvc
+
+  generate-report.py: |
+    #!/usr/bin/env python3
+    import json
+    import os
+    from datetime import datetime
+
+    larry_id = "larry-01"
+    coordination_path = "/coordination"
+
+    # Collect worker results
+    workers = ["cleanup", "consolidation", "optimization", "monitoring"]
+    results = {}
+
+    for worker in workers:
+        result_file = f"{coordination_path}/workers/{larry_id}-{worker}-worker-result.json"
+        if os.path.exists(result_file):
+            with open(result_file, 'r') as f:
+                results[worker] = json.load(f)
+
+    # Generate report
+    report = {
+        "larry_id": larry_id,
+        "phase": "infrastructure",
+        "completed_at": datetime.utcnow().isoformat() + "Z",
+        "workers": results,
+        "summary": {
+            "pgadmin_fixed": results.get("cleanup", {}).get("success", False),
+            "postgresql_consolidated": results.get("consolidation", {}).get("success", False),
+            "performance_optimized": results.get("optimization", {}).get("success", False),
+            "monitoring_deployed": results.get("monitoring", {}).get("success", False)
+        },
+        "metrics": {
+            "database_p95_latency_ms": results.get("optimization", {}).get("p95_latency", 0),
+            "backup_schedule": "every 6 hours",
+            "dashboards_created": results.get("monitoring", {}).get("dashboards_count", 0)
+        }
+    }
+
+    # Save report
+    report_file = f"{coordination_path}/reports/larry-01-final.json"
+    os.makedirs(os.path.dirname(report_file), exist_ok=True)
+    with open(report_file, 'w') as f:
+        json.dump(report, f, indent=2)
+
+    print(f"Report saved to {report_file}")
+
+---
+# Service for Larry-01 coordinator
+apiVersion: v1
+kind: Service
+metadata:
+  name: larry-01-coordinator
+  namespace: larry-01
+spec:
+  selector:
+    app: larry-coordinator
+    larry-instance: "larry-01"
+  ports:
+  - name: http
+    port: 8080
+    targetPort: 8080
+  type: ClusterIP
+
+---
+# ServiceMonitor for Prometheus scraping
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: larry-01-metrics
+  namespace: larry-01
+spec:
+  selector:
+    matchLabels:
+      app: larry-coordinator
+      larry-instance: "larry-01"
+  endpoints:
+  - port: http
+    interval: 15s
+    path: /metrics

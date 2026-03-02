@@ -1,0 +1,28 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: router-config
+  namespace: router-mesh
+data:
+  # Confidence thresholds
+  L1_CONFIDENCE: "0.85"
+  L2_CONFIDENCE: "0.75"
+  CACHE_TTL: "3600"
+
+  # Internal routing (localhost within pod)
+  L1_URL: "http://localhost:8081/classify"
+  L2_URL: "http://localhost:8082/classify"
+
+  # Cortex escalation endpoint
+  CORTEX_URL: "http://relay-core.cortex.svc.cluster.local:8000"
+
+  # MCP Server endpoints
+  UNIFI_URL: "http://unifi-mcp.mcp-servers.svc.cluster.local:8000"
+  PROXMOX_URL: "http://proxmox-mcp.mcp-servers.svc.cluster.local:8000"
+  GRAFANA_URL: "http://grafana-mcp.mcp-servers.svc.cluster.local:8000"
+  ELASTIC_URL: "http://elastic-mcp.mcp-servers.svc.cluster.local:8000"
+  K3S_URL: "http://k3s-mcp.mcp-servers.svc.cluster.local:8000"
+  NETDATA_URL: "http://netdata-mcp.mcp-servers.svc.cluster.local:8000"
+
+  # Redis connection (no auth)
+  REDIS_URL: "redis://redis.cortex-system.svc.cluster.local:6379/2"

@@ -1,0 +1,476 @@
+{
+  "dashboard": {
+    "title": "Cortex Overview",
+    "tags": ["cortex", "overview"],
+    "timezone": "browser",
+    "editable": true,
+    "graphTooltip": 1,
+    "time": {
+      "from": "now-1h",
+      "to": "now"
+    },
+    "refresh": "30s",
+    "schemaVersion": 38,
+    "rows": [],
+    "panels": [
+      {
+        "id": 1,
+        "title": "System Health",
+        "type": "stat",
+        "gridPos": {"h": 4, "w": 6, "x": 0, "y": 0},
+        "targets": [
+          {
+            "expr": "up{job=~\"cortex.*\"}",
+            "legendFormat": "{{job}} - {{master_type}}{{worker_type}}",
+            "refId": "A"
+          }
+        ],
+        "options": {
+          "colorMode": "background",
+          "graphMode": "none",
+          "justifyMode": "auto",
+          "orientation": "auto",
+          "reduceOptions": {
+            "values": false,
+            "calcs": ["lastNotNull"],
+            "fields": ""
+          },
+          "textMode": "auto"
+        },
+        "fieldConfig": {
+          "defaults": {
+            "mappings": [
+              {"type": "value", "value": "0", "text": "DOWN", "color": "red"},
+              {"type": "value", "value": "1", "text": "UP", "color": "green"}
+            ],
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {"value": 0, "color": "red"},
+                {"value": 1, "color": "green"}
+              ]
+            }
+          }
+        }
+      },
+      {
+        "id": 2,
+        "title": "Request Rate",
+        "type": "graph",
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 4},
+        "targets": [
+          {
+            "expr": "sum(cortex:requests:rate5m) by (component)",
+            "legendFormat": "{{component}}",
+            "refId": "A"
+          }
+        ],
+        "yaxes": [
+          {"format": "reqps", "label": "Requests/sec", "show": true},
+          {"format": "short", "show": false}
+        ],
+        "xaxis": {"show": true, "mode": "time"},
+        "lines": true,
+        "fill": 1,
+        "linewidth": 2,
+        "pointradius": 5,
+        "points": false,
+        "bars": false,
+        "stack": false,
+        "percentage": false,
+        "legend": {
+          "show": true,
+          "values": true,
+          "avg": true,
+          "current": true,
+          "max": true,
+          "min": false,
+          "alignAsTable": true,
+          "rightSide": false
+        },
+        "nullPointMode": "null",
+        "tooltip": {"shared": true, "sort": 2, "value_type": "individual"}
+      },
+      {
+        "id": 3,
+        "title": "Error Rate",
+        "type": "graph",
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 4},
+        "targets": [
+          {
+            "expr": "sum(cortex:error_ratio:rate5m) by (component) * 100",
+            "legendFormat": "{{component}} error %",
+            "refId": "A"
+          }
+        ],
+        "yaxes": [
+          {"format": "percent", "label": "Error Rate", "show": true, "max": 100},
+          {"format": "short", "show": false}
+        ],
+        "xaxis": {"show": true, "mode": "time"},
+        "lines": true,
+        "fill": 1,
+        "linewidth": 2,
+        "alert": {
+          "conditions": [
+            {
+              "evaluator": {"params": [5], "type": "gt"},
+              "operator": {"type": "and"},
+              "query": {"params": ["A", "5m", "now"]},
+              "reducer": {"params": [], "type": "avg"},
+              "type": "query"
+            }
+          ],
+          "executionErrorState": "alerting",
+          "frequency": "60s",
+          "handler": 1,
+          "name": "High Error Rate",
+          "noDataState": "no_data",
+          "notifications": []
+        },
+        "thresholds": [
+          {"colorMode": "critical", "fill": true, "line": true, "op": "gt", "value": 5}
+        ]
+      },
+      {
+        "id": 4,
+        "title": "Request Latency (p95)",
+        "type": "graph",
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 12},
+        "targets": [
+          {
+            "expr": "cortex:latency:p95",
+            "legendFormat": "p95 latency",
+            "refId": "A"
+          },
+          {
+            "expr": "cortex:latency:p99",
+            "legendFormat": "p99 latency",
+            "refId": "B"
+          },
+          {
+            "expr": "cortex:latency:p50",
+            "legendFormat": "p50 latency",
+            "refId": "C"
+          }
+        ],
+        "yaxes": [
+          {"format": "s", "label": "Latency", "show": true},
+          {"format": "short", "show": false}
+        ],
+        "xaxis": {"show": true, "mode": "time"}
+      },
+      {
+        "id": 5,
+        "title": "Active Workers by Master",
+        "type": "graph",
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 12},
+        "targets": [
+          {
+            "expr": "cortex_master:active_workers:count",
+            "legendFormat": "{{parent_master}}",
+            "refId": "A"
+          }
+        ],
+        "yaxes": [
+          {"format": "short", "label": "Workers", "show": true},
+          {"format": "short", "show": false}
+        ],
+        "xaxis": {"show": true, "mode": "time"},
+        "stack": true,
+        "fill": 5
+      },
+      {
+        "id": 6,
+        "title": "Task Completion Rate",
+        "type": "graph",
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 20},
+        "targets": [
+          {
+            "expr": "sum(cortex:tasks_completed:rate5m) by (master_type)",
+            "legendFormat": "{{master_type}} completed",
+            "refId": "A"
+          },
+          {
+            "expr": "sum(cortex:tasks_failed:rate5m) by (master_type)",
+            "legendFormat": "{{master_type}} failed",
+            "refId": "B"
+          }
+        ],
+        "yaxes": [
+          {"format": "ops", "label": "Tasks/sec", "show": true},
+          {"format": "short", "show": false}
+        ],
+        "xaxis": {"show": true, "mode": "time"},
+        "seriesOverrides": [
+          {"alias": "/.*failed/", "color": "red", "dashes": true}
+        ]
+      },
+      {
+        "id": 7,
+        "title": "Task Success Rate",
+        "type": "graph",
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 20},
+        "targets": [
+          {
+            "expr": "cortex:task_success_ratio:rate5m * 100",
+            "legendFormat": "Success Rate",
+            "refId": "A"
+          }
+        ],
+        "yaxes": [
+          {"format": "percent", "label": "Success %", "show": true, "min": 0, "max": 100},
+          {"format": "short", "show": false}
+        ],
+        "xaxis": {"show": true, "mode": "time"},
+        "lines": true,
+        "fill": 2,
+        "thresholds": [
+          {"colorMode": "critical", "fill": true, "line": true, "op": "lt", "value": 95}
+        ]
+      },
+      {
+        "id": 8,
+        "title": "Token Consumption Rate",
+        "type": "graph",
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 28},
+        "targets": [
+          {
+            "expr": "sum(cortex:tokens_consumed:rate5m) by (component)",
+            "legendFormat": "{{component}}",
+            "refId": "A"
+          }
+        ],
+        "yaxes": [
+          {"format": "short", "label": "Tokens/sec", "show": true},
+          {"format": "short", "show": false}
+        ],
+        "xaxis": {"show": true, "mode": "time"},
+        "stack": true,
+        "fill": 5
+      },
+      {
+        "id": 9,
+        "title": "Token Budget Utilization",
+        "type": "gauge",
+        "gridPos": {"h": 8, "w": 6, "x": 12, "y": 28},
+        "targets": [
+          {
+            "expr": "cortex:token_budget_utilization * 100",
+            "legendFormat": "Budget Used",
+            "refId": "A"
+          }
+        ],
+        "options": {
+          "showThresholdLabels": false,
+          "showThresholdMarkers": true
+        },
+        "fieldConfig": {
+          "defaults": {
+            "unit": "percent",
+            "min": 0,
+            "max": 100,
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {"value": 0, "color": "green"},
+                {"value": 70, "color": "yellow"},
+                {"value": 90, "color": "red"}
+              ]
+            }
+          }
+        }
+      },
+      {
+        "id": 10,
+        "title": "Tokens Per Task",
+        "type": "stat",
+        "gridPos": {"h": 8, "w": 6, "x": 18, "y": 28},
+        "targets": [
+          {
+            "expr": "avg(cortex:tokens_per_request:rate5m)",
+            "legendFormat": "Avg Tokens/Request",
+            "refId": "A"
+          }
+        ],
+        "options": {
+          "colorMode": "value",
+          "graphMode": "area",
+          "justifyMode": "auto",
+          "orientation": "auto",
+          "reduceOptions": {
+            "values": false,
+            "calcs": ["lastNotNull"],
+            "fields": ""
+          }
+        },
+        "fieldConfig": {
+          "defaults": {
+            "unit": "short",
+            "decimals": 0
+          }
+        }
+      },
+      {
+        "id": 11,
+        "title": "CPU Utilization by Component",
+        "type": "graph",
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 36},
+        "targets": [
+          {
+            "expr": "cortex:cpu_utilization_by_type:avg * 100",
+            "legendFormat": "{{app}} - {{master_type}}{{worker_type}}",
+            "refId": "A"
+          }
+        ],
+        "yaxes": [
+          {"format": "percent", "label": "CPU %", "show": true, "max": 100},
+          {"format": "short", "show": false}
+        ],
+        "xaxis": {"show": true, "mode": "time"},
+        "stack": false,
+        "fill": 1
+      },
+      {
+        "id": 12,
+        "title": "Memory Utilization by Component",
+        "type": "graph",
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 36},
+        "targets": [
+          {
+            "expr": "cortex:memory_utilization_by_type:avg * 100",
+            "legendFormat": "{{app}} - {{master_type}}{{worker_type}}",
+            "refId": "A"
+          }
+        ],
+        "yaxes": [
+          {"format": "percent", "label": "Memory %", "show": true, "max": 100},
+          {"format": "short", "show": false}
+        ],
+        "xaxis": {"show": true, "mode": "time"},
+        "thresholds": [
+          {"colorMode": "critical", "fill": true, "line": true, "op": "gt", "value": 90}
+        ]
+      },
+      {
+        "id": 13,
+        "title": "Task Queue Depth",
+        "type": "graph",
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 44},
+        "targets": [
+          {
+            "expr": "cortex:task_queue_depth:total",
+            "legendFormat": "Total Queue",
+            "refId": "A"
+          },
+          {
+            "expr": "cortex_master:task_queue_depth:avg",
+            "legendFormat": "{{master_type}}",
+            "refId": "B"
+          }
+        ],
+        "yaxes": [
+          {"format": "short", "label": "Tasks", "show": true},
+          {"format": "short", "show": false}
+        ],
+        "xaxis": {"show": true, "mode": "time"}
+      },
+      {
+        "id": 14,
+        "title": "Handoff Metrics",
+        "type": "graph",
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 44},
+        "targets": [
+          {
+            "expr": "sum(cortex:handoffs_created:rate5m)",
+            "legendFormat": "Created",
+            "refId": "A"
+          },
+          {
+            "expr": "sum(cortex:handoffs_completed:rate5m)",
+            "legendFormat": "Completed",
+            "refId": "B"
+          },
+          {
+            "expr": "sum(cortex:handoffs_failed:rate5m)",
+            "legendFormat": "Failed",
+            "refId": "C"
+          }
+        ],
+        "yaxes": [
+          {"format": "ops", "label": "Handoffs/sec", "show": true},
+          {"format": "short", "show": false}
+        ],
+        "xaxis": {"show": true, "mode": "time"},
+        "seriesOverrides": [
+          {"alias": "Failed", "color": "red"}
+        ]
+      },
+      {
+        "id": 15,
+        "title": "Network I/O",
+        "type": "graph",
+        "gridPos": {"h": 8, "w": 24, "x": 0, "y": 52},
+        "targets": [
+          {
+            "expr": "sum(cortex:network_receive:rate5m) by (pod)",
+            "legendFormat": "RX {{pod}}",
+            "refId": "A"
+          },
+          {
+            "expr": "sum(cortex:network_transmit:rate5m) by (pod) * -1",
+            "legendFormat": "TX {{pod}}",
+            "refId": "B"
+          }
+        ],
+        "yaxes": [
+          {"format": "Bps", "label": "Bytes/sec", "show": true},
+          {"format": "short", "show": false}
+        ],
+        "xaxis": {"show": true, "mode": "time"}
+      }
+    ],
+    "templating": {
+      "list": [
+        {
+          "name": "datasource",
+          "type": "datasource",
+          "query": "prometheus",
+          "current": {"text": "Prometheus", "value": "Prometheus"}
+        },
+        {
+          "name": "namespace",
+          "type": "query",
+          "datasource": "Prometheus",
+          "query": "label_values(cortex_requests_total, namespace)",
+          "current": {"text": "cortex", "value": "cortex"},
+          "multi": false,
+          "includeAll": false,
+          "refresh": 1
+        },
+        {
+          "name": "master_type",
+          "type": "query",
+          "datasource": "Prometheus",
+          "query": "label_values(cortex_master_tasks_processed_total, master_type)",
+          "current": {},
+          "multi": true,
+          "includeAll": true,
+          "refresh": 1
+        }
+      ]
+    },
+    "annotations": {
+      "list": [
+        {
+          "datasource": "Prometheus",
+          "enable": true,
+          "expr": "ALERTS{alertstate=\"firing\",namespace=\"cortex\"}",
+          "iconColor": "red",
+          "name": "Alerts",
+          "tagKeys": "alertname,severity"
+        }
+      ]
+    }
+  }
+}

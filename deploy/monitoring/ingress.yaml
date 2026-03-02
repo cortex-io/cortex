@@ -1,0 +1,161 @@
+---
+# Ingress configuration for Prometheus monitoring stack
+# Provides external access to Prometheus, Grafana, and Alertmanager
+
+# Prometheus Ingress
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: prometheus-ingress
+  namespace: monitoring
+  labels:
+    app.kubernetes.io/name: prometheus
+    app.kubernetes.io/part-of: cortex-monitoring-stack
+  annotations:
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+spec:
+  ingressClassName: nginx
+  tls:
+    - hosts:
+        - prometheus.cortex.local
+      secretName: prometheus-tls
+  rules:
+    - host: prometheus.cortex.local
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: prometheus-prometheus
+                port:
+                  number: 9090
+
+---
+# Grafana Ingress
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: grafana-ingress
+  namespace: monitoring
+  labels:
+    app.kubernetes.io/name: grafana
+    app.kubernetes.io/part-of: cortex-monitoring-stack
+  annotations:
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+spec:
+  ingressClassName: nginx
+  tls:
+    - hosts:
+        - grafana.cortex.local
+      secretName: grafana-tls
+  rules:
+    - host: grafana.cortex.local
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: prometheus-grafana
+                port:
+                  number: 80
+
+---
+# Alertmanager Ingress
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: alertmanager-ingress
+  namespace: monitoring
+  labels:
+    app.kubernetes.io/name: alertmanager
+    app.kubernetes.io/part-of: cortex-monitoring-stack
+  annotations:
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+spec:
+  ingressClassName: nginx
+  tls:
+    - hosts:
+        - alertmanager.cortex.local
+      secretName: alertmanager-tls
+  rules:
+    - host: alertmanager.cortex.local
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: prometheus-alertmanager
+                port:
+                  number: 9093
+
+---
+# Internal ClusterIP Services (if not created by Helm chart)
+# These ensure stable DNS names within the cluster
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: prometheus-internal
+  namespace: monitoring
+  labels:
+    app.kubernetes.io/name: prometheus
+    app.kubernetes.io/component: server
+spec:
+  type: ClusterIP
+  clusterIP: None
+  selector:
+    app.kubernetes.io/name: prometheus
+    prometheus: prometheus-prometheus
+  ports:
+    - name: web
+      port: 9090
+      targetPort: 9090
+      protocol: TCP
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: grafana-internal
+  namespace: monitoring
+  labels:
+    app.kubernetes.io/name: grafana
+spec:
+  type: ClusterIP
+  clusterIP: None
+  selector:
+    app.kubernetes.io/name: grafana
+  ports:
+    - name: web
+      port: 3000
+      targetPort: 3000
+      protocol: TCP
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: alertmanager-internal
+  namespace: monitoring
+  labels:
+    app.kubernetes.io/name: alertmanager
+spec:
+  type: ClusterIP
+  clusterIP: None
+  selector:
+    app.kubernetes.io/name: alertmanager
+    alertmanager: prometheus-alertmanager
+  ports:
+    - name: web
+      port: 9093
+      targetPort: 9093
+      protocol: TCP

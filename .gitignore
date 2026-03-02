@@ -77,6 +77,9 @@ coordination/masters/cleanup/knowledge-base/
 coordination/masters/cicd/knowledge-base/
 coordination/masters/inventory/knowledge-base/
 coordination/masters/*/metrics/
+coordination/masters/*/scans/
+coordination/masters/*/output/
+coordination/masters/shared-data/
 coordination/tasks/pending/
 coordination/worker-specs/zombie/
 agents/logs/zombie-workers/
@@ -90,3 +93,4 @@ llm-mesh/models/*.pt
 # OpenTelemetry runtime files
 coordination/observability/traces/*.jsonl
 coordination/observability/metrics/*.jsonl
+.env.unifi

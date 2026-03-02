@@ -1,0 +1,74 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: cortex-api-build-context
+  namespace: cortex
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 100Mi
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: cortex-api-copy-context
+  namespace: cortex
+spec:
+  restartPolicy: Never
+  volumes:
+  - name: build-context
+    persistentVolumeClaim:
+      claimName: cortex-api-build-context
+  containers:
+  - name: copy
+    image: alpine:latest
+    command: ["/bin/sh", "-c"]
+    args:
+      - |
+        apk add --no-cache curl
+        cd /workspace
+
+        # Download server.js from local path (you'll need to copy this manually)
+        cat > Dockerfile << 'EOF'
+        FROM node:20-alpine
+
+        WORKDIR /app
+
+        # Install kubectl, bash, and jq (required for self-healing worker)
+        RUN apk add --no-cache curl ca-certificates bash jq coreutils && \
+            curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl" && \
+            chmod +x kubectl && \
+            mv kubectl /usr/local/bin/ && \
+            apk del curl
+
+        # Create scripts directory
+        RUN mkdir -p /app/scripts
+
+        # Copy server and self-healing worker
+        COPY server.js .
+        COPY scripts/self-heal-worker.sh /app/scripts/
+        RUN chmod +x /app/scripts/self-heal-worker.sh
+
+        # Expose port
+        EXPOSE 8000
+
+        # Health check
+        HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+          CMD node -e "require('http').get('http://localhost:8000/health', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"
+
+        # Start server
+        CMD ["node", "server.js"]
+        EOF
+
+        # Create placeholder for self-heal worker (will be replaced by ConfigMap)
+        mkdir -p scripts
+        echo "#!/bin/bash" > scripts/self-heal-worker.sh
+        echo 'echo "Self-heal worker"' >> scripts/self-heal-worker.sh
+
+        echo "Build context prepared. Mount server.js via ConfigMap"
+        ls -la
+    volumeMounts:
+    - name: build-context
+      mountPath: /workspace

@@ -1,0 +1,21 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: filebeat-config
+  namespace: wazuh-security
+data:
+  filebeat.yml: |
+    # Use Logstash output instead of Elasticsearch to avoid _type parameter issue
+    output.logstash:
+      hosts: ["10.43.246.154:5000"]
+      ssl.enabled: false
+
+    setup.template.json.enabled: false
+    setup.ilm.enabled: false
+
+    filebeat.modules:
+      - module: wazuh
+        alerts:
+          enabled: true
+        archives:
+          enabled: false

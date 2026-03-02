@@ -1,0 +1,294 @@
+---
+# Incident Swarming Coordinator Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: incident-swarming
+  namespace: cortex-itil
+  labels:
+    app: incident-swarming
+    component: itil-stream-1
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: incident-swarming
+  template:
+    metadata:
+      labels:
+        app: incident-swarming
+        component: itil-stream-1
+    spec:
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: incident-swarming-data
+        - name: source
+          configMap:
+            name: incident-swarming-src
+            defaultMode: 0755
+      containers:
+        - name: coordinator
+          image: python:3.11-alpine
+          command: ["/bin/sh", "-c"]
+          args:
+            - |
+              cp /src/swarming-coordinator.py /app/
+              cd /app
+              python3 swarming-coordinator.py
+          volumeMounts:
+            - name: data
+              mountPath: /app/data
+            - name: source
+              mountPath: /src
+          envFrom:
+            - configMapRef:
+                name: incident-swarming-config
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "200m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+          livenessProbe:
+            exec:
+              command: ["sh", "-c", "test -d /app/data/swarms"]
+            initialDelaySeconds: 10
+            periodSeconds: 30
+
+---
+# Event Correlation Engine Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: event-correlation
+  namespace: cortex-itil
+  labels:
+    app: event-correlation
+    component: itil-stream-1
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: event-correlation
+  template:
+    metadata:
+      labels:
+        app: event-correlation
+        component: itil-stream-1
+    spec:
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: event-correlation-data
+        - name: source
+          configMap:
+            name: event-correlation-src
+            defaultMode: 0755
+      containers:
+        - name: engine
+          image: python:3.11-alpine
+          command: ["/bin/sh", "-c"]
+          args:
+            - |
+              cp /src/correlation-engine.py /app/
+              cd /app
+              python3 correlation-engine.py
+          volumeMounts:
+            - name: data
+              mountPath: /app/data
+            - name: source
+              mountPath: /src
+          envFrom:
+            - configMapRef:
+                name: event-correlation-config
+          resources:
+            requests:
+              memory: "512Mi"
+              cpu: "300m"
+            limits:
+              memory: "1Gi"
+              cpu: "700m"
+          livenessProbe:
+            exec:
+              command: ["sh", "-c", "test -d /app/data/events"]
+            initialDelaySeconds: 10
+            periodSeconds: 30
+
+---
+# Intelligent Alerting System Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: intelligent-alerting
+  namespace: cortex-itil
+  labels:
+    app: intelligent-alerting
+    component: itil-stream-1
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: intelligent-alerting
+  template:
+    metadata:
+      labels:
+        app: intelligent-alerting
+        component: itil-stream-1
+    spec:
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: intelligent-alerting-data
+        - name: source
+          configMap:
+            name: intelligent-alerting-src
+            defaultMode: 0755
+      containers:
+        - name: alerting
+          image: python:3.11-alpine
+          command: ["/bin/sh", "-c"]
+          args:
+            - |
+              cp /src/alerting-system.py /app/
+              cd /app
+              python3 alerting-system.py
+          volumeMounts:
+            - name: data
+              mountPath: /app/data
+            - name: source
+              mountPath: /src
+          envFrom:
+            - configMapRef:
+                name: intelligent-alerting-config
+          resources:
+            requests:
+              memory: "384Mi"
+              cpu: "250m"
+            limits:
+              memory: "768Mi"
+              cpu: "600m"
+          livenessProbe:
+            exec:
+              command: ["sh", "-c", "test -d /app/data/alerts"]
+            initialDelaySeconds: 10
+            periodSeconds: 30
+
+---
+# Problem Identification AI Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: problem-identification
+  namespace: cortex-itil
+  labels:
+    app: problem-identification
+    component: itil-stream-1
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: problem-identification
+  template:
+    metadata:
+      labels:
+        app: problem-identification
+        component: itil-stream-1
+    spec:
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: problem-identification-data
+        - name: source
+          configMap:
+            name: problem-identification-src
+            defaultMode: 0755
+      containers:
+        - name: identifier
+          image: python:3.11-alpine
+          command: ["/bin/sh", "-c"]
+          args:
+            - |
+              cp /src/problem-identifier.py /app/
+              cd /app
+              python3 problem-identifier.py
+          volumeMounts:
+            - name: data
+              mountPath: /app/data
+            - name: source
+              mountPath: /src
+          envFrom:
+            - configMapRef:
+                name: problem-identification-config
+          resources:
+            requests:
+              memory: "512Mi"
+              cpu: "300m"
+            limits:
+              memory: "1Gi"
+              cpu: "700m"
+          livenessProbe:
+            exec:
+              command: ["sh", "-c", "test -d /app/data/problems"]
+            initialDelaySeconds: 10
+            periodSeconds: 30
+
+---
+# Known Error Database (KEDB) Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kedb
+  namespace: cortex-itil
+  labels:
+    app: kedb
+    component: itil-stream-1
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: kedb
+  template:
+    metadata:
+      labels:
+        app: kedb
+        component: itil-stream-1
+    spec:
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: kedb-data
+        - name: source
+          configMap:
+            name: kedb-src
+            defaultMode: 0755
+      containers:
+        - name: kedb
+          image: python:3.11-alpine
+          command: ["/bin/sh", "-c"]
+          args:
+            - |
+              cp /src/kedb-service.py /app/
+              cd /app
+              python3 kedb-service.py
+          volumeMounts:
+            - name: data
+              mountPath: /app/data
+            - name: source
+              mountPath: /src
+          envFrom:
+            - configMapRef:
+                name: kedb-config
+          resources:
+            requests:
+              memory: "384Mi"
+              cpu: "250m"
+            limits:
+              memory: "768Mi"
+              cpu: "600m"
+          livenessProbe:
+            exec:
+              command: ["sh", "-c", "test -d /app/data/known_errors"]
+            initialDelaySeconds: 10
+            periodSeconds: 30

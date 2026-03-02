@@ -1,0 +1,471 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: router-build-files
+  namespace: default
+data:
+  model-server-dockerfile: |
+    FROM python:3.11-slim
+
+    RUN apt-get update && apt-get install -y \
+        build-essential \
+        cmake \
+        && rm -rf /var/lib/apt/lists/*
+
+    RUN pip install --no-cache-dir \
+        fastapi \
+        uvicorn \
+        llama-cpp-python
+
+    COPY model_server.py /app/main.py
+    WORKDIR /app
+
+    CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8080"]
+
+  model-server.py: |
+    from fastapi import FastAPI
+    from pydantic import BaseModel
+    from llama_cpp import Llama
+    import math
+    import os
+    import logging
+
+    logging.basicConfig(level=logging.INFO)
+    logger = logging.getLogger(__name__)
+
+    app = FastAPI()
+
+    MODEL_PATH = os.getenv("MODEL_PATH", "/models/model.gguf")
+    ROUTES = ["unifi", "proxmox", "grafana", "elastic", "k3s", "netdata", "cortex"]
+
+    logger.info(f"Loading model from: {MODEL_PATH}")
+
+    try:
+        llm = Llama(
+            model_path=MODEL_PATH,
+            n_ctx=512,
+            n_threads=int(os.getenv("THREADS", "4")),
+            n_batch=32,
+            verbose=False
+        )
+        logger.info("Model loaded successfully")
+    except Exception as e:
+        logger.error(f"Failed to load model: {e}")
+        llm = None
+
+    PROMPT_TEMPLATE = """You are a router. Respond with ONLY the route name, nothing else.
+
+    Routes:
+    - unifi: network devices, APs, clients, firewall, VLANs, switches, wireless, WiFi, ubiquiti
+    - proxmox: VMs, containers, nodes, storage, clusters, virtualization, LXC, hypervisor
+    - grafana: dashboards, metrics, alerts, visualization, graphs, panels, prometheus
+    - elastic: logs, indices, search, observability, kibana, elasticsearch, ELK
+    - k3s: kubernetes, pods, deployments, services, ingress, helm, kubectl, containers
+    - netdata: system metrics, CPU, memory, disk, real-time monitoring, performance
+    - cortex: complex multi-step tasks, ambiguous requests, general questions, multiple systems
+
+    User request: {input}
+
+    Route:"""
+
+
+    class ClassifyRequest(BaseModel):
+        text: str
+
+
+    class ClassifyResponse(BaseModel):
+        route: str
+        confidence: float
+
+
+    @app.post("/classify", response_model=ClassifyResponse)
+    async def classify(req: ClassifyRequest):
+        if llm is None:
+            return ClassifyResponse(route="cortex", confidence=0.0)
+
+        prompt = PROMPT_TEMPLATE.format(input=req.text)
+
+        try:
+            output = llm(
+                prompt,
+                max_tokens=10,
+                stop=["\n", " ", ".", ","],
+                logprobs=True,
+                echo=False
+            )
+
+            raw_route = output["choices"][0]["text"].strip().lower()
+
+            # Match route
+            route = "cortex"
+            for r in ROUTES:
+                if r in raw_route:
+                    route = r
+                    break
+
+            # Calculate confidence from logprobs
+            logprobs = output["choices"][0].get("logprobs", {})
+            token_logprobs = logprobs.get("token_logprobs", [])
+
+            if token_logprobs and token_logprobs[0] is not None:
+                confidence = math.exp(token_logprobs[0])
+            else:
+                confidence = 0.5
+
+            logger.info(f"Classified '{req.text[:50]}...' -> {route} (confidence: {confidence:.2f})")
+
+            return ClassifyResponse(route=route, confidence=min(confidence, 1.0))
+
+        except Exception as e:
+            logger.error(f"Classification error: {e}")
+            return ClassifyResponse(route="cortex", confidence=0.0)
+
+
+    @app.get("/health")
+    async def health():
+        return {
+            "status": "healthy" if llm is not None else "degraded",
+            "model": MODEL_PATH,
+            "model_loaded": llm is not None
+        }
+
+  orchestrator-dockerfile: |
+    FROM python:3.11-slim
+
+    RUN pip install --no-cache-dir \
+        fastapi \
+        uvicorn \
+        httpx \
+        redis \
+        prometheus-client
+
+    COPY orchestrator.py /app/main.py
+    WORKDIR /app
+
+    CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8080"]
+
+  orchestrator.py: |
+    from fastapi import FastAPI, BackgroundTasks
+    from fastapi.responses import PlainTextResponse
+    from pydantic import BaseModel
+    import httpx
+    import redis.asyncio as redis
+    import hashlib
+    import json
+    import os
+    import time
+    import logging
+    from prometheus_client import Counter, Histogram, Gauge, generate_latest, CONTENT_TYPE_LATEST
+
+    logging.basicConfig(level=logging.INFO)
+    logger = logging.getLogger(__name__)
+
+    app = FastAPI()
+
+    # Prometheus Metrics
+    route_counter = Counter("router_decisions_total", "Total routing decisions", ["route", "layer"])
+    latency_hist = Histogram("router_latency_seconds", "Routing latency", ["layer"])
+    cache_hits = Counter("router_cache_hits_total", "Cache hits")
+    cache_misses = Counter("router_cache_misses_total", "Cache misses")
+    errors_counter = Counter("router_errors_total", "Total errors", ["type"])
+    active_requests = Gauge("router_active_requests", "Active routing requests")
+
+    # LLM-D inspired metrics
+    prefill_latency = Histogram("router_prefill_latency_seconds", "L1 model latency (prefill phase)")
+    decode_latency = Histogram("router_decode_latency_seconds", "L2 model latency (decode phase)")
+    ttft_hist = Histogram("router_ttft_seconds", "Time to first token (route decision)")
+    endpoint_load = Gauge("router_endpoint_load", "Current load on MCP endpoints", ["endpoint"])
+
+    # Configuration
+    REDIS_URL = os.getenv("REDIS_URL", "redis://redis.cortex-system.svc.cluster.local:6379/2")
+    L1_URL = os.getenv("L1_URL", "http://localhost:8081/classify")
+    L2_URL = os.getenv("L2_URL", "http://localhost:8082/classify")
+    CORTEX_URL = os.getenv("CORTEX_URL", "http://relay-core.cortex.svc:8000")
+    L1_CONFIDENCE = float(os.getenv("L1_CONFIDENCE", "0.85"))
+    L2_CONFIDENCE = float(os.getenv("L2_CONFIDENCE", "0.75"))
+    CACHE_TTL = int(os.getenv("CACHE_TTL", "3600"))
+
+    ROUTES = {
+        "unifi": os.getenv("UNIFI_URL", "http://unifi-mcp.mcp-servers.svc:8000"),
+        "proxmox": os.getenv("PROXMOX_URL", "http://proxmox-mcp.mcp-servers.svc:8000"),
+        "grafana": os.getenv("GRAFANA_URL", "http://grafana-mcp.mcp-servers.svc:8000"),
+        "elastic": os.getenv("ELASTIC_URL", "http://elastic-mcp.mcp-servers.svc:8000"),
+        "k3s": os.getenv("K3S_URL", "http://k3s-mcp.mcp-servers.svc:8000"),
+        "netdata": os.getenv("NETDATA_URL", "http://netdata-mcp.mcp-servers.svc:8000"),
+        "cortex": CORTEX_URL,
+    }
+
+    redis_client: redis.Redis = None
+    http_client: httpx.AsyncClient = None
+
+
+    class RouteRequest(BaseModel):
+        message: str
+        context: dict | None = None
+
+
+    class RouteResponse(BaseModel):
+        route: str
+        route_url: str
+        confidence: float
+        layer: str
+        latency_ms: float
+        cached: bool = False
+        ttft_ms: float | None = None
+
+
+    @app.on_event("startup")
+    async def startup():
+        global redis_client, http_client
+        logger.info(f"Connecting to Redis: {REDIS_URL}")
+        redis_client = redis.from_url(REDIS_URL, decode_responses=True)
+        http_client = httpx.AsyncClient(timeout=10.0)
+        logger.info("Orchestrator started successfully")
+
+
+    @app.on_event("shutdown")
+    async def shutdown():
+        await redis_client.close()
+        await http_client.aclose()
+
+
+    @app.post("/route", response_model=RouteResponse)
+    async def route_request(req: RouteRequest, background_tasks: BackgroundTasks):
+        start = time.perf_counter()
+        active_requests.inc()
+
+        try:
+            # KV Cache sharing (Redis)
+            cache_key = f"route:{hashlib.sha256(req.message.encode()).hexdigest()[:16]}"
+            try:
+                cached = await redis_client.get(cache_key)
+                if cached:
+                    cache_hits.inc()
+                    data = json.loads(cached)
+                    data["cached"] = True
+                    data["latency_ms"] = (time.perf_counter() - start) * 1000
+                    logger.info(f"Cache hit for: {req.message[:50]}...")
+                    return RouteResponse(**data)
+                cache_misses.inc()
+            except Exception as e:
+                logger.warning(f"Cache read error: {e}")
+                errors_counter.labels(type="cache_read").inc()
+
+            # Prefill Phase: L1 (SmolLM) - Fast model for simple routing
+            ttft_start = time.perf_counter()
+            try:
+                with prefill_latency.time():
+                    l1_result = await http_client.post(L1_URL, json={"text": req.message})
+                    l1_data = l1_result.json()
+
+                ttft = (time.perf_counter() - ttft_start) * 1000
+                ttft_hist.observe(ttft / 1000)
+
+                if l1_data["confidence"] >= L1_CONFIDENCE:
+                    result = RouteResponse(
+                        route=l1_data["route"],
+                        route_url=ROUTES.get(l1_data["route"], CORTEX_URL),
+                        confidence=l1_data["confidence"],
+                        layer="L1",
+                        latency_ms=(time.perf_counter() - start) * 1000,
+                        ttft_ms=ttft
+                    )
+                    route_counter.labels(route=result.route, layer="L1").inc()
+                    endpoint_load.labels(endpoint=result.route).inc()
+                    background_tasks.add_task(cache_result, cache_key, result)
+                    logger.info(f"L1 routed: {req.message[:50]}... -> {result.route} ({result.confidence:.2f})")
+                    return result
+            except Exception as e:
+                logger.error(f"L1 inference error: {e}")
+                errors_counter.labels(type="l1_inference").inc()
+
+            # Decode Phase: L2 (Qwen) - Smarter model for complex routing
+            try:
+                with decode_latency.time():
+                    l2_result = await http_client.post(L2_URL, json={"text": req.message})
+                    l2_data = l2_result.json()
+
+                if l2_data["confidence"] >= L2_CONFIDENCE:
+                    result = RouteResponse(
+                        route=l2_data["route"],
+                        route_url=ROUTES.get(l2_data["route"], CORTEX_URL),
+                        confidence=l2_data["confidence"],
+                        layer="L2",
+                        latency_ms=(time.perf_counter() - start) * 1000,
+                        ttft_ms=(time.perf_counter() - ttft_start) * 1000
+                    )
+                    route_counter.labels(route=result.route, layer="L2").inc()
+                    endpoint_load.labels(endpoint=result.route).inc()
+                    background_tasks.add_task(cache_result, cache_key, result)
+                    logger.info(f"L2 routed: {req.message[:50]}... -> {result.route} ({result.confidence:.2f})")
+                    return result
+            except Exception as e:
+                logger.error(f"L2 inference error: {e}")
+                errors_counter.labels(type="l2_inference").inc()
+                l2_data = {"confidence": 0.0}
+
+            # Escalation: Route to Cortex for complex multi-step tasks
+            result = RouteResponse(
+                route="cortex",
+                route_url=CORTEX_URL,
+                confidence=l2_data.get("confidence", 0.0),
+                layer="escalated",
+                latency_ms=(time.perf_counter() - start) * 1000,
+                ttft_ms=(time.perf_counter() - ttft_start) * 1000
+            )
+            route_counter.labels(route="cortex", layer="escalated").inc()
+            endpoint_load.labels(endpoint="cortex").inc()
+            logger.info(f"Escalated: {req.message[:50]}... -> cortex (low confidence)")
+            return result
+
+        finally:
+            active_requests.dec()
+
+
+    async def cache_result(key: str, result: RouteResponse):
+        try:
+            data = result.model_dump()
+            data.pop("cached", None)
+            data.pop("latency_ms", None)
+            data.pop("ttft_ms", None)
+            await redis_client.setex(key, CACHE_TTL, json.dumps(data))
+        except Exception as e:
+            logger.warning(f"Cache write error: {e}")
+            errors_counter.labels(type="cache_write").inc()
+
+
+    @app.get("/metrics")
+    async def metrics():
+        return PlainTextResponse(generate_latest(), media_type=CONTENT_TYPE_LATEST)
+
+
+    @app.get("/health")
+    async def health():
+        try:
+            await redis_client.ping()
+            redis_status = "connected"
+        except:
+            redis_status = "disconnected"
+
+        return {
+            "status": "healthy",
+            "redis": redis_status,
+            "l1_url": L1_URL,
+            "l2_url": L2_URL,
+            "routes": len(ROUTES)
+        }
+
+
+    @app.get("/routes")
+    async def list_routes():
+        return ROUTES
+
+
+    @app.get("/stats")
+    async def stats():
+        return {
+            "cache_hit_rate": cache_hits._value.get() / max(cache_hits._value.get() + cache_misses._value.get(), 1),
+            "total_requests": sum(route_counter.labels(route=r, layer=l)._value.get()
+                                 for r in ROUTES.keys() for l in ["L1", "L2", "escalated"]),
+            "active_requests": active_requests._value.get()
+        }
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: router-image-builder
+  namespace: default
+spec:
+  ttlSecondsAfterFinished: 600
+  template:
+    spec:
+      restartPolicy: Never
+      containers:
+      - name: buildah
+        image: quay.io/buildah/stable:latest
+        command:
+        - /bin/bash
+        - -c
+        - |
+          set -e
+
+          echo "Setting up insecure registry..."
+          mkdir -p /etc/containers
+          cat > /etc/containers/registries.conf << 'EOF'
+          [[registry]]
+          location = "docker-registry.cortex-chat.svc.cluster.local:5000"
+          insecure = true
+          EOF
+
+          echo "Building model-server image..."
+          mkdir -p /workspace/model-server
+          cat > /workspace/model-server/Dockerfile << 'DOCKERFILE'
+          FROM python:3.11-slim
+
+          RUN apt-get update && apt-get install -y \
+              build-essential \
+              cmake \
+              && rm -rf /var/lib/apt/lists/*
+
+          RUN pip install --no-cache-dir \
+              fastapi \
+              uvicorn \
+              llama-cpp-python
+
+          COPY model_server.py /app/main.py
+          WORKDIR /app
+
+          CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8080"]
+          DOCKERFILE
+
+          cp /config/model-server.py /workspace/model-server/model_server.py
+
+          cd /workspace/model-server
+          buildah bud --format=docker --tls-verify=false \
+            -t docker-registry.cortex-chat.svc.cluster.local:5000/router-model-server:latest .
+          buildah push --tls-verify=false \
+            docker-registry.cortex-chat.svc.cluster.local:5000/router-model-server:latest
+
+          echo "Building orchestrator image..."
+          mkdir -p /workspace/orchestrator
+          cat > /workspace/orchestrator/Dockerfile << 'DOCKERFILE'
+          FROM python:3.11-slim
+
+          RUN pip install --no-cache-dir \
+              fastapi \
+              uvicorn \
+              httpx \
+              redis \
+              prometheus-client
+
+          COPY orchestrator.py /app/main.py
+          WORKDIR /app
+
+          CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8080"]
+          DOCKERFILE
+
+          cp /config/orchestrator.py /workspace/orchestrator/orchestrator.py
+
+          cd /workspace/orchestrator
+          buildah bud --format=docker --tls-verify=false \
+            -t docker-registry.cortex-chat.svc.cluster.local:5000/router-orchestrator:latest .
+          buildah push --tls-verify=false \
+            docker-registry.cortex-chat.svc.cluster.local:5000/router-orchestrator:latest
+
+          echo "All images built and pushed successfully!"
+        securityContext:
+          privileged: true
+        volumeMounts:
+        - name: config
+          mountPath: /config
+        resources:
+          requests:
+            memory: "1Gi"
+            cpu: "1000m"
+          limits:
+            memory: "4Gi"
+            cpu: "2000m"
+      volumes:
+      - name: config
+        configMap:
+          name: router-build-files

@@ -1,0 +1,421 @@
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: cortex
+  namespace: argocd
+  labels:
+    app.kubernetes.io/name: cortex-project
+    app.kubernetes.io/instance: cortex
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+  annotations:
+    argocd.argoproj.io/project-description: "Cortex Automation System - AI-driven infrastructure orchestration"
+
+spec:
+  # Project description
+  description: |
+    Cortex Automation System
+
+    A multi-agent AI system for infrastructure automation, workflow orchestration,
+    and intelligent resource management across Kubernetes, n8n, and Talos environments.
+
+    Components:
+    - MCP Servers (5): k8s-orchestrator, n8n-workflow, talos-node, s3-storage, postgres-data
+    - Dashboard: Web-based monitoring and control interface
+    - Monitoring: Prometheus/Grafana stack
+
+    GitOps Deployment:
+    - Source: GitHub repository
+    - Sync: Automated with self-heal
+    - Deployment: Rolling updates with health checks
+
+  # Source repositories
+  sourceRepos:
+    # Main Cortex repository
+    - https://github.com/ryandahlberg/cortex.git
+
+    # Helm chart repositories
+    - https://prometheus-community.github.io/helm-charts
+    - https://grafana.github.io/helm-charts
+    - https://charts.bitnami.com/bitnami
+    - https://kubernetes.github.io/ingress-nginx
+    - https://cert-manager.io/charts
+
+    # Docker registries
+    - ghcr.io/ryandahlberg/cortex/*
+
+  # Destination clusters and namespaces
+  destinations:
+    # Production cluster
+    - server: https://kubernetes.default.svc
+      namespace: cortex-dashboard
+      name: cortex-production-dashboard
+
+    - server: https://kubernetes.default.svc
+      namespace: cortex-mcp
+      name: cortex-production-mcp
+
+    - server: https://kubernetes.default.svc
+      namespace: cortex-monitoring
+      name: cortex-production-monitoring
+
+    - server: https://kubernetes.default.svc
+      namespace: cortex-storage
+      name: cortex-production-storage
+
+    - server: https://kubernetes.default.svc
+      namespace: cortex-workflows
+      name: cortex-production-workflows
+
+    # Allow deployment to any namespace matching pattern
+    - server: https://kubernetes.default.svc
+      namespace: 'cortex-*'
+
+  # Cluster resource whitelist
+  clusterResourceWhitelist:
+    # Allow cluster-wide resources
+    - group: ''
+      kind: Namespace
+
+    - group: rbac.authorization.k8s.io
+      kind: ClusterRole
+
+    - group: rbac.authorization.k8s.io
+      kind: ClusterRoleBinding
+
+    - group: apiextensions.k8s.io
+      kind: CustomResourceDefinition
+
+    - group: admissionregistration.k8s.io
+      kind: MutatingWebhookConfiguration
+
+    - group: admissionregistration.k8s.io
+      kind: ValidatingWebhookConfiguration
+
+    - group: storage.k8s.io
+      kind: StorageClass
+
+    - group: cert-manager.io
+      kind: ClusterIssuer
+
+  # Namespace resource whitelist
+  namespaceResourceWhitelist:
+    # Core resources
+    - group: ''
+      kind: ConfigMap
+
+    - group: ''
+      kind: Secret
+
+    - group: ''
+      kind: Service
+
+    - group: ''
+      kind: ServiceAccount
+
+    - group: ''
+      kind: PersistentVolumeClaim
+
+    - group: ''
+      kind: Pod
+
+    - group: ''
+      kind: Event
+
+    # Apps
+    - group: apps
+      kind: Deployment
+
+    - group: apps
+      kind: StatefulSet
+
+    - group: apps
+      kind: DaemonSet
+
+    - group: apps
+      kind: ReplicaSet
+
+    # Batch
+    - group: batch
+      kind: Job
+
+    - group: batch
+      kind: CronJob
+
+    # Networking
+    - group: networking.k8s.io
+      kind: Ingress
+
+    - group: networking.k8s.io
+      kind: NetworkPolicy
+
+    # RBAC
+    - group: rbac.authorization.k8s.io
+      kind: Role
+
+    - group: rbac.authorization.k8s.io
+      kind: RoleBinding
+
+    # Autoscaling
+    - group: autoscaling
+      kind: HorizontalPodAutoscaler
+
+    - group: policy
+      kind: PodDisruptionBudget
+
+    # Monitoring
+    - group: monitoring.coreos.com
+      kind: ServiceMonitor
+
+    - group: monitoring.coreos.com
+      kind: PodMonitor
+
+    - group: monitoring.coreos.com
+      kind: PrometheusRule
+
+    - group: monitoring.coreos.com
+      kind: Alertmanager
+
+    - group: monitoring.coreos.com
+      kind: Prometheus
+
+    # Cert Manager
+    - group: cert-manager.io
+      kind: Certificate
+
+    - group: cert-manager.io
+      kind: Issuer
+
+    # Custom resources
+    - group: cortex.automation
+      kind: '*'
+
+  # RBAC roles for applications
+  roles:
+    # Read-only role
+    - name: read-only
+      description: Read-only access to Cortex applications
+      policies:
+        - p, proj:cortex:read-only, applications, get, cortex/*, allow
+        - p, proj:cortex:read-only, applications, list, cortex/*, allow
+
+      groups:
+        - cortex-viewers
+        - platform-team
+
+    # Developer role
+    - name: developer
+      description: Developer access for Cortex applications
+      policies:
+        - p, proj:cortex:developer, applications, get, cortex/*, allow
+        - p, proj:cortex:developer, applications, list, cortex/*, allow
+        - p, proj:cortex:developer, applications, sync, cortex/*, allow
+        - p, proj:cortex:developer, applications, override, cortex/*, allow
+
+      groups:
+        - cortex-developers
+        - sre-team
+
+    # Admin role
+    - name: admin
+      description: Full administrative access to Cortex project
+      policies:
+        - p, proj:cortex:admin, applications, *, cortex/*, allow
+        - p, proj:cortex:admin, repositories, *, *, allow
+        - p, proj:cortex:admin, clusters, *, *, allow
+
+      groups:
+        - cortex-admins
+        - platform-admins
+
+  # Sync windows
+  syncWindows:
+    # Allow syncs during business hours (UTC)
+    - kind: allow
+      schedule: '0 9-17 * * 1-5'
+      duration: 8h
+      applications:
+        - '*'
+      namespaces:
+        - cortex-dashboard
+        - cortex-mcp
+      timeZone: UTC
+
+    # Block syncs during peak hours in production
+    - kind: deny
+      schedule: '0 12-14 * * 1-5'
+      duration: 2h
+      applications:
+        - cortex-mcp-*
+      namespaces:
+        - cortex-mcp
+      timeZone: America/New_York
+      manualSync: true
+
+  # Signature verification
+  signatureKeys:
+    # Require signed commits from GitHub Actions
+    - keyID: github-actions-bot
+
+  # Orphaned resources monitoring
+  orphanedResources:
+    warn: true
+    ignore:
+      - group: ''
+        kind: ConfigMap
+        name: kube-root-ca.crt
+
+      - group: ''
+        kind: Secret
+        name: '*-token-*'
+
+  # Source namespaces (for multi-source apps)
+  sourceNamespaces:
+    - argocd
+
+  # Permits
+  permitOnlyProjectScopedClusters: false
+  permitJWTForProjectScopedClusters: true
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: cortex-project-info
+  namespace: argocd
+  labels:
+    app.kubernetes.io/name: cortex-project-info
+    app.kubernetes.io/part-of: cortex
+
+data:
+  project.yaml: |
+    name: cortex
+    description: Cortex Automation System
+
+    team:
+      name: Platform Engineering
+      slack: "#cortex-team"
+      email: platform@example.com
+
+    repositories:
+      main: https://github.com/ryandahlberg/cortex
+      docs: https://cortex.docs.example.com
+      monitoring: https://grafana.cortex.local
+
+    applications:
+      - name: cortex-dashboard
+        type: web-application
+        language: typescript
+        framework: astro
+
+      - name: mcp-k8s-orchestrator
+        type: mcp-server
+        language: typescript
+        specialization: kubernetes
+
+      - name: mcp-n8n-workflow
+        type: mcp-server
+        language: typescript
+        specialization: workflow-automation
+
+      - name: mcp-talos-node
+        type: mcp-server
+        language: typescript
+        specialization: node-management
+
+      - name: mcp-s3-storage
+        type: mcp-server
+        language: typescript
+        specialization: object-storage
+
+      - name: mcp-postgres-data
+        type: mcp-server
+        language: typescript
+        specialization: database
+
+    environments:
+      - name: production
+        cluster: cortex-prod-cluster
+        region: us-east-1
+
+      - name: staging
+        cluster: cortex-staging-cluster
+        region: us-west-2
+
+    deployment:
+      strategy: gitops
+      tool: argocd
+      sync: automated
+      prune: true
+      self-heal: true
+
+    monitoring:
+      prometheus: true
+      grafana: true
+      alerting: slack
+
+    slo:
+      availability: 99.9%
+      latency_p95: 500ms
+      error_rate: 0.1%
+
+  guidelines.md: |
+    # Cortex Project Guidelines
+
+    ## Deployment Process
+
+    1. All changes must go through GitHub Pull Requests
+    2. CI/CD pipeline must pass (lint, test, security scan)
+    3. Code review required from at least 1 team member
+    4. ArgoCD automatically syncs approved changes
+
+    ## Sync Policy
+
+    - Automated sync enabled for all applications
+    - Self-healing enabled (reverts manual changes)
+    - Prune enabled (removes deleted resources)
+    - Retry on failure with exponential backoff
+
+    ## Rollback Procedure
+
+    1. Identify failing application in ArgoCD UI
+    2. Click "History" to view previous revisions
+    3. Select stable revision and click "Rollback"
+    4. Verify rollback success in monitoring dashboards
+
+    ## Emergency Procedures
+
+    ### Incident Response
+    1. Check #cortex-alerts Slack channel
+    2. Review Grafana dashboards for metrics
+    3. Check ArgoCD for sync status
+    4. Review application logs in Kubernetes
+
+    ### Manual Sync Override
+    - Use ArgoCD CLI: `argocd app sync <app-name>`
+    - Or use ArgoCD UI: Click "Sync" button
+    - Only use during sync windows or emergencies
+
+    ## Resource Limits
+
+    All deployments must specify:
+    - CPU requests and limits
+    - Memory requests and limits
+    - Appropriate HPA configuration
+    - PDB for high-availability services
+
+    ## Security Requirements
+
+    - All container images must be scanned by Trivy
+    - No critical or high vulnerabilities allowed
+    - Secrets must be stored in Kubernetes Secrets
+    - Network policies required for all namespaces
+    - RBAC configured with least privilege
+
+    ## Monitoring & Alerting
+
+    - All services must expose /health endpoint
+    - Prometheus metrics at /metrics endpoint
+    - ServiceMonitor created for each service
+    - Alert rules configured for SLO violations
+    - Runbooks linked in alert annotations

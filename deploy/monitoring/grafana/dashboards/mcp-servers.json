@@ -1,0 +1,469 @@
+{
+  "dashboard": {
+    "title": "MCP Servers",
+    "tags": ["cortex", "mcp", "servers"],
+    "timezone": "browser",
+    "editable": true,
+    "graphTooltip": 1,
+    "time": {
+      "from": "now-1h",
+      "to": "now"
+    },
+    "refresh": "30s",
+    "schemaVersion": 38,
+    "panels": [
+      {
+        "id": 1,
+        "title": "MCP Server Status",
+        "type": "stat",
+        "gridPos": {"h": 6, "w": 24, "x": 0, "y": 0},
+        "targets": [
+          {
+            "expr": "up{job=\"mcp-servers\"}",
+            "legendFormat": "{{mcp_type}} - {{pod}}",
+            "refId": "A"
+          }
+        ],
+        "options": {
+          "colorMode": "background",
+          "graphMode": "none",
+          "justifyMode": "auto",
+          "orientation": "horizontal",
+          "reduceOptions": {
+            "values": false,
+            "calcs": ["lastNotNull"],
+            "fields": ""
+          }
+        },
+        "fieldConfig": {
+          "defaults": {
+            "mappings": [
+              {"type": "value", "value": "0", "text": "DOWN", "color": "red"},
+              {"type": "value", "value": "1", "text": "UP", "color": "green"}
+            ],
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {"value": 0, "color": "red"},
+                {"value": 1, "color": "green"}
+              ]
+            }
+          }
+        }
+      },
+      {
+        "id": 2,
+        "title": "MCP Request Rate by Server Type",
+        "type": "graph",
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 6},
+        "targets": [
+          {
+            "expr": "sum(mcp:requests:rate5m) by (mcp_type)",
+            "legendFormat": "{{mcp_type}}",
+            "refId": "A"
+          }
+        ],
+        "yaxes": [
+          {"format": "reqps", "label": "Requests/sec", "show": true},
+          {"format": "short", "show": false}
+        ],
+        "xaxis": {"show": true, "mode": "time"},
+        "lines": true,
+        "fill": 2,
+        "linewidth": 2,
+        "stack": false,
+        "legend": {
+          "show": true,
+          "values": true,
+          "avg": true,
+          "current": true,
+          "max": true,
+          "alignAsTable": true,
+          "rightSide": false
+        }
+      },
+      {
+        "id": 3,
+        "title": "MCP Error Rate",
+        "type": "graph",
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 6},
+        "targets": [
+          {
+            "expr": "mcp:error_ratio:rate5m * 100",
+            "legendFormat": "{{mcp_type}}",
+            "refId": "A"
+          }
+        ],
+        "yaxes": [
+          {"format": "percent", "label": "Error Rate %", "show": true, "max": 100},
+          {"format": "short", "show": false}
+        ],
+        "xaxis": {"show": true, "mode": "time"},
+        "lines": true,
+        "fill": 1,
+        "thresholds": [
+          {"colorMode": "critical", "fill": true, "line": true, "op": "gt", "value": 5}
+        ]
+      },
+      {
+        "id": 4,
+        "title": "MCP Request Latency (Percentiles)",
+        "type": "graph",
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 14},
+        "targets": [
+          {
+            "expr": "mcp:latency:p50",
+            "legendFormat": "p50 - {{mcp_type}}",
+            "refId": "A"
+          },
+          {
+            "expr": "mcp:latency:p95",
+            "legendFormat": "p95 - {{mcp_type}}",
+            "refId": "B"
+          },
+          {
+            "expr": "mcp:latency:p99",
+            "legendFormat": "p99 - {{mcp_type}}",
+            "refId": "C"
+          }
+        ],
+        "yaxes": [
+          {"format": "s", "label": "Latency", "show": true},
+          {"format": "short", "show": false}
+        ],
+        "xaxis": {"show": true, "mode": "time"},
+        "lines": true,
+        "fill": 0,
+        "linewidth": 2
+      },
+      {
+        "id": 5,
+        "title": "Tool Call Rate",
+        "type": "graph",
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 14},
+        "targets": [
+          {
+            "expr": "sum(mcp:tool_calls:rate5m) by (mcp_type)",
+            "legendFormat": "{{mcp_type}}",
+            "refId": "A"
+          }
+        ],
+        "yaxes": [
+          {"format": "ops", "label": "Tool Calls/sec", "show": true},
+          {"format": "short", "show": false}
+        ],
+        "xaxis": {"show": true, "mode": "time"},
+        "lines": true,
+        "fill": 2,
+        "stack": true
+      },
+      {
+        "id": 6,
+        "title": "Tool Call Success Rate",
+        "type": "graph",
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 22},
+        "targets": [
+          {
+            "expr": "mcp:tool_call_success_ratio:rate5m * 100",
+            "legendFormat": "{{mcp_type}}",
+            "refId": "A"
+          }
+        ],
+        "yaxes": [
+          {"format": "percent", "label": "Success Rate %", "show": true, "min": 0, "max": 100},
+          {"format": "short", "show": false}
+        ],
+        "xaxis": {"show": true, "mode": "time"},
+        "lines": true,
+        "fill": 2,
+        "thresholds": [
+          {"colorMode": "critical", "fill": true, "line": true, "op": "lt", "value": 95}
+        ]
+      },
+      {
+        "id": 7,
+        "title": "Tool Call Failures",
+        "type": "graph",
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 22},
+        "targets": [
+          {
+            "expr": "sum(mcp:tool_call_failures:rate5m) by (mcp_type, tool_name)",
+            "legendFormat": "{{mcp_type}} - {{tool_name}}",
+            "refId": "A"
+          }
+        ],
+        "yaxes": [
+          {"format": "ops", "label": "Failures/sec", "show": true},
+          {"format": "short", "show": false}
+        ],
+        "xaxis": {"show": true, "mode": "time"},
+        "lines": true,
+        "fill": 1
+      },
+      {
+        "id": 8,
+        "title": "Connection Pool Utilization",
+        "type": "graph",
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 30},
+        "targets": [
+          {
+            "expr": "mcp:connection_pool_utilization:avg * 100",
+            "legendFormat": "{{mcp_type}}",
+            "refId": "A"
+          }
+        ],
+        "yaxes": [
+          {"format": "percent", "label": "Pool Utilization %", "show": true, "max": 100},
+          {"format": "short", "show": false}
+        ],
+        "xaxis": {"show": true, "mode": "time"},
+        "lines": true,
+        "fill": 2,
+        "thresholds": [
+          {"colorMode": "warning", "fill": false, "line": true, "op": "gt", "value": 80},
+          {"colorMode": "critical", "fill": true, "line": true, "op": "gt", "value": 90}
+        ]
+      },
+      {
+        "id": 9,
+        "title": "Active Connections",
+        "type": "graph",
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 30},
+        "targets": [
+          {
+            "expr": "mcp_connection_pool_active",
+            "legendFormat": "{{mcp_type}} - active",
+            "refId": "A"
+          },
+          {
+            "expr": "mcp_connection_pool_size",
+            "legendFormat": "{{mcp_type}} - limit",
+            "refId": "B"
+          }
+        ],
+        "yaxes": [
+          {"format": "short", "label": "Connections", "show": true},
+          {"format": "short", "show": false}
+        ],
+        "xaxis": {"show": true, "mode": "time"},
+        "seriesOverrides": [
+          {"alias": "/.*limit/", "dashes": true, "fill": 0}
+        ]
+      },
+      {
+        "id": 10,
+        "title": "MCP Server Memory Usage",
+        "type": "graph",
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 38},
+        "targets": [
+          {
+            "expr": "container_memory_usage_bytes{namespace=\"cortex\",pod=~\".*mcp.*\"} / 1024 / 1024",
+            "legendFormat": "{{pod}}",
+            "refId": "A"
+          }
+        ],
+        "yaxes": [
+          {"format": "mbytes", "label": "Memory (MB)", "show": true},
+          {"format": "short", "show": false}
+        ],
+        "xaxis": {"show": true, "mode": "time"}
+      },
+      {
+        "id": 11,
+        "title": "MCP Server CPU Usage",
+        "type": "graph",
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 38},
+        "targets": [
+          {
+            "expr": "rate(container_cpu_usage_seconds_total{namespace=\"cortex\",pod=~\".*mcp.*\"}[5m]) * 100",
+            "legendFormat": "{{pod}}",
+            "refId": "A"
+          }
+        ],
+        "yaxes": [
+          {"format": "percent", "label": "CPU %", "show": true},
+          {"format": "short", "show": false}
+        ],
+        "xaxis": {"show": true, "mode": "time"}
+      },
+      {
+        "id": 12,
+        "title": "Tool Call Duration by Tool",
+        "type": "heatmap",
+        "gridPos": {"h": 10, "w": 24, "x": 0, "y": 46},
+        "targets": [
+          {
+            "expr": "sum(rate(mcp_tool_call_duration_seconds_bucket[5m])) by (le, tool_name)",
+            "format": "heatmap",
+            "legendFormat": "{{tool_name}}",
+            "refId": "A"
+          }
+        ],
+        "options": {
+          "calculate": false,
+          "cellGap": 2,
+          "cellRadius": 0,
+          "color": {
+            "exponent": 0.5,
+            "fill": "dark-orange",
+            "mode": "scheme",
+            "reverse": false,
+            "scale": "exponential",
+            "scheme": "Spectral",
+            "steps": 128
+          },
+          "exemplars": {
+            "color": "rgba(255,0,255,0.7)"
+          },
+          "filterValues": {
+            "le": 1e-9
+          },
+          "legend": {
+            "show": true
+          },
+          "rowsFrame": {
+            "layout": "auto"
+          },
+          "tooltip": {
+            "show": true,
+            "yHistogram": false
+          },
+          "yAxis": {
+            "axisPlacement": "left",
+            "reverse": false,
+            "unit": "s"
+          }
+        },
+        "fieldConfig": {
+          "defaults": {
+            "custom": {
+              "hideFrom": {
+                "tooltip": false,
+                "viz": false,
+                "legend": false
+              },
+              "scaleDistribution": {
+                "type": "linear"
+              }
+            }
+          }
+        }
+      },
+      {
+        "id": 13,
+        "title": "Top 10 Most Used Tools",
+        "type": "bargauge",
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 56},
+        "targets": [
+          {
+            "expr": "topk(10, sum(mcp:tool_calls:rate5m) by (tool_name))",
+            "legendFormat": "{{tool_name}}",
+            "refId": "A"
+          }
+        ],
+        "options": {
+          "displayMode": "gradient",
+          "orientation": "horizontal",
+          "reduceOptions": {
+            "values": false,
+            "calcs": ["lastNotNull"],
+            "fields": ""
+          },
+          "showUnfilled": true
+        },
+        "fieldConfig": {
+          "defaults": {
+            "unit": "ops",
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {"value": 0, "color": "green"},
+                {"value": 10, "color": "yellow"},
+                {"value": 50, "color": "red"}
+              ]
+            }
+          }
+        }
+      },
+      {
+        "id": 14,
+        "title": "MCP Server Capabilities",
+        "type": "table",
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 56},
+        "targets": [
+          {
+            "expr": "up{job=\"mcp-servers\"}",
+            "format": "table",
+            "instant": true,
+            "refId": "A"
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {
+              "excludeByName": {
+                "Time": true,
+                "Value": true,
+                "job": true
+              },
+              "indexByName": {},
+              "renameByName": {
+                "mcp_type": "Server Type",
+                "capabilities": "Capabilities",
+                "pod": "Pod",
+                "namespace": "Namespace"
+              }
+            }
+          }
+        ],
+        "options": {
+          "showHeader": true,
+          "sortBy": []
+        }
+      }
+    ],
+    "templating": {
+      "list": [
+        {
+          "name": "datasource",
+          "type": "datasource",
+          "query": "prometheus",
+          "current": {"text": "Prometheus", "value": "Prometheus"}
+        },
+        {
+          "name": "mcp_type",
+          "type": "query",
+          "datasource": "Prometheus",
+          "query": "label_values(mcp_requests_total, mcp_type)",
+          "current": {},
+          "multi": true,
+          "includeAll": true,
+          "refresh": 1
+        },
+        {
+          "name": "tool_name",
+          "type": "query",
+          "datasource": "Prometheus",
+          "query": "label_values(mcp_tool_calls_total, tool_name)",
+          "current": {},
+          "multi": true,
+          "includeAll": true,
+          "refresh": 1
+        }
+      ]
+    },
+    "annotations": {
+      "list": [
+        {
+          "datasource": "Prometheus",
+          "enable": true,
+          "expr": "ALERTS{alertstate=\"firing\",component=\"mcp\"}",
+          "iconColor": "red",
+          "name": "MCP Alerts",
+          "tagKeys": "alertname,severity,mcp_type"
+        }
+      ]
+    }
+  }
+}

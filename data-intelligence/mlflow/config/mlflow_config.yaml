@@ -1,0 +1,116 @@
+# MLflow Configuration for Cortex Data Intelligence Platform
+
+# Tracking Server Configuration
+tracking:
+  backend_store_uri: "sqlite:///data-intelligence/mlflow/mlflow.db"
+  default_artifact_root: "data-intelligence/mlflow/artifacts"
+  serve_artifacts: true
+  host: "0.0.0.0"
+  port: 5000
+  workers: 4
+
+# Experiment Configuration
+experiments:
+  routing_optimization:
+    name: "moe-routing-optimization"
+    description: "Optimize Mixture of Experts routing decisions"
+    tags:
+      project: "cortex"
+      phase: "foundation"
+      category: "routing"
+
+  model_selection:
+    name: "model-selection-optimization"
+    description: "Optimize AI model selection for tasks"
+    tags:
+      project: "cortex"
+      phase: "foundation"
+      category: "model-selection"
+
+  cost_optimization:
+    name: "cost-optimization"
+    description: "Optimize token usage and costs"
+    tags:
+      project: "cortex"
+      phase: "foundation"
+      category: "cost"
+
+  quality_optimization:
+    name: "quality-optimization"
+    description: "Optimize task outcome quality"
+    tags:
+      project: "cortex"
+      phase: "foundation"
+      category: "quality"
+
+# Metrics Configuration
+metrics:
+  routing_accuracy:
+    description: "Percentage of correct routing decisions"
+    goal: "maximize"
+    range: [0.0, 1.0]
+
+  average_confidence:
+    description: "Average confidence score for routing decisions"
+    goal: "maximize"
+    range: [0.0, 1.0]
+
+  task_success_rate:
+    description: "Percentage of successfully completed tasks"
+    goal: "maximize"
+    range: [0.0, 1.0]
+
+  average_latency_ms:
+    description: "Average task execution latency in milliseconds"
+    goal: "minimize"
+    range: [0, 1000000]
+
+  cost_per_task:
+    description: "Average cost per task in USD"
+    goal: "minimize"
+    range: [0.0, 100.0]
+
+  tokens_per_task:
+    description: "Average tokens used per task"
+    goal: "minimize"
+    range: [0, 1000000]
+
+  quality_score:
+    description: "Average quality score of task outputs"
+    goal: "maximize"
+    range: [0.0, 1.0]
+
+  cost_efficiency:
+    description: "Quality score per dollar spent"
+    goal: "maximize"
+    range: [0.0, 100.0]
+
+# Auto-logging Configuration
+autolog:
+  disable: false
+  log_models: true
+  log_input_examples: false
+  log_model_signatures: true
+  exclusive: false
+
+# Model Registry Configuration
+model_registry:
+  default_stage: "None"
+  stages:
+    - "Staging"
+    - "Production"
+    - "Archived"
+
+# Integration Configuration
+integrations:
+  delta_lake:
+    enabled: true
+    catalog: "cortex"
+
+  unity_catalog:
+    enabled: true
+    catalog: "cortex"
+    schema: "mlflow"
+
+  databricks:
+    enabled: false

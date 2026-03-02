@@ -1,0 +1,891 @@
+---
+# Larry-03: Development & Inventory
+# Master Node: k3s-master03
+# Worker Nodes: k3s-worker03 + k3s-worker04 (8 workers total)
+# Domain: Code quality, testing, and asset cataloging
+
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: larry-03
+  labels:
+    larry-instance: "larry-03"
+    phase: "development"
+
+---
+# Shared PVC for coordination state
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: larry-03-coordination-pvc
+  namespace: larry-03
+spec:
+  accessModes:
+  - ReadWriteMany
+  storageClassName: longhorn
+  resources:
+    requests:
+      storage: 20Gi
+
+---
+# ConfigMap with Larry-03 configuration
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: larry-03-config
+  namespace: larry-03
+data:
+  larry-id: "larry-03"
+  phase: "development"
+  redis-host: "redis-cluster.redis-ha.svc.cluster.local"
+  redis-port: "6379"
+  coordination-path: "/coordination"
+  master-agents: "development-master,inventory-master,testing-master"
+  worker-count: "8"
+  worker-nodes: "k3s-worker03,k3s-worker04"
+  token-budget-personal: "90000"
+  token-budget-workers: "76000"
+  quality-threshold: "80"
+  coverage-target: "70"
+
+---
+# Larry-03 Coordinator Deployment (runs on k3s-master03)
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: larry-03-coordinator
+  namespace: larry-03
+  labels:
+    app: larry-coordinator
+    larry-instance: "larry-03"
+    role: coordinator
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: larry-coordinator
+      larry-instance: "larry-03"
+  template:
+    metadata:
+      labels:
+        app: larry-coordinator
+        larry-instance: "larry-03"
+        role: coordinator
+    spec:
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: node-role.kubernetes.io/master
+                operator: Exists
+              - key: kubernetes.io/hostname
+                operator: In
+                values:
+                - k3s-master03
+      serviceAccountName: larry-03-sa
+      containers:
+      - name: larry-coordinator
+        image: ghcr.io/cortex-holdings/development-master:latest
+        imagePullPolicy: IfNotPresent
+        env:
+        - name: LARRY_ID
+          valueFrom:
+            configMapKeyRef:
+              name: larry-03-config
+              key: larry-id
+        - name: PHASE
+          valueFrom:
+            configMapKeyRef:
+              name: larry-03-config
+              key: phase
+        - name: REDIS_HOST
+          valueFrom:
+            configMapKeyRef:
+              name: larry-03-config
+              key: redis-host
+        - name: REDIS_PORT
+          valueFrom:
+            configMapKeyRef:
+              name: larry-03-config
+              key: redis-port
+        - name: COORDINATION_PATH
+          valueFrom:
+            configMapKeyRef:
+              name: larry-03-config
+              key: coordination-path
+        - name: MASTER_AGENTS
+          valueFrom:
+            configMapKeyRef:
+              name: larry-03-config
+              key: master-agents
+        - name: TOKEN_BUDGET_PERSONAL
+          valueFrom:
+            configMapKeyRef:
+              name: larry-03-config
+              key: token-budget-personal
+        - name: TOKEN_BUDGET_WORKERS
+          valueFrom:
+            configMapKeyRef:
+              name: larry-03-config
+              key: token-budget-workers
+        - name: QUALITY_THRESHOLD
+          valueFrom:
+            configMapKeyRef:
+              name: larry-03-config
+              key: quality-threshold
+        - name: COVERAGE_TARGET
+          valueFrom:
+            configMapKeyRef:
+              name: larry-03-config
+              key: coverage-target
+        - name: GITHUB_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: github-credentials
+              key: token
+        resources:
+          requests:
+            memory: "8Gi"
+            cpu: "4000m"
+          limits:
+            memory: "16Gi"
+            cpu: "8000m"
+        volumeMounts:
+        - name: coordination
+          mountPath: /coordination
+        - name: scripts
+          mountPath: /scripts
+      volumes:
+      - name: coordination
+        persistentVolumeClaim:
+          claimName: larry-03-coordination-pvc
+      - name: scripts
+        configMap:
+          name: larry-03-scripts
+          defaultMode: 0755
+
+---
+# ServiceAccount with RBAC for cluster inventory
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: larry-03-sa
+  namespace: larry-03
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: larry-03-inventory-reader
+rules:
+- apiGroups: ["*"]
+  resources: ["*"]
+  verbs: ["get", "list", "watch"]
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: larry-03-inventory-reader-binding
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: larry-03-inventory-reader
+subjects:
+- kind: ServiceAccount
+  name: larry-03-sa
+  namespace: larry-03
+
+---
+# Larry-03 Scripts ConfigMap
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: larry-03-scripts
+  namespace: larry-03
+data:
+  orchestrate.sh: |
+    #!/bin/bash
+    set -euo pipefail
+
+    echo "[Larry-03] Starting Development & Inventory Phase"
+    echo "[Larry-03] Coordination via Redis at $REDIS_HOST:$REDIS_PORT"
+    echo "[Larry-03] Quality threshold: $QUALITY_THRESHOLD, Coverage target: $COVERAGE_TARGET"
+
+    # Initialize Redis state
+    redis-cli -h $REDIS_HOST -p $REDIS_PORT SET phase:larry-03:status "in_progress"
+    redis-cli -h $REDIS_HOST -p $REDIS_PORT SET phase:larry-03:progress 0
+    redis-cli -h $REDIS_HOST -p $REDIS_PORT SET phase:larry-03:started_at "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+    redis-cli -h $REDIS_HOST -p $REDIS_PORT SET phase:larry-03:inventory:assets_discovered 0
+    redis-cli -h $REDIS_HOST -p $REDIS_PORT SET phase:larry-03:development:prs_created 0
+    redis-cli -h $REDIS_HOST -p $REDIS_PORT SET phase:larry-03:testing:coverage_increase 0
+
+    # Publish start event
+    redis-cli -h $REDIS_HOST -p $REDIS_PORT PUBLISH larry:coordination "{\"from\":\"larry-03\",\"event\":\"phase_started\",\"timestamp\":\"$(date -u +%Y-%m-%dT%H:%M:%SZ)\"}"
+
+    # Spawn workers (3 on worker03, 5 on worker04)
+    echo "[Larry-03] Spawning 8 workers across k3s-worker03 and k3s-worker04..."
+    kubectl create -f /scripts/inventory-workers.yaml
+    kubectl create -f /scripts/development-workers.yaml
+
+    # Monitor worker progress
+    while true; do
+      completed=$(kubectl get jobs -n larry-03 -l larry-instance=larry-03 --field-selector status.successful=1 -o json | jq '.items | length')
+      total=8
+      progress=$(( completed * 100 / total ))
+
+      redis-cli -h $REDIS_HOST -p $REDIS_PORT SET phase:larry-03:progress $progress
+      redis-cli -h $REDIS_HOST -p $REDIS_PORT PUBLISH larry:coordination "{\"from\":\"larry-03\",\"event\":\"progress_update\",\"progress\":$progress,\"message\":\"$completed/$total workers completed\",\"timestamp\":\"$(date -u +%Y-%m-%dT%H:%M:%SZ)\"}"
+
+      # Update specific metrics
+      assets=$(cat $COORDINATION_PATH/inventory/asset-count.txt 2>/dev/null || echo 0)
+      prs=$(cat $COORDINATION_PATH/development/pr-count.txt 2>/dev/null || echo 0)
+      coverage=$(cat $COORDINATION_PATH/testing/coverage-delta.txt 2>/dev/null || echo 0)
+
+      redis-cli -h $REDIS_HOST -p $REDIS_PORT SET phase:larry-03:inventory:assets_discovered $assets
+      redis-cli -h $REDIS_HOST -p $REDIS_PORT SET phase:larry-03:development:prs_created $prs
+      redis-cli -h $REDIS_HOST -p $REDIS_PORT SET phase:larry-03:testing:coverage_increase $coverage
+
+      if [ $completed -eq $total ]; then
+        echo "[Larry-03] All workers completed!"
+        break
+      fi
+
+      sleep 10
+    done
+
+    # Generate final report
+    echo "[Larry-03] Generating final development & inventory report..."
+    python3 /scripts/generate-report.py
+
+    # Mark complete
+    redis-cli -h $REDIS_HOST -p $REDIS_PORT SET phase:larry-03:status "completed"
+    redis-cli -h $REDIS_HOST -p $REDIS_PORT SET phase:larry-03:completed_at "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+    redis-cli -h $REDIS_HOST -p $REDIS_PORT PUBLISH larry:coordination "{\"from\":\"larry-03\",\"event\":\"phase_complete\",\"timestamp\":\"$(date -u +%Y-%m-%dT%H:%M:%SZ)\"}"
+
+    echo "[Larry-03] Development & inventory phase complete!"
+
+  inventory-workers.yaml: |
+    ---
+    # Inventory Worker 1: catalog-worker-01 (K8s deployments)
+    apiVersion: batch/v1
+    kind: Job
+    metadata:
+      name: larry-03-catalog-worker-01
+      namespace: larry-03
+      labels:
+        app: larry-worker
+        larry-instance: "larry-03"
+        worker-type: catalog
+        team: inventory
+    spec:
+      backoffLimit: 3
+      template:
+        metadata:
+          labels:
+            app: larry-worker
+            larry-instance: "larry-03"
+            worker-type: catalog
+            team: inventory
+        spec:
+          serviceAccountName: larry-03-sa
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                - matchExpressions:
+                  - key: kubernetes.io/hostname
+                    operator: In
+                    values:
+                    - k3s-worker03
+          restartPolicy: OnFailure
+          containers:
+          - name: catalog-worker
+            image: ghcr.io/cortex-holdings/inventory-worker:latest
+            env:
+            - name: WORKER_TYPE
+              value: "catalog"
+            - name: WORKER_ID
+              value: "catalog-01"
+            - name: TASK_ID
+              value: "catalog-deployments"
+            - name: LARRY_ID
+              value: "larry-03"
+            - name: TOKEN_BUDGET
+              value: "8000"
+            - name: TIMEOUT_MINUTES
+              value: "15"
+            - name: CATALOG_TARGET
+              value: "deployments,statefulsets,daemonsets"
+            resources:
+              requests:
+                memory: "2Gi"
+                cpu: "1000m"
+              limits:
+                memory: "4Gi"
+                cpu: "2000m"
+            volumeMounts:
+            - name: coordination
+              mountPath: /coordination
+          volumes:
+          - name: coordination
+            persistentVolumeClaim:
+              claimName: larry-03-coordination-pvc
+    ---
+    # Inventory Worker 2: catalog-worker-02 (Helm releases)
+    apiVersion: batch/v1
+    kind: Job
+    metadata:
+      name: larry-03-catalog-worker-02
+      namespace: larry-03
+      labels:
+        app: larry-worker
+        larry-instance: "larry-03"
+        worker-type: catalog
+        team: inventory
+    spec:
+      backoffLimit: 3
+      template:
+        metadata:
+          labels:
+            app: larry-worker
+            larry-instance: "larry-03"
+            worker-type: catalog
+            team: inventory
+        spec:
+          serviceAccountName: larry-03-sa
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                - matchExpressions:
+                  - key: kubernetes.io/hostname
+                    operator: In
+                    values:
+                    - k3s-worker03
+          restartPolicy: OnFailure
+          containers:
+          - name: catalog-worker
+            image: ghcr.io/cortex-holdings/inventory-worker:latest
+            env:
+            - name: WORKER_TYPE
+              value: "catalog"
+            - name: WORKER_ID
+              value: "catalog-02"
+            - name: TASK_ID
+              value: "catalog-helm-releases"
+            - name: LARRY_ID
+              value: "larry-03"
+            - name: TOKEN_BUDGET
+              value: "8000"
+            - name: TIMEOUT_MINUTES
+              value: "15"
+            - name: CATALOG_TARGET
+              value: "helm-releases"
+            resources:
+              requests:
+                memory: "2Gi"
+                cpu: "1000m"
+              limits:
+                memory: "4Gi"
+                cpu: "2000m"
+            volumeMounts:
+            - name: coordination
+              mountPath: /coordination
+          volumes:
+          - name: coordination
+            persistentVolumeClaim:
+              claimName: larry-03-coordination-pvc
+    ---
+    # Inventory Worker 3: classification-worker
+    apiVersion: batch/v1
+    kind: Job
+    metadata:
+      name: larry-03-classification-worker
+      namespace: larry-03
+      labels:
+        app: larry-worker
+        larry-instance: "larry-03"
+        worker-type: classification
+        team: inventory
+    spec:
+      backoffLimit: 3
+      template:
+        metadata:
+          labels:
+            app: larry-worker
+            larry-instance: "larry-03"
+            worker-type: classification
+            team: inventory
+        spec:
+          serviceAccountName: larry-03-sa
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                - matchExpressions:
+                  - key: kubernetes.io/hostname
+                    operator: In
+                    values:
+                    - k3s-worker03
+          restartPolicy: OnFailure
+          containers:
+          - name: classification-worker
+            image: ghcr.io/cortex-holdings/inventory-worker:latest
+            env:
+            - name: WORKER_TYPE
+              value: "classification"
+            - name: TASK_ID
+              value: "classify-assets"
+            - name: LARRY_ID
+              value: "larry-03"
+            - name: TOKEN_BUDGET
+              value: "10000"
+            - name: TIMEOUT_MINUTES
+              value: "20"
+            resources:
+              requests:
+                memory: "2Gi"
+                cpu: "1000m"
+              limits:
+                memory: "4Gi"
+                cpu: "2000m"
+            volumeMounts:
+            - name: coordination
+              mountPath: /coordination
+          volumes:
+          - name: coordination
+            persistentVolumeClaim:
+              claimName: larry-03-coordination-pvc
+
+  development-workers.yaml: |
+    ---
+    # Development Worker 1: code-quality-worker
+    apiVersion: batch/v1
+    kind: Job
+    metadata:
+      name: larry-03-code-quality-worker
+      namespace: larry-03
+      labels:
+        app: larry-worker
+        larry-instance: "larry-03"
+        worker-type: code-quality
+        team: development
+    spec:
+      backoffLimit: 3
+      template:
+        metadata:
+          labels:
+            app: larry-worker
+            larry-instance: "larry-03"
+            worker-type: code-quality
+            team: development
+        spec:
+          serviceAccountName: larry-03-sa
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                - matchExpressions:
+                  - key: kubernetes.io/hostname
+                    operator: In
+                    values:
+                    - k3s-worker04
+          restartPolicy: OnFailure
+          containers:
+          - name: code-quality-worker
+            image: ghcr.io/cortex-holdings/development-worker:latest
+            env:
+            - name: WORKER_TYPE
+              value: "code-quality"
+            - name: TASK_ID
+              value: "analyze-code-quality"
+            - name: LARRY_ID
+              value: "larry-03"
+            - name: TOKEN_BUDGET
+              value: "10000"
+            - name: TIMEOUT_MINUTES
+              value: "20"
+            - name: QUALITY_THRESHOLD
+              value: "80"
+            resources:
+              requests:
+                memory: "2Gi"
+                cpu: "1000m"
+              limits:
+                memory: "4Gi"
+                cpu: "2000m"
+            volumeMounts:
+            - name: coordination
+              mountPath: /coordination
+          volumes:
+          - name: coordination
+            persistentVolumeClaim:
+              claimName: larry-03-coordination-pvc
+    ---
+    # Development Worker 2: test-coverage-worker
+    apiVersion: batch/v1
+    kind: Job
+    metadata:
+      name: larry-03-test-coverage-worker
+      namespace: larry-03
+      labels:
+        app: larry-worker
+        larry-instance: "larry-03"
+        worker-type: test-coverage
+        team: development
+    spec:
+      backoffLimit: 3
+      template:
+        metadata:
+          labels:
+            app: larry-worker
+            larry-instance: "larry-03"
+            worker-type: test-coverage
+            team: development
+        spec:
+          serviceAccountName: larry-03-sa
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                - matchExpressions:
+                  - key: kubernetes.io/hostname
+                    operator: In
+                    values:
+                    - k3s-worker04
+          restartPolicy: OnFailure
+          containers:
+          - name: test-coverage-worker
+            image: ghcr.io/cortex-holdings/development-worker:latest
+            env:
+            - name: WORKER_TYPE
+              value: "test-coverage"
+            - name: TASK_ID
+              value: "improve-test-coverage"
+            - name: LARRY_ID
+              value: "larry-03"
+            - name: TOKEN_BUDGET
+              value: "10000"
+            - name: TIMEOUT_MINUTES
+              value: "25"
+            - name: COVERAGE_TARGET
+              value: "70"
+            resources:
+              requests:
+                memory: "2Gi"
+                cpu: "1000m"
+              limits:
+                memory: "4Gi"
+                cpu: "2000m"
+            volumeMounts:
+            - name: coordination
+              mountPath: /coordination
+          volumes:
+          - name: coordination
+            persistentVolumeClaim:
+              claimName: larry-03-coordination-pvc
+    ---
+    # Development Worker 3: documentation-worker
+    apiVersion: batch/v1
+    kind: Job
+    metadata:
+      name: larry-03-documentation-worker
+      namespace: larry-03
+      labels:
+        app: larry-worker
+        larry-instance: "larry-03"
+        worker-type: documentation
+        team: development
+    spec:
+      backoffLimit: 3
+      template:
+        metadata:
+          labels:
+            app: larry-worker
+            larry-instance: "larry-03"
+            worker-type: documentation
+            team: development
+        spec:
+          serviceAccountName: larry-03-sa
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                - matchExpressions:
+                  - key: kubernetes.io/hostname
+                    operator: In
+                    values:
+                    - k3s-worker04
+          restartPolicy: OnFailure
+          containers:
+          - name: documentation-worker
+            image: ghcr.io/cortex-holdings/development-worker:latest
+            env:
+            - name: WORKER_TYPE
+              value: "documentation"
+            - name: TASK_ID
+              value: "generate-documentation"
+            - name: LARRY_ID
+              value: "larry-03"
+            - name: TOKEN_BUDGET
+              value: "10000"
+            - name: TIMEOUT_MINUTES
+              value: "20"
+            resources:
+              requests:
+                memory: "2Gi"
+                cpu: "1000m"
+              limits:
+                memory: "4Gi"
+                cpu: "2000m"
+            volumeMounts:
+            - name: coordination
+              mountPath: /coordination
+          volumes:
+          - name: coordination
+            persistentVolumeClaim:
+              claimName: larry-03-coordination-pvc
+    ---
+    # Development Worker 4: feature-worker
+    apiVersion: batch/v1
+    kind: Job
+    metadata:
+      name: larry-03-feature-worker
+      namespace: larry-03
+      labels:
+        app: larry-worker
+        larry-instance: "larry-03"
+        worker-type: feature
+        team: development
+    spec:
+      backoffLimit: 3
+      template:
+        metadata:
+          labels:
+            app: larry-worker
+            larry-instance: "larry-03"
+            worker-type: feature
+            team: development
+        spec:
+          serviceAccountName: larry-03-sa
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                - matchExpressions:
+                  - key: kubernetes.io/hostname
+                    operator: In
+                    values:
+                    - k3s-worker04
+          restartPolicy: OnFailure
+          containers:
+          - name: feature-worker
+            image: ghcr.io/cortex-holdings/development-worker:latest
+            env:
+            - name: WORKER_TYPE
+              value: "feature"
+            - name: TASK_ID
+              value: "implement-priority-feature"
+            - name: LARRY_ID
+              value: "larry-03"
+            - name: TOKEN_BUDGET
+              value: "12000"
+            - name: TIMEOUT_MINUTES
+              value: "25"
+            - name: GITHUB_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: github-credentials
+                  key: token
+            resources:
+              requests:
+                memory: "2Gi"
+                cpu: "1000m"
+              limits:
+                memory: "4Gi"
+                cpu: "2000m"
+            volumeMounts:
+            - name: coordination
+              mountPath: /coordination
+          volumes:
+          - name: coordination
+            persistentVolumeClaim:
+              claimName: larry-03-coordination-pvc
+    ---
+    # Development Worker 5: review-worker
+    apiVersion: batch/v1
+    kind: Job
+    metadata:
+      name: larry-03-review-worker
+      namespace: larry-03
+      labels:
+        app: larry-worker
+        larry-instance: "larry-03"
+        worker-type: review
+        team: development
+    spec:
+      backoffLimit: 3
+      template:
+        metadata:
+          labels:
+            app: larry-worker
+            larry-instance: "larry-03"
+            worker-type: review
+            team: development
+        spec:
+          serviceAccountName: larry-03-sa
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                - matchExpressions:
+                  - key: kubernetes.io/hostname
+                    operator: In
+                    values:
+                    - k3s-worker04
+          restartPolicy: OnFailure
+          containers:
+          - name: review-worker
+            image: ghcr.io/cortex-holdings/development-worker:latest
+            env:
+            - name: WORKER_TYPE
+              value: "review"
+            - name: TASK_ID
+              value: "review-all-prs"
+            - name: LARRY_ID
+              value: "larry-03"
+            - name: TOKEN_BUDGET
+              value: "8000"
+            - name: TIMEOUT_MINUTES
+              value: "15"
+            - name: GITHUB_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: github-credentials
+                  key: token
+            resources:
+              requests:
+                memory: "2Gi"
+                cpu: "1000m"
+              limits:
+                memory: "4Gi"
+                cpu: "2000m"
+            volumeMounts:
+            - name: coordination
+              mountPath: /coordination
+          volumes:
+          - name: coordination
+            persistentVolumeClaim:
+              claimName: larry-03-coordination-pvc
+
+  generate-report.py: |
+    #!/usr/bin/env python3
+    import json
+    import os
+    from datetime import datetime
+
+    larry_id = "larry-03"
+    coordination_path = "/coordination"
+
+    # Load inventory results
+    inventory_file = f"{coordination_path}/inventory/catalog-summary.json"
+    inventory = {}
+    if os.path.exists(inventory_file):
+        with open(inventory_file, 'r') as f:
+            inventory = json.load(f)
+
+    # Load development results
+    development_file = f"{coordination_path}/development/summary.json"
+    development = {}
+    if os.path.exists(development_file):
+        with open(development_file, 'r') as f:
+            development = json.load(f)
+
+    # Load testing results
+    testing_file = f"{coordination_path}/testing/coverage-report.json"
+    testing = {}
+    if os.path.exists(testing_file):
+        with open(testing_file, 'r') as f:
+            testing = json.load(f)
+
+    # Generate comprehensive report
+    report = {
+        "larry_id": larry_id,
+        "phase": "development",
+        "completed_at": datetime.utcnow().isoformat() + "Z",
+        "summary": {
+            "assets_cataloged": inventory.get('total_assets', 0),
+            "prs_created": development.get('prs_created', 0),
+            "test_coverage_increase": testing.get('coverage_delta', 0),
+            "code_quality_score": development.get('quality_score', 0)
+        },
+        "inventory": {
+            "deployments": inventory.get('deployments', 0),
+            "statefulsets": inventory.get('statefulsets', 0),
+            "daemonsets": inventory.get('daemonsets', 0),
+            "helm_releases": inventory.get('helm_releases', 0),
+            "lineage_graph_generated": inventory.get('lineage_graph', False)
+        },
+        "development": {
+            "code_quality_prs": development.get('code_quality_prs', 0),
+            "feature_prs": development.get('feature_prs', 0),
+            "documentation_prs": development.get('documentation_prs', 0),
+            "refactoring_recommendations": development.get('refactoring_recommendations', [])
+        },
+        "testing": {
+            "baseline_coverage": testing.get('baseline_coverage', 0),
+            "current_coverage": testing.get('current_coverage', 0),
+            "coverage_delta": testing.get('coverage_delta', 0),
+            "tests_added": testing.get('tests_added', 0)
+        },
+        "recommendations": [
+            "Review and merge development PRs",
+            "Validate lineage graph for accuracy",
+            "Continue improving test coverage to 80%+",
+            "Implement recommended refactorings"
+        ]
+    }
+
+    # Save report
+    report_file = f"{coordination_path}/reports/larry-03-final.json"
+    os.makedirs(os.path.dirname(report_file), exist_ok=True)
+    with open(report_file, 'w') as f:
+        json.dump(report, f, indent=2)
+
+    print(f"Development & inventory report saved to {report_file}")
+
+---
+# Service for Larry-03 coordinator
+apiVersion: v1
+kind: Service
+metadata:
+  name: larry-03-coordinator
+  namespace: larry-03
+spec:
+  selector:
+    app: larry-coordinator
+    larry-instance: "larry-03"
+  ports:
+  - name: http
+    port: 8080
+    targetPort: 8080
+  type: ClusterIP
+
+---
+# ServiceMonitor for Prometheus scraping
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: larry-03-metrics
+  namespace: larry-03
+spec:
+  selector:
+    matchLabels:
+      app: larry-coordinator
+      larry-instance: "larry-03"
+  endpoints:
+  - port: http
+    interval: 15s
+    path: /metrics

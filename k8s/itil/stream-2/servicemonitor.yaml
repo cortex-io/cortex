@@ -1,0 +1,47 @@
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: itil-stream2-metrics
+  namespace: cortex-itil-stream2
+  labels:
+    prometheus: kube-prometheus
+spec:
+  selector:
+    matchLabels:
+      app: sla-predictor
+  endpoints:
+  - port: metrics
+    interval: 30s
+    path: /metrics
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: business-metrics
+  namespace: cortex-itil-stream2
+  labels:
+    prometheus: kube-prometheus
+spec:
+  selector:
+    matchLabels:
+      app: business-metrics-collector
+  endpoints:
+  - port: metrics
+    interval: 30s
+    path: /metrics
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: availability-risk-metrics
+  namespace: cortex-itil-stream2
+  labels:
+    prometheus: kube-prometheus
+spec:
+  selector:
+    matchLabels:
+      app: availability-risk-engine
+  endpoints:
+  - port: metrics
+    interval: 30s
+    path: /metrics

@@ -1,0 +1,56 @@
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: kaniko-frontend-clawd-fixed
+  namespace: cortex-chat
+spec:
+  ttlSecondsAfterFinished: 300
+  template:
+    spec:
+      initContainers:
+      # Copy source files from the REAL ConfigMap
+      - name: prepare-source
+        image: busybox:1.36
+        command:
+        - sh
+        - -c
+        - |
+          set -e
+          echo "Copying REAL source files from cortex-chat-clawd-source ConfigMap..."
+          cp /source/Dockerfile /workspace/Dockerfile
+          cp /source/index-clawd.html /workspace/index-clawd.html
+          echo "Verifying file sizes..."
+          ls -lh /workspace/
+          echo "First 100 chars of HTML:"
+          head -c 100 /workspace/index-clawd.html
+          echo ""
+          echo "Source files ready for build!"
+        volumeMounts:
+        - name: source
+          mountPath: /source
+        - name: workspace
+          mountPath: /workspace
+      containers:
+      # Kaniko build container
+      - name: kaniko
+        image: gcr.io/kaniko-project/executor:v1.23.2-debug
+        args:
+        - "--dockerfile=/workspace/Dockerfile"
+        - "--context=/workspace"
+        - "--destination=10.43.170.72:5000/cortex-chat-frontend:latest"
+        - "--insecure"
+        - "--skip-tls-verify"
+        - "--cleanup"
+        - "--verbosity=info"
+        volumeMounts:
+        - name: workspace
+          mountPath: /workspace
+      volumes:
+      - name: source
+        configMap:
+          name: cortex-chat-clawd-source  # Using the ConfigMap we just created!
+      - name: workspace
+        emptyDir: {}
+      restartPolicy: Never
+  backoffLimit: 3

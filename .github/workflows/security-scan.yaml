@@ -1,0 +1,446 @@
+name: Security Scanning
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+  pull_request:
+    branches:
+      - main
+      - develop
+  schedule:
+    # Run daily at 2 AM UTC
+    - cron: '0 2 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  security-events: write
+  packages: read
+
+env:
+  NODE_VERSION: '20.x'
+  PNPM_VERSION: '8'
+
+jobs:
+  # Dependency vulnerability scanning
+  dependency-scan:
+    name: Dependency Vulnerability Scan
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Run pnpm audit
+        run: |
+          pnpm audit --audit-level=moderate --json > pnpm-audit.json || true
+          cat pnpm-audit.json
+
+      - name: Run npm audit (detailed)
+        run: |
+          npm audit --json > npm-audit.json || true
+          cat npm-audit.json
+
+      - name: Check for critical vulnerabilities
+        run: |
+          CRITICAL=$(jq '.metadata.vulnerabilities.critical // 0' npm-audit.json)
+          HIGH=$(jq '.metadata.vulnerabilities.high // 0' npm-audit.json)
+
+          echo "Critical vulnerabilities: $CRITICAL"
+          echo "High vulnerabilities: $HIGH"
+
+          if [ "$CRITICAL" -gt 0 ]; then
+            echo "ERROR: Found $CRITICAL critical vulnerabilities!"
+            exit 1
+          fi
+
+          if [ "$HIGH" -gt 5 ]; then
+            echo "WARNING: Found $HIGH high vulnerabilities (threshold: 5)"
+            exit 1
+          fi
+
+      - name: Upload audit results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: dependency-audit-results
+          path: |
+            pnpm-audit.json
+            npm-audit.json
+          retention-days: 30
+
+  # Container image scanning with Trivy
+  container-scan:
+    name: Container Image Scan (${{ matrix.package }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    strategy:
+      matrix:
+        package:
+          - mcp-k8s-orchestrator
+          - mcp-n8n-workflow
+          - mcp-talos-node
+          - mcp-s3-storage
+          - mcp-postgres-data
+      fail-fast: false
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: packages/${{ matrix.package }}/Dockerfile
+          load: true
+          tags: ${{ matrix.package }}:test
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: ${{ matrix.package }}:test
+          format: 'sarif'
+          output: 'trivy-results-${{ matrix.package }}.sarif'
+          severity: 'CRITICAL,HIGH,MEDIUM'
+          exit-code: '0'
+
+      - name: Run Trivy (table format)
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: ${{ matrix.package }}:test
+          format: 'table'
+          severity: 'CRITICAL,HIGH,MEDIUM'
+          exit-code: '1'
+
+      - name: Upload Trivy results to GitHub Security
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: 'trivy-results-${{ matrix.package }}.sarif'
+          category: 'container-${{ matrix.package }}'
+
+      - name: Upload Trivy results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: trivy-results-${{ matrix.package }}
+          path: trivy-results-${{ matrix.package }}.sarif
+          retention-days: 30
+
+  # SAST with CodeQL
+  codeql-analysis:
+    name: CodeQL Analysis
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      actions: read
+      contents: read
+      security-events: write
+
+    strategy:
+      fail-fast: false
+      matrix:
+        language: ['javascript', 'python']
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: ${{ matrix.language }}
+          queries: security-extended,security-and-quality
+
+      - name: Autobuild
+        uses: github/codeql-action/autobuild@v3
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v3
+        with:
+          category: '/language:${{ matrix.language }}'
+
+  # Secret scanning
+  secret-scan:
+    name: Secret Scanning
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Run Gitleaks
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITLEAKS_LICENSE: ${{ secrets.GITLEAKS_LICENSE }}
+
+      - name: Run TruffleHog
+        uses: trufflesecurity/trufflehog@main
+        with:
+          path: ./
+          base: ${{ github.event.repository.default_branch }}
+          head: HEAD
+          extra_args: --debug --only-verified
+
+  # License compliance
+  license-scan:
+    name: License Compliance Check
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Install license checker
+        run: pnpm add -D license-checker
+
+      - name: Check licenses
+        run: |
+          npx license-checker --json --out licenses.json
+
+          # Check for problematic licenses
+          PROBLEMATIC_LICENSES="GPL-2.0|GPL-3.0|AGPL-3.0|SSPL|BUSL"
+
+          if grep -E "$PROBLEMATIC_LICENSES" licenses.json; then
+            echo "ERROR: Found problematic licenses!"
+            exit 1
+          fi
+
+      - name: Upload license report
+        uses: actions/upload-artifact@v4
+        with:
+          name: license-report
+          path: licenses.json
+          retention-days: 30
+
+  # Infrastructure as Code scanning
+  iac-scan:
+    name: Infrastructure Security Scan
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run Trivy IaC scanner
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'config'
+          scan-ref: '.'
+          format: 'sarif'
+          output: 'trivy-iac-results.sarif'
+          severity: 'CRITICAL,HIGH,MEDIUM'
+          exit-code: '0'
+
+      - name: Run Trivy IaC (table format)
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'config'
+          scan-ref: '.'
+          format: 'table'
+          severity: 'CRITICAL,HIGH'
+          exit-code: '1'
+
+      - name: Upload IaC scan results
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: 'trivy-iac-results.sarif'
+          category: 'iac-security'
+
+      - name: Run Checkov
+        uses: bridgecrewio/checkov-action@master
+        with:
+          directory: .
+          framework: kubernetes,dockerfile
+          output_format: sarif
+          output_file_path: checkov-results.sarif
+          soft_fail: true
+
+      - name: Upload Checkov results
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: checkov-results.sarif
+          category: 'iac-checkov'
+
+  # SBOM generation
+  sbom-generation:
+    name: Generate Software Bill of Materials
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Generate SBOM with CycloneDX
+        run: |
+          pnpm add -D @cyclonedx/cyclonedx-npm
+          npx @cyclonedx/cyclonedx-npm --output-file sbom.json
+
+      - name: Generate SBOM with Syft
+        uses: anchore/sbom-action@v0
+        with:
+          path: .
+          format: spdx-json
+          output-file: sbom-spdx.json
+
+      - name: Upload SBOMs
+        uses: actions/upload-artifact@v4
+        with:
+          name: sbom-reports
+          path: |
+            sbom.json
+            sbom-spdx.json
+          retention-days: 90
+
+  # Security report generation
+  security-report:
+    name: Generate Security Report
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    needs:
+      - dependency-scan
+      - container-scan
+      - codeql-analysis
+      - secret-scan
+      - license-scan
+      - iac-scan
+      - sbom-generation
+    if: always()
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: security-artifacts
+
+      - name: Generate security report
+        run: |
+          DATE=$(date -u +%Y-%m-%d)
+          REPORT_FILE="coordination/masters/security/reports/scan-report-${DATE}.json"
+
+          mkdir -p coordination/masters/security/reports
+
+          cat > $REPORT_FILE <<EOF
+          {
+            "scan_id": "scan-${DATE}-${{ github.run_id }}",
+            "timestamp": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
+            "repository": "${{ github.repository }}",
+            "branch": "${{ github.ref_name }}",
+            "commit": "${{ github.sha }}",
+            "scans": {
+              "dependency_scan": "${{ needs.dependency-scan.result }}",
+              "container_scan": "${{ needs.container-scan.result }}",
+              "codeql_analysis": "${{ needs.codeql-analysis.result }}",
+              "secret_scan": "${{ needs.secret-scan.result }}",
+              "license_scan": "${{ needs.license-scan.result }}",
+              "iac_scan": "${{ needs.iac-scan.result }}",
+              "sbom_generation": "${{ needs.sbom-generation.result }}"
+            },
+            "artifacts_location": "security-artifacts/",
+            "status": "completed"
+          }
+          EOF
+
+          cat $REPORT_FILE
+
+      - name: Upload security report
+        uses: actions/upload-artifact@v4
+        with:
+          name: security-report
+          path: coordination/masters/security/reports/
+          retention-days: 90
+
+      - name: Comment on PR
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const report = JSON.parse(fs.readFileSync('coordination/masters/security/reports/scan-report-*.json', 'utf8'));
+
+            const comment = `## Security Scan Results
+
+            Scan ID: \`${report.scan_id}\`
+
+            | Scan Type | Status |
+            |-----------|--------|
+            | Dependency Scan | ${{ needs.dependency-scan.result }} |
+            | Container Scan | ${{ needs.container-scan.result }} |
+            | CodeQL Analysis | ${{ needs.codeql-analysis.result }} |
+            | Secret Scan | ${{ needs.secret-scan.result }} |
+            | License Scan | ${{ needs.license-scan.result }} |
+            | IaC Scan | ${{ needs.iac-scan.result }} |
+            | SBOM Generation | ${{ needs.sbom-generation.result }} |
+
+            Detailed results are available in the workflow artifacts.`;
+
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: comment
+            });
