@@ -1,0 +1,122 @@
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: cortex-core
+  namespace: cortex
+  labels:
+    app: cortex
+    component: meta-agent
+    prometheus: kube-prometheus
+spec:
+  selector:
+    matchLabels:
+      app: cortex-core
+  endpoints:
+    - port: metrics
+      interval: 10s
+      path: /metrics
+      scheme: http
+      scrapeTimeout: 10s
+      relabelings:
+        - sourceLabels: [__meta_kubernetes_pod_name]
+          targetLabel: pod
+        - sourceLabels: [__meta_kubernetes_namespace]
+          targetLabel: namespace
+        - sourceLabels: [__meta_kubernetes_service_name]
+          targetLabel: service
+      metricRelabelings:
+        - sourceLabels: [__name__]
+          regex: cortex_.*
+          action: keep
+
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: cortex-masters
+  namespace: cortex
+  labels:
+    app: cortex
+    component: masters
+    prometheus: kube-prometheus
+spec:
+  selector:
+    matchLabels:
+      app: cortex-master
+  endpoints:
+    - port: metrics
+      interval: 15s
+      path: /metrics
+      scheme: http
+      scrapeTimeout: 10s
+      relabelings:
+        - sourceLabels: [__meta_kubernetes_pod_label_master_type]
+          targetLabel: master_type
+        - sourceLabels: [__meta_kubernetes_pod_name]
+          targetLabel: pod
+        - sourceLabels: [__meta_kubernetes_namespace]
+          targetLabel: namespace
+      metricRelabelings:
+        - sourceLabels: [__name__]
+          regex: (cortex_master_.*|cortex_worker_.*|cortex_task_.*)
+          action: keep
+
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: cortex-contractors
+  namespace: cortex
+  labels:
+    app: cortex
+    component: contractors
+    prometheus: kube-prometheus
+spec:
+  selector:
+    matchLabels:
+      app: cortex-contractor
+  endpoints:
+    - port: metrics
+      interval: 20s
+      path: /metrics
+      scheme: http
+      scrapeTimeout: 15s
+      relabelings:
+        - sourceLabels: [__meta_kubernetes_pod_label_contractor_type]
+          targetLabel: contractor_type
+        - sourceLabels: [__meta_kubernetes_pod_label_specialization]
+          targetLabel: specialization
+        - sourceLabels: [__meta_kubernetes_pod_name]
+          targetLabel: pod
+        - sourceLabels: [__meta_kubernetes_namespace]
+          targetLabel: namespace
+      metricRelabelings:
+        - sourceLabels: [__name__]
+          regex: contractor_.*
+          action: keep
+
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: cortex-dashboard
+  namespace: cortex
+  labels:
+    app: cortex
+    component: dashboard
+    prometheus: kube-prometheus
+spec:
+  selector:
+    matchLabels:
+      app: cortex-dashboard
+  endpoints:
+    - port: http
+      interval: 15s
+      path: /metrics
+      scheme: http
+      scrapeTimeout: 10s
+      relabelings:
+        - sourceLabels: [__meta_kubernetes_pod_name]
+          targetLabel: pod
+        - sourceLabels: [__meta_kubernetes_namespace]
+          targetLabel: namespace

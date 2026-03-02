@@ -1,0 +1,314 @@
+---
+# Custom UniFi Prometheus Exporter using UniFi Integration API v1
+# Uses API key authentication (no username/password)
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: unifi-exporter-script
+  namespace: monitoring
+data:
+  exporter.py: |
+    #!/usr/bin/env python3
+    """
+    UniFi Prometheus Exporter - Uses UniFi Integration API v1
+    Exports metrics from UniFi Network Application for Prometheus
+    """
+    import os
+    import time
+    import requests
+    from urllib3.exceptions import InsecureRequestWarning
+    from prometheus_client import start_http_server, Gauge, Counter, Info
+
+    requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
+
+    # Configuration
+    UNIFI_HOST = os.getenv('UNIFI_HOST', '10.88.140.144')
+    UNIFI_API_KEY = os.getenv('UNIFI_API_KEY')
+    SITE_ID = os.getenv('SITE_ID', '88f7af54-98f8-306a-a1c7-c9349722b1f6')
+    SCRAPE_INTERVAL = int(os.getenv('SCRAPE_INTERVAL', '30'))
+    EXPORTER_PORT = int(os.getenv('EXPORTER_PORT', '9130'))
+
+    # Prometheus metrics
+    unifi_device_info = Info('unifi_device', 'UniFi device information')
+    unifi_device_state = Gauge('unifi_device_state', 'Device state (1=online, 0=offline)', ['device_name', 'model', 'mac'])
+    unifi_device_uptime = Gauge('unifi_device_uptime_seconds', 'Device uptime in seconds', ['device_name', 'model'])
+    unifi_device_cpu = Gauge('unifi_device_cpu_percent', 'Device CPU usage percentage', ['device_name', 'model'])
+    unifi_device_mem = Gauge('unifi_device_mem_percent', 'Device memory usage percentage', ['device_name', 'model'])
+    unifi_device_temp = Gauge('unifi_device_temperature_celsius', 'Device temperature in Celsius', ['device_name', 'model'])
+
+    # Client metrics
+    unifi_clients_total = Gauge('unifi_clients_total', 'Total number of connected clients')
+    unifi_clients_wireless = Gauge('unifi_clients_wireless', 'Number of wireless clients')
+    unifi_clients_wired = Gauge('unifi_clients_wired', 'Number of wired clients')
+
+    # Traffic metrics
+    unifi_device_tx_bytes = Counter('unifi_device_tx_bytes_total', 'Device transmitted bytes', ['device_name', 'model'])
+    unifi_device_rx_bytes = Counter('unifi_device_rx_bytes_total', 'Device received bytes', ['device_name', 'model'])
+    unifi_device_tx_packets = Counter('unifi_device_tx_packets_total', 'Device transmitted packets', ['device_name', 'model'])
+    unifi_device_rx_packets = Counter('unifi_device_rx_packets_total', 'Device received packets', ['device_name', 'model'])
+
+    # Port metrics for switches
+    unifi_port_state = Gauge('unifi_port_state', 'Port state (1=up, 0=down)', ['device_name', 'port_idx', 'port_name'])
+    unifi_port_speed = Gauge('unifi_port_speed_mbps', 'Port speed in Mbps', ['device_name', 'port_idx', 'port_name'])
+    unifi_port_poe_power = Gauge('unifi_port_poe_power_watts', 'PoE power consumption in watts', ['device_name', 'port_idx', 'port_name'])
+
+    # Scrape metrics
+    unifi_scrape_duration = Gauge('unifi_scrape_duration_seconds', 'Time taken to scrape UniFi metrics')
+    unifi_scrape_errors = Counter('unifi_scrape_errors_total', 'Total number of scrape errors')
+
+    class UniFiAPI:
+        def __init__(self):
+            self.base_url = f"https://{UNIFI_HOST}/proxy/network/integration/v1"
+            self.headers = {
+                'X-API-KEY': UNIFI_API_KEY,
+                'Accept': 'application/json'
+            }
+
+        def get_devices(self):
+            """Get all devices from UniFi controller"""
+            try:
+                url = f"{self.base_url}/sites/{SITE_ID}/devices"
+                response = requests.get(url, headers=self.headers, verify=False, timeout=10)
+                if response.status_code == 200:
+                    result = response.json()
+                    return result.get('data', [])
+                else:
+                    print(f"Error getting devices: {response.status_code} - {response.text[:200]}")
+                    return []
+            except Exception as e:
+                print(f"Exception getting devices: {e}")
+                return []
+
+        def get_clients(self):
+            """Get all connected clients"""
+            try:
+                url = f"{self.base_url}/sites/{SITE_ID}/clients"
+                response = requests.get(url, headers=self.headers, verify=False, timeout=10)
+                if response.status_code == 200:
+                    result = response.json()
+                    return result.get('data', [])
+                else:
+                    print(f"Error getting clients: {response.status_code}")
+                    return []
+            except Exception as e:
+                print(f"Exception getting clients: {e}")
+                return []
+
+    def collect_metrics():
+        """Collect metrics from UniFi controller"""
+        start_time = time.time()
+        try:
+            api = UniFiAPI()
+
+            # Get devices
+            devices = api.get_devices()
+            print(f"Found {len(devices)} devices")
+
+            for device in devices:
+                name = device.get('name', 'unknown')
+                model = device.get('shortname', device.get('model', 'unknown'))
+                mac = device.get('mac', 'unknown')
+                state = device.get('state', 'UNKNOWN')
+
+                # Device state
+                state_value = 1 if state == 'ONLINE' else 0
+                unifi_device_state.labels(device_name=name, model=model, mac=mac).set(state_value)
+
+                # Uptime
+                uptime = device.get('uptime', 0)
+                if uptime:
+                    unifi_device_uptime.labels(device_name=name, model=model).set(uptime)
+
+                # System stats
+                sys_stats = device.get('sysStats', {})
+                if sys_stats:
+                    cpu = sys_stats.get('cpu', 0)
+                    mem = sys_stats.get('mem', 0)
+                    temps = sys_stats.get('temps', {})
+
+                    if cpu:
+                        unifi_device_cpu.labels(device_name=name, model=model).set(cpu)
+                    if mem:
+                        unifi_device_mem.labels(device_name=name, model=model).set(mem)
+                    if temps:
+                        # Get first temperature reading
+                        temp_value = next(iter(temps.values()), 0)
+                        if temp_value:
+                            unifi_device_temp.labels(device_name=name, model=model).set(temp_value)
+
+                # Traffic stats
+                stat = device.get('stat', {})
+                if stat:
+                    tx_bytes = stat.get('txBytes', 0)
+                    rx_bytes = stat.get('rxBytes', 0)
+                    tx_packets = stat.get('txPackets', 0)
+                    rx_packets = stat.get('rxPackets', 0)
+
+                    if tx_bytes:
+                        unifi_device_tx_bytes.labels(device_name=name, model=model).inc(tx_bytes)
+                    if rx_bytes:
+                        unifi_device_rx_bytes.labels(device_name=name, model=model).inc(rx_bytes)
+                    if tx_packets:
+                        unifi_device_tx_packets.labels(device_name=name, model=model).inc(tx_packets)
+                    if rx_packets:
+                        unifi_device_rx_packets.labels(device_name=name, model=model).inc(rx_packets)
+
+                # Port stats for switches
+                port_table = device.get('portTable', [])
+                for port in port_table:
+                    port_idx = str(port.get('portIdx', 0))
+                    port_name = port.get('name', f'port_{port_idx}')
+                    port_up = 1 if port.get('up', False) else 0
+                    speed = port.get('speed', 0)
+                    poe_power = port.get('poe_power', 0)
+
+                    unifi_port_state.labels(device_name=name, port_idx=port_idx, port_name=port_name).set(port_up)
+                    if speed:
+                        unifi_port_speed.labels(device_name=name, port_idx=port_idx, port_name=port_name).set(speed)
+                    if poe_power:
+                        unifi_port_poe_power.labels(device_name=name, port_idx=port_idx, port_name=port_name).set(poe_power)
+
+            # Get clients
+            clients = api.get_clients()
+            print(f"Found {len(clients)} clients")
+
+            wireless_count = sum(1 for c in clients if c.get('isWired', False) == False)
+            wired_count = len(clients) - wireless_count
+
+            unifi_clients_total.set(len(clients))
+            unifi_clients_wireless.set(wireless_count)
+            unifi_clients_wired.set(wired_count)
+
+            # Record scrape duration
+            duration = time.time() - start_time
+            unifi_scrape_duration.set(duration)
+            print(f"Scrape completed in {duration:.2f}s")
+
+        except Exception as e:
+            print(f"Error collecting metrics: {e}")
+            unifi_scrape_errors.inc()
+
+    if __name__ == '__main__':
+        print(f"Starting UniFi Prometheus Exporter on port {EXPORTER_PORT}")
+        print(f"UniFi Controller: {UNIFI_HOST}")
+        print(f"Site ID: {SITE_ID}")
+        print(f"Scrape interval: {SCRAPE_INTERVAL}s")
+
+        # Start HTTP server
+        start_http_server(EXPORTER_PORT)
+
+        # Collect metrics in a loop
+        while True:
+            collect_metrics()
+            time.sleep(SCRAPE_INTERVAL)
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: unifi-exporter
+  namespace: monitoring
+  labels:
+    app: unifi-exporter
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: unifi-exporter
+  template:
+    metadata:
+      labels:
+        app: unifi-exporter
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "9130"
+        prometheus.io/path: "/metrics"
+    spec:
+      containers:
+      - name: exporter
+        image: python:3.11-slim
+        command:
+          - /bin/bash
+          - -c
+          - |
+            pip install --no-cache-dir prometheus-client requests urllib3
+            python /app/exporter.py
+        ports:
+        - name: metrics
+          containerPort: 9130
+          protocol: TCP
+        env:
+        - name: UNIFI_HOST
+          value: "10.88.140.144"
+        - name: UNIFI_API_KEY
+          value: "gqVIqY5mNHP_TGUBqgGm-kuLkPA9d5ca"
+        - name: SITE_ID
+          value: "88f7af54-98f8-306a-a1c7-c9349722b1f6"
+        - name: SCRAPE_INTERVAL
+          value: "30"
+        - name: EXPORTER_PORT
+          value: "9130"
+        volumeMounts:
+        - name: script
+          mountPath: /app
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "100m"
+          limits:
+            memory: "256Mi"
+            cpu: "200m"
+        livenessProbe:
+          httpGet:
+            path: /metrics
+            port: 9130
+          initialDelaySeconds: 30
+          periodSeconds: 30
+        readinessProbe:
+          httpGet:
+            path: /metrics
+            port: 9130
+          initialDelaySeconds: 10
+          periodSeconds: 10
+      volumes:
+      - name: script
+        configMap:
+          name: unifi-exporter-script
+          defaultMode: 0755
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: unifi-exporter
+  namespace: monitoring
+  labels:
+    app: unifi-exporter
+  annotations:
+    prometheus.io/scrape: "true"
+    prometheus.io/port: "9130"
+    prometheus.io/path: "/metrics"
+spec:
+  type: ClusterIP
+  ports:
+  - name: metrics
+    port: 9130
+    targetPort: 9130
+    protocol: TCP
+  selector:
+    app: unifi-exporter
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: unifi-exporter
+  namespace: monitoring
+  labels:
+    app: unifi-exporter
+    release: kube-prometheus-stack
+spec:
+  selector:
+    matchLabels:
+      app: unifi-exporter
+  endpoints:
+  - port: metrics
+    interval: 30s
+    path: /metrics

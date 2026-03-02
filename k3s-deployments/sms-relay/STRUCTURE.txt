@@ -1,0 +1,85 @@
+SMS Infrastructure Relay - Project Structure
+==============================================
+
+sms-relay/
+├── .dockerignore                   # Docker build exclusions
+├── .env.example                    # Environment template
+├── .gitignore                      # Git exclusions
+├── DEPLOYMENT.md                   # Production deployment guide
+├── docker-compose.yml              # Docker Compose configuration
+├── Dockerfile                      # Container image definition
+├── Makefile                        # Build automation commands
+├── PROJECT_SUMMARY.md              # Comprehensive project overview
+├── QUICK_REFERENCE.md              # Quick reference card
+├── README.md                       # Main documentation
+├── requirements.txt                # Python dependencies
+├── STRUCTURE.txt                   # This file
+├── TESTING.md                      # Testing guide
+│
+├── k8s/                            # Kubernetes manifests
+│   ├── deployment.yaml             # Pod deployment configuration
+│   ├── ingress.yaml                # HTTPS ingress configuration
+│   ├── kustomization.yaml          # Kustomize configuration
+│   ├── secret.yaml                 # Secrets and ConfigMap template
+│   └── service.yaml                # ClusterIP service
+│
+├── scripts/                        # Helper scripts
+│   ├── setup-dev.sh                # Development environment setup
+│   └── test-webhook.sh             # Local webhook testing
+│
+└── src/                            # Application source code
+    ├── __init__.py                 # Package initializer
+    ├── config.py                   # Configuration management (Pydantic)
+    ├── formatters.py               # SMS output formatters
+    ├── main.py                     # FastAPI application & webhook handler
+    ├── sms.py                      # Twilio client wrapper
+    ├── state.py                    # Conversation state machine
+    │
+    ├── integrations/               # MCP server integrations
+    │   ├── __init__.py
+    │   ├── claude.py               # Claude AI integration
+    │   ├── k8s.py                  # Kubernetes MCP client
+    │   ├── proxmox.py              # Proxmox MCP client
+    │   ├── security.py             # Security MCP client
+    │   └── unifi.py                # UniFi MCP client
+    │
+    └── menus/                      # Menu handlers
+        ├── __init__.py
+        ├── home.py                 # Main menu handler
+        ├── k8s.py                  # Kubernetes submenu
+        ├── network.py              # Network submenu
+        ├── proxmox.py              # Proxmox submenu
+        └── security.py             # Security submenu
+
+File Count:
+- Python files: 17
+- Kubernetes manifests: 5
+- Documentation: 5
+- Configuration: 5
+- Scripts: 2
+- Total: 34 files
+
+Key Components:
+1. FastAPI webhook handler (src/main.py)
+2. State management system (src/state.py)
+3. MCP integration layer (src/integrations/)
+4. Menu navigation system (src/menus/)
+5. SMS formatters (src/formatters.py)
+6. Kubernetes deployment (k8s/)
+7. Comprehensive documentation (*.md)
+
+External Dependencies:
+- Twilio (SMS gateway)
+- Anthropic Claude (AI queries)
+- MCP Servers (UniFi, Proxmox, K8s, Security)
+- Kubernetes cluster with ingress
+- cert-manager (SSL certificates)
+
+Deployment Options:
+1. Local development with ngrok
+2. Docker Compose
+3. Kubernetes (k3s)
+
+Ready to deploy: ✓
+Tested: Pending
+Documentation: Complete

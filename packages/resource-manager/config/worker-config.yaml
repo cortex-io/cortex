@@ -1,0 +1,118 @@
+# Worker Management Configuration for Resource Manager MCP Server
+
+# Kubernetes configuration
+kubernetes:
+  # Context to use (null for default)
+  context: null
+
+  # Namespace for worker operations (default: all namespaces)
+  namespace: null
+
+# MCP Server endpoints for VM provisioning
+mcp_servers:
+  # Talos MCP server endpoint (for Talos Linux VM provisioning)
+  talos:
+    endpoint: "stdio://talos-mcp-server"
+    enabled: true
+
+  # Proxmox MCP server endpoint (for Proxmox VM provisioning)
+  proxmox:
+    endpoint: "stdio://proxmox-mcp-server"
+    enabled: true
+
+  # Preferred provider for burst workers
+  preferred_provider: "talos"
+
+# Worker size templates
+worker_sizes:
+  small:
+    cpu: 2
+    memory_gb: 4
+    disk_gb: 50
+
+  medium:
+    cpu: 4
+    memory_gb: 8
+    disk_gb: 100
+
+  large:
+    cpu: 8
+    memory_gb: 16
+    disk_gb: 200
+
+  xlarge:
+    cpu: 16
+    memory_gb: 32
+    disk_gb: 400
+
+# Burst worker configuration
+burst_workers:
+  # Maximum number of burst workers that can be provisioned
+  max_burst_workers: 10
+
+  # Default TTL in hours (if not specified)
+  default_ttl_hours: 24
+
+  # Minimum TTL in hours
+  min_ttl_hours: 1
+
+  # Maximum TTL in hours (1 week)
+  max_ttl_hours: 168
+
+  # Label to identify burst workers
+  worker_label: "worker-type=burst"
+
+  # Annotation for TTL
+  ttl_annotation: "worker-ttl"
+
+  # Automatic cleanup check interval (seconds)
+  cleanup_interval_seconds: 300
+
+# Drain configuration
+drain:
+  # Grace period for pod termination (seconds)
+  grace_period_seconds: 300
+
+  # Ignore DaemonSets during drain
+  ignore_daemonsets: true
+
+  # Delete pods with emptyDir volumes
+  delete_emptydir_data: true
+
+  # Force deletion of standalone pods
+  force: true
+
+  # Timeout for drain operation (seconds)
+  timeout_seconds: 600
+
+# Safety configuration
+safety:
+  # Require confirmation before destroying permanent workers (always true)
+  protect_permanent_workers: true
+
+  # Require drain before destroy (unless force=true)
+  require_drain_before_destroy: true
+
+  # List of protected worker name patterns (regex)
+  protected_worker_patterns:
+    - "^master-.*"
+    - "^control-plane-.*"
+    - "^permanent-.*"
+
+# Logging configuration
+logging:
+  level: "INFO"
+  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+
+# Monitoring and metrics
+monitoring:
+  # Enable metrics collection
+  enabled: true
+
+  # Metrics to track
+  metrics:
+    - "worker_count_by_type"
+    - "worker_provision_time"
+    - "worker_drain_time"
+    - "worker_destroy_time"
+    - "burst_worker_ttl_remaining"

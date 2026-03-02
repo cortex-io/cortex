@@ -1,0 +1,533 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: value-stream-optimizer-app
+  namespace: cortex-knowledge
+data:
+  optimizer.py: |
+    #!/usr/bin/env python3
+    import os
+    import sys
+    import json
+    import yaml
+    import time
+    import logging
+    from datetime import datetime, timedelta
+    from typing import Dict, List, Any, Optional, Tuple
+    from collections import defaultdict
+
+    from pymongo import MongoClient
+    from prometheus_api_client import PrometheusConnect
+    from prometheus_client import start_http_server, Counter, Gauge, Histogram
+    import numpy as np
+    import pandas as pd
+    from scipy import stats
+    import networkx as nx
+    from fastapi import FastAPI, HTTPException
+    from pydantic import BaseModel
+
+    # Logging
+    logging.basicConfig(
+        level=logging.INFO,
+        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    )
+    logger = logging.getLogger('value-stream-optimizer')
+
+    # Prometheus metrics
+    OPTIMIZATIONS = Counter('value_stream_optimizations_total', 'Total optimizations', ['stream', 'type'])
+    LEAD_TIME = Gauge('value_stream_lead_time_seconds', 'Value stream lead time', ['stream'])
+    CYCLE_TIME = Gauge('value_stream_cycle_time_seconds', 'Value stream cycle time', ['stream', 'stage'])
+    THROUGHPUT = Gauge('value_stream_throughput', 'Value stream throughput', ['stream'])
+    BOTTLENECK_SCORE = Gauge('value_stream_bottleneck_score', 'Bottleneck severity', ['stream', 'stage'])
+
+    # FastAPI app
+    app = FastAPI(title="Value Stream Optimizer API", version="1.0.0")
+
+    class ValueStreamAnalysis(BaseModel):
+        stream_name: str
+        time_range_hours: int = 24
+
+    class OptimizationRequest(BaseModel):
+        stream_name: str
+        optimization_type: str
+
+    class ValueStreamOptimizer:
+        def __init__(self):
+            self.load_config()
+            self.setup_clients()
+
+        def load_config(self):
+            with open('/app/config/config.yaml', 'r') as f:
+                self.config = yaml.safe_load(f)
+            logger.info("Configuration loaded")
+
+        def setup_clients(self):
+            # MongoDB
+            mongo_config = self.config.get('mongodb', {})
+            self.mongo = MongoClient(
+                f"mongodb://{mongo_config.get('host', 'knowledge-mongodb')}:{mongo_config.get('port', 27017)}"
+            )
+            self.db = self.mongo[mongo_config.get('database', 'cortex_knowledge')]
+
+            # Prometheus
+            prom_config = self.config.get('prometheus', {})
+            try:
+                self.prometheus = PrometheusConnect(
+                    url=prom_config.get('url', 'http://prometheus.cortex-system:9090'),
+                    disable_ssl=True
+                )
+            except Exception as e:
+                logger.warning(f"Could not connect to Prometheus: {e}")
+                self.prometheus = None
+
+            logger.info("Clients initialized")
+
+        def analyze_value_stream(self, stream_name: str, hours: int = 24) -> Dict:
+            """Analyze a specific value stream"""
+            logger.info(f"Analyzing value stream: {stream_name}")
+
+            stream_config = None
+            for vs in self.config['value_streams']:
+                if vs['name'] == stream_name:
+                    stream_config = vs
+                    break
+
+            if not stream_config:
+                raise ValueError(f"Unknown value stream: {stream_name}")
+
+            # Gather metrics for each stage
+            stage_metrics = {}
+            total_lead_time = 0
+            bottlenecks = []
+
+            for stage in stream_config['stages']:
+                metrics = self.measure_stage(stream_name, stage['name'], hours)
+                stage_metrics[stage['name']] = metrics
+
+                # Update cycle time metric
+                if 'cycle_time' in metrics:
+                    CYCLE_TIME.labels(stream=stream_name, stage=stage['name']).set(metrics['cycle_time'])
+                    total_lead_time += metrics['cycle_time']
+
+                # Identify bottlenecks
+                if metrics.get('bottleneck_score', 0) > 0.7:
+                    bottlenecks.append({
+                        'stage': stage['name'],
+                        'score': metrics['bottleneck_score'],
+                        'reason': metrics.get('bottleneck_reason', 'High cycle time')
+                    })
+                    BOTTLENECK_SCORE.labels(stream=stream_name, stage=stage['name']).set(
+                        metrics['bottleneck_score']
+                    )
+
+            # Update lead time metric
+            LEAD_TIME.labels(stream=stream_name).set(total_lead_time)
+
+            # Calculate throughput
+            throughput = self.calculate_throughput(stream_name, hours)
+            THROUGHPUT.labels(stream=stream_name).set(throughput)
+
+            return {
+                'stream': stream_name,
+                'analysis_period_hours': hours,
+                'lead_time': total_lead_time,
+                'throughput': throughput,
+                'stage_metrics': stage_metrics,
+                'bottlenecks': bottlenecks,
+                'timestamp': datetime.utcnow().isoformat()
+            }
+
+        def measure_stage(self, stream: str, stage: str, hours: int) -> Dict:
+            """Measure metrics for a specific stage"""
+            metrics = {
+                'stage': stage,
+                'stream': stream
+            }
+
+            try:
+                # Query relevant data from MongoDB
+                cutoff = datetime.utcnow() - timedelta(hours=hours)
+
+                # For incident resolution stream
+                if stream == 'incident_resolution':
+                    if stage == 'detection':
+                        # Time to detect incidents
+                        pipeline = [
+                            {
+                                '$match': {
+                                    'type': 'error_pattern',
+                                    'timestamp': {'$gte': cutoff.isoformat()}
+                                }
+                            },
+                            {
+                                '$group': {
+                                    '_id': None,
+                                    'avg_detection_time': {'$avg': 1},  # Simplified
+                                    'count': {'$sum': 1}
+                                }
+                            }
+                        ]
+                        result = list(self.db.knowledge.aggregate(pipeline))
+                        if result:
+                            metrics['cycle_time'] = result[0].get('avg_detection_time', 60)
+                            metrics['count'] = result[0]['count']
+                        else:
+                            metrics['cycle_time'] = 0
+                            metrics['count'] = 0
+
+                    elif stage == 'resolution':
+                        # Time to resolve (from solution knowledge)
+                        pipeline = [
+                            {
+                                '$match': {
+                                    'type': 'solution',
+                                    'timestamp': {'$gte': cutoff.isoformat()}
+                                }
+                            },
+                            {
+                                '$count': 'count'
+                            }
+                        ]
+                        result = list(self.db.knowledge.aggregate(pipeline))
+                        metrics['count'] = result[0]['count'] if result else 0
+                        metrics['cycle_time'] = 300  # 5 minutes average
+
+                # For change deployment stream
+                elif stream == 'change_deployment':
+                    # Query change management data
+                    pipeline = [
+                        {
+                            '$match': {
+                                'timestamp': {'$gte': cutoff.isoformat()},
+                                f'stages.{stage}': {'$exists': True}
+                            }
+                        },
+                        {
+                            '$group': {
+                                '_id': None,
+                                'avg_time': {'$avg': f'$stages.{stage}.duration'},
+                                'count': {'$sum': 1}
+                            }
+                        }
+                    ]
+                    result = list(self.db.changes.aggregate(pipeline))
+                    if result:
+                        metrics['cycle_time'] = result[0].get('avg_time', 600)
+                        metrics['count'] = result[0]['count']
+                    else:
+                        metrics['cycle_time'] = 0
+                        metrics['count'] = 0
+
+                # Calculate bottleneck score
+                # Higher cycle time relative to others = higher bottleneck score
+                avg_cycle_time = 300  # baseline
+                if metrics.get('cycle_time', 0) > 0:
+                    ratio = metrics['cycle_time'] / avg_cycle_time
+                    metrics['bottleneck_score'] = min(ratio, 1.0)
+                else:
+                    metrics['bottleneck_score'] = 0
+
+                if metrics['bottleneck_score'] > 0.7:
+                    metrics['bottleneck_reason'] = f"Cycle time {metrics['cycle_time']:.0f}s exceeds baseline"
+
+            except Exception as e:
+                logger.error(f"Error measuring stage {stage}: {e}")
+                metrics['cycle_time'] = 0
+                metrics['count'] = 0
+                metrics['bottleneck_score'] = 0
+
+            return metrics
+
+        def calculate_throughput(self, stream: str, hours: int) -> float:
+            """Calculate stream throughput (items per hour)"""
+            try:
+                cutoff = datetime.utcnow() - timedelta(hours=hours)
+
+                # Different queries for different streams
+                if stream == 'incident_resolution':
+                    count = self.db.knowledge.count_documents({
+                        'type': 'solution',
+                        'timestamp': {'$gte': cutoff.isoformat()}
+                    })
+                elif stream == 'change_deployment':
+                    count = self.db.changes.count_documents({
+                        'timestamp': {'$gte': cutoff.isoformat()},
+                        'status': 'completed'
+                    })
+                else:
+                    count = 0
+
+                throughput = count / hours if hours > 0 else 0
+                return round(throughput, 2)
+
+            except Exception as e:
+                logger.error(f"Error calculating throughput: {e}")
+                return 0.0
+
+        def identify_waste(self, stream: str) -> List[Dict]:
+            """Identify waste in value stream"""
+            logger.info(f"Identifying waste in {stream}")
+            waste_items = []
+
+            waste_types = self.config['optimization']['techniques'][1]['waste_types']
+
+            # Analyze for different waste types
+            for waste_type in waste_types:
+                if waste_type == 'waiting':
+                    # Look for long gaps between stages
+                    waste = self.detect_waiting_waste(stream)
+                    waste_items.extend(waste)
+
+                elif waste_type == 'rework':
+                    # Look for repeated work
+                    waste = self.detect_rework_waste(stream)
+                    waste_items.extend(waste)
+
+                elif waste_type == 'defects':
+                    # Look for quality issues
+                    waste = self.detect_defect_waste(stream)
+                    waste_items.extend(waste)
+
+            return waste_items
+
+        def detect_waiting_waste(self, stream: str) -> List[Dict]:
+            """Detect waiting waste"""
+            waste = []
+
+            try:
+                # Find stages with high idle time
+                analysis = self.analyze_value_stream(stream, hours=24)
+
+                for stage_name, metrics in analysis['stage_metrics'].items():
+                    if metrics.get('bottleneck_score', 0) > 0.6:
+                        waste.append({
+                            'type': 'waiting',
+                            'stream': stream,
+                            'stage': stage_name,
+                            'severity': metrics['bottleneck_score'],
+                            'description': f"High waiting time in {stage_name} stage",
+                            'recommendation': 'Increase parallelization or resource allocation'
+                        })
+
+            except Exception as e:
+                logger.error(f"Error detecting waiting waste: {e}")
+
+            return waste
+
+        def detect_rework_waste(self, stream: str) -> List[Dict]:
+            """Detect rework waste"""
+            waste = []
+
+            try:
+                # Look for repeated errors/solutions
+                pipeline = [
+                    {
+                        '$match': {
+                            'type': 'error_pattern'
+                        }
+                    },
+                    {
+                        '$group': {
+                            '_id': '$content',
+                            'count': {'$sum': 1}
+                        }
+                    },
+                    {
+                        '$match': {
+                            'count': {'$gt': 5}
+                        }
+                    }
+                ]
+
+                repeated = list(self.db.knowledge.aggregate(pipeline))
+
+                for item in repeated:
+                    waste.append({
+                        'type': 'rework',
+                        'stream': stream,
+                        'severity': min(item['count'] / 10, 1.0),
+                        'description': f"Repeated error pattern: {item['_id'][:100]}",
+                        'occurrences': item['count'],
+                        'recommendation': 'Implement permanent fix to prevent recurrence'
+                    })
+
+            except Exception as e:
+                logger.error(f"Error detecting rework waste: {e}")
+
+            return waste
+
+        def detect_defect_waste(self, stream: str) -> List[Dict]:
+            """Detect defect waste"""
+            waste = []
+
+            try:
+                # Look for error patterns
+                cutoff = datetime.utcnow() - timedelta(hours=24)
+
+                error_count = self.db.knowledge.count_documents({
+                    'type': 'error_pattern',
+                    'timestamp': {'$gte': cutoff.isoformat()}
+                })
+
+                total_count = self.db.knowledge.count_documents({
+                    'timestamp': {'$gte': cutoff.isoformat()}
+                })
+
+                if total_count > 0:
+                    error_rate = error_count / total_count
+
+                    if error_rate > 0.2:  # More than 20% errors
+                        waste.append({
+                            'type': 'defects',
+                            'stream': stream,
+                            'severity': min(error_rate, 1.0),
+                            'description': f"High error rate: {error_rate*100:.1f}%",
+                            'error_count': error_count,
+                            'total_count': total_count,
+                            'recommendation': 'Improve quality controls and testing'
+                        })
+
+            except Exception as e:
+                logger.error(f"Error detecting defect waste: {e}")
+
+            return waste
+
+        def generate_optimization_plan(self, stream: str) -> Dict:
+            """Generate optimization plan for value stream"""
+            logger.info(f"Generating optimization plan for {stream}")
+
+            # Analyze current state
+            analysis = self.analyze_value_stream(stream, hours=24)
+            waste = self.identify_waste(stream)
+
+            optimizations = []
+
+            # Address bottlenecks
+            for bottleneck in analysis.get('bottlenecks', []):
+                optimizations.append({
+                    'type': 'bottleneck_elimination',
+                    'priority': 'high',
+                    'stage': bottleneck['stage'],
+                    'current_score': bottleneck['score'],
+                    'actions': [
+                        'Increase resource allocation',
+                        'Enable parallel processing',
+                        'Automate manual steps'
+                    ],
+                    'expected_improvement': '30-50% cycle time reduction'
+                })
+
+            # Address waste
+            for waste_item in waste:
+                optimizations.append({
+                    'type': f"waste_elimination_{waste_item['type']}",
+                    'priority': 'high' if waste_item['severity'] > 0.7 else 'medium',
+                    'description': waste_item['description'],
+                    'recommendation': waste_item['recommendation'],
+                    'expected_improvement': f"{waste_item['severity']*100:.0f}% reduction in waste"
+                })
+
+            # Store plan
+            plan = {
+                'stream': stream,
+                'analysis': analysis,
+                'waste_identified': waste,
+                'optimizations': optimizations,
+                'targets': self.config['optimization']['targets'],
+                'created_at': datetime.utcnow().isoformat()
+            }
+
+            self.db.optimization_plans.insert_one(plan)
+
+            # Update metrics
+            OPTIMIZATIONS.labels(stream=stream, type='plan_generated').inc()
+
+            return plan
+
+        def run_background_analysis(self):
+            """Background task to continuously analyze value streams"""
+            logger.info("Starting background value stream analysis")
+
+            while True:
+                try:
+                    for stream_config in self.config['value_streams']:
+                        stream_name = stream_config['name']
+
+                        # Analyze stream
+                        analysis = self.analyze_value_stream(stream_name, hours=24)
+
+                        # Generate optimization plan if bottlenecks found
+                        if analysis.get('bottlenecks'):
+                            self.generate_optimization_plan(stream_name)
+
+                        logger.info(f"Analyzed {stream_name}: "
+                                  f"Lead time: {analysis['lead_time']:.0f}s, "
+                                  f"Throughput: {analysis['throughput']:.2f}/hr, "
+                                  f"Bottlenecks: {len(analysis['bottlenecks'])}")
+
+                    # Wait before next cycle
+                    time.sleep(900)  # 15 minutes
+
+                except Exception as e:
+                    logger.error(f"Error in background analysis: {e}")
+                    time.sleep(60)
+
+    # Create optimizer instance
+    optimizer = ValueStreamOptimizer()
+
+    # API endpoints
+    @app.on_event("startup")
+    async def startup_event():
+        import threading
+        # Start background analysis in separate thread
+        thread = threading.Thread(target=optimizer.run_background_analysis, daemon=True)
+        thread.start()
+
+        # Start metrics server
+        start_http_server(9093)
+
+    @app.get("/health")
+    async def health():
+        return {"status": "healthy", "timestamp": datetime.utcnow().isoformat()}
+
+    @app.post("/analyze")
+    async def analyze(request: ValueStreamAnalysis):
+        """Analyze a value stream"""
+        try:
+            analysis = optimizer.analyze_value_stream(request.stream_name, request.time_range_hours)
+            return analysis
+        except Exception as e:
+            logger.error(f"Analysis error: {e}")
+            raise HTTPException(status_code=500, detail=str(e))
+
+    @app.post("/optimize")
+    async def optimize(request: OptimizationRequest):
+        """Generate optimization plan"""
+        try:
+            plan = optimizer.generate_optimization_plan(request.stream_name)
+            return plan
+        except Exception as e:
+            logger.error(f"Optimization error: {e}")
+            raise HTTPException(status_code=500, detail=str(e))
+
+    @app.get("/waste/{stream_name}")
+    async def get_waste(stream_name: str):
+        """Identify waste in stream"""
+        try:
+            waste = optimizer.identify_waste(stream_name)
+            return {"stream": stream_name, "waste": waste, "count": len(waste)}
+        except Exception as e:
+            logger.error(f"Waste detection error: {e}")
+            raise HTTPException(status_code=500, detail=str(e))
+
+    @app.get("/streams")
+    async def list_streams():
+        """List all value streams"""
+        return {
+            "streams": [vs['name'] for vs in optimizer.config['value_streams']],
+            "count": len(optimizer.config['value_streams'])
+        }
+
+    if __name__ == '__main__':
+        import uvicorn
+        uvicorn.run(app, host='0.0.0.0', port=8000)

@@ -1,182 +1,503 @@
 #!/usr/bin/env bash
 # Cleanup Master - Report Generator
-# Generates actionable cleanup reports
+#
+# Generates human-readable reports from scan results
+#
+# Usage:
+#   ./report.sh                    # Report from latest scan
+#   ./report.sh <scan-dir>         # Report from specific scan
+#   ./report.sh --json             # Output as JSON
+#   ./report.sh --markdown         # Output as Markdown
 
 set -euo pipefail
 
+# Get script directory and project root
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+export PROJECT_ROOT="$(cd "$SCRIPT_DIR/../../.." && pwd)"
 
-# Find latest scan
-latest_scan=$(ls -t "$SCRIPT_DIR/scans" | grep "^scan-" | head -1)
+# Configuration
+SCANS_DIR="$SCRIPT_DIR/scans"
+CONFIG_FILE="$SCRIPT_DIR/config/cleanup-rules.json"
+MAX_ITEMS=50
 
-if [[ -z "$latest_scan" ]]; then
-    echo "Error: No scan found. Run ./coordination/masters/cleanup/scan.sh first."
-    exit 1
-fi
+# ANSI colors
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
+CYAN='\033[0;36m'
+NC='\033[0m' # No Color
+BOLD='\033[1m'
+DIM='\033[2m'
 
-scan_dir="$SCRIPT_DIR/scans/$latest_scan"
-summary="$scan_dir/summary.json"
+# ==============================================================================
+# HELPER FUNCTIONS
+# ==============================================================================
 
-# Generate markdown report
-report_file="$scan_dir/CLEANUP-REPORT.md"
+get_latest_scan() {
+    local latest=$(ls -t "$SCANS_DIR" 2>/dev/null | grep "^scan-" | head -1)
+    if [[ -n "$latest" ]]; then
+        echo "$SCANS_DIR/$latest"
+    else
+        echo ""
+    fi
+}
 
-cat > "$report_file" << 'EOF'
-# Cleanup Report
+print_header() {
+    local title="$1"
+    local count="${2:-}"
 
-**Scan ID:** SCAN_ID
-**Timestamp:** TIMESTAMP
+    echo ""
+    echo -e "${BLUE}${BOLD}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+    if [[ -n "$count" ]]; then
+        echo -e "${BLUE}${BOLD}  $title ${DIM}($count items)${NC}"
+    else
+        echo -e "${BLUE}${BOLD}  $title${NC}"
+    fi
+    echo -e "${BLUE}${BOLD}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+}
 
----
+print_subheader() {
+    local title="$1"
+    echo ""
+    echo -e "  ${CYAN}${BOLD}$title${NC}"
+    echo -e "  ${DIM}────────────────────────────────────────────${NC}"
+}
 
-## Summary
+print_item() {
+    local icon="$1"
+    local text="$2"
+    echo -e "    $icon $text"
+}
 
-| Category | Count | Priority |
-|----------|-------|----------|
-| Unreferenced Files | UNREFERENCED | Medium |
-| Dead Functions | DEAD_FUNCS | Low |
-| Empty Directories | EMPTY_DIRS | Low |
-| Permission Issues | PERM_ISSUES | High |
-| Duplicate Files | DUPLICATES | Medium |
-| Broken References | BROKEN_REFS | High |
-| Legacy API Calls | LEGACY_APIS | High |
-| Legacy Patterns | LEGACY_PATTERNS | Medium |
-| .gitignore Issues | GITIGNORE | Low |
+severity_icon() {
+    local severity="$1"
+    case "$severity" in
+        critical|high)   echo -e "${RED}●${NC}" ;;
+        medium)          echo -e "${YELLOW}●${NC}" ;;
+        low)             echo -e "${GREEN}●${NC}" ;;
+        *)               echo -e "${DIM}○${NC}" ;;
+    esac
+}
 
-**Total Issues:** TOTAL_ISSUES
+# ==============================================================================
+# REPORT SECTIONS
+# ==============================================================================
 
----
+report_summary() {
+    local scan_dir="$1"
 
-## High Priority Issues
+    if [[ ! -f "$scan_dir/summary.json" ]]; then
+        echo -e "${RED}No summary found${NC}"
+        return
+    fi
 
-### Broken References
-BROKEN_REFS_DETAIL
+    print_header "SCAN SUMMARY"
 
-### Permission Issues
-PERM_ISSUES_DETAIL
+    local scan_id=$(jq -r '.scan_id' "$scan_dir/summary.json")
+    local timestamp=$(jq -r '.timestamp' "$scan_dir/summary.json")
+    local total=$(jq -r '.summary.total_issues // 0' "$scan_dir/summary.json")
 
-### Legacy API Calls
-LEGACY_APIS_DETAIL
+    echo ""
+    echo -e "  ${BOLD}Scan ID:${NC}     $scan_id"
+    echo -e "  ${BOLD}Timestamp:${NC}   $timestamp"
+    echo -e "  ${BOLD}Total Issues:${NC} $total"
+    echo ""
 
----
+    # Issue breakdown
+    echo -e "  ${BOLD}Issue Breakdown:${NC}"
+    echo ""
 
-## Medium Priority Issues
+    local categories=(
+        "unreferenced_files:Unreferenced Files"
+        "dead_functions:Dead Functions"
+        "empty_directories:Empty Directories"
+        "permission_issues:Permission Issues"
+        "duplicate_files:Duplicate Files"
+        "broken_references:Broken References"
+        "legacy_api_calls:Legacy API Calls"
+        "legacy_patterns:Legacy Patterns"
+        "gitignore_issues:Gitignore Issues"
+    )
 
-### Unreferenced Files
-UNREFERENCED_DETAIL
+    for cat in "${categories[@]}"; do
+        local key=$(echo "$cat" | cut -d: -f1)
+        local label=$(echo "$cat" | cut -d: -f2)
+        local count=$(jq -r ".summary.$key // 0" "$scan_dir/summary.json")
 
-### Duplicate Files
-DUPLICATES_DETAIL
+        local icon
+        if [[ $count -eq 0 ]]; then
+            icon="${GREEN}✓${NC}"
+        elif [[ $count -lt 5 ]]; then
+            icon="${YELLOW}!${NC}"
+        else
+            icon="${RED}✗${NC}"
+        fi
 
-### Legacy Patterns
-LEGACY_PATTERNS_DETAIL
+        printf "    $icon %-25s %s\n" "$label:" "$count"
+    done
+}
 
----
+report_unreferenced_files() {
+    local scan_dir="$1"
+    local file="$scan_dir/unreferenced-files.json"
 
-## Low Priority Issues
+    if [[ ! -f "$file" ]]; then
+        return
+    fi
 
-### Dead Functions
-DEAD_FUNCS_DETAIL
+    local count=$(jq -r '.count // 0' "$file")
+    [[ $count -eq 0 ]] && return
 
-### Empty Directories
-EMPTY_DIRS_DETAIL
+    print_header "UNREFERENCED FILES" "$count"
 
-### .gitignore Issues
-GITIGNORE_DETAIL
+    print_subheader "Files not referenced anywhere in the codebase"
 
----
+    jq -r ".files[:$MAX_ITEMS][]" "$file" 2>/dev/null | while read -r f; do
+        print_item "$(severity_icon low)" "${DIM}$f${NC}"
+    done
 
-## Recommended Actions
+    if [[ $count -gt $MAX_ITEMS ]]; then
+        echo ""
+        echo -e "    ${DIM}... and $((count - MAX_ITEMS)) more${NC}"
+    fi
+}
 
-### Immediate (High Priority)
-1. Fix broken references - these will cause runtime errors
-2. Resolve permission issues - scripts won't execute
-3. Remove legacy API calls - referencing removed infrastructure
+report_dead_functions() {
+    local scan_dir="$1"
+    local file="$scan_dir/dead-functions.json"
 
-### Soon (Medium Priority)
-1. Remove unreferenced files - reduce codebase size
-2. Deduplicate files - improve maintainability
-3. Clean up legacy patterns - modernize codebase
+    if [[ ! -f "$file" ]]; then
+        return
+    fi
 
-### Eventually (Low Priority)
-1. Remove dead functions - reduce noise
-2. Clean empty directories - cleaner structure
-3. Fix .gitignore issues - proper version control
+    local count=$(jq -r '.count // 0' "$file")
+    [[ $count -eq 0 ]] && return
 
----
+    print_header "DEAD FUNCTIONS" "$count"
 
-## Auto-Fix Recommendations
+    print_subheader "Functions defined but never called"
 
-**Safe to auto-fix:**
-- Empty directories
-- File permissions
-- Duplicate files (keeps newest)
-- .gitignore violations
+    jq -r ".functions[:$MAX_ITEMS][] | \"\\(.file):\\(.function)\"" "$file" 2>/dev/null | while read -r line; do
+        local f=$(echo "$line" | cut -d: -f1)
+        local func=$(echo "$line" | cut -d: -f2)
+        print_item "$(severity_icon low)" "${DIM}$f${NC}: ${YELLOW}$func()${NC}"
+    done
+}
 
-**Manual review required:**
-- Unreferenced files
-- Broken references
-- Legacy API calls
-- Dead functions
+report_permission_issues() {
+    local scan_dir="$1"
+    local file="$scan_dir/permission-issues.json"
 
-**Run auto-fix:**
-```bash
-# Dry run (preview)
-./coordination/masters/cleanup/run.sh --auto-fix
+    if [[ ! -f "$file" ]]; then
+        return
+    fi
 
-# Live run (apply changes)
-./coordination/masters/cleanup/run.sh --auto-fix --live
-```
+    local count=$(jq -r '.count // 0' "$file")
+    [[ $count -eq 0 ]] && return
 
----
+    print_header "PERMISSION ISSUES" "$count"
 
-EOF
+    print_subheader "Scripts not executable"
+    jq -r ".issues[:$MAX_ITEMS][] | select(.issue == \"not_executable\") | .file" "$file" 2>/dev/null | while read -r f; do
+        print_item "$(severity_icon medium)" "$f ${RED}(needs +x)${NC}"
+    done
 
-# Substitute values
-sed -i.bak "s/SCAN_ID/$(jq -r '.scan_id' "$summary")/g" "$report_file"
-sed -i.bak "s/TIMESTAMP/$(jq -r '.timestamp' "$summary")/g" "$report_file"
-sed -i.bak "s/UNREFERENCED/$(jq -r '.summary.unreferenced_files' "$summary")/g" "$report_file"
-sed -i.bak "s/DEAD_FUNCS/$(jq -r '.summary.dead_functions' "$summary")/g" "$report_file"
-sed -i.bak "s/EMPTY_DIRS/$(jq -r '.summary.empty_directories' "$summary")/g" "$report_file"
-sed -i.bak "s/PERM_ISSUES/$(jq -r '.summary.permission_issues' "$summary")/g" "$report_file"
-sed -i.bak "s/DUPLICATES/$(jq -r '.summary.duplicate_files' "$summary")/g" "$report_file"
-sed -i.bak "s/BROKEN_REFS/$(jq -r '.summary.broken_references // 0' "$summary")/g" "$report_file"
-sed -i.bak "s/LEGACY_APIS/$(jq -r '.summary.legacy_api_calls // 0' "$summary")/g" "$report_file"
-sed -i.bak "s/LEGACY_PATTERNS/$(jq -r '.summary.legacy_patterns // 0' "$summary")/g" "$report_file"
-sed -i.bak "s/GITIGNORE/$(jq -r '.summary.gitignore_issues // 0' "$summary")/g" "$report_file"
-sed -i.bak "s/TOTAL_ISSUES/$(jq -r '.summary.total_issues' "$summary")/g" "$report_file"
+    print_subheader "Files that should not be executable"
+    jq -r ".issues[:$MAX_ITEMS][] | select(.issue == \"should_not_be_executable\") | .file" "$file" 2>/dev/null | while read -r f; do
+        print_item "$(severity_icon low)" "$f ${YELLOW}(remove +x)${NC}"
+    done
+}
 
-# Add details
-if [[ -f "$scan_dir/broken-references.json" ]]; then
-    broken_detail=$(jq -r '.references[] | "- `\(.file):\(.line)` - Missing: \(.missing_reference)"' "$scan_dir/broken-references.json" | head -10)
-    echo "$broken_detail" | sed -i.bak "/BROKEN_REFS_DETAIL/r /dev/stdin" "$report_file"
-fi
-sed -i.bak "s/BROKEN_REFS_DETAIL//g" "$report_file"
+report_duplicate_files() {
+    local scan_dir="$1"
+    local file="$scan_dir/duplicate-files.json"
 
-if [[ -f "$scan_dir/permission-issues.json" ]]; then
-    perm_detail=$(jq -r '.issues[] | "- `\(.file)` - \(.issue)"' "$scan_dir/permission-issues.json" | head -10)
-    echo "$perm_detail" | sed -i.bak "/PERM_ISSUES_DETAIL/r /dev/stdin" "$report_file"
-fi
-sed -i.bak "s/PERM_ISSUES_DETAIL//g" "$report_file"
+    if [[ ! -f "$file" ]]; then
+        return
+    fi
 
-if [[ -f "$scan_dir/legacy-api-calls.json" ]]; then
-    legacy_detail=$(jq -r '.findings[] | "- `\(.file):\(.line)` - Pattern: \(.pattern)"' "$scan_dir/legacy-api-calls.json" | head -10)
-    echo "$legacy_detail" | sed -i.bak "/LEGACY_APIS_DETAIL/r /dev/stdin" "$report_file"
-fi
-sed -i.bak "s/LEGACY_APIS_DETAIL//g" "$report_file"
+    local count=$(jq -r '.count // 0' "$file")
+    [[ $count -eq 0 ]] && return
 
-# Add placeholder text for other sections
-sed -i.bak "s/UNREFERENCED_DETAIL/See: $scan_dir\/unreferenced-files.json/g" "$report_file"
-sed -i.bak "s/DUPLICATES_DETAIL/See: $scan_dir\/duplicate-files.json/g" "$report_file"
-sed -i.bak "s/LEGACY_PATTERNS_DETAIL/See: $scan_dir\/legacy-patterns.json/g" "$report_file"
-sed -i.bak "s/DEAD_FUNCS_DETAIL/See: $scan_dir\/dead-functions.json/g" "$report_file"
-sed -i.bak "s/EMPTY_DIRS_DETAIL/See: $scan_dir\/empty-directories.json/g" "$report_file"
-sed -i.bak "s/GITIGNORE_DETAIL/See: $scan_dir\/gitignore-issues.json/g" "$report_file"
+    print_header "DUPLICATE FILES" "$count"
 
-# Clean up backup files
-rm -f "$report_file.bak"
+    print_subheader "Files with identical content"
 
-echo "=== Cleanup Report Generated ==="
-echo ""
-cat "$report_file"
-echo ""
-echo "Report saved to: $report_file"
+    jq -r ".duplicates[:$MAX_ITEMS][] | \"\\(.original) == \\(.duplicate)\"" "$file" 2>/dev/null | while read -r line; do
+        local orig=$(echo "$line" | cut -d= -f1 | tr -d ' ')
+        local dup=$(echo "$line" | cut -d= -f2 | tr -d ' ')
+        print_item "$(severity_icon medium)" "${DIM}$orig${NC}"
+        echo -e "        ${DIM}duplicate:${NC} ${YELLOW}$dup${NC}"
+    done
+}
+
+report_broken_references() {
+    local scan_dir="$1"
+    local file="$scan_dir/broken-references.json"
+
+    if [[ ! -f "$file" ]]; then
+        return
+    fi
+
+    local count=$(jq -r '.count // 0' "$file")
+    [[ $count -eq 0 ]] && return
+
+    print_header "BROKEN REFERENCES" "$count"
+
+    print_subheader "Files referencing non-existent resources"
+
+    jq -r ".references[:$MAX_ITEMS][] | \"\\(.file)|\\(.missing_reference)|\\(.type)\"" "$file" 2>/dev/null | while IFS='|' read -r f ref type; do
+        print_item "$(severity_icon high)" "$f"
+        echo -e "        ${RED}missing:${NC} $ref ${DIM}($type)${NC}"
+    done
+}
+
+report_legacy_patterns() {
+    local scan_dir="$1"
+    local file="$scan_dir/legacy-patterns.json"
+
+    if [[ ! -f "$file" ]]; then
+        return
+    fi
+
+    local count=$(jq -r '.count // 0' "$file")
+    [[ $count -eq 0 ]] && return
+
+    print_header "LEGACY PATTERNS" "$count"
+
+    print_subheader "Deprecated code patterns found"
+
+    jq -r ".findings[:$MAX_ITEMS][] | \"\\(.file):\\(.line)|\\(.pattern)|\\(.description)\"" "$file" 2>/dev/null | while IFS='|' read -r loc pattern desc; do
+        print_item "$(severity_icon medium)" "${DIM}$loc${NC}"
+        echo -e "        ${YELLOW}$pattern${NC}: $desc"
+    done
+}
+
+report_legacy_api_calls() {
+    local scan_dir="$1"
+    local file="$scan_dir/legacy-api-calls.json"
+
+    if [[ ! -f "$file" ]]; then
+        return
+    fi
+
+    local count=$(jq -r '.count // 0' "$file")
+    [[ $count -eq 0 ]] && return
+
+    print_header "LEGACY API CALLS" "$count"
+
+    print_subheader "References to deprecated API endpoints"
+
+    jq -r ".findings[:$MAX_ITEMS][] | \"\\(.file):\\(.line)|\\(.pattern)\"" "$file" 2>/dev/null | while IFS='|' read -r loc pattern; do
+        print_item "$(severity_icon medium)" "${DIM}$loc${NC}: ${YELLOW}$pattern${NC}"
+    done
+}
+
+report_recommendations() {
+    local scan_dir="$1"
+
+    print_header "RECOMMENDATIONS"
+
+    echo ""
+    echo -e "  ${BOLD}Immediate Actions (High Priority):${NC}"
+
+    # Check for high-priority issues
+    local broken=$(jq -r '.summary.broken_references // 0' "$scan_dir/summary.json" 2>/dev/null)
+    local perms=$(jq -r '.summary.permission_issues // 0' "$scan_dir/summary.json" 2>/dev/null)
+
+    if [[ $broken -gt 0 ]]; then
+        echo -e "    ${RED}1.${NC} Fix $broken broken references - these may cause runtime errors"
+    fi
+
+    if [[ $perms -gt 0 ]]; then
+        echo -e "    ${YELLOW}2.${NC} Fix $perms permission issues - run: ./run.sh --auto-fix --live"
+    fi
+
+    echo ""
+    echo -e "  ${BOLD}Cleanup Actions (Medium Priority):${NC}"
+
+    local dups=$(jq -r '.summary.duplicate_files // 0' "$scan_dir/summary.json" 2>/dev/null)
+    local empty=$(jq -r '.summary.empty_directories // 0' "$scan_dir/summary.json" 2>/dev/null)
+    local legacy=$(jq -r '.summary.legacy_patterns // 0' "$scan_dir/summary.json" 2>/dev/null)
+
+    if [[ $dups -gt 0 ]]; then
+        echo -e "    ${YELLOW}3.${NC} Remove $dups duplicate files to reduce confusion"
+    fi
+
+    if [[ $empty -gt 0 ]]; then
+        echo -e "    ${DIM}4.${NC} Remove $empty empty directories"
+    fi
+
+    if [[ $legacy -gt 0 ]]; then
+        echo -e "    ${YELLOW}5.${NC} Update $legacy legacy patterns to current standards"
+    fi
+
+    echo ""
+    echo -e "  ${BOLD}Maintenance Actions (Low Priority):${NC}"
+
+    local unref=$(jq -r '.summary.unreferenced_files // 0' "$scan_dir/summary.json" 2>/dev/null)
+    local dead=$(jq -r '.summary.dead_functions // 0' "$scan_dir/summary.json" 2>/dev/null)
+
+    if [[ $unref -gt 0 ]]; then
+        echo -e "    ${DIM}6.${NC} Review $unref unreferenced files - may be safe to remove"
+    fi
+
+    if [[ $dead -gt 0 ]]; then
+        echo -e "    ${DIM}7.${NC} Consider removing $dead dead functions"
+    fi
+
+    echo ""
+    echo -e "  ${BOLD}Quick Fix Command:${NC}"
+    echo -e "    ${CYAN}./run.sh --auto-fix --live${NC}"
+    echo ""
+}
+
+# ==============================================================================
+# OUTPUT FORMATS
+# ==============================================================================
+
+output_json() {
+    local scan_dir="$1"
+
+    if [[ -f "$scan_dir/summary.json" ]]; then
+        cat "$scan_dir/summary.json"
+    else
+        echo "{\"error\": \"No scan summary found\"}"
+    fi
+}
+
+output_markdown() {
+    local scan_dir="$1"
+
+    echo "# Cleanup Master Report"
+    echo ""
+    echo "Generated: $(date -u +%Y-%m-%dT%H:%M:%SZ)"
+    echo ""
+
+    if [[ -f "$scan_dir/summary.json" ]]; then
+        echo "## Summary"
+        echo ""
+        echo "| Category | Count |"
+        echo "|----------|-------|"
+
+        jq -r '.summary | to_entries[] | "| \(.key) | \(.value) |"' "$scan_dir/summary.json"
+        echo ""
+    fi
+
+    # Add sections for each issue type
+    local files=(
+        "unreferenced-files.json:Unreferenced Files"
+        "dead-functions.json:Dead Functions"
+        "permission-issues.json:Permission Issues"
+        "broken-references.json:Broken References"
+    )
+
+    for item in "${files[@]}"; do
+        local file=$(echo "$item" | cut -d: -f1)
+        local title=$(echo "$item" | cut -d: -f2)
+
+        if [[ -f "$scan_dir/$file" ]]; then
+            local count=$(jq -r '.count // 0' "$scan_dir/$file")
+            if [[ $count -gt 0 ]]; then
+                echo "## $title ($count)"
+                echo ""
+                echo '```'
+                jq -r '.files // .issues // .functions // .references | .[:20][]' "$scan_dir/$file" 2>/dev/null || true
+                echo '```'
+                echo ""
+            fi
+        fi
+    done
+}
+
+output_terminal() {
+    local scan_dir="$1"
+
+    echo ""
+    echo -e "${CYAN}${BOLD}"
+    echo "   ╔═══════════════════════════════════════════════════════════════╗"
+    echo "   ║                CLEANUP MASTER - SCAN REPORT                    ║"
+    echo "   ╚═══════════════════════════════════════════════════════════════╝"
+    echo -e "${NC}"
+
+    report_summary "$scan_dir"
+    report_broken_references "$scan_dir"
+    report_permission_issues "$scan_dir"
+    report_duplicate_files "$scan_dir"
+    report_legacy_patterns "$scan_dir"
+    report_legacy_api_calls "$scan_dir"
+    report_unreferenced_files "$scan_dir"
+    report_dead_functions "$scan_dir"
+    report_recommendations "$scan_dir"
+
+    echo ""
+    echo -e "${DIM}Report generated from: $scan_dir${NC}"
+    echo ""
+}
+
+# ==============================================================================
+# MAIN
+# ==============================================================================
+
+main() {
+    local scan_dir=""
+    local output_format="terminal"
+
+    # Parse arguments
+    while [[ $# -gt 0 ]]; do
+        case "$1" in
+            --json)
+                output_format="json"
+                shift
+                ;;
+            --markdown|--md)
+                output_format="markdown"
+                shift
+                ;;
+            --help|-h)
+                echo "Usage: $0 [scan-dir] [--json|--markdown]"
+                echo ""
+                echo "Options:"
+                echo "  --json       Output as JSON"
+                echo "  --markdown   Output as Markdown"
+                echo "  --help       Show this help"
+                exit 0
+                ;;
+            *)
+                if [[ -d "$1" ]]; then
+                    scan_dir="$1"
+                else
+                    echo "Error: Invalid scan directory: $1"
+                    exit 1
+                fi
+                shift
+                ;;
+        esac
+    done
+
+    # Get scan directory
+    if [[ -z "$scan_dir" ]]; then
+        scan_dir=$(get_latest_scan)
+    fi
+
+    if [[ -z "$scan_dir" || ! -d "$scan_dir" ]]; then
+        echo -e "${RED}No scan found. Run './run.sh' first.${NC}"
+        exit 1
+    fi
+
+    # Generate report in requested format
+    case "$output_format" in
+        json)
+            output_json "$scan_dir"
+            ;;
+        markdown)
+            output_markdown "$scan_dir"
+            ;;
+        *)
+            output_terminal "$scan_dir"
+            ;;
+    esac
+}
+
+main "$@"

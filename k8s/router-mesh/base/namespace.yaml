@@ -1,0 +1,8 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: router-mesh
+  labels:
+    app.kubernetes.io/name: router-mesh
+    app.kubernetes.io/component: llm-routing
+    prometheus: enabled

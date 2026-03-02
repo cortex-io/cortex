@@ -1,0 +1,116 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: business-metrics-collector
+  namespace: cortex-itil-stream2
+  labels:
+    app: business-metrics-collector
+    component: business-metrics
+    stream: "2"
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: business-metrics-collector
+  template:
+    metadata:
+      labels:
+        app: business-metrics-collector
+        component: business-metrics
+    spec:
+      serviceAccountName: business-metrics
+      containers:
+      - name: business-metrics-collector
+        image: business-metrics-collector:latest
+        imagePullPolicy: Never
+        ports:
+        - containerPort: 8001
+          name: metrics
+          protocol: TCP
+        env:
+        - name: PROMETHEUS_URL
+          value: "http://prometheus-k8s.cortex-system.svc.cluster.local:9090"
+        - name: COLLECTION_INTERVAL
+          value: "60"
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "50m"
+          limits:
+            memory: "256Mi"
+            cpu: "200m"
+        volumeMounts:
+        - name: data
+          mountPath: /data
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 8001
+          initialDelaySeconds: 30
+          periodSeconds: 30
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 8001
+          initialDelaySeconds: 10
+          periodSeconds: 10
+      volumes:
+      - name: data
+        persistentVolumeClaim:
+          claimName: business-metrics-data-pvc
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: business-metrics-collector
+  namespace: cortex-itil-stream2
+  labels:
+    app: business-metrics-collector
+spec:
+  selector:
+    app: business-metrics-collector
+  ports:
+  - port: 8001
+    targetPort: 8001
+    name: metrics
+  type: ClusterIP
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: business-metrics
+  namespace: cortex-itil-stream2
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: business-metrics
+rules:
+- apiGroups: [""]
+  resources: ["services", "pods", "namespaces"]
+  verbs: ["get", "list", "watch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: business-metrics
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: business-metrics
+subjects:
+- kind: ServiceAccount
+  name: business-metrics
+  namespace: cortex-itil-stream2
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: business-metrics-data-pvc
+  namespace: cortex-itil-stream2
+spec:
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: 2Gi

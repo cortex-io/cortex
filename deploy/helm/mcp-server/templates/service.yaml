@@ -1,0 +1,25 @@
+{{- if .Values.service.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "mcp-server.serviceName" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "mcp-server.labels" . | nindent 4 }}
+    {{- with .Values.service.labels }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+  {{- with .Values.service.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  type: {{ .Values.service.type }}
+  ports:
+    - port: {{ .Values.service.port }}
+      targetPort: http
+      protocol: TCP
+      name: http
+  selector:
+    {{- include "mcp-server.selectorLabels" . | nindent 4 }}
+{{- end }}

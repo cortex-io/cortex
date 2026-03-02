@@ -37,6 +37,16 @@ NLP_CLASSIFIER_ENABLED="${NLP_CLASSIFIER_ENABLED:-true}"
 NLP_CLASSIFIER_SCRIPT="$CORTEX_HOME/coordination/masters/coordinator/lib/nlp-classifier.sh"
 NLP_CONFIDENCE_THRESHOLD="${NLP_CONFIDENCE_THRESHOLD:-0.7}"
 
+# Complexity Estimator & Initializer Routing (Implementation Plan Dec 2025)
+COMPLEXITY_ESTIMATOR_SCRIPT="$CORTEX_HOME/coordination/masters/coordinator/lib/complexity-estimator.sh"
+INITIALIZER_ROUTING_ENABLED="${INITIALIZER_ROUTING_ENABLED:-true}"
+COMPLEXITY_THRESHOLD="${COMPLEXITY_THRESHOLD:-3}"
+
+# Load complexity estimator
+if [ -f "$COMPLEXITY_ESTIMATOR_SCRIPT" ]; then
+    source "$COMPLEXITY_ESTIMATOR_SCRIPT"
+fi
+
 # Load access control (skip if in bypass mode or file doesn't exist)
 if [ "$GOVERNANCE_BYPASS" != "true" ] && [ -f "$CORTEX_HOME/scripts/lib/access-check.sh" ]; then
     source "$CORTEX_HOME/scripts/lib/access-check.sh"
@@ -815,6 +825,37 @@ route_task_moe() {
         echo '{"error": "Permission denied to access routing patterns"}' >&2
         return 1
     }
+
+    # Enhancement: Check if task should be routed to Initializer first for decomposition
+    if [ "$INITIALIZER_ROUTING_ENABLED" = "true" ] && command -v estimate_task_complexity &> /dev/null; then
+        local complexity=$(estimate_task_complexity "$task_description")
+        local complexity_level=$(get_complexity_level "$complexity")
+
+        if [ "$complexity" -gt "$COMPLEXITY_THRESHOLD" ]; then
+            # Route to Initializer for decomposition
+            local routing_decision=$(jq -n \
+                --arg task_id "$task_id" \
+                --arg timestamp "$timestamp" \
+                --arg complexity "$complexity" \
+                --arg level "$complexity_level" \
+                '{
+                    task_id: $task_id,
+                    expert: "initializer-master",
+                    confidence: 100,
+                    method: "complexity-based",
+                    complexity: ($complexity | tonumber),
+                    complexity_level: $level,
+                    reason: "Task complexity exceeds threshold - routing to Initializer for decomposition",
+                    timestamp: $timestamp
+                }')
+
+            # Log routing decision
+            echo "$routing_decision" >> "$ROUTING_LOG"
+
+            echo "$routing_decision"
+            return 0
+        fi
+    fi
 
     # Phase 3: Try NLP classifier first (3-layer hybrid: keywords -> patterns -> Claude API)
     local nlp_result=$(try_nlp_classifier "$task_id" "$task_description")

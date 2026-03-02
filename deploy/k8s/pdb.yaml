@@ -1,0 +1,29 @@
+---
+# PodDisruptionBudget ensures high availability during voluntary disruptions
+# (e.g., node drains, cluster upgrades, pod evictions)
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: cortex
+  namespace: cortex
+  labels:
+    app.kubernetes.io/name: cortex
+    app.kubernetes.io/instance: cortex
+    app.kubernetes.io/component: availability
+    app.kubernetes.io/part-of: cortex-platform
+  annotations:
+    description: "Ensures at least 2 cortex pods are available during disruptions"
+spec:
+  # Minimum number of pods that must remain available during disruption
+  minAvailable: 2
+
+  # Alternative: Use maxUnavailable instead
+  # maxUnavailable: 1
+
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: cortex
+      app.kubernetes.io/instance: cortex
+
+  # Unhealthy pod eviction policy (Kubernetes 1.26+)
+  unhealthyPodEvictionPolicy: IfHealthyBudget

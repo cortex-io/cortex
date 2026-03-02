@@ -1,0 +1,765 @@
+apiVersion: v1
+items:
+- apiVersion: apps/v1
+  kind: Deployment
+  metadata:
+    annotations:
+      deployment.kubernetes.io/revision: "38"
+      field.cattle.io/publicEndpoints: '[{"addresses":["10.88.145.200"],"port":443,"protocol":"HTTPS","serviceName":"cortex:cortex-orchestrator","ingressName":"cortex:cortex-api-ingress","hostname":"cortex-api.ry-ops.dev","path":"/","allNodes":false}]'
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"apps/v1","kind":"Deployment","metadata":{"annotations":{},"labels":{"app":"cortex-orchestrator"},"name":"cortex-orchestrator","namespace":"cortex"},"spec":{"replicas":1,"selector":{"matchLabels":{"app":"cortex-orchestrator"}},"template":{"metadata":{"labels":{"app":"cortex-orchestrator"}},"spec":{"containers":[{"env":[{"name":"ANTHROPIC_API_KEY","value":"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"},{"name":"SANDFLY_HOST","value":"10.88.140.176"},{"name":"SANDFLY_USERNAME","value":"admin"},{"name":"SANDFLY_PASSWORD","value":"emphasize-art-nibble-arguable-paradox-flick-unpack"},{"name":"PROXMOX_HOST","value":"10.88.140.21"},{"name":"PROXMOX_PORT","value":"8006"},{"name":"PROXMOX_USERNAME","value":"root@pam"},{"name":"PROXMOX_PASSWORD","value":"toor"},{"name":"UNIFI_HOST","value":"10.88.140.16"},{"name":"UNIFI_PORT","value":"443"},{"name":"UNIFI_USERNAME","value":"cortex"},{"name":"UNIFI_PASSWORD","value":"cortex"},{"name":"UNIFI_SITE","value":"default"},{"name":"UNIFI_IS_UDM","value":"false"}],"image":"10.43.170.72:5000/cortex-api:latest","imagePullPolicy":"Always","name":"cortex-api","ports":[{"containerPort":8000,"name":"http"}],"resources":{"limits":{"cpu":"500m","memory":"512Mi"},"requests":{"cpu":"100m","memory":"128Mi"}}}],"serviceAccountName":"cortex-api"}}}}
+    creationTimestamp: "2025-12-24T14:33:55Z"
+    generation: 39
+    labels:
+      app: cortex-orchestrator
+    name: cortex-orchestrator
+    namespace: cortex
+    resourceVersion: "47343168"
+    uid: 61acbc17-e2a7-429c-aff5-580430e23704
+  spec:
+    progressDeadlineSeconds: 600
+    replicas: 1
+    revisionHistoryLimit: 10
+    selector:
+      matchLabels:
+        app: cortex-orchestrator
+    strategy:
+      rollingUpdate:
+        maxSurge: 25%
+        maxUnavailable: 25%
+      type: RollingUpdate
+    template:
+      metadata:
+        annotations:
+          kubectl.kubernetes.io/restartedAt: "2025-12-29T19:37:43-06:00"
+        creationTimestamp: null
+        labels:
+          app: cortex-orchestrator
+      spec:
+        containers:
+        - env:
+          - name: ANTHROPIC_API_KEY
+            value: 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
+          - name: SANDFLY_HOST
+            value: 10.88.140.176
+          - name: SANDFLY_USERNAME
+            value: admin
+          - name: SANDFLY_PASSWORD
+            value: emphasize-art-nibble-arguable-paradox-flick-unpack
+          - name: PROXMOX_HOST
+            value: 10.88.140.21
+          - name: PROXMOX_PORT
+            value: "8006"
+          - name: PROXMOX_USERNAME
+            value: root@pam
+          - name: PROXMOX_PASSWORD
+            value: toor
+          - name: UNIFI_HOST
+            value: 10.88.140.16
+          - name: UNIFI_PORT
+            value: "443"
+          - name: UNIFI_USERNAME
+            value: cortex
+          - name: UNIFI_PASSWORD
+            value: cortex
+          - name: UNIFI_SITE
+            value: default
+          - name: UNIFI_IS_UDM
+            value: "false"
+          - name: UNIFI_MCP_URL
+            value: http://unifi-mcp-server.cortex-system.svc.cluster.local:3000
+          - name: WAZUH_MCP_URL
+            value: http://wazuh-mcp-server.cortex-system.svc.cluster.local:8080
+          - name: PROXMOX_MCP_URL
+            value: http://proxmox-mcp-server.cortex-system.svc.cluster.local:3000
+          - name: MAX_ITERATIONS
+            value: "50"
+          image: 10.43.170.72:5000/cortex-api:latest
+          imagePullPolicy: Always
+          name: cortex-api
+          ports:
+          - containerPort: 8000
+            name: http
+            protocol: TCP
+          resources:
+            limits:
+              cpu: 500m
+              memory: 512Mi
+            requests:
+              cpu: 100m
+              memory: 128Mi
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+        dnsPolicy: ClusterFirst
+        restartPolicy: Always
+        schedulerName: default-scheduler
+        securityContext: {}
+        serviceAccount: cortex-api
+        serviceAccountName: cortex-api
+        terminationGracePeriodSeconds: 30
+  status:
+    availableReplicas: 1
+    conditions:
+    - lastTransitionTime: "2025-12-29T13:13:40Z"
+      lastUpdateTime: "2025-12-29T13:13:40Z"
+      message: Deployment has minimum availability.
+      reason: MinimumReplicasAvailable
+      status: "True"
+      type: Available
+    - lastTransitionTime: "2025-12-24T14:33:55Z"
+      lastUpdateTime: "2025-12-30T01:37:47Z"
+      message: ReplicaSet "cortex-orchestrator-596dffd458" has successfully progressed.
+      reason: NewReplicaSetAvailable
+      status: "True"
+      type: Progressing
+    observedGeneration: 39
+    readyReplicas: 1
+    replicas: 1
+    updatedReplicas: 1
+- apiVersion: apps/v1
+  kind: Deployment
+  metadata:
+    annotations:
+      deployment.kubernetes.io/revision: "1"
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"apps/v1","kind":"Deployment","metadata":{"annotations":{},"labels":{"app":"cortex-queue-worker","component":"task-processor"},"name":"cortex-queue-worker","namespace":"cortex"},"spec":{"replicas":2,"selector":{"matchLabels":{"app":"cortex-queue-worker"}},"template":{"metadata":{"labels":{"app":"cortex-queue-worker","component":"task-processor"}},"spec":{"containers":[{"env":[{"name":"REDIS_HOST","value":"redis-queue.cortex.svc.cluster.local"},{"name":"REDIS_PORT","value":"6379"},{"name":"ANTHROPIC_API_KEY","valueFrom":{"secretKeyRef":{"key":"anthropic-api-key","name":"cortex-secrets"}}},{"name":"IDLE_TIMEOUT_MS","value":"300000"},{"name":"TASKS_DIR","value":"/app/tasks"}],"image":"10.43.170.72:5000/cortex-queue-worker:latest","imagePullPolicy":"Always","name":"worker","resources":{"limits":{"cpu":"1000m","memory":"1Gi"},"requests":{"cpu":"100m","memory":"256Mi"}},"volumeMounts":[{"mountPath":"/app/tasks","name":"tasks-storage"}]}],"volumes":[{"emptyDir":{},"name":"tasks-storage"}]}}}}
+    creationTimestamp: "2025-12-26T21:35:57Z"
+    generation: 1
+    labels:
+      app: cortex-queue-worker
+      component: task-processor
+    name: cortex-queue-worker
+    namespace: cortex
+    resourceVersion: "50015275"
+    uid: 3c7ad921-a94b-4be3-8822-990ea8f13e18
+  spec:
+    progressDeadlineSeconds: 600
+    replicas: 2
+    revisionHistoryLimit: 10
+    selector:
+      matchLabels:
+        app: cortex-queue-worker
+    strategy:
+      rollingUpdate:
+        maxSurge: 25%
+        maxUnavailable: 25%
+      type: RollingUpdate
+    template:
+      metadata:
+        creationTimestamp: null
+        labels:
+          app: cortex-queue-worker
+          component: task-processor
+      spec:
+        containers:
+        - env:
+          - name: REDIS_HOST
+            value: redis-queue.cortex.svc.cluster.local
+          - name: REDIS_PORT
+            value: "6379"
+          - name: ANTHROPIC_API_KEY
+            valueFrom:
+              secretKeyRef:
+                key: anthropic-api-key
+                name: cortex-secrets
+          - name: IDLE_TIMEOUT_MS
+            value: "300000"
+          - name: TASKS_DIR
+            value: /app/tasks
+          image: 10.43.170.72:5000/cortex-queue-worker:latest
+          imagePullPolicy: Always
+          name: worker
+          resources:
+            limits:
+              cpu: "1"
+              memory: 1Gi
+            requests:
+              cpu: 100m
+              memory: 256Mi
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+          volumeMounts:
+          - mountPath: /app/tasks
+            name: tasks-storage
+        dnsPolicy: ClusterFirst
+        restartPolicy: Always
+        schedulerName: default-scheduler
+        securityContext: {}
+        terminationGracePeriodSeconds: 30
+        volumes:
+        - emptyDir: {}
+          name: tasks-storage
+  status:
+    availableReplicas: 1
+    conditions:
+    - lastTransitionTime: "2025-12-26T21:35:57Z"
+      lastUpdateTime: "2025-12-26T21:36:01Z"
+      message: ReplicaSet "cortex-queue-worker-6764dc75cf" has successfully progressed.
+      reason: NewReplicaSetAvailable
+      status: "True"
+      type: Progressing
+    - lastTransitionTime: "2025-12-30T13:26:21Z"
+      lastUpdateTime: "2025-12-30T13:26:21Z"
+      message: Deployment does not have minimum availability.
+      reason: MinimumReplicasUnavailable
+      status: "False"
+      type: Available
+    observedGeneration: 1
+    readyReplicas: 1
+    replicas: 2
+    unavailableReplicas: 1
+    updatedReplicas: 2
+- apiVersion: apps/v1
+  kind: Deployment
+  metadata:
+    annotations:
+      deployment.kubernetes.io/revision: "2"
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"apps/v1","kind":"Deployment","metadata":{"annotations":{},"labels":{"app":"documentation-master"},"name":"documentation-master","namespace":"cortex"},"spec":{"replicas":1,"selector":{"matchLabels":{"app":"documentation-master"}},"template":{"metadata":{"labels":{"app":"documentation-master"}},"spec":{"containers":[{"command":["/bin/sh","-c","# Install dependencies\napk add --no-cache bash curl jq wget\n\n# Copy master scripts from ConfigMap volume\nmkdir -p /app/lib /app/workers /app/config\n\n# Start the master process\necho \"Documentation Master starting...\"\necho \"Knowledge base: /data/kb\"\necho \"Cache: /data/cache\"\n\n# Simple HTTP server for queries\nwhile true; do\n  echo \"Documentation Master ready on port 8080\"\n  nc -l -p 8080 -e /bin/sh -c 'echo -e \"HTTP/1.1 200 OK\\nContent-Type: application/json\\n\\n{\\\"status\\\":\\\"ready\\\",\\\"timestamp\\\":\\\"$(date -u +%Y-%m-%dT%H:%M:%SZ)\\\"}\"'\ndone\n"],"env":[{"name":"KB_PATH","value":"/data/kb"},{"name":"CACHE_PATH","value":"/data/cache"}],"image":"alpine:latest","name":"doc-master","ports":[{"containerPort":8080,"name":"http"},{"containerPort":9090,"name":"metrics"}],"resources":{"limits":{"cpu":"500m","memory":"512Mi"},"requests":{"cpu":"250m","memory":"256Mi"}},"volumeMounts":[{"mountPath":"/data/kb","name":"kb-storage"},{"mountPath":"/data/cache","name":"cache-storage"},{"mountPath":"/app/config","name":"config"}]}],"volumes":[{"name":"kb-storage","persistentVolumeClaim":{"claimName":"documentation-master-kb"}},{"name":"cache-storage","persistentVolumeClaim":{"claimName":"documentation-master-cache"}},{"configMap":{"name":"documentation-master-config"},"name":"config"}]}}}}
+    creationTimestamp: "2025-12-27T17:37:45Z"
+    generation: 2
+    labels:
+      app: documentation-master
+    name: documentation-master
+    namespace: cortex
+    resourceVersion: "36807190"
+    uid: b641d7f1-dc5f-484c-b23a-80020a145c01
+  spec:
+    progressDeadlineSeconds: 600
+    replicas: 1
+    revisionHistoryLimit: 10
+    selector:
+      matchLabels:
+        app: documentation-master
+    strategy:
+      rollingUpdate:
+        maxSurge: 25%
+        maxUnavailable: 25%
+      type: RollingUpdate
+    template:
+      metadata:
+        annotations:
+          kubectl.kubernetes.io/restartedAt: "2025-12-27T19:26:22-06:00"
+        creationTimestamp: null
+        labels:
+          app: documentation-master
+      spec:
+        containers:
+        - command:
+          - /bin/sh
+          - -c
+          - |
+            # Install dependencies
+            apk add --no-cache bash curl jq wget
+
+            # Copy master scripts from ConfigMap volume
+            mkdir -p /app/lib /app/workers /app/config
+
+            # Start the master process
+            echo "Documentation Master starting..."
+            echo "Knowledge base: /data/kb"
+            echo "Cache: /data/cache"
+
+            # Simple HTTP server for queries
+            while true; do
+              echo "Documentation Master ready on port 8080"
+              nc -l -p 8080 -e /bin/sh -c 'echo -e "HTTP/1.1 200 OK\nContent-Type: application/json\n\n{\"status\":\"ready\",\"timestamp\":\"$(date -u +%Y-%m-%dT%H:%M:%SZ)\"}"'
+            done
+          env:
+          - name: KB_PATH
+            value: /data/kb
+          - name: CACHE_PATH
+            value: /data/cache
+          image: alpine:latest
+          imagePullPolicy: Always
+          name: doc-master
+          ports:
+          - containerPort: 8080
+            name: http
+            protocol: TCP
+          - containerPort: 9090
+            name: metrics
+            protocol: TCP
+          resources:
+            limits:
+              cpu: 500m
+              memory: 512Mi
+            requests:
+              cpu: 250m
+              memory: 256Mi
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+          volumeMounts:
+          - mountPath: /data/kb
+            name: kb-storage
+          - mountPath: /data/cache
+            name: cache-storage
+          - mountPath: /app/config
+            name: config
+        dnsPolicy: ClusterFirst
+        restartPolicy: Always
+        schedulerName: default-scheduler
+        securityContext: {}
+        terminationGracePeriodSeconds: 30
+        volumes:
+        - name: kb-storage
+          persistentVolumeClaim:
+            claimName: documentation-master-kb
+        - name: cache-storage
+          persistentVolumeClaim:
+            claimName: documentation-master-cache
+        - configMap:
+            defaultMode: 420
+            name: documentation-master-config
+          name: config
+  status:
+    availableReplicas: 1
+    conditions:
+    - lastTransitionTime: "2025-12-27T17:37:54Z"
+      lastUpdateTime: "2025-12-27T17:37:54Z"
+      message: Deployment has minimum availability.
+      reason: MinimumReplicasAvailable
+      status: "True"
+      type: Available
+    - lastTransitionTime: "2025-12-27T17:37:45Z"
+      lastUpdateTime: "2025-12-28T01:26:25Z"
+      message: ReplicaSet "documentation-master-5bf954f65f" has successfully progressed.
+      reason: NewReplicaSetAvailable
+      status: "True"
+      type: Progressing
+    observedGeneration: 2
+    readyReplicas: 1
+    replicas: 1
+    updatedReplicas: 1
+- apiVersion: apps/v1
+  kind: Deployment
+  metadata:
+    annotations:
+      deployment.kubernetes.io/revision: "1"
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"apps/v1","kind":"Deployment","metadata":{"annotations":{},"labels":{"app":"redis-queue","component":"task-queue"},"name":"redis-queue","namespace":"cortex"},"spec":{"replicas":1,"selector":{"matchLabels":{"app":"redis-queue"}},"template":{"metadata":{"labels":{"app":"redis-queue","component":"task-queue"}},"spec":{"containers":[{"command":["redis-server","--save","60","1000","--loglevel","notice","--maxmemory","2gb","--maxmemory-policy","allkeys-lru"],"image":"redis:7-alpine","livenessProbe":{"initialDelaySeconds":30,"periodSeconds":10,"tcpSocket":{"port":6379}},"name":"redis","ports":[{"containerPort":6379,"name":"redis"}],"readinessProbe":{"exec":{"command":["redis-cli","ping"]},"initialDelaySeconds":5,"periodSeconds":5},"resources":{"limits":{"cpu":"1000m","memory":"2Gi"},"requests":{"cpu":"100m","memory":"256Mi"}},"volumeMounts":[{"mountPath":"/data","name":"redis-data"}]}],"volumes":[{"name":"redis-data","persistentVolumeClaim":{"claimName":"redis-queue-pvc"}}]}}}}
+    creationTimestamp: "2025-12-26T21:27:24Z"
+    generation: 1
+    labels:
+      app: redis-queue
+      component: task-queue
+    name: redis-queue
+    namespace: cortex
+    resourceVersion: "31259380"
+    uid: 116207b7-6ae8-435a-949e-a2eb83d3a6a9
+  spec:
+    progressDeadlineSeconds: 600
+    replicas: 1
+    revisionHistoryLimit: 10
+    selector:
+      matchLabels:
+        app: redis-queue
+    strategy:
+      rollingUpdate:
+        maxSurge: 25%
+        maxUnavailable: 25%
+      type: RollingUpdate
+    template:
+      metadata:
+        creationTimestamp: null
+        labels:
+          app: redis-queue
+          component: task-queue
+      spec:
+        containers:
+        - command:
+          - redis-server
+          - --save
+          - "60"
+          - "1000"
+          - --loglevel
+          - notice
+          - --maxmemory
+          - 2gb
+          - --maxmemory-policy
+          - allkeys-lru
+          image: redis:7-alpine
+          imagePullPolicy: IfNotPresent
+          livenessProbe:
+            failureThreshold: 3
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            successThreshold: 1
+            tcpSocket:
+              port: 6379
+            timeoutSeconds: 1
+          name: redis
+          ports:
+          - containerPort: 6379
+            name: redis
+            protocol: TCP
+          readinessProbe:
+            exec:
+              command:
+              - redis-cli
+              - ping
+            failureThreshold: 3
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            successThreshold: 1
+            timeoutSeconds: 1
+          resources:
+            limits:
+              cpu: "1"
+              memory: 2Gi
+            requests:
+              cpu: 100m
+              memory: 256Mi
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+          volumeMounts:
+          - mountPath: /data
+            name: redis-data
+        dnsPolicy: ClusterFirst
+        restartPolicy: Always
+        schedulerName: default-scheduler
+        securityContext: {}
+        terminationGracePeriodSeconds: 30
+        volumes:
+        - name: redis-data
+          persistentVolumeClaim:
+            claimName: redis-queue-pvc
+  status:
+    availableReplicas: 1
+    conditions:
+    - lastTransitionTime: "2025-12-26T21:27:39Z"
+      lastUpdateTime: "2025-12-26T21:27:39Z"
+      message: Deployment has minimum availability.
+      reason: MinimumReplicasAvailable
+      status: "True"
+      type: Available
+    - lastTransitionTime: "2025-12-26T21:27:24Z"
+      lastUpdateTime: "2025-12-26T21:27:39Z"
+      message: ReplicaSet "redis-queue-7d9d7f4c7b" has successfully progressed.
+      reason: NewReplicaSetAvailable
+      status: "True"
+      type: Progressing
+    observedGeneration: 1
+    readyReplicas: 1
+    replicas: 1
+    updatedReplicas: 1
+- apiVersion: apps/v1
+  kind: Deployment
+  metadata:
+    annotations:
+      deployment.kubernetes.io/revision: "3"
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"apps/v1","kind":"Deployment","metadata":{"annotations":{},"labels":{"app":"youtube-ingestion","component":"knowledge"},"name":"youtube-ingestion","namespace":"cortex"},"spec":{"replicas":1,"selector":{"matchLabels":{"app":"youtube-ingestion"}},"template":{"metadata":{"labels":{"app":"youtube-ingestion","component":"knowledge"}},"spec":{"containers":[{"env":[{"name":"PORT","value":"8080"},{"name":"REDIS_HOST","value":"redis-queue.cortex.svc.cluster.local"},{"name":"REDIS_PORT","value":"6379"},{"name":"REDIS_ENABLED","value":"true"},{"name":"ANTHROPIC_API_KEY","valueFrom":{"secretKeyRef":{"key":"api-key","name":"anthropic-api-key"}}},{"name":"TRANSCRIPTS_DIR","value":"/data/transcripts"},{"name":"KNOWLEDGE_DIR","value":"/data/knowledge"},{"name":"CACHE_DIR","value":"/data/cache"}],"image":"localhost/youtube-ingestion:latest","imagePullPolicy":"IfNotPresent","livenessProbe":{"httpGet":{"path":"/health","port":8080},"initialDelaySeconds":30,"periodSeconds":10,"timeoutSeconds":5},"name":"youtube-ingestion","ports":[{"containerPort":8080,"name":"http"}],"readinessProbe":{"httpGet":{"path":"/health","port":8080},"initialDelaySeconds":10,"periodSeconds":5,"timeoutSeconds":3},"resources":{"limits":{"cpu":"1000m","memory":"1Gi"},"requests":{"cpu":"200m","memory":"256Mi"}},"volumeMounts":[{"mountPath":"/data","name":"youtube-data"},{"mountPath":"/app/extract_transcript.py","name":"fixes","subPath":"extract_transcript.py"},{"mountPath":"/app/src/processors/classifier.js","name":"fixes","subPath":"classifier.js"},{"mountPath":"/app/src/ingestion-service.js","name":"fixes","subPath":"ingestion-service.js"}]}],"volumes":[{"name":"youtube-data","persistentVolumeClaim":{"claimName":"youtube-data-pvc"}},{"configMap":{"name":"youtube-ingestion-fixes"},"name":"fixes"}]}}}}
+    creationTimestamp: "2025-12-28T21:06:02Z"
+    generation: 3
+    labels:
+      app: youtube-ingestion
+      component: knowledge
+    name: youtube-ingestion
+    namespace: cortex
+    resourceVersion: "49753933"
+    uid: 3d98f2a8-f4e6-489a-b3b6-c9603922c602
+  spec:
+    progressDeadlineSeconds: 600
+    replicas: 1
+    revisionHistoryLimit: 10
+    selector:
+      matchLabels:
+        app: youtube-ingestion
+    strategy:
+      rollingUpdate:
+        maxSurge: 25%
+        maxUnavailable: 25%
+      type: RollingUpdate
+    template:
+      metadata:
+        annotations:
+          kubectl.kubernetes.io/restartedAt: "2025-12-30T06:05:37-06:00"
+        creationTimestamp: null
+        labels:
+          app: youtube-ingestion
+          component: knowledge
+      spec:
+        containers:
+        - env:
+          - name: PORT
+            value: "8080"
+          - name: REDIS_HOST
+            value: redis-queue.cortex.svc.cluster.local
+          - name: REDIS_PORT
+            value: "6379"
+          - name: REDIS_ENABLED
+            value: "true"
+          - name: ANTHROPIC_API_KEY
+            valueFrom:
+              secretKeyRef:
+                key: api-key
+                name: anthropic-api-key
+          - name: TRANSCRIPTS_DIR
+            value: /data/transcripts
+          - name: KNOWLEDGE_DIR
+            value: /data/knowledge
+          - name: CACHE_DIR
+            value: /data/cache
+          image: localhost/youtube-ingestion:latest
+          imagePullPolicy: IfNotPresent
+          livenessProbe:
+            failureThreshold: 3
+            httpGet:
+              path: /health
+              port: 8080
+              scheme: HTTP
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 5
+          name: youtube-ingestion
+          ports:
+          - containerPort: 8080
+            name: http
+            protocol: TCP
+          readinessProbe:
+            failureThreshold: 3
+            httpGet:
+              path: /health
+              port: 8080
+              scheme: HTTP
+            initialDelaySeconds: 10
+            periodSeconds: 5
+            successThreshold: 1
+            timeoutSeconds: 3
+          resources:
+            limits:
+              cpu: "1"
+              memory: 1Gi
+            requests:
+              cpu: 200m
+              memory: 256Mi
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+          volumeMounts:
+          - mountPath: /data
+            name: youtube-data
+          - mountPath: /app/extract_transcript.py
+            name: fixes
+            subPath: extract_transcript.py
+          - mountPath: /app/src/processors/classifier.js
+            name: fixes
+            subPath: classifier.js
+          - mountPath: /app/src/ingestion-service.js
+            name: fixes
+            subPath: ingestion-service.js
+        dnsPolicy: ClusterFirst
+        restartPolicy: Always
+        schedulerName: default-scheduler
+        securityContext: {}
+        terminationGracePeriodSeconds: 30
+        volumes:
+        - name: youtube-data
+          persistentVolumeClaim:
+            claimName: youtube-data-pvc
+        - configMap:
+            defaultMode: 420
+            name: youtube-ingestion-fixes
+          name: fixes
+  status:
+    availableReplicas: 1
+    conditions:
+    - lastTransitionTime: "2025-12-30T12:15:56Z"
+      lastUpdateTime: "2025-12-30T12:15:56Z"
+      message: Deployment has minimum availability.
+      reason: MinimumReplicasAvailable
+      status: "True"
+      type: Available
+    - lastTransitionTime: "2025-12-28T21:06:02Z"
+      lastUpdateTime: "2025-12-30T12:17:01Z"
+      message: ReplicaSet "youtube-ingestion-75f4cb4cd6" has successfully progressed.
+      reason: NewReplicaSetAvailable
+      status: "True"
+      type: Progressing
+    observedGeneration: 3
+    readyReplicas: 1
+    replicas: 1
+    updatedReplicas: 1
+- apiVersion: v1
+  kind: Service
+  metadata:
+    annotations:
+      auth.istio.io/8089: NONE
+      field.cattle.io/publicEndpoints: '[{"port":31584,"protocol":"TCP","serviceName":"cortex:cm-acme-http-solver-hsgsx","allNodes":true}]'
+    creationTimestamp: "2025-12-28T14:25:52Z"
+    generateName: cm-acme-http-solver-
+    labels:
+      acme.cert-manager.io/http-domain: "1499662338"
+      acme.cert-manager.io/http-token: "1074925140"
+      acme.cert-manager.io/http01-solver: "true"
+    name: cm-acme-http-solver-hsgsx
+    namespace: cortex
+    ownerReferences:
+    - apiVersion: acme.cert-manager.io/v1
+      blockOwnerDeletion: true
+      controller: true
+      kind: Challenge
+      name: cortex-api-tls-1-181336435-531462493
+      uid: 361c8780-5e22-4cad-bf47-4fd0d9daa616
+    resourceVersion: "39379772"
+    uid: 2c378a6e-a3a0-4ac5-89d4-ba56bbc51487
+  spec:
+    clusterIP: 10.43.204.106
+    clusterIPs:
+    - 10.43.204.106
+    externalTrafficPolicy: Cluster
+    internalTrafficPolicy: Cluster
+    ipFamilies:
+    - IPv4
+    ipFamilyPolicy: SingleStack
+    ports:
+    - name: http
+      nodePort: 31584
+      port: 8089
+      protocol: TCP
+      targetPort: 8089
+    selector:
+      acme.cert-manager.io/http-domain: "1499662338"
+      acme.cert-manager.io/http-token: "1074925140"
+      acme.cert-manager.io/http01-solver: "true"
+    sessionAffinity: None
+    type: NodePort
+  status:
+    loadBalancer: {}
+- apiVersion: v1
+  kind: Service
+  metadata:
+    annotations:
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"v1","kind":"Service","metadata":{"annotations":{},"labels":{"app":"cortex-orchestrator"},"name":"cortex-orchestrator","namespace":"cortex"},"spec":{"ports":[{"name":"http","port":8000,"targetPort":8000}],"selector":{"app":"cortex-orchestrator"},"type":"ClusterIP"}}
+    creationTimestamp: "2025-12-24T14:33:55Z"
+    labels:
+      app: cortex-orchestrator
+    name: cortex-orchestrator
+    namespace: cortex
+    resourceVersion: "18814561"
+    uid: f17cb374-78b7-44f5-998b-7ae4db8cd68c
+  spec:
+    clusterIP: 10.43.234.57
+    clusterIPs:
+    - 10.43.234.57
+    internalTrafficPolicy: Cluster
+    ipFamilies:
+    - IPv4
+    ipFamilyPolicy: SingleStack
+    ports:
+    - name: http
+      port: 8000
+      protocol: TCP
+      targetPort: 8000
+    selector:
+      app: cortex-orchestrator
+    sessionAffinity: None
+    type: ClusterIP
+  status:
+    loadBalancer: {}
+- apiVersion: v1
+  kind: Service
+  metadata:
+    annotations:
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"v1","kind":"Service","metadata":{"annotations":{},"labels":{"app":"documentation-master"},"name":"documentation-master","namespace":"cortex"},"spec":{"ports":[{"name":"http","port":8080,"protocol":"TCP","targetPort":8080},{"name":"metrics","port":9090,"protocol":"TCP","targetPort":9090}],"selector":{"app":"documentation-master"},"type":"ClusterIP"}}
+    creationTimestamp: "2025-12-27T17:37:45Z"
+    labels:
+      app: documentation-master
+    name: documentation-master
+    namespace: cortex
+    resourceVersion: "35263816"
+    uid: 07bc6950-f6e5-401c-9e21-443dc81476d2
+  spec:
+    clusterIP: 10.43.150.170
+    clusterIPs:
+    - 10.43.150.170
+    internalTrafficPolicy: Cluster
+    ipFamilies:
+    - IPv4
+    ipFamilyPolicy: SingleStack
+    ports:
+    - name: http
+      port: 8080
+      protocol: TCP
+      targetPort: 8080
+    - name: metrics
+      port: 9090
+      protocol: TCP
+      targetPort: 9090
+    selector:
+      app: documentation-master
+    sessionAffinity: None
+    type: ClusterIP
+  status:
+    loadBalancer: {}
+- apiVersion: v1
+  kind: Service
+  metadata:
+    annotations:
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"v1","kind":"Service","metadata":{"annotations":{},"labels":{"app":"redis-queue","component":"task-queue"},"name":"redis-queue","namespace":"cortex"},"spec":{"ports":[{"name":"redis","port":6379,"protocol":"TCP","targetPort":6379}],"selector":{"app":"redis-queue"},"type":"ClusterIP"}}
+    creationTimestamp: "2025-12-26T21:27:25Z"
+    labels:
+      app: redis-queue
+      component: task-queue
+    name: redis-queue
+    namespace: cortex
+    resourceVersion: "31258592"
+    uid: cf7ad42f-0270-438b-9f42-034bd4cdc39b
+  spec:
+    clusterIP: 10.43.10.63
+    clusterIPs:
+    - 10.43.10.63
+    internalTrafficPolicy: Cluster
+    ipFamilies:
+    - IPv4
+    ipFamilyPolicy: SingleStack
+    ports:
+    - name: redis
+      port: 6379
+      protocol: TCP
+      targetPort: 6379
+    selector:
+      app: redis-queue
+    sessionAffinity: None
+    type: ClusterIP
+  status:
+    loadBalancer: {}
+- apiVersion: v1
+  kind: Service
+  metadata:
+    annotations:
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"v1","kind":"Service","metadata":{"annotations":{},"labels":{"app":"youtube-ingestion"},"name":"youtube-ingestion","namespace":"cortex"},"spec":{"ports":[{"name":"http","port":8080,"protocol":"TCP","targetPort":8080}],"selector":{"app":"youtube-ingestion"},"type":"ClusterIP"}}
+    creationTimestamp: "2025-12-28T18:22:28Z"
+    labels:
+      app: youtube-ingestion
+    name: youtube-ingestion
+    namespace: cortex
+    resourceVersion: "40272534"
+    uid: b311627b-de02-4001-877a-ddabbfc1b1fb
+  spec:
+    clusterIP: 10.43.119.1
+    clusterIPs:
+    - 10.43.119.1
+    internalTrafficPolicy: Cluster
+    ipFamilies:
+    - IPv4
+    ipFamilyPolicy: SingleStack
+    ports:
+    - name: http
+      port: 8080
+      protocol: TCP
+      targetPort: 8080
+    selector:
+      app: youtube-ingestion
+    sessionAffinity: None
+    type: ClusterIP
+  status:
+    loadBalancer: {}
+kind: List
+metadata:
+  resourceVersion: ""

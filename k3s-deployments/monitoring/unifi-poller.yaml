@@ -1,0 +1,181 @@
+---
+# UniFi Poller - Prometheus exporter for UniFi Network Application
+# Exports metrics from UDM Pro for Grafana dashboards
+apiVersion: v1
+kind: Secret
+metadata:
+  name: unifi-poller-secret
+  namespace: monitoring
+type: Opaque
+stringData:
+  # UniFi API Key (no username/password needed)
+  UNIFI_API_KEY: "gqVIqY5mNHP_TGUBqgGm-kuLkPA9d5ca"
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: unifi-poller-config
+  namespace: monitoring
+data:
+  up.conf: |
+    # UniFi Poller Configuration
+    [poller]
+      debug = false
+      quiet = false
+      plugins = []
+
+    [prometheus]
+      disable = false
+      namespace = "unifi"
+      http_listen = "0.0.0.0:9130"
+      report_errors = false
+
+    [unifi]
+      dynamic = false
+
+    [unifi.defaults]
+      role           = "UniFi Prometheus Exporter"
+      url            = "https://10.88.140.144:8443"
+      user           = ""
+      pass           = ""
+      save_ids       = false
+      save_dpi       = false
+      save_sites     = true
+      hash_pii       = false
+      verify_ssl     = false
+
+    [[unifi.controller]]
+      url        = "https://10.88.140.144:8443"
+      user       = ""
+      pass       = ""
+      verify_ssl = false
+      save_ids   = false
+      save_dpi   = false
+      save_sites = true
+
+    [influxdb]
+      disable = true
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: unifi-poller
+  namespace: monitoring
+  labels:
+    app: unifi-poller
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: unifi-poller
+  template:
+    metadata:
+      labels:
+        app: unifi-poller
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "9130"
+        prometheus.io/path: "/metrics"
+    spec:
+      containers:
+      - name: unifi-poller
+        image: ghcr.io/unpoller/unpoller:latest
+        imagePullPolicy: Always
+        ports:
+        - name: metrics
+          containerPort: 9130
+          protocol: TCP
+        env:
+        - name: UP_UNIFI_DEFAULT_URL
+          value: "https://10.88.140.144:8443"
+        - name: UP_UNIFI_DEFAULT_USER
+          value: ""
+        - name: UP_UNIFI_DEFAULT_PASS
+          value: ""
+        - name: UP_UNIFI_DEFAULT_VERIFY_SSL
+          value: "false"
+        - name: UP_UNIFI_DEFAULT_SAVE_SITES
+          value: "true"
+        - name: UP_UNIFI_DEFAULT_SAVE_IDS
+          value: "false"
+        - name: UP_UNIFI_DEFAULT_SAVE_DPI
+          value: "false"
+        - name: UP_PROMETHEUS_DISABLE
+          value: "false"
+        - name: UP_PROMETHEUS_NAMESPACE
+          value: "unifi"
+        - name: UP_PROMETHEUS_HTTP_LISTEN
+          value: "0.0.0.0:9130"
+        - name: UP_INFLUXDB_DISABLE
+          value: "true"
+        - name: UP_POLLER_DEBUG
+          value: "false"
+        # Use API key authentication
+        - name: UP_UNIFI_DEFAULT_ROLE
+          value: "UniFi Prometheus Exporter"
+        volumeMounts:
+        - name: config
+          mountPath: /config
+          readOnly: true
+        resources:
+          requests:
+            memory: "64Mi"
+            cpu: "50m"
+          limits:
+            memory: "256Mi"
+            cpu: "200m"
+        livenessProbe:
+          httpGet:
+            path: /metrics
+            port: 9130
+          initialDelaySeconds: 30
+          periodSeconds: 30
+        readinessProbe:
+          httpGet:
+            path: /metrics
+            port: 9130
+          initialDelaySeconds: 10
+          periodSeconds: 10
+      volumes:
+      - name: config
+        configMap:
+          name: unifi-poller-config
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: unifi-poller
+  namespace: monitoring
+  labels:
+    app: unifi-poller
+  annotations:
+    prometheus.io/scrape: "true"
+    prometheus.io/port: "9130"
+    prometheus.io/path: "/metrics"
+spec:
+  type: ClusterIP
+  ports:
+  - name: metrics
+    port: 9130
+    targetPort: 9130
+    protocol: TCP
+  selector:
+    app: unifi-poller
+---
+# ServiceMonitor for Prometheus Operator
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: unifi-poller
+  namespace: monitoring
+  labels:
+    app: unifi-poller
+    release: prometheus
+spec:
+  selector:
+    matchLabels:
+      app: unifi-poller
+  endpoints:
+  - port: metrics
+    interval: 30s
+    path: /metrics

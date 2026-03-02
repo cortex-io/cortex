@@ -59,6 +59,25 @@
       "domains": ["cicd"],
       "status": "active",
       "added_at": "2025-11-27T00:00:00Z"
+    },
+    "resource-manager": {
+      "description": "Handles MCP server lifecycle, worker management, and resource allocation across the cortex system",
+      "capabilities": [
+        "mcp server lifecycle",
+        "mcp start",
+        "mcp stop",
+        "mcp scale",
+        "worker provisioning",
+        "worker management",
+        "worker drain",
+        "worker destroy",
+        "resource allocation",
+        "capacity planning",
+        "resource optimization"
+      ],
+      "domains": ["infrastructure", "resources"],
+      "status": "active",
+      "added_at": "2025-12-09T00:00:00Z"
     }
   }
 }

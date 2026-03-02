@@ -1,0 +1,541 @@
+---
+# Sandfly Security Prometheus Exporter
+# Exports security metrics from Sandfly for Grafana dashboards
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: sandfly-exporter-script
+  namespace: monitoring
+data:
+  exporter.py: |
+    #!/usr/bin/env python3
+    """
+    Sandfly Prometheus Exporter - Enhanced Version
+    Exports comprehensive security metrics from Sandfly Security platform
+    Enhanced by Daryl-2 with full API coverage
+    """
+    import os
+    import time
+    import requests
+    from urllib3.exceptions import InsecureRequestWarning
+    from prometheus_client import start_http_server, Gauge, Counter, Info
+    from datetime import datetime, timedelta
+
+    requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
+
+    # Configuration
+    SANDFLY_HOST = os.getenv('SANDFLY_HOST', '10.88.140.176')
+    SANDFLY_USERNAME = os.getenv('SANDFLY_USERNAME', 'admin')
+    SANDFLY_PASSWORD = os.getenv('SANDFLY_PASSWORD', '')
+    SCRAPE_INTERVAL = int(os.getenv('SCRAPE_INTERVAL', '60'))
+    EXPORTER_PORT = int(os.getenv('EXPORTER_PORT', '9131'))
+
+    # Prometheus metrics
+    sandfly_info = Info('sandfly', 'Sandfly system information')
+    sandfly_up = Gauge('sandfly_up', 'Sandfly API scrape success (1=up, 0=down)')
+
+    # Host count metrics (from /v4/status)
+    sandfly_hosts_total = Gauge('sandfly_hosts_total', 'Total number of monitored hosts')
+    sandfly_hosts_active = Gauge('sandfly_hosts_active', 'Number of active hosts')
+    sandfly_hosts_inactive = Gauge('sandfly_hosts_inactive', 'Number of inactive hosts')
+    # Deprecated but kept for backward compatibility
+    sandfly_hosts_online = Gauge('sandfly_hosts_online', 'Number of online hosts (deprecated, use active)')
+    sandfly_hosts_offline = Gauge('sandfly_hosts_offline', 'Number of offline hosts (deprecated, use inactive)')
+
+    # Result/Scan metrics - Totals (from /v4/status)
+    sandfly_results_total = Gauge('sandfly_results_total', 'Total number of scan results')
+    sandfly_results_pass_total = Gauge('sandfly_results_pass_total', 'Total passed scans (no threats)')
+    sandfly_results_fail_total = Gauge('sandfly_results_fail_total', 'Total failed scans (threats detected)')
+    sandfly_results_error_total = Gauge('sandfly_results_error_total', 'Total scan errors')
+    sandfly_results_sandboxed_total = Gauge('sandfly_results_sandboxed_total', 'Total sandboxed results')
+    # Deprecated but kept for backward compatibility
+    sandfly_results_pass = Gauge('sandfly_results_pass', 'Number of passed scans (deprecated)')
+    sandfly_results_fail = Gauge('sandfly_results_fail', 'Number of failed scans (deprecated)')
+    sandfly_results_error = Gauge('sandfly_results_error', 'Number of scan errors (deprecated)')
+
+    # Time series metrics (from /v4/status hourly data)
+    sandfly_results_hourly = Gauge('sandfly_results_hourly', 'Hourly scan results', ['hour', 'type'])
+
+    # Per-host detailed metrics (from /v4/hosts)
+    sandfly_host_online = Gauge('sandfly_host_online', 'Host online status (1=online, 0=offline)', ['hostname', 'ip'])
+    sandfly_host_last_seen_timestamp = Gauge('sandfly_host_last_seen_timestamp', 'Last seen Unix timestamp', ['hostname', 'ip'])
+    sandfly_host_last_scan_timestamp = Gauge('sandfly_host_last_scan_timestamp', 'Last scan Unix timestamp', ['hostname', 'ip'])
+    sandfly_host_memory_total_bytes = Gauge('sandfly_host_memory_total_bytes', 'Total memory in bytes', ['hostname', 'ip'])
+    sandfly_host_memory_free_bytes = Gauge('sandfly_host_memory_free_bytes', 'Free memory in bytes', ['hostname', 'ip'])
+    sandfly_host_cpu_cores = Gauge('sandfly_host_cpu_cores', 'Number of CPU cores', ['hostname', 'ip'])
+    sandfly_host_results = Gauge('sandfly_host_results', 'Scan results per host', ['hostname', 'ip', 'status'])
+    # Deprecated
+    sandfly_host_last_scan = Gauge('sandfly_host_last_scan_timestamp_deprecated', 'Last scan timestamp (deprecated)', ['hostname', 'ip'])
+
+    # Threat metrics (from /v4/results filtering)
+    sandfly_threats_by_severity = Gauge('sandfly_threats_by_severity', 'Active threats by severity', ['severity'])
+    sandfly_host_threats_total = Gauge('sandfly_host_threats_total', 'Threats per host by severity', ['hostname', 'ip', 'severity'])
+
+    # User metrics (from /v4/users)
+    sandfly_users_total = Gauge('sandfly_users_total', 'Total number of users')
+
+    # Scrape metrics
+    sandfly_scrape_duration = Gauge('sandfly_scrape_duration_seconds', 'Time taken to scrape Sandfly metrics')
+    sandfly_scrape_errors = Counter('sandfly_scrape_errors_total', 'Total number of scrape errors')
+
+    class SandflyAPI:
+        def __init__(self):
+            self.base_url = f"https://{SANDFLY_HOST}/v4"
+            self.token = None
+            self.token_expiry = None
+
+        def _ensure_authenticated(self):
+            """Ensure we have a valid authentication token"""
+            if self.token and self.token_expiry and datetime.now() < self.token_expiry:
+                return
+
+            response = requests.post(
+                f"{self.base_url}/auth/login",
+                json={"username": SANDFLY_USERNAME, "password": SANDFLY_PASSWORD},
+                verify=False,
+                timeout=10
+            )
+            response.raise_for_status()
+            data = response.json()
+            self.token = data.get("access_token")
+            # Token valid for 1 hour, refresh at 50 minutes
+            self.token_expiry = datetime.now() + timedelta(minutes=50)
+
+        def _headers(self):
+            """Get request headers with auth token"""
+            return {
+                "Authorization": f"Bearer {self.token}",
+                "Content-Type": "application/json"
+            }
+
+        def get_version(self):
+            """Get Sandfly version info"""
+            try:
+                self._ensure_authenticated()
+                response = requests.get(
+                    f"{self.base_url}/version",
+                    headers=self._headers(),
+                    verify=False,
+                    timeout=10
+                )
+                if response.status_code == 200:
+                    return response.json()
+                return {}
+            except Exception as e:
+                print(f"Error getting version: {e}")
+                return {}
+
+        def get_status(self):
+            """Get system-wide status with aggregated metrics (PRIMARY DATA SOURCE)"""
+            try:
+                self._ensure_authenticated()
+                response = requests.get(
+                    f"{self.base_url}/status",
+                    headers=self._headers(),
+                    verify=False,
+                    timeout=15
+                )
+                if response.status_code == 200:
+                    return response.json()
+                print(f"Error getting status: {response.status_code}")
+                return None
+            except Exception as e:
+                print(f"Exception getting status: {e}")
+                return None
+
+        def get_hosts(self, page=1, size=100):
+            """Get monitored hosts with detailed information"""
+            try:
+                self._ensure_authenticated()
+                response = requests.get(
+                    f"{self.base_url}/hosts",
+                    headers=self._headers(),
+                    params={"page": page, "size": size},
+                    verify=False,
+                    timeout=15
+                )
+                if response.status_code == 200:
+                    return response.json()
+                print(f"Error getting hosts: {response.status_code} - {response.text[:200]}")
+                return {"data": [], "total": 0}
+            except Exception as e:
+                print(f"Exception getting hosts: {e}")
+                return {"data": [], "total": 0}
+
+        def get_results(self, page=1, size=100, filter_dict=None):
+            """Get scan results with optional filtering"""
+            try:
+                self._ensure_authenticated()
+                payload = {
+                    "filter": filter_dict or {},
+                    "page": page,
+                    "size": size,
+                    "summary": False
+                }
+                response = requests.post(
+                    f"{self.base_url}/results",
+                    headers=self._headers(),
+                    json=payload,
+                    verify=False,
+                    timeout=15
+                )
+                if response.status_code == 200:
+                    return response.json()
+                print(f"Error getting results: {response.status_code}")
+                return {"data": [], "total": 0}
+            except Exception as e:
+                print(f"Exception getting results: {e}")
+                return {"data": [], "total": 0}
+
+        def get_recent_threats(self, hours=24, max_results=100):
+            """Get recent failed scans (threats) within specified hours"""
+            try:
+                # Calculate time filter
+                start_time = datetime.now() - timedelta(hours=hours)
+                filter_dict = {
+                    "status": "fail",
+                    "start_time": start_time.isoformat() + "Z"
+                }
+                return self.get_results(page=1, size=max_results, filter_dict=filter_dict)
+            except Exception as e:
+                print(f"Exception getting recent threats: {e}")
+                return {"data": [], "total": 0}
+
+        def get_users(self):
+            """Get user list"""
+            try:
+                self._ensure_authenticated()
+                response = requests.get(
+                    f"{self.base_url}/users",
+                    headers=self._headers(),
+                    verify=False,
+                    timeout=10
+                )
+                if response.status_code == 200:
+                    return response.json()
+                print(f"Error getting users: {response.status_code}")
+                return {"data": [], "total": 0}
+            except Exception as e:
+                print(f"Exception getting users: {e}")
+                return {"data": [], "total": 0}
+
+    def collect_metrics():
+        """Collect comprehensive metrics from Sandfly - Enhanced by Daryl-2"""
+        start_time = time.time()
+        scrape_success = 0
+
+        try:
+            api = SandflyAPI()
+            print(f"[{datetime.now().isoformat()}] Starting metric collection...")
+
+            # 1. Get version info (quick, low-cost)
+            version_info = api.get_version()
+            if version_info:
+                sandfly_info.info({
+                    'version': str(version_info.get('version', 'unknown')),
+                    'build_date': str(version_info.get('build_date', 'unknown')),
+                    'host': SANDFLY_HOST
+                })
+                print(f"  ✓ Version: {version_info.get('version')}")
+
+            # 2. Get system status (MOST IMPORTANT - provides pre-aggregated data)
+            status_data = api.get_status()
+            if status_data:
+                # Host counts from status
+                hosts_status = status_data.get('hosts', {})
+                total_hosts = hosts_status.get('total', 0)
+                active_hosts = hosts_status.get('total_active', 0)
+                inactive_hosts = hosts_status.get('total_inactive', 0)
+
+                sandfly_hosts_total.set(total_hosts)
+                sandfly_hosts_active.set(active_hosts)
+                sandfly_hosts_inactive.set(inactive_hosts)
+                # Deprecated metrics for backward compatibility
+                sandfly_hosts_online.set(active_hosts)
+                sandfly_hosts_offline.set(inactive_hosts)
+
+                print(f"  ✓ Hosts: {total_hosts} total ({active_hosts} active, {inactive_hosts} inactive)")
+
+                # Result totals from status
+                results_status = status_data.get('results', {})
+
+                # Extract totals from hourly data
+                hourly_data = results_status.get('hourly', {})
+
+                all_total = hourly_data.get('all', {}).get('total', 0)
+                pass_total = hourly_data.get('pass', {}).get('total', 0)
+                fail_total = hourly_data.get('fail', {}).get('total', 0)
+                error_total = hourly_data.get('error', {}).get('total', 0)
+                sandboxed_total = hourly_data.get('sandboxed', {}).get('total', 0)
+
+                sandfly_results_total.set(all_total)
+                sandfly_results_pass_total.set(pass_total)
+                sandfly_results_fail_total.set(fail_total)
+                sandfly_results_error_total.set(error_total)
+                sandfly_results_sandboxed_total.set(sandboxed_total)
+                # Deprecated metrics
+                sandfly_results_pass.set(pass_total)
+                sandfly_results_fail.set(fail_total)
+                sandfly_results_error.set(error_total)
+
+                print(f"  ✓ Results: {all_total} total (pass: {pass_total}, fail: {fail_total}, error: {error_total}, sandboxed: {sandboxed_total})")
+
+                # Extract hourly time series data (last 72 hours)
+                for result_type in ['all', 'pass', 'fail', 'error', 'sandboxed']:
+                    type_data = hourly_data.get(result_type, {}).get('data', [])
+                    for entry in type_data:
+                        hour = entry.get('time', '')
+                        count = entry.get('total', 0)
+                        if hour and count > 0:  # Only record non-zero values to reduce metric cardinality
+                            sandfly_results_hourly.labels(hour=hour, type=result_type).set(count)
+
+                print(f"  ✓ Hourly time series data recorded for all result types")
+            else:
+                print(f"  ✗ Failed to get status data")
+
+            # 3. Get detailed host information
+            hosts_data = api.get_hosts(page=1, size=100)
+            hosts = hosts_data.get('data', [])
+
+            # Per-host metrics by status
+            host_status_counts = {}
+
+            for host in hosts:
+                hostname = host.get('hostname', 'unknown')
+                host_ip = host.get('ip', 'unknown')
+
+                # Online/offline status
+                is_online = host.get('online', False)
+                sandfly_host_online.labels(hostname=hostname, ip=host_ip).set(1 if is_online else 0)
+
+                # Timestamps
+                last_seen = host.get('last_seen')
+                if last_seen:
+                    try:
+                        timestamp = datetime.fromisoformat(last_seen.replace('Z', '+00:00')).timestamp()
+                        sandfly_host_last_seen_timestamp.labels(hostname=hostname, ip=host_ip).set(timestamp)
+                    except:
+                        pass
+
+                last_scan = host.get('last_scan')
+                if last_scan:
+                    try:
+                        timestamp = datetime.fromisoformat(last_scan.replace('Z', '+00:00')).timestamp()
+                        sandfly_host_last_scan_timestamp.labels(hostname=hostname, ip=host_ip).set(timestamp)
+                        # Deprecated metric
+                        sandfly_host_last_scan.labels(hostname=hostname, ip=host_ip).set(timestamp)
+                    except:
+                        pass
+
+                # Memory metrics
+                memory = host.get('memory', {})
+                if isinstance(memory, dict):
+                    total_mem = memory.get('total', 0)
+                    free_mem = memory.get('free', 0)
+                    if total_mem > 0:
+                        sandfly_host_memory_total_bytes.labels(hostname=hostname, ip=host_ip).set(total_mem * 1024)  # Convert KB to bytes
+                        sandfly_host_memory_free_bytes.labels(hostname=hostname, ip=host_ip).set(free_mem * 1024)
+
+                # CPU metrics
+                cpu = host.get('cpu', {})
+                if isinstance(cpu, dict):
+                    cores = cpu.get('cores', 0)
+                    if cores > 0:
+                        sandfly_host_cpu_cores.labels(hostname=hostname, ip=host_ip).set(cores)
+
+            print(f"  ✓ Detailed metrics for {len(hosts)} hosts")
+
+            # 4. Get recent results for per-host breakdown
+            results_data = api.get_results(page=1, size=200)
+            results = results_data.get('data', [])
+
+            # Count results per host by status
+            host_result_counts = {}
+            for result in results:
+                hostname = result.get('hostname', 'unknown')
+                host_ip = result.get('host_ip', 'unknown')
+                status = result.get('status', 'unknown')
+
+                key = (hostname, host_ip, status)
+                host_result_counts[key] = host_result_counts.get(key, 0) + 1
+
+            for (hostname, host_ip, status), count in host_result_counts.items():
+                sandfly_host_results.labels(hostname=hostname, ip=host_ip, status=status).set(count)
+
+            print(f"  ✓ Per-host result breakdown from {len(results)} recent results")
+
+            # 5. Get recent threats (failed scans) and analyze by severity
+            threats_data = api.get_recent_threats(hours=24, max_results=100)
+            threats = threats_data.get('data', [])
+
+            # Reset threat metrics
+            severity_counts = {'info': 0, 'low': 0, 'medium': 0, 'high': 0, 'critical': 0}
+            host_threat_counts = {}
+
+            for threat in threats:
+                severity = threat.get('severity', 'unknown').lower()
+                if severity in severity_counts:
+                    severity_counts[severity] += 1
+
+                hostname = threat.get('hostname', 'unknown')
+                host_ip = threat.get('host_ip', 'unknown')
+                key = (hostname, host_ip, severity)
+                host_threat_counts[key] = host_threat_counts.get(key, 0) + 1
+
+            # Set severity metrics
+            for severity, count in severity_counts.items():
+                sandfly_threats_by_severity.labels(severity=severity).set(count)
+
+            # Set per-host threat metrics
+            for (hostname, host_ip, severity), count in host_threat_counts.items():
+                sandfly_host_threats_total.labels(hostname=hostname, ip=host_ip, severity=severity).set(count)
+
+            print(f"  ✓ Threat analysis: {len(threats)} threats in last 24h (critical: {severity_counts['critical']}, high: {severity_counts['high']})")
+
+            # 6. Get user count
+            users_data = api.get_users()
+            total_users = users_data.get('total', 0)
+            sandfly_users_total.set(total_users)
+            print(f"  ✓ Users: {total_users}")
+
+            # Success!
+            scrape_success = 1
+
+            # Record scrape duration
+            duration = time.time() - start_time
+            sandfly_scrape_duration.set(duration)
+            sandfly_up.set(scrape_success)
+            print(f"[{datetime.now().isoformat()}] Scrape completed successfully in {duration:.2f}s")
+            print("")
+
+        except Exception as e:
+            print(f"[{datetime.now().isoformat()}] ✗ Error collecting metrics: {e}")
+            import traceback
+            traceback.print_exc()
+            sandfly_scrape_errors.inc()
+            sandfly_up.set(0)
+            print("")
+
+    if __name__ == '__main__':
+        print(f"Starting Sandfly Prometheus Exporter on port {EXPORTER_PORT}")
+        print(f"Sandfly Host: {SANDFLY_HOST}")
+        print(f"Scrape interval: {SCRAPE_INTERVAL}s")
+
+        # Start HTTP server
+        start_http_server(EXPORTER_PORT)
+
+        # Collect metrics in a loop
+        while True:
+            collect_metrics()
+            time.sleep(SCRAPE_INTERVAL)
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sandfly-exporter
+  namespace: monitoring
+  labels:
+    app: sandfly-exporter
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: sandfly-exporter
+  template:
+    metadata:
+      labels:
+        app: sandfly-exporter
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "9131"
+        prometheus.io/path: "/metrics"
+    spec:
+      containers:
+      - name: exporter
+        image: python:3.11-slim
+        command:
+          - /bin/bash
+          - -c
+          - |
+            pip install --no-cache-dir prometheus-client requests urllib3
+            python /app/exporter.py
+        ports:
+        - name: metrics
+          containerPort: 9131
+          protocol: TCP
+        env:
+        - name: SANDFLY_HOST
+          value: "10.88.140.176"
+        - name: SANDFLY_USERNAME
+          value: "admin"
+        - name: SANDFLY_PASSWORD
+          value: "emphasize-art-nibble-arguable-paradox-flick-unpack"
+        - name: SCRAPE_INTERVAL
+          value: "60"
+        - name: EXPORTER_PORT
+          value: "9131"
+        volumeMounts:
+        - name: script
+          mountPath: /app
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "100m"
+          limits:
+            memory: "256Mi"
+            cpu: "200m"
+        livenessProbe:
+          httpGet:
+            path: /metrics
+            port: 9131
+          initialDelaySeconds: 30
+          periodSeconds: 30
+        readinessProbe:
+          httpGet:
+            path: /metrics
+            port: 9131
+          initialDelaySeconds: 10
+          periodSeconds: 10
+      volumes:
+      - name: script
+        configMap:
+          name: sandfly-exporter-script
+          defaultMode: 0755
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: sandfly-exporter
+  namespace: monitoring
+  labels:
+    app: sandfly-exporter
+  annotations:
+    prometheus.io/scrape: "true"
+    prometheus.io/port: "9131"
+    prometheus.io/path: "/metrics"
+spec:
+  type: ClusterIP
+  ports:
+  - name: metrics
+    port: 9131
+    targetPort: 9131
+    protocol: TCP
+  selector:
+    app: sandfly-exporter
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: sandfly-exporter
+  namespace: monitoring
+  labels:
+    app: sandfly-exporter
+    release: kube-prometheus-stack
+spec:
+  selector:
+    matchLabels:
+      app: sandfly-exporter
+  endpoints:
+  - port: metrics
+    interval: 60s
+    path: /metrics

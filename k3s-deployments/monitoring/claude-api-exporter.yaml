@@ -1,0 +1,450 @@
+---
+# Claude API Prometheus Exporter
+# Exports Claude API usage metrics, token consumption, and cost tracking
+# Created by Daryl-1 Agent for comprehensive Claude API monitoring
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: claude-api-exporter-script
+  namespace: monitoring
+data:
+  exporter.py: |
+    #!/usr/bin/env python3
+    """
+    Claude API Prometheus Exporter
+    Monitors Claude API usage, token consumption, costs, and performance
+    Created by Daryl-1 for Cortex Holdings monitoring infrastructure
+    """
+    import os
+    import time
+    from datetime import datetime
+    from prometheus_client import start_http_server, Gauge, Counter, Histogram, Info
+    import anthropic
+
+    # Configuration
+    CLAUDE_API_KEY = os.getenv('CLAUDE_API_KEY', '')
+    SCRAPE_INTERVAL = int(os.getenv('SCRAPE_INTERVAL', '300'))  # 5 minutes default
+    EXPORTER_PORT = int(os.getenv('EXPORTER_PORT', '9132'))
+
+    # Pricing per million tokens (USD) - Updated 2025
+    PRICING = {
+        "claude-sonnet-4.5": {
+            "input": 3.00 / 1_000_000,
+            "output": 15.00 / 1_000_000,
+            "cache_creation": 3.75 / 1_000_000,
+            "cache_read": 0.30 / 1_000_000
+        },
+        "claude-opus-4.5": {
+            "input": 15.00 / 1_000_000,
+            "output": 75.00 / 1_000_000,
+            "cache_creation": 18.75 / 1_000_000,
+            "cache_read": 1.50 / 1_000_000
+        },
+        "claude-haiku-4": {
+            "input": 0.80 / 1_000_000,
+            "output": 4.00 / 1_000_000,
+            "cache_creation": 1.00 / 1_000_000,
+            "cache_read": 0.08 / 1_000_000
+        },
+        "claude-3-5-sonnet-20241022": {
+            "input": 3.00 / 1_000_000,
+            "output": 15.00 / 1_000_000,
+            "cache_creation": 3.75 / 1_000_000,
+            "cache_read": 0.30 / 1_000_000
+        },
+        "claude-3-opus-20240229": {
+            "input": 15.00 / 1_000_000,
+            "output": 75.00 / 1_000_000,
+            "cache_creation": 18.75 / 1_000_000,
+            "cache_read": 1.50 / 1_000_000
+        },
+        "claude-3-haiku-20240307": {
+            "input": 0.25 / 1_000_000,
+            "output": 1.25 / 1_000_000,
+            "cache_creation": 0.30 / 1_000_000,
+            "cache_read": 0.03 / 1_000_000
+        }
+    }
+
+    # Prometheus Metrics
+    claude_info = Info('claude_api', 'Claude API exporter information')
+    claude_api_up = Gauge('claude_api_up', 'Claude API scrape success (1=up, 0=down)')
+
+    # Token Usage Metrics (Counters - accumulate over time)
+    claude_tokens_input_total = Counter('claude_tokens_input_total',
+                                        'Total input tokens used',
+                                        ['model', 'service_tier'])
+    claude_tokens_output_total = Counter('claude_tokens_output_total',
+                                         'Total output tokens used',
+                                         ['model', 'service_tier'])
+    claude_tokens_cache_creation_total = Counter('claude_tokens_cache_creation_total',
+                                                 'Total cache creation tokens',
+                                                 ['model'])
+    claude_tokens_cache_read_total = Counter('claude_tokens_cache_read_total',
+                                             'Total cache read tokens',
+                                             ['model'])
+
+    # Cost Tracking (Counters - accumulate costs over time)
+    claude_cost_estimated_usd_total = Counter('claude_cost_estimated_usd_total',
+                                              'Total estimated cost in USD',
+                                              ['model', 'token_type'])
+
+    # Request Metrics
+    claude_requests_total = Counter('claude_requests_total',
+                                    'Total API requests made',
+                                    ['model', 'service_tier', 'status'])
+    claude_request_duration_seconds = Histogram('claude_request_duration_seconds',
+                                                'API request duration in seconds',
+                                                ['model'])
+
+    # Cache Efficiency Metrics
+    claude_cache_hit_ratio = Gauge('claude_cache_hit_ratio',
+                                   'Cache hit ratio (0-1)',
+                                   ['model'])
+    claude_cache_total_reads = Counter('claude_cache_total_reads',
+                                       'Total cache read operations',
+                                       ['model'])
+    claude_cache_total_writes = Counter('claude_cache_total_writes',
+                                        'Total cache write operations',
+                                        ['model'])
+
+    # Service Tier Usage
+    claude_service_tier_requests = Counter('claude_service_tier_requests',
+                                           'Requests by service tier',
+                                           ['tier'])
+
+    # Tool Usage
+    claude_web_search_requests_total = Counter('claude_web_search_requests_total',
+                                               'Web search tool requests',
+                                               ['model'])
+
+    # Scrape Performance
+    claude_scrape_duration_seconds = Gauge('claude_scrape_duration_seconds',
+                                           'Time taken to scrape Claude API')
+    claude_scrape_errors_total = Counter('claude_scrape_errors_total',
+                                         'Total scrape errors')
+
+    # Current Session Gauges (for dashboards)
+    claude_session_tokens_input = Gauge('claude_session_tokens_input',
+                                        'Tokens used in current session',
+                                        ['model'])
+    claude_session_tokens_output = Gauge('claude_session_tokens_output',
+                                         'Output tokens in current session',
+                                         ['model'])
+    claude_session_cost_usd = Gauge('claude_session_cost_usd',
+                                    'Estimated cost for current session',
+                                    ['model'])
+
+    def calculate_cost(model, usage):
+        """Calculate estimated cost for a request based on token usage"""
+        if model not in PRICING:
+            print(f"Warning: Unknown model {model}, using Sonnet pricing")
+            model = "claude-sonnet-4.5"
+
+        pricing = PRICING[model]
+        cost = 0.0
+        costs_breakdown = {}
+
+        # Input tokens cost
+        input_tokens = usage.get('input_tokens', 0)
+        if input_tokens > 0:
+            input_cost = input_tokens * pricing['input']
+            cost += input_cost
+            costs_breakdown['input'] = input_cost
+
+        # Output tokens cost
+        output_tokens = usage.get('output_tokens', 0)
+        if output_tokens > 0:
+            output_cost = output_tokens * pricing['output']
+            cost += output_cost
+            costs_breakdown['output'] = output_cost
+
+        # Cache creation cost
+        cache_creation = usage.get('cache_creation_input_tokens', 0)
+        if cache_creation > 0:
+            cache_create_cost = cache_creation * pricing['cache_creation']
+            cost += cache_create_cost
+            costs_breakdown['cache_creation'] = cache_create_cost
+
+        # Cache read cost
+        cache_read = usage.get('cache_read_input_tokens', 0)
+        if cache_read > 0:
+            cache_read_cost = cache_read * pricing['cache_read']
+            cost += cache_read_cost
+            costs_breakdown['cache_read'] = cache_read_cost
+
+        return cost, costs_breakdown
+
+    def collect_metrics():
+        """Collect metrics from Claude API by making a test request"""
+        start_time = time.time()
+        scrape_success = 0
+
+        try:
+            print(f"[{datetime.now().isoformat()}] Starting Claude API metric collection...")
+
+            # Initialize Claude client
+            client = anthropic.Anthropic(api_key=CLAUDE_API_KEY)
+
+            # Make a minimal test request using cheapest model
+            # This costs approximately $0.0005 per scrape
+            test_model = "claude-3-haiku-20240307"
+
+            request_start = time.time()
+            message = client.messages.create(
+                model=test_model,
+                max_tokens=10,
+                messages=[
+                    {"role": "user", "content": "ping"}
+                ]
+            )
+            request_duration = time.time() - request_start
+
+            # Record request duration
+            claude_request_duration_seconds.labels(model=test_model).observe(request_duration)
+
+            # Extract usage data from response
+            usage = message.usage
+            service_tier = getattr(usage, 'service_tier', 'standard')
+
+            # Extract token metrics
+            input_tokens = getattr(usage, 'input_tokens', 0)
+            output_tokens = getattr(usage, 'output_tokens', 0)
+            cache_creation_tokens = getattr(usage, 'cache_creation_input_tokens', 0)
+            cache_read_tokens = getattr(usage, 'cache_read_input_tokens', 0)
+
+            print(f"  ✓ API Response received:")
+            print(f"    - Model: {test_model}")
+            print(f"    - Service Tier: {service_tier}")
+            print(f"    - Input Tokens: {input_tokens}")
+            print(f"    - Output Tokens: {output_tokens}")
+            print(f"    - Cache Creation: {cache_creation_tokens}")
+            print(f"    - Cache Read: {cache_read_tokens}")
+            print(f"    - Request Duration: {request_duration:.3f}s")
+
+            # Update token counters
+            claude_tokens_input_total.labels(
+                model=test_model,
+                service_tier=service_tier
+            ).inc(input_tokens)
+
+            claude_tokens_output_total.labels(
+                model=test_model,
+                service_tier=service_tier
+            ).inc(output_tokens)
+
+            if cache_creation_tokens > 0:
+                claude_tokens_cache_creation_total.labels(model=test_model).inc(cache_creation_tokens)
+                claude_cache_total_writes.labels(model=test_model).inc(1)
+
+            if cache_read_tokens > 0:
+                claude_tokens_cache_read_total.labels(model=test_model).inc(cache_read_tokens)
+                claude_cache_total_reads.labels(model=test_model).inc(1)
+
+            # Calculate cache hit ratio
+            total_cache_ops = cache_creation_tokens + cache_read_tokens
+            if total_cache_ops > 0:
+                hit_ratio = cache_read_tokens / total_cache_ops
+                claude_cache_hit_ratio.labels(model=test_model).set(hit_ratio)
+
+            # Update session gauges for current metrics
+            claude_session_tokens_input.labels(model=test_model).set(input_tokens)
+            claude_session_tokens_output.labels(model=test_model).set(output_tokens)
+
+            # Calculate costs
+            cost, costs_breakdown = calculate_cost(test_model, {
+                'input_tokens': input_tokens,
+                'output_tokens': output_tokens,
+                'cache_creation_input_tokens': cache_creation_tokens,
+                'cache_read_input_tokens': cache_read_tokens
+            })
+
+            # Update cost counters
+            for token_type, token_cost in costs_breakdown.items():
+                claude_cost_estimated_usd_total.labels(
+                    model=test_model,
+                    token_type=token_type
+                ).inc(token_cost)
+
+            # Update session cost gauge
+            claude_session_cost_usd.labels(model=test_model).set(cost)
+
+            print(f"    - Estimated Cost: ${cost:.6f}")
+            print(f"      Breakdown: {costs_breakdown}")
+
+            # Record successful request
+            claude_requests_total.labels(
+                model=test_model,
+                service_tier=service_tier,
+                status='success'
+            ).inc()
+
+            # Record service tier usage
+            claude_service_tier_requests.labels(tier=service_tier).inc()
+
+            # Check for tool usage
+            server_tool_use = getattr(usage, 'server_tool_use', None)
+            if server_tool_use:
+                web_searches = getattr(server_tool_use, 'web_search_requests', 0)
+                if web_searches > 0:
+                    claude_web_search_requests_total.labels(model=test_model).inc(web_searches)
+                    print(f"    - Web Searches: {web_searches}")
+
+            # Update exporter info
+            claude_info.info({
+                'version': '1.0.0',
+                'last_scrape': datetime.now().isoformat(),
+                'api_endpoint': 'https://api.anthropic.com/v1'
+            })
+
+            scrape_success = 1
+            claude_api_up.set(1)
+
+            duration = time.time() - start_time
+            claude_scrape_duration_seconds.set(duration)
+
+            print(f"[{datetime.now().isoformat()}] ✓ Scrape completed successfully in {duration:.2f}s")
+            print("")
+
+        except anthropic.APIError as e:
+            print(f"[{datetime.now().isoformat()}] ✗ Claude API Error: {e}")
+            claude_scrape_errors_total.inc()
+            claude_api_up.set(0)
+            # Record failed request
+            claude_requests_total.labels(
+                model='unknown',
+                service_tier='unknown',
+                status='error'
+            ).inc()
+
+        except Exception as e:
+            print(f"[{datetime.now().isoformat()}] ✗ Unexpected error: {e}")
+            import traceback
+            traceback.print_exc()
+            claude_scrape_errors_total.inc()
+            claude_api_up.set(0)
+
+    if __name__ == '__main__':
+        print(f"Starting Claude API Prometheus Exporter on port {EXPORTER_PORT}")
+        print(f"API Key: {'*' * 20}{CLAUDE_API_KEY[-10:] if len(CLAUDE_API_KEY) > 10 else '(not set)'}")
+        print(f"Scrape interval: {SCRAPE_INTERVAL}s ({SCRAPE_INTERVAL/60:.1f} minutes)")
+        print(f"Estimated daily cost: ${(24*60*60/SCRAPE_INTERVAL) * 0.0005:.2f}")
+        print("")
+
+        # Start HTTP server for Prometheus to scrape
+        start_http_server(EXPORTER_PORT)
+        print(f"Metrics endpoint available at http://localhost:{EXPORTER_PORT}/metrics")
+        print("")
+
+        # Collect metrics in a loop
+        while True:
+            collect_metrics()
+            time.sleep(SCRAPE_INTERVAL)
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: claude-api-exporter
+  namespace: monitoring
+  labels:
+    app: claude-api-exporter
+    component: metrics
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: claude-api-exporter
+  template:
+    metadata:
+      labels:
+        app: claude-api-exporter
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "9132"
+        prometheus.io/path: "/metrics"
+    spec:
+      containers:
+      - name: exporter
+        image: python:3.11-slim
+        command:
+          - /bin/bash
+          - -c
+          - |
+            pip install --no-cache-dir prometheus-client anthropic
+            python /app/exporter.py
+        ports:
+        - name: metrics
+          containerPort: 9132
+          protocol: TCP
+        env:
+        - name: CLAUDE_API_KEY
+          value: "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"
+        - name: SCRAPE_INTERVAL
+          value: "300"  # 5 minutes
+        - name: EXPORTER_PORT
+          value: "9132"
+        volumeMounts:
+        - name: script
+          mountPath: /app
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "100m"
+          limits:
+            memory: "256Mi"
+            cpu: "200m"
+        livenessProbe:
+          httpGet:
+            path: /metrics
+            port: 9132
+          initialDelaySeconds: 30
+          periodSeconds: 60
+        readinessProbe:
+          httpGet:
+            path: /metrics
+            port: 9132
+          initialDelaySeconds: 10
+          periodSeconds: 30
+      volumes:
+      - name: script
+        configMap:
+          name: claude-api-exporter-script
+          defaultMode: 0755
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: claude-api-exporter
+  namespace: monitoring
+  labels:
+    app: claude-api-exporter
+  annotations:
+    prometheus.io/scrape: "true"
+    prometheus.io/port: "9132"
+    prometheus.io/path: "/metrics"
+spec:
+  type: ClusterIP
+  ports:
+  - name: metrics
+    port: 9132
+    targetPort: 9132
+    protocol: TCP
+  selector:
+    app: claude-api-exporter
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: claude-api-exporter
+  namespace: monitoring
+  labels:
+    app: claude-api-exporter
+    release: kube-prometheus-stack
+spec:
+  selector:
+    matchLabels:
+      app: claude-api-exporter
+  endpoints:
+  - port: metrics
+    interval: 5m  # Scrape every 5 minutes to match exporter interval
+    path: /metrics
