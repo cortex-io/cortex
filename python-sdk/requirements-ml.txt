@@ -12,7 +12,7 @@ langchain>=0.2.5  # Updated to fix CVE (DoS and SQL injection vulnerabilities)
 langchain-openai==0.0.2
 langchain-community>=0.3.27  # Updated to fix CVE (XXE and SSRF)
 langchain-core>=0.3.80  # Updated to fix CVE (template injection)
-langsmith==0.0.77
+langsmith==0.6.7
 
 # Vector Stores and Embeddings
 chromadb==0.4.22
