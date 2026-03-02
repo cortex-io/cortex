@@ -1,0 +1,86 @@
+name: Monthly Cost Report
+
+on:
+  schedule:
+    # Last day of each month at 11 AM UTC
+    - cron: '0 11 28-31 * *'
+  workflow_dispatch:  # Allow manual triggering
+
+permissions:
+  contents: read
+
+jobs:
+  cost-report:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Setup Quarto
+        uses: quarto-dev/quarto-actions/setup@v2
+
+      - name: Install Python dependencies
+        run: |
+          pip install jupyter pyyaml pyarrow
+          cd reports
+          pip install polars anthropic plotly pandas
+
+      - name: Render cost report
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          cd reports
+          quarto render cost-report.qmd
+
+      - name: Upload cost report artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: cost-report-${{ github.run_number }}
+          path: |
+            reports/_site/cost-report.html
+            reports/cost-report.html
+          retention-days: 365
+
+      - name: Calculate total costs
+        id: costs
+        run: |
+          TOTAL_TOKENS=0
+          if [ -f coordination/worker-health-metrics.jsonl ]; then
+            TOTAL_TOKENS=$(jq -r '.tokens_used // 0' coordination/worker-health-metrics.jsonl 2>/dev/null | awk '{s+=$1} END {print s}' || echo "0")
+          fi
+          echo "total_tokens=$TOTAL_TOKENS" >> $GITHUB_OUTPUT
+
+      - name: Send email with cost report
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: ${{ secrets.MAIL_SERVER }}
+          server_port: ${{ secrets.MAIL_PORT }}
+          username: ${{ secrets.MAIL_USERNAME }}
+          password: ${{ secrets.MAIL_PASSWORD }}
+          subject: "Cortex Monthly Cost Report"
+          to: ryan@ry-ops.dev
+          from: Cortex Reports <${{ secrets.MAIL_USERNAME }}>
+          html_body: |
+            <h1>Cortex Monthly Cost Report</h1>
+            <p>Your monthly cost analysis report is attached.</p>
+            <h2>Quick Summary:</h2>
+            <ul>
+              <li>Total Tokens Used: ${{ steps.costs.outputs.total_tokens || 'N/A' }}</li>
+            </ul>
+            <p>Generated: $(date -u +"%Y-%m-%d %H:%M UTC")</p>
+            <p><em>This is an automated cost report from Cortex.</em></p>
+          attachments: reports/_site/cost-report.html
+
+      - name: Create summary
+        run: |
+          echo "## 💰 Cost Report Generated & Emailed" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Cost report has been completed and emailed to ryan@ry-ops.dev" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Total Tokens:** ${{ steps.costs.outputs.total_tokens || 'N/A' }}" >> $GITHUB_STEP_SUMMARY

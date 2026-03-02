@@ -23,7 +23,7 @@
       "Audit query interface",
       "Compliance reports"
     ],
-    "repository": "ry-ops/commit-relay",
+    "repository": "ry-ops/cortex",
     "branch": "main",
     "handoff_id": "coord-to-development-E6A84659-BE54-46C1-B6BB-4EE2F82027C8"
   },

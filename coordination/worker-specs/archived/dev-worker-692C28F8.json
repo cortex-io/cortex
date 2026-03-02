@@ -14,7 +14,7 @@
   "created_at": "2025-11-08T08:28:49-0600",
   "created_by": "create-task-cli",
   "context": {
-    "repository": "ry-ops/commit-relay",
+    "repository": "ry-ops/cortex",
     "branch": "main",
     "description": "CRITICAL: Admin page restart button not working. Investigate dashboard/public/index.html admin panel restart functionality, /api/admin/restart endpoint implementation, server process management logic, and permission issues. Fix restart button to properly restart dashboard server and provide user feedback. Also fix event log purge button that shows 'Failed to purge event log' error.",
     "requirements": []
@@ -34,8 +34,8 @@
   "testing"
 ],
     "knowledge_base_refs": {
-      "implementation_patterns": "/Users/ryandahlberg/projects/commit-relay/scripts/../coordination/masters/development/knowledge-base/implementation-patterns.jsonl",
-      "architecture_docs": "/Users/ryandahlberg/projects/commit-relay/scripts/../coordination/masters/development/knowledge-base/codebase-architecture.json"
+      "implementation_patterns": "/Users/ryandahlberg/projects/cortex/scripts/../coordination/masters/development/knowledge-base/implementation-patterns.jsonl",
+      "architecture_docs": "/Users/ryandahlberg/projects/cortex/scripts/../coordination/masters/development/knowledge-base/codebase-architecture.json"
     }
   },
   "resources": {

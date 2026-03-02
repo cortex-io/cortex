@@ -1,0 +1,23 @@
+{
+  "task_id": "security-006",
+  "master": "security",
+  "description": "Implement rate limiting on API endpoints to prevent abuse",
+  "complexity": "medium",
+  "expected_outcome": {
+    "should_add_rate_limiter": true,
+    "should_configure_limits": true,
+    "should_return_headers": true,
+    "should_handle_exceeded": true
+  },
+  "evaluation_criteria": [
+    "Implements rate limiting middleware",
+    "Configures per-endpoint limits",
+    "Uses token bucket or sliding window algorithm",
+    "Returns rate limit headers (X-RateLimit-*)",
+    "Returns 429 status when exceeded",
+    "Supports IP-based and user-based limiting",
+    "Tests rate limiting behavior"
+  ],
+  "estimated_time_minutes": 35,
+  "tags": ["rate-limiting", "security", "api"]
+}

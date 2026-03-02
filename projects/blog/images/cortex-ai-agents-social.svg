@@ -1,0 +1,159 @@
+<svg width="1200" height="630" viewBox="0 0 1200 630" xmlns="http://www.w3.org/2000/svg">
+  <!-- Social sharing image for AI agents post -->
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#1a1a2e;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#16213e;stop-opacity:1" />
+    </linearGradient>
+
+    <linearGradient id="shieldGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#00d9ff;stop-opacity:0.6" />
+      <stop offset="100%" style="stop-color:#00ffcc;stop-opacity:0.6" />
+    </linearGradient>
+
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="5" result="coloredBlur"/>
+      <feMerge>
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1200" height="630" fill="url(#bgGrad)"/>
+
+  <!-- Grid -->
+  <g opacity="0.04">
+    <line x1="0" y1="210" x2="1200" y2="210" stroke="white" stroke-width="1"/>
+    <line x1="0" y1="420" x2="1200" y2="420" stroke="white" stroke-width="1"/>
+    <line x1="400" y1="0" x2="400" y2="630" stroke="white" stroke-width="1"/>
+    <line x1="800" y1="0" x2="800" y2="630" stroke="white" stroke-width="1"/>
+  </g>
+
+  <!-- Central shield/security icon -->
+  <g transform="translate(600, 315)">
+    <!-- Outer protection ring -->
+    <circle cx="0" cy="0" r="180" fill="none" stroke="#00d9ff" stroke-width="2" opacity="0.3" stroke-dasharray="15,10">
+      <animateTransform attributeName="transform" type="rotate" from="0 0 0" to="360 0 0" dur="30s" repeatCount="indefinite"/>
+    </circle>
+
+    <!-- Inner ring -->
+    <circle cx="0" cy="0" r="140" fill="none" stroke="#00ffcc" stroke-width="2" opacity="0.25">
+      <animateTransform attributeName="transform" type="rotate" from="360 0 0" to="0 0 0" dur="20s" repeatCount="indefinite"/>
+    </circle>
+
+    <!-- Shield shape -->
+    <g filter="url(#glow)">
+      <path d="M 0,-80 L 60,-60 L 60,40 Q 60,80 0,100 Q -60,80 -60,40 L -60,-60 Z"
+            fill="#16213e" stroke="#00d9ff" stroke-width="3" opacity="0.9"/>
+
+      <!-- Shield inner glow -->
+      <path d="M 0,-70 L 50,-53 L 50,38 Q 50,72 0,88 Q -50,72 -50,38 L -50,-53 Z"
+            fill="url(#shieldGrad)" opacity="0.2">
+        <animate attributeName="opacity" values="0.2;0.4;0.2" dur="3s" repeatCount="indefinite"/>
+      </path>
+
+      <!-- AI brain icon inside shield -->
+      <g opacity="0.8">
+        <!-- Central node -->
+        <circle cx="0" cy="10" r="15" fill="#00d9ff" opacity="0.3"/>
+        <circle cx="0" cy="10" r="8" fill="#00d9ff"/>
+
+        <!-- Neural connections -->
+        <circle cx="-25" cy="-10" r="6" fill="#00ffcc">
+          <animate attributeName="opacity" values="1;0.4;1" dur="2s" repeatCount="indefinite"/>
+        </circle>
+        <circle cx="25" cy="-10" r="6" fill="#00ffcc">
+          <animate attributeName="opacity" values="0.4;1;0.4" dur="2s" repeatCount="indefinite" begin="0.7s"/>
+        </circle>
+        <circle cx="-25" cy="30" r="6" fill="#00d9ff">
+          <animate attributeName="opacity" values="0.4;1;0.4" dur="2s" repeatCount="indefinite" begin="0.3s"/>
+        </circle>
+        <circle cx="25" cy="30" r="6" fill="#00d9ff">
+          <animate attributeName="opacity" values="0.4;1;0.4" dur="2s" repeatCount="indefinite" begin="1s"/>
+        </circle>
+
+        <!-- Connection lines -->
+        <line x1="-25" y1="-10" x2="0" y2="10" stroke="#00ffcc" stroke-width="1.5" opacity="0.5"/>
+        <line x1="25" y1="-10" x2="0" y2="10" stroke="#00ffcc" stroke-width="1.5" opacity="0.5"/>
+        <line x1="-25" y1="30" x2="0" y2="10" stroke="#00d9ff" stroke-width="1.5" opacity="0.5"/>
+        <line x1="25" y1="30" x2="0" y2="10" stroke="#00d9ff" stroke-width="1.5" opacity="0.5"/>
+      </g>
+
+      <!-- Security check marks -->
+      <g opacity="0.7">
+        <path d="M -20,-35 L -15,-30 L -8,-40" stroke="#00ffcc" stroke-width="2.5" fill="none" stroke-linecap="round">
+          <animate attributeName="opacity" values="0;0.7;0.7" dur="3s" repeatCount="indefinite"/>
+        </path>
+        <path d="M 8,-35 L 13,-30 L 20,-40" stroke="#00ffcc" stroke-width="2.5" fill="none" stroke-linecap="round">
+          <animate attributeName="opacity" values="0;0.7;0.7" dur="3s" repeatCount="indefinite" begin="0.5s"/>
+        </path>
+      </g>
+    </g>
+
+    <!-- Satellite nodes representing agents -->
+    <g opacity="0.7">
+      <!-- Top agent -->
+      <circle cx="0" cy="-120" r="18" fill="#16213e" stroke="#00d9ff" stroke-width="2"/>
+      <circle cx="0" cy="-120" r="8" fill="#00d9ff" opacity="0.4">
+        <animate attributeName="opacity" values="0.4;0.7;0.4" dur="2s" repeatCount="indefinite"/>
+      </circle>
+
+      <!-- Right agent -->
+      <circle cx="104" cy="-60" r="18" fill="#16213e" stroke="#00ffcc" stroke-width="2"/>
+      <circle cx="104" cy="-60" r="8" fill="#00ffcc" opacity="0.4">
+        <animate attributeName="opacity" values="0.4;0.7;0.4" dur="2s" repeatCount="indefinite" begin="0.5s"/>
+      </circle>
+
+      <!-- Bottom right agent -->
+      <circle cx="104" cy="60" r="18" fill="#16213e" stroke="#00d9ff" stroke-width="2"/>
+      <circle cx="104" cy="60" r="8" fill="#00d9ff" opacity="0.4">
+        <animate attributeName="opacity" values="0.4;0.7;0.4" dur="2s" repeatCount="indefinite" begin="1s"/>
+      </circle>
+
+      <!-- Bottom agent -->
+      <circle cx="0" cy="120" r="18" fill="#16213e" stroke="#00ffcc" stroke-width="2"/>
+      <circle cx="0" cy="120" r="8" fill="#00ffcc" opacity="0.4">
+        <animate attributeName="opacity" values="0.4;0.7;0.4" dur="2s" repeatCount="indefinite" begin="1.5s"/>
+      </circle>
+
+      <!-- Bottom left agent -->
+      <circle cx="-104" cy="60" r="18" fill="#16213e" stroke="#00d9ff" stroke-width="2"/>
+      <circle cx="-104" cy="60" r="8" fill="#00d9ff" opacity="0.4">
+        <animate attributeName="opacity" values="0.4;0.7;0.4" dur="2s" repeatCount="indefinite" begin="0.75s"/>
+      </circle>
+
+      <!-- Left agent -->
+      <circle cx="-104" cy="-60" r="18" fill="#16213e" stroke="#00ffcc" stroke-width="2"/>
+      <circle cx="-104" cy="-60" r="8" fill="#00ffcc" opacity="0.4">
+        <animate attributeName="opacity" values="0.4;0.7;0.4" dur="2s" repeatCount="indefinite" begin="1.25s"/>
+      </circle>
+    </g>
+  </g>
+
+  <!-- Connection lines (faint) -->
+  <g opacity="0.15">
+    <line x1="600" y1="195" x2="600" y2="235" stroke="#00d9ff" stroke-width="2"/>
+    <line x1="704" y1="255" x2="664" y2="285" stroke="#00ffcc" stroke-width="2"/>
+    <line x1="704" y1="375" x2="664" y2="345" stroke="#00d9ff" stroke-width="2"/>
+    <line x1="600" y1="435" x2="600" y2="395" stroke="#00ffcc" stroke-width="2"/>
+    <line x1="496" y1="375" x2="536" y2="345" stroke="#00d9ff" stroke-width="2"/>
+    <line x1="496" y1="255" x2="536" y2="285" stroke="#00ffcc" stroke-width="2"/>
+  </g>
+
+  <!-- Corner decorations -->
+  <g opacity="0.4">
+    <circle cx="80" cy="80" r="30" fill="none" stroke="#00d9ff" stroke-width="2">
+      <animateTransform attributeName="transform" type="rotate" from="0 80 80" to="360 80 80" dur="20s" repeatCount="indefinite"/>
+    </circle>
+    <circle cx="1120" cy="550" r="30" fill="none" stroke="#00ffcc" stroke-width="2" stroke-dasharray="6,4">
+      <animateTransform attributeName="transform" type="rotate" from="360 1120 550" to="0 1120 550" dur="25s" repeatCount="indefinite"/>
+    </circle>
+  </g>
+
+  <!-- Bottom accent -->
+  <rect x="0" y="620" width="1200" height="10" fill="url(#shieldGrad)">
+    <animate attributeName="opacity" values="0.6;1;0.6" dur="3s" repeatCount="indefinite"/>
+  </rect>
+</svg>

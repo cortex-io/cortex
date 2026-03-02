@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # scripts/lib/failure-pattern-detection.sh
 # Failure Pattern Detection Library - Phase 4.4
 # Analyzes worker failures to identify patterns and predict future failures
@@ -14,10 +14,10 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-COMMIT_RELAY_HOME="${COMMIT_RELAY_HOME:-$(cd "$SCRIPT_DIR/../.." && pwd)}"
+CORTEX_HOME="${CORTEX_HOME:-$(cd "$SCRIPT_DIR/../.." && pwd)}"
 
 # Load configuration
-PATTERN_POLICY_FILE="$COMMIT_RELAY_HOME/coordination/config/failure-pattern-detection-policy.json"
+PATTERN_POLICY_FILE="$CORTEX_HOME/coordination/config/failure-pattern-detection-policy.json"
 if [ ! -f "$PATTERN_POLICY_FILE" ]; then
     echo "ERROR: Pattern detection policy file not found: $PATTERN_POLICY_FILE" >&2
     exit 1
@@ -31,15 +31,15 @@ SIMILARITY_THRESHOLD=$(jq -r '.detection.similarity_threshold' "$PATTERN_POLICY_
 CORRELATION_WINDOW=$(jq -r '.correlation_analysis.correlation_window_seconds' "$PATTERN_POLICY_FILE")
 
 # Directories
-PATTERNS_DIR="$COMMIT_RELAY_HOME/coordination/patterns"
+PATTERNS_DIR="$CORTEX_HOME/coordination/patterns"
 PATTERN_DB="$PATTERNS_DIR/failure-patterns.jsonl"
 PATTERN_INDEX="$PATTERNS_DIR/pattern-index.json"
-PATTERN_LOG="$COMMIT_RELAY_HOME/agents/logs/system/failure-pattern-detection.log"
+PATTERN_LOG="$CORTEX_HOME/agents/logs/system/failure-pattern-detection.log"
 
 # Event sources
-ZOMBIE_EVENTS="$COMMIT_RELAY_HOME/coordination/events/zombie-cleanup-events.jsonl"
-RESTART_EVENTS="$COMMIT_RELAY_HOME/coordination/events/worker-restart-events.jsonl"
-HEARTBEAT_EVENTS="$COMMIT_RELAY_HOME/coordination/events/heartbeat-events.jsonl"
+ZOMBIE_EVENTS="$CORTEX_HOME/coordination/events/zombie-cleanup-events.jsonl"
+RESTART_EVENTS="$CORTEX_HOME/coordination/events/worker-restart-events.jsonl"
+HEARTBEAT_EVENTS="$CORTEX_HOME/coordination/events/heartbeat-events.jsonl"
 
 # Ensure directories exist
 mkdir -p "$PATTERNS_DIR"
@@ -137,7 +137,7 @@ extract_failure_signature() {
         zombie_date=$(date +%Y-%m-%d)
     fi
 
-    local zombie_spec="$COMMIT_RELAY_HOME/coordination/worker-specs/zombie/$zombie_date/${worker_id}.json"
+    local zombie_spec="$CORTEX_HOME/coordination/worker-specs/zombie/$zombie_date/${worker_id}.json"
 
     if [ -f "$zombie_spec" ]; then
         worker_type=$(jq -r '.worker_type // "unknown"' "$zombie_spec" 2>/dev/null || echo "unknown")
@@ -263,7 +263,7 @@ detect_frequent_patterns() {
         if [ "$worker_id" != "unknown" ]; then
             local timestamp=$(echo "$event" | jq -r '.timestamp')
             local zombie_date=$(echo "$timestamp" | cut -d'T' -f1)
-            local spec_file="$COMMIT_RELAY_HOME/coordination/worker-specs/zombie/${zombie_date}/${worker_id}.json"
+            local spec_file="$CORTEX_HOME/coordination/worker-specs/zombie/${zombie_date}/${worker_id}.json"
 
             if [ -f "$spec_file" ]; then
                 worker_type=$(jq -r '.worker_type // "unknown"' "$spec_file" 2>/dev/null || echo "unknown")
@@ -471,7 +471,7 @@ emit_pattern_event() {
         }')
 
     # Write to events log
-    local events_log="$COMMIT_RELAY_HOME/coordination/events/failure-pattern-events.jsonl"
+    local events_log="$CORTEX_HOME/coordination/events/failure-pattern-events.jsonl"
     mkdir -p "$(dirname "$events_log")"
     echo "$event_json" >> "$events_log"
 }

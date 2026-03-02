@@ -1,0 +1,20 @@
+{
+  "task_id": "security-005",
+  "master": "security",
+  "description": "Check for SQL injection vulnerabilities in database query code",
+  "complexity": "medium",
+  "expected_outcome": {
+    "should_find_raw_queries": true,
+    "should_suggest_parameterization": true,
+    "should_check_orm_usage": true
+  },
+  "evaluation_criteria": [
+    "Identifies raw SQL query construction",
+    "Detects string concatenation in queries",
+    "Suggests parameterized queries or ORM usage",
+    "Checks input validation on query parameters",
+    "Provides code examples for fixes"
+  ],
+  "estimated_time_minutes": 20,
+  "tags": ["sql-injection", "database", "vulnerability"]
+}

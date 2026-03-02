@@ -1,0 +1,365 @@
+---
+# SLA Predictor Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sla-predictor
+  namespace: cortex-itil-stream2
+  labels:
+    app: sla-predictor
+    component: sla-management
+    stream: "2"
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: sla-predictor
+  template:
+    metadata:
+      labels:
+        app: sla-predictor
+        component: sla-management
+    spec:
+      serviceAccountName: stream2-sa
+      initContainers:
+      - name: install-deps
+        image: python:3.11-slim
+        command: ["/bin/sh", "-c"]
+        args:
+        - |
+          pip install --no-cache-dir --target=/deps numpy==1.24.3 scikit-learn==1.3.0 requests==2.31.0 prometheus-client==0.17.1 kubernetes==27.2.0 joblib==1.3.2
+        volumeMounts:
+        - name: deps
+          mountPath: /deps
+      containers:
+      - name: sla-predictor
+        image: python:3.11-slim
+        command: ["/bin/sh", "-c"]
+        args:
+        - |
+          export PYTHONPATH=/deps:$PYTHONPATH
+          python /app/sla-predictor.py
+        ports:
+        - containerPort: 8000
+          name: metrics
+          protocol: TCP
+        env:
+        - name: PROMETHEUS_URL
+          value: "http://prometheus-k8s.cortex-system.svc.cluster.local:9090"
+        - name: PREDICTION_INTERVAL
+          value: "60"
+        - name: PYTHONUNBUFFERED
+          value: "1"
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "100m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+        volumeMounts:
+        - name: code
+          mountPath: /app
+        - name: deps
+          mountPath: /deps
+        - name: models
+          mountPath: /models
+        - name: data
+          mountPath: /data
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 8000
+          initialDelaySeconds: 60
+          periodSeconds: 30
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 8000
+          initialDelaySeconds: 30
+          periodSeconds: 10
+      volumes:
+      - name: code
+        configMap:
+          name: sla-predictor-code
+      - name: deps
+        emptyDir: {}
+      - name: models
+        persistentVolumeClaim:
+          claimName: sla-models-pvc
+      - name: data
+        persistentVolumeClaim:
+          claimName: sla-data-pvc
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: sla-predictor
+  namespace: cortex-itil-stream2
+  labels:
+    app: sla-predictor
+spec:
+  selector:
+    app: sla-predictor
+  ports:
+  - port: 8000
+    targetPort: 8000
+    name: metrics
+  type: ClusterIP
+---
+# Business Metrics Collector Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: business-metrics-collector
+  namespace: cortex-itil-stream2
+  labels:
+    app: business-metrics-collector
+    component: business-metrics
+    stream: "2"
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: business-metrics-collector
+  template:
+    metadata:
+      labels:
+        app: business-metrics-collector
+        component: business-metrics
+    spec:
+      serviceAccountName: stream2-sa
+      initContainers:
+      - name: install-deps
+        image: python:3.11-slim
+        command: ["/bin/sh", "-c"]
+        args:
+        - |
+          pip install --no-cache-dir --target=/deps requests==2.31.0 prometheus-client==0.17.1 kubernetes==27.2.0
+        volumeMounts:
+        - name: deps
+          mountPath: /deps
+      containers:
+      - name: business-metrics-collector
+        image: python:3.11-slim
+        command: ["/bin/sh", "-c"]
+        args:
+        - |
+          export PYTHONPATH=/deps:$PYTHONPATH
+          python /app/business-metrics-collector.py
+        ports:
+        - containerPort: 8001
+          name: metrics
+          protocol: TCP
+        env:
+        - name: PROMETHEUS_URL
+          value: "http://prometheus-k8s.cortex-system.svc.cluster.local:9090"
+        - name: COLLECTION_INTERVAL
+          value: "60"
+        - name: PYTHONUNBUFFERED
+          value: "1"
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "50m"
+          limits:
+            memory: "256Mi"
+            cpu: "200m"
+        volumeMounts:
+        - name: code
+          mountPath: /app
+        - name: deps
+          mountPath: /deps
+        - name: data
+          mountPath: /data
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 8001
+          initialDelaySeconds: 60
+          periodSeconds: 30
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 8001
+          initialDelaySeconds: 30
+          periodSeconds: 10
+      volumes:
+      - name: code
+        configMap:
+          name: business-metrics-code
+      - name: deps
+        emptyDir: {}
+      - name: data
+        persistentVolumeClaim:
+          claimName: business-metrics-data-pvc
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: business-metrics-collector
+  namespace: cortex-itil-stream2
+  labels:
+    app: business-metrics-collector
+spec:
+  selector:
+    app: business-metrics-collector
+  ports:
+  - port: 8001
+    targetPort: 8001
+    name: metrics
+  type: ClusterIP
+---
+# Availability Risk Engine Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: availability-risk-engine
+  namespace: cortex-itil-stream2
+  labels:
+    app: availability-risk-engine
+    component: availability-risk
+    stream: "2"
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: availability-risk-engine
+  template:
+    metadata:
+      labels:
+        app: availability-risk-engine
+        component: availability-risk
+    spec:
+      serviceAccountName: stream2-sa
+      initContainers:
+      - name: install-deps
+        image: python:3.11-slim
+        command: ["/bin/sh", "-c"]
+        args:
+        - |
+          pip install --no-cache-dir --target=/deps numpy==1.24.3 scikit-learn==1.3.0 requests==2.31.0 prometheus-client==0.17.1 kubernetes==27.2.0
+        volumeMounts:
+        - name: deps
+          mountPath: /deps
+      containers:
+      - name: availability-risk-engine
+        image: python:3.11-slim
+        command: ["/bin/sh", "-c"]
+        args:
+        - |
+          export PYTHONPATH=/deps:$PYTHONPATH
+          python /app/availability-risk-engine.py
+        ports:
+        - containerPort: 8002
+          name: metrics
+          protocol: TCP
+        env:
+        - name: PROMETHEUS_URL
+          value: "http://prometheus-k8s.cortex-system.svc.cluster.local:9090"
+        - name: ASSESSMENT_INTERVAL
+          value: "60"
+        - name: PYTHONUNBUFFERED
+          value: "1"
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "100m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+        volumeMounts:
+        - name: code
+          mountPath: /app
+        - name: deps
+          mountPath: /deps
+        - name: data
+          mountPath: /data
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 8002
+          initialDelaySeconds: 60
+          periodSeconds: 30
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 8002
+          initialDelaySeconds: 30
+          periodSeconds: 10
+      volumes:
+      - name: code
+        configMap:
+          name: availability-risk-code
+      - name: deps
+        emptyDir: {}
+      - name: data
+        persistentVolumeClaim:
+          claimName: availability-risk-data-pvc
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: availability-risk-engine
+  namespace: cortex-itil-stream2
+  labels:
+    app: availability-risk-engine
+spec:
+  selector:
+    app: availability-risk-engine
+  ports:
+  - port: 8002
+    targetPort: 8002
+    name: metrics
+  type: ClusterIP
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: sla-predictor
+  namespace: cortex-itil-stream2
+  labels:
+    prometheus: kube-prometheus
+spec:
+  selector:
+    matchLabels:
+      app: sla-predictor
+  endpoints:
+  - port: metrics
+    interval: 30s
+    path: /metrics
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: business-metrics
+  namespace: cortex-itil-stream2
+  labels:
+    prometheus: kube-prometheus
+spec:
+  selector:
+    matchLabels:
+      app: business-metrics-collector
+  endpoints:
+  - port: metrics
+    interval: 30s
+    path: /metrics
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: availability-risk
+  namespace: cortex-itil-stream2
+  labels:
+    prometheus: kube-prometheus
+spec:
+  selector:
+    matchLabels:
+      app: availability-risk-engine
+  endpoints:
+  - port: metrics
+    interval: 30s
+    path: /metrics

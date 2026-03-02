@@ -1,0 +1,119 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: availability-risk-engine
+  namespace: cortex-itil-stream2
+  labels:
+    app: availability-risk-engine
+    component: availability-risk
+    stream: "2"
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: availability-risk-engine
+  template:
+    metadata:
+      labels:
+        app: availability-risk-engine
+        component: availability-risk
+    spec:
+      serviceAccountName: availability-risk
+      containers:
+      - name: availability-risk-engine
+        image: availability-risk-engine:latest
+        imagePullPolicy: Never
+        ports:
+        - containerPort: 8002
+          name: metrics
+          protocol: TCP
+        env:
+        - name: PROMETHEUS_URL
+          value: "http://prometheus-k8s.cortex-system.svc.cluster.local:9090"
+        - name: ASSESSMENT_INTERVAL
+          value: "60"
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "100m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+        volumeMounts:
+        - name: data
+          mountPath: /data
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 8002
+          initialDelaySeconds: 30
+          periodSeconds: 30
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 8002
+          initialDelaySeconds: 10
+          periodSeconds: 10
+      volumes:
+      - name: data
+        persistentVolumeClaim:
+          claimName: availability-risk-data-pvc
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: availability-risk-engine
+  namespace: cortex-itil-stream2
+  labels:
+    app: availability-risk-engine
+spec:
+  selector:
+    app: availability-risk-engine
+  ports:
+  - port: 8002
+    targetPort: 8002
+    name: metrics
+  type: ClusterIP
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: availability-risk
+  namespace: cortex-itil-stream2
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: availability-risk
+rules:
+- apiGroups: [""]
+  resources: ["services", "pods", "namespaces", "nodes"]
+  verbs: ["get", "list", "watch"]
+- apiGroups: ["apps"]
+  resources: ["deployments"]
+  verbs: ["get", "list", "watch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: availability-risk
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: availability-risk
+subjects:
+- kind: ServiceAccount
+  name: availability-risk
+  namespace: cortex-itil-stream2
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: availability-risk-data-pvc
+  namespace: cortex-itil-stream2
+spec:
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: 2Gi

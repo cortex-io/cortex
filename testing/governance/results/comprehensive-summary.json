@@ -32,7 +32,7 @@
       ]
     },
     "framework_version": "1.0.0",
-    "test_suite_location": "/Users/ryandahlberg/commit-relay/tests/governance",
-    "results_location": "/Users/ryandahlberg/commit-relay/tests/governance/results"
+    "test_suite_location": "/Users/ryandahlberg/cortex/tests/governance",
+    "results_location": "/Users/ryandahlberg/cortex/tests/governance/results"
   }
 }

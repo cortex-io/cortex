@@ -1,0 +1,343 @@
+name: Release Pipeline
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+    inputs:
+      release-type:
+        description: 'Release type'
+        required: true
+        type: choice
+        options:
+          - patch
+          - minor
+          - major
+          - prerelease
+
+permissions:
+  contents: write
+  issues: write
+  pull-requests: write
+  packages: write
+
+env:
+  NODE_VERSION: '20.x'
+  PNPM_VERSION: '8'
+
+jobs:
+  # Determine if release is needed
+  check-release:
+    name: Check Release Required
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      should-release: ${{ steps.check.outputs.should-release }}
+      next-version: ${{ steps.check.outputs.next-version }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Check for releasable commits
+        id: check
+        run: |
+          # Check if there are any commits since last tag
+          LAST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
+
+          if [ -z "$LAST_TAG" ]; then
+            echo "No previous tag found, creating initial release"
+            echo "should-release=true" >> $GITHUB_OUTPUT
+            echo "next-version=1.0.0" >> $GITHUB_OUTPUT
+          else
+            # Check for conventional commits
+            COMMITS=$(git log $LAST_TAG..HEAD --pretty=format:"%s" | grep -E "^(feat|fix|perf|revert):" || true)
+
+            if [ -n "$COMMITS" ]; then
+              echo "Found releasable commits"
+              echo "should-release=true" >> $GITHUB_OUTPUT
+
+              # Determine next version based on commits
+              if echo "$COMMITS" | grep -q "^feat!:"; then
+                echo "next-version=major" >> $GITHUB_OUTPUT
+              elif echo "$COMMITS" | grep -q "^feat:"; then
+                echo "next-version=minor" >> $GITHUB_OUTPUT
+              else
+                echo "next-version=patch" >> $GITHUB_OUTPUT
+              fi
+            else
+              echo "No releasable commits found"
+              echo "should-release=false" >> $GITHUB_OUTPUT
+            fi
+          fi
+
+  # Semantic release
+  release:
+    name: Semantic Release
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    needs: check-release
+    if: needs.check-release.outputs.should-release == 'true' || github.event_name == 'workflow_dispatch'
+
+    outputs:
+      version: ${{ steps.semantic.outputs.version }}
+      new-release-published: ${{ steps.semantic.outputs.new-release-published }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+          persist-credentials: true
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Setup Git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Run semantic-release
+        id: semantic
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # Install semantic-release
+          pnpm add -D semantic-release @semantic-release/changelog @semantic-release/git @semantic-release/github conventional-changelog-conventionalcommits
+
+          # Create release config
+          cat > .releaserc.json <<EOF
+          {
+            "branches": ["main"],
+            "plugins": [
+              ["@semantic-release/commit-analyzer", {
+                "preset": "conventionalcommits",
+                "releaseRules": [
+                  {"type": "feat", "release": "minor"},
+                  {"type": "fix", "release": "patch"},
+                  {"type": "perf", "release": "patch"},
+                  {"type": "revert", "release": "patch"},
+                  {"type": "docs", "scope": "README", "release": "patch"},
+                  {"type": "refactor", "release": "patch"},
+                  {"type": "style", "release": "patch"},
+                  {"breaking": true, "release": "major"}
+                ]
+              }],
+              ["@semantic-release/release-notes-generator", {
+                "preset": "conventionalcommits",
+                "writerOpts": {
+                  "commitsSort": ["subject", "scope"]
+                }
+              }],
+              ["@semantic-release/changelog", {
+                "changelogFile": "CHANGELOG.md",
+                "changelogTitle": "# Cortex Automation System Changelog"
+              }],
+              ["@semantic-release/npm", {
+                "npmPublish": false
+              }],
+              ["@semantic-release/github", {
+                "assets": [
+                  {"path": "packages/*/dist/**", "label": "Distribution files"}
+                ]
+              }],
+              ["@semantic-release/git", {
+                "assets": ["CHANGELOG.md", "package.json", "pnpm-lock.yaml", "packages/*/package.json"],
+                "message": "chore(release): \${nextRelease.version} [skip ci]\n\n\${nextRelease.notes}"
+              }]
+            ]
+          }
+          EOF
+
+          # Run semantic-release
+          npx semantic-release
+
+      - name: Get release version
+        if: success()
+        run: |
+          VERSION=$(git describe --tags --abbrev=0)
+          echo "Released version: $VERSION"
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "new-release-published=true" >> $GITHUB_OUTPUT
+
+  # Build release artifacts
+  build-artifacts:
+    name: Build Release Artifacts
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    needs: release
+    if: needs.release.outputs.new-release-published == 'true'
+
+    strategy:
+      matrix:
+        package:
+          - mcp-k8s-orchestrator
+          - mcp-n8n-workflow
+          - mcp-talos-node
+          - mcp-s3-storage
+          - mcp-postgres-data
+        platform:
+          - linux-amd64
+          - linux-arm64
+      fail-fast: false
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.release.outputs.version }}
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build package
+        run: pnpm --filter ${{ matrix.package }} run build
+
+      - name: Package artifact
+        run: |
+          cd packages/${{ matrix.package }}
+          tar -czf ../../${{ matrix.package }}-${{ needs.release.outputs.version }}-${{ matrix.platform }}.tar.gz dist/
+
+      - name: Upload to release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ needs.release.outputs.version }}
+          files: ${{ matrix.package }}-${{ needs.release.outputs.version }}-${{ matrix.platform }}.tar.gz
+
+  # Generate release notes
+  generate-release-notes:
+    name: Generate Release Notes
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    needs: release
+    if: needs.release.outputs.new-release-published == 'true'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ needs.release.outputs.version }}
+
+      - name: Generate release summary
+        run: |
+          # Get commits since last release
+          PREVIOUS_TAG=$(git describe --tags --abbrev=0 ${{ needs.release.outputs.version }}^ 2>/dev/null || echo "")
+
+          if [ -z "$PREVIOUS_TAG" ]; then
+            RANGE="${{ needs.release.outputs.version }}"
+          else
+            RANGE="${PREVIOUS_TAG}..${{ needs.release.outputs.version }}"
+          fi
+
+          # Create release summary
+          cat > release-summary.md <<EOF
+          # Release ${{ needs.release.outputs.version }}
+
+          ## What's Changed
+
+          ### Features
+          $(git log $RANGE --pretty=format:"- %s (%h)" --grep="^feat:" || echo "No new features")
+
+          ### Bug Fixes
+          $(git log $RANGE --pretty=format:"- %s (%h)" --grep="^fix:" || echo "No bug fixes")
+
+          ### Performance Improvements
+          $(git log $RANGE --pretty=format:"- %s (%h)" --grep="^perf:" || echo "No performance improvements")
+
+          ### Documentation
+          $(git log $RANGE --pretty=format:"- %s (%h)" --grep="^docs:" || echo "No documentation changes")
+
+          ## Contributors
+          $(git log $RANGE --pretty=format:"- @%an" | sort -u)
+
+          ## Deployment
+
+          This release includes:
+          - 5 MCP server packages
+          - ArgoCD manifests for GitOps deployment
+          - Docker images published to ghcr.io
+
+          ## Installation
+
+          \`\`\`bash
+          # Pull Docker images
+          docker pull ghcr.io/${{ github.repository }}/mcp-k8s-orchestrator:${{ needs.release.outputs.version }}
+
+          # Deploy with ArgoCD
+          kubectl apply -f deploy/argocd/application.yaml
+          \`\`\`
+          EOF
+
+          cat release-summary.md
+
+      - name: Update release description
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ needs.release.outputs.version }}
+          body_path: release-summary.md
+
+  # Create release announcement
+  announce-release:
+    name: Announce Release
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    needs: [release, build-artifacts, generate-release-notes]
+    if: needs.release.outputs.new-release-published == 'true'
+
+    steps:
+      - name: Create announcement issue
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const version = '${{ needs.release.outputs.version }}';
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: `Release ${version} is now available`,
+              body: `A new version of Cortex has been released!\n\n` +
+                    `Version: ${version}\n` +
+                    `Release notes: https://github.com/${{ github.repository }}/releases/tag/${version}\n\n` +
+                    `Docker images are available at ghcr.io/${{ github.repository }}\n\n` +
+                    `Deploy with ArgoCD using the manifests in deploy/argocd/`,
+              labels: ['release', 'announcement']
+            });
+
+      - name: Notify deployment
+        run: |
+          echo "Release ${{ needs.release.outputs.version }} completed successfully!"
+          echo "Docker images pushed to ghcr.io"
+          echo "Release artifacts uploaded to GitHub"

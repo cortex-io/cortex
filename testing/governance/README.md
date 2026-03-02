@@ -342,7 +342,7 @@ To add new governance tests:
 
 ## License
 
-Part of the commit-relay project. See main LICENSE file.
+Part of the cortex project. See main LICENSE file.
 
 ---
 

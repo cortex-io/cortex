@@ -1,0 +1,71 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: backend-build-script
+  namespace: cortex-chat
+data:
+  build.sh: |
+    #!/bin/sh
+    set -e
+
+    echo "Cloning repository..."
+    cd /workspace
+    git clone https://github.com/ry-ops/cortex.git repo
+
+    echo "Copying backend source..."
+    cp -r repo/k3s-deployments/cortex-chat/backend-simple/* /build/
+
+    echo "Building with Kaniko..."
+    /kaniko/executor \
+      --dockerfile=/build/Dockerfile \
+      --context=/build \
+      --destination=10.43.170.72:5000/cortex-chat-backend-simple:latest \
+      --skip-tls-verify \
+      --insecure \
+      --cache=true \
+      --cache-ttl=24h
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: kaniko-backend-build-git
+  namespace: cortex-chat
+spec:
+  ttlSecondsAfterFinished: 300
+  template:
+    spec:
+      restartPolicy: Never
+      initContainers:
+      - name: git-clone
+        image: alpine/git:latest
+        command: ["/bin/sh"]
+        args:
+        - -c
+        - |
+          git clone https://github.com/ry-ops/cortex.git /workspace/repo
+          cp -r /workspace/repo/k3s-deployments/cortex-chat/backend-simple/* /build/
+          ls -la /build
+        volumeMounts:
+        - name: workspace
+          mountPath: /workspace
+        - name: build
+          mountPath: /build
+      containers:
+      - name: kaniko
+        image: gcr.io/kaniko-project/executor:latest
+        args:
+        - "--dockerfile=/build/Dockerfile"
+        - "--context=/build"
+        - "--destination=10.43.170.72:5000/cortex-chat-backend-simple:latest"
+        - "--skip-tls-verify"
+        - "--insecure"
+        - "--cache=true"
+        - "--cache-ttl=24h"
+        volumeMounts:
+        - name: build
+          mountPath: /build
+      volumes:
+      - name: workspace
+        emptyDir: {}
+      - name: build
+        emptyDir: {}

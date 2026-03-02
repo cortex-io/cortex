@@ -14,7 +14,7 @@
   "created_at": "2025-11-08T04:43:47-0600",
   "created_by": "create-task-cli",
   "context": {
-    "repository": "ry-ops/commit-relay",
+    "repository": "ry-ops/cortex",
     "branch": "main",
     "description": "Implement adaptive caching system that promotes frequently-accessed RAG knowledge to CAG cache. Track access patterns, identify hot data, and automatically update CAG caches when access frequency exceeds threshold (>10 accesses/day).",
     "requirements": []
@@ -34,8 +34,8 @@
   "testing"
 ],
     "knowledge_base_refs": {
-      "implementation_patterns": "/Users/ryandahlberg/projects/commit-relay/scripts/../coordination/masters/development/knowledge-base/implementation-patterns.jsonl",
-      "architecture_docs": "/Users/ryandahlberg/projects/commit-relay/scripts/../coordination/masters/development/knowledge-base/codebase-architecture.json"
+      "implementation_patterns": "/Users/ryandahlberg/projects/cortex/scripts/../coordination/masters/development/knowledge-base/implementation-patterns.jsonl",
+      "architecture_docs": "/Users/ryandahlberg/projects/cortex/scripts/../coordination/masters/development/knowledge-base/codebase-architecture.json"
     }
   },
   "resources": {

@@ -36,7 +36,7 @@ This worker was spawned with `task_id: "null"` (literal string "null", not a mis
 
 ### Recommendations
 1. **Fix Worker Spawning Logic**: Update the development-master spawn logic to prevent spawning workers with null task assignments
-2. **Service Recovery**: Restart failed services (coordinator, development-master, pm-daemon) using `/Users/ryandahlberg/Projects/commit-relay/scripts/ensure-services.sh`
+2. **Service Recovery**: Restart failed services (coordinator, development-master, pm-daemon) using `/Users/ryandahlberg/Projects/cortex/scripts/ensure-services.sh`
 3. **Worker Pool Cleanup**: Update worker-pool.json to mark this worker as completed with status "no_task_assigned"
 4. **Prevent Future Occurrences**: Add validation to prevent spawning workers without valid task assignments
 

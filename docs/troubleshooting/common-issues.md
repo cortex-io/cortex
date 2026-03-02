@@ -2,7 +2,7 @@
 
 ## Common Issues and Solutions
 
-Quick reference for diagnosing and fixing common commit-relay issues.
+Quick reference for diagnosing and fixing common cortex issues.
 
 ---
 
@@ -454,9 +454,9 @@ pm2 logs                  # PM2 managed processes
 
 ### Support Channels
 
-- **Documentation**: https://github.com/ry-ops/commit-relay/wiki
-- **Issues**: https://github.com/ry-ops/commit-relay/issues
-- **Discussions**: https://github.com/ry-ops/commit-relay/discussions
+- **Documentation**: https://github.com/ry-ops/cortex/wiki
+- **Issues**: https://github.com/ry-ops/cortex/issues
+- **Discussions**: https://github.com/ry-ops/cortex/discussions
 
 ---
 

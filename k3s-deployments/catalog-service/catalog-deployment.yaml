@@ -1,0 +1,223 @@
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: catalog-system
+  labels:
+    name: catalog-system
+    cortex-component: catalog
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: catalog-config
+  namespace: catalog-system
+data:
+  REDIS_HOST: "redis-master.cortex-system.svc.cluster.local"
+  REDIS_PORT: "6379"
+  CORTEX_ROOT: "/cortex"
+  LOG_LEVEL: "info"
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: catalog-api
+  namespace: catalog-system
+  labels:
+    app: catalog-api
+    component: api
+spec:
+  replicas: 2  # HA for API queries
+  selector:
+    matchLabels:
+      app: catalog-api
+  template:
+    metadata:
+      labels:
+        app: catalog-api
+        component: api
+    spec:
+      containers:
+      - name: catalog-api
+        image: catalog-service:2.0.0
+        imagePullPolicy: IfNotPresent
+        command: ["node", "catalog-api.js"]
+        ports:
+        - containerPort: 3000
+          name: http
+          protocol: TCP
+        env:
+        - name: REDIS_HOST
+          valueFrom:
+            configMapKeyRef:
+              name: catalog-config
+              key: REDIS_HOST
+        - name: REDIS_PORT
+          valueFrom:
+            configMapKeyRef:
+              name: catalog-config
+              key: REDIS_PORT
+        - name: REDIS_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: redis
+              key: redis-password
+              optional: true
+        - name: PORT
+          value: "3000"
+        resources:
+          requests:
+            cpu: 100m
+            memory: 128Mi
+          limits:
+            cpu: 500m
+            memory: 512Mi
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 3000
+          initialDelaySeconds: 10
+          periodSeconds: 30
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 3000
+          initialDelaySeconds: 5
+          periodSeconds: 10
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: catalog-api
+  namespace: catalog-system
+  labels:
+    app: catalog-api
+spec:
+  type: ClusterIP
+  ports:
+  - port: 3000
+    targetPort: 3000
+    protocol: TCP
+    name: http
+  selector:
+    app: catalog-api
+
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: catalog-discovery
+  namespace: catalog-system
+  labels:
+    app: catalog-discovery
+    component: discovery
+spec:
+  schedule: "*/15 * * * *"  # Every 15 minutes
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      template:
+        metadata:
+          labels:
+            app: catalog-discovery
+            component: discovery
+        spec:
+          restartPolicy: OnFailure
+          containers:
+          - name: discovery
+            image: catalog-service:2.0.0
+            imagePullPolicy: IfNotPresent
+            command: ["node", "catalog-discovery.js"]
+            env:
+            - name: REDIS_HOST
+              valueFrom:
+                configMapKeyRef:
+                  name: catalog-config
+                  key: REDIS_HOST
+            - name: REDIS_PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: catalog-config
+                  key: REDIS_PORT
+            - name: REDIS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: redis
+                  key: redis-password
+                  optional: true
+            - name: CORTEX_ROOT
+              valueFrom:
+                configMapKeyRef:
+                  name: catalog-config
+                  key: CORTEX_ROOT
+            volumeMounts:
+            - name: cortex-files
+              mountPath: /cortex
+              readOnly: true
+            resources:
+              requests:
+                cpu: 200m
+                memory: 256Mi
+              limits:
+                cpu: 1000m
+                memory: 1Gi
+          volumes:
+          - name: cortex-files
+            hostPath:
+              path: /Users/ryandahlberg/Projects/cortex
+              type: Directory
+
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: catalog-discovery
+  namespace: catalog-system
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: catalog-discovery
+  namespace: catalog-system
+rules:
+- apiGroups: [""]
+  resources: ["configmaps"]
+  verbs: ["get", "list"]
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: catalog-discovery
+  namespace: catalog-system
+subjects:
+- kind: ServiceAccount
+  name: catalog-discovery
+  namespace: catalog-system
+roleRef:
+  kind: Role
+  name: catalog-discovery
+  apiGroup: rbac.authorization.k8s.io
+
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: catalog-api
+  namespace: catalog-system
+  labels:
+    app: catalog-api
+spec:
+  selector:
+    matchLabels:
+      app: catalog-api
+  endpoints:
+  - port: http
+    interval: 30s
+    path: /api/stats

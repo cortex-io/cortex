@@ -7,7 +7,7 @@
 
 ## Task Description
 
-MoE Learning System: Master commit-relay Architecture and Operations
+MoE Learning System: Master cortex Architecture and Operations
 
 ## Deliverables Updated
 

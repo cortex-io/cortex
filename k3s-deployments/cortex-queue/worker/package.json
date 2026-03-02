@@ -1,0 +1,17 @@
+{
+  "name": "cortex-queue-worker",
+  "version": "1.0.0",
+  "description": "Redis-based task queue worker for Cortex",
+  "main": "worker.js",
+  "scripts": {
+    "start": "node worker.js"
+  },
+  "dependencies": {
+    "ioredis": "^5.3.2",
+    "@anthropic-ai/sdk": "^0.27.0",
+    "axios": "^1.6.2"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

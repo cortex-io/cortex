@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # scripts/lib/auto-fix.sh
 # Auto-Fix Engine Library - Phase 4.5 Self-Healing Implementation
 # Automated remediation system for detected failure patterns
@@ -10,7 +10,7 @@
 #   - Success validation and learning
 #
 # Usage:
-#   source "$COMMIT_RELAY_HOME/scripts/lib/auto-fix.sh"
+#   source "$CORTEX_HOME/scripts/lib/auto-fix.sh"
 #   apply_auto_fix "$pattern_id"
 
 set -euo pipefail
@@ -19,23 +19,23 @@ set -euo pipefail
 # Configuration
 # ============================================================================
 
-COMMIT_RELAY_HOME="${COMMIT_RELAY_HOME:-$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)}"
+CORTEX_HOME="${CORTEX_HOME:-$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)}"
 
 # Configuration files
-FIX_REGISTRY_FILE="${COMMIT_RELAY_HOME}/coordination/config/auto-fix-registry.json"
-FIX_POLICY_FILE="${COMMIT_RELAY_HOME}/coordination/config/auto-fix-policy.json"
+FIX_REGISTRY_FILE="${CORTEX_HOME}/coordination/config/auto-fix-registry.json"
+FIX_POLICY_FILE="${CORTEX_HOME}/coordination/config/auto-fix-policy.json"
 
 # Data files
-FIX_HISTORY_FILE="${COMMIT_RELAY_HOME}/coordination/auto-fix/fix-history.jsonl"
-FIX_STATE_FILE="${COMMIT_RELAY_HOME}/coordination/auto-fix/fix-state.json"
-PENDING_APPROVALS_FILE="${COMMIT_RELAY_HOME}/coordination/auto-fix/pending-approvals.json"
-ROLLBACK_QUEUE_FILE="${COMMIT_RELAY_HOME}/coordination/auto-fix/rollback-queue.jsonl"
+FIX_HISTORY_FILE="${CORTEX_HOME}/coordination/auto-fix/fix-history.jsonl"
+FIX_STATE_FILE="${CORTEX_HOME}/coordination/auto-fix/fix-state.json"
+PENDING_APPROVALS_FILE="${CORTEX_HOME}/coordination/auto-fix/pending-approvals.json"
+ROLLBACK_QUEUE_FILE="${CORTEX_HOME}/coordination/auto-fix/rollback-queue.jsonl"
 
 # Event log
-FIX_EVENTS_LOG="${COMMIT_RELAY_HOME}/coordination/events/auto-fix-events.jsonl"
+FIX_EVENTS_LOG="${CORTEX_HOME}/coordination/events/auto-fix-events.jsonl"
 
 # Metrics
-FIX_METRICS_FILE="${COMMIT_RELAY_HOME}/coordination/metrics/auto-fix-metrics.json"
+FIX_METRICS_FILE="${CORTEX_HOME}/coordination/metrics/auto-fix-metrics.json"
 
 # Create directories
 mkdir -p "$(dirname "$FIX_HISTORY_FILE")"
@@ -43,8 +43,8 @@ mkdir -p "$(dirname "$FIX_EVENTS_LOG")"
 mkdir -p "$(dirname "$FIX_METRICS_FILE")"
 
 # Load pattern detection library for pattern queries
-if [ -f "$COMMIT_RELAY_HOME/scripts/lib/failure-pattern-detection.sh" ]; then
-    source "$COMMIT_RELAY_HOME/scripts/lib/failure-pattern-detection.sh" 2>/dev/null || true
+if [ -f "$CORTEX_HOME/scripts/lib/failure-pattern-detection.sh" ]; then
+    source "$CORTEX_HOME/scripts/lib/failure-pattern-detection.sh" 2>/dev/null || true
 fi
 
 # ============================================================================
@@ -318,7 +318,7 @@ check_fix_prerequisites() {
     local requires_worker_specs=$(echo "$prerequisites" | jq -r '.requires_worker_specs // false')
     if [ "$requires_worker_specs" = "true" ]; then
         local worker_type=$(echo "$pattern" | jq -r '.signature.worker_type')
-        local worker_spec_template="${COMMIT_RELAY_HOME}/coordination/worker-specs/templates/${worker_type}.json"
+        local worker_spec_template="${CORTEX_HOME}/coordination/worker-specs/templates/${worker_type}.json"
 
         if [ ! -f "$worker_spec_template" ]; then
             log_fix "ERROR" "Worker spec template not found: $worker_spec_template"
@@ -330,7 +330,7 @@ check_fix_prerequisites() {
     local check_budget=$(jq -r '.token_budget.check_budget_before_fix' "$FIX_POLICY_FILE")
     if [ "$check_budget" = "true" ]; then
         local min_budget=$(jq -r '.token_budget.min_budget_threshold_tokens' "$FIX_POLICY_FILE")
-        local current_budget=$(jq -r '.remaining' "$COMMIT_RELAY_HOME/coordination/token-budget.json" 2>/dev/null || echo "0")
+        local current_budget=$(jq -r '.remaining' "$CORTEX_HOME/coordination/token-budget.json" 2>/dev/null || echo "0")
 
         if [ "$current_budget" -lt "$min_budget" ]; then
             log_fix "ERROR" "Insufficient token budget: $current_budget < $min_budget"
@@ -361,7 +361,7 @@ execute_fix_action() {
             local min_value=$(echo "$action" | jq -r '.min_value // null')
 
             local worker_type=$(echo "$context" | jq -r '.worker_type')
-            local spec_file="${COMMIT_RELAY_HOME}/coordination/worker-specs/templates/${worker_type}.json"
+            local spec_file="${CORTEX_HOME}/coordination/worker-specs/templates/${worker_type}.json"
 
             if [ ! -f "$spec_file" ]; then
                 log_fix "ERROR" "Worker spec not found: $spec_file"
@@ -416,7 +416,7 @@ execute_fix_action() {
 
             while IFS= read -r path_template; do
                 local path="${path_template//\{worker_id\}/$worker_id}"
-                local full_path="${COMMIT_RELAY_HOME}/${path}"
+                local full_path="${CORTEX_HOME}/${path}"
 
                 if [ -e "$full_path" ]; then
                     rm -rf "$full_path"
@@ -428,8 +428,8 @@ execute_fix_action() {
         "trigger_worker_restart")
             local worker_id=$(echo "$context" | jq -r '.worker_id')
 
-            if [ -f "$COMMIT_RELAY_HOME/scripts/lib/worker-restart.sh" ]; then
-                source "$COMMIT_RELAY_HOME/scripts/lib/worker-restart.sh"
+            if [ -f "$CORTEX_HOME/scripts/lib/worker-restart.sh" ]; then
+                source "$CORTEX_HOME/scripts/lib/worker-restart.sh"
                 restart_worker "$worker_id"
                 log_fix "INFO" "Triggered restart for: $worker_id"
             fi
@@ -441,7 +441,7 @@ execute_fix_action() {
                 worker_type=$(echo "$context" | jq -r '.worker_type')
             fi
 
-            local cb_file="${COMMIT_RELAY_HOME}/coordination/worker-restart/circuit-breakers.json"
+            local cb_file="${CORTEX_HOME}/coordination/worker-restart/circuit-breakers.json"
             if [ -f "$cb_file" ]; then
                 jq --arg type "$worker_type" 'del(.[$type])' "$cb_file" > "${cb_file}.tmp"
                 mv "${cb_file}.tmp" "$cb_file"

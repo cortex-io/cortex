@@ -47,7 +47,7 @@
       "All 20 repositories are marked 'pending_catalog' - need deep analysis",
       "Limited community engagement (only 3 total stars across portfolio)",
       "Zero open issues across all repositories",
-      "Core system (commit-relay) is operational with healthy Dashboard API"
+      "Core system (cortex) is operational with healthy Dashboard API"
     ]
   },
   "recommendations": [
@@ -66,7 +66,7 @@
     {
       "priority": "medium",
       "category": "automation",
-      "action": "Implement automated health checks and monitoring via commit-relay",
+      "action": "Implement automated health checks and monitoring via cortex",
       "impact": "Proactive issue detection and maintenance scheduling"
     },
     {

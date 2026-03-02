@@ -1,0 +1,23 @@
+{
+  "task_id": "inventory-002",
+  "master": "inventory",
+  "description": "Generate dependency graph of all masters and workers",
+  "complexity": "medium",
+  "expected_outcome": {
+    "should_identify_masters": true,
+    "should_identify_workers": true,
+    "should_map_relationships": true,
+    "should_visualize_graph": true
+  },
+  "evaluation_criteria": [
+    "Identifies all master types",
+    "Identifies all worker types",
+    "Maps master-worker relationships",
+    "Maps worker-worker dependencies",
+    "Generates graph visualization (mermaid/dot)",
+    "Includes handoff patterns",
+    "Documents the dependency structure"
+  ],
+  "estimated_time_minutes": 35,
+  "tags": ["dependency", "visualization", "architecture"]
+}

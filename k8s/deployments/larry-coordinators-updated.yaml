@@ -1,0 +1,75 @@
+---
+# Larry-01 ConfigMap Update - Real Redis Configuration
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: larry-01-config
+  namespace: larry-01
+data:
+  larry-id: "larry-01"
+  phase: "infrastructure"
+  redis-host: "redis-master.cortex-system.svc.cluster.local"
+  redis-port: "6379"
+  redis-password: "cortex123"
+  postgres-host: "postgres.cortex-system.svc.cluster.local"
+  postgres-port: "5432"
+  postgres-db: "cortex"
+  postgres-user: "cortex"
+  coordination-path: "/coordination"
+  master-agents: "cicd-master,monitoring-master"
+  worker-count: "4"
+  worker-node: "k3s-worker01"
+  token-budget-personal: "50000"
+  token-budget-workers: "36000"
+
+---
+# Larry-02 ConfigMap Update - Real Redis Configuration
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: larry-02-config
+  namespace: larry-02
+data:
+  larry-id: "larry-02"
+  phase: "security"
+  redis-host: "redis-master.cortex-system.svc.cluster.local"
+  redis-port: "6379"
+  redis-password: "cortex123"
+  postgres-host: "postgres.cortex-system.svc.cluster.local"
+  postgres-port: "5432"
+  postgres-db: "cortex"
+  postgres-user: "cortex"
+  coordination-path: "/coordination"
+  master-agents: "security-master"
+  worker-count: "4"
+  worker-node: "k3s-worker02"
+  token-budget-personal: "30000"
+  token-budget-workers: "36000"
+  cvss-threshold: "7.0"
+  scan-namespaces: "cortex-system,database,monitoring,n8n,ingress,ai-agents,storage"
+
+---
+# Larry-03 ConfigMap Update - Real Redis Configuration
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: larry-03-config
+  namespace: larry-03
+data:
+  larry-id: "larry-03"
+  phase: "development"
+  redis-host: "redis-master.cortex-system.svc.cluster.local"
+  redis-port: "6379"
+  redis-password: "cortex123"
+  postgres-host: "postgres.cortex-system.svc.cluster.local"
+  postgres-port: "5432"
+  postgres-db: "cortex"
+  postgres-user: "cortex"
+  coordination-path: "/coordination"
+  master-agents: "development-master,inventory-master,testing-master"
+  worker-count: "8"
+  worker-nodes: "k3s-worker03,k3s-worker04"
+  token-budget-personal: "90000"
+  token-budget-workers: "76000"
+  quality-threshold: "80"
+  coverage-target: "70"

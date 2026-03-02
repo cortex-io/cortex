@@ -6,7 +6,7 @@ PII scanning, compliance reporting, and governance management.
 
 ## Overview
 
-This runbook covers the governance and compliance operations for Commit-Relay, including PII detection, data quality monitoring, and compliance reporting.
+This runbook covers the governance and compliance operations for Cortex, including PII detection, data quality monitoring, and compliance reporting.
 
 ---
 

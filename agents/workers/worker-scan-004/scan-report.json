@@ -23,7 +23,7 @@
   },
   "fix_analysis": {
     "fix_implemented": true,
-    "fix_location": "/Users/ryandahlberg/Projects/commit-relay/dashboard/server/middleware/auth.js",
+    "fix_location": "/Users/ryandahlberg/Projects/cortex/dashboard/server/middleware/auth.js",
     "fix_method": "Constant-time comparison using crypto.timingSafeEqual()",
     "fix_details": [
       {

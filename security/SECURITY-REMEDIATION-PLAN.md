@@ -1,7 +1,7 @@
 # Security Vulnerability Remediation Plan
 
 **Date:** November 25, 2025
-**Orchestrated By:** commit-relay security-master + development-master (MoE routing)
+**Orchestrated By:** cortex security-master + development-master (MoE routing)
 
 ---
 
@@ -11,7 +11,7 @@ This document tracks the remediation of security vulnerabilities discovered acro
 
 ## Critical Fixes Required
 
-### 1. commit-relay - Path Traversal Vulnerabilities (HIGH)
+### 1. cortex - Path Traversal Vulnerabilities (HIGH)
 
 **Status:** 🟡 In Progress
 **Priority:** CRITICAL
@@ -31,7 +31,7 @@ This document tracks the remediation of security vulnerabilities discovered acro
 
 ---
 
-### 2. commit-relay - Python Dependency Upgrades (HIGH/MEDIUM)
+### 2. cortex - Python Dependency Upgrades (HIGH/MEDIUM)
 
 **Status:** ⏳ Pending
 **Priority:** HIGH

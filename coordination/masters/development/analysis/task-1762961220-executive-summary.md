@@ -35,7 +35,7 @@ All 6 governance workers launched 70+ minutes ago failed immediately with:
 
 ## Root Cause
 
-**Location:** `/Users/ryandahlberg/commit-relay/scripts/claude-worker-launcher-v2.sh:152`
+**Location:** `/Users/ryandahlberg/cortex/scripts/claude-worker-launcher-v2.sh:152`
 
 **The Bug:**
 ```bash
@@ -84,25 +84,25 @@ Changed from `echo >>` to proper `sed` substitution with character escaping
 ## Deliverables
 
 1. **Root Cause Analysis** (19 pages)
-   - `/Users/ryandahlberg/commit-relay/coordination/masters/development/analysis/task-1762961220-root-cause-analysis.md`
+   - `/Users/ryandahlberg/cortex/coordination/masters/development/analysis/task-1762961220-root-cause-analysis.md`
 
 2. **Fixed Launcher Script**
-   - `/Users/ryandahlberg/commit-relay/scripts/claude-worker-launcher-v2-FIXED.sh`
+   - `/Users/ryandahlberg/cortex/scripts/claude-worker-launcher-v2-FIXED.sh`
 
 3. **Fix Comparison Document**
-   - `/Users/ryandahlberg/commit-relay/coordination/masters/development/analysis/task-1762961220-fix-comparison.md`
+   - `/Users/ryandahlberg/cortex/coordination/masters/development/analysis/task-1762961220-fix-comparison.md`
 
 4. **Test Results**
-   - `/Users/ryandahlberg/commit-relay/coordination/masters/development/analysis/task-1762961220-test-results.md`
+   - `/Users/ryandahlberg/cortex/coordination/masters/development/analysis/task-1762961220-test-results.md`
 
 5. **MoE Learning Entry** (JSONL)
-   - `/Users/ryandahlberg/commit-relay/coordination/masters/coordinator/learning/script-governance-learnings.jsonl`
+   - `/Users/ryandahlberg/cortex/coordination/masters/coordinator/learning/script-governance-learnings.jsonl`
 
 6. **Test Script**
-   - `/Users/ryandahlberg/commit-relay/scripts/test-launcher-validation.sh`
+   - `/Users/ryandahlberg/cortex/scripts/test-launcher-validation.sh`
 
 7. **Handoff to Coordinator**
-   - `/Users/ryandahlberg/commit-relay/coordination/masters/development/handoffs/development-to-coordinator-task-1762961220.json`
+   - `/Users/ryandahlberg/cortex/coordination/masters/development/handoffs/development-to-coordinator-task-1762961220.json`
 
 ---
 

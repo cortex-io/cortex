@@ -10,7 +10,7 @@
     {
       "type": "script",
       "path": "scripts/test-hello.sh",
-      "description": "Bash script that prints 'Hello from commit-relay'",
+      "description": "Bash script that prints 'Hello from cortex'",
       "verified": true
     }
   ],
@@ -28,7 +28,7 @@
       "uptime_seconds": 1308.27
     },
     "test_results": {
-      "script_output": "Hello from commit-relay",
+      "script_output": "Hello from cortex",
       "execution_success": true
     }
   },

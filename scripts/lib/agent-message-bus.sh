@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # scripts/lib/agent-message-bus.sh
 # Agent Message Bus for Multi-Agent Coordination
 # Week 7: Q1 Implementation - Multi-Agent Coordination
@@ -17,17 +17,17 @@ set -euo pipefail
 
 # Get script directory and project root
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-COMMIT_RELAY_HOME="${COMMIT_RELAY_HOME:-$(cd "$SCRIPT_DIR/../.." && pwd)}"
+CORTEX_HOME="${CORTEX_HOME:-$(cd "$SCRIPT_DIR/../.." && pwd)}"
 
 # Load dependencies
-source "$COMMIT_RELAY_HOME/scripts/lib/logging.sh" 2>/dev/null || {
+source "$CORTEX_HOME/scripts/lib/logging.sh" 2>/dev/null || {
     log_info() { echo "[INFO] $1"; }
     log_warn() { echo "[WARN] $1"; }
     log_error() { echo "[ERROR] $1"; }
 }
 
 # Configuration
-MESSAGE_BUS_DIR="$COMMIT_RELAY_HOME/coordination/message-bus"
+MESSAGE_BUS_DIR="$CORTEX_HOME/coordination/message-bus"
 QUEUES_DIR="$MESSAGE_BUS_DIR/queues"
 TOPICS_DIR="$MESSAGE_BUS_DIR/topics"
 SUBSCRIPTIONS_DIR="$MESSAGE_BUS_DIR/subscriptions"

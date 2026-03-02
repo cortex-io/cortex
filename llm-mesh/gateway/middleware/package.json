@@ -1,7 +1,7 @@
 {
-  "name": "commit-relay-middleware",
+  "name": "cortex-middleware",
   "version": "1.0.0",
-  "description": "Token counting, cost tracking, and budget management middleware for commit-relay",
+  "description": "Token counting, cost tracking, and budget management middleware for cortex",
   "main": "index.js",
   "scripts": {
     "test": "node -e \"const m = require('./'); console.log('Middleware loaded:', Object.keys(m).join(', '))\""
@@ -15,6 +15,6 @@
     "cost-tracking",
     "budget-management"
   ],
-  "author": "commit-relay",
+  "author": "cortex",
   "license": "MIT"
 }

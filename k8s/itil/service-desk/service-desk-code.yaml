@@ -1,0 +1,333 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: service-desk-code
+  namespace: cortex-service-desk
+data:
+  service_desk.py: |
+    import os
+    import json
+    import re
+    from datetime import datetime
+    from flask import Flask, request, jsonify
+    from flask_cors import CORS
+    from flask_socketio import SocketIO, emit
+    import redis
+    from prometheus_client import Counter, Histogram, Gauge, generate_latest
+    import spacy
+    from transformers import pipeline
+    from sklearn.feature_extraction.text import TfidfVectorizer
+    from sklearn.metrics.pairwise import cosine_similarity
+    import numpy as np
+
+    app = Flask(__name__)
+    CORS(app)
+    socketio = SocketIO(app, cors_allowed_origins="*")
+
+    # Redis connection
+    redis_client = redis.Redis(
+        host=os.getenv('REDIS_HOST', 'localhost'),
+        port=int(os.getenv('REDIS_PORT', 6379)),
+        decode_responses=True
+    )
+
+    # Prometheus metrics
+    request_counter = Counter('service_desk_requests_total', 'Total service desk requests', ['intent', 'channel'])
+    intent_confidence = Histogram('service_desk_intent_confidence', 'Intent detection confidence')
+    response_time = Histogram('service_desk_response_time_seconds', 'Response time')
+    active_sessions = Gauge('service_desk_active_sessions', 'Active chat sessions')
+    fulfillment_counter = Counter('service_desk_fulfillment_total', 'Total fulfillment requests', ['status'])
+
+    # Load NLP models
+    print("Loading NLP models...")
+    nlp = spacy.load("en_core_web_sm")
+    sentiment_analyzer = pipeline("sentiment-analysis", model=os.getenv('NLP_MODEL'))
+
+    # Load configuration
+    with open('/config/catalog/catalog.json', 'r') as f:
+        service_catalog = json.load(f)
+
+    with open('/config/intents/intents.json', 'r') as f:
+        intents_config = json.load(f)
+
+    confidence_threshold = float(os.getenv('CONFIDENCE_THRESHOLD', '0.75'))
+
+    # Build intent matcher
+    intent_patterns = []
+    intent_names = []
+    for intent in intents_config['intents']:
+        for pattern in intent['patterns']:
+            intent_patterns.append(pattern)
+            intent_names.append(intent['name'])
+
+    vectorizer = TfidfVectorizer()
+    intent_vectors = vectorizer.fit_transform(intent_patterns)
+
+    class ConversationalAI:
+        def __init__(self):
+            self.sessions = {}
+
+        def create_session(self, user_id, channel):
+            session_id = f"{user_id}_{datetime.now().timestamp()}"
+            self.sessions[session_id] = {
+                'user_id': user_id,
+                'channel': channel,
+                'created_at': datetime.now().isoformat(),
+                'messages': [],
+                'context': {},
+                'state': 'active'
+            }
+            active_sessions.inc()
+            return session_id
+
+        def process_message(self, session_id, message):
+            if session_id not in self.sessions:
+                return {'error': 'Invalid session'}
+
+            session = self.sessions[session_id]
+            session['messages'].append({
+                'role': 'user',
+                'content': message,
+                'timestamp': datetime.now().isoformat()
+            })
+
+            # Extract intent
+            intent_result = self.extract_intent(message)
+
+            # Extract entities
+            entities = self.extract_entities(message)
+
+            # Sentiment analysis
+            sentiment = sentiment_analyzer(message)[0]
+
+            # Store in context
+            session['context']['last_intent'] = intent_result
+            session['context']['last_entities'] = entities
+            session['context']['sentiment'] = sentiment
+
+            # Generate response
+            response = self.generate_response(session, intent_result, entities)
+
+            session['messages'].append({
+                'role': 'assistant',
+                'content': response['message'],
+                'timestamp': datetime.now().isoformat()
+            })
+
+            # Record metrics
+            if intent_result:
+                request_counter.labels(
+                    intent=intent_result.get('name', 'unknown'),
+                    channel=session['channel']
+                ).inc()
+                intent_confidence.observe(intent_result.get('confidence', 0))
+
+            return response
+
+        def extract_intent(self, text):
+            # Vectorize input
+            text_vector = vectorizer.transform([text.lower()])
+
+            # Calculate similarity
+            similarities = cosine_similarity(text_vector, intent_vectors)[0]
+
+            # Get best match
+            best_idx = np.argmax(similarities)
+            best_score = similarities[best_idx]
+
+            if best_score < confidence_threshold:
+                return None
+
+            intent_name = intent_names[best_idx]
+
+            # Find intent config
+            for intent in intents_config['intents']:
+                if intent['name'] == intent_name:
+                    return {
+                        'name': intent_name,
+                        'confidence': float(best_score),
+                        'service_id': intent.get('service_id')
+                    }
+
+            return None
+
+        def extract_entities(self, text):
+            doc = nlp(text)
+            entities = {
+                'persons': [ent.text for ent in doc.ents if ent.label_ == 'PERSON'],
+                'orgs': [ent.text for ent in doc.ents if ent.label_ == 'ORG'],
+                'dates': [ent.text for ent in doc.ents if ent.label_ == 'DATE'],
+                'products': [ent.text for ent in doc.ents if ent.label_ == 'PRODUCT'],
+                'nouns': [chunk.text for chunk in doc.noun_chunks]
+            }
+
+            # Extract email
+            email_pattern = r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b'
+            emails = re.findall(email_pattern, text)
+            if emails:
+                entities['emails'] = emails
+
+            return entities
+
+        def generate_response(self, session, intent, entities):
+            if not intent:
+                return {
+                    'message': "I'm not sure I understand. Could you please rephrase your request? You can ask me about password resets, access requests, software installation, hardware requests, or network access.",
+                    'suggestions': [
+                        'Reset my password',
+                        'Request access to an application',
+                        'Install software',
+                        'Request new hardware'
+                    ]
+                }
+
+            service_id = intent.get('service_id')
+            service = None
+
+            for svc in service_catalog['services']:
+                if svc['id'] == service_id:
+                    service = svc
+                    break
+
+            if not service:
+                return {'message': 'Service not found'}
+
+            # Check if we have all required fields
+            required_fields = [f for f in service['fields'] if f.get('required', False)]
+            missing_fields = []
+
+            for field in required_fields:
+                if field['name'] not in session['context']:
+                    missing_fields.append(field)
+
+            if missing_fields:
+                # Ask for missing information
+                field = missing_fields[0]
+                return {
+                    'message': f"I can help you with {service['name']}. {field['name'].replace('_', ' ').title()} is required. What would you like to specify?",
+                    'service': service,
+                    'next_field': field,
+                    'progress': len(required_fields) - len(missing_fields),
+                    'total_fields': len(required_fields)
+                }
+
+            # All fields collected, create request
+            request_data = {
+                'service_id': service_id,
+                'service_name': service['name'],
+                'user_id': session['user_id'],
+                'channel': session['channel'],
+                'created_at': datetime.now().isoformat(),
+                'fields': {}
+            }
+
+            for field in service['fields']:
+                if field['name'] in session['context']:
+                    request_data['fields'][field['name']] = session['context'][field['name']]
+
+            # Submit to fulfillment system
+            request_id = self.create_fulfillment_request(request_data)
+
+            return {
+                'message': f"I've created your request for {service['name']}. Your request ID is {request_id}. Expected completion time: {service['sla']}.",
+                'request_id': request_id,
+                'service': service,
+                'status': 'submitted'
+            }
+
+        def create_fulfillment_request(self, request_data):
+            request_id = f"REQ-{datetime.now().strftime('%Y%m%d-%H%M%S')}"
+            request_data['request_id'] = request_id
+            request_data['status'] = 'pending'
+
+            # Store in Redis
+            redis_client.setex(
+                f"request:{request_id}",
+                86400,  # 24 hours TTL
+                json.dumps(request_data)
+            )
+
+            redis_client.lpush('fulfillment:queue', request_id)
+
+            return request_id
+
+        def close_session(self, session_id):
+            if session_id in self.sessions:
+                self.sessions[session_id]['state'] = 'closed'
+                active_sessions.dec()
+
+    ai = ConversationalAI()
+
+    @app.route('/health', methods=['GET'])
+    def health():
+        return jsonify({'status': 'healthy'}), 200
+
+    @app.route('/ready', methods=['GET'])
+    def ready():
+        try:
+            redis_client.ping()
+            return jsonify({'status': 'ready'}), 200
+        except:
+            return jsonify({'status': 'not ready'}), 503
+
+    @app.route('/api/v1/session', methods=['POST'])
+    def create_session():
+        data = request.json
+        user_id = data.get('user_id', 'anonymous')
+        channel = data.get('channel', 'api')
+
+        session_id = ai.create_session(user_id, channel)
+
+        return jsonify({
+            'session_id': session_id,
+            'message': 'Hello! I\'m your AI service desk assistant. How can I help you today?'
+        }), 201
+
+    @app.route('/api/v1/message', methods=['POST'])
+    def send_message():
+        data = request.json
+        session_id = data.get('session_id')
+        message = data.get('message')
+
+        if not session_id or not message:
+            return jsonify({'error': 'Missing session_id or message'}), 400
+
+        response = ai.process_message(session_id, message)
+
+        return jsonify(response), 200
+
+    @app.route('/api/v1/catalog', methods=['GET'])
+    def get_catalog():
+        return jsonify(service_catalog), 200
+
+    @app.route('/api/v1/request/<request_id>', methods=['GET'])
+    def get_request(request_id):
+        data = redis_client.get(f"request:{request_id}")
+        if not data:
+            return jsonify({'error': 'Request not found'}), 404
+
+        return jsonify(json.loads(data)), 200
+
+    @app.route('/metrics', methods=['GET'])
+    def metrics():
+        return generate_latest(), 200
+
+    @socketio.on('connect')
+    def handle_connect():
+        session_id = ai.create_session('websocket_user', 'websocket')
+        emit('session_created', {'session_id': session_id})
+
+    @socketio.on('message')
+    def handle_message(data):
+        session_id = data.get('session_id')
+        message = data.get('message')
+
+        response = ai.process_message(session_id, message)
+        emit('response', response)
+
+    @socketio.on('disconnect')
+    def handle_disconnect():
+        pass
+
+    if __name__ == '__main__':
+        socketio.run(app, host='0.0.0.0', port=5000, debug=False)

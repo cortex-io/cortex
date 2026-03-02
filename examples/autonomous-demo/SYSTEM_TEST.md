@@ -27,4 +27,4 @@ Check:
 
 ---
 
-🤖 Testing commit-relay autonomous workflow
+🤖 Testing cortex autonomous workflow

@@ -1,0 +1,326 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: knowledge-graph-api-app
+  namespace: cortex-knowledge
+data:
+  api.py: |
+    #!/usr/bin/env python3
+    import os
+    import logging
+    from typing import List, Dict, Optional, Any
+    from datetime import datetime
+
+    from fastapi import FastAPI, HTTPException, Query
+    from fastapi.responses import JSONResponse
+    from pydantic import BaseModel
+    from neo4j import GraphDatabase
+    from prometheus_client import make_asgi_app, Counter, Histogram
+
+    # Logging
+    logging.basicConfig(level=logging.INFO)
+    logger = logging.getLogger('knowledge-graph-api')
+
+    # Prometheus metrics
+    QUERIES = Counter('graph_queries_total', 'Total graph queries', ['query_type'])
+    QUERY_DURATION = Histogram('graph_query_duration_seconds', 'Query duration')
+
+    # FastAPI app
+    app = FastAPI(title="Cortex Knowledge Graph API", version="1.0.0")
+
+    # Models
+    class KnowledgeQuery(BaseModel):
+        query: str
+        limit: int = 50
+
+    class RelationshipQuery(BaseModel):
+        source_id: str
+        target_id: Optional[str] = None
+        relationship_type: Optional[str] = None
+
+    class MasterKnowledge(BaseModel):
+        master: str
+        knowledge_types: Optional[List[str]] = None
+
+    # Neo4j connection
+    class GraphDB:
+        def __init__(self):
+            self.driver = GraphDatabase.driver(
+                os.getenv('NEO4J_URI', 'bolt://knowledge-graph:7687'),
+                auth=(
+                    os.getenv('NEO4J_USER', 'neo4j'),
+                    os.getenv('NEO4J_PASSWORD', 'cortex-knowledge-graph')
+                )
+            )
+
+        def close(self):
+            self.driver.close()
+
+        def execute_query(self, query: str, parameters: Dict = None):
+            with self.driver.session() as session:
+                result = session.run(query, parameters or {})
+                return [record.data() for record in result]
+
+    graph_db = GraphDB()
+
+    @app.on_event("shutdown")
+    async def shutdown_event():
+        graph_db.close()
+
+    @app.get("/health")
+    async def health():
+        return {"status": "healthy", "timestamp": datetime.utcnow().isoformat()}
+
+    @app.get("/knowledge/search")
+    async def search_knowledge(
+        q: str = Query(..., description="Search query"),
+        type: Optional[str] = Query(None, description="Knowledge type filter"),
+        tag: Optional[str] = Query(None, description="Tag filter"),
+        limit: int = Query(50, description="Result limit")
+    ):
+        """Search knowledge base"""
+        QUERIES.labels(query_type='search').inc()
+
+        try:
+            with QUERY_DURATION.time():
+                query = """
+                MATCH (k:Knowledge)
+                WHERE k.content CONTAINS $search_term
+                """
+
+                params = {"search_term": q, "limit": limit}
+
+                if type:
+                    query += " AND k.type = $type"
+                    params["type"] = type
+
+                if tag:
+                    query += """
+                    MATCH (k)-[:TAGGED_WITH]->(t:Tag {name: $tag})
+                    """
+                    params["tag"] = tag
+
+                query += """
+                RETURN k.id as id, k.type as type, k.content as content,
+                       k.timestamp as timestamp
+                ORDER BY k.timestamp DESC
+                LIMIT $limit
+                """
+
+                results = graph_db.execute_query(query, params)
+                return {"results": results, "count": len(results)}
+
+        except Exception as e:
+            logger.error(f"Search error: {e}")
+            raise HTTPException(status_code=500, detail=str(e))
+
+    @app.get("/knowledge/{knowledge_id}")
+    async def get_knowledge(knowledge_id: str):
+        """Get specific knowledge item with relationships"""
+        QUERIES.labels(query_type='get').inc()
+
+        try:
+            query = """
+            MATCH (k:Knowledge {id: $id})
+            OPTIONAL MATCH (k)-[:FROM_SOURCE]->(s:Source)
+            OPTIONAL MATCH (k)-[:TAGGED_WITH]->(t:Tag)
+            OPTIONAL MATCH (k)-[:RELATED_TO]->(r:Knowledge)
+            RETURN k,
+                   collect(DISTINCT s) as sources,
+                   collect(DISTINCT t.name) as tags,
+                   collect(DISTINCT {id: r.id, type: r.type}) as related
+            """
+
+            results = graph_db.execute_query(query, {"id": knowledge_id})
+
+            if not results:
+                raise HTTPException(status_code=404, detail="Knowledge not found")
+
+            return results[0]
+
+        except HTTPException:
+            raise
+        except Exception as e:
+            logger.error(f"Get knowledge error: {e}")
+            raise HTTPException(status_code=500, detail=str(e))
+
+    @app.get("/knowledge/master/{master_name}")
+    async def get_master_knowledge(
+        master_name: str,
+        knowledge_type: Optional[str] = None,
+        limit: int = 100
+    ):
+        """Get knowledge relevant to a specific master agent"""
+        QUERIES.labels(query_type='master_knowledge').inc()
+
+        try:
+            query = """
+            MATCH (m:Master {name: $master})
+            OPTIONAL MATCH (m)-[:USES_KNOWLEDGE]->(k:Knowledge)
+            """
+
+            params = {"master": master_name, "limit": limit}
+
+            if knowledge_type:
+                query += " WHERE k.type = $type"
+                params["type"] = knowledge_type
+
+            query += """
+            RETURN k.id as id, k.type as type, k.content as content,
+                   k.timestamp as timestamp
+            ORDER BY k.timestamp DESC
+            LIMIT $limit
+            """
+
+            results = graph_db.execute_query(query, params)
+            return {"master": master_name, "knowledge": results, "count": len(results)}
+
+        except Exception as e:
+            logger.error(f"Master knowledge error: {e}")
+            raise HTTPException(status_code=500, detail=str(e))
+
+    @app.post("/knowledge/relate")
+    async def create_relationship(rel: RelationshipQuery):
+        """Create relationship between knowledge items"""
+        QUERIES.labels(query_type='create_relation').inc()
+
+        try:
+            query = """
+            MATCH (k1:Knowledge {id: $source_id})
+            """
+
+            params = {"source_id": rel.source_id}
+
+            if rel.target_id:
+                query += """
+                MATCH (k2:Knowledge {id: $target_id})
+                MERGE (k1)-[r:RELATED_TO {type: $rel_type}]->(k2)
+                RETURN k1.id, k2.id, type(r) as relationship
+                """
+                params["target_id"] = rel.target_id
+                params["rel_type"] = rel.relationship_type or "RELATED_TO"
+            else:
+                return {"error": "Target ID required"}
+
+            results = graph_db.execute_query(query, params)
+            return {"created": len(results) > 0, "results": results}
+
+        except Exception as e:
+            logger.error(f"Create relationship error: {e}")
+            raise HTTPException(status_code=500, detail=str(e))
+
+    @app.get("/knowledge/similar/{knowledge_id}")
+    async def find_similar(knowledge_id: str, limit: int = 10):
+        """Find similar knowledge items"""
+        QUERIES.labels(query_type='similar').inc()
+
+        try:
+            # Find knowledge with shared tags
+            query = """
+            MATCH (k:Knowledge {id: $id})-[:TAGGED_WITH]->(t:Tag)
+            MATCH (similar:Knowledge)-[:TAGGED_WITH]->(t)
+            WHERE similar.id <> $id
+            WITH similar, count(t) as shared_tags
+            ORDER BY shared_tags DESC
+            LIMIT $limit
+            RETURN similar.id as id, similar.type as type,
+                   similar.content as content, shared_tags
+            """
+
+            results = graph_db.execute_query(query, {"id": knowledge_id, "limit": limit})
+            return {"similar": results, "count": len(results)}
+
+        except Exception as e:
+            logger.error(f"Similar search error: {e}")
+            raise HTTPException(status_code=500, detail=str(e))
+
+    @app.get("/knowledge/path")
+    async def find_path(
+        from_id: str = Query(..., description="Source knowledge ID"),
+        to_id: str = Query(..., description="Target knowledge ID")
+    ):
+        """Find relationship path between two knowledge items"""
+        QUERIES.labels(query_type='path').inc()
+
+        try:
+            query = """
+            MATCH path = shortestPath(
+              (k1:Knowledge {id: $from_id})-[*..5]-(k2:Knowledge {id: $to_id})
+            )
+            RETURN [node in nodes(path) | {id: node.id, type: node.type}] as nodes,
+                   [rel in relationships(path) | type(rel)] as relationships
+            """
+
+            results = graph_db.execute_query(query, {"from_id": from_id, "to_id": to_id})
+            return {"path": results[0] if results else None}
+
+        except Exception as e:
+            logger.error(f"Path search error: {e}")
+            raise HTTPException(status_code=500, detail=str(e))
+
+    @app.get("/analytics/knowledge-types")
+    async def knowledge_type_stats():
+        """Get statistics by knowledge type"""
+        QUERIES.labels(query_type='stats').inc()
+
+        try:
+            query = """
+            MATCH (k:Knowledge)
+            RETURN k.type as type, count(k) as count
+            ORDER BY count DESC
+            """
+
+            results = graph_db.execute_query(query)
+            return {"statistics": results}
+
+        except Exception as e:
+            logger.error(f"Stats error: {e}")
+            raise HTTPException(status_code=500, detail=str(e))
+
+    @app.get("/analytics/tag-cloud")
+    async def tag_cloud(limit: int = 50):
+        """Get tag cloud data"""
+        QUERIES.labels(query_type='tag_cloud').inc()
+
+        try:
+            query = """
+            MATCH (t:Tag)<-[:TAGGED_WITH]-(k:Knowledge)
+            RETURN t.name as tag, count(k) as count
+            ORDER BY count DESC
+            LIMIT $limit
+            """
+
+            results = graph_db.execute_query(query, {"limit": limit})
+            return {"tags": results}
+
+        except Exception as e:
+            logger.error(f"Tag cloud error: {e}")
+            raise HTTPException(status_code=500, detail=str(e))
+
+    @app.get("/analytics/master-knowledge-usage")
+    async def master_knowledge_usage():
+        """Get knowledge usage by master"""
+        QUERIES.labels(query_type='master_usage').inc()
+
+        try:
+            query = """
+            MATCH (m:Master)
+            OPTIONAL MATCH (m)-[:USES_KNOWLEDGE]->(k:Knowledge)
+            RETURN m.name as master, m.role as role, count(k) as knowledge_count
+            ORDER BY knowledge_count DESC
+            """
+
+            results = graph_db.execute_query(query)
+            return {"masters": results}
+
+        except Exception as e:
+            logger.error(f"Master usage error: {e}")
+            raise HTTPException(status_code=500, detail=str(e))
+
+    # Mount Prometheus metrics
+    metrics_app = make_asgi_app()
+    app.mount("/metrics", metrics_app)
+
+    if __name__ == '__main__':
+        import uvicorn
+        uvicorn.run(app, host='0.0.0.0', port=8000)

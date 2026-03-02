@@ -1,0 +1,22 @@
+{
+  "task_id": "coordinator-002",
+  "master": "coordinator",
+  "description": "Decompose complex feature request into subtasks for multiple masters",
+  "complexity": "high",
+  "expected_outcome": {
+    "should_decompose_task": true,
+    "should_identify_dependencies": true,
+    "should_route_to_multiple_masters": true,
+    "should_track_subtasks": true
+  },
+  "evaluation_criteria": [
+    "Breaks complex task into logical subtasks",
+    "Identifies which master handles each subtask",
+    "Determines task dependencies and ordering",
+    "Creates handoffs for each subtask",
+    "Tracks overall task progress",
+    "Handles subtask completion and aggregation"
+  ],
+  "estimated_time_minutes": 15,
+  "tags": ["decomposition", "coordination", "planning"]
+}

@@ -1,18 +1,18 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # Meta-Learning for Cross-Task Optimization
 # Phase 5 Item #58: Extract meta-patterns that succeed across task types
 
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-COMMIT_RELAY_HOME="${COMMIT_RELAY_HOME:-$(cd "$SCRIPT_DIR/../../.." && pwd)}"
+CORTEX_HOME="${CORTEX_HOME:-$(cd "$SCRIPT_DIR/../../.." && pwd)}"
 
-source "$COMMIT_RELAY_HOME/scripts/lib/logging.sh" 2>/dev/null || {
+source "$CORTEX_HOME/scripts/lib/logging.sh" 2>/dev/null || {
     log_info() { echo "[INFO] $1"; }
 }
 
 # Meta-learning directories
-META_DIR="$COMMIT_RELAY_HOME/coordination/knowledge-base/meta-learning"
+META_DIR="$CORTEX_HOME/coordination/knowledge-base/meta-learning"
 mkdir -p "$META_DIR"
 
 # Extract patterns from successful tasks
@@ -23,7 +23,7 @@ extract_success_patterns() {
     log_info "Extracting success patterns from last $days days (min score: $min_score)"
 
     local patterns_file="$META_DIR/success-patterns.jsonl"
-    local feedback_dir="$COMMIT_RELAY_HOME/coordination/knowledge-base/feedback-reports"
+    local feedback_dir="$CORTEX_HOME/coordination/knowledge-base/feedback-reports"
 
     # Analyze feedback reports
     local patterns='[]'
@@ -57,7 +57,7 @@ learn_optimization_strategies() {
     local strategies='[]'
 
     # Analyze worker performance patterns
-    local worker_specs_dir="$COMMIT_RELAY_HOME/coordination/worker-specs/completed"
+    local worker_specs_dir="$CORTEX_HOME/coordination/worker-specs/completed"
 
     if [ -d "$worker_specs_dir" ]; then
         # Group by worker type and analyze performance

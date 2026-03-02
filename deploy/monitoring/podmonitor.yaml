@@ -1,0 +1,141 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PodMonitor
+metadata:
+  name: cortex-workers
+  namespace: cortex
+  labels:
+    app: cortex
+    component: workers
+    prometheus: kube-prometheus
+spec:
+  selector:
+    matchLabels:
+      app: cortex-worker
+  podMetricsEndpoints:
+    - port: metrics
+      interval: 10s
+      path: /metrics
+      scheme: http
+      scrapeTimeout: 10s
+      relabelings:
+        - sourceLabels: [__meta_kubernetes_pod_label_worker_type]
+          targetLabel: worker_type
+        - sourceLabels: [__meta_kubernetes_pod_label_parent_master]
+          targetLabel: parent_master
+        - sourceLabels: [__meta_kubernetes_pod_label_task_id]
+          targetLabel: task_id
+        - sourceLabels: [__meta_kubernetes_pod_name]
+          targetLabel: pod
+        - sourceLabels: [__meta_kubernetes_namespace]
+          targetLabel: namespace
+        - sourceLabels: [__meta_kubernetes_pod_ip]
+          targetLabel: pod_ip
+      metricRelabelings:
+        - sourceLabels: [__name__]
+          regex: cortex_worker_.*
+          action: keep
+
+---
+apiVersion: monitoring.coreos.com/v1
+kind: PodMonitor
+metadata:
+  name: mcp-servers
+  namespace: cortex
+  labels:
+    app: cortex
+    component: mcp
+    prometheus: kube-prometheus
+spec:
+  selector:
+    matchLabels:
+      app: mcp-server
+  podMetricsEndpoints:
+    - port: metrics
+      interval: 15s
+      path: /metrics
+      scheme: http
+      scrapeTimeout: 10s
+      relabelings:
+        - sourceLabels: [__meta_kubernetes_pod_label_mcp_type]
+          targetLabel: mcp_type
+        - sourceLabels: [__meta_kubernetes_pod_annotation_mcp_capabilities]
+          targetLabel: capabilities
+        - sourceLabels: [__meta_kubernetes_pod_annotation_mcp_version]
+          targetLabel: mcp_version
+        - sourceLabels: [__meta_kubernetes_pod_name]
+          targetLabel: pod
+        - sourceLabels: [__meta_kubernetes_namespace]
+          targetLabel: namespace
+        - sourceLabels: [__meta_kubernetes_pod_ip]
+          targetLabel: pod_ip
+      metricRelabelings:
+        - sourceLabels: [__name__]
+          regex: mcp_.*
+          action: keep
+
+---
+apiVersion: monitoring.coreos.com/v1
+kind: PodMonitor
+metadata:
+  name: cortex-divisions
+  namespace: cortex
+  labels:
+    app: cortex
+    component: divisions
+    prometheus: kube-prometheus
+spec:
+  selector:
+    matchLabels:
+      tier: division
+  podMetricsEndpoints:
+    - port: metrics
+      interval: 20s
+      path: /metrics
+      scheme: http
+      scrapeTimeout: 15s
+      relabelings:
+        - sourceLabels: [__meta_kubernetes_pod_label_division]
+          targetLabel: division
+        - sourceLabels: [__meta_kubernetes_pod_label_gm_type]
+          targetLabel: gm_type
+        - sourceLabels: [__meta_kubernetes_pod_name]
+          targetLabel: pod
+        - sourceLabels: [__meta_kubernetes_namespace]
+          targetLabel: namespace
+      metricRelabelings:
+        - sourceLabels: [__name__]
+          regex: (division_.*|gm_.*)
+          action: keep
+
+---
+apiVersion: monitoring.coreos.com/v1
+kind: PodMonitor
+metadata:
+  name: cortex-n8n
+  namespace: cortex
+  labels:
+    app: n8n
+    component: workflow
+    prometheus: kube-prometheus
+spec:
+  selector:
+    matchLabels:
+      app: n8n
+  podMetricsEndpoints:
+    - port: metrics
+      interval: 30s
+      path: /metrics
+      scheme: http
+      scrapeTimeout: 20s
+      relabelings:
+        - sourceLabels: [__meta_kubernetes_pod_name]
+          targetLabel: pod
+        - sourceLabels: [__meta_kubernetes_namespace]
+          targetLabel: namespace
+      metricRelabelings:
+        - sourceLabels: [__name__]
+          regex: n8n_.*
+          action: keep
+        - sourceLabels: [__name__]
+          regex: workflow_.*
+          action: keep

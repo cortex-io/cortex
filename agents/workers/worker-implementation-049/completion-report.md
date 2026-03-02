@@ -14,7 +14,7 @@ Successfully identified and fixed performance issues in the database query optim
 
 ### 1. Sequential Vector Store Searches (context-manager.js)
 
-**Location**: `/Users/ryandahlberg/Projects/commit-relay/lib/rag/context-manager.js`
+**Location**: `/Users/ryandahlberg/Projects/cortex/lib/rag/context-manager.js`
 
 **Problem**: Three methods (`buildTaskContext`, `buildDebugContext`, `buildCodeContext`) were making sequential vector store search calls, resulting in cumulative latency.
 
@@ -29,7 +29,7 @@ Successfully identified and fixed performance issues in the database query optim
 
 ### 2. Unbounded Cache Growth (query-optimizer.js)
 
-**Location**: `/Users/ryandahlberg/Projects/commit-relay/lib/database/query-optimizer.js`
+**Location**: `/Users/ryandahlberg/Projects/cortex/lib/database/query-optimizer.js`
 
 **Problem**: The query cache `Map` had no size limit, which could lead to unbounded memory growth over time.
 

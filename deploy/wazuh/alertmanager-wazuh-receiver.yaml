@@ -1,0 +1,396 @@
+# Alertmanager Configuration for Wazuh Integration
+# Sends Prometheus alerts to Wazuh for correlation and SIEM
+# Last Updated: 2025-12-11
+
+# This extends the existing alertmanager-config.yaml with Wazuh webhook receiver
+
+# ===========================================
+# Wazuh Webhook Receiver Configuration
+# Add this to your existing alertmanager configuration
+# ===========================================
+
+receivers:
+  # Existing receivers...
+
+  # Wazuh SIEM receiver
+  - name: 'wazuh-siem'
+    webhook_configs:
+      - url: 'http://wazuh-webhook-forwarder.cortex-monitoring.svc.cluster.local:8080/webhook'
+        send_resolved: true
+        http_config:
+          basic_auth:
+            username: 'cortex-alertmanager'
+            password: '${WAZUH_WEBHOOK_PASSWORD}'
+        max_alerts: 0  # No limit on alerts per webhook
+
+        # Custom headers
+        headers:
+          Content-Type: application/json
+          X-Source: cortex-prometheus
+          X-Environment: production
+
+# ===========================================
+# Route configuration updates
+# Add Wazuh as a receiver for security alerts
+# ===========================================
+
+route:
+  # Existing route config...
+
+  routes:
+    # Route security-related alerts to Wazuh
+    - match_re:
+        alertname: '^(Wazuh|Security|Auth|Privilege|Container|Secret|Vulnerability).*'
+      receiver: 'wazuh-siem'
+      continue: true
+      group_wait: 10s
+      group_interval: 30s
+      repeat_interval: 5m
+
+    # Route critical alerts to Wazuh
+    - match:
+        severity: critical
+      receiver: 'wazuh-siem'
+      continue: true
+      group_wait: 5s
+      repeat_interval: 2m
+
+    # Route Cortex component failures to Wazuh
+    - match_re:
+        component: 'meta-agent|master|worker|mcp|contractor'
+        alertname: '.*Down|.*Failed|.*Error'
+      receiver: 'wazuh-siem'
+      continue: true
+      repeat_interval: 10m
+
+---
+# Wazuh Webhook Forwarder Service
+# Transforms Alertmanager webhooks to Wazuh-compatible format
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: wazuh-webhook-config
+  namespace: cortex-monitoring
+  labels:
+    app: wazuh-webhook-forwarder
+data:
+  config.yaml: |
+    # Webhook server settings
+    server:
+      port: 8080
+      listen_address: 0.0.0.0
+      log_level: info
+
+    # Wazuh connection
+    wazuh:
+      manager_url: https://10.88.140.202:55000
+      api_user: ${WAZUH_API_USER}
+      api_password: ${WAZUH_API_PASSWORD}
+      verify_ssl: false
+
+    # Alert transformation rules
+    transformation:
+      # Map Prometheus severity to Wazuh levels
+      severity_mapping:
+        critical: 15
+        high: 12
+        warning: 8
+        info: 5
+
+      # Default rule group for Prometheus alerts
+      default_rule_group: "prometheus_alerts"
+
+      # Default decoder
+      default_decoder: "cortex-json"
+
+    # Alert enrichment
+    enrichment:
+      # Add custom fields to forwarded alerts
+      custom_fields:
+        source: "cortex-prometheus"
+        integration: "alertmanager-wazuh"
+        monitored_system: "cortex"
+
+      # Include alert labels as fields
+      include_labels: true
+
+      # Include alert annotations as fields
+      include_annotations: true
+
+    # Filtering
+    filters:
+      # Minimum severity to forward
+      min_severity: warning
+
+      # Alert names to exclude (reduce noise)
+      exclude_alerts: []
+
+      # Components to exclude
+      exclude_components: []
+
+    # Rate limiting
+    rate_limit:
+      enabled: true
+      max_alerts_per_minute: 100
+      burst_size: 20
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: wazuh-webhook-forwarder
+  namespace: cortex-monitoring
+  labels:
+    app: wazuh-webhook-forwarder
+    component: monitoring
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: wazuh-webhook-forwarder
+  template:
+    metadata:
+      labels:
+        app: wazuh-webhook-forwarder
+        component: monitoring
+    spec:
+      containers:
+      - name: forwarder
+        image: ryandahlberg/wazuh-webhook-forwarder:v1.0.0  # Custom image needed
+        ports:
+        - containerPort: 8080
+          name: http
+          protocol: TCP
+        env:
+        - name: WAZUH_API_USER
+          valueFrom:
+            secretKeyRef:
+              name: wazuh-api-credentials
+              key: username
+        - name: WAZUH_API_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: wazuh-api-credentials
+              key: password
+        - name: WAZUH_WEBHOOK_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: wazuh-webhook-credentials
+              key: password
+        volumeMounts:
+        - name: config
+          mountPath: /etc/wazuh-webhook
+          readOnly: true
+        resources:
+          requests:
+            cpu: 100m
+            memory: 128Mi
+          limits:
+            cpu: 500m
+            memory: 512Mi
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: 8080
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /ready
+            port: 8080
+          initialDelaySeconds: 5
+          periodSeconds: 5
+      volumes:
+      - name: config
+        configMap:
+          name: wazuh-webhook-config
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: wazuh-webhook-forwarder
+  namespace: cortex-monitoring
+  labels:
+    app: wazuh-webhook-forwarder
+spec:
+  type: ClusterIP
+  ports:
+  - port: 8080
+    targetPort: 8080
+    protocol: TCP
+    name: http
+  selector:
+    app: wazuh-webhook-forwarder
+
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: wazuh-webhook-credentials
+  namespace: cortex-monitoring
+type: Opaque
+stringData:
+  password: "CHANGE_ME"  # Replace with strong password
+
+---
+# Example Python webhook forwarder script
+# Save as: docker/wazuh-webhook-forwarder/app.py
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: wazuh-webhook-forwarder-script
+  namespace: cortex-monitoring
+data:
+  app.py: |
+    #!/usr/bin/env python3
+    """
+    Wazuh Webhook Forwarder for Alertmanager
+    Transforms Prometheus alerts to Wazuh-compatible format
+    """
+
+    from flask import Flask, request, jsonify
+    import requests
+    import json
+    import logging
+    from datetime import datetime
+    import os
+
+    app = Flask(__name__)
+    logging.basicConfig(level=logging.INFO)
+    logger = logging.getLogger(__name__)
+
+    # Configuration
+    WAZUH_MANAGER_URL = os.getenv('WAZUH_MANAGER_URL', 'https://10.88.140.202:55000')
+    WAZUH_API_USER = os.getenv('WAZUH_API_USER')
+    WAZUH_API_PASSWORD = os.getenv('WAZUH_API_PASSWORD')
+
+    # Severity mapping
+    SEVERITY_MAP = {
+        'critical': 15,
+        'high': 12,
+        'warning': 8,
+        'info': 5
+    }
+
+    def get_wazuh_token():
+        """Authenticate with Wazuh API and get token"""
+        url = f"{WAZUH_MANAGER_URL}/security/user/authenticate"
+        auth = (WAZUH_API_USER, WAZUH_API_PASSWORD)
+
+        try:
+            response = requests.post(url, auth=auth, verify=False)
+            response.raise_for_status()
+            return response.json()['data']['token']
+        except Exception as e:
+            logger.error(f"Failed to authenticate with Wazuh: {e}")
+            return None
+
+    def transform_alert(prometheus_alert):
+        """Transform Prometheus alert to Wazuh event format"""
+        labels = prometheus_alert.get('labels', {})
+        annotations = prometheus_alert.get('annotations', {})
+        status = prometheus_alert.get('status', 'firing')
+
+        # Build Wazuh event
+        wazuh_event = {
+            "timestamp": datetime.utcnow().isoformat() + 'Z',
+            "component": labels.get('component', 'prometheus'),
+            "event_type": "prometheus_alert",
+            "alertname": labels.get('alertname', 'UnknownAlert'),
+            "severity": labels.get('severity', 'info'),
+            "status": status,
+            "summary": annotations.get('summary', ''),
+            "description": annotations.get('description', ''),
+            "source": "cortex-prometheus",
+            "integration": "alertmanager-wazuh",
+            "labels": labels,
+            "annotations": annotations
+        }
+
+        return wazuh_event
+
+    def send_to_wazuh(event):
+        """Send event to Wazuh via API"""
+        token = get_wazuh_token()
+        if not token:
+            return False
+
+        url = f"{WAZUH_MANAGER_URL}/events"
+        headers = {
+            'Authorization': f'Bearer {token}',
+            'Content-Type': 'application/json'
+        }
+
+        try:
+            response = requests.post(url, json=event, headers=headers, verify=False)
+            response.raise_for_status()
+            logger.info(f"Successfully sent alert to Wazuh: {event['alertname']}")
+            return True
+        except Exception as e:
+            logger.error(f"Failed to send event to Wazuh: {e}")
+            return False
+
+    @app.route('/webhook', methods=['POST'])
+    def webhook():
+        """Receive Alertmanager webhook"""
+        try:
+            data = request.get_json()
+
+            if not data:
+                return jsonify({"error": "No data received"}), 400
+
+            # Process alerts
+            alerts = data.get('alerts', [])
+            processed = 0
+
+            for alert in alerts:
+                wazuh_event = transform_alert(alert)
+                if send_to_wazuh(wazuh_event):
+                    processed += 1
+
+            return jsonify({
+                "status": "success",
+                "received": len(alerts),
+                "processed": processed
+            }), 200
+
+        except Exception as e:
+            logger.error(f"Error processing webhook: {e}")
+            return jsonify({"error": str(e)}), 500
+
+    @app.route('/healthz', methods=['GET'])
+    def healthz():
+        """Health check endpoint"""
+        return jsonify({"status": "healthy"}), 200
+
+    @app.route('/ready', methods=['GET'])
+    def ready():
+        """Readiness check endpoint"""
+        token = get_wazuh_token()
+        if token:
+            return jsonify({"status": "ready"}), 200
+        else:
+            return jsonify({"status": "not ready"}), 503
+
+    if __name__ == '__main__':
+        app.run(host='0.0.0.0', port=8080)
+
+  requirements.txt: |
+    flask==3.0.0
+    requests==2.31.0
+    gunicorn==21.2.0
+
+  Dockerfile: |
+    FROM python:3.11-slim
+
+    WORKDIR /app
+
+    COPY requirements.txt .
+    RUN pip install --no-cache-dir -r requirements.txt
+
+    COPY app.py .
+
+    EXPOSE 8080
+
+    CMD ["gunicorn", "--bind", "0.0.0.0:8080", "--workers", "4", "app:app"]

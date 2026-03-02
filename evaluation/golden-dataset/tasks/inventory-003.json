@@ -1,0 +1,23 @@
+{
+  "task_id": "inventory-003",
+  "master": "inventory",
+  "description": "Audit all shell scripts and document their purposes and dependencies",
+  "complexity": "low",
+  "expected_outcome": {
+    "should_find_all_scripts": true,
+    "should_document_purpose": true,
+    "should_identify_dependencies": true,
+    "should_check_permissions": true
+  },
+  "evaluation_criteria": [
+    "Discovers all shell scripts in repository",
+    "Extracts script descriptions/comments",
+    "Identifies script dependencies (other scripts, tools)",
+    "Documents input parameters",
+    "Checks file permissions",
+    "Generates structured inventory (JSON/markdown)",
+    "Flags scripts without documentation"
+  ],
+  "estimated_time_minutes": 25,
+  "tags": ["scripts", "documentation", "audit"]
+}

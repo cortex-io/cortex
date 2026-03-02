@@ -8,7 +8,7 @@
 
 ## Summary
 
-Successfully implemented new user management API endpoints in the commit-relay dashboard server. The implementation adds comprehensive user preferences management, session tracking, and a unified profile endpoint.
+Successfully implemented new user management API endpoints in the cortex dashboard server. The implementation adds comprehensive user preferences management, session tracking, and a unified profile endpoint.
 
 ## Implemented Endpoints
 

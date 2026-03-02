@@ -1,7 +1,7 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "$id": "https://commit-relay.dev/schemas/workflow.json",
-  "title": "Commit-Relay Workflow Schema",
+  "$id": "https://cortex.dev/schemas/workflow.json",
+  "title": "Cortex Workflow Schema",
   "description": "Schema for declarative DAG workflow definitions",
   "type": "object",
   "required": ["name", "version", "steps"],

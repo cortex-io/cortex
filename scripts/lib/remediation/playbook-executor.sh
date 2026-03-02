@@ -124,7 +124,7 @@ execute_step() {
 
             if [[ -n "$worker_id" ]]; then
                 # Find worker PID
-                local pid_file="/tmp/commit-relay-worker-${worker_id}.pid"
+                local pid_file="/tmp/cortex-worker-${worker_id}.pid"
                 if [[ -f "$pid_file" ]]; then
                     local pid=$(cat "$pid_file")
                     if kill -0 "$pid" 2>/dev/null; then

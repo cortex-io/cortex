@@ -14,7 +14,7 @@
   "created_at": "2025-11-08T08:29:01-0600",
   "created_by": "create-task-cli",
   "context": {
-    "repository": "ry-ops/commit-relay",
+    "repository": "ry-ops/cortex",
     "branch": "main",
     "description": "Generate comprehensive PDF report documenting all dashboard issues found: 1) KPI metrics not reporting, 2) Admin restart button failure, 3) Event log purge failure. For each issue document: root cause analysis, why it occurred, technical details, fix approach used, code changes made, testing performed, and prevention measures. Use markdown-pdf or similar to generate professional PDF report in docs/dashboard-issues-report.pdf",
     "requirements": []
@@ -34,8 +34,8 @@
   "testing"
 ],
     "knowledge_base_refs": {
-      "implementation_patterns": "/Users/ryandahlberg/projects/commit-relay/scripts/../coordination/masters/development/knowledge-base/implementation-patterns.jsonl",
-      "architecture_docs": "/Users/ryandahlberg/projects/commit-relay/scripts/../coordination/masters/development/knowledge-base/codebase-architecture.json"
+      "implementation_patterns": "/Users/ryandahlberg/projects/cortex/scripts/../coordination/masters/development/knowledge-base/implementation-patterns.jsonl",
+      "architecture_docs": "/Users/ryandahlberg/projects/cortex/scripts/../coordination/masters/development/knowledge-base/codebase-architecture.json"
     }
   },
   "resources": {

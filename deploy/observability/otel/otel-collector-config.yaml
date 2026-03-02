@@ -1,0 +1,363 @@
+# OpenTelemetry Collector Configuration for Cortex
+# This configuration sets up receivers, processors, and exporters for metrics, traces, and logs
+
+receivers:
+  # OTLP receiver for gRPC and HTTP
+  otlp:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:4317
+      http:
+        endpoint: 0.0.0.0:4318
+        cors:
+          allowed_origins:
+            - http://*
+            - https://*
+
+  # Prometheus receiver to scrape existing Prometheus targets
+  prometheus:
+    config:
+      scrape_configs:
+        # Scrape the collector's own metrics
+        - job_name: 'otel-collector'
+          scrape_interval: 30s
+          static_configs:
+            - targets: ['localhost:8888']
+
+        # Scrape Cortex services
+        - job_name: 'cortex-services'
+          scrape_interval: 30s
+          kubernetes_sd_configs:
+            - role: pod
+              namespaces:
+                names:
+                  - cortex
+                  - monitoring
+          relabel_configs:
+            - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_scrape]
+              action: keep
+              regex: true
+            - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_path]
+              action: replace
+              target_label: __metrics_path__
+              regex: (.+)
+            - source_labels: [__address__, __meta_kubernetes_pod_annotation_prometheus_io_port]
+              action: replace
+              regex: ([^:]+)(?::\d+)?;(\d+)
+              replacement: $1:$2
+              target_label: __address__
+            - action: labelmap
+              regex: __meta_kubernetes_pod_label_(.+)
+            - source_labels: [__meta_kubernetes_namespace]
+              action: replace
+              target_label: kubernetes_namespace
+            - source_labels: [__meta_kubernetes_pod_name]
+              action: replace
+              target_label: kubernetes_pod_name
+
+        # Scrape n8n workflows
+        - job_name: 'n8n-workflows'
+          scrape_interval: 30s
+          static_configs:
+            - targets: ['n8n.cortex.svc.cluster.local:5678']
+          metrics_path: '/metrics'
+
+  # Filelog receiver for Cortex application logs
+  filelog:
+    include:
+      - /var/log/pods/cortex_*/*/*.log
+      - /var/log/pods/monitoring_*/*/*.log
+    include_file_path: true
+    include_file_name: false
+    operators:
+      # Parse JSON logs
+      - type: json_parser
+        timestamp:
+          parse_from: attributes.time
+          layout: '%Y-%m-%dT%H:%M:%S.%LZ'
+      # Add Kubernetes metadata
+      - type: regex_parser
+        regex: '^/var/log/pods/(?P<namespace>[^_]+)_(?P<pod_name>[^_]+)_(?P<pod_uid>[^/]+)/(?P<container_name>[^/]+)/(?P<restart_count>\d+)\.log$'
+        parse_from: attributes["log.file.path"]
+      # Move parsed fields to resource attributes
+      - type: move
+        from: attributes.namespace
+        to: resource["k8s.namespace.name"]
+      - type: move
+        from: attributes.pod_name
+        to: resource["k8s.pod.name"]
+      - type: move
+        from: attributes.container_name
+        to: resource["k8s.container.name"]
+
+  # Kubernetes events receiver (for cluster events)
+  k8s_events:
+    auth_type: serviceAccount
+    namespaces: [cortex, monitoring]
+
+processors:
+  # Batch processor - batches telemetry data before exporting
+  batch:
+    timeout: 10s
+    send_batch_size: 1000
+    send_batch_max_size: 1500
+
+  # Memory limiter - prevents OOM by limiting memory usage
+  memory_limiter:
+    check_interval: 1s
+    limit_mib: 400
+    spike_limit_mib: 100
+
+  # Resource processor - adds cluster and environment context
+  resource:
+    attributes:
+      - key: cluster
+        value: cortex-talos
+        action: upsert
+      - key: environment
+        value: production
+        action: upsert
+      - key: service.namespace
+        value: cortex
+        action: upsert
+
+  # Resource detection processor - auto-detects cloud/k8s environment
+  resourcedetection:
+    detectors: [env, system, docker, kubernetes]
+    timeout: 5s
+    override: false
+
+  # K8s attributes processor - enriches with Kubernetes metadata
+  k8sattributes:
+    auth_type: serviceAccount
+    passthrough: false
+    extract:
+      metadata:
+        - k8s.namespace.name
+        - k8s.deployment.name
+        - k8s.statefulset.name
+        - k8s.daemonset.name
+        - k8s.cronjob.name
+        - k8s.job.name
+        - k8s.node.name
+        - k8s.pod.name
+        - k8s.pod.uid
+        - k8s.pod.start_time
+      labels:
+        - tag_name: app.label.component
+          key: app.kubernetes.io/component
+          from: pod
+        - tag_name: app.label.name
+          key: app.kubernetes.io/name
+          from: pod
+    pod_association:
+      - sources:
+          - from: resource_attribute
+            name: k8s.pod.ip
+      - sources:
+          - from: resource_attribute
+            name: k8s.pod.uid
+      - sources:
+          - from: connection
+
+  # Filter processor - drop low-value metrics to reduce cardinality
+  filter/drop_low_value:
+    metrics:
+      datapoint:
+        # Drop metrics with specific attributes
+        - 'attributes["http.route"] == "/health"'
+        - 'attributes["http.route"] == "/healthz"'
+        - 'attributes["http.route"] == "/readyz"'
+        - 'attributes["http.route"] == "/livez"'
+
+  # Attributes processor - adds custom Cortex attributes
+  attributes/cortex:
+    actions:
+      - key: cortex.system
+        value: "true"
+        action: insert
+      - key: cortex.version
+        from_attribute: service.version
+        action: upsert
+
+  # Span processor for traces - sets span attributes
+  span:
+    name:
+      # Extract HTTP method and route for span name
+      from_attributes: ["http.method", "http.route"]
+      separator: " "
+
+  # Tail sampling processor - intelligent sampling for traces
+  tail_sampling:
+    decision_wait: 10s
+    num_traces: 100
+    expected_new_traces_per_sec: 10
+    policies:
+      # Always sample errors
+      - name: errors-policy
+        type: status_code
+        status_code:
+          status_codes: [ERROR]
+      # Always sample slow requests (>1s)
+      - name: slow-requests-policy
+        type: latency
+        latency:
+          threshold_ms: 1000
+      # Sample 100% of Cortex agent traces
+      - name: cortex-agents-policy
+        type: string_attribute
+        string_attribute:
+          key: service.name
+          values: ["cortex-agent-.*"]
+          enabled_regex_matching: true
+          invert_match: false
+      # Sample 10% of normal traffic
+      - name: probabilistic-policy
+        type: probabilistic
+        probabilistic:
+          sampling_percentage: 10
+
+exporters:
+  # Prometheus exporter - exposes metrics for Prometheus to scrape
+  prometheus:
+    endpoint: "0.0.0.0:8889"
+    namespace: cortex
+    const_labels:
+      collector: otel
+    resource_to_telemetry_conversion:
+      enabled: true
+
+  # Logging exporter - outputs to collector logs (debug/development)
+  logging:
+    verbosity: detailed
+    sampling_initial: 5
+    sampling_thereafter: 200
+
+  # Debug exporter - detailed logging for troubleshooting
+  debug:
+    verbosity: detailed
+    sampling_initial: 5
+    sampling_thereafter: 200
+
+  # OTLP exporter for traces - send to Jaeger/Tempo
+  otlp/traces:
+    endpoint: jaeger-collector.monitoring.svc.cluster.local:4317
+    tls:
+      insecure: true
+    retry_on_failure:
+      enabled: true
+      initial_interval: 5s
+      max_interval: 30s
+      max_elapsed_time: 300s
+
+  # OTLP exporter for metrics - optional secondary metrics backend
+  otlp/metrics:
+    endpoint: tempo.monitoring.svc.cluster.local:4317
+    tls:
+      insecure: true
+    retry_on_failure:
+      enabled: true
+
+  # Loki exporter for logs
+  loki:
+    endpoint: http://loki.monitoring.svc.cluster.local:3100/loki/api/v1/push
+    labels:
+      resource:
+        cluster: "cluster"
+        environment: "environment"
+        k8s.namespace.name: "namespace"
+        k8s.pod.name: "pod"
+        k8s.container.name: "container"
+      attributes:
+        level: "level"
+        service.name: "service"
+    retry_on_failure:
+      enabled: true
+
+  # Prometheus Remote Write exporter - alternative to scraping
+  prometheusremotewrite:
+    endpoint: http://prometheus-prometheus.monitoring.svc.cluster.local:9090/api/v1/write
+    tls:
+      insecure: true
+    retry_on_failure:
+      enabled: true
+
+extensions:
+  # Health check extension
+  health_check:
+    endpoint: 0.0.0.0:13133
+    path: "/health"
+    check_collector_pipeline:
+      enabled: true
+      interval: 5m
+      exporter_failure_threshold: 5
+
+  # Performance profiler
+  pprof:
+    endpoint: 0.0.0.0:1777
+
+  # Zpages for live debugging
+  zpages:
+    endpoint: 0.0.0.0:55679
+
+  # Prometheus metrics about the collector itself
+  prometheus:
+    endpoint: 0.0.0.0:8888
+
+service:
+  extensions: [health_check, pprof, zpages, prometheus]
+
+  pipelines:
+    # Metrics pipeline
+    metrics:
+      receivers: [otlp, prometheus]
+      processors:
+        - memory_limiter
+        - resource
+        - resourcedetection
+        - k8sattributes
+        - filter/drop_low_value
+        - attributes/cortex
+        - batch
+      exporters: [prometheus, logging]
+      # Uncomment to enable remote write
+      # exporters: [prometheus, prometheusremotewrite, logging]
+
+    # Traces pipeline
+    traces:
+      receivers: [otlp]
+      processors:
+        - memory_limiter
+        - resource
+        - resourcedetection
+        - k8sattributes
+        - attributes/cortex
+        - span
+        - tail_sampling
+        - batch
+      exporters: [debug]
+      # Uncomment when Jaeger/Tempo is deployed
+      # exporters: [otlp/traces, debug]
+
+    # Logs pipeline
+    logs:
+      receivers: [otlp, filelog, k8s_events]
+      processors:
+        - memory_limiter
+        - resource
+        - resourcedetection
+        - k8sattributes
+        - attributes/cortex
+        - batch
+      exporters: [logging]
+      # Uncomment when Loki is deployed
+      # exporters: [loki, logging]
+
+  # Telemetry configuration for the collector itself
+  telemetry:
+    logs:
+      level: info
+      encoding: json
+    metrics:
+      level: detailed
+      address: 0.0.0.0:8888

@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # scripts/lib/task-allocator.sh
 # Task Allocator Library - Phase 3 Item 24
 # Context-aware resource allocation with dynamic token budget based on task complexity
@@ -10,7 +10,7 @@
 #   - Integration with worker spec builder
 #
 # Usage:
-#   source "$COMMIT_RELAY_HOME/scripts/lib/task-allocator.sh"
+#   source "$CORTEX_HOME/scripts/lib/task-allocator.sh"
 #   allocation=$(allocate_resources --task-description "Implement auth system" --task-type "feature")
 
 set -euo pipefail
@@ -19,13 +19,13 @@ set -euo pipefail
 # Configuration
 # ============================================================================
 
-COMMIT_RELAY_HOME="${COMMIT_RELAY_HOME:-$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)}"
+CORTEX_HOME="${CORTEX_HOME:-$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)}"
 
 # Allocation policy
-ALLOCATION_POLICY_FILE="${COMMIT_RELAY_HOME}/coordination/config/task-allocation-policy.json"
+ALLOCATION_POLICY_FILE="${CORTEX_HOME}/coordination/config/task-allocation-policy.json"
 
 # Historical data
-ALLOCATION_HISTORY_FILE="${COMMIT_RELAY_HOME}/coordination/metrics/task-allocation-history.jsonl"
+ALLOCATION_HISTORY_FILE="${CORTEX_HOME}/coordination/metrics/task-allocation-history.jsonl"
 
 # Create directories
 mkdir -p "$(dirname "$ALLOCATION_HISTORY_FILE")"

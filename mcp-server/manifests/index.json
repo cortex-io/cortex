@@ -69,7 +69,7 @@
     }
   },
   "mcp": {
-    "server": "commit-relay-mcp",
+    "server": "cortex-mcp",
     "version": "1.0.0",
     "protocol": "JSON-RPC 2.0",
     "transport": "stdio"
