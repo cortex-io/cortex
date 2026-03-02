@@ -109,8 +109,13 @@ jobs:
     name: Lint Commit Messages
     runs-on: ubuntu-latest
     timeout-minutes: 5
-    # Skip for Dependabot — their commit messages don't follow conventional commits
-    if: github.actor != 'dependabot[bot]'
+    # Skip for Dependabot and security bot branches — commit messages don't follow conventional commits
+    if: >
+      github.actor != 'dependabot[bot]' &&
+      github.actor != 'mend-bolt-for-github[bot]' &&
+      github.actor != 'snyk-bot' &&
+      !startsWith(github.head_ref, 'dependabot/') &&
+      !startsWith(github.head_ref, 'security/')
 
     steps:
       - name: Checkout code
