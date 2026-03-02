@@ -32,9 +32,10 @@ jobs:
         uses: actions/github-script@v7
         with:
           script: |
-            // Dependabot PRs follow their own title format — skip validation
-            if (context.actor === 'dependabot[bot]') {
-              core.info('Skipping title check for Dependabot PR');
+            // Dependabot and security bots follow their own title format — skip validation
+            const bots = ['dependabot[bot]', 'mend-bolt-for-github[bot]', 'snyk-bot'];
+            if (bots.includes(context.actor)) {
+              core.info('Skipping title check for bot PR');
               return;
             }
             const title = context.payload.pull_request.title;
@@ -55,9 +56,10 @@ jobs:
         uses: actions/github-script@v7
         with:
           script: |
-            // Dependabot PRs use auto-generated descriptions — skip validation
-            if (context.actor === 'dependabot[bot]') {
-              core.info('Skipping description check for Dependabot PR');
+            // Dependabot and security bots use auto-generated descriptions — skip validation
+            const bots = ['dependabot[bot]', 'mend-bolt-for-github[bot]', 'snyk-bot'];
+            if (bots.includes(context.actor)) {
+              core.info('Skipping description check for bot PR');
               return;
             }
             const body = context.payload.pull_request.body || '';
@@ -84,7 +86,7 @@ jobs:
             echo "Dependabot branch — skipping branch name check"
             exit 0
           fi
-          PATTERN="^(feature|bugfix|hotfix|release|refactor|fix)/[a-z0-9-]+$"
+          PATTERN="^(feature|bugfix|hotfix|release|refactor|fix|security|chore)/[a-z0-9._-]+$"
           if ! echo "$BRANCH" | grep -qE "$PATTERN"; then
             echo "Branch name must follow pattern: type/description"
             echo "Examples: feature/add-monitoring, bugfix/fix-memory-leak"
