@@ -22,7 +22,7 @@
   "author": "ry-ops",
   "license": "MIT",
   "dependencies": {
-    "@anthropic-ai/sdk": "^0.71.0",
+    "@anthropic-ai/sdk": "^0.71.2",
     "@opentelemetry/api": "^1.9.0",
     "@opentelemetry/sdk-node": "^0.208.0",
     "@opentelemetry/sdk-trace-node": "^2.2.0",
@@ -37,7 +37,7 @@
     "openai": "^4.73.0",
     "postman-cli": "^1.26.0",
     "tiktoken": "^1.0.17",
-    "ws": "^8.18.3"
+    "ws": "^8.19.0"
   },
   "devDependencies": {
     "@types/jest": "^29.5.11",
