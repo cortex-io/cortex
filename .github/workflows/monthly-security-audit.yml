@@ -47,7 +47,7 @@ jobs:
           quarto render security-audit.qmd
 
       - name: Upload security audit artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: security-audit-${{ github.run_number }}
           path: |
