@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: sla-predictor-code
+  namespace: cortex-itil-stream2
+data:
+  sla-predictor.py: |

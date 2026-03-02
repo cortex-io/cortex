@@ -1,0 +1,321 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cortex
+  namespace: cortex
+  labels:
+    app.kubernetes.io/name: cortex
+    app.kubernetes.io/instance: cortex
+    app.kubernetes.io/version: "2.0.0"
+    app.kubernetes.io/component: orchestration
+    app.kubernetes.io/part-of: cortex-platform
+    app.kubernetes.io/managed-by: kubectl
+  annotations:
+    description: "Cortex orchestration platform deployment"
+    cortex.ry-ops.io/architecture: "moe"
+spec:
+  replicas: 3
+  revisionHistoryLimit: 5
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: cortex
+      app.kubernetes.io/instance: cortex
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: cortex
+        app.kubernetes.io/instance: cortex
+        app.kubernetes.io/version: "2.0.0"
+        app.kubernetes.io/component: orchestration
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "9500"
+        prometheus.io/path: "/metrics"
+        # Force rolling update on config/secret changes
+        checksum/config: "{{ include (print $.Template.BasePath \"/configmap.yaml\") . | sha256sum }}"
+        checksum/secret: "{{ include (print $.Template.BasePath \"/secret.yaml\") . | sha256sum }}"
+    spec:
+      serviceAccountName: cortex
+      automountServiceAccountToken: true
+
+      # Security context for pod
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+        fsGroupChangePolicy: "OnRootMismatch"
+        seccompProfile:
+          type: RuntimeDefault
+
+      # Init container to set up data directory permissions
+      initContainers:
+      - name: setup-data-dir
+        image: busybox:1.36
+        command: ['sh', '-c', 'mkdir -p /data/state /data/logs /data/repos && chown -R 1000:1000 /data']
+        securityContext:
+          runAsUser: 0
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+            add:
+            - CHOWN
+            - FOWNER
+          readOnlyRootFilesystem: true
+        volumeMounts:
+        - name: data
+          mountPath: /data
+
+      containers:
+      - name: cortex
+        image: ghcr.io/ry-ops/cortex:2.0.0
+        imagePullPolicy: IfNotPresent
+
+        # Security context for container
+        securityContext:
+          runAsNonRoot: true
+          runAsUser: 1000
+          runAsGroup: 1000
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop:
+            - ALL
+          seccompProfile:
+            type: RuntimeDefault
+
+        # Container ports
+        ports:
+        - name: http
+          containerPort: 9500
+          protocol: TCP
+        - name: websocket
+          containerPort: 9501
+          protocol: TCP
+        - name: dashboard
+          containerPort: 3004
+          protocol: TCP
+
+        # Environment variables from ConfigMap and Secret
+        env:
+        - name: NODE_ENV
+          valueFrom:
+            configMapKeyRef:
+              name: cortex-config
+              key: NODE_ENV
+        - name: API_PORT
+          value: "9500"
+        - name: COORDINATION_PORT
+          value: "9500"
+        - name: COORDINATION_WS_PORT
+          value: "9501"
+        - name: DASHBOARD_PORT
+          value: "3004"
+        - name: ANTHROPIC_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: cortex-secrets
+              key: anthropic-api-key
+        - name: API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: cortex-secrets
+              key: api-key
+        - name: ALLOWED_ORIGINS
+          valueFrom:
+            configMapKeyRef:
+              name: cortex-config
+              key: ALLOWED_ORIGINS
+        - name: MAX_WORKERS
+          valueFrom:
+            configMapKeyRef:
+              name: cortex-config
+              key: MAX_WORKERS
+        - name: WORKER_TIMEOUT_MINUTES
+          valueFrom:
+            configMapKeyRef:
+              name: cortex-config
+              key: WORKER_TIMEOUT_MINUTES
+        - name: WORKER_TOKEN_BUDGET
+          valueFrom:
+            configMapKeyRef:
+              name: cortex-config
+              key: WORKER_TOKEN_BUDGET
+        - name: DEBUG
+          valueFrom:
+            configMapKeyRef:
+              name: cortex-config
+              key: DEBUG
+        - name: LOG_DIR
+          value: "/data/logs"
+        - name: REPOS_PATH
+          value: "/data/repos"
+        - name: METRICS_RETENTION_DAYS
+          valueFrom:
+            configMapKeyRef:
+              name: cortex-config
+              key: METRICS_RETENTION_DAYS
+        - name: GIT_AUTHOR_NAME
+          valueFrom:
+            configMapKeyRef:
+              name: cortex-config
+              key: GIT_AUTHOR_NAME
+        - name: GIT_AUTHOR_EMAIL
+          valueFrom:
+            configMapKeyRef:
+              name: cortex-config
+              key: GIT_AUTHOR_EMAIL
+        # Kubernetes-specific environment
+        - name: POD_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
+        - name: POD_NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+        - name: POD_IP
+          valueFrom:
+            fieldRef:
+              fieldPath: status.podIP
+        - name: NODE_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: spec.nodeName
+
+        # Resource limits and requests
+        resources:
+          requests:
+            cpu: 500m
+            memory: 1Gi
+            ephemeral-storage: 1Gi
+          limits:
+            cpu: 2000m
+            memory: 4Gi
+            ephemeral-storage: 5Gi
+
+        # Volume mounts
+        volumeMounts:
+        - name: data
+          mountPath: /data
+        - name: tmp
+          mountPath: /tmp
+        - name: npm-cache
+          mountPath: /home/node/.npm
+
+        # Startup probe - give app time to initialize
+        startupProbe:
+          httpGet:
+            path: /health
+            port: http
+            scheme: HTTP
+          initialDelaySeconds: 10
+          periodSeconds: 5
+          timeoutSeconds: 3
+          successThreshold: 1
+          failureThreshold: 30
+
+        # Liveness probe - restart if unhealthy
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: http
+            scheme: HTTP
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          successThreshold: 1
+          failureThreshold: 3
+
+        # Readiness probe - remove from service if not ready
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: http
+            scheme: HTTP
+          initialDelaySeconds: 5
+          periodSeconds: 5
+          timeoutSeconds: 3
+          successThreshold: 1
+          failureThreshold: 3
+
+        # Lifecycle hooks
+        lifecycle:
+          preStop:
+            exec:
+              command: ["/bin/sh", "-c", "sleep 15"]
+
+      # Pod anti-affinity for HA - spread across nodes
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            podAffinityTerm:
+              labelSelector:
+                matchExpressions:
+                - key: app.kubernetes.io/name
+                  operator: In
+                  values:
+                  - cortex
+              topologyKey: kubernetes.io/hostname
+          - weight: 50
+            podAffinityTerm:
+              labelSelector:
+                matchExpressions:
+                - key: app.kubernetes.io/name
+                  operator: In
+                  values:
+                  - cortex
+              topologyKey: topology.kubernetes.io/zone
+        nodeAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 50
+            preference:
+              matchExpressions:
+              - key: node-role.kubernetes.io/worker
+                operator: Exists
+
+      # Topology spread constraints for better distribution
+      topologySpreadConstraints:
+      - maxSkew: 1
+        topologyKey: kubernetes.io/hostname
+        whenUnsatisfiable: ScheduleAnyway
+        labelSelector:
+          matchLabels:
+            app.kubernetes.io/name: cortex
+      - maxSkew: 1
+        topologyKey: topology.kubernetes.io/zone
+        whenUnsatisfiable: ScheduleAnyway
+        labelSelector:
+          matchLabels:
+            app.kubernetes.io/name: cortex
+
+      # DNS configuration
+      dnsPolicy: ClusterFirst
+      dnsConfig:
+        options:
+        - name: ndots
+          value: "2"
+        - name: edns0
+
+      # Termination grace period
+      terminationGracePeriodSeconds: 30
+
+      # Volumes
+      volumes:
+      - name: data
+        persistentVolumeClaim:
+          claimName: cortex-data
+      - name: tmp
+        emptyDir:
+          sizeLimit: 1Gi
+      - name: npm-cache
+        emptyDir:
+          sizeLimit: 500Mi

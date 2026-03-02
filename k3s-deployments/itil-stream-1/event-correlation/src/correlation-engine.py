@@ -1,0 +1,426 @@
+#!/usr/bin/env python3
+"""
+Event Correlation Engine
+ITIL Implementation - Stream 1, Component 2
+
+Correlates related events to reduce alert noise:
+- Groups related events using ML clustering
+- Identifies root cause from event chains
+- Reduces duplicate incidents
+- Provides correlation confidence scores
+"""
+
+import asyncio
+import json
+import logging
+import os
+import time
+from datetime import datetime, timedelta
+from typing import Dict, List, Optional, Set, Tuple
+from dataclasses import dataclass, asdict
+from collections import defaultdict
+import hashlib
+
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
+logger = logging.getLogger('event-correlation')
+
+
+@dataclass
+class Event:
+    id: str
+    source: str
+    event_type: str
+    severity: str
+    timestamp: datetime
+    message: str
+    metadata: Dict
+    fingerprint: str
+    correlation_id: Optional[str] = None
+
+
+@dataclass
+class CorrelationGroup:
+    id: str
+    events: List[str]  # event IDs
+    root_cause_event: Optional[str]
+    confidence: float
+    created_at: datetime
+    updated_at: datetime
+    pattern: str
+    incident_created: bool
+
+
+class EventCorrelationEngine:
+    """Correlates events to identify related incidents and root causes"""
+
+    def __init__(self, data_dir: str = "/app/data"):
+        self.data_dir = data_dir
+        self.events: Dict[str, Event] = {}
+        self.correlations: Dict[str, CorrelationGroup] = {}
+        self.event_buffer: List[Event] = []
+
+        # Configuration
+        self.correlation_window = int(os.getenv('CORRELATION_WINDOW', '300'))  # 5 minutes
+        self.min_correlation_confidence = float(os.getenv('MIN_CORRELATION_CONFIDENCE', '0.7'))
+        self.buffer_size = int(os.getenv('EVENT_BUFFER_SIZE', '1000'))
+        self.correlation_interval = int(os.getenv('CORRELATION_INTERVAL', '30'))
+
+        os.makedirs(f"{data_dir}/events", exist_ok=True)
+        os.makedirs(f"{data_dir}/correlations", exist_ok=True)
+        os.makedirs(f"{data_dir}/metrics", exist_ok=True)
+
+        # Correlation patterns
+        self.correlation_patterns = self._load_correlation_patterns()
+
+        logger.info("Event Correlation Engine initialized")
+
+    def _load_correlation_patterns(self) -> List[Dict]:
+        """Load known correlation patterns"""
+        return [
+            {
+                'name': 'cascading_failure',
+                'pattern': ['service_down', 'dependency_failure', 'timeout'],
+                'confidence': 0.95,
+                'time_window': 60
+            },
+            {
+                'name': 'resource_exhaustion',
+                'pattern': ['high_memory', 'high_cpu', 'oom_kill'],
+                'confidence': 0.90,
+                'time_window': 120
+            },
+            {
+                'name': 'network_partition',
+                'pattern': ['connection_timeout', 'unreachable', 'dns_failure'],
+                'confidence': 0.85,
+                'time_window': 90
+            },
+            {
+                'name': 'database_contention',
+                'pattern': ['slow_query', 'deadlock', 'connection_pool_exhausted'],
+                'confidence': 0.88,
+                'time_window': 180
+            },
+            {
+                'name': 'deployment_failure',
+                'pattern': ['pod_crash_loop', 'image_pull_error', 'config_error'],
+                'confidence': 0.92,
+                'time_window': 120
+            },
+            {
+                'name': 'security_incident',
+                'pattern': ['unauthorized_access', 'suspicious_activity', 'rate_limit_exceeded'],
+                'confidence': 0.87,
+                'time_window': 300
+            }
+        ]
+
+    def _calculate_fingerprint(self, event: Event) -> str:
+        """Calculate event fingerprint for deduplication"""
+        # Normalize event data for fingerprinting
+        components = [
+            event.source,
+            event.event_type,
+            event.severity,
+            # Exclude timestamp for dedup
+        ]
+
+        # Add key metadata fields
+        if 'host' in event.metadata:
+            components.append(event.metadata['host'])
+        if 'service' in event.metadata:
+            components.append(event.metadata['service'])
+
+        fingerprint_str = '|'.join(str(c) for c in components)
+        return hashlib.sha256(fingerprint_str.encode()).hexdigest()[:16]
+
+    def ingest_event(self, event: Event) -> bool:
+        """Ingest a new event for correlation"""
+        # Calculate fingerprint
+        event.fingerprint = self._calculate_fingerprint(event)
+
+        # Check for recent duplicate
+        cutoff_time = datetime.now() - timedelta(seconds=60)
+        for existing_event in self.event_buffer:
+            if (existing_event.fingerprint == event.fingerprint and
+                existing_event.timestamp > cutoff_time):
+                logger.debug(f"Duplicate event detected: {event.id}")
+                return False
+
+        # Store event
+        self.events[event.id] = event
+        self.event_buffer.append(event)
+
+        # Maintain buffer size
+        if len(self.event_buffer) > self.buffer_size:
+            self.event_buffer = self.event_buffer[-self.buffer_size:]
+
+        self._save_event(event)
+        logger.debug(f"Event ingested: {event.id} ({event.event_type})")
+        return True
+
+    def _calculate_similarity(self, event1: Event, event2: Event) -> float:
+        """Calculate similarity score between two events"""
+        score = 0.0
+
+        # Source similarity
+        if event1.source == event2.source:
+            score += 0.3
+
+        # Type similarity
+        if event1.event_type == event2.event_type:
+            score += 0.3
+        elif self._events_related(event1.event_type, event2.event_type):
+            score += 0.2
+
+        # Severity similarity
+        if event1.severity == event2.severity:
+            score += 0.1
+
+        # Temporal proximity (within correlation window)
+        time_diff = abs((event1.timestamp - event2.timestamp).total_seconds())
+        if time_diff <= self.correlation_window:
+            temporal_score = 1.0 - (time_diff / self.correlation_window)
+            score += temporal_score * 0.3
+
+        return min(score, 1.0)
+
+    def _events_related(self, type1: str, type2: str) -> bool:
+        """Check if two event types are related"""
+        # Check correlation patterns
+        for pattern in self.correlation_patterns:
+            if type1 in pattern['pattern'] and type2 in pattern['pattern']:
+                return True
+        return False
+
+    def correlate_events(self) -> List[CorrelationGroup]:
+        """Correlate recent events into groups"""
+        logger.info("Starting event correlation")
+
+        # Get recent events
+        cutoff_time = datetime.now() - timedelta(seconds=self.correlation_window)
+        recent_events = [e for e in self.event_buffer if e.timestamp > cutoff_time]
+
+        if len(recent_events) < 2:
+            return []
+
+        # Pattern-based correlation
+        new_correlations = []
+        for pattern in self.correlation_patterns:
+            correlation = self._correlate_by_pattern(recent_events, pattern)
+            if correlation:
+                new_correlations.append(correlation)
+
+        # Similarity-based correlation
+        similarity_correlations = self._correlate_by_similarity(recent_events)
+        new_correlations.extend(similarity_correlations)
+
+        # Store correlations
+        for correlation in new_correlations:
+            self.correlations[correlation.id] = correlation
+            self._save_correlation(correlation)
+
+            # Update event correlation IDs
+            for event_id in correlation.events:
+                if event_id in self.events:
+                    self.events[event_id].correlation_id = correlation.id
+
+        logger.info(f"Created {len(new_correlations)} correlation groups")
+        return new_correlations
+
+    def _correlate_by_pattern(self, events: List[Event], pattern: Dict) -> Optional[CorrelationGroup]:
+        """Correlate events matching a known pattern"""
+        pattern_events = []
+        pattern_types = set(pattern['pattern'])
+
+        # Find events matching pattern types
+        for event in events:
+            if event.event_type in pattern_types:
+                pattern_events.append(event)
+
+        if len(pattern_events) < 2:
+            return None
+
+        # Check if events are within pattern time window
+        if pattern_events:
+            earliest = min(e.timestamp for e in pattern_events)
+            latest = max(e.timestamp for e in pattern_events)
+            time_span = (latest - earliest).total_seconds()
+
+            if time_span > pattern['time_window']:
+                return None
+
+        # Create correlation group
+        correlation_id = f"corr-{pattern['name']}-{int(time.time())}"
+        correlation = CorrelationGroup(
+            id=correlation_id,
+            events=[e.id for e in pattern_events],
+            root_cause_event=pattern_events[0].id,  # First in chain is likely root cause
+            confidence=pattern['confidence'],
+            created_at=datetime.now(),
+            updated_at=datetime.now(),
+            pattern=pattern['name'],
+            incident_created=False
+        )
+
+        logger.info(f"Pattern correlation: {pattern['name']} with {len(pattern_events)} events")
+        return correlation
+
+    def _correlate_by_similarity(self, events: List[Event]) -> List[CorrelationGroup]:
+        """Correlate events by similarity clustering"""
+        correlations = []
+        processed = set()
+
+        for i, event1 in enumerate(events):
+            if event1.id in processed or event1.correlation_id:
+                continue
+
+            cluster = [event1]
+            cluster_ids = {event1.id}
+
+            # Find similar events
+            for event2 in events[i+1:]:
+                if event2.id in processed or event2.correlation_id:
+                    continue
+
+                similarity = self._calculate_similarity(event1, event2)
+                if similarity >= self.min_correlation_confidence:
+                    cluster.append(event2)
+                    cluster_ids.add(event2.id)
+
+            # Create correlation if cluster is significant
+            if len(cluster) >= 2:
+                correlation_id = f"corr-sim-{int(time.time())}-{i}"
+                correlation = CorrelationGroup(
+                    id=correlation_id,
+                    events=list(cluster_ids),
+                    root_cause_event=cluster[0].id,
+                    confidence=self._calculate_cluster_confidence(cluster),
+                    created_at=datetime.now(),
+                    updated_at=datetime.now(),
+                    pattern='similarity_based',
+                    incident_created=False
+                )
+
+                correlations.append(correlation)
+                processed.update(cluster_ids)
+
+        return correlations
+
+    def _calculate_cluster_confidence(self, cluster: List[Event]) -> float:
+        """Calculate confidence score for a cluster"""
+        if len(cluster) < 2:
+            return 0.0
+
+        # Calculate average pairwise similarity
+        total_similarity = 0.0
+        pairs = 0
+
+        for i, event1 in enumerate(cluster):
+            for event2 in cluster[i+1:]:
+                total_similarity += self._calculate_similarity(event1, event2)
+                pairs += 1
+
+        return total_similarity / max(pairs, 1)
+
+    def get_correlation(self, correlation_id: str) -> Optional[CorrelationGroup]:
+        """Get correlation group by ID"""
+        return self.correlations.get(correlation_id)
+
+    def get_event_correlation(self, event_id: str) -> Optional[CorrelationGroup]:
+        """Get correlation group for an event"""
+        event = self.events.get(event_id)
+        if event and event.correlation_id:
+            return self.correlations.get(event.correlation_id)
+        return None
+
+    def _save_event(self, event: Event):
+        """Persist event data"""
+        event_file = f"{self.data_dir}/events/{event.id}.json"
+        event_data = {
+            'id': event.id,
+            'source': event.source,
+            'event_type': event.event_type,
+            'severity': event.severity,
+            'timestamp': event.timestamp.isoformat(),
+            'message': event.message,
+            'metadata': event.metadata,
+            'fingerprint': event.fingerprint,
+            'correlation_id': event.correlation_id
+        }
+        with open(event_file, 'w') as f:
+            json.dump(event_data, f, indent=2)
+
+    def _save_correlation(self, correlation: CorrelationGroup):
+        """Persist correlation data"""
+        corr_file = f"{self.data_dir}/correlations/{correlation.id}.json"
+        corr_data = {
+            'id': correlation.id,
+            'events': correlation.events,
+            'root_cause_event': correlation.root_cause_event,
+            'confidence': correlation.confidence,
+            'created_at': correlation.created_at.isoformat(),
+            'updated_at': correlation.updated_at.isoformat(),
+            'pattern': correlation.pattern,
+            'incident_created': correlation.incident_created
+        }
+        with open(corr_file, 'w') as f:
+            json.dump(corr_data, f, indent=2)
+
+    def get_metrics(self) -> Dict:
+        """Get correlation engine metrics"""
+        recent_events = [e for e in self.event_buffer
+                        if e.timestamp > datetime.now() - timedelta(hours=1)]
+        recent_correlations = [c for c in self.correlations.values()
+                             if c.created_at > datetime.now() - timedelta(hours=1)]
+
+        correlated_events = sum(len(c.events) for c in recent_correlations)
+
+        metrics = {
+            'timestamp': datetime.now().isoformat(),
+            'total_events': len(self.events),
+            'buffer_size': len(self.event_buffer),
+            'recent_events_1h': len(recent_events),
+            'total_correlations': len(self.correlations),
+            'recent_correlations_1h': len(recent_correlations),
+            'correlation_rate': correlated_events / max(len(recent_events), 1),
+            'avg_correlation_confidence': sum(c.confidence for c in recent_correlations) / max(len(recent_correlations), 1)
+        }
+
+        return metrics
+
+    async def run(self):
+        """Main correlation engine loop"""
+        logger.info("Starting Event Correlation Engine")
+
+        while True:
+            try:
+                # Run correlation
+                correlations = self.correlate_events()
+
+                # Get and save metrics
+                metrics = self.get_metrics()
+                metrics_file = f"{self.data_dir}/metrics/correlation-metrics-{int(time.time())}.json"
+                with open(metrics_file, 'w') as f:
+                    json.dump(metrics, f, indent=2)
+
+                logger.info(f"Correlation cycle: {len(correlations)} groups created, "
+                          f"rate: {metrics['correlation_rate']:.2%}")
+
+                await asyncio.sleep(self.correlation_interval)
+
+            except Exception as e:
+                logger.error(f"Error in correlation loop: {e}", exc_info=True)
+                await asyncio.sleep(10)
+
+
+async def main():
+    engine = EventCorrelationEngine()
+    await engine.run()
+
+
+if __name__ == "__main__":
+    asyncio.run(main())

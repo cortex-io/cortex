@@ -4,11 +4,57 @@
 
 set -euo pipefail
 
-# Get project root
+# Get script directory and project root
+LIB_SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 if [[ -z "${PROJECT_ROOT:-}" ]]; then
-    LIB_SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
     PROJECT_ROOT="$(cd "$LIB_SCRIPT_DIR/../../../.." && pwd)"
 fi
+
+# Config file path
+CONFIG_FILE="${LIB_SCRIPT_DIR}/../config/cleanup-rules.json"
+
+# ==============================================================================
+# PROTECTED FILES HELPER
+# ==============================================================================
+
+# Load all protected files from config into a lookup file
+load_protected_files() {
+    local lookup_file="${1:-/tmp/protected-files-$$.txt}"
+
+    if [[ ! -f "$CONFIG_FILE" ]]; then
+        echo "Warning: Config file not found: $CONFIG_FILE" >&2
+        touch "$lookup_file"
+        echo "$lookup_file"
+        return
+    fi
+
+    # Extract all protected file paths from all sections
+    jq -r '
+        [
+            .protected_executables.scripts[]?,
+            .protected_executables.cleanup_master[]?,
+            .protected_executables.coordinator_master[]?,
+            .protected_executables.security_master[]?,
+            .protected_executables.other_masters[]?,
+            .protected_core_modules.cortex_core[]?,
+            .protected_core_modules.coordination[]?,
+            .protected_core_modules.worker_pool[]?,
+            .protected_core_modules.scheduler[]?,
+            .protected_python_sdk.files[]?,
+            .protected_analysis.files[]?
+        ] | .[]
+    ' "$CONFIG_FILE" 2>/dev/null | sort -u > "$lookup_file"
+
+    echo "$lookup_file"
+}
+
+# Check if a file is protected
+is_protected_file() {
+    local file="$1"
+    local lookup_file="$2"
+
+    grep -qxF "$file" "$lookup_file" 2>/dev/null
+}
 
 # ==============================================================================
 # DEAD CODE DETECTION
@@ -19,6 +65,11 @@ find_unreferenced_files() {
     local results_file="${2:-/tmp/unreferenced-files.json}"
 
     echo "Scanning for unreferenced files in $scan_dir..." >&2
+
+    # Load protected files list
+    local protected_files=$(load_protected_files "/tmp/protected-files-$$.txt")
+    local protected_count=$(wc -l < "$protected_files" | tr -d ' ')
+    echo "  Loaded $protected_count protected files from config" >&2
 
     # V2 Optimization: Use awk hash table instead of repeated greps
     # This reduces 46K greps × 10M lines to 1 pass through 10M lines
@@ -73,16 +124,26 @@ find_unreferenced_files() {
 
     echo "Step 3/3: Generating results..." >&2
 
-    # Convert to relative paths and build array
+    # Convert to relative paths and build array (excluding protected files)
     local unreferenced=()
+    local skipped_protected=0
     while IFS= read -r file; do
         [[ -z "$file" ]] && continue
         local relative_path="${file#$PROJECT_ROOT/}"
+
+        # Skip protected files
+        if is_protected_file "$relative_path" "$protected_files"; then
+            ((skipped_protected++))
+            continue
+        fi
+
         unreferenced+=("$relative_path")
     done <<< "$unreferenced_raw"
 
+    echo "  Skipped $skipped_protected protected files" >&2
+
     # Cleanup
-    rm -f "$temp_files"
+    rm -f "$temp_files" "$protected_files"
 
     echo "  Found ${#unreferenced[@]} unreferenced files" >&2
 
@@ -280,7 +341,9 @@ scan_for_duplicates() {
     local duplicates=()
 
     # Step 1: Group files by size (duplicates must have same size)
-    declare -A size_groups
+    # Bash 3.x compatible: Use temp file instead of associative array
+    local size_groups_file="/tmp/size-groups-$$.txt"
+    > "$size_groups_file"  # Create/clear file
     local total=0
     local processed=0
 
@@ -293,7 +356,7 @@ scan_for_duplicates() {
         fi
 
         local size=$(stat -f%z "$file" 2>/dev/null || stat -c%s "$file" 2>/dev/null)
-        size_groups[$size]="${size_groups[$size]:-}$file"$'\n'
+        echo "$size|$file" >> "$size_groups_file"
         ((total++))
         ((processed++))
 
@@ -306,46 +369,50 @@ scan_for_duplicates() {
     echo "Step 2/3: Identifying size groups with multiple files..." >&2
 
     # Step 2: Only hash files that have potential duplicates (same size)
-    local candidates=0
-    for size in "${!size_groups[@]}"; do
-        local file_list="${size_groups[$size]}"
-        local count=$(echo "$file_list" | grep -c '^' || echo 0)
-        if [[ $count -gt 1 ]]; then
-            ((candidates += count))
-        fi
-    done
+    # Find sizes that appear more than once
+    local candidate_sizes_file="/tmp/candidate-sizes-$$.txt"
+    awk -F'|' '{count[$1]++; if(count[$1]==2) print $1}' "$size_groups_file" | sort -u > "$candidate_sizes_file"
+    local candidates=$(awk -F'|' 'NR==FNR{sizes[$1]=1; next} $1 in sizes' "$candidate_sizes_file" "$size_groups_file" | wc -l | tr -d ' ')
 
     echo "Step 3/3: Computing hashes for $candidates/$total candidate files..." >&2
 
     # Step 3: Hash only the candidate files
-    declare -A file_hashes
+    # Bash 3.x compatible: Use temp file instead of associative array
+    local file_hashes_file="/tmp/file-hashes-$$.txt"
+    > "$file_hashes_file"  # Create/clear file
     local hashed=0
 
-    for size in "${!size_groups[@]}"; do
-        local file_list="${size_groups[$size]}"
-        local count=$(echo "$file_list" | grep -c '^' || echo 0)
+    # Process each candidate size group
+    while IFS= read -r size; do
+        [[ -z "$size" ]] && continue
 
-        # Only hash if multiple files have this size
-        if [[ $count -gt 1 ]]; then
-            while IFS= read -r file; do
-                [[ -z "$file" ]] && continue
+        # Get all files with this size
+        local files_with_size=$(grep "^$size|" "$size_groups_file" | cut -d'|' -f2-)
 
-                local relative_path="${file#$PROJECT_ROOT/}"
-                local hash=$(md5sum "$file" 2>/dev/null | cut -d' ' -f1 || md5 -q "$file" 2>/dev/null)
+        while IFS= read -r file; do
+            [[ -z "$file" ]] && continue
 
-                if [[ -n "${file_hashes[$hash]:-}" ]]; then
-                    duplicates+=("{\"hash\": \"$hash\", \"original\": \"${file_hashes[$hash]}\", \"duplicate\": \"$relative_path\"}")
-                else
-                    file_hashes[$hash]="$relative_path"
-                fi
+            local relative_path="${file#$PROJECT_ROOT/}"
+            local hash=$(md5sum "$file" 2>/dev/null | cut -d' ' -f1 || md5 -q "$file" 2>/dev/null)
 
-                ((hashed++))
-                if (( hashed % 50 == 0 )); then
-                    echo "  Hashed $hashed/$candidates files..." >&2
-                fi
-            done <<< "$file_list"
-        fi
-    done
+            # Check if hash already exists in our tracking file
+            local existing_file=$(grep "^$hash|" "$file_hashes_file" | cut -d'|' -f2- | head -1)
+
+            if [[ -n "$existing_file" ]]; then
+                duplicates+=("{\"hash\": \"$hash\", \"original\": \"$existing_file\", \"duplicate\": \"$relative_path\"}")
+            else
+                echo "$hash|$relative_path" >> "$file_hashes_file"
+            fi
+
+            ((hashed++))
+            if (( hashed % 50 == 0 )); then
+                echo "  Hashed $hashed/$candidates files..." >&2
+            fi
+        done <<< "$files_with_size"
+    done < "$candidate_sizes_file"
+
+    # Cleanup temp files
+    rm -f "$size_groups_file" "$candidate_sizes_file" "$file_hashes_file"
 
     # Generate JSON output
     if [[ ${#duplicates[@]} -gt 0 ]]; then
@@ -369,6 +436,226 @@ scan_for_duplicates() {
     fi
 
     echo "${#duplicates[@]}"
+}
+
+# ==============================================================================
+# JUNK FILE DETECTION (Malformed command artifacts)
+# ==============================================================================
+
+find_junk_files() {
+    local scan_dir="${1:-$PROJECT_ROOT}"
+    local results_file="${2:-/tmp/junk-files.json}"
+
+    echo "Scanning for junk files (malformed command artifacts) in $scan_dir..." >&2
+
+    local junk_files=()
+
+    # Pattern 1: Files with shell metacharacters in names (|, >, <, &, ;, $, `)
+    # These are almost always artifacts from broken shell commands
+    echo "  Checking for shell metacharacter filenames..." >&2
+    while IFS= read -r file; do
+        [[ -z "$file" ]] && continue
+        local relative_path="${file#$PROJECT_ROOT/}"
+
+        # Skip excluded directories
+        if echo "$relative_path" | grep -qE '(node_modules|\.git|\.venv|__pycache__)'; then
+            continue
+        fi
+
+        local filename=$(basename "$file")
+        local size=$(stat -f%z "$file" 2>/dev/null || stat -c%s "$file" 2>/dev/null || echo "0")
+
+        junk_files+=("{\"file\": \"$relative_path\", \"reason\": \"shell_metacharacter_in_filename\", \"size\": $size}")
+    done < <(find "$scan_dir" -maxdepth 3 -type f \( -name '*|*' -o -name '*>*' -o -name '*<*' -o -name '*&*' -o -name '*;*' -o -name '*\`*' \) 2>/dev/null)
+
+    # Pattern 2: Very small files (< 50 bytes) in project root with no extension
+    # that look like partial command fragments
+    echo "  Checking for small fragment files in root..." >&2
+    while IFS= read -r file; do
+        [[ -z "$file" ]] && continue
+        local filename=$(basename "$file")
+        local relative_path="${file#$PROJECT_ROOT/}"
+
+        # Skip hidden files and known files
+        [[ "$filename" == .* ]] && continue
+        [[ "$filename" == "LICENSE" ]] && continue
+        [[ "$filename" == "Makefile" ]] && continue
+
+        # Check if file has no extension (likely junk)
+        if [[ "$filename" != *.* ]]; then
+            local size=$(stat -f%z "$file" 2>/dev/null || stat -c%s "$file" 2>/dev/null || echo "0")
+
+            # Only flag very small files (likely fragments)
+            if [[ $size -lt 50 ]]; then
+                junk_files+=("{\"file\": \"$relative_path\", \"reason\": \"small_fragment_no_extension\", \"size\": $size}")
+            fi
+        fi
+    done < <(find "$scan_dir" -maxdepth 1 -type f 2>/dev/null)
+
+    # Pattern 3: Files that look like partial words from common commands
+    # e.g., "orld" from "Hello World", "ello" from "echo Hello"
+    echo "  Checking for partial word fragments..." >&2
+    local partial_patterns=("orld" "ello" "rint" "xport" "unction" "equire" "mport")
+    for pattern in "${partial_patterns[@]}"; do
+        while IFS= read -r file; do
+            [[ -z "$file" ]] && continue
+            local filename=$(basename "$file")
+            local relative_path="${file#$PROJECT_ROOT/}"
+
+            # Skip if in excluded directories
+            if echo "$relative_path" | grep -qE '(node_modules|\.git|\.venv|__pycache__)'; then
+                continue
+            fi
+
+            # Only flag if file is very small
+            local size=$(stat -f%z "$file" 2>/dev/null || stat -c%s "$file" 2>/dev/null || echo "0")
+            if [[ $size -lt 100 ]]; then
+                junk_files+=("{\"file\": \"$relative_path\", \"reason\": \"partial_word_fragment\", \"pattern\": \"$pattern\", \"size\": $size}")
+            fi
+        done < <(find "$scan_dir" -maxdepth 2 -type f -name "*$pattern*" 2>/dev/null | grep -v '\.')
+    done
+
+    echo "  Found ${#junk_files[@]} junk files" >&2
+
+    # Generate JSON output
+    if [[ ${#junk_files[@]} -gt 0 ]]; then
+        echo "[$(IFS=,; echo "${junk_files[*]}")]" | jq \
+            --arg timestamp "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+            '{
+                scan_type: "junk_files",
+                timestamp: $timestamp,
+                count: (. | length),
+                files: .
+            }' > "$results_file"
+    else
+        jq -n \
+            --arg timestamp "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+            '{
+                scan_type: "junk_files",
+                timestamp: $timestamp,
+                count: 0,
+                files: []
+            }' > "$results_file"
+    fi
+
+    echo "${#junk_files[@]}"
+}
+
+# ==============================================================================
+# ANALYSIS ARTIFACTS SCANNER
+# ==============================================================================
+
+# Find analysis artifacts and cache directories that can be safely removed
+# Detects: __marimo__, __pycache__, .pytest_cache, .mypy_cache, *.egg-info,
+#          .ipynb_checkpoints, temp files, backup files, editor swap files
+find_analysis_artifacts() {
+    local scan_dir="${1:-$PROJECT_ROOT}"
+    local results_file="${2:-/tmp/analysis-artifacts.json}"
+
+    echo "Scanning for analysis artifacts and cache directories in $scan_dir..." >&2
+
+    local artifacts=()
+
+    # Pattern 1: Python and notebook cache directories
+    echo "  Checking for cache directories..." >&2
+    local cache_patterns="__marimo__ __pycache__ .pytest_cache .mypy_cache .ipynb_checkpoints .coverage .nox .tox"
+    for pattern in $cache_patterns; do
+        while IFS= read -r dir; do
+            [[ -z "$dir" ]] && continue
+            local relative_path="${dir#$scan_dir/}"
+
+            # Skip if inside node_modules or .git
+            if echo "$relative_path" | grep -qE '(node_modules|\.git)/'; then
+                continue
+            fi
+
+            # Get directory size
+            local size=$(du -sk "$dir" 2>/dev/null | cut -f1)
+            size=${size:-0}
+
+            artifacts+=("{\"path\": \"$relative_path\", \"type\": \"cache_directory\", \"pattern\": \"$pattern\", \"size_kb\": $size}")
+        done < <(find "$scan_dir" -type d -name "$pattern" 2>/dev/null)
+    done
+
+    # Pattern 2: Egg-info directories (Python packages)
+    echo "  Checking for egg-info directories..." >&2
+    while IFS= read -r dir; do
+        [[ -z "$dir" ]] && continue
+        local relative_path="${dir#$scan_dir/}"
+
+        # Skip if inside node_modules, .git, or .venv
+        if echo "$relative_path" | grep -qE '(node_modules|\.git|\.venv)/'; then
+            continue
+        fi
+
+        local size=$(du -sk "$dir" 2>/dev/null | cut -f1)
+        size=${size:-0}
+
+        artifacts+=("{\"path\": \"$relative_path\", \"type\": \"egg_info\", \"size_kb\": $size}")
+    done < <(find "$scan_dir" -type d -name "*.egg-info" 2>/dev/null)
+
+    # Pattern 3: Temporary and backup files
+    echo "  Checking for temp/backup files..." >&2
+    local temp_patterns="*.tmp *.bak *.orig *.swp *~ *.pyc *.pyo"
+    for pattern in $temp_patterns; do
+        while IFS= read -r file; do
+            [[ -z "$file" ]] && continue
+            local relative_path="${file#$scan_dir/}"
+
+            # Skip excluded directories
+            if echo "$relative_path" | grep -qE '(node_modules|\.git|\.venv)/'; then
+                continue
+            fi
+
+            local size=$(stat -f%z "$file" 2>/dev/null || stat -c%s "$file" 2>/dev/null || echo "0")
+
+            artifacts+=("{\"path\": \"$relative_path\", \"type\": \"temp_file\", \"pattern\": \"$pattern\", \"size\": $size}")
+        done < <(find "$scan_dir" -type f -name "$pattern" 2>/dev/null)
+    done
+
+    # Pattern 4: Log files in analysis directories
+    echo "  Checking for log files in analysis directories..." >&2
+    while IFS= read -r file; do
+        [[ -z "$file" ]] && continue
+        local relative_path="${file#$scan_dir/}"
+
+        # Only consider logs in analysis directory
+        if ! echo "$relative_path" | grep -q "^analysis/"; then
+            continue
+        fi
+
+        local size=$(stat -f%z "$file" 2>/dev/null || stat -c%s "$file" 2>/dev/null || echo "0")
+
+        artifacts+=("{\"path\": \"$relative_path\", \"type\": \"analysis_log\", \"size\": $size}")
+    done < <(find "$scan_dir/analysis" -type f -name "*.log" 2>/dev/null)
+
+    # Generate JSON output
+    local count=${#artifacts[@]}
+
+    if [[ $count -gt 0 ]]; then
+        local json_array=$(printf '%s\n' "${artifacts[@]}" | paste -sd ',' -)
+        jq -n \
+            --arg timestamp "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+            --argjson count "$count" \
+            --argjson artifacts "[$json_array]" \
+            '{
+                scan_type: "analysis_artifacts",
+                timestamp: $timestamp,
+                count: $count,
+                artifacts: $artifacts
+            }' > "$results_file"
+    else
+        jq -n \
+            --arg timestamp "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+            '{
+                scan_type: "analysis_artifacts",
+                timestamp: $timestamp,
+                count: 0,
+                artifacts: []
+            }' > "$results_file"
+    fi
+
+    echo "$count"
 }
 
 # ==============================================================================
@@ -396,6 +683,8 @@ run_full_scan() {
     local empty_dirs=$(find_empty_directories "$PROJECT_ROOT" "$scan_dir/empty-directories.json")
     local perm_issues=$(check_file_permissions "$PROJECT_ROOT" "$scan_dir/permission-issues.json")
     local duplicates=$(scan_for_duplicates "$PROJECT_ROOT" "$scan_dir/duplicate-files.json")
+    local junk=$(find_junk_files "$PROJECT_ROOT" "$scan_dir/junk-files.json")
+    local artifacts=$(find_analysis_artifacts "$PROJECT_ROOT" "$scan_dir/analysis-artifacts.json")
 
     # Generate summary
     jq -n \
@@ -406,6 +695,8 @@ run_full_scan() {
         --argjson empty_dirs "$empty_dirs" \
         --argjson perm_issues "$perm_issues" \
         --argjson duplicates "$duplicates" \
+        --argjson junk "$junk" \
+        --argjson artifacts "$artifacts" \
         '{
             scan_id: $scan_id,
             timestamp: $timestamp,
@@ -415,7 +706,9 @@ run_full_scan() {
                 empty_directories: $empty_dirs,
                 permission_issues: $perm_issues,
                 duplicate_files: $duplicates,
-                total_issues: ($unreferenced + $dead_funcs + $empty_dirs + $perm_issues + $duplicates)
+                junk_files: $junk,
+                analysis_artifacts: $artifacts,
+                total_issues: ($unreferenced + $dead_funcs + $empty_dirs + $perm_issues + $duplicates + $junk + $artifacts)
             },
             scan_directory: "'"$scan_dir"'"
         }' > "$scan_dir/summary.json"
@@ -432,9 +725,13 @@ run_full_scan() {
 # EXPORTS
 # ==============================================================================
 
+export -f load_protected_files
+export -f is_protected_file
 export -f find_unreferenced_files
 export -f find_dead_functions
 export -f find_empty_directories
 export -f check_file_permissions
 export -f scan_for_duplicates
+export -f find_junk_files
+export -f find_analysis_artifacts
 export -f run_full_scan

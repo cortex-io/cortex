@@ -1,0 +1,164 @@
+---
+# ========================================
+# LARRY-01: Infrastructure & Database
+# ========================================
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: larry-01-coordinator
+  namespace: larry-01
+  labels:
+    app: larry-coordinator
+    larry-instance: "larry-01"
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: larry-coordinator
+      larry-instance: "larry-01"
+  template:
+    metadata:
+      labels:
+        app: larry-coordinator
+        larry-instance: "larry-01"
+    spec:
+      serviceAccountName: larry-01-sa
+      containers:
+      - name: coordinator
+        image: redis:7-alpine
+        command: ["/bin/sh"]
+        args: ["-c", "apk add --no-cache bash curl && /scripts/coordinator.sh"]
+        envFrom:
+        - configMapRef:
+            name: larry-01-config
+        env:
+        - name: LARRY_ID
+          value: "larry-01"
+        - name: REDIS_PASSWORD
+          value: "cortex123"
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "250m"
+          limits:
+            memory: "1Gi"
+            cpu: "500m"
+        volumeMounts:
+        - name: scripts
+          mountPath: /scripts
+      volumes:
+      - name: scripts
+        configMap:
+          name: larry-01-coordinator-script
+          defaultMode: 0755
+
+---
+# ========================================
+# LARRY-02: Security & Compliance
+# ========================================
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: larry-02-coordinator
+  namespace: larry-02
+  labels:
+    app: larry-coordinator
+    larry-instance: "larry-02"
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: larry-coordinator
+      larry-instance: "larry-02"
+  template:
+    metadata:
+      labels:
+        app: larry-coordinator
+        larry-instance: "larry-02"
+    spec:
+      serviceAccountName: larry-02-sa
+      containers:
+      - name: coordinator
+        image: redis:7-alpine
+        command: ["/bin/sh"]
+        args: ["-c", "apk add --no-cache bash curl && /scripts/coordinator.sh"]
+        envFrom:
+        - configMapRef:
+            name: larry-02-config
+        env:
+        - name: LARRY_ID
+          value: "larry-02"
+        - name: REDIS_PASSWORD
+          value: "cortex123"
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "250m"
+          limits:
+            memory: "1Gi"
+            cpu: "500m"
+        volumeMounts:
+        - name: scripts
+          mountPath: /scripts
+      volumes:
+      - name: scripts
+        configMap:
+          name: larry-02-coordinator-script
+          defaultMode: 0755
+
+---
+# ========================================
+# LARRY-03: Development & Inventory
+# ========================================
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: larry-03-coordinator
+  namespace: larry-03
+  labels:
+    app: larry-coordinator
+    larry-instance: "larry-03"
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: larry-coordinator
+      larry-instance: "larry-03"
+  template:
+    metadata:
+      labels:
+        app: larry-coordinator
+        larry-instance: "larry-03"
+    spec:
+      serviceAccountName: larry-03-sa
+      containers:
+      - name: coordinator
+        image: redis:7-alpine
+        command: ["/bin/sh"]
+        args: ["-c", "apk add --no-cache bash curl && /scripts/coordinator.sh"]
+        envFrom:
+        - configMapRef:
+            name: larry-03-config
+        env:
+        - name: LARRY_ID
+          value: "larry-03"
+        - name: REDIS_PASSWORD
+          value: "cortex123"
+        resources:
+          requests:
+            memory: "1Gi"
+            cpu: "500m"
+          limits:
+            memory: "2Gi"
+            cpu: "1000m"
+        volumeMounts:
+        - name: scripts
+          mountPath: /scripts
+      volumes:
+      - name: scripts
+        configMap:
+          name: larry-03-coordinator-script
+          defaultMode: 0755

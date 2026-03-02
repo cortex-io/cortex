@@ -1,0 +1,689 @@
+apiVersion: v1
+items:
+- apiVersion: apps/v1
+  kind: Deployment
+  metadata:
+    annotations:
+      deployment.kubernetes.io/revision: "51"
+      field.cattle.io/publicEndpoints: '[{"addresses":["10.88.145.210"],"port":80,"protocol":"TCP","serviceName":"cortex-chat:cortex-chat-frontend","allNodes":false}]'
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"apps/v1","kind":"Deployment","metadata":{"annotations":{},"name":"cortex-chat","namespace":"cortex-chat"},"spec":{"replicas":1,"selector":{"matchLabels":{"app":"cortex-chat"}},"template":{"metadata":{"labels":{"app":"cortex-chat"}},"spec":{"containers":[{"image":"nginx:alpine","name":"nginx-proxy","ports":[{"containerPort":80,"name":"http"}],"resources":{"limits":{"cpu":"200m","memory":"128Mi"},"requests":{"cpu":"50m","memory":"64Mi"}},"volumeMounts":[{"mountPath":"/etc/nginx/nginx.conf","name":"nginx-config","subPath":"nginx.conf"}]},{"image":"10.43.170.72:5000/cortex-chat-frontend:latest","imagePullPolicy":"Always","name":"frontend","ports":[{"containerPort":3000,"name":"frontend"}],"resources":{"limits":{"cpu":"500m","memory":"256Mi"},"requests":{"cpu":"100m","memory":"128Mi"}}},{"env":[{"name":"ANTHROPIC_API_KEY","valueFrom":{"secretKeyRef":{"key":"anthropic-api-key","name":"cortex-chat-secrets"}}},{"name":"REDIS_PASSWORD","valueFrom":{"secretKeyRef":{"key":"redis-password","name":"cortex-chat-secrets"}}},{"name":"REDIS_HOST","value":"redis.cortex-chat.svc.cluster.local"},{"name":"REDIS_PORT","value":"6379"},{"name":"UNIFI_MCP_URL","value":"http://unifi-mcp.cortex-system.svc.cluster.local:3000"},{"name":"PROXMOX_MCP_URL","value":"http://proxmox-mcp.cortex-system.svc.cluster.local:3000"},{"name":"WAZUH_MCP_URL","value":"http://wazuh-mcp.cortex-system.svc.cluster.local:3000"},{"name":"CORTEX_URL","value":"http://cortex-orchestrator.cortex.svc.cluster.local:8000"},{"name":"AUTH_USERNAME","valueFrom":{"secretKeyRef":{"key":"auth-username","name":"cortex-chat-secrets"}}},{"name":"AUTH_PASSWORD","valueFrom":{"secretKeyRef":{"key":"auth-password","name":"cortex-chat-secrets"}}}],"image":"10.43.170.72:5000/cortex-chat-backend:latest","imagePullPolicy":"Always","name":"backend","ports":[{"containerPort":8080,"name":"api"}],"resources":{"limits":{"cpu":"1000m","memory":"512Mi"},"requests":{"cpu":"200m","memory":"256Mi"}}}],"volumes":[{"configMap":{"name":"cortex-chat-nginx"},"name":"nginx-config"}]}}}}
+    creationTimestamp: "2025-12-23T21:29:03Z"
+    generation: 56
+    name: cortex-chat
+    namespace: cortex-chat
+    resourceVersion: "49953007"
+    uid: fc3d4120-0be4-4072-aa1c-9c726f3fdac5
+  spec:
+    progressDeadlineSeconds: 600
+    replicas: 1
+    revisionHistoryLimit: 10
+    selector:
+      matchLabels:
+        app: cortex-chat
+    strategy:
+      rollingUpdate:
+        maxSurge: 25%
+        maxUnavailable: 25%
+      type: RollingUpdate
+    template:
+      metadata:
+        annotations:
+          kubectl.kubernetes.io/restartedAt: "2025-12-30T07:09:47-06:00"
+        creationTimestamp: null
+        labels:
+          app: cortex-chat
+      spec:
+        containers:
+        - image: 10.43.170.72:5000/cortex-chat-frontend:latest
+          imagePullPolicy: Always
+          name: frontend
+          ports:
+          - containerPort: 3000
+            protocol: TCP
+          resources:
+            limits:
+              cpu: 200m
+              memory: 128Mi
+            requests:
+              cpu: 50m
+              memory: 64Mi
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+        dnsPolicy: ClusterFirst
+        restartPolicy: Always
+        schedulerName: default-scheduler
+        securityContext: {}
+        serviceAccount: cortex-chat-backend
+        serviceAccountName: cortex-chat-backend
+        terminationGracePeriodSeconds: 30
+        volumes:
+        - configMap:
+            defaultMode: 420
+            name: cortex-chat-nginx
+          name: nginx-config
+        - configMap:
+            defaultMode: 420
+            name: frontend-html
+          name: frontend-html
+  status:
+    availableReplicas: 1
+    conditions:
+    - lastTransitionTime: "2025-12-27T22:34:13Z"
+      lastUpdateTime: "2025-12-27T22:34:13Z"
+      message: Deployment has minimum availability.
+      reason: MinimumReplicasAvailable
+      status: "True"
+      type: Available
+    - lastTransitionTime: "2025-12-23T22:01:55Z"
+      lastUpdateTime: "2025-12-30T13:09:51Z"
+      message: ReplicaSet "cortex-chat-658f447774" has successfully progressed.
+      reason: NewReplicaSetAvailable
+      status: "True"
+      type: Progressing
+    observedGeneration: 56
+    readyReplicas: 1
+    replicas: 1
+    updatedReplicas: 1
+- apiVersion: apps/v1
+  kind: Deployment
+  metadata:
+    annotations:
+      deployment.kubernetes.io/revision: "46"
+      field.cattle.io/publicEndpoints: "null"
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"apps/v1","kind":"Deployment","metadata":{"annotations":{},"labels":{"app":"cortex-chat-backend-simple","component":"backend"},"name":"cortex-chat-backend-simple","namespace":"cortex-chat"},"spec":{"replicas":1,"selector":{"matchLabels":{"app":"cortex-chat-backend-simple"}},"template":{"metadata":{"labels":{"app":"cortex-chat-backend-simple","component":"backend"}},"spec":{"containers":[{"env":[{"name":"PORT","value":"8080"},{"name":"CORTEX_URL","value":"http://cortex-orchestrator.cortex.svc.cluster.local:8000"},{"name":"REDIS_HOST","value":"redis.cortex-system.svc.cluster.local"},{"name":"REDIS_PORT","value":"6379"},{"name":"ANTHROPIC_API_KEY","valueFrom":{"secretKeyRef":{"key":"anthropic-api-key","name":"cortex-chat-secrets"}}},{"name":"AUTH_USERNAME","valueFrom":{"secretKeyRef":{"key":"auth-username","name":"cortex-chat-secrets"}}},{"name":"AUTH_PASSWORD","valueFrom":{"secretKeyRef":{"key":"auth-password","name":"cortex-chat-secrets"}}},{"name":"CORS_ORIGIN","value":"*"}],"image":"10.43.170.72:5000/cortex-chat-backend-simple:latest","imagePullPolicy":"Always","livenessProbe":{"httpGet":{"path":"/health","port":8080},"initialDelaySeconds":10,"periodSeconds":30},"name":"backend","ports":[{"containerPort":8080,"name":"http","protocol":"TCP"}],"readinessProbe":{"httpGet":{"path":"/health","port":8080},"initialDelaySeconds":5,"periodSeconds":10},"resources":{"limits":{"cpu":"1000m","memory":"512Mi"},"requests":{"cpu":"200m","memory":"256Mi"}}}]}}}}
+    creationTimestamp: "2025-12-25T23:08:21Z"
+    generation: 48
+    labels:
+      app: cortex-chat-backend-simple
+      component: backend
+    name: cortex-chat-backend-simple
+    namespace: cortex-chat
+    resourceVersion: "49681657"
+    uid: 4e31d33f-1c98-410f-b310-5389b6e0dc9e
+  spec:
+    progressDeadlineSeconds: 600
+    replicas: 1
+    revisionHistoryLimit: 10
+    selector:
+      matchLabels:
+        app: cortex-chat-backend-simple
+    strategy:
+      rollingUpdate:
+        maxSurge: 25%
+        maxUnavailable: 25%
+      type: RollingUpdate
+    template:
+      metadata:
+        annotations:
+          kubectl.kubernetes.io/restartedAt: "2025-12-30T05:57:35-06:00"
+        creationTimestamp: null
+        labels:
+          app: cortex-chat-backend-simple
+          component: backend
+      spec:
+        containers:
+        - env:
+          - name: PORT
+            value: "8080"
+          - name: CORTEX_URL
+            value: http://cortex-orchestrator.cortex.svc.cluster.local:8000
+          - name: REDIS_HOST
+            value: redis.cortex-system.svc.cluster.local
+          - name: REDIS_PORT
+            value: "6379"
+          - name: ANTHROPIC_API_KEY
+            valueFrom:
+              secretKeyRef:
+                key: anthropic-api-key
+                name: cortex-chat-secrets
+          - name: AUTH_USERNAME
+            valueFrom:
+              secretKeyRef:
+                key: auth-username
+                name: cortex-chat-secrets
+          - name: AUTH_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                key: auth-password
+                name: cortex-chat-secrets
+          - name: CORS_ORIGIN
+            value: '*'
+          - name: REDIS_PASSWORD
+          image: 10.43.170.72:5000/cortex-chat-backend-simple:latest
+          imagePullPolicy: Always
+          livenessProbe:
+            failureThreshold: 3
+            httpGet:
+              path: /health
+              port: 8080
+              scheme: HTTP
+            initialDelaySeconds: 10
+            periodSeconds: 30
+            successThreshold: 1
+            timeoutSeconds: 1
+          name: backend
+          ports:
+          - containerPort: 8080
+            name: http
+            protocol: TCP
+          readinessProbe:
+            failureThreshold: 3
+            httpGet:
+              path: /health
+              port: 8080
+              scheme: HTTP
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 1
+          resources:
+            limits:
+              cpu: "1"
+              memory: 512Mi
+            requests:
+              cpu: 200m
+              memory: 256Mi
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+        dnsPolicy: ClusterFirst
+        restartPolicy: Always
+        schedulerName: default-scheduler
+        securityContext: {}
+        terminationGracePeriodSeconds: 30
+  status:
+    availableReplicas: 1
+    conditions:
+    - lastTransitionTime: "2025-12-27T18:34:49Z"
+      lastUpdateTime: "2025-12-27T18:34:49Z"
+      message: Deployment has minimum availability.
+      reason: MinimumReplicasAvailable
+      status: "True"
+      type: Available
+    - lastTransitionTime: "2025-12-25T23:08:21Z"
+      lastUpdateTime: "2025-12-30T11:57:50Z"
+      message: ReplicaSet "cortex-chat-backend-simple-646f9c458f" has successfully
+        progressed.
+      reason: NewReplicaSetAvailable
+      status: "True"
+      type: Progressing
+    observedGeneration: 48
+    readyReplicas: 1
+    replicas: 1
+    updatedReplicas: 1
+- apiVersion: apps/v1
+  kind: Deployment
+  metadata:
+    annotations:
+      deployment.kubernetes.io/revision: "6"
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"apps/v1","kind":"Deployment","metadata":{"annotations":{},"name":"cortex-chat-proxy","namespace":"cortex-chat"},"spec":{"replicas":1,"selector":{"matchLabels":{"app":"cortex-chat-proxy"}},"template":{"metadata":{"labels":{"app":"cortex-chat-proxy"}},"spec":{"containers":[{"command":["node","/app/proxy.js"],"image":"node:20-alpine","name":"proxy","ports":[{"containerPort":8080}],"volumeMounts":[{"mountPath":"/app","name":"proxy-script"}]}],"volumes":[{"configMap":{"name":"cortex-chat-proxy"},"name":"proxy-script"}]}}}}
+    creationTimestamp: "2025-12-24T21:01:28Z"
+    generation: 6
+    name: cortex-chat-proxy
+    namespace: cortex-chat
+    resourceVersion: "25647852"
+    uid: cedf2c75-f512-4832-8bac-ffdd8b2c87f6
+  spec:
+    progressDeadlineSeconds: 600
+    replicas: 1
+    revisionHistoryLimit: 10
+    selector:
+      matchLabels:
+        app: cortex-chat-proxy
+    strategy:
+      rollingUpdate:
+        maxSurge: 25%
+        maxUnavailable: 25%
+      type: RollingUpdate
+    template:
+      metadata:
+        annotations:
+          kubectl.kubernetes.io/restartedAt: "2025-12-25T10:28:02-06:00"
+        creationTimestamp: null
+        labels:
+          app: cortex-chat-proxy
+      spec:
+        containers:
+        - command:
+          - node
+          - /app/proxy.js
+          env:
+          - name: CORTEX_MCP_URL
+            value: http://cortex-orchestrator.cortex.svc.cluster.local:8000
+          image: node:20-alpine
+          imagePullPolicy: IfNotPresent
+          name: proxy
+          ports:
+          - containerPort: 8080
+            protocol: TCP
+          resources: {}
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+          volumeMounts:
+          - mountPath: /app
+            name: proxy-script
+        dnsPolicy: ClusterFirst
+        restartPolicy: Always
+        schedulerName: default-scheduler
+        securityContext: {}
+        terminationGracePeriodSeconds: 30
+        volumes:
+        - configMap:
+            defaultMode: 420
+            name: cortex-chat-proxy
+          name: proxy-script
+  status:
+    availableReplicas: 1
+    conditions:
+    - lastTransitionTime: "2025-12-24T21:01:28Z"
+      lastUpdateTime: "2025-12-25T16:28:03Z"
+      message: ReplicaSet "cortex-chat-proxy-6c6898f449" has successfully progressed.
+      reason: NewReplicaSetAvailable
+      status: "True"
+      type: Progressing
+    - lastTransitionTime: "2025-12-25T17:12:01Z"
+      lastUpdateTime: "2025-12-25T17:12:01Z"
+      message: Deployment has minimum availability.
+      reason: MinimumReplicasAvailable
+      status: "True"
+      type: Available
+    observedGeneration: 6
+    readyReplicas: 1
+    replicas: 1
+    updatedReplicas: 1
+- apiVersion: apps/v1
+  kind: Deployment
+  metadata:
+    annotations:
+      deployment.kubernetes.io/revision: "2"
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"apps/v1","kind":"Deployment","metadata":{"annotations":{},"name":"docker-registry","namespace":"cortex-chat"},"spec":{"replicas":1,"selector":{"matchLabels":{"app":"docker-registry"}},"template":{"metadata":{"labels":{"app":"docker-registry"}},"spec":{"containers":[{"env":[{"name":"REGISTRY_STORAGE_FILESYSTEM_ROOTDIRECTORY","value":"/var/lib/registry"},{"name":"REGISTRY_STORAGE_DELETE_ENABLED","value":"true"}],"image":"registry:2","name":"registry","ports":[{"containerPort":5000,"name":"http"}],"resources":{"limits":{"cpu":"500m","memory":"512Mi"},"requests":{"cpu":"100m","memory":"128Mi"}},"volumeMounts":[{"mountPath":"/var/lib/registry","name":"storage"}]}],"volumes":[{"name":"storage","persistentVolumeClaim":{"claimName":"docker-registry-storage"}}]}}}}
+    creationTimestamp: "2025-12-23T21:40:27Z"
+    generation: 2
+    name: docker-registry
+    namespace: cortex-chat
+    resourceVersion: "24490716"
+    uid: 3ddf742b-933d-40f1-ad56-8f435fee12a8
+  spec:
+    progressDeadlineSeconds: 600
+    replicas: 1
+    revisionHistoryLimit: 10
+    selector:
+      matchLabels:
+        app: docker-registry
+    strategy:
+      rollingUpdate:
+        maxSurge: 25%
+        maxUnavailable: 25%
+      type: RollingUpdate
+    template:
+      metadata:
+        creationTimestamp: null
+        labels:
+          app: docker-registry
+      spec:
+        containers:
+        - env:
+          - name: REGISTRY_STORAGE_FILESYSTEM_ROOTDIRECTORY
+            value: /var/lib/registry
+          - name: REGISTRY_STORAGE_DELETE_ENABLED
+            value: "true"
+          image: registry:2
+          imagePullPolicy: IfNotPresent
+          name: registry
+          ports:
+          - containerPort: 5000
+            name: http
+            protocol: TCP
+          resources:
+            limits:
+              cpu: 500m
+              memory: 512Mi
+            requests:
+              cpu: 100m
+              memory: 128Mi
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+          volumeMounts:
+          - mountPath: /var/lib/registry
+            name: storage
+        dnsPolicy: ClusterFirst
+        restartPolicy: Always
+        schedulerName: default-scheduler
+        securityContext: {}
+        terminationGracePeriodSeconds: 30
+        volumes:
+        - emptyDir: {}
+          name: storage
+  status:
+    availableReplicas: 1
+    conditions:
+    - lastTransitionTime: "2025-12-25T12:33:32Z"
+      lastUpdateTime: "2025-12-25T12:33:32Z"
+      message: Deployment has minimum availability.
+      reason: MinimumReplicasAvailable
+      status: "True"
+      type: Available
+    - lastTransitionTime: "2025-12-23T21:40:27Z"
+      lastUpdateTime: "2025-12-25T12:33:32Z"
+      message: ReplicaSet "docker-registry-64f7dc778" has successfully progressed.
+      reason: NewReplicaSetAvailable
+      status: "True"
+      type: Progressing
+    observedGeneration: 2
+    readyReplicas: 1
+    replicas: 1
+    updatedReplicas: 1
+- apiVersion: apps/v1
+  kind: Deployment
+  metadata:
+    annotations:
+      deployment.kubernetes.io/revision: "1"
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"apps/v1","kind":"Deployment","metadata":{"annotations":{},"name":"redis","namespace":"cortex-chat"},"spec":{"replicas":1,"selector":{"matchLabels":{"app":"redis"}},"template":{"metadata":{"labels":{"app":"redis"}},"spec":{"containers":[{"command":["redis-server","--requirepass","$(REDIS_PASSWORD)"],"env":[{"name":"REDIS_PASSWORD","valueFrom":{"secretKeyRef":{"key":"redis-password","name":"cortex-chat-secrets"}}}],"image":"redis:7-alpine","name":"redis","ports":[{"containerPort":6379,"name":"redis"}],"resources":{"limits":{"cpu":"500m","memory":"256Mi"},"requests":{"cpu":"100m","memory":"128Mi"}},"volumeMounts":[{"mountPath":"/data","name":"data"}]}],"volumes":[{"name":"data","persistentVolumeClaim":{"claimName":"redis-data"}}]}}}}
+    creationTimestamp: "2025-12-23T21:28:54Z"
+    generation: 1
+    name: redis
+    namespace: cortex-chat
+    resourceVersion: "34744213"
+    uid: 3e891fdd-9788-462d-a4cc-a09bc36768e7
+  spec:
+    progressDeadlineSeconds: 600
+    replicas: 1
+    revisionHistoryLimit: 10
+    selector:
+      matchLabels:
+        app: redis
+    strategy:
+      rollingUpdate:
+        maxSurge: 25%
+        maxUnavailable: 25%
+      type: RollingUpdate
+    template:
+      metadata:
+        creationTimestamp: null
+        labels:
+          app: redis
+      spec:
+        containers:
+        - command:
+          - redis-server
+          - --requirepass
+          - $(REDIS_PASSWORD)
+          env:
+          - name: REDIS_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                key: redis-password
+                name: cortex-chat-secrets
+          image: redis:7-alpine
+          imagePullPolicy: IfNotPresent
+          name: redis
+          ports:
+          - containerPort: 6379
+            name: redis
+            protocol: TCP
+          resources:
+            limits:
+              cpu: 500m
+              memory: 256Mi
+            requests:
+              cpu: 100m
+              memory: 128Mi
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+          volumeMounts:
+          - mountPath: /data
+            name: data
+        dnsPolicy: ClusterFirst
+        restartPolicy: Always
+        schedulerName: default-scheduler
+        securityContext: {}
+        terminationGracePeriodSeconds: 30
+        volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: redis-data
+  status:
+    availableReplicas: 1
+    conditions:
+    - lastTransitionTime: "2025-12-23T21:28:54Z"
+      lastUpdateTime: "2025-12-23T21:29:09Z"
+      message: ReplicaSet "redis-6b86c875ff" has successfully progressed.
+      reason: NewReplicaSetAvailable
+      status: "True"
+      type: Progressing
+    - lastTransitionTime: "2025-12-27T15:00:31Z"
+      lastUpdateTime: "2025-12-27T15:00:31Z"
+      message: Deployment has minimum availability.
+      reason: MinimumReplicasAvailable
+      status: "True"
+      type: Available
+    observedGeneration: 1
+    readyReplicas: 1
+    replicas: 1
+    updatedReplicas: 1
+- apiVersion: v1
+  kind: Service
+  metadata:
+    annotations:
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"v1","kind":"Service","metadata":{"annotations":{},"name":"cortex-chat","namespace":"cortex-chat"},"spec":{"ports":[{"name":"http","port":80,"protocol":"TCP","targetPort":3000},{"name":"api","port":8080,"protocol":"TCP","targetPort":8080}],"selector":{"app":"cortex-chat"}}}
+    creationTimestamp: "2025-12-23T21:29:03Z"
+    name: cortex-chat
+    namespace: cortex-chat
+    resourceVersion: "23449820"
+    uid: e52a7928-9166-4be1-8836-64e863775c85
+  spec:
+    clusterIP: 10.43.42.62
+    clusterIPs:
+    - 10.43.42.62
+    internalTrafficPolicy: Cluster
+    ipFamilies:
+    - IPv4
+    ipFamilyPolicy: SingleStack
+    ports:
+    - name: http
+      port: 80
+      protocol: TCP
+      targetPort: 80
+    - name: api
+      port: 8080
+      protocol: TCP
+      targetPort: 8080
+    selector:
+      app: cortex-chat
+    sessionAffinity: None
+    type: ClusterIP
+  status:
+    loadBalancer: {}
+- apiVersion: v1
+  kind: Service
+  metadata:
+    annotations:
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"v1","kind":"Service","metadata":{"annotations":{},"labels":{"app":"cortex-chat-backend-simple","component":"backend"},"name":"cortex-chat-backend-simple","namespace":"cortex-chat"},"spec":{"ports":[{"name":"http","port":8080,"protocol":"TCP","targetPort":8080}],"selector":{"app":"cortex-chat-backend-simple"},"type":"ClusterIP"}}
+    creationTimestamp: "2025-12-25T23:08:21Z"
+    labels:
+      app: cortex-chat-backend-simple
+      component: backend
+    name: cortex-chat-backend-simple
+    namespace: cortex-chat
+    resourceVersion: "26828029"
+    uid: 1792f0b8-f326-453f-994d-e29c5590e194
+  spec:
+    clusterIP: 10.43.34.83
+    clusterIPs:
+    - 10.43.34.83
+    internalTrafficPolicy: Cluster
+    ipFamilies:
+    - IPv4
+    ipFamilyPolicy: SingleStack
+    ports:
+    - name: http
+      port: 8080
+      protocol: TCP
+      targetPort: 8080
+    selector:
+      app: cortex-chat-backend-simple
+    sessionAffinity: None
+    type: ClusterIP
+  status:
+    loadBalancer: {}
+- apiVersion: v1
+  kind: Service
+  metadata:
+    annotations:
+      field.cattle.io/publicEndpoints: '[{"addresses":["10.88.145.210"],"port":80,"protocol":"TCP","serviceName":"cortex-chat:cortex-chat-frontend","allNodes":false}]'
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"v1","kind":"Service","metadata":{"annotations":{},"name":"cortex-chat-frontend","namespace":"cortex-chat"},"spec":{"loadBalancerIP":"10.88.145.210","ports":[{"port":80,"protocol":"TCP","targetPort":80}],"selector":{"app":"cortex-chat"},"type":"LoadBalancer"}}
+      metallb.io/ip-allocated-from-pool: default-pool
+    creationTimestamp: "2025-12-23T21:29:04Z"
+    name: cortex-chat-frontend
+    namespace: cortex-chat
+    resourceVersion: "15340191"
+    uid: eee10d6b-df33-448d-bc08-4d5c1cac329e
+  spec:
+    allocateLoadBalancerNodePorts: true
+    clusterIP: 10.43.212.144
+    clusterIPs:
+    - 10.43.212.144
+    externalTrafficPolicy: Cluster
+    internalTrafficPolicy: Cluster
+    ipFamilies:
+    - IPv4
+    ipFamilyPolicy: SingleStack
+    loadBalancerIP: 10.88.145.210
+    ports:
+    - nodePort: 32308
+      port: 80
+      protocol: TCP
+      targetPort: 80
+    selector:
+      app: cortex-chat
+    sessionAffinity: None
+    type: LoadBalancer
+  status:
+    loadBalancer:
+      ingress:
+      - ip: 10.88.145.210
+        ipMode: VIP
+- apiVersion: v1
+  kind: Service
+  metadata:
+    annotations:
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"v1","kind":"Service","metadata":{"annotations":{},"name":"cortex-chat-proxy","namespace":"cortex-chat"},"spec":{"ports":[{"port":8080,"targetPort":8080}],"selector":{"app":"cortex-chat-proxy"},"type":"ClusterIP"}}
+    creationTimestamp: "2025-12-24T21:01:28Z"
+    name: cortex-chat-proxy
+    namespace: cortex-chat
+    resourceVersion: "20205903"
+    uid: f98fcaaa-b137-4bf9-8e08-5992a6b4ae9b
+  spec:
+    clusterIP: 10.43.73.13
+    clusterIPs:
+    - 10.43.73.13
+    internalTrafficPolicy: Cluster
+    ipFamilies:
+    - IPv4
+    ipFamilyPolicy: SingleStack
+    ports:
+    - port: 8080
+      protocol: TCP
+      targetPort: 8080
+    selector:
+      app: cortex-chat-proxy
+    sessionAffinity: None
+    type: ClusterIP
+  status:
+    loadBalancer: {}
+- apiVersion: v1
+  kind: Service
+  metadata:
+    annotations:
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"v1","kind":"Service","metadata":{"annotations":{},"name":"docker-registry","namespace":"cortex-chat"},"spec":{"ports":[{"port":5000,"protocol":"TCP","targetPort":5000}],"selector":{"app":"docker-registry"},"type":"ClusterIP"}}
+    creationTimestamp: "2025-12-23T21:40:27Z"
+    name: docker-registry
+    namespace: cortex-chat
+    resourceVersion: "15185407"
+    uid: 2ee25ff8-9f23-44e0-95ec-3f1b01406c0d
+  spec:
+    clusterIP: 10.43.170.72
+    clusterIPs:
+    - 10.43.170.72
+    internalTrafficPolicy: Cluster
+    ipFamilies:
+    - IPv4
+    ipFamilyPolicy: SingleStack
+    ports:
+    - port: 5000
+      protocol: TCP
+      targetPort: 5000
+    selector:
+      app: docker-registry
+    sessionAffinity: None
+    type: ClusterIP
+  status:
+    loadBalancer: {}
+- apiVersion: v1
+  kind: Service
+  metadata:
+    annotations:
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"v1","kind":"Service","metadata":{"annotations":{},"name":"redis","namespace":"cortex-chat"},"spec":{"ports":[{"port":6379,"protocol":"TCP","targetPort":6379}],"selector":{"app":"redis"}}}
+    creationTimestamp: "2025-12-23T21:28:54Z"
+    name: redis
+    namespace: cortex-chat
+    resourceVersion: "15143912"
+    uid: a7043cc3-3799-4aa1-9dc8-d3c9038bfc2a
+  spec:
+    clusterIP: 10.43.210.189
+    clusterIPs:
+    - 10.43.210.189
+    internalTrafficPolicy: Cluster
+    ipFamilies:
+    - IPv4
+    ipFamilyPolicy: SingleStack
+    ports:
+    - port: 6379
+      protocol: TCP
+      targetPort: 6379
+    selector:
+      app: redis
+    sessionAffinity: None
+    type: ClusterIP
+  status:
+    loadBalancer: {}
+- apiVersion: traefik.io/v1alpha1
+  kind: IngressRoute
+  metadata:
+    annotations:
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"traefik.io/v1alpha1","kind":"IngressRoute","metadata":{"annotations":{},"name":"cortex-chat","namespace":"cortex-chat"},"spec":{"entryPoints":["web","websecure"],"routes":[{"kind":"Rule","match":"Host(`chat.ry-ops.dev`) \u0026\u0026 PathPrefix(`/api`)","services":[{"name":"cortex-chat-backend-simple","port":8080}]},{"kind":"Rule","match":"Host(`chat.ry-ops.dev`)","services":[{"name":"cortex-chat","port":80}]}]}}
+    creationTimestamp: "2025-12-23T21:29:13Z"
+    generation: 2
+    name: cortex-chat
+    namespace: cortex-chat
+    resourceVersion: "39393322"
+    uid: 171e1300-2d43-40c3-998b-f7cc025a44dc
+  spec:
+    entryPoints:
+    - web
+    - websecure
+    routes:
+    - kind: Rule
+      match: Host(`chat.ry-ops.dev`) && PathPrefix(`/api`)
+      services:
+      - name: cortex-chat-backend-simple
+        port: 8080
+    - kind: Rule
+      match: Host(`chat.ry-ops.dev`)
+      services:
+      - name: cortex-chat
+        port: 80
+kind: List
+metadata:
+  resourceVersion: ""

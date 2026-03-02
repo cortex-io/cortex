@@ -1,0 +1,52 @@
+{
+  "storage": {
+    "max_cache_size_gb": 10,
+    "max_per_domain_gb": 2,
+    "pruning_threshold_percent": 80,
+    "auto_prune_enabled": true,
+    "prune_schedule": "0 1 * * *",
+    "reserved_space_gb": 1
+  },
+  "rate_limiting": {
+    "requests_per_minute": 60,
+    "requests_per_hour": 2000,
+    "concurrent_crawls": 5,
+    "concurrent_workers": 3,
+    "respect_robots_txt": true,
+    "crawl_delay_seconds": 1,
+    "max_retries": 3,
+    "retry_backoff_seconds": 5,
+    "timeout_seconds": 30,
+    "dns_cache_ttl_seconds": 300
+  },
+  "token_budget": {
+    "max_tokens_per_crawl": 100000,
+    "max_tokens_per_query": 50000,
+    "daily_budget": 1000000,
+    "hourly_budget": 50000,
+    "budget_reset_hour": 0,
+    "warn_threshold_percent": 80
+  },
+  "memory_limits": {
+    "max_memory_mb": 2048,
+    "cache_memory_mb": 512,
+    "worker_memory_mb": 256,
+    "gc_threshold_percent": 75
+  },
+  "performance": {
+    "index_batch_size": 100,
+    "embedding_batch_size": 50,
+    "max_queue_size": 1000,
+    "worker_timeout_seconds": 300,
+    "health_check_interval_seconds": 30
+  },
+  "networking": {
+    "user_agent": "Cortex-Documentation-Master/1.0 (https://cortex.internal)",
+    "accept_encoding": ["gzip", "deflate"],
+    "follow_redirects": true,
+    "max_redirect_hops": 3,
+    "dns_timeout_seconds": 5,
+    "connection_timeout_seconds": 10,
+    "read_timeout_seconds": 30
+  }
+}

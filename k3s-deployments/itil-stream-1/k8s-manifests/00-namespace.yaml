@@ -1,0 +1,9 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: cortex-itil
+  labels:
+    app.kubernetes.io/name: cortex-itil
+    app.kubernetes.io/part-of: cortex
+    itil.cortex.io/stream: "1"
+    itil.cortex.io/category: incident-problem-management

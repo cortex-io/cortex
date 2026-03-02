@@ -1,0 +1,23 @@
+{
+  "name": "cortex-catalog-service",
+  "version": "2.0.0",
+  "description": "Redis-backed catalog service for Cortex multi-agent system",
+  "main": "catalog-api.js",
+  "scripts": {
+    "start": "node catalog-api.js",
+    "discover": "node catalog-discovery.js",
+    "migrate": "node migrate-to-redis.js",
+    "test": "echo \"No tests yet\" && exit 0"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "ioredis": "^5.3.2",
+    "express-graphql": "^0.12.0",
+    "graphql": "^15.8.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "author": "Cortex Team",
+  "license": "MIT"
+}

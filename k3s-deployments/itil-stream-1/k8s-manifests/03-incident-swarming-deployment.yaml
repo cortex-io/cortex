@@ -1,0 +1,90 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: incident-swarming-src
+  namespace: cortex-itil
+data:
+  swarming-coordinator.py: |
+    $(cat /Users/ryandahlberg/Projects/cortex/k3s-deployments/itil-stream-1/incident-swarming/src/swarming-coordinator.py | sed 's/^/    /')
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: incident-swarming
+  namespace: cortex-itil
+  labels:
+    app: incident-swarming
+    component: itil-stream-1
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: incident-swarming
+  template:
+    metadata:
+      labels:
+        app: incident-swarming
+        component: itil-stream-1
+    spec:
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: incident-swarming-data
+        - name: source
+          configMap:
+            name: incident-swarming-src
+            defaultMode: 0755
+      containers:
+        - name: coordinator
+          image: python:3.11-alpine
+          command: ["/bin/sh", "-c"]
+          args:
+            - |
+              cp /src/swarming-coordinator.py /app/
+              cd /app
+              python3 swarming-coordinator.py
+          volumeMounts:
+            - name: data
+              mountPath: /app/data
+            - name: source
+              mountPath: /src
+          envFrom:
+            - configMapRef:
+                name: incident-swarming-config
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "200m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+          livenessProbe:
+            exec:
+              command: ["sh", "-c", "test -d /app/data/swarms"]
+            initialDelaySeconds: 10
+            periodSeconds: 30
+          readinessProbe:
+            exec:
+              command: ["sh", "-c", "test -d /app/data/swarms && test -f /app/swarming-coordinator.py"]
+            initialDelaySeconds: 5
+            periodSeconds: 10
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: incident-swarming
+  namespace: cortex-itil
+  labels:
+    app: incident-swarming
+spec:
+  type: ClusterIP
+  ports:
+    - port: 8080
+      targetPort: 8080
+      protocol: TCP
+      name: http
+  selector:
+    app: incident-swarming

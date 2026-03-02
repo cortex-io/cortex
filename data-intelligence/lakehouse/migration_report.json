@@ -1,0 +1,54 @@
+{
+  "started_at": "2025-12-03T12:43:24.846724",
+  "tables_migrated": [
+    {
+      "table": "tasks",
+      "records": 38,
+      "timestamp": "2025-12-03T12:43:24.860022"
+    },
+    {
+      "table": "workers",
+      "records": 65,
+      "timestamp": "2025-12-03T12:43:24.866860"
+    },
+    {
+      "table": "routing_decisions",
+      "records": 77,
+      "timestamp": "2025-12-03T12:43:24.877918"
+    },
+    {
+      "table": "governance_logs",
+      "records": 16006,
+      "timestamp": "2025-12-03T12:43:25.091554"
+    },
+    {
+      "table": "strategy_plans",
+      "records": 4,
+      "timestamp": "2025-12-03T12:43:25.093705"
+    },
+    {
+      "table": "events",
+      "records": 0,
+      "timestamp": "2025-12-03T12:43:25.097146"
+    },
+    {
+      "table": "model_selection",
+      "records": 0,
+      "timestamp": "2025-12-03T12:43:25.100666"
+    },
+    {
+      "table": "active_identities",
+      "records": 0,
+      "timestamp": "2025-12-03T12:43:25.102726"
+    },
+    {
+      "table": "embeddings_cache",
+      "records": 3,
+      "timestamp": "2025-12-03T12:43:25.104517"
+    }
+  ],
+  "tables_failed": [],
+  "records_processed": 16193,
+  "errors": [],
+  "completed_at": "2025-12-03T12:43:25.104563"
+}

@@ -1,0 +1,90 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cortex-chat-backend-simple
+  namespace: cortex-chat
+  labels:
+    app: cortex-chat-backend-simple
+    component: backend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: cortex-chat-backend-simple
+  template:
+    metadata:
+      labels:
+        app: cortex-chat-backend-simple
+        component: backend
+    spec:
+      containers:
+      - name: backend
+        image: 10.43.170.72:5000/cortex-chat-backend-simple:latest
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 8080
+          name: http
+          protocol: TCP
+        env:
+        - name: PORT
+          value: "8080"
+        - name: CORTEX_URL
+          value: "http://cortex-orchestrator.cortex.svc.cluster.local:8000"
+        - name: REDIS_HOST
+          value: "redis.cortex-system.svc.cluster.local"
+        - name: REDIS_PORT
+          value: "6379"
+        - name: ANTHROPIC_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: cortex-chat-secrets
+              key: anthropic-api-key
+        - name: AUTH_USERNAME
+          valueFrom:
+            secretKeyRef:
+              name: cortex-chat-secrets
+              key: auth-username
+        - name: AUTH_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: cortex-chat-secrets
+              key: auth-password
+        - name: CORS_ORIGIN
+          value: "*"
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "200m"
+          limits:
+            memory: "512Mi"
+            cpu: "1000m"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 10
+          periodSeconds: 30
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 5
+          periodSeconds: 10
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: cortex-chat-backend-simple
+  namespace: cortex-chat
+  labels:
+    app: cortex-chat-backend-simple
+    component: backend
+spec:
+  selector:
+    app: cortex-chat-backend-simple
+  ports:
+  - name: http
+    port: 8080
+    targetPort: 8080
+    protocol: TCP
+  type: ClusterIP

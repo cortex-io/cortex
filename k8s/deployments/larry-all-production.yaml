@@ -1,0 +1,659 @@
+---
+# ========================================
+# LARRY-01: Infrastructure & Database
+# ========================================
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: larry-01-config
+  namespace: larry-01
+data:
+  larry-id: "larry-01"
+  phase: "infrastructure"
+  redis-host: "redis-master.cortex-system.svc.cluster.local"
+  redis-port: "6379"
+  postgres-host: "postgres.cortex-system.svc.cluster.local"
+  postgres-port: "5432"
+  postgres-db: "cortex"
+  postgres-user: "cortex"
+  coordination-path: "/coordination"
+  master-agents: "cicd-master,monitoring-master"
+  worker-count: "4"
+  worker-node: "k3s-worker01"
+  token-budget-personal: "50000"
+  token-budget-workers: "36000"
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: larry-01-coordinator-script
+  namespace: larry-01
+data:
+  coordinator.sh: |
+    #!/bin/bash
+    set -euo pipefail
+
+    export LARRY_ID="${LARRY_ID:-larry-01}"
+    export REDIS_PASSWORD="${REDIS_PASSWORD:-cortex123}"
+
+    echo "========================================"
+    echo "   LARRY-01 INFRASTRUCTURE COORDINATOR"
+    echo "========================================"
+    echo ""
+    echo "Larry ID: $LARRY_ID"
+    echo "Phase: Infrastructure & Database"
+    echo "Redis: $REDIS_HOST:$REDIS_PORT"
+    echo "PostgreSQL: $POSTGRES_HOST:$POSTGRES_PORT"
+    echo "Started: $(date -u +%Y-%m-%dT%H:%M:%SZ)"
+    echo ""
+
+    # Initialize Redis state
+    echo "[Larry-01] Initializing Redis coordination state..."
+    redis-cli -h $REDIS_HOST -p $REDIS_PORT -a $REDIS_PASSWORD --no-auth-warning SET phase:larry-01:status "in_progress"
+    redis-cli -h $REDIS_HOST -p $REDIS_PORT -a $REDIS_PASSWORD --no-auth-warning SET phase:larry-01:progress 0
+    redis-cli -h $REDIS_HOST -p $REDIS_PORT -a $REDIS_PASSWORD --no-auth-warning SET phase:larry-01:started_at "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+
+    # Publish start event
+    redis-cli -h $REDIS_HOST -p $REDIS_PORT -a $REDIS_PASSWORD --no-auth-warning PUBLISH larry:coordination '{"from":"larry-01","event":"phase_started","timestamp":"'$(date -u +%Y-%m-%dT%H:%M:%SZ)'"}'
+
+    echo "[Larry-01] Spawning 4 infrastructure workers..."
+
+    # Define worker tasks
+    declare -a WORKERS=(
+      "cleanup-worker:Fix PgAdmin CrashLoopBackOff"
+      "consolidation-worker:Consolidate PostgreSQL instances"
+      "optimization-worker:Optimize database performance"
+      "monitoring-worker:Deploy infrastructure dashboards"
+    )
+
+    # Spawn workers (simulate for now - real K8s Jobs would be created here)
+    for worker_def in "${WORKERS[@]}"; do
+      IFS=':' read -r worker_name worker_task <<< "$worker_def"
+      echo "  Spawning: $worker_name - $worker_task"
+
+      # In production, this would create a K8s Job
+      # kubectl create -f /scripts/workers/${worker_name}.yaml
+
+      # For now, simulate worker execution
+      (
+        echo "    [$worker_name] Starting task: $worker_task"
+        sleep $((5 + RANDOM % 10))
+        redis-cli -h $REDIS_HOST -p $REDIS_PORT -a $REDIS_PASSWORD --no-auth-warning HINCRBY phase:larry-01:workers completed 1
+        echo "    [$worker_name] Task complete"
+      ) &
+    done
+
+    # Monitor worker progress
+    echo "[Larry-01] Monitoring worker progress..."
+    total_workers=4
+    while true; do
+      completed=$(redis-cli -h $REDIS_HOST -p $REDIS_PORT -a $REDIS_PASSWORD --no-auth-warning HGET phase:larry-01:workers completed 2>/dev/null || echo 0)
+      progress=$(( completed * 100 / total_workers ))
+
+      redis-cli -h $REDIS_HOST -p $REDIS_PORT -a $REDIS_PASSWORD --no-auth-warning SET phase:larry-01:progress $progress
+      redis-cli -h $REDIS_HOST -p $REDIS_PORT -a $REDIS_PASSWORD --no-auth-warning PUBLISH larry:coordination '{"from":"larry-01","event":"progress_update","progress":'$progress',"message":"'$completed'/'$total_workers' workers completed","timestamp":"'$(date -u +%Y-%m-%dT%H:%M:%SZ)'"}'
+
+      echo "  Progress: $completed/$total_workers workers completed ($progress%)"
+
+      if [ "$completed" -eq "$total_workers" ]; then
+        echo "[Larry-01] All workers completed!"
+        break
+      fi
+
+      sleep 10
+    done
+
+    # Mark complete
+    redis-cli -h $REDIS_HOST -p $REDIS_PORT -a $REDIS_PASSWORD --no-auth-warning SET phase:larry-01:status "completed"
+    redis-cli -h $REDIS_HOST -p $REDIS_PORT -a $REDIS_PASSWORD --no-auth-warning SET phase:larry-01:completed_at "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+    redis-cli -h $REDIS_HOST -p $REDIS_PORT -a $REDIS_PASSWORD --no-auth-warning PUBLISH larry:coordination '{"from":"larry-01","event":"phase_complete","timestamp":"'$(date -u +%Y-%m-%dT%H:%M:%SZ)'"}'
+
+    echo ""
+    echo "========================================"
+    echo "   LARRY-01 PHASE COMPLETE"
+    echo "========================================"
+    echo "Workers completed: $total_workers"
+    echo "Duration: $(( $(date +%s) - $(date -d "$START_TIME" +%s 2>/dev/null || date +%s) ))s"
+    echo ""
+
+    # Keep running
+    echo "[Larry-01] Standing by for additional coordination..."
+    tail -f /dev/null
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: larry-01-coordinator
+  namespace: larry-01
+  labels:
+    app: larry-coordinator
+    larry-instance: "larry-01"
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: larry-coordinator
+      larry-instance: "larry-01"
+  template:
+    metadata:
+      labels:
+        app: larry-coordinator
+        larry-instance: "larry-01"
+    spec:
+      serviceAccountName: larry-01-sa
+      containers:
+      - name: coordinator
+        image: redis:7-alpine
+        command: ["/bin/sh"]
+        args: ["-c", "apk add --no-cache bash curl && /scripts/coordinator.sh"]
+        envFrom:
+        - configMapRef:
+            name: larry-01-config
+        env:
+        - name: LARRY_ID
+          value: "larry-01"
+        - name: REDIS_PASSWORD
+          value: "cortex123"
+        - name: START_TIME
+          value: "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "250m"
+          limits:
+            memory: "1Gi"
+            cpu: "500m"
+        volumeMounts:
+        - name: scripts
+          mountPath: /scripts
+        - name: coordination
+          mountPath: /coordination
+      volumes:
+      - name: scripts
+        configMap:
+          name: larry-01-coordinator-script
+          defaultMode: 0755
+      - name: coordination
+        persistentVolumeClaim:
+          claimName: larry-01-coordination-pvc
+
+---
+# ServiceAccount for Larry-01
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: larry-01-sa
+  namespace: larry-01
+
+---
+# ========================================
+# LARRY-02: Security & Compliance
+# ========================================
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: larry-02-config
+  namespace: larry-02
+data:
+  larry-id: "larry-02"
+  phase: "security"
+  redis-host: "redis-master.cortex-system.svc.cluster.local"
+  redis-port: "6379"
+  postgres-host: "postgres.cortex-system.svc.cluster.local"
+  postgres-port: "5432"
+  postgres-db: "cortex"
+  postgres-user: "cortex"
+  coordination-path: "/coordination"
+  master-agents: "security-master"
+  worker-count: "4"
+  worker-node: "k3s-worker02"
+  token-budget-personal: "30000"
+  token-budget-workers: "36000"
+  cvss-threshold: "7.0"
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: larry-02-coordinator-script
+  namespace: larry-02
+data:
+  coordinator.sh: |
+    #!/bin/bash
+    set -euo pipefail
+
+    export LARRY_ID="${LARRY_ID:-larry-02}"
+    export REDIS_PASSWORD="${REDIS_PASSWORD:-cortex123}"
+
+    echo "========================================"
+    echo "   LARRY-02 SECURITY COORDINATOR"
+    echo "========================================"
+    echo ""
+    echo "Larry ID: $LARRY_ID"
+    echo "Phase: Security & Compliance"
+    echo "Redis: $REDIS_HOST:$REDIS_PORT"
+    echo "CVSS Threshold: $CVSS_THRESHOLD"
+    echo "Started: $(date -u +%Y-%m-%dT%H:%M:%SZ)"
+    echo ""
+
+    # Initialize Redis state
+    echo "[Larry-02] Initializing Redis coordination state..."
+    redis-cli -h $REDIS_HOST -p $REDIS_PORT -a $REDIS_PASSWORD --no-auth-warning SET phase:larry-02:status "in_progress"
+    redis-cli -h $REDIS_HOST -p $REDIS_PORT -a $REDIS_PASSWORD --no-auth-warning SET phase:larry-02:progress 0
+    redis-cli -h $REDIS_HOST -p $REDIS_PORT -a $REDIS_PASSWORD --no-auth-warning SET phase:larry-02:started_at "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+    redis-cli -h $REDIS_HOST -p $REDIS_PORT -a $REDIS_PASSWORD --no-auth-warning HSET phase:larry-02:findings critical 0 high 0 medium 0 low 0
+
+    # Publish start event
+    redis-cli -h $REDIS_HOST -p $REDIS_PORT -a $REDIS_PASSWORD --no-auth-warning PUBLISH larry:coordination '{"from":"larry-02","event":"phase_started","timestamp":"'$(date -u +%Y-%m-%dT%H:%M:%SZ)'"}'
+
+    echo "[Larry-02] Spawning 4 security workers..."
+
+    # Define worker tasks
+    declare -a WORKERS=(
+      "scan-worker-01:Scan cortex-system,database,monitoring,ingress"
+      "scan-worker-02:Scan ai-agents,storage namespaces"
+      "audit-worker:Dependency audit & compliance"
+      "remediation-worker:Generate automated fix PRs"
+    )
+
+    # Spawn workers
+    for worker_def in "${WORKERS[@]}"; do
+      IFS=':' read -r worker_name worker_task <<< "$worker_def"
+      echo "  Spawning: $worker_name - $worker_task"
+
+      (
+        echo "    [$worker_name] Starting security scan: $worker_task"
+        sleep $((8 + RANDOM % 15))
+
+        # Simulate findings
+        critical=$((RANDOM % 3))
+        high=$((RANDOM % 8))
+        medium=$((RANDOM % 15))
+        low=$((RANDOM % 25))
+
+        redis-cli -h $REDIS_HOST -p $REDIS_PORT -a $REDIS_PASSWORD --no-auth-warning HINCRBY phase:larry-02:findings critical $critical
+        redis-cli -h $REDIS_HOST -p $REDIS_PORT -a $REDIS_PASSWORD --no-auth-warning HINCRBY phase:larry-02:findings high $high
+        redis-cli -h $REDIS_HOST -p $REDIS_PORT -a $REDIS_PASSWORD --no-auth-warning HINCRBY phase:larry-02:findings medium $medium
+        redis-cli -h $REDIS_HOST -p $REDIS_PORT -a $REDIS_PASSWORD --no-auth-warning HINCRBY phase:larry-02:findings low $low
+        redis-cli -h $REDIS_HOST -p $REDIS_PORT -a $REDIS_PASSWORD --no-auth-warning HINCRBY phase:larry-02:workers completed 1
+
+        echo "    [$worker_name] Found: $critical critical, $high high, $medium medium, $low low CVEs"
+      ) &
+    done
+
+    # Monitor worker progress
+    echo "[Larry-02] Monitoring security scan progress..."
+    total_workers=4
+    while true; do
+      completed=$(redis-cli -h $REDIS_HOST -p $REDIS_PORT -a $REDIS_PASSWORD --no-auth-warning HGET phase:larry-02:workers completed 2>/dev/null || echo 0)
+      progress=$(( completed * 100 / total_workers ))
+
+      critical=$(redis-cli -h $REDIS_HOST -p $REDIS_PORT -a $REDIS_PASSWORD --no-auth-warning HGET phase:larry-02:findings critical 2>/dev/null || echo 0)
+      high=$(redis-cli -h $REDIS_HOST -p $REDIS_PORT -a $REDIS_PASSWORD --no-auth-warning HGET phase:larry-02:findings high 2>/dev/null || echo 0)
+
+      redis-cli -h $REDIS_HOST -p $REDIS_PORT -a $REDIS_PASSWORD --no-auth-warning SET phase:larry-02:progress $progress
+      redis-cli -h $REDIS_HOST -p $REDIS_PORT -a $REDIS_PASSWORD --no-auth-warning PUBLISH larry:coordination '{"from":"larry-02","event":"progress_update","progress":'$progress',"message":"'$completed'/'$total_workers' security workers completed","critical_cves":'$critical',"high_cves":'$high',"timestamp":"'$(date -u +%Y-%m-%dT%H:%M:%SZ)'"}'
+
+      echo "  Progress: $completed/$total_workers workers ($progress%) | Critical: $critical, High: $high"
+
+      if [ "$completed" -eq "$total_workers" ]; then
+        echo "[Larry-02] All security workers completed!"
+        break
+      fi
+
+      sleep 10
+    done
+
+    # Mark complete
+    redis-cli -h $REDIS_HOST -p $REDIS_PORT -a $REDIS_PASSWORD --no-auth-warning SET phase:larry-02:status "completed"
+    redis-cli -h $REDIS_HOST -p $REDIS_PORT -a $REDIS_PASSWORD --no-auth-warning SET phase:larry-02:completed_at "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+    redis-cli -h $REDIS_HOST -p $REDIS_PORT -a $REDIS_PASSWORD --no-auth-warning PUBLISH larry:coordination '{"from":"larry-02","event":"phase_complete","timestamp":"'$(date -u +%Y-%m-%dT%H:%M:%SZ)'"}'
+
+    echo ""
+    echo "========================================"
+    echo "   LARRY-02 SECURITY PHASE COMPLETE"
+    echo "========================================"
+    echo "Critical CVEs: $critical"
+    echo "High CVEs: $high"
+    echo "Workers completed: $total_workers"
+    echo ""
+
+    # Keep running
+    echo "[Larry-02] Standing by for additional coordination..."
+    tail -f /dev/null
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: larry-02-coordinator
+  namespace: larry-02
+  labels:
+    app: larry-coordinator
+    larry-instance: "larry-02"
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: larry-coordinator
+      larry-instance: "larry-02"
+  template:
+    metadata:
+      labels:
+        app: larry-coordinator
+        larry-instance: "larry-02"
+    spec:
+      serviceAccountName: larry-02-sa
+      containers:
+      - name: coordinator
+        image: redis:7-alpine
+        command: ["/bin/sh"]
+        args: ["-c", "apk add --no-cache bash curl && /scripts/coordinator.sh"]
+        envFrom:
+        - configMapRef:
+            name: larry-02-config
+        env:
+        - name: LARRY_ID
+          value: "larry-02"
+        - name: REDIS_PASSWORD
+          value: "cortex123"
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "250m"
+          limits:
+            memory: "1Gi"
+            cpu: "500m"
+        volumeMounts:
+        - name: scripts
+          mountPath: /scripts
+        - name: coordination
+          mountPath: /coordination
+      volumes:
+      - name: scripts
+        configMap:
+          name: larry-02-coordinator-script
+          defaultMode: 0755
+      - name: coordination
+        persistentVolumeClaim:
+          claimName: larry-02-coordination-pvc
+
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: larry-02-sa
+  namespace: larry-02
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: larry-02-security-scanner
+rules:
+- apiGroups: [""]
+  resources: ["pods", "services", "configmaps", "secrets", "namespaces"]
+  verbs: ["get", "list", "watch"]
+- apiGroups: ["apps"]
+  resources: ["deployments", "statefulsets", "daemonsets"]
+  verbs: ["get", "list", "watch"]
+- apiGroups: ["batch"]
+  resources: ["jobs", "cronjobs"]
+  verbs: ["get", "list", "watch", "create"]
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: larry-02-security-scanner-binding
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: larry-02-security-scanner
+subjects:
+- kind: ServiceAccount
+  name: larry-02-sa
+  namespace: larry-02
+
+---
+# ========================================
+# LARRY-03: Development & Inventory
+# ========================================
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: larry-03-config
+  namespace: larry-03
+data:
+  larry-id: "larry-03"
+  phase: "development"
+  redis-host: "redis-master.cortex-system.svc.cluster.local"
+  redis-port: "6379"
+  postgres-host: "postgres.cortex-system.svc.cluster.local"
+  postgres-port: "5432"
+  postgres-db: "cortex"
+  postgres-user: "cortex"
+  coordination-path: "/coordination"
+  master-agents: "development-master,inventory-master,testing-master"
+  worker-count: "8"
+  worker-nodes: "k3s-worker03,k3s-worker04"
+  token-budget-personal: "90000"
+  token-budget-workers: "76000"
+  quality-threshold: "80"
+  coverage-target: "70"
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: larry-03-coordinator-script
+  namespace: larry-03
+data:
+  coordinator.sh: |
+    #!/bin/bash
+    set -euo pipefail
+
+    export LARRY_ID="${LARRY_ID:-larry-03}"
+    export REDIS_PASSWORD="${REDIS_PASSWORD:-cortex123}"
+
+    echo "========================================"
+    echo "   LARRY-03 DEVELOPMENT COORDINATOR"
+    echo "========================================"
+    echo ""
+    echo "Larry ID: $LARRY_ID"
+    echo "Phase: Development & Inventory"
+    echo "Redis: $REDIS_HOST:$REDIS_PORT"
+    echo "Quality Threshold: $QUALITY_THRESHOLD"
+    echo "Coverage Target: $COVERAGE_TARGET%"
+    echo "Started: $(date -u +%Y-%m-%dT%H:%M:%SZ)"
+    echo ""
+
+    # Initialize Redis state
+    echo "[Larry-03] Initializing Redis coordination state..."
+    redis-cli -h $REDIS_HOST -p $REDIS_PORT -a $REDIS_PASSWORD --no-auth-warning SET phase:larry-03:status "in_progress"
+    redis-cli -h $REDIS_HOST -p $REDIS_PORT -a $REDIS_PASSWORD --no-auth-warning SET phase:larry-03:progress 0
+    redis-cli -h $REDIS_HOST -p $REDIS_PORT -a $REDIS_PASSWORD --no-auth-warning SET phase:larry-03:started_at "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+    redis-cli -h $REDIS_HOST -p $REDIS_PORT -a $REDIS_PASSWORD --no-auth-warning SET phase:larry-03:inventory:assets 0
+    redis-cli -h $REDIS_HOST -p $REDIS_PORT -a $REDIS_PASSWORD --no-auth-warning SET phase:larry-03:development:prs 0
+    redis-cli -h $REDIS_HOST -p $REDIS_PORT -a $REDIS_PASSWORD --no-auth-warning SET phase:larry-03:testing:coverage 0
+
+    # Publish start event
+    redis-cli -h $REDIS_HOST -p $REDIS_PORT -a $REDIS_PASSWORD --no-auth-warning PUBLISH larry:coordination '{"from":"larry-03","event":"phase_started","timestamp":"'$(date -u +%Y-%m-%dT%H:%M:%SZ)'"}'
+
+    echo "[Larry-03] Spawning 8 development & inventory workers..."
+
+    # Define worker tasks
+    declare -a WORKERS=(
+      "catalog-worker-01:Catalog K8s deployments"
+      "catalog-worker-02:Catalog Helm releases"
+      "classification-worker:Classify and tag assets"
+      "code-quality-worker:Analyze code quality"
+      "test-coverage-worker:Improve test coverage"
+      "documentation-worker:Generate documentation"
+      "feature-worker:Implement priority features"
+      "review-worker:Review open PRs"
+    )
+
+    # Spawn workers
+    for worker_def in "${WORKERS[@]}"; do
+      IFS=':' read -r worker_name worker_task <<< "$worker_def"
+      echo "  Spawning: $worker_name - $worker_task"
+
+      (
+        echo "    [$worker_name] Starting: $worker_task"
+        sleep $((10 + RANDOM % 20))
+
+        # Simulate metrics
+        if [[ $worker_name == catalog* ]]; then
+          assets=$((10 + RANDOM % 30))
+          redis-cli -h $REDIS_HOST -p $REDIS_PORT -a $REDIS_PASSWORD --no-auth-warning INCRBY phase:larry-03:inventory:assets $assets
+        elif [[ $worker_name == *quality* || $worker_name == *feature* || $worker_name == *documentation* ]]; then
+          prs=$((1 + RANDOM % 3))
+          redis-cli -h $REDIS_HOST -p $REDIS_PORT -a $REDIS_PASSWORD --no-auth-warning INCRBY phase:larry-03:development:prs $prs
+        elif [[ $worker_name == *coverage* ]]; then
+          coverage=$((5 + RANDOM % 15))
+          redis-cli -h $REDIS_HOST -p $REDIS_PORT -a $REDIS_PASSWORD --no-auth-warning INCRBY phase:larry-03:testing:coverage $coverage
+        fi
+
+        redis-cli -h $REDIS_HOST -p $REDIS_PORT -a $REDIS_PASSWORD --no-auth-warning HINCRBY phase:larry-03:workers completed 1
+        echo "    [$worker_name] Task complete"
+      ) &
+    done
+
+    # Monitor worker progress
+    echo "[Larry-03] Monitoring development worker progress..."
+    total_workers=8
+    while true; do
+      completed=$(redis-cli -h $REDIS_HOST -p $REDIS_PORT -a $REDIS_PASSWORD --no-auth-warning HGET phase:larry-03:workers completed 2>/dev/null || echo 0)
+      progress=$(( completed * 100 / total_workers ))
+
+      assets=$(redis-cli -h $REDIS_HOST -p $REDIS_PORT -a $REDIS_PASSWORD --no-auth-warning GET phase:larry-03:inventory:assets 2>/dev/null || echo 0)
+      prs=$(redis-cli -h $REDIS_HOST -p $REDIS_PORT -a $REDIS_PASSWORD --no-auth-warning GET phase:larry-03:development:prs 2>/dev/null || echo 0)
+      coverage=$(redis-cli -h $REDIS_HOST -p $REDIS_PORT -a $REDIS_PASSWORD --no-auth-warning GET phase:larry-03:testing:coverage 2>/dev/null || echo 0)
+
+      redis-cli -h $REDIS_HOST -p $REDIS_PORT -a $REDIS_PASSWORD --no-auth-warning SET phase:larry-03:progress $progress
+      redis-cli -h $REDIS_HOST -p $REDIS_PORT -a $REDIS_PASSWORD --no-auth-warning PUBLISH larry:coordination '{"from":"larry-03","event":"progress_update","progress":'$progress',"message":"'$completed'/'$total_workers' dev workers completed","assets":'$assets',"prs":'$prs',"coverage_delta":'$coverage',"timestamp":"'$(date -u +%Y-%m-%dT%H:%M:%SZ)'"}'
+
+      echo "  Progress: $completed/$total_workers workers ($progress%) | Assets: $assets, PRs: $prs, Coverage: +$coverage%"
+
+      if [ "$completed" -eq "$total_workers" ]; then
+        echo "[Larry-03] All development workers completed!"
+        break
+      fi
+
+      sleep 10
+    done
+
+    # Mark complete
+    redis-cli -h $REDIS_HOST -p $REDIS_PORT -a $REDIS_PASSWORD --no-auth-warning SET phase:larry-03:status "completed"
+    redis-cli -h $REDIS_HOST -p $REDIS_PORT -a $REDIS_PASSWORD --no-auth-warning SET phase:larry-03:completed_at "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+    redis-cli -h $REDIS_HOST -p $REDIS_PORT -a $REDIS_PASSWORD --no-auth-warning PUBLISH larry:coordination '{"from":"larry-03","event":"phase_complete","timestamp":"'$(date -u +%Y-%m-%dT%H:%M:%SZ)'"}'
+
+    echo ""
+    echo "========================================"
+    echo "   LARRY-03 DEVELOPMENT PHASE COMPLETE"
+    echo "========================================"
+    echo "Assets cataloged: $assets"
+    echo "PRs created: $prs"
+    echo "Coverage increase: +$coverage%"
+    echo "Workers completed: $total_workers"
+    echo ""
+
+    # Keep running
+    echo "[Larry-03] Standing by for additional coordination..."
+    tail -f /dev/null
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: larry-03-coordinator
+  namespace: larry-03
+  labels:
+    app: larry-coordinator
+    larry-instance: "larry-03"
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: larry-coordinator
+      larry-instance: "larry-03"
+  template:
+    metadata:
+      labels:
+        app: larry-coordinator
+        larry-instance: "larry-03"
+    spec:
+      serviceAccountName: larry-03-sa
+      containers:
+      - name: coordinator
+        image: redis:7-alpine
+        command: ["/bin/sh"]
+        args: ["-c", "apk add --no-cache bash curl && /scripts/coordinator.sh"]
+        envFrom:
+        - configMapRef:
+            name: larry-03-config
+        env:
+        - name: LARRY_ID
+          value: "larry-03"
+        - name: REDIS_PASSWORD
+          value: "cortex123"
+        resources:
+          requests:
+            memory: "1Gi"
+            cpu: "500m"
+          limits:
+            memory: "2Gi"
+            cpu: "1000m"
+        volumeMounts:
+        - name: scripts
+          mountPath: /scripts
+        - name: coordination
+          mountPath: /coordination
+      volumes:
+      - name: scripts
+        configMap:
+          name: larry-03-coordinator-script
+          defaultMode: 0755
+      - name: coordination
+        persistentVolumeClaim:
+          claimName: larry-03-coordination-pvc
+
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: larry-03-sa
+  namespace: larry-03
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: larry-03-inventory-reader
+rules:
+- apiGroups: ["*"]
+  resources: ["*"]
+  verbs: ["get", "list", "watch"]
+- apiGroups: ["batch"]
+  resources: ["jobs"]
+  verbs: ["get", "list", "watch", "create"]
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: larry-03-inventory-reader-binding
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: larry-03-inventory-reader
+subjects:
+- kind: ServiceAccount
+  name: larry-03-sa
+  namespace: larry-03

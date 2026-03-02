@@ -1,0 +1,140 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: documentation-master
+  namespace: cortex
+  labels:
+    app: documentation-master
+    cortex-role: master
+    cortex-component: documentation
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate  # Since we use RWO volumes
+  selector:
+    matchLabels:
+      app: documentation-master
+  template:
+    metadata:
+      labels:
+        app: documentation-master
+        cortex-role: master
+        cortex-component: documentation
+    spec:
+      containers:
+      - name: documentation-master
+        image: bash:5.2-alpine3.19
+        command: ["/bin/bash"]
+        args: ["-c", "apk add --no-cache curl jq bc netcat-openbsd && /app/master.sh start"]
+        env:
+        - name: CORTEX_ROLE
+          value: "documentation-master"
+        - name: MOE_ENABLED
+          value: "true"
+        - name: KNOWLEDGE_BASE_PATH
+          value: "/data/knowledge-base"
+        - name: CACHE_PATH
+          value: "/data/cache"
+        - name: HEALTH_CHECK_PORT
+          value: "8080"
+        - name: QUERY_PORT
+          value: "8080"
+        - name: LOG_LEVEL
+          value: "info"
+        ports:
+        - name: api
+          containerPort: 8080
+          protocol: TCP
+        volumeMounts:
+        - name: code
+          mountPath: /app
+          readOnly: true
+        - name: lib
+          mountPath: /app/lib
+          readOnly: true
+        - name: config
+          mountPath: /app/config
+          readOnly: true
+        - name: knowledge-base
+          mountPath: /data/knowledge-base
+        - name: cache
+          mountPath: /data/cache
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "250m"
+          limits:
+            memory: "2Gi"
+            cpu: "1000m"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 10
+          periodSeconds: 5
+          timeoutSeconds: 3
+          failureThreshold: 3
+      volumes:
+      - name: code
+        configMap:
+          name: documentation-master-code
+          defaultMode: 0755
+      - name: lib
+        configMap:
+          name: documentation-master-lib
+          defaultMode: 0755
+      - name: config
+        configMap:
+          name: documentation-master-config
+      - name: knowledge-base
+        persistentVolumeClaim:
+          claimName: documentation-kb-pvc
+      - name: cache
+        persistentVolumeClaim:
+          claimName: documentation-cache-pvc
+      restartPolicy: Always
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: documentation-master-code
+  namespace: cortex
+  labels:
+    app: documentation-master
+    component: code
+data:
+  master.sh: |
+    # This will be populated from coordination/masters/documentation-master/master.sh
+    # For now, placeholder - will be updated via CI/CD or manual sync
+    #!/bin/bash
+    echo "Documentation Master starting..."
+    exec /bin/bash
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: documentation-master-lib
+  namespace: cortex
+  labels:
+    app: documentation-master
+    component: code
+data:
+  # These will be populated from coordination/masters/documentation-master/lib/*.sh
+  # For now, placeholders - will be updated via CI/CD or manual sync
+  crawler.sh: |
+    #!/bin/bash
+    echo "Crawler placeholder"
+  indexer.sh: |
+    #!/bin/bash
+    echo "Indexer placeholder"
+  query-handler.sh: |
+    #!/bin/bash
+    echo "Query handler placeholder"

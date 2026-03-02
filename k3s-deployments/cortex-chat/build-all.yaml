@@ -1,0 +1,89 @@
+---
+# Build Job for Cortex API (cortex-orchestrator)
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: kaniko-cortex-api-build
+  namespace: cortex
+spec:
+  ttlSecondsAfterFinished: 600
+  template:
+    spec:
+      restartPolicy: Never
+      containers:
+      - name: kaniko
+        image: gcr.io/kaniko-project/executor:latest
+        args:
+        - "--context=git://github.com/ry-ops/cortex.git#refs/heads/main"
+        - "--context-sub-path=k3s-deployments/cortex-chat/cortex-api"
+        - "--dockerfile=Dockerfile"
+        - "--destination=10.43.170.72:5000/cortex-api:latest"
+        - "--skip-tls-verify"
+        - "--insecure"
+        - "--cache=true"
+        - "--cache-ttl=24h"
+        volumeMounts:
+        - name: docker-config
+          mountPath: /kaniko/.docker
+      volumes:
+      - name: docker-config
+        emptyDir: {}
+---
+# Build Job for Backend Simple (TypeScript API)
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: kaniko-backend-simple-build
+  namespace: cortex-chat
+spec:
+  ttlSecondsAfterFinished: 600
+  template:
+    spec:
+      restartPolicy: Never
+      containers:
+      - name: kaniko
+        image: gcr.io/kaniko-project/executor:latest
+        args:
+        - "--context=git://github.com/ry-ops/cortex.git#refs/heads/main"
+        - "--context-sub-path=k3s-deployments/cortex-chat/backend-simple"
+        - "--dockerfile=Dockerfile"
+        - "--destination=10.43.170.72:5000/cortex-chat-backend-simple:latest"
+        - "--skip-tls-verify"
+        - "--insecure"
+        - "--cache=true"
+        - "--cache-ttl=24h"
+        volumeMounts:
+        - name: docker-config
+          mountPath: /kaniko/.docker
+      volumes:
+      - name: docker-config
+        emptyDir: {}
+---
+# Build Job for Frontend Redesign (Static HTML)
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: kaniko-frontend-redesign-build
+  namespace: cortex-chat
+spec:
+  ttlSecondsAfterFinished: 600
+  template:
+    spec:
+      restartPolicy: Never
+      containers:
+      - name: kaniko
+        image: gcr.io/kaniko-project/executor:latest
+        args:
+        - "--context=git://github.com/ry-ops/cortex.git#refs/heads/main"
+        - "--context-sub-path=k3s-deployments/cortex-chat/frontend-redesign"
+        - "--dockerfile=Dockerfile"
+        - "--destination=10.43.170.72:5000/cortex-chat-frontend:latest"
+        - "--skip-tls-verify"
+        - "--insecure"
+        - "--cache=false"
+        volumeMounts:
+        - name: docker-config
+          mountPath: /kaniko/.docker
+      volumes:
+      - name: docker-config
+        emptyDir: {}

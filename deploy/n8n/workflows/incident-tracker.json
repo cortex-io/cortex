@@ -1,0 +1,482 @@
+{
+  "name": "Incident Tracker",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "incident-tracker",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "webhook-trigger",
+      "name": "Webhook Trigger",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [250, 400],
+      "webhookId": "incident-tracker"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Extract alert and determine incident state\nconst body = $input.item.json.body;\nconst alert = body.alert || $input.item.json;\n\nconst alertName = alert.alertName || alert.labels?.alertname;\nconst fingerprint = alert.fingerprint || '';\nconst status = alert.status || 'unknown';\nconst severity = alert.severity || alert.labels?.severity || 'unknown';\n\n// Generate incident ID based on alert fingerprint or name\nconst incidentId = `inc-${fingerprint.substring(0, 8) || Date.now()}`;\n\n// Determine if this is a new incident or update\nconst isFiring = status === 'firing';\nconst isResolved = status === 'resolved';\n\nreturn {\n  json: {\n    incidentId,\n    alert,\n    alertName,\n    fingerprint,\n    status,\n    severity,\n    isFiring,\n    isResolved,\n    processedAt: new Date().toISOString(),\n    cluster: alert.cluster || alert.labels?.cluster || 'unknown',\n    namespace: alert.namespace || alert.labels?.namespace || '',\n    summary: alert.summary || alert.annotations?.summary || '',\n    description: alert.description || alert.annotations?.description || ''\n  }\n};"
+      },
+      "id": "extract-alert",
+      "name": "Extract Alert Data",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [450, 400]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.severity }}",
+              "rightValue": "critical",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        }
+      },
+      "id": "check-critical",
+      "name": "Is Critical?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [650, 400]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.isFiring }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true"
+              }
+            }
+          ],
+          "combinator": "and"
+        }
+      },
+      "id": "check-state",
+      "name": "Is Firing?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [850, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Create new incident record\nconst alert = $input.item.json;\n\nconst incident = {\n  incident_id: alert.incidentId,\n  fingerprint: alert.fingerprint,\n  alert_name: alert.alertName,\n  severity: alert.severity,\n  cluster: alert.cluster,\n  namespace: alert.namespace,\n  \n  // Timeline\n  fired_at: alert.alert.startsAt || new Date().toISOString(),\n  acknowledged_at: null,\n  resolved_at: null,\n  \n  // Status\n  status: 'active',\n  state: 'firing',\n  \n  // Details\n  summary: alert.summary,\n  description: alert.description,\n  labels: alert.alert.labels || {},\n  annotations: alert.alert.annotations || {},\n  \n  // Metadata\n  created_at: new Date().toISOString(),\n  updated_at: new Date().toISOString(),\n  \n  // Related alerts (will be aggregated)\n  related_alerts: [{\n    fingerprint: alert.fingerprint,\n    fired_at: alert.alert.startsAt,\n    summary: alert.summary\n  }],\n  \n  // Metrics\n  alert_count: 1,\n  mttr_seconds: null\n};\n\nreturn {\n  json: {\n    ...alert,\n    incident\n  }\n};"
+      },
+      "id": "create-incident",
+      "name": "Create Incident Record",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1050, 200]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Update existing incident with resolved status\nconst alert = $input.item.json;\n\n// In a real implementation, you would:\n// 1. Read existing incident from storage\n// 2. Calculate MTTR\n// 3. Update status\n\n// For this example, we'll create the resolved update\nconst now = new Date();\nconst firedAt = new Date(alert.alert.startsAt || now);\nconst mttrSeconds = Math.floor((now - firedAt) / 1000);\n\nconst incidentUpdate = {\n  incident_id: alert.incidentId,\n  fingerprint: alert.fingerprint,\n  \n  // Timeline\n  resolved_at: now.toISOString(),\n  \n  // Status\n  status: 'resolved',\n  state: 'resolved',\n  \n  // Metrics\n  mttr_seconds: mttrSeconds,\n  mttr_human: formatDuration(mttrSeconds),\n  \n  // Metadata\n  updated_at: now.toISOString()\n};\n\nfunction formatDuration(seconds) {\n  const hours = Math.floor(seconds / 3600);\n  const minutes = Math.floor((seconds % 3600) / 60);\n  const secs = seconds % 60;\n  \n  if (hours > 0) {\n    return `${hours}h ${minutes}m ${secs}s`;\n  } else if (minutes > 0) {\n    return `${minutes}m ${secs}s`;\n  } else {\n    return `${secs}s`;\n  }\n}\n\nreturn {\n  json: {\n    ...alert,\n    incidentUpdate\n  }\n};"
+      },
+      "id": "resolve-incident",
+      "name": "Resolve Incident & Calculate MTTR",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1050, 400]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://n8n.cortex.svc.cluster.local:5678/webhook/incident-storage",
+        "authentication": "none",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "action",
+              "value": "create"
+            },
+            {
+              "name": "incident",
+              "value": "={{ $json.incident }}"
+            }
+          ]
+        },
+        "options": {
+          "retry": {
+            "enabled": true,
+            "maxTries": 3
+          }
+        }
+      },
+      "id": "store-incident",
+      "name": "Store Incident",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [1250, 200],
+      "notes": "Replace with database write or file storage"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://n8n.cortex.svc.cluster.local:5678/webhook/incident-storage",
+        "authentication": "none",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "action",
+              "value": "update"
+            },
+            {
+              "name": "incident_id",
+              "value": "={{ $json.incidentId }}"
+            },
+            {
+              "name": "update",
+              "value": "={{ $json.incidentUpdate }}"
+            }
+          ]
+        },
+        "options": {
+          "retry": {
+            "enabled": true,
+            "maxTries": 3
+          }
+        }
+      },
+      "id": "update-incident",
+      "name": "Update Incident",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [1250, 400]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Aggregate related alerts into single incident\n// This would check if similar alerts should be grouped\n\nconst alert = $input.item.json;\nconst alertName = alert.alertName;\nconst namespace = alert.namespace;\nconst cluster = alert.cluster;\n\n// In production, query existing incidents with similar characteristics\n// For now, we'll create a grouping key\nconst groupingKey = `${cluster}:${namespace}:${alertName}`;\n\nreturn {\n  json: {\n    ...alert,\n    groupingKey,\n    shouldAggregate: true // In production, check if existing incident matches\n  }\n};"
+      },
+      "id": "check-aggregation",
+      "name": "Check Alert Aggregation",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1050, 100]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { \"status\": \"success\", \"incident_id\": $json.incidentId, \"action\": $json.incident ? 'created' : 'updated' } }}"
+      },
+      "id": "webhook-response",
+      "name": "Webhook Response",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [1450, 300]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { \"status\": \"skipped\", \"reason\": \"Not a critical alert\", \"severity\": $json.severity } }}"
+      },
+      "id": "response-skipped",
+      "name": "Response (Skipped)",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [850, 500]
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "weeks",
+              "daysOfTheWeek": [
+                {
+                  "day": "monday"
+                }
+              ],
+              "hoursOfTheDay": [
+                {
+                  "hour": 9
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "id": "weekly-schedule",
+      "name": "Weekly Schedule (Monday 9 AM)",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.1,
+      "position": [250, 700]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "http://n8n.cortex.svc.cluster.local:5678/webhook/incident-storage?action=list&timeframe=week",
+        "authentication": "none",
+        "options": {}
+      },
+      "id": "fetch-weekly-incidents",
+      "name": "Fetch Weekly Incidents",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [450, 700]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Generate weekly incident summary\nconst incidents = $input.item.json.incidents || [];\n\nconst totalIncidents = incidents.length;\nconst criticalIncidents = incidents.filter(i => i.severity === 'critical').length;\nconst resolvedIncidents = incidents.filter(i => i.status === 'resolved').length;\nconst activeIncidents = incidents.filter(i => i.status === 'active').length;\n\n// Calculate average MTTR for resolved incidents\nconst resolvedWithMttr = incidents.filter(i => i.mttr_seconds !== null);\nconst avgMttr = resolvedWithMttr.length > 0\n  ? resolvedWithMttr.reduce((sum, i) => sum + i.mttr_seconds, 0) / resolvedWithMttr.length\n  : 0;\n\nfunction formatDuration(seconds) {\n  const hours = Math.floor(seconds / 3600);\n  const minutes = Math.floor((seconds % 3600) / 60);\n  return hours > 0 ? `${hours}h ${minutes}m` : `${minutes}m`;\n}\n\n// Group by alert name\nconst byAlertName = {};\nincidents.forEach(inc => {\n  const name = inc.alert_name;\n  if (!byAlertName[name]) {\n    byAlertName[name] = { count: 0, critical: 0, resolved: 0 };\n  }\n  byAlertName[name].count++;\n  if (inc.severity === 'critical') byAlertName[name].critical++;\n  if (inc.status === 'resolved') byAlertName[name].resolved++;\n});\n\n// Create summary report\nconst summary = {\n  period: 'Last 7 days',\n  generated_at: new Date().toISOString(),\n  \n  overview: {\n    total_incidents: totalIncidents,\n    critical_incidents: criticalIncidents,\n    active_incidents: activeIncidents,\n    resolved_incidents: resolvedIncidents,\n    resolution_rate: totalIncidents > 0 ? (resolvedIncidents / totalIncidents * 100).toFixed(1) + '%' : 'N/A'\n  },\n  \n  performance: {\n    avg_mttr_seconds: Math.floor(avgMttr),\n    avg_mttr_human: formatDuration(Math.floor(avgMttr))\n  },\n  \n  by_alert_type: byAlertName,\n  \n  top_incidents: incidents\n    .sort((a, b) => (b.alert_count || 0) - (a.alert_count || 0))\n    .slice(0, 5)\n    .map(inc => ({\n      incident_id: inc.incident_id,\n      alert_name: inc.alert_name,\n      severity: inc.severity,\n      status: inc.status,\n      alert_count: inc.alert_count || 1,\n      mttr: inc.mttr_human || 'Active'\n    }))\n};\n\n// Format Slack message\nconst slackMessage = {\n  blocks: [\n    {\n      type: \"header\",\n      text: {\n        type: \"plain_text\",\n        text: \"Weekly Incident Summary Report\",\n        emoji: true\n      }\n    },\n    {\n      type: \"section\",\n      text: {\n        type: \"mrkdwn\",\n        text: `*Period:* ${summary.period}\\n*Generated:* ${new Date().toLocaleString()}`\n      }\n    },\n    {\n      type: \"divider\"\n    },\n    {\n      type: \"section\",\n      fields: [\n        {\n          type: \"mrkdwn\",\n          text: `*Total Incidents:*\\n${summary.overview.total_incidents}`\n        },\n        {\n          type: \"mrkdwn\",\n          text: `*Critical:*\\n${summary.overview.critical_incidents}`\n        },\n        {\n          type: \"mrkdwn\",\n          text: `*Resolved:*\\n${summary.overview.resolved_incidents}`\n        },\n        {\n          type: \"mrkdwn\",\n          text: `*Active:*\\n${summary.overview.active_incidents}`\n        },\n        {\n          type: \"mrkdwn\",\n          text: `*Resolution Rate:*\\n${summary.overview.resolution_rate}`\n        },\n        {\n          type: \"mrkdwn\",\n          text: `*Avg MTTR:*\\n${summary.performance.avg_mttr_human}`\n        }\n      ]\n    },\n    {\n      type: \"divider\"\n    },\n    {\n      type: \"section\",\n      text: {\n        type: \"mrkdwn\",\n        text: \"*Top Incidents:*\\n\" + summary.top_incidents.map((inc, idx) => \n          `${idx + 1}. ${inc.alert_name} (${inc.severity}) - ${inc.alert_count} alerts - MTTR: ${inc.mttr}`\n        ).join('\\n')\n      }\n    }\n  ]\n};\n\nreturn {\n  json: {\n    summary,\n    slackMessage\n  }\n};"
+      },
+      "id": "generate-summary",
+      "name": "Generate Weekly Summary",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [650, 700]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.SLACK_WEBHOOK_URL || 'https://hooks.slack.com/services/YOUR/WEBHOOK/URL' }}",
+        "authentication": "none",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json.slackMessage) }}",
+        "options": {}
+      },
+      "id": "send-summary",
+      "name": "Send Weekly Summary",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [850, 700]
+    },
+    {
+      "parameters": {
+        "operation": "writeFile",
+        "fileName": "=/cortex/reports/incident-summary-{{ new Date().toISOString().split('T')[0] }}.json",
+        "fileContent": "={{ JSON.stringify($json.summary, null, 2) }}",
+        "options": {}
+      },
+      "id": "save-summary",
+      "name": "Save Summary to File",
+      "type": "n8n-nodes-base.files",
+      "typeVersion": 1,
+      "position": [850, 800],
+      "notes": "Optional: save to persistent volume"
+    },
+    {
+      "parameters": {
+        "content": "## Incident Tracker\n\nTracks alert lifecycle and incident management:\n\n**Incident Creation (Firing)**\n- Create incident record\n- Track firing timestamp\n- Aggregate related alerts\n- Store in incident database\n\n**Incident Resolution (Resolved)**\n- Update incident status\n- Calculate MTTR\n- Log resolution time\n- Update metrics\n\n**Weekly Summary**\n- Runs every Monday at 9 AM\n- Generates incident statistics\n- Calculates average MTTR\n- Sends report to Slack\n- Saves report to file\n\n**Metrics Tracked:**\n- Total incidents\n- Critical vs warning\n- Resolution rate\n- Average MTTR\n- Top recurring incidents",
+        "height": 680,
+        "width": 380
+      },
+      "id": "sticky-note-1",
+      "name": "Sticky Note",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [240, 940]
+    },
+    {
+      "parameters": {
+        "content": "## Storage Backend\n\nReplace incident-storage webhook with:\n\n1. **PostgreSQL**\n   - Use PostgreSQL node\n   - Table: incidents\n   - Columns: incident_id, alert_name, severity, status, fired_at, resolved_at, mttr_seconds, etc.\n\n2. **File System**\n   - Use Files node\n   - Path: /cortex/data/incidents/\n   - Format: JSON or JSONL\n\n3. **External API**\n   - PagerDuty\n   - Opsgenie\n   - Jira Service Desk\n\nCurrent: HTTP webhook placeholder",
+        "height": 420,
+        "width": 350
+      },
+      "id": "sticky-note-2",
+      "name": "Sticky Note 2",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [1250, 620]
+    }
+  ],
+  "connections": {
+    "Webhook Trigger": {
+      "main": [
+        [
+          {
+            "node": "Extract Alert Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Alert Data": {
+      "main": [
+        [
+          {
+            "node": "Is Critical?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is Critical?": {
+      "main": [
+        [
+          {
+            "node": "Is Firing?",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Response (Skipped)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is Firing?": {
+      "main": [
+        [
+          {
+            "node": "Check Alert Aggregation",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Resolve Incident & Calculate MTTR",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Incident Record": {
+      "main": [
+        [
+          {
+            "node": "Store Incident",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Resolve Incident & Calculate MTTR": {
+      "main": [
+        [
+          {
+            "node": "Update Incident",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Store Incident": {
+      "main": [
+        [
+          {
+            "node": "Webhook Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Incident": {
+      "main": [
+        [
+          {
+            "node": "Webhook Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Alert Aggregation": {
+      "main": [
+        [
+          {
+            "node": "Create Incident Record",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Weekly Schedule (Monday 9 AM)": {
+      "main": [
+        [
+          {
+            "node": "Fetch Weekly Incidents",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Weekly Incidents": {
+      "main": [
+        [
+          {
+            "node": "Generate Weekly Summary",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate Weekly Summary": {
+      "main": [
+        [
+          {
+            "node": "Send Weekly Summary",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Save Summary to File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "settings": {
+    "executionOrder": "v1",
+    "saveExecutionProgress": true,
+    "saveManualExecutions": true
+  },
+  "staticData": null,
+  "tags": [
+    {
+      "name": "cortex",
+      "id": "cortex"
+    },
+    {
+      "name": "alerting",
+      "id": "alerting"
+    },
+    {
+      "name": "incident-management",
+      "id": "incident-management"
+    }
+  ],
+  "triggerCount": 2,
+  "updatedAt": "2025-12-12T00:00:00.000Z",
+  "versionId": "1"
+}

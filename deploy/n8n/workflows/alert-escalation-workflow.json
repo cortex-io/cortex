@@ -1,0 +1,499 @@
+{
+  "name": "Alert Escalation Workflow",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "*/5 * * * *"
+            }
+          ]
+        }
+      },
+      "id": "schedule-trigger",
+      "name": "Schedule Trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [250, 300],
+      "notes": "Check every 5 minutes for unacknowledged alerts"
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $env.ALERTMANAGER_URL }}/api/v2/alerts",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBasicAuth",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "filter",
+              "value": "alertname!=\"\""
+            },
+            {
+              "name": "silenced",
+              "value": "false"
+            },
+            {
+              "name": "inhibited",
+              "value": "false"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "get-active-alerts",
+      "name": "Get Active Alerts",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [450, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Filter critical alerts and check acknowledgment status\nconst alerts = $input.item.json;\nconst currentTime = new Date();\nconst acknowledgmentWindow = 15 * 60 * 1000; // 15 minutes\n\nconst unacknowledgedAlerts = alerts.filter(alert => {\n  if (alert.labels?.severity !== 'critical') {\n    return false;\n  }\n  \n  const startTime = new Date(alert.startsAt);\n  const timeSinceStart = currentTime - startTime;\n  \n  // Check if alert has been active for more than 15 minutes\n  if (timeSinceStart < acknowledgmentWindow) {\n    return false;\n  }\n  \n  // Check if alert has acknowledgment annotation\n  const isAcknowledged = alert.annotations?.acknowledged === 'true';\n  \n  return !isAcknowledged;\n});\n\nreturn unacknowledgedAlerts.map(alert => ({\n  json: {\n    alertname: alert.labels?.alertname,\n    service: alert.labels?.service || alert.labels?.job,\n    instance: alert.labels?.instance,\n    namespace: alert.labels?.namespace,\n    severity: alert.labels?.severity,\n    startsAt: alert.startsAt,\n    summary: alert.annotations?.summary,\n    description: alert.annotations?.description,\n    fingerprint: alert.fingerprint,\n    generatorURL: alert.generatorURL,\n    timeSinceStart: Math.floor(timeSinceStart / 60000) + ' minutes',\n    escalationLevel: 1\n  }\n}));"
+      },
+      "id": "filter-unacknowledged",
+      "name": "Filter Unacknowledged Alerts",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [650, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $input.all().length }}",
+              "rightValue": 0,
+              "operator": {
+                "type": "number",
+                "operation": "gt"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "check-alerts-exist",
+      "name": "Check Alerts Exist",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [850, 300]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $env.ESCALATION_DB_API }}/escalations/{{ $json.fingerprint }}",
+        "authentication": "genericCredentialType",
+        "sendQuery": false,
+        "options": {
+          "response": {
+            "response": {
+              "neverError": true
+            }
+          }
+        }
+      },
+      "id": "check-escalation-history",
+      "name": "Check Escalation History",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1050, 200]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Determine escalation level based on history\nconst alert = $input.first().json;\nconst history = $input.last().json;\n\nlet escalationLevel = 1;\nlet escalationTarget = 'team';\n\nif (history && history.escalations) {\n  escalationLevel = (history.escalations.length || 0) + 1;\n  \n  // Define escalation ladder\n  const escalationLadder = [\n    { level: 1, target: 'team', method: 'slack' },\n    { level: 2, target: 'senior_engineer', method: 'slack,email' },\n    { level: 3, target: 'on_call', method: 'pagerduty' },\n    { level: 4, target: 'manager', method: 'pagerduty,phone' },\n    { level: 5, target: 'director', method: 'pagerduty,phone,sms' }\n  ];\n  \n  const currentEscalation = escalationLadder[Math.min(escalationLevel - 1, escalationLadder.length - 1)];\n  escalationTarget = currentEscalation.target;\n  \n  return [{\n    json: {\n      ...alert,\n      escalationLevel: escalationLevel,\n      escalationTarget: escalationTarget,\n      escalationMethods: currentEscalation.method.split(','),\n      previousEscalations: history.escalations || []\n    }\n  }];\n}\n\nreturn [{\n  json: {\n    ...alert,\n    escalationLevel: 1,\n    escalationTarget: 'team',\n    escalationMethods: ['slack'],\n    previousEscalations: []\n  }\n}];"
+      },
+      "id": "determine-escalation-level",
+      "name": "Determine Escalation Level",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1250, 200]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $env.ONCALL_API }}/current",
+        "authentication": "genericCredentialType",
+        "options": {}
+      },
+      "id": "get-oncall-rotation",
+      "name": "Get On-Call Rotation",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1450, 200]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Map escalation target to on-call person\nconst alert = $input.first().json;\nconst oncallData = $input.last().json;\n\nconst targetMap = {\n  'team': oncallData.team_channel || '#alerts',\n  'senior_engineer': oncallData.senior_engineer?.slack || oncallData.primary?.slack,\n  'on_call': oncallData.primary?.slack || oncallData.primary?.email,\n  'manager': oncallData.manager?.slack || oncallData.manager?.email,\n  'director': oncallData.director?.email || oncallData.escalation?.email\n};\n\nconst notificationTarget = targetMap[alert.escalationTarget] || '#alerts';\n\nreturn [{\n  json: {\n    ...alert,\n    notificationTarget: notificationTarget,\n    oncallPrimary: oncallData.primary,\n    oncallSecondary: oncallData.secondary\n  }\n}];"
+      },
+      "id": "map-oncall-target",
+      "name": "Map On-Call Target",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1650, 200]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.SLACK_WEBHOOK_ESCALATION }}",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "text",
+              "value": "=🚨 ESCALATION LEVEL {{ $json.escalationLevel }}: {{ $json.alertname }}"
+            },
+            {
+              "name": "channel",
+              "value": "={{ $json.notificationTarget }}"
+            },
+            {
+              "name": "blocks",
+              "value": "=[{\"type\":\"header\",\"text\":{\"type\":\"plain_text\",\"text\":\"🚨 Alert Escalation - Level {{ $json.escalationLevel }}\"}},{\"type\":\"section\",\"fields\":[{\"type\":\"mrkdwn\",\"text\":\"*Alert:*\\n{{ $json.alertname }}\"},{\"type\":\"mrkdwn\",\"text\":\"*Service:*\\n{{ $json.service }}\"},{\"type\":\"mrkdwn\",\"text\":\"*Severity:*\\n{{ $json.severity }}\"},{\"type\":\"mrkdwn\",\"text\":\"*Time Active:*\\n{{ $json.timeSinceStart }}\"}]},{\"type\":\"section\",\"text\":{\"type\":\"mrkdwn\",\"text\":\"*Summary:*\\n{{ $json.summary }}\\n\\n*This alert has not been acknowledged for 15+ minutes and is being escalated.*\"}},{\"type\":\"section\",\"text\":{\"type\":\"mrkdwn\",\"text\":\"*On-Call Primary:* {{ $json.oncallPrimary.name }}\\n*Target:* {{ $json.escalationTarget }}\\n*Previous Escalations:* {{ $json.previousEscalations.length }}\"}}]"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "notify-escalation-slack",
+      "name": "Notify Escalation - Slack",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1850, 100]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.escalationLevel }}",
+              "rightValue": 3,
+              "operator": {
+                "type": "number",
+                "operation": "gte"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "check-pagerduty-required",
+      "name": "Check PagerDuty Required",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [1850, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://events.pagerduty.com/v2/enqueue",
+        "authentication": "genericCredentialType",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "routing_key",
+              "value": "={{ $env.PAGERDUTY_ROUTING_KEY }}"
+            },
+            {
+              "name": "event_action",
+              "value": "trigger"
+            },
+            {
+              "name": "dedup_key",
+              "value": "={{ $json.fingerprint }}"
+            },
+            {
+              "name": "payload",
+              "value": "={{ { \"summary\": $json.alertname + ' - Escalation Level ' + $json.escalationLevel, \"severity\": \"critical\", \"source\": $json.service, \"component\": $json.namespace, \"custom_details\": { \"description\": $json.description, \"time_active\": $json.timeSinceStart, \"escalation_level\": $json.escalationLevel, \"prometheus_url\": $json.generatorURL } } }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "trigger-pagerduty",
+      "name": "Trigger PagerDuty",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [2050, 200],
+      "notes": "Integration with PagerDuty for critical escalations"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.ESCALATION_DB_API }}/escalations",
+        "authentication": "genericCredentialType",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "fingerprint",
+              "value": "={{ $json.fingerprint }}"
+            },
+            {
+              "name": "alertname",
+              "value": "={{ $json.alertname }}"
+            },
+            {
+              "name": "escalation_level",
+              "value": "={{ $json.escalationLevel }}"
+            },
+            {
+              "name": "escalation_target",
+              "value": "={{ $json.escalationTarget }}"
+            },
+            {
+              "name": "oncall_primary",
+              "value": "={{ $json.oncallPrimary.name }}"
+            },
+            {
+              "name": "timestamp",
+              "value": "={{ $now.toISO() }}"
+            },
+            {
+              "name": "notification_methods",
+              "value": "={{ $json.escalationMethods }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "record-escalation-history",
+      "name": "Record Escalation History",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [2250, 200]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.AUDIT_LOG_API }}",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "type",
+              "value": "alert_escalation"
+            },
+            {
+              "name": "escalation",
+              "value": "={{ $json }}"
+            },
+            {
+              "name": "timestamp",
+              "value": "={{ $now.toISO() }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "log-escalation-audit",
+      "name": "Log Escalation to Audit",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [2450, 200]
+    },
+    {
+      "parameters": {},
+      "id": "no-alerts-end",
+      "name": "No Alerts - End",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [850, 500]
+    }
+  ],
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Get Active Alerts",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Active Alerts": {
+      "main": [
+        [
+          {
+            "node": "Filter Unacknowledged Alerts",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter Unacknowledged Alerts": {
+      "main": [
+        [
+          {
+            "node": "Check Alerts Exist",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Alerts Exist": {
+      "main": [
+        [
+          {
+            "node": "Check Escalation History",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "No Alerts - End",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Escalation History": {
+      "main": [
+        [
+          {
+            "node": "Determine Escalation Level",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Determine Escalation Level": {
+      "main": [
+        [
+          {
+            "node": "Get On-Call Rotation",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get On-Call Rotation": {
+      "main": [
+        [
+          {
+            "node": "Map On-Call Target",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Map On-Call Target": {
+      "main": [
+        [
+          {
+            "node": "Notify Escalation - Slack",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Check PagerDuty Required",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Notify Escalation - Slack": {
+      "main": [
+        [
+          {
+            "node": "Record Escalation History",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check PagerDuty Required": {
+      "main": [
+        [
+          {
+            "node": "Trigger PagerDuty",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Record Escalation History",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Trigger PagerDuty": {
+      "main": [
+        [
+          {
+            "node": "Record Escalation History",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Record Escalation History": {
+      "main": [
+        [
+          {
+            "node": "Log Escalation to Audit",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": [
+    {
+      "name": "escalation",
+      "id": "escalation-tag-1"
+    },
+    {
+      "name": "oncall",
+      "id": "oncall-tag-1"
+    }
+  ],
+  "triggerCount": 1,
+  "updatedAt": "2025-12-11T00:00:00.000Z",
+  "versionId": "1"
+}

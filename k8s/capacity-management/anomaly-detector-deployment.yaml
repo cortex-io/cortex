@@ -1,0 +1,187 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: anomaly-detector-config
+  namespace: cortex-capacity
+data:
+  PROMETHEUS_URL: "http://kube-prometheus-stack-prometheus.monitoring.svc.cluster.local:9090"
+  REDIS_HOST: "redis-master.cortex-capacity.svc.cluster.local"
+  REDIS_PORT: "6379"
+  REDIS_DB: "1"
+  MODEL_RETRAIN_INTERVAL_HOURS: "24"
+  BASELINE_WINDOW_DAYS: "7"
+  ZSCORE_THRESHOLD: "3.0"
+  ISOLATION_FOREST_CONTAMINATION: "0.1"
+  AUTOENCODER_THRESHOLD: "0.95"
+  DBSCAN_EPS: "0.5"
+  DBSCAN_MIN_SAMPLES: "5"
+  ALERTMANAGER_URL: "http://kube-prometheus-stack-alertmanager.monitoring.svc.cluster.local:9093"
+  LOG_LEVEL: "INFO"
+
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: anomaly-detector-models
+  namespace: cortex-capacity
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 5Gi
+  storageClassName: longhorn
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: anomaly-detector
+  namespace: cortex-capacity
+  labels:
+    app: anomaly-detector
+    component: ml-anomaly-detection
+spec:
+  replicas: 2
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  selector:
+    matchLabels:
+      app: anomaly-detector
+  template:
+    metadata:
+      labels:
+        app: anomaly-detector
+        component: ml-anomaly-detection
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8001"
+        prometheus.io/path: "/metrics"
+    spec:
+      serviceAccountName: anomaly-detector
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        fsGroup: 1000
+      containers:
+      - name: detector
+        image: anomaly-detector:latest
+        imagePullPolicy: IfNotPresent
+        ports:
+        - name: http
+          containerPort: 8001
+          protocol: TCP
+        envFrom:
+        - configMapRef:
+            name: anomaly-detector-config
+        env:
+        - name: MODEL_STORAGE_PATH
+          value: "/models"
+        resources:
+          requests:
+            memory: "3Gi"
+            cpu: "1500m"
+          limits:
+            memory: "6Gi"
+            cpu: "3000m"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: http
+          initialDelaySeconds: 60
+          periodSeconds: 30
+          timeoutSeconds: 10
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: http
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        volumeMounts:
+        - name: models
+          mountPath: /models
+      volumes:
+      - name: models
+        persistentVolumeClaim:
+          claimName: anomaly-detector-models
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: anomaly-detector
+  namespace: cortex-capacity
+  labels:
+    app: anomaly-detector
+  annotations:
+    prometheus.io/scrape: "true"
+    prometheus.io/port: "8001"
+    prometheus.io/path: "/metrics"
+spec:
+  type: ClusterIP
+  ports:
+  - port: 8001
+    targetPort: http
+    protocol: TCP
+    name: http
+  selector:
+    app: anomaly-detector
+
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: anomaly-detector
+  namespace: cortex-capacity
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: anomaly-detector
+rules:
+- apiGroups: [""]
+  resources: ["nodes", "pods", "persistentvolumeclaims"]
+  verbs: ["get", "list", "watch"]
+- apiGroups: ["metrics.k8s.io"]
+  resources: ["nodes", "pods"]
+  verbs: ["get", "list"]
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: anomaly-detector
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: anomaly-detector
+subjects:
+- kind: ServiceAccount
+  name: anomaly-detector
+  namespace: cortex-capacity
+
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: anomaly-detector
+  namespace: cortex-capacity
+  labels:
+    app: anomaly-detector
+spec:
+  selector:
+    matchLabels:
+      app: anomaly-detector
+  endpoints:
+  - port: http
+    path: /metrics
+    interval: 30s
+    scrapeTimeout: 10s

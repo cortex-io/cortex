@@ -1,0 +1,50 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cortex-queue-worker
+  namespace: cortex
+  labels:
+    app: cortex-queue-worker
+    component: task-processor
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: cortex-queue-worker
+  template:
+    metadata:
+      labels:
+        app: cortex-queue-worker
+        component: task-processor
+    spec:
+      containers:
+      - name: worker
+        image: 10.43.170.72:5000/cortex-queue-worker:latest
+        imagePullPolicy: Always
+        env:
+        - name: REDIS_HOST
+          value: "redis-queue.cortex.svc.cluster.local"
+        - name: REDIS_PORT
+          value: "6379"
+        - name: ANTHROPIC_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: cortex-secrets
+              key: anthropic-api-key
+        - name: IDLE_TIMEOUT_MS
+          value: "300000"
+        - name: TASKS_DIR
+          value: "/app/tasks"
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "100m"
+          limits:
+            memory: "1Gi"
+            cpu: "1000m"
+        volumeMounts:
+        - name: tasks-storage
+          mountPath: /app/tasks
+      volumes:
+      - name: tasks-storage
+        emptyDir: {}  # Use emptyDir instead of PVC - workers save completed tasks here temporarily

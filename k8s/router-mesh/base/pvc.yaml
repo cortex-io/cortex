@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: router-models-pvc
+  namespace: router-mesh
+spec:
+  accessModes:
+    - ReadWriteOnce  # Changed from ReadWriteMany due to Longhorn issues
+  storageClassName: longhorn
+  resources:
+    requests:
+      storage: 5Gi

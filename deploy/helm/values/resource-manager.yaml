@@ -1,0 +1,341 @@
+# Values for Resource Manager MCP Server
+# This file overrides the default values in mcp-server/values.yaml
+
+nameOverride: "resource-manager"
+fullnameOverride: "resource-manager"
+
+mcpServer:
+  name: "resource-manager"
+  type: "resource-orchestration"
+  version: "1.0.0"
+
+image:
+  repository: ghcr.io/cortex/resource-manager-mcp
+  pullPolicy: IfNotPresent
+  tag: "latest"
+
+replicaCount: 3
+
+resources:
+  limits:
+    cpu: 2000m
+    memory: 1Gi
+  requests:
+    cpu: 200m
+    memory: 256Mi
+
+# Enable KEDA autoscaling for resource management operations
+keda:
+  enabled: true
+  minReplicaCount: 2
+  maxReplicaCount: 10
+  pollingInterval: 30
+  cooldownPeriod: 300
+  triggers:
+    # Scale based on API request rate
+    - type: prometheus
+      metadata:
+        serverAddress: http://prometheus-operated.monitoring.svc.cluster.local:9090
+        metricName: resource_manager_requests_rate
+        threshold: '100'
+        query: sum(rate(http_requests_total{job="resource-manager",status=~"2.."}[2m]))
+    # Scale based on resource operation queue
+    - type: prometheus
+      metadata:
+        serverAddress: http://prometheus-operated.monitoring.svc.cluster.local:9090
+        metricName: resource_manager_queue_depth
+        threshold: '50'
+        query: resource_manager_queue_length{job="resource-manager"}
+    # Scale based on active resource requests
+    - type: prometheus
+      metadata:
+        serverAddress: http://prometheus-operated.monitoring.svc.cluster.local:9090
+        metricName: resource_manager_active_requests
+        threshold: '25'
+        query: resource_manager_active_requests{job="resource-manager"}
+    # CPU-based scaling
+    - type: cpu
+      metricType: Utilization
+      metadata:
+        value: "70"
+    # Memory-based scaling
+    - type: memory
+      metricType: Utilization
+      metadata:
+        value: "75"
+
+# Pod Disruption Budget for high availability
+podDisruptionBudget:
+  enabled: true
+  minAvailable: 2
+
+service:
+  enabled: true
+  type: ClusterIP
+  port: 8080
+  targetPort: 8080
+  annotations:
+    prometheus.io/scrape: "true"
+    prometheus.io/port: "8080"
+    prometheus.io/path: "/metrics"
+
+# ConfigMap for Resource Manager configuration
+configMap:
+  enabled: true
+  data:
+    RM_PORT: "8080"
+    LOG_LEVEL: "info"
+    LOG_FORMAT: "json"
+    METRICS_ENABLED: "true"
+    METRICS_PORT: "8080"
+    # Resource Manager specific settings
+    MAX_CONCURRENT_REQUESTS: "50"
+    REQUEST_TIMEOUT: "300"
+    # Integration endpoints
+    N8N_MCP_ENDPOINT: "http://n8n-mcp.cortex-mcp.svc.cluster.local:8080"
+    TALOS_MCP_ENDPOINT: "http://talos-mcp.cortex-mcp.svc.cluster.local:8080"
+    PROXMOX_MCP_ENDPOINT: "http://proxmox-mcp.cortex-mcp.svc.cluster.local:8080"
+    # Cache and state management
+    REDIS_HOST: "redis-master.database.svc.cluster.local"
+    REDIS_PORT: "6379"
+    CACHE_TTL: "300"
+    STATE_PERSISTENCE_ENABLED: "true"
+    # Database for resource tracking
+    DB_TYPE: "postgresql"
+    DB_HOST: "postgresql.database.svc.cluster.local"
+    DB_PORT: "5432"
+    DB_NAME: "resource_manager"
+    # Resource allocation settings
+    RESOURCE_ALLOCATION_STRATEGY: "balanced"
+    AUTO_SCALING_ENABLED: "true"
+    RESOURCE_QUOTAS_ENABLED: "true"
+
+# Secret for Resource Manager credentials (base64 encoded)
+secret:
+  enabled: true
+  data:
+    DB_USER: "" # Add base64 encoded database user
+    DB_PASSWORD: "" # Add base64 encoded database password
+    REDIS_PASSWORD: "" # Add base64 encoded redis password
+    N8N_API_KEY: "" # Add base64 encoded n8n API key
+    TALOS_API_TOKEN: "" # Add base64 encoded Talos API token
+    PROXMOX_API_TOKEN: "" # Add base64 encoded Proxmox API token
+    ENCRYPTION_KEY: "" # Add base64 encoded encryption key for sensitive data
+
+envFrom:
+  - configMapRef:
+      name: resource-manager-config
+  - secretRef:
+      name: resource-manager-secret
+
+# Volumes for state persistence and configuration
+volumes:
+  - name: config
+    emptyDir: {}
+  - name: cache
+    emptyDir: {}
+  - name: tmp
+    emptyDir: {}
+
+volumeMounts:
+  - name: config
+    mountPath: /etc/resource-manager
+    readOnly: false
+  - name: cache
+    mountPath: /var/cache/resource-manager
+    readOnly: false
+  - name: tmp
+    mountPath: /tmp
+    readOnly: false
+
+livenessProbe:
+  enabled: true
+  httpGet:
+    path: /health
+    port: 8080
+  initialDelaySeconds: 30
+  periodSeconds: 30
+  timeoutSeconds: 5
+  successThreshold: 1
+  failureThreshold: 3
+
+readinessProbe:
+  enabled: true
+  httpGet:
+    path: /ready
+    port: 8080
+  initialDelaySeconds: 15
+  periodSeconds: 10
+  timeoutSeconds: 3
+  successThreshold: 1
+  failureThreshold: 3
+
+startupProbe:
+  enabled: true
+  httpGet:
+    path: /health
+    port: 8080
+  initialDelaySeconds: 0
+  periodSeconds: 10
+  timeoutSeconds: 3
+  successThreshold: 1
+  failureThreshold: 30
+
+podLabels:
+  cortex.ai/component: "resource-orchestration"
+  cortex.ai/mcp-server: "resource-manager"
+  cortex.ai/tier: "orchestration"
+
+podAnnotations:
+  prometheus.io/scrape: "true"
+  prometheus.io/port: "8080"
+  prometheus.io/path: "/metrics"
+
+# Service Account with necessary RBAC permissions
+serviceAccount:
+  create: true
+  annotations:
+    # Add any cloud provider specific annotations here
+  name: "resource-manager"
+
+# Pod Anti-Affinity for high availability
+affinity:
+  podAntiAffinity:
+    requiredDuringSchedulingIgnoredDuringExecution:
+      - labelSelector:
+          matchExpressions:
+            - key: app.kubernetes.io/name
+              operator: In
+              values:
+                - resource-manager
+        topologyKey: kubernetes.io/hostname
+  # Prefer to run on different availability zones
+  podAntiAffinity:
+    preferredDuringSchedulingIgnoredDuringExecution:
+      - weight: 100
+        podAffinityTerm:
+          labelSelector:
+            matchExpressions:
+              - key: app.kubernetes.io/name
+                operator: In
+                values:
+                  - resource-manager
+          topologyKey: topology.kubernetes.io/zone
+
+# Lifecycle hooks for graceful shutdown
+lifecycle:
+  preStop:
+    exec:
+      command: ["/bin/sh", "-c", "sleep 20"]
+
+# Service Monitor for Prometheus
+serviceMonitor:
+  enabled: true
+  interval: 30s
+  scrapeTimeout: 10s
+  labels:
+    release: prometheus
+
+# Ingress for internal access
+ingress:
+  enabled: true
+  className: "nginx"
+  annotations:
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/proxy-body-size: "32m"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "300"
+  hosts:
+    - host: resource-manager.cortex.local
+      paths:
+        - path: /
+          pathType: Prefix
+  tls:
+    - secretName: resource-manager-tls
+      hosts:
+        - resource-manager.cortex.local
+
+# Security context
+securityContext:
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop:
+    - ALL
+  readOnlyRootFilesystem: true
+  runAsNonRoot: true
+  runAsUser: 65534
+
+podSecurityContext:
+  runAsNonRoot: true
+  runAsUser: 65534
+  fsGroup: 65534
+  seccompProfile:
+    type: RuntimeDefault
+
+# Priority class for critical orchestration
+priorityClassName: "system-cluster-critical"
+
+# Topology Spread for better distribution
+topologySpreadConstraints:
+  - maxSkew: 1
+    topologyKey: kubernetes.io/hostname
+    whenUnsatisfiable: DoNotSchedule
+    labelSelector:
+      matchLabels:
+        app.kubernetes.io/name: resource-manager
+  - maxSkew: 1
+    topologyKey: topology.kubernetes.io/zone
+    whenUnsatisfiable: ScheduleAnyway
+    labelSelector:
+      matchLabels:
+        app.kubernetes.io/name: resource-manager
+
+# Network policy for controlled access
+networkPolicy:
+  enabled: true
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    - from:
+      # Allow from same namespace
+      - podSelector: {}
+      # Allow from monitoring namespace
+      - namespaceSelector:
+          matchLabels:
+            name: monitoring
+      ports:
+      - protocol: TCP
+        port: 8080
+  egress:
+    # Allow DNS
+    - to:
+      - namespaceSelector: {}
+      ports:
+      - protocol: TCP
+        port: 53
+      - protocol: UDP
+        port: 53
+    # Allow to other MCP servers
+    - to:
+      - namespaceSelector:
+          matchLabels:
+            name: cortex-mcp
+      ports:
+      - protocol: TCP
+        port: 8080
+    # Allow to database
+    - to:
+      - namespaceSelector:
+          matchLabels:
+            name: database
+      ports:
+      - protocol: TCP
+        port: 5432
+      - protocol: TCP
+        port: 6379
+    # Allow HTTPS egress
+    - to:
+      - namespaceSelector: {}
+      ports:
+      - protocol: TCP
+        port: 443
