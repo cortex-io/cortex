@@ -1,0 +1,79 @@
+# Auto-labeling configuration for PRs
+
+# MCP Server packages
+'mcp:k8s':
+  - packages/mcp-k8s-orchestrator/**/*
+
+'mcp:n8n':
+  - packages/mcp-n8n-workflow/**/*
+
+'mcp:talos':
+  - packages/mcp-talos-node/**/*
+
+'mcp:s3':
+  - packages/mcp-s3-storage/**/*
+
+'mcp:postgres':
+  - packages/mcp-postgres-data/**/*
+
+# Dashboard
+'dashboard':
+  - packages/cortex-dashboard/**/*
+
+# Infrastructure
+'infrastructure':
+  - deploy/**/*
+  - .github/workflows/**/*
+
+# Coordination
+'coordination':
+  - coordination/**/*
+
+# Documentation
+'documentation':
+  - '**/*.md'
+  - docs/**/*
+
+# Configuration
+'configuration':
+  - '**/*.json'
+  - '**/*.yaml'
+  - '**/*.yml'
+  - '**/*.toml'
+
+# Scripts
+'scripts':
+  - scripts/**/*
+
+# Tests
+'tests':
+  - '**/*.test.ts'
+  - '**/*.spec.ts'
+  - tests/**/*
+
+# Dependencies
+'dependencies':
+  - package.json
+  - pnpm-lock.yaml
+  - '**/package.json'
+
+# CI/CD
+'cicd':
+  - .github/workflows/**/*
+
+# Security
+'security':
+  - coordination/masters/security/**/*
+  - .github/workflows/security-scan.yaml
+
+# Breaking change
+'breaking':
+  - any: ['packages/**/BREAKING_CHANGE.md']
+
+# Hotfix
+'hotfix':
+  - head-branch: ['^hotfix/', '^fix/critical']
+
+# Release
+'release':
+  - head-branch: ['^release/']

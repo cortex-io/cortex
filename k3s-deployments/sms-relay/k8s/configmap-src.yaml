@@ -1,0 +1,469 @@
+apiVersion: v1
+data:
+  __init__.py: |
+    """SMS Infrastructure Relay Service."""
+  config.py: |
+    """Configuration management for SMS relay service."""
+    from pydantic_settings import BaseSettings
+
+
+    class Settings(BaseSettings):
+        """Application settings loaded from environment variables."""
+
+        # Twilio Configuration
+        twilio_account_sid: str
+        twilio_auth_token: str
+        twilio_phone_number: str
+        allowed_phone_number: str  # E.164 format
+
+        # MCP Server Endpoints
+        unifi_mcp_url: str = "http://unifi-mcp:3000"
+        proxmox_mcp_url: str = "http://proxmox-mcp:3000"
+        k8s_mcp_url: str = "http://k8s-mcp:3000"
+        security_mcp_url: str = "http://security-mcp:3000"
+
+        # Claude API
+        anthropic_api_key: str
+
+        # Application
+        host: str = "0.0.0.0"
+        port: int = 8000
+
+        class Config:
+            env_file = ".env"
+            case_sensitive = False
+
+
+    settings = Settings()
+  formatters.py: |
+    """Formatters for terse SMS output."""
+    from typing import Dict, Any
+
+
+    def format_network_summary(data: Dict[str, Any]) -> str:
+        """Format network status to ~300 chars."""
+        status = "OK" if data.get("healthy", True) else "ALERT"
+        devices = data.get("device_count", 0)
+        aps = data.get("ap_count", 0)
+        alerts = data.get("alert_count", 0)
+
+        msg = f"Network {status}. {devices} devices, {aps} APs, {alerts} alerts.\n"
+        msg += "D)etails  A)lerts  C)lients"
+        return msg
+
+
+    def format_network_details(data: Dict[str, Any]) -> str:
+        """Format detailed network info."""
+        uptime = data.get("uptime", "N/A")
+        bandwidth = data.get("bandwidth", {})
+
+        msg = f"Uptime: {uptime}\n"
+        msg += f"WAN: {bandwidth.get('wan_rx', 0)}↓ {bandwidth.get('wan_tx', 0)}↑\n"
+        msg += f"LAN: {bandwidth.get('lan_rx', 0)}↓ {bandwidth.get('lan_tx', 0)}↑"
+        return msg
+
+
+    def format_network_alerts(alerts: list) -> str:
+        """Format network alerts."""
+        if not alerts:
+            return "No alerts."
+
+        msg = f"{len(alerts)} alert(s):\n"
+        for alert in alerts[:3]:  # Show max 3
+            msg += f"• {alert.get('message', 'Unknown')}\n"
+        return msg.rstrip()
+
+
+    def format_network_clients(clients: list) -> str:
+        """Format top clients."""
+        if not clients:
+            return "No clients."
+
+        msg = f"{len(clients)} client(s):\n"
+        for client in clients[:5]:  # Show max 5
+            name = client.get('hostname', client.get('mac', 'Unknown'))
+            msg += f"• {name}\n"
+        return msg.rstrip()
+
+
+    def format_proxmox_summary(data: Dict[str, Any]) -> str:
+        """Format Proxmox status to ~300 chars."""
+        status = "OK" if data.get("healthy", True) else "ALERT"
+        nodes = data.get("node_count", 0)
+        vms = data.get("vm_count", 0)
+        lxc = data.get("lxc_count", 0)
+        cpu = data.get("cpu_usage", 0)
+        ram = data.get("ram_usage", 0)
+        storage = data.get("storage_usage", 0)
+
+        msg = f"Proxmox {status}. {nodes} nodes, {vms} VMs, {lxc} LXC.\n"
+        msg += f"CPU: {cpu}%  RAM: {ram}%  Storage: {storage}%\n"
+        msg += "D)etails  V)Ms  N)odes"
+        return msg
+
+
+    def format_proxmox_details(data: Dict[str, Any]) -> str:
+        """Format detailed Proxmox info."""
+        nodes = data.get("nodes", [])
+
+        msg = ""
+        for node in nodes[:3]:  # Max 3 nodes
+            name = node.get("name", "Unknown")
+            status = node.get("status", "unknown")
+            cpu = node.get("cpu", 0)
+            ram = node.get("ram", 0)
+            msg += f"{name}: {status} CPU:{cpu}% RAM:{ram}%\n"
+        return msg.rstrip()
+
+
+    def format_proxmox_vms(vms: list) -> str:
+        """Format VM list."""
+        if not vms:
+            return "No VMs."
+
+        running = [vm for vm in vms if vm.get("status") == "running"]
+        stopped = [vm for vm in vms if vm.get("status") == "stopped"]
+
+        msg = f"{len(running)} running, {len(stopped)} stopped\n"
+        for vm in running[:5]:  # Show max 5 running
+            msg += f"• {vm.get('name', 'Unknown')}\n"
+        return msg.rstrip()
+
+
+    def format_k8s_summary(data: Dict[str, Any]) -> str:
+        """Format K8s status to ~300 chars."""
+        status = "OK" if data.get("healthy", True) else "ALERT"
+        pods = data.get("pod_count", 0)
+        pending = data.get("pending_count", 0)
+        failed = data.get("failed_count", 0)
+
+        msg = f"K8s {status}. {pods} pods, {pending} pending, {failed} failed.\n"
+        msg += "D)etails  P)ods  S)ervices"
+        return msg
+
+
+    def format_k8s_details(data: Dict[str, Any]) -> str:
+        """Format detailed K8s info."""
+        namespaces = data.get("namespaces", [])
+
+        msg = f"{len(namespaces)} namespace(s):\n"
+        for ns in namespaces[:5]:  # Max 5
+            name = ns.get("name", "Unknown")
+            pod_count = ns.get("pod_count", 0)
+            msg += f"• {name}: {pod_count} pods\n"
+        return msg.rstrip()
+
+
+    def format_k8s_pods(pods: list) -> str:
+        """Format pod list."""
+        if not pods:
+            return "No pods."
+
+        msg = ""
+        for pod in pods[:8]:  # Show max 8
+            name = pod.get("name", "Unknown")
+            status = pod.get("status", "unknown")
+            msg += f"• {name}: {status}\n"
+        return msg.rstrip()
+
+
+    def format_security_summary(data: Dict[str, Any]) -> str:
+        """Format security status to ~300 chars."""
+        status = "OK" if data.get("healthy", True) else "ALERT"
+        critical = data.get("critical_count", 0)
+        warnings = data.get("warning_count", 0)
+
+        msg = f"Security {status}. {critical} critical, {warnings} warnings.\n"
+        msg += "A)lerts  L)ogs  F)irewall"
+        return msg
+
+
+    def format_security_alerts(alerts: list) -> str:
+        """Format security alerts."""
+        if not alerts:
+            return "No alerts."
+
+        msg = f"{len(alerts)} alert(s):\n"
+        for alert in alerts[:3]:  # Show max 3
+            severity = alert.get("severity", "info")
+            message = alert.get("message", "Unknown")
+            msg += f"• [{severity}] {message}\n"
+        return msg.rstrip()
+
+
+    def format_security_logs(logs: list) -> str:
+        """Format recent security logs."""
+        if not logs:
+            return "No recent logs."
+
+        msg = f"{len(logs)} log(s):\n"
+        for log in logs[:5]:  # Show max 5
+            msg += f"• {log.get('message', 'Unknown')}\n"
+        return msg.rstrip()
+
+
+    def truncate_message(msg: str, max_length: int = 320) -> str:
+        """Truncate message to max SMS length."""
+        if len(msg) <= max_length:
+            return msg
+        return msg[:max_length - 3] + "..."
+  main.py: |
+    """Main FastAPI application for SMS relay webhook."""
+    from fastapi import FastAPI, Request, Response
+    from fastapi.responses import PlainTextResponse
+    from contextlib import asynccontextmanager
+
+    from src.config import settings
+    from src.state import state_manager
+    from src.menus.home import get_home_menu, handle_home_input
+    from src.menus.network import handle_network_menu
+    from src.menus.proxmox import handle_proxmox_menu
+    from src.menus.k8s import handle_k8s_menu
+    from src.menus.security import handle_security_menu
+    from src.integrations.claude import claude_client
+
+
+    @asynccontextmanager
+    async def lifespan(app: FastAPI):
+        """Application lifespan handler."""
+        print("SMS Relay service starting...")
+        yield
+        print("SMS Relay service shutting down...")
+
+
+    app = FastAPI(
+        title="SMS Infrastructure Relay",
+        description="SMS-based infrastructure monitoring via Twilio",
+        version="1.0.0",
+        lifespan=lifespan
+    )
+
+
+    async def process_message(from_number: str, body: str) -> str:
+        """Process incoming SMS message and return response."""
+        state = state_manager.get_state(from_number)
+        message = body.strip()
+
+        # Global commands
+        if message.lower() in ["home", "h", "menu", "m"]:
+            state.reset_to_home()
+            return get_home_menu()
+
+        if message.lower() in ["?", "help"]:
+            return """Commands:
+    home/h/menu: Main menu
+    ?: Help
+    1-5: Menu options
+
+    In menus, use letter shortcuts like D for Details."""
+
+        # Claude mode
+        if state.claude_mode:
+            if message.lower() in ["home", "h", "menu", "exit", "quit"]:
+                state.reset_to_home()
+                return get_home_menu()
+
+            response = await claude_client.query(message)
+            return response
+
+        # Home menu
+        if state.menu_context == "home":
+            response = handle_home_input(state, message)
+            if response:
+                return response
+            # Fall through to new menu context
+
+        # Route to appropriate menu handler
+        try:
+            if state.menu_context == "network":
+                return await handle_network_menu(state, message)
+
+            elif state.menu_context == "proxmox":
+                return await handle_proxmox_menu(state, message)
+
+            elif state.menu_context == "k8s":
+                return await handle_k8s_menu(state, message)
+
+            elif state.menu_context == "security":
+                return await handle_security_menu(state, message)
+
+            elif state.menu_context == "claude":
+                # Claude mode already handled above
+                return "Claude mode. Ask anything about your infra."
+
+            else:
+                # Default to home
+                state.reset_to_home()
+                return get_home_menu()
+
+        except Exception as e:
+            print(f"Error processing message: {e}")
+            return f"Error: {str(e)[:50]}. Reply 'home' for menu."
+
+
+    @app.post("/sms")
+    async def handle_sms(request: Request):
+        """Handle incoming SMS webhook from Twilio."""
+        try:
+            form = await request.form()
+            from_number = form.get("From", "")
+            body = form.get("Body", "")
+
+            print(f"SMS from {from_number}: {body}")
+
+            # Validate sender
+            if from_number != settings.allowed_phone_number:
+                print(f"Unauthorized number: {from_number}")
+                # Return empty response for unauthorized numbers
+                twiml = """<?xml version="1.0" encoding="UTF-8"?>
+    <Response></Response>"""
+                return Response(content=twiml, media_type="text/xml")
+
+            # Process message
+            response_text = await process_message(from_number, body)
+
+            # Build TwiML response
+            twiml = f"""<?xml version="1.0" encoding="UTF-8"?>
+    <Response>
+        <Message>{response_text}</Message>
+    </Response>"""
+
+            return Response(content=twiml, media_type="text/xml")
+
+        except Exception as e:
+            print(f"Error handling SMS: {e}")
+            # Return error TwiML
+            twiml = """<?xml version="1.0" encoding="UTF-8"?>
+    <Response>
+        <Message>Error processing request. Please try again.</Message>
+    </Response>"""
+            return Response(content=twiml, media_type="text/xml")
+
+
+    @app.get("/health")
+    async def health_check():
+        """Health check endpoint."""
+        return {"status": "ok", "service": "sms-relay"}
+
+
+    @app.get("/")
+    async def root():
+        """Root endpoint."""
+        return {
+            "service": "SMS Infrastructure Relay",
+            "version": "1.0.0",
+            "endpoints": {
+                "webhook": "/sms",
+                "health": "/health"
+            }
+        }
+
+
+    if __name__ == "__main__":
+        import uvicorn
+        uvicorn.run(
+            "main:app",
+            host=settings.host,
+            port=settings.port,
+            reload=True
+        )
+  sms.py: |
+    """Twilio SMS helper functions."""
+    from twilio.rest import Client
+    from src.config import settings
+
+
+    class SMSClient:
+        """Wrapper for Twilio SMS operations."""
+
+        def __init__(self):
+            self.client = Client(
+                settings.twilio_account_sid,
+                settings.twilio_auth_token
+            )
+            self.from_number = settings.twilio_phone_number
+
+        def send_message(self, to_number: str, body: str) -> bool:
+            """Send an SMS message."""
+            try:
+                message = self.client.messages.create(
+                    body=body,
+                    from_=self.from_number,
+                    to=to_number
+                )
+                return message.sid is not None
+            except Exception as e:
+                print(f"Error sending SMS: {e}")
+                return False
+
+
+    # Global SMS client instance
+    sms_client = SMSClient()
+  state.py: |
+    """State management for SMS conversation flow."""
+    from typing import Dict, Optional
+    from dataclasses import dataclass, field
+    from datetime import datetime
+
+
+    @dataclass
+    class UserState:
+        """Represents the state of a user's SMS conversation."""
+
+        phone_number: str
+        menu_context: str = "home"  # home, network, proxmox, k8s, security, claude
+        submenu: Optional[str] = None
+        pending_action: Optional[Dict] = None
+        claude_mode: bool = False
+        last_activity: datetime = field(default_factory=datetime.now)
+
+        def reset_to_home(self):
+            """Reset state to home menu."""
+            self.menu_context = "home"
+            self.submenu = None
+            self.pending_action = None
+            self.claude_mode = False
+            self.last_activity = datetime.now()
+
+        def update_activity(self):
+            """Update last activity timestamp."""
+            self.last_activity = datetime.now()
+
+
+    class StateManager:
+        """Manages user conversation states."""
+
+        def __init__(self):
+            self._states: Dict[str, UserState] = {}
+
+        def get_state(self, phone_number: str) -> UserState:
+            """Get or create state for a phone number."""
+            if phone_number not in self._states:
+                self._states[phone_number] = UserState(phone_number=phone_number)
+
+            state = self._states[phone_number]
+            state.update_activity()
+            return state
+
+        def reset_state(self, phone_number: str):
+            """Reset user state to home."""
+            if phone_number in self._states:
+                self._states[phone_number].reset_to_home()
+
+        def clear_old_states(self, max_age_minutes: int = 60):
+            """Clear states older than max_age_minutes."""
+            now = datetime.now()
+            to_remove = [
+                phone for phone, state in self._states.items()
+                if (now - state.last_activity).total_seconds() > max_age_minutes * 60
+            ]
+            for phone in to_remove:
+                del self._states[phone]
+
+
+    # Global state manager instance
+    state_manager = StateManager()
+kind: ConfigMap
+metadata:
+  creationTimestamp: null
+  name: sms-relay-src

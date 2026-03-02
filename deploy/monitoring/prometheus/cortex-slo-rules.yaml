@@ -1,0 +1,492 @@
+groups:
+  # SLO Recording Rules - Service Level Objectives
+  # These rules calculate SLO compliance and error budgets for Cortex components
+
+  # Meta-agent SLO: 99.9% availability
+  - name: cortex_slo_meta_agent
+    interval: 60s
+    rules:
+      # Meta-agent availability over 5m window
+      - record: cortex_slo:meta_agent:availability:5m
+        expr: avg_over_time(up{job="cortex-core"}[5m])
+
+      # Meta-agent availability over 30m window
+      - record: cortex_slo:meta_agent:availability:30m
+        expr: avg_over_time(up{job="cortex-core"}[30m])
+
+      # Meta-agent availability over 1h window
+      - record: cortex_slo:meta_agent:availability:1h
+        expr: avg_over_time(up{job="cortex-core"}[1h])
+
+      # Meta-agent availability over 24h window
+      - record: cortex_slo:meta_agent:availability:24h
+        expr: avg_over_time(up{job="cortex-core"}[24h])
+
+      # Meta-agent error budget (99.9% SLO = 0.1% error budget)
+      - record: cortex_slo:meta_agent:error_budget_remaining
+        expr: |
+          1 - (
+            (1 - avg_over_time(up{job="cortex-core"}[30d]))
+            /
+            0.001
+          )
+
+      # Meta-agent error budget burn rate (5m)
+      - record: cortex_slo:meta_agent:error_budget_burn_rate:5m
+        expr: |
+          (1 - avg_over_time(up{job="cortex-core"}[5m]))
+          /
+          0.001
+
+      # Meta-agent error budget burn rate (1h)
+      - record: cortex_slo:meta_agent:error_budget_burn_rate:1h
+        expr: |
+          (1 - avg_over_time(up{job="cortex-core"}[1h]))
+          /
+          0.001
+
+      # Meta-agent request success rate (99.9% SLO)
+      - record: cortex_slo:meta_agent:request_success_rate:5m
+        expr: |
+          (
+            sum(rate(cortex_requests_total{component="meta-agent",status!="error"}[5m]))
+            /
+            sum(rate(cortex_requests_total{component="meta-agent"}[5m]))
+          )
+
+  # Master agents SLO: 99.5% availability
+  - name: cortex_slo_master_agents
+    interval: 60s
+    rules:
+      # Master agents availability by type (5m)
+      - record: cortex_slo:master:availability:5m
+        expr: avg_over_time(up{job="cortex-masters"}[5m]) by (master_type)
+
+      # Master agents availability by type (1h)
+      - record: cortex_slo:master:availability:1h
+        expr: avg_over_time(up{job="cortex-masters"}[1h]) by (master_type)
+
+      # Master agents availability by type (24h)
+      - record: cortex_slo:master:availability:24h
+        expr: avg_over_time(up{job="cortex-masters"}[24h]) by (master_type)
+
+      # Master agents overall availability (5m)
+      - record: cortex_slo:master:availability_overall:5m
+        expr: avg(avg_over_time(up{job="cortex-masters"}[5m]))
+
+      # Master agents error budget remaining (99.5% SLO = 0.5% error budget)
+      - record: cortex_slo:master:error_budget_remaining
+        expr: |
+          1 - (
+            (1 - avg_over_time(up{job="cortex-masters"}[30d]) by (master_type))
+            /
+            0.005
+          )
+
+      # Master agents error budget burn rate (5m)
+      - record: cortex_slo:master:error_budget_burn_rate:5m
+        expr: |
+          (1 - avg_over_time(up{job="cortex-masters"}[5m]) by (master_type))
+          /
+          0.005
+
+      # Master agents task success rate (99.5% SLO)
+      - record: cortex_slo:master:task_success_rate:5m
+        expr: |
+          sum by (master_type) (rate(cortex_master_tasks_completed_total[5m]))
+          /
+          sum by (master_type) (rate(cortex_master_tasks_processed_total[5m]))
+
+      # Master agents task success rate - overall
+      - record: cortex_slo:master:task_success_rate_overall:5m
+        expr: |
+          sum(rate(cortex_master_tasks_completed_total[5m]))
+          /
+          sum(rate(cortex_master_tasks_processed_total[5m]))
+
+  # Worker agents SLO: 99% availability
+  - name: cortex_slo_worker_agents
+    interval: 60s
+    rules:
+      # Worker agents availability by type (5m)
+      - record: cortex_slo:worker:availability:5m
+        expr: avg_over_time(up{job="cortex-workers"}[5m]) by (worker_type)
+
+      # Worker agents availability by type (1h)
+      - record: cortex_slo:worker:availability:1h
+        expr: avg_over_time(up{job="cortex-workers"}[1h]) by (worker_type)
+
+      # Worker agents availability by type (24h)
+      - record: cortex_slo:worker:availability:24h
+        expr: avg_over_time(up{job="cortex-workers"}[24h]) by (worker_type)
+
+      # Worker agents overall availability (5m)
+      - record: cortex_slo:worker:availability_overall:5m
+        expr: avg(avg_over_time(up{job="cortex-workers"}[5m]))
+
+      # Worker agents error budget remaining (99% SLO = 1% error budget)
+      - record: cortex_slo:worker:error_budget_remaining
+        expr: |
+          1 - (
+            (1 - avg_over_time(up{job="cortex-workers"}[30d]) by (worker_type))
+            /
+            0.01
+          )
+
+      # Worker agents error budget burn rate (5m)
+      - record: cortex_slo:worker:error_budget_burn_rate:5m
+        expr: |
+          (1 - avg_over_time(up{job="cortex-workers"}[5m]) by (worker_type))
+          /
+          0.01
+
+      # Worker agents task success rate (99% SLO)
+      - record: cortex_slo:worker:task_success_rate:5m
+        expr: |
+          sum by (worker_type) (rate(cortex_worker_task_completions_total[5m]))
+          /
+          (
+            sum by (worker_type) (rate(cortex_worker_task_completions_total[5m]))
+            +
+            sum by (worker_type) (rate(cortex_worker_task_failures_total[5m]))
+          )
+
+      # Worker agents task success rate - overall
+      - record: cortex_slo:worker:task_success_rate_overall:5m
+        expr: |
+          sum(rate(cortex_worker_task_completions_total[5m]))
+          /
+          (
+            sum(rate(cortex_worker_task_completions_total[5m]))
+            +
+            sum(rate(cortex_worker_task_failures_total[5m]))
+          )
+
+  # MCP servers SLO: 99.5% availability
+  - name: cortex_slo_mcp_servers
+    interval: 60s
+    rules:
+      # MCP servers availability by type (5m)
+      - record: cortex_slo:mcp:availability:5m
+        expr: avg_over_time(up{job="mcp-servers"}[5m]) by (mcp_type)
+
+      # MCP servers availability by type (1h)
+      - record: cortex_slo:mcp:availability:1h
+        expr: avg_over_time(up{job="mcp-servers"}[1h]) by (mcp_type)
+
+      # MCP servers availability by type (24h)
+      - record: cortex_slo:mcp:availability:24h
+        expr: avg_over_time(up{job="mcp-servers"}[24h]) by (mcp_type)
+
+      # MCP servers overall availability (5m)
+      - record: cortex_slo:mcp:availability_overall:5m
+        expr: avg(avg_over_time(up{job="mcp-servers"}[5m]))
+
+      # MCP servers error budget remaining (99.5% SLO = 0.5% error budget)
+      - record: cortex_slo:mcp:error_budget_remaining
+        expr: |
+          1 - (
+            (1 - avg_over_time(up{job="mcp-servers"}[30d]) by (mcp_type))
+            /
+            0.005
+          )
+
+      # MCP servers error budget burn rate (5m)
+      - record: cortex_slo:mcp:error_budget_burn_rate:5m
+        expr: |
+          (1 - avg_over_time(up{job="mcp-servers"}[5m]) by (mcp_type))
+          /
+          0.005
+
+      # MCP servers request success rate (99.5% SLO)
+      - record: cortex_slo:mcp:request_success_rate:5m
+        expr: |
+          sum by (mcp_type) (rate(mcp_requests_total{status!="error"}[5m]))
+          /
+          sum by (mcp_type) (rate(mcp_requests_total[5m]))
+
+      # MCP servers tool call success rate (99% SLO)
+      - record: cortex_slo:mcp:tool_call_success_rate:5m
+        expr: |
+          (
+            sum by (mcp_type) (rate(mcp_tool_calls_total[5m]))
+            -
+            sum by (mcp_type) (rate(mcp_tool_call_failures_total[5m]))
+          )
+          /
+          sum by (mcp_type) (rate(mcp_tool_calls_total[5m]))
+
+      # MCP servers latency SLO compliance (p99 < 2s)
+      - record: cortex_slo:mcp:latency_slo_compliance:5m
+        expr: |
+          histogram_quantile(0.99, rate(mcp_request_duration_seconds_bucket[5m]))
+          < bool 2
+
+  # Contractor SLO: 99% availability
+  - name: cortex_slo_contractors
+    interval: 60s
+    rules:
+      # Contractors availability by type (5m)
+      - record: cortex_slo:contractor:availability:5m
+        expr: avg_over_time(up{job="cortex-contractors"}[5m]) by (contractor_type)
+
+      # Contractors availability by type (1h)
+      - record: cortex_slo:contractor:availability:1h
+        expr: avg_over_time(up{job="cortex-contractors"}[1h]) by (contractor_type)
+
+      # Contractors availability by type (24h)
+      - record: cortex_slo:contractor:availability:24h
+        expr: avg_over_time(up{job="cortex-contractors"}[24h]) by (contractor_type)
+
+      # Contractors error budget remaining (99% SLO = 1% error budget)
+      - record: cortex_slo:contractor:error_budget_remaining
+        expr: |
+          1 - (
+            (1 - avg_over_time(up{job="cortex-contractors"}[30d]) by (contractor_type))
+            /
+            0.01
+          )
+
+      # Contractors error budget burn rate (5m)
+      - record: cortex_slo:contractor:error_budget_burn_rate:5m
+        expr: |
+          (1 - avg_over_time(up{job="cortex-contractors"}[5m]) by (contractor_type))
+          /
+          0.01
+
+      # Contractors task success rate (99% SLO)
+      - record: cortex_slo:contractor:task_success_rate:5m
+        expr: |
+          sum by (contractor_type) (rate(contractor_tasks_completed_total[5m]))
+          /
+          (
+            sum by (contractor_type) (rate(contractor_tasks_completed_total[5m]))
+            +
+            sum by (contractor_type) (rate(contractor_tasks_failed_total[5m]))
+          )
+
+  # Overall System SLO: 99.5% availability
+  - name: cortex_slo_system_overall
+    interval: 60s
+    rules:
+      # Overall system availability (5m)
+      - record: cortex_slo:system:availability:5m
+        expr: |
+          avg(
+            avg_over_time(up{job=~"cortex-.*"}[5m])
+          )
+
+      # Overall system availability (1h)
+      - record: cortex_slo:system:availability:1h
+        expr: |
+          avg(
+            avg_over_time(up{job=~"cortex-.*"}[1h])
+          )
+
+      # Overall system availability (24h)
+      - record: cortex_slo:system:availability:24h
+        expr: |
+          avg(
+            avg_over_time(up{job=~"cortex-.*"}[24h])
+          )
+
+      # Overall system error budget remaining (99.5% SLO)
+      - record: cortex_slo:system:error_budget_remaining
+        expr: |
+          1 - (
+            (1 - avg(avg_over_time(up{job=~"cortex-.*"}[30d])))
+            /
+            0.005
+          )
+
+      # Overall system error budget burn rate (5m)
+      - record: cortex_slo:system:error_budget_burn_rate:5m
+        expr: |
+          (1 - avg(avg_over_time(up{job=~"cortex-.*"}[5m])))
+          /
+          0.005
+
+      # Overall system request success rate
+      - record: cortex_slo:system:request_success_rate:5m
+        expr: |
+          sum(rate(cortex_requests_total{status!="error"}[5m]))
+          /
+          sum(rate(cortex_requests_total[5m]))
+
+      # Overall system task success rate
+      - record: cortex_slo:system:task_success_rate:5m
+        expr: |
+          sum(rate(cortex_task_completions_total[5m]))
+          /
+          (
+            sum(rate(cortex_task_completions_total[5m]))
+            +
+            sum(rate(cortex_task_failures_total[5m]))
+          )
+
+  # SLO Violation Alerts
+  - name: cortex_slo_alerts
+    interval: 60s
+    rules:
+      # Meta-agent availability SLO violation
+      - alert: CortexMetaAgentSLOViolation
+        expr: cortex_slo:meta_agent:availability:1h < 0.999
+        for: 5m
+        labels:
+          severity: critical
+          component: meta-agent
+          slo: availability
+        annotations:
+          summary: "Meta-agent availability below SLO (99.9%)"
+          description: "Meta-agent availability is {{ $value | humanizePercentage }} over the last hour, below the 99.9% SLO target."
+
+      # Meta-agent error budget burn rate alert (fast burn)
+      - alert: CortexMetaAgentErrorBudgetFastBurn
+        expr: |
+          cortex_slo:meta_agent:error_budget_burn_rate:5m > 10
+          and
+          cortex_slo:meta_agent:error_budget_burn_rate:1h > 10
+        for: 2m
+        labels:
+          severity: critical
+          component: meta-agent
+          slo: error_budget
+        annotations:
+          summary: "Meta-agent error budget burning rapidly"
+          description: "Meta-agent is consuming error budget at {{ $value }}x the acceptable rate."
+
+      # Master agents availability SLO violation
+      - alert: CortexMasterAgentSLOViolation
+        expr: cortex_slo:master:availability:1h < 0.995
+        for: 5m
+        labels:
+          severity: critical
+          component: master
+          slo: availability
+        annotations:
+          summary: "Master agent {{ $labels.master_type }} availability below SLO (99.5%)"
+          description: "Master agent {{ $labels.master_type }} availability is {{ $value | humanizePercentage }}, below the 99.5% SLO target."
+
+      # Master agents error budget fast burn
+      - alert: CortexMasterErrorBudgetFastBurn
+        expr: |
+          cortex_slo:master:error_budget_burn_rate:5m > 10
+          and
+          cortex_slo:master:error_budget_burn_rate:5m > 10
+        for: 2m
+        labels:
+          severity: critical
+          component: master
+          slo: error_budget
+        annotations:
+          summary: "Master {{ $labels.master_type }} error budget burning rapidly"
+          description: "Master {{ $labels.master_type }} is consuming error budget at {{ $value }}x the acceptable rate."
+
+      # Master task success rate SLO violation
+      - alert: CortexMasterTaskSuccessSLOViolation
+        expr: cortex_slo:master:task_success_rate:5m < 0.995
+        for: 10m
+        labels:
+          severity: warning
+          component: master
+          slo: task_success
+        annotations:
+          summary: "Master {{ $labels.master_type }} task success rate below SLO"
+          description: "Master {{ $labels.master_type }} task success rate is {{ $value | humanizePercentage }}, below the 99.5% SLO."
+
+      # Worker agents availability SLO violation
+      - alert: CortexWorkerAgentSLOViolation
+        expr: cortex_slo:worker:availability:1h < 0.99
+        for: 5m
+        labels:
+          severity: warning
+          component: worker
+          slo: availability
+        annotations:
+          summary: "Worker {{ $labels.worker_type }} availability below SLO (99%)"
+          description: "Worker {{ $labels.worker_type }} availability is {{ $value | humanizePercentage }}, below the 99% SLO target."
+
+      # Worker task success rate SLO violation
+      - alert: CortexWorkerTaskSuccessSLOViolation
+        expr: cortex_slo:worker:task_success_rate:5m < 0.99
+        for: 10m
+        labels:
+          severity: warning
+          component: worker
+          slo: task_success
+        annotations:
+          summary: "Worker {{ $labels.worker_type }} task success rate below SLO"
+          description: "Worker {{ $labels.worker_type }} task success rate is {{ $value | humanizePercentage }}, below the 99% SLO."
+
+      # MCP servers availability SLO violation
+      - alert: CortexMCPServerSLOViolation
+        expr: cortex_slo:mcp:availability:1h < 0.995
+        for: 5m
+        labels:
+          severity: critical
+          component: mcp
+          slo: availability
+        annotations:
+          summary: "MCP server {{ $labels.mcp_type }} availability below SLO (99.5%)"
+          description: "MCP server {{ $labels.mcp_type }} availability is {{ $value | humanizePercentage }}, below the 99.5% SLO target."
+
+      # MCP tool call success rate SLO violation
+      - alert: CortexMCPToolCallSuccessSLOViolation
+        expr: cortex_slo:mcp:tool_call_success_rate:5m < 0.99
+        for: 10m
+        labels:
+          severity: warning
+          component: mcp
+          slo: tool_success
+        annotations:
+          summary: "MCP server {{ $labels.mcp_type }} tool call success rate below SLO"
+          description: "MCP server {{ $labels.mcp_type }} tool call success rate is {{ $value | humanizePercentage }}, below the 99% SLO."
+
+      # MCP latency SLO violation
+      - alert: CortexMCPLatencySLOViolation
+        expr: |
+          histogram_quantile(0.99, rate(mcp_request_duration_seconds_bucket[5m])) > 2
+        for: 10m
+        labels:
+          severity: warning
+          component: mcp
+          slo: latency
+        annotations:
+          summary: "MCP server {{ $labels.mcp_type }} latency above SLO"
+          description: "MCP server {{ $labels.mcp_type }} p99 latency is {{ $value }}s, above the 2s SLO target."
+
+      # Overall system availability SLO violation
+      - alert: CortexSystemSLOViolation
+        expr: cortex_slo:system:availability:1h < 0.995
+        for: 5m
+        labels:
+          severity: critical
+          component: system
+          slo: availability
+        annotations:
+          summary: "Overall Cortex system availability below SLO (99.5%)"
+          description: "Overall system availability is {{ $value | humanizePercentage }}, below the 99.5% SLO target."
+
+      # Overall system error budget exhaustion warning
+      - alert: CortexSystemErrorBudgetLow
+        expr: cortex_slo:system:error_budget_remaining < 0.1
+        for: 5m
+        labels:
+          severity: warning
+          component: system
+          slo: error_budget
+        annotations:
+          summary: "Overall system error budget running low"
+          description: "Only {{ $value | humanizePercentage }} of the monthly error budget remains."
+
+      # Overall system error budget critically low
+      - alert: CortexSystemErrorBudgetCritical
+        expr: cortex_slo:system:error_budget_remaining < 0.05
+        for: 5m
+        labels:
+          severity: critical
+          component: system
+          slo: error_budget
+        annotations:
+          summary: "Overall system error budget critically low"
+          description: "Only {{ $value | humanizePercentage }} of the monthly error budget remains. Immediate action required."

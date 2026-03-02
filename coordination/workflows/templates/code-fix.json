@@ -1,0 +1,309 @@
+{
+  "name": "Automated Code Fix",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "code-fix",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "webhook-trigger",
+      "name": "Webhook Trigger",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [250, 350],
+      "webhookId": "code-fix"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Parse fix request\nconst input = $input.item.json.body || $input.item.json;\n\nconst params = {\n  repo_url: input.repo_url,\n  branch: input.branch || 'main',\n  commit_sha: input.commit_sha,\n  issues: typeof input.issues === 'string' ? JSON.parse(input.issues) : input.issues,\n  work_dir: input.work_dir,\n  create_pr: input.create_pr === true || input.create_pr === 'true',\n  auto_merge: input.auto_merge === true,\n  request_id: input.request_id || `fix-${Date.now()}`,\n  fix_branch: `cortex/auto-fix-${Date.now()}`\n};\n\n// Extract repo info\nconst urlParts = params.repo_url?.split('/') || [];\nparams.repo_name = urlParts[urlParts.length - 1]?.replace('.git', '');\nparams.repo_owner = urlParts[urlParts.length - 2];\n\n// Determine what can be auto-fixed\nparams.fixable = {\n  lint: params.issues?.lint?.errors > 0 || params.issues?.lint?.warnings > 0,\n  security: params.issues?.security?.high > 0 || params.issues?.security?.critical > 0\n};\n\nreturn [{\n  json: {\n    params: params,\n    timestamp: new Date().toISOString()\n  }\n}];"
+      },
+      "id": "parse-request",
+      "name": "Parse Request",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [450, 350]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {"caseSensitive": false, "leftValue": "", "typeValidation": "strict"},
+          "conditions": [{"leftValue": "={{ $json.params.work_dir }}", "rightValue": "", "operator": {"type": "string", "operation": "notEmpty"}}],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "has-workdir",
+      "name": "Has Work Dir?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [650, 350]
+    },
+    {
+      "parameters": {
+        "command": "mkdir -p /tmp/cortex-fix/{{ $json.params.request_id }} && cd /tmp/cortex-fix/{{ $json.params.request_id }} && git clone --depth 1 --branch {{ $json.params.branch }} {{ $json.params.repo_url }} repo && cd repo && echo $(pwd)",
+        "options": {"timeout": 120000}
+      },
+      "id": "clone-fresh",
+      "name": "Clone Fresh",
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [850, 450]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Set work directory\nconst params = $('Parse Request').item.json.params;\nlet workDir = params.work_dir;\n\nif (!workDir || $('Has Work Dir?').item.json === false) {\n  workDir = $input.item.json.stdout?.trim() || `/tmp/cortex-fix/${params.request_id}/repo`;\n}\n\nreturn [{\n  json: {\n    params: {...params, work_dir: workDir},\n    work_dir: workDir\n  }\n}];"
+      },
+      "id": "set-workdir",
+      "name": "Set Work Dir",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1050, 350]
+    },
+    {
+      "parameters": {
+        "command": "cd {{ $json.work_dir }} && git checkout -b {{ $json.params.fix_branch }} 2>/dev/null || git checkout {{ $json.params.fix_branch }}",
+        "options": {}
+      },
+      "id": "create-branch",
+      "name": "Create Fix Branch",
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [1250, 350]
+    },
+    {
+      "parameters": {
+        "command": "cd {{ $json.work_dir }} && if [ -f package.json ]; then npx eslint . --fix 2>/dev/null; fi && if command -v ruff &> /dev/null; then ruff check . --fix 2>/dev/null; ruff format . 2>/dev/null; fi && echo 'lint fixes applied'",
+        "options": {"timeout": 120000}
+      },
+      "id": "apply-lint-fixes",
+      "name": "Apply Lint Fixes",
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [1450, 250]
+    },
+    {
+      "parameters": {
+        "command": "cd {{ $json.work_dir }} && if [ -f package.json ]; then npm audit fix 2>/dev/null || true; fi && if [ -f requirements.txt ]; then pip-audit --fix 2>/dev/null || true; fi && echo 'security fixes attempted'",
+        "options": {"timeout": 180000}
+      },
+      "id": "apply-security-fixes",
+      "name": "Apply Security Fixes",
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [1450, 450]
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combinationMode": "mergeByPosition",
+        "options": {}
+      },
+      "id": "merge-fixes",
+      "name": "Merge Fixes",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 2.1,
+      "position": [1700, 350]
+    },
+    {
+      "parameters": {
+        "command": "cd {{ $json.work_dir }} && git add -A && git diff --cached --stat",
+        "options": {}
+      },
+      "id": "check-changes",
+      "name": "Check Changes",
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [1900, 350]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Check if there are actual changes\nconst diffOutput = $input.item.json.stdout || '';\nconst hasChanges = diffOutput.trim().length > 0 && !diffOutput.includes('nothing to commit');\n\nconst context = $('Set Work Dir').item.json;\n\nreturn [{\n  json: {\n    ...context,\n    has_changes: hasChanges,\n    diff_summary: diffOutput.trim()\n  }\n}];"
+      },
+      "id": "evaluate-changes",
+      "name": "Evaluate Changes",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [2100, 350]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {"caseSensitive": false, "leftValue": "", "typeValidation": "strict"},
+          "conditions": [{"leftValue": "={{ $json.has_changes }}", "rightValue": true, "operator": {"type": "boolean", "operation": "true"}}],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "has-changes",
+      "name": "Has Changes?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [2300, 350]
+    },
+    {
+      "parameters": {
+        "command": "cd {{ $json.work_dir }} && git commit -m \"fix: Auto-fix code issues (lint, security)\" -m \"Applied by Cortex automated code fix workflow\" -m \"Request ID: {{ $json.params.request_id }}\"",
+        "options": {}
+      },
+      "id": "commit-changes",
+      "name": "Commit Changes",
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [2500, 250]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {"caseSensitive": false, "leftValue": "", "typeValidation": "strict"},
+          "conditions": [{"leftValue": "={{ $json.params.create_pr }}", "rightValue": true, "operator": {"type": "boolean", "operation": "true"}}],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "should-create-pr",
+      "name": "Create PR?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [2700, 250]
+    },
+    {
+      "parameters": {
+        "command": "cd {{ $json.work_dir }} && git push -u origin {{ $json.params.fix_branch }}",
+        "options": {}
+      },
+      "id": "push-branch",
+      "name": "Push Branch",
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [2900, 150]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://api.github.com/repos/{{ $json.params.repo_owner }}/{{ $json.params.repo_name }}/pulls",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {"name": "title", "value": "fix: Automated code fixes by Cortex"},
+            {"name": "body", "value": "## Automated Code Fixes\\n\\nThis PR was automatically generated by Cortex to fix:\\n\\n- Linting issues\\n- Security vulnerabilities\\n\\n**Request ID:** {{ $json.params.request_id }}\\n\\n---\\n*Generated by Cortex Workflow Automation*"},
+            {"name": "head", "value": "={{ $json.params.fix_branch }}"},
+            {"name": "base", "value": "={{ $json.params.branch }}"}
+          ]
+        },
+        "options": {}
+      },
+      "id": "create-pr",
+      "name": "Create PR",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [3100, 150],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "github-token",
+          "name": "GitHub Token"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Prepare final result\nconst context = $('Evaluate Changes').item.json;\nlet prUrl = null;\nlet prNumber = null;\n\ntry {\n  const prResponse = $('Create PR').item?.json;\n  prUrl = prResponse?.html_url;\n  prNumber = prResponse?.number;\n} catch (e) { /* no PR created */ }\n\nreturn [{\n  json: {\n    success: true,\n    request_id: context.params.request_id,\n    repo: context.params.repo_url,\n    branch: context.params.branch,\n    fix_branch: context.params.fix_branch,\n    changes_applied: context.has_changes,\n    diff_summary: context.diff_summary,\n    pr_created: prUrl !== null,\n    pr_url: prUrl,\n    pr_number: prNumber,\n    timestamp: new Date().toISOString()\n  }\n}];"
+      },
+      "id": "prepare-result",
+      "name": "Prepare Result",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [3300, 250]
+    },
+    {
+      "parameters": {
+        "jsCode": "// No changes result\nconst context = $('Evaluate Changes').item.json;\n\nreturn [{\n  json: {\n    success: true,\n    request_id: context.params.request_id,\n    repo: context.params.repo_url,\n    changes_applied: false,\n    message: 'No fixable issues found or all issues require manual intervention',\n    timestamp: new Date().toISOString()\n  }\n}];"
+      },
+      "id": "no-changes-result",
+      "name": "No Changes Result",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [2500, 450]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.AUDIT_LOG_API }}",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {"name": "type", "value": "code_fix"},
+            {"name": "result", "value": "={{ JSON.stringify($json) }}"},
+            {"name": "timestamp", "value": "={{ $now.toISO() }}"}
+          ]
+        },
+        "options": {}
+      },
+      "id": "audit-log",
+      "name": "Audit Log",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [3500, 350]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.SLACK_WEBHOOK_DEV }}",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {"name": "text", "value": "={{ $json.pr_created ? '🔧 Auto-Fix PR Created' : ($json.changes_applied ? '🔧 Code Fixes Applied' : '✅ No Fixes Needed') }}"},
+            {"name": "blocks", "value": "=[{\"type\":\"header\",\"text\":{\"type\":\"plain_text\",\"text\":\"{{ $json.pr_created ? '🔧 Auto-Fix PR Created' : ($json.changes_applied ? '🔧 Code Fixes Applied' : '✅ No Fixes Needed') }}\"}},{\"type\":\"section\",\"fields\":[{\"type\":\"mrkdwn\",\"text\":\"*Repo:*\\n{{ $json.repo }}\"},{\"type\":\"mrkdwn\",\"text\":\"*Branch:*\\n{{ $json.branch }}\"}{{ $json.pr_url ? ',{\"type\":\"mrkdwn\",\"text\":\"*PR:*\\n<' + $json.pr_url + '|#' + $json.pr_number + '>\"}' : '' }}]}]"}
+          ]
+        },
+        "options": {}
+      },
+      "id": "notify-slack",
+      "name": "Notify Slack",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [3700, 350]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json }}",
+        "options": {}
+      },
+      "id": "response",
+      "name": "Response",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [3900, 350]
+    }
+  ],
+  "connections": {
+    "Webhook Trigger": {"main": [[{"node": "Parse Request", "type": "main", "index": 0}]]},
+    "Parse Request": {"main": [[{"node": "Has Work Dir?", "type": "main", "index": 0}]]},
+    "Has Work Dir?": {"main": [[{"node": "Set Work Dir", "type": "main", "index": 0}], [{"node": "Clone Fresh", "type": "main", "index": 0}]]},
+    "Clone Fresh": {"main": [[{"node": "Set Work Dir", "type": "main", "index": 0}]]},
+    "Set Work Dir": {"main": [[{"node": "Create Fix Branch", "type": "main", "index": 0}]]},
+    "Create Fix Branch": {"main": [[{"node": "Apply Lint Fixes", "type": "main", "index": 0}, {"node": "Apply Security Fixes", "type": "main", "index": 0}]]},
+    "Apply Lint Fixes": {"main": [[{"node": "Merge Fixes", "type": "main", "index": 0}]]},
+    "Apply Security Fixes": {"main": [[{"node": "Merge Fixes", "type": "main", "index": 1}]]},
+    "Merge Fixes": {"main": [[{"node": "Check Changes", "type": "main", "index": 0}]]},
+    "Check Changes": {"main": [[{"node": "Evaluate Changes", "type": "main", "index": 0}]]},
+    "Evaluate Changes": {"main": [[{"node": "Has Changes?", "type": "main", "index": 0}]]},
+    "Has Changes?": {"main": [[{"node": "Commit Changes", "type": "main", "index": 0}], [{"node": "No Changes Result", "type": "main", "index": 0}]]},
+    "Commit Changes": {"main": [[{"node": "Create PR?", "type": "main", "index": 0}]]},
+    "Create PR?": {"main": [[{"node": "Push Branch", "type": "main", "index": 0}], [{"node": "Prepare Result", "type": "main", "index": 0}]]},
+    "Push Branch": {"main": [[{"node": "Create PR", "type": "main", "index": 0}]]},
+    "Create PR": {"main": [[{"node": "Prepare Result", "type": "main", "index": 0}]]},
+    "Prepare Result": {"main": [[{"node": "Audit Log", "type": "main", "index": 0}]]},
+    "No Changes Result": {"main": [[{"node": "Audit Log", "type": "main", "index": 0}]]},
+    "Audit Log": {"main": [[{"node": "Notify Slack", "type": "main", "index": 0}]]},
+    "Notify Slack": {"main": [[{"node": "Response", "type": "main", "index": 0}]]}
+  },
+  "settings": {"executionOrder": "v1"},
+  "tags": [{"name": "development"}, {"name": "ci"}, {"name": "fix"}, {"name": "cortex"}],
+  "triggerCount": 1,
+  "versionId": "1"
+}

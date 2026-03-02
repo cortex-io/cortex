@@ -1,0 +1,112 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cortex-chat
+  namespace: cortex-chat
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: cortex-chat
+  template:
+    metadata:
+      labels:
+        app: cortex-chat
+    spec:
+      containers:
+      # Frontend
+      - name: frontend
+        image: ghcr.io/ry-ops/cortex-chat-frontend:latest
+        ports:
+        - containerPort: 3000
+          name: http
+        resources:
+          requests:
+            cpu: 100m
+            memory: 128Mi
+          limits:
+            cpu: 500m
+            memory: 256Mi
+
+      # Backend
+      - name: backend
+        image: ghcr.io/ry-ops/cortex-chat-backend:latest
+        ports:
+        - containerPort: 8080
+          name: api
+        env:
+        - name: ANTHROPIC_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: cortex-chat-secrets
+              key: anthropic-api-key
+        - name: REDIS_HOST
+          value: "redis.cortex-system.svc.cluster.local"
+        - name: REDIS_PORT
+          value: "6379"
+        - name: REDIS_URL
+          value: "redis://:$(REDIS_PASSWORD)@redis.cortex-chat.svc.cluster.local:6379"
+        - name: REDIS_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: cortex-chat-secrets
+              key: redis-password
+        - name: UNIFI_MCP_URL
+          value: "http://unifi-mcp.cortex-system.svc.cluster.local:3000"
+        - name: PROXMOX_MCP_URL
+          value: "http://proxmox-mcp.cortex-system.svc.cluster.local:3000"
+        - name: SANDFLY_MCP_URL
+          value: "http://sandfly-mcp-server.cortex-system.svc.cluster.local:3000"
+        - name: CORTEX_URL
+          value: "http://cortex-orchestrator.cortex.svc.cluster.local:8000"
+        - name: AUTH_USERNAME
+          valueFrom:
+            secretKeyRef:
+              name: cortex-chat-secrets
+              key: auth-username
+        - name: AUTH_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: cortex-chat-secrets
+              key: auth-password
+        resources:
+          requests:
+            cpu: 200m
+            memory: 256Mi
+          limits:
+            cpu: 1000m
+            memory: 512Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: cortex-chat
+  namespace: cortex-chat
+spec:
+  selector:
+    app: cortex-chat
+  ports:
+  - name: http
+    port: 80
+    targetPort: 3000
+    protocol: TCP
+  - name: api
+    port: 8080
+    targetPort: 8080
+    protocol: TCP
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: cortex-chat-frontend
+  namespace: cortex-chat
+spec:
+  type: LoadBalancer
+  loadBalancerIP: 10.88.145.210
+  selector:
+    app: cortex-chat
+  ports:
+  - port: 80
+    targetPort: 3000
+    protocol: TCP

@@ -1,0 +1,118 @@
+---
+# Storage Class for monitoring persistent volumes
+# Configured for Talos Linux with local storage provisioning
+
+# For Talos, we'll use the default storage class or hostPath for now
+# In production, you may want to use Rook-Ceph, Longhorn, or another CSI driver
+
+# Option 1: Local Path Provisioner (recommended for Talos)
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: monitoring-local-storage
+  labels:
+    app.kubernetes.io/part-of: cortex-monitoring-stack
+provisioner: kubernetes.io/no-provisioner
+volumeBindingMode: WaitForFirstConsumer
+reclaimPolicy: Retain
+
+---
+# PersistentVolumes for Prometheus (manual provisioning)
+# Create these on each node or use dynamic provisioner
+
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: prometheus-data-pv
+  labels:
+    app.kubernetes.io/name: prometheus
+    app.kubernetes.io/component: storage
+spec:
+  capacity:
+    storage: 50Gi
+  volumeMode: Filesystem
+  accessModes:
+    - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: monitoring-local-storage
+  local:
+    path: /var/lib/prometheus
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+        - matchExpressions:
+            - key: kubernetes.io/hostname
+              operator: In
+              values:
+                - talos-node-1  # Update with actual node name
+
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: grafana-data-pv
+  labels:
+    app.kubernetes.io/name: grafana
+    app.kubernetes.io/component: storage
+spec:
+  capacity:
+    storage: 10Gi
+  volumeMode: Filesystem
+  accessModes:
+    - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: monitoring-local-storage
+  local:
+    path: /var/lib/grafana
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+        - matchExpressions:
+            - key: kubernetes.io/hostname
+              operator: In
+              values:
+                - talos-node-1  # Update with actual node name
+
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: alertmanager-data-pv
+  labels:
+    app.kubernetes.io/name: alertmanager
+    app.kubernetes.io/component: storage
+spec:
+  capacity:
+    storage: 10Gi
+  volumeMode: Filesystem
+  accessModes:
+    - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: monitoring-local-storage
+  local:
+    path: /var/lib/alertmanager
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+        - matchExpressions:
+            - key: kubernetes.io/hostname
+              operator: In
+              values:
+                - talos-node-1  # Update with actual node name
+
+---
+# Alternative: Use default Talos storage class if available
+# Comment out the above and uncomment this if you have a dynamic provisioner
+
+# apiVersion: storage.k8s.io/v1
+# kind: StorageClass
+# metadata:
+#   name: monitoring-fast
+#   labels:
+#     app.kubernetes.io/part-of: cortex-monitoring-stack
+# provisioner: kubernetes.io/host-path  # or your CSI provisioner
+# parameters:
+#   type: pd-ssd
+# volumeBindingMode: WaitForFirstConsumer
+# allowVolumeExpansion: true
+# reclaimPolicy: Retain
