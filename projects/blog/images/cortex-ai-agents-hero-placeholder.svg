@@ -1,0 +1,112 @@
+<svg width="1200" height="630" viewBox="0 0 1200 630" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background gradient -->
+  <defs>
+    <linearGradient id="bgGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#0066CC;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#004C99;stop-opacity:1" />
+    </linearGradient>
+
+    <linearGradient id="accentGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#00CC66;stop-opacity:0.3" />
+      <stop offset="100%" style="stop-color:#00FF80;stop-opacity:0.3" />
+    </linearGradient>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1200" height="630" fill="url(#bgGradient)"/>
+
+  <!-- Decorative grid pattern -->
+  <g opacity="0.1">
+    <line x1="0" y1="100" x2="1200" y2="100" stroke="white" stroke-width="1"/>
+    <line x1="0" y1="200" x2="1200" y2="200" stroke="white" stroke-width="1"/>
+    <line x1="0" y1="300" x2="1200" y2="300" stroke="white" stroke-width="1"/>
+    <line x1="0" y1="400" x2="1200" y2="400" stroke="white" stroke-width="1"/>
+    <line x1="0" y1="500" x2="1200" y2="500" stroke="white" stroke-width="1"/>
+    <line x1="200" y1="0" x2="200" y2="630" stroke="white" stroke-width="1"/>
+    <line x1="400" y1="0" x2="400" y2="630" stroke="white" stroke-width="1"/>
+    <line x1="600" y1="0" x2="600" y2="630" stroke="white" stroke-width="1"/>
+    <line x1="800" y1="0" x2="800" y2="630" stroke="white" stroke-width="1"/>
+    <line x1="1000" y1="0" x2="1000" y2="630" stroke="white" stroke-width="1"/>
+  </g>
+
+  <!-- Central icon - Robot/AI Agent -->
+  <g transform="translate(850, 315)">
+    <!-- Robot head -->
+    <rect x="-60" y="-70" width="120" height="100" rx="10" fill="white" opacity="0.9"/>
+
+    <!-- Robot eyes -->
+    <circle cx="-25" cy="-40" r="12" fill="#0066CC"/>
+    <circle cx="25" cy="-40" r="12" fill="#0066CC"/>
+
+    <!-- Robot antenna -->
+    <line x1="0" y1="-70" x2="0" y2="-90" stroke="white" stroke-width="4" opacity="0.9"/>
+    <circle cx="0" cy="-95" r="8" fill="#00CC66"/>
+
+    <!-- Robot mouth/interface -->
+    <rect x="-30" y="0" width="60" height="15" rx="7" fill="#0066CC" opacity="0.6"/>
+  </g>
+
+  <!-- Orbital elements representing different agent types -->
+  <g opacity="0.8">
+    <!-- Security -->
+    <circle cx="950" cy="200" r="40" fill="none" stroke="#00CC66" stroke-width="3"/>
+    <text x="950" y="210" text-anchor="middle" fill="white" font-size="24" font-weight="bold">🔒</text>
+
+    <!-- Reasoning -->
+    <circle cx="750" cy="250" r="40" fill="none" stroke="#00CC66" stroke-width="3"/>
+    <text x="750" y="260" text-anchor="middle" fill="white" font-size="24" font-weight="bold">🧠</text>
+
+    <!-- Coordination -->
+    <circle cx="950" cy="430" r="40" fill="none" stroke="#00CC66" stroke-width="3"/>
+    <text x="950" y="440" text-anchor="middle" fill="white" font-size="24" font-weight="bold">🤝</text>
+
+    <!-- Monitoring -->
+    <circle cx="750" cy="380" r="40" fill="none" stroke="#00CC66" stroke-width="3"/>
+    <text x="750" y="390" text-anchor="middle" fill="white" font-size="24" font-weight="bold">👁️</text>
+  </g>
+
+  <!-- Connection lines -->
+  <g opacity="0.3">
+    <line x1="850" y1="315" x2="950" y2="200" stroke="#00CC66" stroke-width="2"/>
+    <line x1="850" y1="315" x2="750" y2="250" stroke="#00CC66" stroke-width="2"/>
+    <line x1="850" y1="315" x2="950" y2="430" stroke="#00CC66" stroke-width="2"/>
+    <line x1="850" y1="315" x2="750" y2="380" stroke="#00CC66" stroke-width="2"/>
+  </g>
+
+  <!-- Title -->
+  <text x="100" y="180" fill="white" font-size="56" font-weight="bold" font-family="Arial, sans-serif">
+    Cortex AI Agents
+  </text>
+
+  <!-- Subtitle -->
+  <text x="100" y="240" fill="white" font-size="32" font-family="Arial, sans-serif" opacity="0.9">
+    Autonomous • Intelligent • Safe
+  </text>
+
+  <!-- Key features -->
+  <g transform="translate(100, 300)">
+    <text x="0" y="0" fill="#00CC66" font-size="20" font-weight="bold">✓</text>
+    <text x="30" y="0" fill="white" font-size="20">Advanced Reasoning</text>
+
+    <text x="0" y="35" fill="#00CC66" font-size="20" font-weight="bold">✓</text>
+    <text x="30" y="35" fill="white" font-size="20">Multi-Agent Orchestration</text>
+
+    <text x="0" y="70" fill="#00CC66" font-size="20" font-weight="bold">✓</text>
+    <text x="30" y="70" fill="white" font-size="20">24/7 Security Monitoring</text>
+
+    <text x="0" y="105" fill="#00CC66" font-size="20" font-weight="bold">✓</text>
+    <text x="30" y="105" fill="white" font-size="20">Production-Grade Governance</text>
+  </g>
+
+  <!-- Stats badge -->
+  <g transform="translate(100, 520)">
+    <rect x="0" y="0" width="320" height="60" rx="10" fill="white" opacity="0.15"/>
+    <text x="20" y="35" fill="white" font-size="24" font-weight="bold">2,264+ LOC</text>
+    <text x="180" y="35" fill="white" font-size="24" font-weight="bold">7 Enhancements</text>
+  </g>
+
+  <!-- Logo/Brand -->
+  <text x="1100" y="600" text-anchor="end" fill="white" font-size="18" font-family="Arial, sans-serif" opacity="0.6">
+    CORTEX
+  </text>
+</svg>

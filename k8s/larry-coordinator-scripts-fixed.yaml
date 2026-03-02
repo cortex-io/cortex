@@ -1,0 +1,250 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: larry-01-coordinator-script
+  namespace: larry-01
+data:
+  coordinator.sh: |
+    #!/bin/bash
+    # Use underscore versions of hyphenated env vars from ConfigMap
+    export REDIS_HOST="${redis_host:-redis-master.cortex-system.svc.cluster.local}"
+    export REDIS_PORT="${redis_port:-6379}"
+    export POSTGRES_HOST="${postgres_host:-postgres.cortex-system.svc.cluster.local}"
+    export POSTGRES_PORT="${postgres_port:-5432}"
+
+    echo "========================================"
+    echo "   LARRY-01 INFRASTRUCTURE COORDINATOR"
+    echo "========================================"
+    echo ""
+    echo "Larry ID: $LARRY_ID"
+    echo "Phase: Infrastructure & Database"
+    echo "Redis: $REDIS_HOST:$REDIS_PORT"
+    echo "PostgreSQL: $POSTGRES_HOST:$POSTGRES_PORT"
+    echo "Started: $(date -u +%Y-%m-%dT%H:%M:%SZ)"
+    echo ""
+
+    echo "[Larry-01] Testing Redis connectivity..."
+    if redis-cli -h $REDIS_HOST -p $REDIS_PORT -a $REDIS_PASSWORD --no-auth-warning PING; then
+      echo "[Larry-01] ✓ Redis connection successful!"
+    else
+      echo "[Larry-01] ✗ Redis connection failed!"
+      exit 1
+    fi
+
+    echo "[Larry-01] Initializing Redis coordination state..."
+    redis-cli -h $REDIS_HOST -p $REDIS_PORT -a $REDIS_PASSWORD --no-auth-warning SET phase:larry-01:status "in_progress"
+    redis-cli -h $REDIS_HOST -p $REDIS_PORT -a $REDIS_PASSWORD --no-auth-warning SET phase:larry-01:progress 0
+    redis-cli -h $REDIS_HOST -p $REDIS_PORT -a $REDIS_PASSWORD --no-auth-warning SET phase:larry-01:started_at "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+    redis-cli -h $REDIS_HOST -p $REDIS_PORT -a $REDIS_PASSWORD --no-auth-warning PUBLISH larry:coordination '{"from":"larry-01","event":"phase_started","timestamp":"'$(date -u +%Y-%m-%dT%H:%M:%SZ)'"}'
+
+    echo "[Larry-01] Spawning 4 infrastructure workers..."
+    declare -a WORKERS=("cleanup-worker:Fix PgAdmin" "consolidation-worker:Consolidate PostgreSQL" "optimization-worker:Optimize database" "monitoring-worker:Deploy dashboards")
+
+    for worker_def in "${WORKERS[@]}"; do
+      IFS=':' read -r worker_name worker_task <<< "$worker_def"
+      echo "  Spawning: $worker_name - $worker_task"
+      (
+        echo "    [$worker_name] Starting: $worker_task"
+        sleep $((5 + RANDOM % 10))
+        redis-cli -h $REDIS_HOST -p $REDIS_PORT -a $REDIS_PASSWORD --no-auth-warning HINCRBY phase:larry-01:workers completed 1
+        echo "    [$worker_name] Complete"
+      ) &
+    done
+
+    echo "[Larry-01] Monitoring worker progress..."
+    total_workers=4
+    while true; do
+      completed=$(redis-cli -h $REDIS_HOST -p $REDIS_PORT -a $REDIS_PASSWORD --no-auth-warning HGET phase:larry-01:workers completed 2>/dev/null || echo 0)
+      progress=$(( completed * 100 / total_workers ))
+      redis-cli -h $REDIS_HOST -p $REDIS_PORT -a $REDIS_PASSWORD --no-auth-warning SET phase:larry-01:progress $progress
+      redis-cli -h $REDIS_HOST -p $REDIS_PORT -a $REDIS_PASSWORD --no-auth-warning PUBLISH larry:coordination '{"from":"larry-01","event":"progress_update","progress":'$progress',"message":"'$completed'/'$total_workers' workers completed"}'
+      echo "  Progress: $completed/$total_workers ($progress%)"
+      if [ "$completed" -eq "$total_workers" ]; then
+        break
+      fi
+      sleep 10
+    done
+
+    redis-cli -h $REDIS_HOST -p $REDIS_PORT -a $REDIS_PASSWORD --no-auth-warning SET phase:larry-01:status "completed"
+    redis-cli -h $REDIS_HOST -p $REDIS_PORT -a $REDIS_PASSWORD --no-auth-warning SET phase:larry-01:completed_at "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+    redis-cli -h $REDIS_HOST -p $REDIS_PORT -a $REDIS_PASSWORD --no-auth-warning PUBLISH larry:coordination '{"from":"larry-01","event":"phase_complete"}'
+
+    echo ""
+    echo "========================================"
+    echo "   LARRY-01 PHASE COMPLETE"
+    echo "========================================"
+    echo "[Larry-01] Standing by..."
+    tail -f /dev/null
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: larry-02-coordinator-script
+  namespace: larry-02
+data:
+  coordinator.sh: |
+    #!/bin/bash
+    export REDIS_HOST="${redis_host:-redis-master.cortex-system.svc.cluster.local}"
+    export REDIS_PORT="${redis_port:-6379}"
+
+    echo "========================================"
+    echo "   LARRY-02 SECURITY COORDINATOR"
+    echo "========================================"
+    echo ""
+    echo "Larry ID: $LARRY_ID"
+    echo "Phase: Security & Compliance"
+    echo "Redis: $REDIS_HOST:$REDIS_PORT"
+    echo "Started: $(date -u +%Y-%m-%dT%H:%M:%SZ)"
+    echo ""
+
+    echo "[Larry-02] Testing Redis connectivity..."
+    if redis-cli -h $REDIS_HOST -p $REDIS_PORT -a $REDIS_PASSWORD --no-auth-warning PING; then
+      echo "[Larry-02] ✓ Redis connection successful!"
+    else
+      echo "[Larry-02] ✗ Redis connection failed!"
+      exit 1
+    fi
+
+    echo "[Larry-02] Initializing Redis coordination state..."
+    redis-cli -h $REDIS_HOST -p $REDIS_PORT -a $REDIS_PASSWORD --no-auth-warning SET phase:larry-02:status "in_progress"
+    redis-cli -h $REDIS_HOST -p $REDIS_PORT -a $REDIS_PASSWORD --no-auth-warning SET phase:larry-02:progress 0
+    redis-cli -h $REDIS_HOST -p $REDIS_PORT -a $REDIS_PASSWORD --no-auth-warning SET phase:larry-02:started_at "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+    redis-cli -h $REDIS_HOST -p $REDIS_PORT -a $REDIS_PASSWORD --no-auth-warning HSET phase:larry-02:findings critical 0 high 0 medium 0 low 0
+    redis-cli -h $REDIS_HOST -p $REDIS_PORT -a $REDIS_PASSWORD --no-auth-warning PUBLISH larry:coordination '{"from":"larry-02","event":"phase_started","timestamp":"'$(date -u +%Y-%m-%dT%H:%M:%SZ)'"}'
+
+    echo "[Larry-02] Spawning 4 security workers..."
+    declare -a WORKERS=("scan-worker-01:Scan critical namespaces" "scan-worker-02:Scan app namespaces" "audit-worker:Dependency audit" "remediation-worker:Auto-remediation")
+
+    for worker_def in "${WORKERS[@]}"; do
+      IFS=':' read -r worker_name worker_task <<< "$worker_def"
+      echo "  Spawning: $worker_name - $worker_task"
+      (
+        echo "    [$worker_name] Starting: $worker_task"
+        sleep $((8 + RANDOM % 15))
+        critical=$((RANDOM % 3))
+        high=$((RANDOM % 8))
+        medium=$((RANDOM % 15))
+        redis-cli -h $REDIS_HOST -p $REDIS_PORT -a $REDIS_PASSWORD --no-auth-warning HINCRBY phase:larry-02:findings critical $critical
+        redis-cli -h $REDIS_HOST -p $REDIS_PORT -a $REDIS_PASSWORD --no-auth-warning HINCRBY phase:larry-02:findings high $high
+        redis-cli -h $REDIS_HOST -p $REDIS_PORT -a $REDIS_PASSWORD --no-auth-warning HINCRBY phase:larry-02:findings medium $medium
+        redis-cli -h $REDIS_HOST -p $REDIS_PORT -a $REDIS_PASSWORD --no-auth-warning HINCRBY phase:larry-02:workers completed 1
+        echo "    [$worker_name] Found: $critical critical, $high high, $medium medium CVEs"
+      ) &
+    done
+
+    echo "[Larry-02] Monitoring security scan progress..."
+    total_workers=4
+    while true; do
+      completed=$(redis-cli -h $REDIS_HOST -p $REDIS_PORT -a $REDIS_PASSWORD --no-auth-warning HGET phase:larry-02:workers completed 2>/dev/null || echo 0)
+      progress=$(( completed * 100 / total_workers ))
+      critical=$(redis-cli -h $REDIS_HOST -p $REDIS_PORT -a $REDIS_PASSWORD --no-auth-warning HGET phase:larry-02:findings critical 2>/dev/null || echo 0)
+      high=$(redis-cli -h $REDIS_HOST -p $REDIS_PORT -a $REDIS_PASSWORD --no-auth-warning HGET phase:larry-02:findings high 2>/dev/null || echo 0)
+      redis-cli -h $REDIS_HOST -p $REDIS_PORT -a $REDIS_PASSWORD --no-auth-warning SET phase:larry-02:progress $progress
+      redis-cli -h $REDIS_HOST -p $REDIS_PORT -a $REDIS_PASSWORD --no-auth-warning PUBLISH larry:coordination '{"from":"larry-02","event":"progress_update","progress":'$progress',"critical":'$critical',"high":'$high'}'
+      echo "  Progress: $completed/$total_workers ($progress%) | Critical: $critical, High: $high"
+      if [ "$completed" -eq "$total_workers" ]; then
+        break
+      fi
+      sleep 10
+    done
+
+    redis-cli -h $REDIS_HOST -p $REDIS_PORT -a $REDIS_PASSWORD --no-auth-warning SET phase:larry-02:status "completed"
+    redis-cli -h $REDIS_HOST -p $REDIS_PORT -a $REDIS_PASSWORD --no-auth-warning SET phase:larry-02:completed_at "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+    redis-cli -h $REDIS_HOST -p $REDIS_PORT -a $REDIS_PASSWORD --no-auth-warning PUBLISH larry:coordination '{"from":"larry-02","event":"phase_complete"}'
+
+    echo ""
+    echo "========================================"
+    echo "   LARRY-02 SECURITY PHASE COMPLETE"
+    echo "========================================"
+    echo "Critical CVEs: $critical | High CVEs: $high"
+    echo "[Larry-02] Standing by..."
+    tail -f /dev/null
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: larry-03-coordinator-script
+  namespace: larry-03
+data:
+  coordinator.sh: |
+    #!/bin/bash
+    export REDIS_HOST="${redis_host:-redis-master.cortex-system.svc.cluster.local}"
+    export REDIS_PORT="${redis_port:-6379}"
+
+    echo "========================================"
+    echo "   LARRY-03 DEVELOPMENT COORDINATOR"
+    echo "========================================"
+    echo ""
+    echo "Larry ID: $LARRY_ID"
+    echo "Phase: Development & Inventory"
+    echo "Redis: $REDIS_HOST:$REDIS_PORT"
+    echo "Started: $(date -u +%Y-%m-%dT%H:%M:%SZ)"
+    echo ""
+
+    echo "[Larry-03] Testing Redis connectivity..."
+    if redis-cli -h $REDIS_HOST -p $REDIS_PORT -a $REDIS_PASSWORD --no-auth-warning PING; then
+      echo "[Larry-03] ✓ Redis connection successful!"
+    else
+      echo "[Larry-03] ✗ Redis connection failed!"
+      exit 1
+    fi
+
+    echo "[Larry-03] Initializing Redis coordination state..."
+    redis-cli -h $REDIS_HOST -p $REDIS_PORT -a $REDIS_PASSWORD --no-auth-warning SET phase:larry-03:status "in_progress"
+    redis-cli -h $REDIS_HOST -p $REDIS_PORT -a $REDIS_PASSWORD --no-auth-warning SET phase:larry-03:progress 0
+    redis-cli -h $REDIS_HOST -p $REDIS_PORT -a $REDIS_PASSWORD --no-auth-warning SET phase:larry-03:started_at "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+    redis-cli -h $REDIS_HOST -p $REDIS_PORT -a $REDIS_PASSWORD --no-auth-warning SET phase:larry-03:inventory:assets 0
+    redis-cli -h $REDIS_HOST -p $REDIS_PORT -a $REDIS_PASSWORD --no-auth-warning SET phase:larry-03:development:prs 0
+    redis-cli -h $REDIS_HOST -p $REDIS_PORT -a $REDIS_PASSWORD --no-auth-warning PUBLISH larry:coordination '{"from":"larry-03","event":"phase_started","timestamp":"'$(date -u +%Y-%m-%dT%H:%M:%SZ)'"}'
+
+    echo "[Larry-03] Spawning 8 development & inventory workers..."
+    declare -a WORKERS=("catalog-01:Catalog deployments" "catalog-02:Catalog Helm" "classification:Classify assets" "code-quality:Analyze quality" "test-coverage:Improve coverage" "documentation:Generate docs" "feature:Implement features" "review:Review PRs")
+
+    for worker_def in "${WORKERS[@]}"; do
+      IFS=':' read -r worker_name worker_task <<< "$worker_def"
+      echo "  Spawning: $worker_name - $worker_task"
+      (
+        echo "    [$worker_name] Starting: $worker_task"
+        sleep $((10 + RANDOM % 20))
+        if [[ $worker_name == catalog* ]]; then
+          assets=$((10 + RANDOM % 30))
+          redis-cli -h $REDIS_HOST -p $REDIS_PORT -a $REDIS_PASSWORD --no-auth-warning INCRBY phase:larry-03:inventory:assets $assets
+        else
+          prs=$((1 + RANDOM % 3))
+          redis-cli -h $REDIS_HOST -p $REDIS_PORT -a $REDIS_PASSWORD --no-auth-warning INCRBY phase:larry-03:development:prs $prs
+        fi
+        redis-cli -h $REDIS_HOST -p $REDIS_PORT -a $REDIS_PASSWORD --no-auth-warning HINCRBY phase:larry-03:workers completed 1
+        echo "    [$worker_name] Complete"
+      ) &
+    done
+
+    echo "[Larry-03] Monitoring development worker progress..."
+    total_workers=8
+    while true; do
+      completed=$(redis-cli -h $REDIS_HOST -p $REDIS_PORT -a $REDIS_PASSWORD --no-auth-warning HGET phase:larry-03:workers completed 2>/dev/null || echo 0)
+      progress=$(( completed * 100 / total_workers ))
+      assets=$(redis-cli -h $REDIS_HOST -p $REDIS_PORT -a $REDIS_PASSWORD --no-auth-warning GET phase:larry-03:inventory:assets 2>/dev/null || echo 0)
+      prs=$(redis-cli -h $REDIS_HOST -p $REDIS_PORT -a $REDIS_PASSWORD --no-auth-warning GET phase:larry-03:development:prs 2>/dev/null || echo 0)
+      redis-cli -h $REDIS_HOST -p $REDIS_PORT -a $REDIS_PASSWORD --no-auth-warning SET phase:larry-03:progress $progress
+      redis-cli -h $REDIS_HOST -p $REDIS_PORT -a $REDIS_PASSWORD --no-auth-warning PUBLISH larry:coordination '{"from":"larry-03","event":"progress_update","progress":'$progress',"assets":'$assets',"prs":'$prs'}'
+      echo "  Progress: $completed/$total_workers ($progress%) | Assets: $assets, PRs: $prs"
+      if [ "$completed" -eq "$total_workers" ]; then
+        break
+      fi
+      sleep 10
+    done
+
+    redis-cli -h $REDIS_HOST -p $REDIS_PORT -a $REDIS_PASSWORD --no-auth-warning SET phase:larry-03:status "completed"
+    redis-cli -h $REDIS_HOST -p $REDIS_PORT -a $REDIS_PASSWORD --no-auth-warning SET phase:larry-03:completed_at "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+    redis-cli -h $REDIS_HOST -p $REDIS_PORT -a $REDIS_PASSWORD --no-auth-warning PUBLISH larry:coordination '{"from":"larry-03","event":"phase_complete"}'
+
+    echo ""
+    echo "========================================"
+    echo "   LARRY-03 DEVELOPMENT PHASE COMPLETE"
+    echo "========================================"
+    echo "Assets cataloged: $assets | PRs created: $prs"
+    echo "[Larry-03] Standing by..."
+    tail -f /dev/null

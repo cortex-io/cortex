@@ -1,0 +1,23 @@
+# Cortex Analysis Environment
+# For Marimo notebooks and data analysis
+
+# Core notebook environment
+marimo>=0.9.0
+
+# AI/LLM clients
+anthropic>=0.39.0
+openai>=1.54.0
+
+# Data processing
+polars>=1.13.0
+pandas>=2.2.0
+pyarrow>=17.0.0
+
+# Visualization
+matplotlib>=3.9.0
+plotly>=5.24.0
+seaborn>=0.13.0
+
+# Utilities
+python-dateutil>=2.9.0
+pytz>=2024.1

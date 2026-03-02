@@ -1,0 +1,193 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: cortex-knowledge
+  labels:
+    itil-stream: "4"
+    component: knowledge-management
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: knowledge-extraction-config
+  namespace: cortex-knowledge
+data:
+  config.yaml: |
+    extraction:
+      sources:
+        - type: logs
+          namespaces: ["cortex", "cortex-system", "cortex-chat", "cortex-autonomous", "cortex-change-mgmt"]
+          patterns:
+            - "ERROR"
+            - "WARN"
+            - "resolved"
+            - "deployed"
+            - "failed"
+        - type: events
+          resources: ["pods", "deployments", "services", "configmaps"]
+        - type: metrics
+          prometheus_url: "http://prometheus.cortex-system:9090"
+        - type: git
+          repo_path: "/workspace"
+          file_types: [".md", ".yaml", ".json", ".py", ".sh"]
+
+      processors:
+        - name: error-pattern-extraction
+          type: nlp
+          model: sentiment-analysis
+
+        - name: solution-extraction
+          type: pattern-matching
+          patterns:
+            - "fix: (.*)"
+            - "resolved by (.*)"
+            - "workaround: (.*)"
+
+        - name: incident-correlation
+          type: time-series
+          window: 1h
+
+        - name: topic-modeling
+          type: lda
+          num_topics: 20
+
+      knowledge_types:
+        - incident_solutions
+        - error_patterns
+        - best_practices
+        - configuration_examples
+        - troubleshooting_guides
+        - performance_optimizations
+
+      output:
+        storage: mongodb
+        index: elasticsearch
+        graph: neo4j
+
+    mongodb:
+      host: knowledge-mongodb
+      port: 27017
+      database: cortex_knowledge
+
+    elasticsearch:
+      hosts: ["knowledge-elasticsearch:9200"]
+      index_prefix: cortex-kb
+
+    neo4j:
+      uri: bolt://knowledge-graph:7687
+      database: cortex
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: knowledge-extractor
+  namespace: cortex-knowledge
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: knowledge-extractor
+  template:
+    metadata:
+      labels:
+        app: knowledge-extractor
+        itil-component: knowledge-extraction
+    spec:
+      serviceAccountName: knowledge-extractor
+      containers:
+      - name: extractor
+        image: python:3.11-slim
+        command: ["/bin/bash", "-c"]
+        args:
+          - |
+            pip install --no-cache-dir \
+              kubernetes \
+              pymongo \
+              elasticsearch \
+              neo4j \
+              prometheus-client \
+              nltk \
+              scikit-learn \
+              transformers \
+              torch \
+              gitpython \
+              pyyaml \
+              requests && \
+            python -m nltk.downloader punkt stopwords && \
+            python /app/extractor.py
+        volumeMounts:
+        - name: config
+          mountPath: /app/config
+        - name: app
+          mountPath: /app
+        - name: workspace
+          mountPath: /workspace
+        env:
+        - name: PYTHONUNBUFFERED
+          value: "1"
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "250m"
+          limits:
+            memory: "2Gi"
+            cpu: "1000m"
+      volumes:
+      - name: config
+        configMap:
+          name: knowledge-extraction-config
+      - name: app
+        configMap:
+          name: knowledge-extractor-app
+      - name: workspace
+        emptyDir: {}
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: knowledge-extractor
+  namespace: cortex-knowledge
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: knowledge-extractor
+rules:
+- apiGroups: [""]
+  resources: ["pods", "pods/log", "events", "configmaps", "services"]
+  verbs: ["get", "list", "watch"]
+- apiGroups: ["apps"]
+  resources: ["deployments", "replicasets", "statefulsets"]
+  verbs: ["get", "list", "watch"]
+- apiGroups: ["batch"]
+  resources: ["jobs", "cronjobs"]
+  verbs: ["get", "list", "watch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: knowledge-extractor
+subjects:
+- kind: ServiceAccount
+  name: knowledge-extractor
+  namespace: cortex-knowledge
+roleRef:
+  kind: ClusterRole
+  name: knowledge-extractor
+  apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: knowledge-extractor
+  namespace: cortex-knowledge
+spec:
+  selector:
+    app: knowledge-extractor
+  ports:
+  - name: http
+    port: 8080
+    targetPort: 8080
+  - name: metrics
+    port: 9090
+    targetPort: 9090

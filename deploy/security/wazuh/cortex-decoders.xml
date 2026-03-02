@@ -1,0 +1,340 @@
+<!--
+  Cortex Log Decoders for Wazuh
+
+  Purpose: Parse and extract fields from Cortex, N8N, and MCP logs
+  Integration: Deploy to /var/ossec/etc/decoders/local_decoder.xml on Wazuh server
+  Server: 10.88.140.202
+
+  Extracted Fields:
+  - agent_type: Type of Cortex agent (master, worker, coordinator)
+  - task_id: Unique task identifier
+  - token_count: Number of tokens consumed
+  - error_type: Classification of error
+  - severity: Log severity level
+  - component: System component (mcp, n8n, cortex)
+-->
+
+<decoder name="cortex-json">
+  <program_name>^cortex</program_name>
+  <plugin_decoder>JSON_Decoder</plugin_decoder>
+</decoder>
+
+<!-- ======================================= -->
+<!-- Cortex Agent Log Decoders             -->
+<!-- ======================================= -->
+
+<decoder name="cortex-agent">
+  <parent>cortex-json</parent>
+  <prematch>agent_type|master|worker|coordinator</prematch>
+  <regex offset="after_parent">agent_type":"(\w+)"</regex>
+  <order>agent_type</order>
+</decoder>
+
+<decoder name="cortex-agent-task">
+  <parent>cortex-agent</parent>
+  <regex offset="after_parent">task_id":"([\w-]+)"</regex>
+  <order>task_id</order>
+</decoder>
+
+<decoder name="cortex-agent-error">
+  <parent>cortex-agent</parent>
+  <regex offset="after_parent">error_type":"(\w+)"</regex>
+  <order>error_type</order>
+</decoder>
+
+<decoder name="cortex-agent-severity">
+  <parent>cortex-agent</parent>
+  <regex offset="after_parent">severity":"(\w+)"</regex>
+  <order>severity</order>
+</decoder>
+
+<!-- ======================================= -->
+<!-- Token Management Decoders             -->
+<!-- ======================================= -->
+
+<decoder name="cortex-token">
+  <parent>cortex-json</parent>
+  <prematch>token</prematch>
+  <regex offset="after_parent">token_count":(\d+)</regex>
+  <order>token_count</order>
+</decoder>
+
+<decoder name="cortex-token-budget">
+  <parent>cortex-token</parent>
+  <regex offset="after_parent">token_budget":(\d+)</regex>
+  <order>token_budget</order>
+</decoder>
+
+<decoder name="cortex-token-remaining">
+  <parent>cortex-token</parent>
+  <regex offset="after_parent">token_remaining":(\d+)</regex>
+  <order>token_remaining</order>
+</decoder>
+
+<decoder name="cortex-token-percent">
+  <parent>cortex-token</parent>
+  <regex offset="after_parent">token_usage_percent":(\d+\.?\d*)</regex>
+  <order>token_usage_percent</order>
+</decoder>
+
+<!-- ======================================= -->
+<!-- Worker Process Decoders               -->
+<!-- ======================================= -->
+
+<decoder name="cortex-worker">
+  <parent>cortex-json</parent>
+  <prematch>worker</prematch>
+  <regex offset="after_parent">worker_id":"([\w-]+)"</regex>
+  <order>worker_id</order>
+</decoder>
+
+<decoder name="cortex-worker-type">
+  <parent>cortex-worker</parent>
+  <regex offset="after_parent">worker_type":"([\w-]+)"</regex>
+  <order>worker_type</order>
+</decoder>
+
+<decoder name="cortex-worker-status">
+  <parent>cortex-worker</parent>
+  <regex offset="after_parent">status":"(\w+)"</regex>
+  <order>worker_status</order>
+</decoder>
+
+<decoder name="cortex-worker-duration">
+  <parent>cortex-worker</parent>
+  <regex offset="after_parent">duration_ms":(\d+)</regex>
+  <order>duration_ms</order>
+</decoder>
+
+<!-- ======================================= -->
+<!-- N8N Workflow Decoders                 -->
+<!-- ======================================= -->
+
+<decoder name="n8n-json">
+  <program_name>^n8n</program_name>
+  <plugin_decoder>JSON_Decoder</plugin_decoder>
+</decoder>
+
+<decoder name="n8n-workflow">
+  <parent>n8n-json</parent>
+  <prematch>workflow</prematch>
+  <regex offset="after_parent">workflowId":"([\w-]+)"</regex>
+  <order>workflow_id</order>
+</decoder>
+
+<decoder name="n8n-workflow-name">
+  <parent>n8n-workflow</parent>
+  <regex offset="after_parent">workflowName":"([^"]+)"</regex>
+  <order>workflow_name</order>
+</decoder>
+
+<decoder name="n8n-execution">
+  <parent>n8n-workflow</parent>
+  <regex offset="after_parent">executionId":"([\w-]+)"</regex>
+  <order>execution_id</order>
+</decoder>
+
+<decoder name="n8n-execution-status">
+  <parent>n8n-execution</parent>
+  <regex offset="after_parent">status":"(\w+)"</regex>
+  <order>execution_status</order>
+</decoder>
+
+<decoder name="n8n-error">
+  <parent>n8n-workflow</parent>
+  <regex offset="after_parent">errorMessage":"([^"]+)"</regex>
+  <order>error_message</order>
+</decoder>
+
+<decoder name="n8n-webhook">
+  <parent>n8n-json</parent>
+  <prematch>webhook</prematch>
+  <regex offset="after_parent">webhookPath":"([^"]+)"</regex>
+  <order>webhook_path</order>
+</decoder>
+
+<!-- ======================================= -->
+<!-- MCP Server Decoders                   -->
+<!-- ======================================= -->
+
+<decoder name="mcp-json">
+  <program_name>^mcp</program_name>
+  <plugin_decoder>JSON_Decoder</plugin_decoder>
+</decoder>
+
+<decoder name="mcp-server">
+  <parent>mcp-json</parent>
+  <prematch>server</prematch>
+  <regex offset="after_parent">server_name":"([\w-]+)"</regex>
+  <order>mcp_server</order>
+</decoder>
+
+<decoder name="mcp-connection">
+  <parent>mcp-server</parent>
+  <regex offset="after_parent">connection_status":"(\w+)"</regex>
+  <order>connection_status</order>
+</decoder>
+
+<decoder name="mcp-latency">
+  <parent>mcp-server</parent>
+  <regex offset="after_parent">latency_ms":(\d+)</regex>
+  <order>latency_ms</order>
+</decoder>
+
+<decoder name="mcp-error">
+  <parent>mcp-server</parent>
+  <regex offset="after_parent">error":"([^"]+)"</regex>
+  <order>mcp_error</order>
+</decoder>
+
+<decoder name="mcp-tool">
+  <parent>mcp-json</parent>
+  <prematch>tool</prematch>
+  <regex offset="after_parent">tool_name":"([^"]+)"</regex>
+  <order>tool_name</order>
+</decoder>
+
+<!-- ======================================= -->
+<!-- Cortex Master Decoders                -->
+<!-- ======================================= -->
+
+<decoder name="cortex-master">
+  <parent>cortex-json</parent>
+  <prematch>master</prematch>
+  <regex offset="after_parent">master_type":"(\w+)"</regex>
+  <order>master_type</order>
+</decoder>
+
+<decoder name="cortex-handoff">
+  <parent>cortex-master</parent>
+  <regex offset="after_parent">handoff_id":"([\w-]+)"</regex>
+  <order>handoff_id</order>
+</decoder>
+
+<decoder name="cortex-handoff-from">
+  <parent>cortex-handoff</parent>
+  <regex offset="after_parent">from_master":"(\w+)"</regex>
+  <order>from_master</order>
+</decoder>
+
+<decoder name="cortex-handoff-to">
+  <parent>cortex-handoff</parent>
+  <regex offset="after_parent">to_master":"(\w+)"</regex>
+  <order>to_master</order>
+</decoder>
+
+<!-- ======================================= -->
+<!-- Cortex Security Decoders              -->
+<!-- ======================================= -->
+
+<decoder name="cortex-security">
+  <parent>cortex-json</parent>
+  <prematch>security|vulnerability|scan</prematch>
+  <regex offset="after_parent">security_event":"(\w+)"</regex>
+  <order>security_event</order>
+</decoder>
+
+<decoder name="cortex-vulnerability">
+  <parent>cortex-security</parent>
+  <regex offset="after_parent">cve_id":"(CVE-\d{4}-\d+)"</regex>
+  <order>cve_id</order>
+</decoder>
+
+<decoder name="cortex-severity">
+  <parent>cortex-security</parent>
+  <regex offset="after_parent">cvss_score":(\d+\.?\d*)</regex>
+  <order>cvss_score</order>
+</decoder>
+
+<!-- ======================================= -->
+<!-- Cortex Configuration Decoders         -->
+<!-- ======================================= -->
+
+<decoder name="cortex-config">
+  <parent>cortex-json</parent>
+  <prematch>configuration|config</prematch>
+  <regex offset="after_parent">config_file":"([^"]+)"</regex>
+  <order>config_file</order>
+</decoder>
+
+<decoder name="cortex-config-change">
+  <parent>cortex-config</parent>
+  <regex offset="after_parent">change_type":"(\w+)"</regex>
+  <order>config_change_type</order>
+</decoder>
+
+<!-- ======================================= -->
+<!-- Cortex Performance Decoders           -->
+<!-- ======================================= -->
+
+<decoder name="cortex-performance">
+  <parent>cortex-json</parent>
+  <prematch>metrics|performance</prematch>
+  <regex offset="after_parent">metric_name":"([^"]+)"</regex>
+  <order>metric_name</order>
+</decoder>
+
+<decoder name="cortex-metric-value">
+  <parent>cortex-performance</parent>
+  <regex offset="after_parent">metric_value":(\d+\.?\d*)</regex>
+  <order>metric_value</order>
+</decoder>
+
+<decoder name="cortex-error-rate">
+  <parent>cortex-performance</parent>
+  <regex offset="after_parent">error_rate":(\d+\.?\d*)</regex>
+  <order>error_rate</order>
+</decoder>
+
+<!-- ======================================= -->
+<!-- Cortex Task Queue Decoders            -->
+<!-- ======================================= -->
+
+<decoder name="cortex-queue">
+  <parent>cortex-json</parent>
+  <prematch>queue|task_queue</prematch>
+  <regex offset="after_parent">queue_size":(\d+)</regex>
+  <order>queue_size</order>
+</decoder>
+
+<decoder name="cortex-queue-limit">
+  <parent>cortex-queue</parent>
+  <regex offset="after_parent">queue_limit":(\d+)</regex>
+  <order>queue_limit</order>
+</decoder>
+
+<!-- ======================================= -->
+<!-- Cortex Authentication Decoders        -->
+<!-- ======================================= -->
+
+<decoder name="cortex-auth">
+  <parent>cortex-json</parent>
+  <prematch>auth|authentication</prematch>
+  <regex offset="after_parent">username":"([^"]+)"</regex>
+  <order>username</order>
+</decoder>
+
+<decoder name="cortex-auth-source">
+  <parent>cortex-auth</parent>
+  <regex offset="after_parent">source_ip":"([\d\.]+)"</regex>
+  <order>source_ip</order>
+</decoder>
+
+<decoder name="cortex-auth-method">
+  <parent>cortex-auth</parent>
+  <regex offset="after_parent">auth_method":"(\w+)"</regex>
+  <order>auth_method</order>
+</decoder>
+
+<!-- ======================================= -->
+<!-- Generic Cortex Text Log Decoder       -->
+<!-- (Fallback for non-JSON logs)          -->
+<!-- ======================================= -->
+
+<decoder name="cortex-text">
+  <program_name>^cortex</program_name>
+  <prematch>\[</prematch>
+  <regex>^\[(\S+)\]\s+(\w+):\s+(.+)</regex>
+  <order>timestamp,log_level,message</order>
+</decoder>
+

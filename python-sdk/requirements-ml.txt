@@ -1,17 +1,17 @@
 # ML/AI Dependencies for Cortex
 # PyTorch and Deep Learning
-torch==2.1.2
-torchvision==0.16.2
-torchaudio==2.1.2
-transformers==4.36.2
+torch>=2.8.0  # Updated to fix CVE (RCE + resource shutdown vulnerabilities)
+torchvision>=0.21.0  # Compatible with torch 2.8+
+torchaudio>=2.8.0  # Compatible with torch 2.8+
+transformers>=4.53.0  # Updated to fix CVE (deserialization vulnerabilities)
 sentence-transformers==2.3.1
 accelerate==0.25.0
 
 # LangChain and LLM Orchestration
-langchain==0.1.0
+langchain>=0.2.5  # Updated to fix CVE (DoS and SQL injection vulnerabilities)
 langchain-openai==0.0.2
-langchain-community==0.0.10
-langchain-core==0.1.10
+langchain-community>=0.3.27  # Updated to fix CVE (XXE and SSRF)
+langchain-core>=0.3.80  # Updated to fix CVE (template injection)
 langsmith==0.0.77
 
 # Vector Stores and Embeddings
@@ -23,17 +23,17 @@ openai==1.7.1
 # Data Processing
 numpy==1.26.3
 pandas==2.1.4
-scikit-learn==1.4.0
+scikit-learn>=1.5.0  # Updated to fix CVE (sensitive data leakage)
 scipy==1.11.4
 
 # Model Training and Evaluation
 tensorboard==2.15.1
-mlflow==2.9.2
+mlflow>=2.22.2  # Updated to fix CVE (RCE, path traversal, weak auth)
 optuna==3.5.0
 wandb==0.16.2
 
 # Utilities
-tqdm==4.66.1
+tqdm>=4.66.3  # Updated to fix CVE (CLI arguments injection)
 pyyaml==6.0.1
 python-dotenv==1.0.0
 joblib==1.3.2
@@ -46,6 +46,6 @@ pygments==2.17.2
 
 # Monitoring
 prometheus-client==0.19.0
-sentry-sdk==1.39.2
+sentry-sdk>=1.45.1  # Updated to fix CVE (env var exposure)
 faiss-cpu==1.13.0
 sentence-transformers==5.1.2

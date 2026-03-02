@@ -1,0 +1,22 @@
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  annotations:
+      {"apiVersion":"monitoring.coreos.com/v1","kind":"ServiceMonitor","metadata":{"annotations":{},"labels":{"release":"kube-prometheus-stack"},"name":"proxmox-exporter","namespace":"monitoring-exporters"},"spec":{"endpoints":[{"interval":"30s","params":{"module":["default"],"target":["https://10.88.145.100:8006"]},"path":"/pve","port":"metrics"}],"selector":{"matchLabels":{"app":"proxmox-exporter"}}}}
+  labels:
+    release: kube-prometheus-stack
+  name: proxmox-exporter
+  namespace: monitoring-exporters
+spec:
+  endpoints:
+  - interval: 30s
+    params:
+      module:
+      - default
+      target:
+      - 10.88.140.164:8006
+    path: /pve
+    port: metrics
+  selector:
+    matchLabels:
+      app: proxmox-exporter

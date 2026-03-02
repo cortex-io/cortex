@@ -1,0 +1,135 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: cortex
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: cortex-api
+  namespace: cortex
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: cortex-api-reader
+rules:
+- apiGroups: [""]
+  resources: ["pods", "services", "nodes", "namespaces", "configmaps", "secrets", "endpoints"]
+  verbs: ["get", "list", "watch"]
+- apiGroups: [""]
+  resources: ["pods", "pods/log"]
+  verbs: ["get", "list"]
+- apiGroups: [""]
+  resources: ["pods"]
+  verbs: ["create", "delete"]  # For connectivity tests
+- apiGroups: ["apps"]
+  resources: ["deployments", "statefulsets", "daemonsets", "replicasets"]
+  verbs: ["get", "list", "watch", "patch", "update"]  # patch/update for self-healing
+- apiGroups: ["apps"]
+  resources: ["deployments/scale"]
+  verbs: ["get", "update", "patch"]  # For scaling during healing
+- apiGroups: ["batch"]
+  resources: ["jobs", "cronjobs"]
+  verbs: ["get", "list", "watch"]
+- apiGroups: ["metrics.k8s.io"]
+  resources: ["nodes", "pods"]
+  verbs: ["get", "list"]
+- apiGroups: [""]
+  resources: ["events"]
+  verbs: ["get", "list", "watch"]  # For diagnostic checks
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: cortex-api-reader-binding
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: cortex-api-reader
+subjects:
+- kind: ServiceAccount
+  name: cortex-api
+  namespace: cortex
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cortex-orchestrator
+  namespace: cortex
+  labels:
+    app: cortex-orchestrator
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: cortex-orchestrator
+  template:
+    metadata:
+      labels:
+        app: cortex-orchestrator
+    spec:
+      serviceAccountName: cortex-api
+      containers:
+      - name: cortex-api
+        image: 10.43.170.72:5000/cortex-api:latest
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 8000
+          name: http
+        env:
+        - name: ANTHROPIC_API_KEY
+          value: "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"
+        - name: SANDFLY_HOST
+          value: "10.88.140.176"
+        - name: SANDFLY_USERNAME
+          value: "admin"
+        - name: SANDFLY_PASSWORD
+          value: "emphasize-art-nibble-arguable-paradox-flick-unpack"
+        - name: PROXMOX_HOST
+          value: "10.88.140.21"
+        - name: PROXMOX_PORT
+          value: "8006"
+        - name: PROXMOX_USERNAME
+          value: "root@pam"
+        - name: PROXMOX_PASSWORD
+          value: "toor"
+        - name: UNIFI_HOST
+          value: "10.88.140.16"
+        - name: UNIFI_PORT
+          value: "443"
+        - name: UNIFI_USERNAME
+          value: "cortex"
+        - name: UNIFI_PASSWORD
+          value: "cortex"
+        - name: UNIFI_SITE
+          value: "default"
+        - name: UNIFI_IS_UDM
+          value: "false"
+        - name: SELF_HEAL_WORKER_PATH
+          value: "/app/scripts/self-heal-worker.sh"
+        - name: HEALING_ENABLED
+          value: "true"
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "200m"
+          limits:
+            memory: "1Gi"
+            cpu: "1000m"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: cortex-orchestrator
+  namespace: cortex
+  labels:
+    app: cortex-orchestrator
+spec:
+  selector:
+    app: cortex-orchestrator
+  ports:
+  - port: 8000
+    targetPort: 8000
+    name: http
+  type: ClusterIP

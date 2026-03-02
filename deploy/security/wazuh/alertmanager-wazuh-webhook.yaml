@@ -1,0 +1,327 @@
+# Alertmanager Configuration for Wazuh Integration
+#
+# Purpose: Send Prometheus/Alertmanager alerts back to Wazuh for correlation
+# Architecture: Bidirectional alert flow
+#   - Wazuh -> Prometheus: Security events as metrics
+#   - Prometheus -> Wazuh: Infrastructure alerts as security events
+#
+# This creates a unified security and monitoring view in Wazuh dashboard
+
+---
+# ConfigMap: Alertmanager Configuration with Wazuh Webhook
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: alertmanager-wazuh-config
+  namespace: monitoring
+data:
+  alertmanager.yml: |
+    global:
+      resolve_timeout: 5m
+
+    # Alert routing configuration
+    route:
+      group_by: ['alertname', 'cluster', 'service']
+      group_wait: 10s
+      group_interval: 10s
+      repeat_interval: 12h
+      receiver: 'default'
+
+      routes:
+      # Critical alerts -> Multiple receivers including Wazuh
+      - match:
+          severity: critical
+        receiver: 'critical-alerts'
+        continue: true
+
+      # Security alerts -> Wazuh + Security team
+      - match_re:
+          alertname: '.*Security.*|.*Unauthorized.*|.*Intrusion.*'
+        receiver: 'security-alerts'
+        continue: true
+
+      # Cortex-specific alerts -> Wazuh for correlation
+      - match_re:
+          component: cortex
+        receiver: 'cortex-alerts'
+        continue: true
+
+      # Wazuh agent alerts -> N8N workflow for auto-remediation
+      - match_re:
+          alertname: 'WazuhAgent.*'
+        receiver: 'wazuh-agent-alerts'
+        continue: true
+
+    # Inhibition rules (prevent alert spam)
+    inhibit_rules:
+    - source_match:
+        severity: 'critical'
+      target_match:
+        severity: 'warning'
+      equal: ['alertname', 'cluster', 'service']
+
+    # Alert receivers
+    receivers:
+
+    # Default receiver (Slack/Email)
+    - name: 'default'
+      slack_configs:
+      - api_url: 'YOUR_SLACK_WEBHOOK_URL'
+        channel: '#monitoring-alerts'
+        title: 'Prometheus Alert'
+        text: '{{ range .Alerts }}{{ .Annotations.description }}{{ end }}'
+
+    # Critical alerts -> Wazuh, PagerDuty, Slack
+    - name: 'critical-alerts'
+      webhook_configs:
+      # Send to Wazuh via custom webhook receiver
+      - url: 'http://wazuh-webhook-receiver.security-monitoring.svc.cluster.local:8080/webhook'
+        send_resolved: true
+        http_config:
+          basic_auth:
+            username: 'alertmanager'
+            password: 'CHANGE_ME'
+
+      # PagerDuty integration
+      pagerduty_configs:
+      - service_key: 'YOUR_PAGERDUTY_KEY'
+        description: '{{ .GroupLabels.alertname }}: {{ .Annotations.summary }}'
+
+      # Slack critical channel
+      slack_configs:
+      - api_url: 'YOUR_SLACK_WEBHOOK_URL'
+        channel: '#critical-alerts'
+        title: 'CRITICAL: {{ .GroupLabels.alertname }}'
+        text: '{{ range .Alerts }}{{ .Annotations.description }}{{ end }}'
+        color: 'danger'
+
+    # Security alerts -> Wazuh + Security team
+    - name: 'security-alerts'
+      webhook_configs:
+      # Wazuh webhook
+      - url: 'http://wazuh-webhook-receiver.security-monitoring.svc.cluster.local:8080/webhook'
+        send_resolved: true
+
+      # Email to security team
+      email_configs:
+      - to: 'security@ryops.local'
+        from: 'alertmanager@ryops.local'
+        smarthost: 'smtp.ryops.local:587'
+        headers:
+          Subject: 'Security Alert: {{ .GroupLabels.alertname }}'
+
+    # Cortex-specific alerts -> Wazuh for correlation
+    - name: 'cortex-alerts'
+      webhook_configs:
+      # Wazuh webhook for correlation with Cortex logs
+      - url: 'http://wazuh-webhook-receiver.security-monitoring.svc.cluster.local:8080/webhook'
+        send_resolved: true
+
+      # N8N workflow for auto-remediation
+      - url: 'http://n8n.n8n.svc.cluster.local:5678/webhook/cortex-alerts'
+        send_resolved: true
+
+      # Slack cortex channel
+      slack_configs:
+      - api_url: 'YOUR_SLACK_WEBHOOK_URL'
+        channel: '#cortex-alerts'
+        title: 'Cortex Alert: {{ .GroupLabels.alertname }}'
+        text: '{{ range .Alerts }}{{ .Annotations.description }}{{ end }}'
+
+    # Wazuh agent alerts -> N8N for auto-remediation
+    - name: 'wazuh-agent-alerts'
+      webhook_configs:
+      # N8N workflow to attempt agent reconnection
+      - url: 'http://n8n.n8n.svc.cluster.local:5678/webhook/wazuh-agent-recovery'
+        send_resolved: true
+
+---
+# Deployment: Wazuh Webhook Receiver
+# Receives alerts from Alertmanager and forwards to Wazuh API
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: wazuh-webhook-receiver
+  namespace: security-monitoring
+  labels:
+    app: wazuh-webhook-receiver
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: wazuh-webhook-receiver
+  template:
+    metadata:
+      labels:
+        app: wazuh-webhook-receiver
+    spec:
+      containers:
+      - name: webhook-receiver
+        image: ryops/wazuh-webhook-receiver:latest
+        imagePullPolicy: Always
+        ports:
+        - name: webhook
+          containerPort: 8080
+        env:
+        - name: WAZUH_API_HOST
+          value: "10.88.140.202"
+        - name: WAZUH_API_PORT
+          value: "55000"
+        - name: WAZUH_API_USERNAME
+          valueFrom:
+            secretKeyRef:
+              name: wazuh-api-credentials
+              key: username
+        - name: WAZUH_API_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: wazuh-api-credentials
+              key: password
+        - name: WEBHOOK_USERNAME
+          value: "alertmanager"
+        - name: WEBHOOK_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: wazuh-webhook-auth
+              key: password
+        resources:
+          requests:
+            memory: "64Mi"
+            cpu: "50m"
+          limits:
+            memory: "128Mi"
+            cpu: "200m"
+
+---
+# Service: Wazuh Webhook Receiver
+apiVersion: v1
+kind: Service
+metadata:
+  name: wazuh-webhook-receiver
+  namespace: security-monitoring
+  labels:
+    app: wazuh-webhook-receiver
+spec:
+  type: ClusterIP
+  ports:
+  - port: 8080
+    targetPort: 8080
+    protocol: TCP
+    name: webhook
+  selector:
+    app: wazuh-webhook-receiver
+
+---
+# Secret: Webhook Authentication
+apiVersion: v1
+kind: Secret
+metadata:
+  name: wazuh-webhook-auth
+  namespace: security-monitoring
+type: Opaque
+stringData:
+  username: "alertmanager"
+  password: "CHANGE_ME_IN_PRODUCTION"
+
+---
+# ConfigMap: Alert to Wazuh Event Mapping
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: alert-wazuh-mapping
+  namespace: security-monitoring
+data:
+  mapping.yaml: |
+    # Map Prometheus alert severity to Wazuh alert levels
+    severity_mapping:
+      critical: 12    # Wazuh level 12 (Critical)
+      high: 10        # Wazuh level 10 (High)
+      warning: 7      # Wazuh level 7 (Medium)
+      info: 5         # Wazuh level 5 (Low)
+
+    # Map alert types to Wazuh rule groups
+    alert_groups:
+      WazuhAgentDisconnected: "wazuh,agent_management"
+      CortexAgentFailure: "cortex,cortex_errors"
+      CortexTokenExhaustion: "cortex,cortex_performance"
+      CortexWorkerTimeout: "cortex,cortex_errors,worker_timeout"
+      CortexMCPFailure: "cortex,cortex_errors,mcp_failures"
+      CortexUnauthorizedAccess: "cortex,cortex_security,authentication_failures"
+      WazuhFileIntegrityViolation: "syscheck,fim"
+      WazuhCriticalVulnerability: "vulnerability-detector"
+
+    # Custom event formatting for Wazuh
+    event_template: |
+      {
+        "timestamp": "{{ .StartsAt }}",
+        "rule_id": 100500,
+        "rule_description": "{{ .Labels.alertname }}",
+        "rule_level": {{ .Severity }},
+        "rule_groups": {{ .Groups }},
+        "source": "alertmanager",
+        "agent_id": "000",
+        "agent_name": "prometheus-integration",
+        "data": {
+          "alertname": "{{ .Labels.alertname }}",
+          "severity": "{{ .Labels.severity }}",
+          "component": "{{ .Labels.component }}",
+          "summary": "{{ .Annotations.summary }}",
+          "description": "{{ .Annotations.description }}"
+        }
+      }
+
+---
+# Example Webhook Receiver Implementation (wazuh_webhook_receiver.py)
+# This would be built into the ryops/wazuh-webhook-receiver:latest image
+#
+# from flask import Flask, request, jsonify
+# import requests
+# import json
+# import os
+# from datetime import datetime
+#
+# app = Flask(__name__)
+#
+# WAZUH_API_HOST = os.getenv('WAZUH_API_HOST', '10.88.140.202')
+# WAZUH_API_PORT = os.getenv('WAZUH_API_PORT', '55000')
+# WAZUH_API_USER = os.getenv('WAZUH_API_USERNAME')
+# WAZUH_API_PASS = os.getenv('WAZUH_API_PASSWORD')
+#
+# def get_wazuh_token():
+#     """Authenticate with Wazuh API and get token"""
+#     url = f"https://{WAZUH_API_HOST}:{WAZUH_API_PORT}/security/user/authenticate"
+#     response = requests.post(url, auth=(WAZUH_API_USER, WAZUH_API_PASS), verify=False)
+#     return response.json()['data']['token']
+#
+# def send_to_wazuh(alert_data):
+#     """Send alert to Wazuh as custom event"""
+#     token = get_wazuh_token()
+#     headers = {'Authorization': f'Bearer {token}'}
+#
+#     # Format alert for Wazuh ingestion
+#     wazuh_event = {
+#         'timestamp': alert_data.get('startsAt'),
+#         'rule_id': 100500,  # Custom rule for Prometheus alerts
+#         'rule_description': alert_data.get('labels', {}).get('alertname'),
+#         'rule_level': map_severity(alert_data.get('labels', {}).get('severity')),
+#         'data': alert_data
+#     }
+#
+#     # Send to Wazuh API
+#     url = f"https://{WAZUH_API_HOST}:{WAZUH_API_PORT}/events"
+#     response = requests.post(url, headers=headers, json=wazuh_event, verify=False)
+#     return response
+#
+# @app.route('/webhook', methods=['POST'])
+# def webhook():
+#     """Receive webhooks from Alertmanager"""
+#     data = request.json
+#
+#     # Process each alert
+#     for alert in data.get('alerts', []):
+#         send_to_wazuh(alert)
+#
+#     return jsonify({'status': 'success'}), 200
+#
+# if __name__ == '__main__':
+#     app.run(host='0.0.0.0', port=8080)

@@ -1,0 +1,19 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: youtube-ingestion
+  namespace: cortex
+  annotations:
+    kubernetes.io/ingress.class: traefik
+spec:
+  rules:
+  - host: youtube.cortex.local
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: youtube-ingestion
+            port:
+              number: 8080

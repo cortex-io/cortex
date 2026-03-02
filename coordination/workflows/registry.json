@@ -1,0 +1,156 @@
+{
+  "version": "1.0.0",
+  "description": "Cortex Workflow Template Registry - Maps intents to n8n workflow templates",
+  "n8n_config": {
+    "base_url_env": "N8N_URL",
+    "api_key_env": "N8N_API_KEY",
+    "default_tags": ["cortex", "automated"]
+  },
+  "intents": {
+    "k3s_storage_expansion": {
+      "template": "k3s-storage-expansion.json",
+      "n8n_name": "K3S Storage Expansion",
+      "description": "Expands storage on k3s nodes via Proxmox/LVM",
+      "tags": ["infrastructure", "storage", "k3s"],
+      "required_params": ["node_name", "size_gb", "storage_class"],
+      "optional_params": ["notify_channel", "dry_run"],
+      "triggers": ["alert:K3sNodeStorageLow", "alert:PVCPending", "manual"],
+      "autonomy": {
+        "can_auto_create": true,
+        "can_auto_execute": true,
+        "requires_approval_above_gb": 500
+      }
+    },
+    "k3s_node_scale": {
+      "template": "k3s-node-scale.json",
+      "n8n_name": "K3S Node Scaling",
+      "description": "Adds or removes k3s worker nodes",
+      "tags": ["infrastructure", "compute", "k3s"],
+      "required_params": ["action", "count"],
+      "optional_params": ["node_template", "target_pool"],
+      "triggers": ["alert:K3sHighCPU", "alert:K3sPendingPods", "manual"],
+      "autonomy": {
+        "can_auto_create": true,
+        "can_auto_execute": true,
+        "max_scale_up": 3,
+        "max_scale_down": 1
+      }
+    },
+    "proxmox_vm_provision": {
+      "template": "proxmox-vm-provision.json",
+      "n8n_name": "Proxmox VM Provisioner",
+      "description": "Provisions new VMs on Proxmox cluster",
+      "tags": ["infrastructure", "compute", "proxmox"],
+      "required_params": ["vm_name", "template_id", "target_node"],
+      "optional_params": ["cores", "memory_mb", "disk_gb", "network", "tags"],
+      "triggers": ["manual", "api"],
+      "autonomy": {
+        "can_auto_create": true,
+        "can_auto_execute": true,
+        "max_cores": 8,
+        "max_memory_gb": 32
+      }
+    },
+    "code_validation": {
+      "template": "code-validation.json",
+      "n8n_name": "Code Validation Pipeline",
+      "description": "Validates code quality, runs linters, tests, and security scans",
+      "tags": ["development", "ci", "validation"],
+      "required_params": ["repo_url", "branch"],
+      "optional_params": ["commit_sha", "languages", "fix_mode", "callback_url"],
+      "triggers": ["webhook:github", "webhook:gitlab", "manual", "api"],
+      "autonomy": {
+        "can_auto_create": true,
+        "can_auto_execute": true,
+        "can_auto_fix": true
+      }
+    },
+    "code_fix": {
+      "template": "code-fix.json",
+      "n8n_name": "Automated Code Fix",
+      "description": "Automatically fixes code issues detected by validation",
+      "tags": ["development", "ci", "fix"],
+      "required_params": ["repo_url", "branch", "issues"],
+      "optional_params": ["create_pr", "auto_merge", "notify"],
+      "triggers": ["workflow:code_validation", "manual"],
+      "autonomy": {
+        "can_auto_create": true,
+        "can_auto_execute": true,
+        "can_create_pr": true,
+        "can_auto_merge": false
+      }
+    },
+    "mcp_server_lifecycle": {
+      "template": "mcp-server-lifecycle.json",
+      "n8n_name": "MCP Server Lifecycle Manager",
+      "description": "Starts, stops, restarts MCP servers",
+      "tags": ["infrastructure", "mcp"],
+      "required_params": ["server_name", "action"],
+      "optional_params": ["config_override", "health_check"],
+      "triggers": ["alert:MCPServerDown", "manual"],
+      "autonomy": {
+        "can_auto_create": true,
+        "can_auto_execute": true
+      }
+    },
+    "backup_restore": {
+      "template": "backup-restore.json",
+      "n8n_name": "Backup and Restore Operations",
+      "description": "Manages backups and restores for critical services",
+      "tags": ["infrastructure", "backup", "disaster-recovery"],
+      "required_params": ["target", "action"],
+      "optional_params": ["snapshot_id", "destination", "verify"],
+      "triggers": ["schedule", "manual", "alert:BackupFailed"],
+      "autonomy": {
+        "can_auto_create": true,
+        "can_auto_execute": true,
+        "restore_requires_approval": true
+      }
+    },
+    "certificate_renewal": {
+      "template": "certificate-renewal.json",
+      "n8n_name": "Certificate Renewal",
+      "description": "Renews TLS certificates before expiry",
+      "tags": ["security", "certificates"],
+      "required_params": ["domain"],
+      "optional_params": ["provider", "notify_days_before"],
+      "triggers": ["schedule", "alert:CertExpiringSoon"],
+      "autonomy": {
+        "can_auto_create": true,
+        "can_auto_execute": true
+      }
+    },
+    "github_pr_validation": {
+      "template": "github-pr-validation.json",
+      "n8n_name": "GitHub PR Validation",
+      "description": "Validates pull requests on GitHub repos via webhook",
+      "tags": ["development", "ci", "github"],
+      "required_params": [],
+      "optional_params": [],
+      "triggers": ["webhook:github"],
+      "autonomy": {
+        "can_auto_create": true,
+        "can_auto_execute": true,
+        "updates_github_status": true
+      }
+    }
+  },
+  "workflow_defaults": {
+    "retry_policy": {
+      "max_attempts": 3,
+      "backoff_multiplier": 2,
+      "initial_delay_seconds": 30
+    },
+    "timeout_seconds": 600,
+    "notification": {
+      "on_success": false,
+      "on_failure": true,
+      "channel": "cortex-alerts"
+    },
+    "audit": {
+      "log_execution": true,
+      "log_params": true,
+      "retention_days": 90
+    }
+  }
+}
