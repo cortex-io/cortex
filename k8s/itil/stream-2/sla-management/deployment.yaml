@@ -1,0 +1,136 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sla-predictor
+  namespace: cortex-itil-stream2
+  labels:
+    app: sla-predictor
+    component: sla-management
+    stream: "2"
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: sla-predictor
+  template:
+    metadata:
+      labels:
+        app: sla-predictor
+        component: sla-management
+    spec:
+      serviceAccountName: sla-predictor
+      containers:
+      - name: sla-predictor
+        image: sla-predictor:latest
+        imagePullPolicy: Never
+        ports:
+        - containerPort: 8000
+          name: metrics
+          protocol: TCP
+        env:
+        - name: PROMETHEUS_URL
+          value: "http://prometheus-k8s.cortex-system.svc.cluster.local:9090"
+        - name: PREDICTION_INTERVAL
+          value: "60"
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "100m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+        volumeMounts:
+        - name: models
+          mountPath: /models
+        - name: data
+          mountPath: /data
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 8000
+          initialDelaySeconds: 30
+          periodSeconds: 30
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 8000
+          initialDelaySeconds: 10
+          periodSeconds: 10
+      volumes:
+      - name: models
+        persistentVolumeClaim:
+          claimName: sla-models-pvc
+      - name: data
+        persistentVolumeClaim:
+          claimName: sla-data-pvc
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: sla-predictor
+  namespace: cortex-itil-stream2
+  labels:
+    app: sla-predictor
+spec:
+  selector:
+    app: sla-predictor
+  ports:
+  - port: 8000
+    targetPort: 8000
+    name: metrics
+  type: ClusterIP
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: sla-predictor
+  namespace: cortex-itil-stream2
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: sla-predictor
+rules:
+- apiGroups: [""]
+  resources: ["services", "pods", "namespaces"]
+  verbs: ["get", "list", "watch"]
+- apiGroups: ["apps"]
+  resources: ["deployments"]
+  verbs: ["get", "list", "watch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: sla-predictor
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: sla-predictor
+subjects:
+- kind: ServiceAccount
+  name: sla-predictor
+  namespace: cortex-itil-stream2
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: sla-models-pvc
+  namespace: cortex-itil-stream2
+spec:
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: sla-data-pvc
+  namespace: cortex-itil-stream2
+spec:
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: 2Gi

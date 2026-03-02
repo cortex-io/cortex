@@ -14,7 +14,7 @@
     "created_at": "2025-11-05T16:48:50Z",
     "created_by": "create-task-cli",
     "context": {
-      "repository": "ry-ops/commit-relay",
+      "repository": "ry-ops/cortex",
       "branch": "main",
       "description": "Replace token budget pie chart with AUTONOMOUS PRODUCTIVITY METRICS chart showing system's incredible progress\\! Create a multi-line time-series chart tracking: 1) Tasks completed per day (green line trending UP), 2) Autonomous commits per day (blue line), 3) Worker success rate % (purple line), 4) Average task completion time trending DOWN (orange line). Add sparklines showing 7-day trends. Include exciting stats cards: 'Total Autonomous Commits', 'Hours Saved', 'Tasks Completed Today', 'Current Streak'. Make it visually stunning with animations, gradients, and celebration effects when milestones hit. Title: '🚀 Autonomous Productivity Analytics'. This will showcase the system's exponential improvement and make users excited about the progress\\!",
       "requirements": []
@@ -32,8 +32,8 @@
       "testing"
     ],
     "knowledge_base_refs": {
-      "implementation_patterns": "/Users/ryandahlberg/commit-relay/scripts/../coordination/masters/development/knowledge-base/implementation-patterns.jsonl",
-      "architecture_docs": "/Users/ryandahlberg/commit-relay/scripts/../coordination/masters/development/knowledge-base/codebase-architecture.json"
+      "implementation_patterns": "/Users/ryandahlberg/cortex/scripts/../coordination/masters/development/knowledge-base/implementation-patterns.jsonl",
+      "architecture_docs": "/Users/ryandahlberg/cortex/scripts/../coordination/masters/development/knowledge-base/codebase-architecture.json"
     }
   },
   "resources": {

@@ -16,7 +16,7 @@ readonly PROJECT_ROOT="${PROJECT_ROOT:-$(cd "$SCRIPT_DIR/../../.." && pwd)}"
 readonly POLICY_DEFINITIONS="${POLICY_DEFINITIONS:-$PROJECT_ROOT/coordination/governance/policies/policy-definitions.json}"
 readonly POLICY_EVALUATION_LOG="${POLICY_EVALUATION_LOG:-$PROJECT_ROOT/coordination/governance/policy-evaluations.jsonl}"
 readonly POLICY_VIOLATIONS_LOG="${POLICY_VIOLATIONS_LOG:-$PROJECT_ROOT/coordination/governance/policy-violations.jsonl}"
-readonly POLICY_CACHE_FILE="${POLICY_CACHE_FILE:-/tmp/commit-relay-policy-cache.json}"
+readonly POLICY_CACHE_FILE="${POLICY_CACHE_FILE:-/tmp/cortex-policy-cache.json}"
 
 # Initialize directories
 mkdir -p "$(dirname "$POLICY_EVALUATION_LOG")"

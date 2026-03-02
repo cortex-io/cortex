@@ -53,8 +53,8 @@
     }
   },
   "deliverables": {
-    "security_scan_report": "/Users/ryandahlberg/Projects/commit-relay/agents/workers/worker-scan-021/reports/security-scan-report.md",
-    "completion_report": "/Users/ryandahlberg/Projects/commit-relay/agents/workers/worker-scan-021/completion-report.json"
+    "security_scan_report": "/Users/ryandahlberg/Projects/cortex/agents/workers/worker-scan-021/reports/security-scan-report.md",
+    "completion_report": "/Users/ryandahlberg/Projects/cortex/agents/workers/worker-scan-021/completion-report.json"
   },
   "service_health": {
     "dashboard_api": "healthy",

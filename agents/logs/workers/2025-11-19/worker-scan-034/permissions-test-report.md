@@ -8,7 +8,7 @@
 
 ## Executive Summary
 
-Comprehensive testing of the commit-relay Access Control system has been completed successfully. All permission checks are functioning correctly with proper role-based access control (RBAC) and namespace restrictions in place.
+Comprehensive testing of the cortex Access Control system has been completed successfully. All permission checks are functioning correctly with proper role-based access control (RBAC) and namespace restrictions in place.
 
 ## Test Environment
 
@@ -46,7 +46,7 @@ Comprehensive testing of the commit-relay Access Control system has been complet
 
 ## Test Results
 
-### 1. System Role Permissions (commit-relay-system)
+### 1. System Role Permissions (cortex-system)
 
 | Permission | Expected | Actual | Status |
 |------------|----------|--------|--------|
@@ -98,7 +98,7 @@ The generated access control report reveals interesting system behavior:
 
 ### Top Actors
 1. **undefined** - 5,050 attempts (all denied) - Indicates potential issue with actor identification
-2. **commit-relay-system** - 5 attempts (all granted)
+2. **cortex-system** - 5 attempts (all granted)
 3. **security-master** - 6 attempts (3 granted, 3 denied)
 4. **default-user** - 5 attempts (3 granted, 2 denied)
 5. **sparse-pool-manager** - 3 attempts (all denied) - Role not assigned
@@ -173,7 +173,7 @@ The Access Control system meets the following requirements:
 
 ## Conclusion
 
-The commit-relay Access Control system is functioning correctly with proper:
+The cortex Access Control system is functioning correctly with proper:
 - Role-based permissions enforcement
 - Namespace access restrictions
 - Audit logging capabilities

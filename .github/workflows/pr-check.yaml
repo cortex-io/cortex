@@ -1,0 +1,253 @@
+name: Pull Request Validation
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+    branches:
+      - main
+      - develop
+
+permissions:
+  contents: read
+  pull-requests: write
+  statuses: write
+
+env:
+  NODE_VERSION: '20.x'
+
+jobs:
+  # PR metadata validation
+  pr-metadata:
+    name: Validate PR Metadata
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check PR title format
+        uses: actions/github-script@v7
+        with:
+          script: |
+            // Dependabot PRs follow their own title format — skip validation
+            if (context.actor === 'dependabot[bot]') {
+              core.info('Skipping title check for Dependabot PR');
+              return;
+            }
+            const title = context.payload.pull_request.title;
+            const pattern = /^(feat|fix|docs|style|refactor|perf|test|build|ci|chore|revert)(\(.+\))?: .+/;
+
+            if (!pattern.test(title)) {
+              core.setFailed(
+                'PR title must follow conventional commits format:\n' +
+                'type(scope): description\n\n' +
+                'Examples:\n' +
+                '- feat(mcp-k8s): add pod scaling support\n' +
+                '- fix(dashboard): resolve memory leak\n' +
+                '- docs(readme): update installation guide'
+              );
+            }
+
+      - name: Check PR description
+        uses: actions/github-script@v7
+        with:
+          script: |
+            // Dependabot PRs use auto-generated descriptions — skip validation
+            if (context.actor === 'dependabot[bot]') {
+              core.info('Skipping description check for Dependabot PR');
+              return;
+            }
+            const body = context.payload.pull_request.body || '';
+
+            if (body.length < 50) {
+              core.setFailed('PR description must be at least 50 characters');
+            }
+
+            const requiredSections = ['## Summary', '## Changes', '## Testing'];
+            const missingSections = requiredSections.filter(section => !body.includes(section));
+
+            if (missingSections.length > 0) {
+              core.warning(
+                'PR description should include:\n' +
+                missingSections.join('\n')
+              );
+            }
+
+      - name: Check branch name
+        run: |
+          BRANCH="${{ github.head_ref }}"
+          # Dependabot branches use their own naming convention — allow them
+          if echo "$BRANCH" | grep -qE "^dependabot/"; then
+            echo "Dependabot branch — skipping branch name check"
+            exit 0
+          fi
+          PATTERN="^(feature|bugfix|hotfix|release|refactor|fix)/[a-z0-9-]+$"
+          if ! echo "$BRANCH" | grep -qE "$PATTERN"; then
+            echo "Branch name must follow pattern: type/description"
+            echo "Examples: feature/add-monitoring, bugfix/fix-memory-leak"
+            exit 1
+          fi
+
+      - name: Check for WIP
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const title = context.payload.pull_request.title;
+            const draft = context.payload.pull_request.draft;
+
+            if (title.toLowerCase().includes('wip') && !draft) {
+              core.setFailed('PRs with WIP in title should be marked as draft');
+            }
+
+  # Conventional commits check
+  commit-lint:
+    name: Lint Commit Messages
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    # Skip for Dependabot — their commit messages don't follow conventional commits
+    if: github.actor != 'dependabot[bot]'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Install commitlint
+        run: |
+          npm install -g @commitlint/cli @commitlint/config-conventional
+
+      - name: Validate commits
+        run: |
+          git fetch origin ${{ github.base_ref }}
+          for commit in $(git rev-list origin/${{ github.base_ref }}..HEAD); do
+            echo "Checking commit: $commit"
+            git log --format=%B -n 1 $commit | npx commitlint
+          done
+
+  # Security check — npm audit only (no build/lint scripts exist)
+  security-check:
+    name: Security Check
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run audit
+        run: |
+          npm audit --audit-level=high || {
+            echo "Security vulnerabilities found!"
+            echo "Run 'npm audit' locally and fix issues"
+            exit 1
+          }
+
+      - name: Check for secrets
+        uses: trufflesecurity/trufflehog@main
+        with:
+          path: ./
+          base: ${{ github.event.pull_request.base.sha }}
+          head: ${{ github.event.pull_request.head.sha }}
+
+  # PR size check
+  pr-size:
+    name: Check PR Size
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Check PR size
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const additions = context.payload.pull_request.additions;
+            const deletions = context.payload.pull_request.deletions;
+            const changes = additions + deletions;
+
+            let label = '';
+            let comment = '';
+
+            if (changes < 100) {
+              label = 'size/XS';
+            } else if (changes < 300) {
+              label = 'size/S';
+            } else if (changes < 600) {
+              label = 'size/M';
+            } else if (changes < 1200) {
+              label = 'size/L';
+              comment = '⚠️ Large PR detected. Consider splitting into smaller PRs.';
+            } else {
+              label = 'size/XL';
+              comment = '⚠️ Extra large PR detected. Please split into smaller, focused PRs for easier review.';
+            }
+
+            try {
+              await github.rest.issues.addLabels({
+                issue_number: context.issue.number,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                labels: [label]
+              });
+            } catch (e) {
+              core.warning(`Could not add label: ${e.message}`);
+            }
+
+            if (comment) {
+              await github.rest.issues.createComment({
+                issue_number: context.issue.number,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                body: comment
+              });
+            }
+
+  # Auto-labeling
+  auto-label:
+    name: Auto Label PR
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Label based on files
+        uses: actions/labeler@v5
+        with:
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          configuration-path: .github/labeler.yml
+        continue-on-error: true
+
+  # PR validation summary
+  pr-validation-summary:
+    name: PR Validation Summary
+    runs-on: ubuntu-latest
+    needs:
+      - pr-metadata
+      - security-check
+    if: always()
+
+    steps:
+      - name: Check validation status
+        run: |
+          if [[ "${{ needs.pr-metadata.result }}" == "failure" ]] || \
+             [[ "${{ needs.security-check.result }}" == "failure" ]]; then
+            echo "PR validation failed!"
+            exit 1
+          fi
+          echo "PR validation passed!"

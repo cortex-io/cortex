@@ -5,7 +5,7 @@
 ### Install from source
 
 ```bash
-cd /Users/ryandahlberg/commit-relay/python-sdk
+cd /Users/ryandahlberg/cortex/python-sdk
 pip install -e .
 ```
 
@@ -51,7 +51,7 @@ Test the installation:
 
 ```bash
 cd examples
-export PYTHONPATH=/Users/ryandahlberg/commit-relay/python-sdk
+export PYTHONPATH=/Users/ryandahlberg/cortex/python-sdk
 python3 basic_usage.py
 ```
 
@@ -70,7 +70,7 @@ print(client.ping())  # Should print True
 If you get `ModuleNotFoundError: No module named 'commit_relay'`, either:
 
 1. Install the package: `pip install -e .`
-2. Or set PYTHONPATH: `export PYTHONPATH=/Users/ryandahlberg/commit-relay/python-sdk`
+2. Or set PYTHONPATH: `export PYTHONPATH=/Users/ryandahlberg/cortex/python-sdk`
 
 ### pandas not available
 
@@ -97,7 +97,7 @@ python3 --version
 
 ## Dashboard Requirements
 
-The SDK requires a running commit-relay dashboard:
+The SDK requires a running cortex dashboard:
 
 1. Dashboard must be running on http://localhost:3000 (or configured URL)
 2. Dashboard API must be accessible

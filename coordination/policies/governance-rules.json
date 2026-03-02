@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "description": "Governance rules for commit-relay worker validation and compliance",
+  "description": "Governance rules for cortex worker validation and compliance",
   "resource_limits": {
     "max_tokens_per_worker": 200000,
     "max_time_minutes": 120,

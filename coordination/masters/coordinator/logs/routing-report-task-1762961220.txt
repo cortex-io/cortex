@@ -27,7 +27,7 @@ Affected Workers:
   - sec-worker-48C1327F
 
 Script Under Investigation:
-  /Users/ryandahlberg/commit-relay/scripts/claude-worker-launcher-v2.sh
+  /Users/ryandahlberg/cortex/scripts/claude-worker-launcher-v2.sh
 
 MOE ROUTING ANALYSIS
 --------------------
@@ -54,7 +54,7 @@ Reasoning:
 ROUTING ACTIONS TAKEN
 ----------------------
 ✓ Created handoff file: 
-  /Users/ryandahlberg/commit-relay/coordination/masters/coordinator/handoffs/to-development-task-1762961220.json
+  /Users/ryandahlberg/cortex/coordination/masters/coordinator/handoffs/to-development-task-1762961220.json
 
 ✓ Logged routing decision to knowledge base:
   - knowledge-base/routing-decisions.jsonl

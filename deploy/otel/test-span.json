@@ -1,0 +1,107 @@
+{
+  "resourceSpans": [
+    {
+      "resource": {
+        "attributes": [
+          {
+            "key": "service.name",
+            "value": {
+              "stringValue": "cortex-test"
+            }
+          },
+          {
+            "key": "service.namespace",
+            "value": {
+              "stringValue": "cortex"
+            }
+          },
+          {
+            "key": "deployment.environment",
+            "value": {
+              "stringValue": "test"
+            }
+          },
+          {
+            "key": "cortex.agent.type",
+            "value": {
+              "stringValue": "test-agent"
+            }
+          },
+          {
+            "key": "cortex.task.id",
+            "value": {
+              "stringValue": "test-task-001"
+            }
+          }
+        ]
+      },
+      "scopeSpans": [
+        {
+          "scope": {
+            "name": "cortex-test-instrumentation",
+            "version": "1.0.0"
+          },
+          "spans": [
+            {
+              "traceId": "5b8aa5a2d2c872e8321cf37308d69df2",
+              "spanId": "051581bf3cb55c13",
+              "name": "cortex.test.operation",
+              "kind": 1,
+              "startTimeUnixNano": "1702323600000000000",
+              "endTimeUnixNano": "1702323601000000000",
+              "attributes": [
+                {
+                  "key": "cortex.operation.type",
+                  "value": {
+                    "stringValue": "test"
+                  }
+                },
+                {
+                  "key": "cortex.test.duration_ms",
+                  "value": {
+                    "intValue": "1000"
+                  }
+                },
+                {
+                  "key": "http.method",
+                  "value": {
+                    "stringValue": "POST"
+                  }
+                },
+                {
+                  "key": "http.status_code",
+                  "value": {
+                    "intValue": "200"
+                  }
+                }
+              ],
+              "events": [
+                {
+                  "timeUnixNano": "1702323600500000000",
+                  "name": "test.checkpoint",
+                  "attributes": [
+                    {
+                      "key": "checkpoint.name",
+                      "value": {
+                        "stringValue": "halfway"
+                      }
+                    },
+                    {
+                      "key": "progress",
+                      "value": {
+                        "intValue": "50"
+                      }
+                    }
+                  ]
+                }
+              ],
+              "status": {
+                "code": 1
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

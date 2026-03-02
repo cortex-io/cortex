@@ -38,7 +38,7 @@
     },
     "top_repositories": [
       {
-        "name": "ry-ops/commit-relay",
+        "name": "ry-ops/cortex",
         "language": "JavaScript",
         "description": "Multi-agent AI system for autonomous GitHub repository management",
         "visibility": "private",

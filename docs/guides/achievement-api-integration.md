@@ -49,7 +49,7 @@ await fetch('http://localhost:5001/api/achievements/execute/quickdraw', {
 
 ## MoE Integration
 
-Achievement Master routes tasks through commit-relay's MoE system:
+Achievement Master routes tasks through cortex's MoE system:
 - Development Master: Feature PRs, code enhancements
 - CI/CD Master: Workflow automation, deployments
 - Security Master: Token management, best practices

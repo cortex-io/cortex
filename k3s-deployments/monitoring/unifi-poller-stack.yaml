@@ -1,0 +1,115 @@
+---
+# UniFi Poller Stack for K3s - Based on timothystewart6/unpoller-unifi
+# Proper implementation using UniFi Controller API with all metrics
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: unpoller-config
+  namespace: monitoring
+data:
+  UP_INFLUXDB_DISABLE: "true"
+  UP_POLLER_DEBUG: "false"
+  UP_UNIFI_DYNAMIC: "false"
+  UP_PROMETHEUS_HTTP_LISTEN: "0.0.0.0:9130"
+  UP_PROMETHEUS_NAMESPACE: "unpoller"
+  UP_UNIFI_CONTROLLER_0_VERIFY_SSL: "false"
+  UP_UNIFI_CONTROLLER_0_SAVE_ALARMS: "true"
+  UP_UNIFI_CONTROLLER_0_SAVE_ANOMALIES: "true"
+  UP_UNIFI_CONTROLLER_0_SAVE_EVENTS: "true"
+  UP_UNIFI_CONTROLLER_0_SAVE_IDS: "true"
+  UP_UNIFI_CONTROLLER_0_SAVE_SITES: "true"
+  UP_UNIFI_CONTROLLER_0_SAVE_DPI: "false"
+  UP_UNIFI_CONTROLLER_0_URL: "https://10.88.140.144:443"
+  UP_UNIFI_CONTROLLER_0_USER: "unifi-poller"
+  UP_UNIFI_CONTROLLER_0_PASS: "rvF4T4UuzjX^cQy8umPE"
+  UP_UNIFI_CONTROLLER_0_SITE: "default"
+  TZ: "America/Chicago"
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: unpoller
+  namespace: monitoring
+  labels:
+    app: unpoller
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: unpoller
+  template:
+    metadata:
+      labels:
+        app: unpoller
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "9130"
+        prometheus.io/path: "/metrics"
+    spec:
+      containers:
+      - name: unpoller
+        image: ghcr.io/unpoller/unpoller:latest
+        ports:
+        - name: metrics
+          containerPort: 9130
+          protocol: TCP
+        envFrom:
+        - configMapRef:
+            name: unpoller-config
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "100m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+        livenessProbe:
+          httpGet:
+            path: /metrics
+            port: 9130
+          initialDelaySeconds: 30
+          periodSeconds: 30
+        readinessProbe:
+          httpGet:
+            path: /metrics
+            port: 9130
+          initialDelaySeconds: 10
+          periodSeconds: 10
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: unpoller
+  namespace: monitoring
+  labels:
+    app: unpoller
+  annotations:
+    prometheus.io/scrape: "true"
+    prometheus.io/port: "9130"
+    prometheus.io/path: "/metrics"
+spec:
+  type: ClusterIP
+  ports:
+  - name: metrics
+    port: 9130
+    targetPort: 9130
+    protocol: TCP
+  selector:
+    app: unpoller
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: unpoller
+  namespace: monitoring
+  labels:
+    app: unpoller
+    release: kube-prometheus-stack
+spec:
+  selector:
+    matchLabels:
+      app: unpoller
+  endpoints:
+  - port: metrics
+    interval: 30s
+    path: /metrics

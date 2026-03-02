@@ -6,7 +6,7 @@ Visual architecture and design overview of the ML, Discovery, and CI/CD modules.
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│                     Commit-Relay Python SDK                      │
+│                     Cortex Python SDK                      │
 ├─────────────────────────────────────────────────────────────────┤
 │                                                                   │
 │  ┌───────────────────┐  ┌───────────────────┐  ┌─────────────┐ │
@@ -222,7 +222,7 @@ GitHub Actions Event
 ├─────────────────────────────────────────────────────────────────┤
 │                                                                   │
 │  ┌─────────────────┐         ┌─────────────────┐               │
-│  │ Commit-Relay    │         │ Python SDK      │               │
+│  │ Cortex    │         │ Python SDK      │               │
 │  │ Backend         │◄────────┤ Client          │               │
 │  │ • API Server    │ HTTP    │ • ML Module     │               │
 │  │ • Task Queue    │         │ • Integrations  │               │
@@ -264,7 +264,7 @@ Prediction:
 
 **Storage:**
 ```
-/Users/ryandahlberg/commit-relay/python-sdk/models/
+/Users/ryandahlberg/cortex/python-sdk/models/
 └── task_failure_model.pkl
 ```
 
@@ -506,4 +506,4 @@ The strategic modules architecture provides:
 - **Extensible Framework:** Easy to enhance
 - **Production Ready:** Tested and documented
 
-All components follow best practices for enterprise Python development and integrate seamlessly with the existing commit-relay ecosystem.
+All components follow best practices for enterprise Python development and integrate seamlessly with the existing cortex ecosystem.

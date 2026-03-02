@@ -1,10 +1,10 @@
 # Unified Data & AI Catalog
 
-Enterprise-grade unified catalog for commit-relay implementing Databricks-proven governance patterns.
+Enterprise-grade unified catalog for cortex implementing Databricks-proven governance patterns.
 
 ## Overview
 
-The Unified Catalog provides centralized governance for all data and AI assets in the commit-relay system. It implements a three-level namespace structure (catalog.schema.asset) and supports:
+The Unified Catalog provides centralized governance for all data and AI assets in the cortex system. It implements a three-level namespace structure (catalog.schema.asset) and supports:
 
 - Automated asset discovery
 - Natural language search

@@ -1,0 +1,23 @@
+{
+  "task_id": "development-003",
+  "master": "development",
+  "description": "Refactor configuration loading to use a centralized config manager",
+  "complexity": "medium",
+  "expected_outcome": {
+    "should_create_config_manager": true,
+    "should_migrate_existing_code": true,
+    "should_maintain_compatibility": true,
+    "should_add_validation": true
+  },
+  "evaluation_criteria": [
+    "Creates centralized config manager class",
+    "Implements environment variable loading",
+    "Adds config validation",
+    "Migrates existing config usage",
+    "Maintains backward compatibility",
+    "Adds tests for config manager",
+    "Updates documentation"
+  ],
+  "estimated_time_minutes": 50,
+  "tags": ["refactoring", "architecture", "config"]
+}

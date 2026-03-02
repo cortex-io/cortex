@@ -2,7 +2,7 @@
 
 ## Overview
 
-Comprehensive performance optimization strategies for commit-relay Achievement Master and MoE system.
+Comprehensive performance optimization strategies for cortex Achievement Master and MoE system.
 
 **Goal**: Minimize latency, maximize throughput, optimize resource utilization.
 

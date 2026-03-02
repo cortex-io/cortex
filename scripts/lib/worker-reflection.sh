@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # scripts/lib/worker-reflection.sh
 # Worker Self-Correction via Reflection
 # Phase 2 Enhancement #17
@@ -26,7 +26,7 @@ WORKER_REFLECTION_LOADED=1
 
 # Configuration
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-COMMIT_RELAY_HOME="${COMMIT_RELAY_HOME:-$(cd "$SCRIPT_DIR/../.." && pwd)}"
+CORTEX_HOME="${CORTEX_HOME:-$(cd "$SCRIPT_DIR/../.." && pwd)}"
 
 # Default retry configuration
 MAX_REFLECTION_RETRIES="${MAX_REFLECTION_RETRIES:-3}"
@@ -41,7 +41,7 @@ source "$SCRIPT_DIR/logging.sh" 2>/dev/null || {
 }
 
 # Reflection results directory
-REFLECTION_DIR="$COMMIT_RELAY_HOME/coordination/worker-specs/reflections"
+REFLECTION_DIR="$CORTEX_HOME/coordination/worker-specs/reflections"
 mkdir -p "$REFLECTION_DIR"
 
 ##############################################################################
@@ -65,8 +65,8 @@ check_output_exists() {
         return 1
     fi
 
-    # Check if it's a relative path in commit-relay
-    if [ -f "$COMMIT_RELAY_HOME/$output_location" ] || [ -d "$COMMIT_RELAY_HOME/$output_location" ]; then
+    # Check if it's a relative path in cortex
+    if [ -f "$CORTEX_HOME/$output_location" ] || [ -d "$CORTEX_HOME/$output_location" ]; then
         return 0
     fi
 
@@ -91,10 +91,10 @@ check_acceptance_criteria() {
     local failed_checks=()
 
     # Get worker spec to find acceptance criteria
-    local worker_spec="$COMMIT_RELAY_HOME/coordination/worker-specs/active/${worker_id}.json"
+    local worker_spec="$CORTEX_HOME/coordination/worker-specs/active/${worker_id}.json"
 
     if [ ! -f "$worker_spec" ]; then
-        worker_spec="$COMMIT_RELAY_HOME/coordination/worker-specs/completed/${worker_id}.json"
+        worker_spec="$CORTEX_HOME/coordination/worker-specs/completed/${worker_id}.json"
     fi
 
     # Default criteria if no spec found
@@ -363,7 +363,7 @@ perform_reflection() {
     log_info "[Reflection] Result: passed=$reflection_passed, recommendation=$recommendation"
 
     # Emit dashboard event
-    local events_file="$COMMIT_RELAY_HOME/coordination/dashboard-events.jsonl"
+    local events_file="$CORTEX_HOME/coordination/dashboard-events.jsonl"
     if [ -w "$(dirname "$events_file")" ] || [ -w "$events_file" ]; then
         local event_json=$(jq -n \
             --arg timestamp "$timestamp" \

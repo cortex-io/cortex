@@ -1,0 +1,110 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: documentation-master-config
+  namespace: cortex
+  labels:
+    app: documentation-master
+    component: config
+data:
+  sources.json: |
+    {
+      "sandfly": {
+        "enabled": true,
+        "priority": "high",
+        "sources": [
+          {
+            "url": "https://docs.sandflysecurity.com",
+            "type": "documentation",
+            "crawl_depth": 5,
+            "update_frequency": "daily",
+            "selectors": {
+              "content": "main, article, .documentation",
+              "exclude": "nav, footer, .sidebar"
+            }
+          },
+          {
+            "url": "https://sandflysecurity.com/blog",
+            "type": "blog",
+            "crawl_depth": 2,
+            "update_frequency": "weekly",
+            "selectors": {
+              "content": "article, .post-content",
+              "exclude": "nav, footer, .comments"
+            }
+          }
+        ],
+        "knowledge_graph": {
+          "entities": ["alerts", "hosts", "processes", "forensics", "policies"],
+          "relationships": ["detects", "monitors", "analyzes", "integrates_with"],
+          "cross_domain_links": {
+            "security-master": ["threat_detection", "vulnerability_scanning"],
+            "inventory-master": ["host_inventory", "asset_tracking"]
+          }
+        }
+      }
+    }
+
+  resource-limits.json: |
+    {
+      "storage": {
+        "max_cache_size_gb": 10,
+        "max_per_domain_gb": 2,
+        "pruning_threshold_percent": 80
+      },
+      "rate_limiting": {
+        "requests_per_minute": 60,
+        "concurrent_crawls": 5,
+        "respect_robots_txt": true,
+        "crawl_delay_seconds": 1,
+        "max_retries": 3,
+        "timeout_seconds": 30
+      },
+      "token_budget": {
+        "max_tokens_per_crawl": 100000,
+        "max_tokens_per_query": 50000,
+        "daily_budget": 1000000
+      }
+    }
+
+  crawl-policy.json: |
+    {
+      "scheduled_updates": {
+        "high_priority": "daily",
+        "medium_priority": "weekly",
+        "low_priority": "monthly"
+      },
+      "triggered_updates": {
+        "knowledge_gap_detected": true,
+        "api_version_change": true,
+        "task_failure_threshold": 3
+      },
+      "version_tracking": {
+        "detect_new_releases": true,
+        "changelog_monitoring": true
+      }
+    }
+
+  learning-policy.json: |
+    {
+      "moe_integration": {
+        "enabled": true,
+        "router_endpoint": "http://llm-mesh-moe-router:8080",
+        "learner_endpoint": "http://llm-mesh-moe-learner:8080",
+        "outcome_tracking": true,
+        "confidence_threshold": 0.7
+      },
+      "priority_scoring": {
+        "formula": "usage_frequency * success_rate * recency",
+        "weights": {
+          "usage_frequency": 0.4,
+          "success_rate": 0.4,
+          "recency": 0.2
+        }
+      },
+      "pruning_policy": {
+        "enabled": true,
+        "min_value_score": 0.3,
+        "evaluation_window_days": 90
+      }
+    }

@@ -1,0 +1,149 @@
+---
+# ServiceAccount for cortex pods
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: cortex
+  namespace: cortex
+  labels:
+    app.kubernetes.io/name: cortex
+    app.kubernetes.io/instance: cortex
+    app.kubernetes.io/component: serviceaccount
+    app.kubernetes.io/part-of: cortex-platform
+  annotations:
+    description: "Service account for Cortex application pods"
+automountServiceAccountToken: true
+
+---
+# Role for cortex namespace-scoped permissions
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: cortex
+  namespace: cortex
+  labels:
+    app.kubernetes.io/name: cortex
+    app.kubernetes.io/instance: cortex
+    app.kubernetes.io/component: rbac
+    app.kubernetes.io/part-of: cortex-platform
+rules:
+# Allow cortex to read and list pods (for worker orchestration)
+- apiGroups: [""]
+  resources: ["pods"]
+  verbs: ["get", "list", "watch"]
+
+# Allow cortex to read pod logs (for debugging)
+- apiGroups: [""]
+  resources: ["pods/log"]
+  verbs: ["get", "list"]
+
+# Allow cortex to read and update configmaps (for state management)
+- apiGroups: [""]
+  resources: ["configmaps"]
+  verbs: ["get", "list", "watch", "create", "update", "patch"]
+
+# Allow cortex to read secrets (for configuration)
+- apiGroups: [""]
+  resources: ["secrets"]
+  verbs: ["get", "list", "watch"]
+
+# Allow cortex to create and manage events (for audit trail)
+- apiGroups: [""]
+  resources: ["events"]
+  verbs: ["create", "patch"]
+
+# Allow cortex to read services (for service discovery)
+- apiGroups: [""]
+  resources: ["services"]
+  verbs: ["get", "list", "watch"]
+
+# Allow cortex to read endpoints (for service mesh integration)
+- apiGroups: [""]
+  resources: ["endpoints"]
+  verbs: ["get", "list", "watch"]
+
+# Allow cortex to get and update its own deployment (for self-management)
+- apiGroups: ["apps"]
+  resources: ["deployments"]
+  verbs: ["get", "list", "watch"]
+  resourceNames: ["cortex"]
+
+# Allow cortex to read replicasets (for deployment status)
+- apiGroups: ["apps"]
+  resources: ["replicasets"]
+  verbs: ["get", "list", "watch"]
+
+---
+# RoleBinding to bind the role to the service account
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: cortex
+  namespace: cortex
+  labels:
+    app.kubernetes.io/name: cortex
+    app.kubernetes.io/instance: cortex
+    app.kubernetes.io/component: rbac
+    app.kubernetes.io/part-of: cortex-platform
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: cortex
+subjects:
+- kind: ServiceAccount
+  name: cortex
+  namespace: cortex
+
+---
+# ClusterRole for cluster-wide read permissions (optional - for multi-namespace visibility)
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: cortex-cluster-reader
+  labels:
+    app.kubernetes.io/name: cortex
+    app.kubernetes.io/instance: cortex
+    app.kubernetes.io/component: rbac
+    app.kubernetes.io/part-of: cortex-platform
+  annotations:
+    description: "Cluster-wide read permissions for Cortex (optional)"
+rules:
+# Read nodes for resource awareness
+- apiGroups: [""]
+  resources: ["nodes"]
+  verbs: ["get", "list", "watch"]
+
+# Read namespaces for multi-tenant support
+- apiGroups: [""]
+  resources: ["namespaces"]
+  verbs: ["get", "list", "watch"]
+
+# Read storage classes for PVC management
+- apiGroups: ["storage.k8s.io"]
+  resources: ["storageclasses"]
+  verbs: ["get", "list", "watch"]
+
+# Read persistent volumes for storage management
+- apiGroups: [""]
+  resources: ["persistentvolumes"]
+  verbs: ["get", "list", "watch"]
+
+---
+# ClusterRoleBinding (optional - uncomment if cluster-wide permissions needed)
+# apiVersion: rbac.authorization.k8s.io/v1
+# kind: ClusterRoleBinding
+# metadata:
+#   name: cortex-cluster-reader
+#   labels:
+#     app.kubernetes.io/name: cortex
+#     app.kubernetes.io/instance: cortex
+#     app.kubernetes.io/component: rbac
+#     app.kubernetes.io/part-of: cortex-platform
+# roleRef:
+#   apiGroup: rbac.authorization.k8s.io
+#   kind: ClusterRole
+#   name: cortex-cluster-reader
+# subjects:
+# - kind: ServiceAccount
+#   name: cortex
+#   namespace: cortex

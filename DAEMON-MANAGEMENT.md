@@ -64,9 +64,9 @@ const daemons = {
 **Configuration:**
 - Check interval: 30 seconds
 - Log location: `logs/daemons/daemon-supervisor.log`
-- PID file: `/tmp/commit-relay-daemon-supervisor.pid`
+- PID file: `/tmp/cortex-daemon-supervisor.pid`
 
-### 2. Startup Integration (`scripts/start-commit-relay.sh`)
+### 2. Startup Integration (`scripts/start-cortex.sh`)
 
 **Changes:**
 - Added daemon-supervisor to the DAEMONS array
@@ -83,7 +83,7 @@ const daemons = {
 ## How It Works
 
 ### Normal Operation
-1. `start-commit-relay.sh` starts all daemons including supervisor
+1. `start-cortex.sh` starts all daemons including supervisor
 2. Supervisor begins 30-second monitoring loop
 3. Dashboard queries daemon status via `/api/daemons/all`
 4. All daemons show as "running" with PID and uptime
@@ -106,7 +106,7 @@ tail -f logs/daemons/daemon-supervisor.log
 **Stop Supervisor:**
 ```bash
 pkill -f "daemon-supervisor.sh"
-rm -f /tmp/commit-relay-daemon-supervisor.pid
+rm -f /tmp/cortex-daemon-supervisor.pid
 ```
 
 **Restart Supervisor:**
@@ -132,7 +132,7 @@ curl http://localhost:5001/api/daemons/all | jq
 
 ### Modified
 - `dashboard/server/index.js` - Fixed daemon detection (lines 1715-1728)
-- `scripts/start-commit-relay.sh` - Added supervisor to startup (line 73)
+- `scripts/start-cortex.sh` - Added supervisor to startup (line 73)
 
 ## Update Resistance
 
@@ -153,7 +153,7 @@ Run these commands to verify the permanent fix:
 ps aux | grep daemon-supervisor | grep -v grep
 
 # 2. Check all daemons are running
-./scripts/start-commit-relay.sh 2>&1 | grep "already running"
+./scripts/start-cortex.sh 2>&1 | grep "already running"
 
 # 3. Test auto-recovery (kill a daemon and watch it restart)
 pkill -f "health-monitor-daemon.sh"
@@ -188,7 +188,7 @@ grep "failed to start" logs/daemons/daemon-supervisor.log
 4. Check for port conflicts or resource issues
 
 ### Supervisor Not Running
-1. Check for stale PID file: `rm -f /tmp/commit-relay-daemon-supervisor.pid`
+1. Check for stale PID file: `rm -f /tmp/cortex-daemon-supervisor.pid`
 2. Look for errors in supervisor log
 3. Manually start: `./scripts/daemon-supervisor.sh &`
 4. Verify it's in startup script DAEMONS array
@@ -203,7 +203,7 @@ grep "failed to start" logs/daemons/daemon-supervisor.log
 ### Adding New Daemons
 1. Add to `DAEMON_LIST` in `daemon-supervisor.sh`
 2. Add to `daemons` object in `dashboard/server/index.js`
-3. Add to `DAEMONS` array in `start-commit-relay.sh`
+3. Add to `DAEMONS` array in `start-cortex.sh`
 4. Restart supervisor: `pkill -f daemon-supervisor && ./scripts/daemon-supervisor.sh &`
 
 ### Changing Check Interval

@@ -1,0 +1,21 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cortex
+spec:
+  replicas: 1
+  template:
+    spec:
+      containers:
+      - name: cortex
+        resources:
+          requests:
+            cpu: 100m
+            memory: 256Mi
+          limits:
+            cpu: 500m
+            memory: 1Gi
+        env:
+        - name: DEBUG
+          value: "true"

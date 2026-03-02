@@ -1,6 +1,6 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # scripts/lib/logging.sh
-# Structured logging utilities for commit-relay
+# Structured logging utilities for cortex
 
 # Prevent re-sourcing
 if [ -n "${LOGGING_LIB_LOADED:-}" ]; then
@@ -16,10 +16,10 @@ declare -r LOG_LEVEL_ERROR=3
 declare -r LOG_LEVEL_CRITICAL=4
 
 # Current log level (default: INFO)
-COMMIT_RELAY_LOG_LEVEL="${COMMIT_RELAY_LOG_LEVEL:-$LOG_LEVEL_INFO}"
+CORTEX_LOG_LEVEL="${CORTEX_LOG_LEVEL:-$LOG_LEVEL_INFO}"
 
 # Log directory
-LOG_DIR="${COMMIT_RELAY_HOME:-$(pwd)}/agents/logs/system"
+LOG_DIR="${CORTEX_HOME:-$(pwd)}/agents/logs/system"
 mkdir -p "$LOG_DIR"
 
 # Get log level number from string
@@ -43,7 +43,7 @@ log() {
 
     # Check if should log based on level
     local level_num=$(get_log_level_number "$level")
-    if [ "$level_num" -lt "$COMMIT_RELAY_LOG_LEVEL" ]; then
+    if [ "$level_num" -lt "$CORTEX_LOG_LEVEL" ]; then
         return 0
     fi
 
@@ -109,7 +109,7 @@ broadcast_dashboard_event() {
     local event_type=$1
     local event_data=$2
 
-    local event_file="${COMMIT_RELAY_HOME:-$(pwd)}/coordination/dashboard-events.jsonl"
+    local event_file="${CORTEX_HOME:-$(pwd)}/coordination/dashboard-events.jsonl"
 
     if [ ! -w "$event_file" ]; then
         return 0

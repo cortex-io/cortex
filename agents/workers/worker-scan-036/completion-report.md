@@ -66,7 +66,7 @@ The application is well-structured, documented, and functional. The main improve
 ## Artifacts
 
 - **Detailed Report**: `scan-report.json`
-- **Location**: `/Users/ryandahlberg/commit-relay/agents/workers/worker-scan-036/`
+- **Location**: `/Users/ryandahlberg/cortex/agents/workers/worker-scan-036/`
 
 ## Conclusion
 

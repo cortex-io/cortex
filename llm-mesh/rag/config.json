@@ -1,0 +1,26 @@
+{
+  "embedding_model": "all-MiniLM-L6-v2",
+  "embedding_dimension": 384,
+  "max_sequence_length": 512,
+  "index_params": {
+    "index_type": "IndexFlatL2",
+    "nlist": 100
+  },
+  "retrieval_params": {
+    "default_top_k": 5,
+    "max_top_k": 20,
+    "min_similarity_score": 0.0
+  },
+  "storage": {
+    "task_outcomes_index": "storage/task_outcomes.index",
+    "code_patterns_index": "storage/code_patterns.index",
+    "metadata_file": "storage/metadata.jsonl",
+    "task_metadata_file": "storage/task_metadata.jsonl",
+    "pattern_metadata_file": "storage/pattern_metadata.jsonl"
+  },
+  "batch_size": 32,
+  "indexing": {
+    "auto_index": false,
+    "rebuild_on_start": false
+  }
+}

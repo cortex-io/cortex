@@ -257,7 +257,7 @@ steps:
         Content-Type: application/json
       body:
         event: APPROVE
-        body: "Automatically approved by commit-relay code review workflow. All checks passed."
+        body: "Automatically approved by cortex code review workflow. All checks passed."
 
   # Step 10: Cleanup
   - id: cleanup

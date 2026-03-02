@@ -31,7 +31,7 @@
   "results": {
     "status": "success",
     "output_location": "agents/workers/worker-documentation-037/REPOSITORY_CATALOG.md",
-    "summary": "Successfully cataloged commit-relay repository metadata including all dependencies, architecture components, scripts, and system health status. Generated comprehensive 500+ line documentation covering v5.0 Hybrid RAG+CAG architecture, 4 master agents, 16 worker types, 82 scripts, and complete dependency inventory for Node.js (root + dashboard) and Python SDK.",
+    "summary": "Successfully cataloged cortex repository metadata including all dependencies, architecture components, scripts, and system health status. Generated comprehensive 500+ line documentation covering v5.0 Hybrid RAG+CAG architecture, 4 master agents, 16 worker types, 82 scripts, and complete dependency inventory for Node.js (root + dashboard) and Python SDK.",
     "artifacts": [
       "REPOSITORY_CATALOG.md"
     ]

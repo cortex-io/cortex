@@ -64,7 +64,7 @@
         "status", "metrics", "logging", "benchmark", "clean", "Alpine", "Express.js",
         "Chart.js", "ApexCharts", "Lucide", "SSE", "REST", "HTTP", "jq", "sed", "awk",
         "grep", "Chokidar", "nodemon", "pm2", "Jest", "Mocha", "Chai", "e2e",
-        "commit-relay", "coordinator", "master", "specialist", "DDQD", "stress test",
+        "cortex", "coordinator", "master", "specialist", "DDQD", "stress test",
         "load test", "performance test", "git operation", "version control", "repository",
         "branch management", "merge conflict", "pull request", "code review",
         "worker daemon", "task orchestrator", "handoff processor", "metrics snapshot",

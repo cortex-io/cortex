@@ -1,3 +1,3 @@
 """
-Core ML/AI libraries for commit-relay.
+Core ML/AI libraries for cortex.
 """

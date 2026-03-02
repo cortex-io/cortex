@@ -1,0 +1,139 @@
+apiVersion: v1
+items:
+- apiVersion: traefik.io/v1alpha1
+  kind: IngressRoute
+  metadata:
+    annotations:
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"traefik.io/v1alpha1","kind":"IngressRoute","metadata":{"annotations":{},"name":"redis-commander","namespace":"default"},"spec":{"entryPoints":["web"],"routes":[{"kind":"Rule","match":"Host(`redis.cortex.local`) || Host(`redis.local`)","services":[{"name":"redis-commander","port":8081}]}]}}
+    creationTimestamp: "2025-12-21T17:59:43Z"
+    generation: 1
+    name: redis-commander
+    namespace: default
+    resourceVersion: "4026558"
+    uid: 8e1307c8-dc5a-4b02-89c6-d7a5f364fce0
+  spec:
+    entryPoints:
+    - web
+    routes:
+    - kind: Rule
+      match: Host(`redis.cortex.local`) || Host(`redis.local`)
+      services:
+      - name: redis-commander
+        port: 8081
+- apiVersion: traefik.io/v1alpha1
+  kind: IngressRoute
+  metadata:
+    annotations:
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"traefik.io/v1alpha1","kind":"IngressRoute","metadata":{"annotations":{},"name":"unifi-controller","namespace":"default"},"spec":{"entryPoints":["web","websecure"],"routes":[{"kind":"Rule","match":"Host(`unifi.cortex.local`) || Host(`unifi.local`)","services":[{"name":"unifi-controller","port":8443,"scheme":"https"}]}]}}
+    creationTimestamp: "2025-12-21T17:59:43Z"
+    generation: 1
+    name: unifi-controller
+    namespace: default
+    resourceVersion: "4026552"
+    uid: 60cfcb71-919d-4995-852f-d92cb955bb84
+  spec:
+    entryPoints:
+    - web
+    - websecure
+    routes:
+    - kind: Rule
+      match: Host(`unifi.cortex.local`) || Host(`unifi.local`)
+      services:
+      - name: unifi-controller
+        port: 8443
+        scheme: https
+- apiVersion: traefik.io/v1alpha1
+  kind: IngressRoute
+  metadata:
+    annotations:
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"traefik.io/v1alpha1","kind":"IngressRoute","metadata":{"annotations":{},"name":"grafana","namespace":"monitoring"},"spec":{"entryPoints":["web"],"routes":[{"kind":"Rule","match":"Host(`grafana.cortex.local`) || Host(`grafana.local`)","services":[{"name":"prometheus-grafana","port":80}]}]}}
+    creationTimestamp: "2025-12-21T17:59:43Z"
+    generation: 1
+    name: grafana
+    namespace: monitoring
+    resourceVersion: "4026568"
+    uid: 46674a03-a900-4d6a-b681-2eb6099de1d2
+  spec:
+    entryPoints:
+    - web
+    routes:
+    - kind: Rule
+      match: Host(`grafana.cortex.local`) || Host(`grafana.local`)
+      services:
+      - name: prometheus-grafana
+        port: 80
+- apiVersion: traefik.io/v1alpha1
+  kind: IngressRoute
+  metadata:
+    annotations:
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"traefik.io/v1alpha1","kind":"IngressRoute","metadata":{"annotations":{},"name":"prometheus","namespace":"monitoring"},"spec":{"entryPoints":["web"],"routes":[{"kind":"Rule","match":"Host(`prometheus.cortex.local`) || Host(`prometheus.local`)","services":[{"name":"prometheus-kube-prometheus-prometheus","port":9090}]}]}}
+    creationTimestamp: "2025-12-21T17:59:43Z"
+    generation: 1
+    name: prometheus
+    namespace: monitoring
+    resourceVersion: "4026562"
+    uid: 4a5fb6dd-397c-4350-9df7-bd7d5f798d36
+  spec:
+    entryPoints:
+    - web
+    routes:
+    - kind: Rule
+      match: Host(`prometheus.cortex.local`) || Host(`prometheus.local`)
+      services:
+      - name: prometheus-kube-prometheus-prometheus
+        port: 9090
+- apiVersion: traefik.io/v1alpha1
+  kind: IngressRoute
+  metadata:
+    annotations:
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"traefik.io/v1alpha1","kind":"IngressRoute","metadata":{"annotations":{},"name":"wazuh-dashboard","namespace":"wazuh-security"},"spec":{"entryPoints":["web","websecure"],"routes":[{"kind":"Rule","match":"Host(`wazuh.cortex.local`) || Host(`wazuh.local`)","middlewares":[{"name":"wazuh-headers"}],"services":[{"name":"wazuh-dashboard","port":443,"scheme":"https"}]}]}}
+    creationTimestamp: "2025-12-21T17:56:02Z"
+    generation: 1
+    name: wazuh-dashboard
+    namespace: wazuh-security
+    resourceVersion: "4013416"
+    uid: 2a788bb8-b759-4f44-8529-68930c2dbaf7
+  spec:
+    entryPoints:
+    - web
+    - websecure
+    routes:
+    - kind: Rule
+      match: Host(`wazuh.cortex.local`) || Host(`wazuh.local`)
+      middlewares:
+      - name: wazuh-headers
+      services:
+      - name: wazuh-dashboard
+        port: 443
+        scheme: https
+- apiVersion: traefik.io/v1alpha1
+  kind: IngressRoute
+  metadata:
+    annotations:
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"traefik.io/v1alpha1","kind":"IngressRoute","metadata":{"annotations":{},"name":"wazuh-grafana","namespace":"wazuh-security"},"spec":{"entryPoints":["web","websecure"],"routes":[{"kind":"Rule","match":"Host(`wazuh-grafana.cortex.local`) || PathPrefix(`/wazuh`)","services":[{"name":"wazuh-dashboard","port":443,"scheme":"https"}]}]}}
+    creationTimestamp: "2025-12-21T17:59:43Z"
+    generation: 1
+    name: wazuh-grafana
+    namespace: wazuh-security
+    resourceVersion: "4026553"
+    uid: 3e555178-6f35-438a-b190-6a9df7ae66ca
+  spec:
+    entryPoints:
+    - web
+    - websecure
+    routes:
+    - kind: Rule
+      match: Host(`wazuh-grafana.cortex.local`) || PathPrefix(`/wazuh`)
+      services:
+      - name: wazuh-dashboard
+        port: 443
+        scheme: https
+kind: List
+metadata:
+  resourceVersion: ""

@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # scripts/lib/worker-restart.sh
 # Worker Automatic Restart Library - Phase 4.3
 # Intelligent restart logic for failed workers with retry policies
@@ -14,13 +14,13 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-COMMIT_RELAY_HOME="${COMMIT_RELAY_HOME:-$(cd "$SCRIPT_DIR/../.." && pwd)}"
+CORTEX_HOME="${CORTEX_HOME:-$(cd "$SCRIPT_DIR/../.." && pwd)}"
 
 # Load dependencies
-source "$COMMIT_RELAY_HOME/scripts/lib/heartbeat.sh" 2>/dev/null || true
+source "$CORTEX_HOME/scripts/lib/heartbeat.sh" 2>/dev/null || true
 
 # Load configuration
-RESTART_POLICY_FILE="$COMMIT_RELAY_HOME/coordination/config/worker-restart-policy.json"
+RESTART_POLICY_FILE="$CORTEX_HOME/coordination/config/worker-restart-policy.json"
 if [ ! -f "$RESTART_POLICY_FILE" ]; then
     echo "ERROR: Restart policy file not found: $RESTART_POLICY_FILE" >&2
     exit 1
@@ -37,11 +37,11 @@ GLOBAL_RATE_LIMIT=$(jq -r '.rate_limits.global_max_per_minute' "$RESTART_POLICY_
 PER_TYPE_RATE_LIMIT=$(jq -r '.rate_limits.per_type_max_per_minute' "$RESTART_POLICY_FILE")
 
 # Directories
-ZOMBIE_SPECS_DIR="$COMMIT_RELAY_HOME/coordination/worker-specs/zombie"
-ACTIVE_SPECS_DIR="$COMMIT_RELAY_HOME/coordination/worker-specs/active"
-RESTART_QUEUE_DIR="$COMMIT_RELAY_HOME/coordination/restart/queue"
-CIRCUIT_BREAKER_FILE="$COMMIT_RELAY_HOME/coordination/restart/circuit-breakers.json"
-RESTART_LOG="$COMMIT_RELAY_HOME/agents/logs/system/worker-restart.log"
+ZOMBIE_SPECS_DIR="$CORTEX_HOME/coordination/worker-specs/zombie"
+ACTIVE_SPECS_DIR="$CORTEX_HOME/coordination/worker-specs/active"
+RESTART_QUEUE_DIR="$CORTEX_HOME/coordination/restart/queue"
+CIRCUIT_BREAKER_FILE="$CORTEX_HOME/coordination/restart/circuit-breakers.json"
+RESTART_LOG="$CORTEX_HOME/agents/logs/system/worker-restart.log"
 
 # Ensure directories exist
 mkdir -p "$RESTART_QUEUE_DIR"
@@ -239,7 +239,7 @@ check_restart_rate_limit() {
 ##############################################################################
 check_token_budget() {
     local required_tokens="$1"
-    local token_budget_file="$COMMIT_RELAY_HOME/coordination/token-budget.json"
+    local token_budget_file="$CORTEX_HOME/coordination/token-budget.json"
 
     if [ ! -f "$token_budget_file" ]; then
         log_restart "WARN: Token budget file not found, allowing restart"
@@ -469,7 +469,7 @@ emit_restart_event() {
         }')
 
     # Write to events log
-    local events_log="$COMMIT_RELAY_HOME/coordination/events/worker-restart-events.jsonl"
+    local events_log="$CORTEX_HOME/coordination/events/worker-restart-events.jsonl"
     mkdir -p "$(dirname "$events_log")"
     echo "$event_json" >> "$events_log"
 

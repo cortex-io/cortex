@@ -1,6 +1,6 @@
 # ML/AI Deployment Guide
 
-Complete deployment guide for ML-enhanced routing and RAG systems in commit-relay.
+Complete deployment guide for ML-enhanced routing and RAG systems in cortex.
 
 ## Overview
 

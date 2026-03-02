@@ -6,7 +6,7 @@
   "created_at": "2025-11-12T13:56:14Z",
   "status": "running",
   "context": {
-    "repository": "ry-ops/commit-relay",
+    "repository": "ry-ops/cortex",
     "branch": "main",
     "task_title": "GOVERNANCE UPGRADE - Phase 4: AI-Powered Monitoring & Quality Assurance",
     "task_description": "Implement AI-powered data quality monitoring, automatic PII detection and tagging, model drift detection for agents, proactive monitoring dashboard. Build QualityMonitor class with automated data quality checks, PII scanner with automatic tagging, agent performance monitoring with drift detection, real-time monitoring dashboard with alerts.",

@@ -1,0 +1,147 @@
+Wazuh Integration for Cortex Security Monitoring
+=================================================
+
+Directory: /Users/ryandahlberg/Projects/cortex/deploy/wazuh/
+Total: 11 files, 160KB
+
+File Structure:
+===============
+
+Core Configuration Files (4):
+├── wazuh-cortex-rules.xml (20KB)
+│   └── 57 custom security rules (IDs 100100-100199)
+│       ├── Authentication & Access Control (100100-100109)
+│       ├── Privilege Escalation (100110-100119)
+│       ├── Configuration Changes (100120-100129)
+│       ├── API Abuse (100130-100139)
+│       ├── Kubernetes Audit (100140-100149)
+│       ├── Container Escape (100150-100159)
+│       ├── Secrets Access (100160-100169)
+│       ├── Task Anomalies (100170-100179)
+│       ├── Data Exfiltration (100180-100189)
+│       └── System Integrity (100190-100199)
+│
+├── wazuh-cortex-decoders.xml (15KB)
+│   └── 20+ JSON decoders for:
+│       ├── Cortex agents (meta, masters, workers, contractors)
+│       ├── Task execution logs
+│       ├── MCP server logs
+│       ├── N8N workflow logs
+│       ├── Kubernetes audit logs
+│       ├── Container runtime logs
+│       ├── Network activity logs
+│       └── Secrets access logs
+│
+├── wazuh-agent-config.yaml (9.8KB)
+│   └── Complete agent configuration:
+│       ├── 11+ log collection sources
+│       ├── File Integrity Monitoring paths
+│       ├── Rootcheck configuration
+│       ├── SCA (compliance) policies
+│       ├── Vulnerability detection settings
+│       └── Docker/K8s integration
+│
+└── prometheus-wazuh-exporter.yaml (12KB)
+    └── Kubernetes manifests + Prometheus rules:
+        ├── Exporter Deployment
+        ├── Service & ServiceMonitor
+        ├── 15+ recording rules
+        └── 12+ alerting rules
+
+Kubernetes Integration (1):
+└── alertmanager-wazuh-receiver.yaml (10KB)
+    └── Bidirectional alert integration:
+        ├── Webhook receiver deployment
+        ├── Alert transformation service
+        ├── Python Flask application
+        └── Dockerfile + requirements
+
+Automation Scripts (2):
+├── deploy-wazuh-integration.sh (13KB) [executable]
+│   └── Automated deployment:
+│       ├── Prerequisites checking
+│       ├── Deploy to Wazuh manager
+│       ├── Deploy to Kubernetes
+│       ├── Verification steps
+│       └── Dry-run mode
+│
+└── test-integration.sh (14KB) [executable]
+    └── Comprehensive test suite:
+        ├── 18 integration tests
+        ├── Connectivity validation
+        ├── Rule triggering tests
+        ├── Metrics verification
+        └── Summary reporting
+
+Documentation (4):
+├── README.md (23KB)
+│   └── Complete integration guide:
+│       ├── Architecture overview
+│       ├── Installation instructions
+│       ├── Configuration guide
+│       ├── Alert tuning recommendations
+│       ├── Troubleshooting guide
+│       └── Compliance reporting
+│
+├── QUICK-REFERENCE.md (11KB)
+│   └── Fast lookup reference:
+│       ├── Common commands
+│       ├── Rule ID reference
+│       ├── Prometheus queries
+│       ├── Troubleshooting cheat sheet
+│       └── Useful one-liners
+│
+├── DEPLOYMENT-SUMMARY.md (7.9KB)
+│   └── Deployment overview:
+│       ├── What was created
+│       ├── Quick start guide
+│       ├── Validation steps
+│       └── Success criteria
+│
+└── FILES.txt (this file)
+    └── File structure overview
+
+Statistics:
+===========
+Total Files: 11
+Total Size: 160KB
+Total Lines: ~4,780
+Security Rules: 57 (100100-100199)
+Log Decoders: 20+
+Prometheus Rules: 27
+Test Cases: 18
+
+Integration Points:
+==================
+┌─────────────────────────────────────────┐
+│         Cortex K3s Cluster              │
+│  ┌──────────┐  ┌──────────┐            │
+│  │ Agents   │  │ Exporter │            │
+│  │ (Daemon) │  │ (Deploy) │            │
+│  └────┬─────┘  └────┬─────┘            │
+└───────┼─────────────┼───────────────────┘
+        │             │
+        │   External Network
+        │             │
+   ┌────▼─────────────▼────┐
+   │ Wazuh Manager         │
+   │ 10.88.140.202         │
+   │ (Proxmox VM 101)      │
+   └───────────────────────┘
+
+Deployment:
+===========
+1. Run: ./deploy-wazuh-integration.sh
+2. Test: ./test-integration.sh
+3. Docs: README.md, QUICK-REFERENCE.md
+
+Support:
+========
+- Wazuh Dashboard: https://10.88.140.202:5601
+- Documentation: README.md
+- Quick Ref: QUICK-REFERENCE.md
+- Troubleshooting: QUICK-REFERENCE.md section
+
+Version: 1.0.0
+Created: 2025-12-11
+Author: Claude Opus 4.5 (Security Master)

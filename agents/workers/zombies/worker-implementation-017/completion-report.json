@@ -25,7 +25,7 @@
     ],
     "results": [
       "✓ Script accepts name argument correctly",
-      "✓ Outputs expected greeting format: 'Hello, [name]! Welcome to autonomous commit-relay!'",
+      "✓ Outputs expected greeting format: 'Hello, [name]! Welcome to autonomous cortex!'",
       "✓ Proper error handling for missing arguments",
       "✓ User-friendly usage message"
     ]

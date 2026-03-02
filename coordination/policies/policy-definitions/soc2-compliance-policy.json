@@ -113,7 +113,7 @@
     }
   ],
   "metadata": {
-    "author": "commit-relay-compliance",
+    "author": "cortex-compliance",
     "created_at": "2025-11-21T00:00:00Z",
     "updated_at": "2025-11-21T00:00:00Z",
     "tags": ["soc2", "trust-services", "compliance", "audit"]

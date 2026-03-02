@@ -1,0 +1,16 @@
+---
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: cortex-chat
+  namespace: cortex-chat
+spec:
+  entryPoints:
+  - web
+  - websecure
+  routes:
+  - kind: Rule
+    match: Host(`chat.cortex.local`)
+    services:
+    - name: cortex-chat
+      port: 80

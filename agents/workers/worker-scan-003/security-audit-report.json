@@ -149,5 +149,5 @@
       "recommendation": "Consider adding Content Security Policy headers to dashboard server"
     }
   ],
-  "conclusion": "The commit-relay codebase demonstrates good security practices. No critical or high-severity issues were found. The codebase properly handles secrets management, has no known vulnerable dependencies, and follows secure coding practices. Minor improvements can be made to further harden the system, but overall the security posture is strong."
+  "conclusion": "The cortex codebase demonstrates good security practices. No critical or high-severity issues were found. The codebase properly handles secrets management, has no known vulnerable dependencies, and follows secure coding practices. Minor improvements can be made to further harden the system, but overall the security posture is strong."
 }

@@ -1,0 +1,255 @@
+---
+title: "Cortex Security Audit Report"
+subtitle: "Monthly Security Posture Assessment"
+date: now
+format:
+  html:
+    code-fold: true
+    toc: true
+    embed-resources: true
+execute:
+  echo: false
+---
+
+## Security Overview
+
+```{python}
+import polars as pl
+import json
+from pathlib import Path
+from datetime import datetime, timedelta
+from anthropic import Anthropic
+import os
+import pytz
+
+# Load month's security events
+coordination_dir = Path("../coordination")
+security_events_file = coordination_dir / "events" / "security-events.jsonl"
+security_results_file = coordination_dir / "security" / "scan-results.jsonl"
+
+# Date range for this month (timezone-aware)
+month_start = datetime.now(pytz.UTC) - timedelta(days=30)
+
+# Load security events
+security_events = pl.DataFrame()
+if security_events_file.exists():
+    security_events = pl.read_ndjson(security_events_file)
+    if 'timestamp' in security_events.columns:
+        try:
+            security_events = security_events.with_columns(
+                pl.col('timestamp').str.to_datetime(format="%Y-%m-%dT%H:%M:%S%z", strict=False)
+            ).filter(
+                pl.col('timestamp') > month_start
+            )
+        except:
+            pass  # Skip filtering if timestamp parsing fails
+
+# Load scan results if available
+scan_results = pl.DataFrame()
+if security_results_file.exists():
+    scan_results = pl.read_ndjson(security_results_file)
+    if 'timestamp' in scan_results.columns:
+        try:
+            scan_results = scan_results.with_columns(
+                pl.col('timestamp').str.to_datetime(format="%Y-%m-%dT%H:%M:%S%z", strict=False)
+            ).filter(
+                pl.col('timestamp') > month_start
+            )
+        except:
+            pass  # Skip filtering if timestamp parsing fails
+
+# Calculate metrics
+total_scans = len(security_events) + len(scan_results)
+total_findings = 0
+
+if 'finding_count' in scan_results.columns and len(scan_results) > 0:
+    total_findings = scan_results.select('finding_count').sum()[0, 0]
+
+critical_count = 0
+high_count = 0
+if 'severity' in scan_results.columns and len(scan_results) > 0:
+    critical_count = len(scan_results.filter(pl.col('severity') == 'critical'))
+    high_count = len(scan_results.filter(pl.col('severity') == 'high'))
+
+print(f"""
+### Security Metrics (Last 30 Days)
+
+- **Total Security Scans**: {total_scans:,}
+- **Total Findings**: {total_findings:,}
+- **Critical Vulnerabilities**: {critical_count} 🔴
+- **High Priority Issues**: {high_count} 🟠
+- **Security Score**: {"A" if critical_count == 0 and high_count == 0 else "B" if critical_count == 0 else "C"}
+""")
+```
+
+## AI Security Assessment
+
+```{python}
+# Generate AI security assessment
+api_key = os.getenv("ANTHROPIC_API_KEY", "")
+has_api_key = bool(api_key and len(api_key) > 10)
+
+if has_api_key:
+    client = Anthropic(api_key=api_key)
+    try:
+        assessment_data = {
+            "total_scans": total_scans,
+            "total_findings": total_findings,
+            "critical": critical_count,
+            "high": high_count
+        }
+
+        response = client.messages.create(
+            model="claude-sonnet-4",
+            max_tokens=1024,
+            messages=[{
+                "role": "user",
+                "content": f"""Provide a comprehensive security assessment based on these metrics:
+
+{json.dumps(assessment_data, indent=2)}
+
+Include:
+1. Overall security posture (2-3 sentences)
+2. Key areas of concern
+3. Positive security trends
+4. Priority remediation actions
+
+Be professional and security-focused."""
+            }]
+        )
+        print(response.content[0].text)
+    except Exception as e:
+        print(f"*Error generating security assessment: {str(e)}*")
+else:
+    print("*AI security assessment not available.*")
+    print("")
+    print(f"- API Key configured: {'✅ Yes' if has_api_key else '❌ No (add ANTHROPIC_API_KEY secret)'}")
+```
+
+## Vulnerability Trends
+
+```{python}
+import plotly.express as px
+
+if len(scan_results) > 0 and 'timestamp' in scan_results.columns and 'finding_count' in scan_results.columns:
+    # Daily vulnerability counts
+    daily_vulns = scan_results.with_columns(
+        pl.col('timestamp').dt.date().alias('date')
+    ).group_by('date').agg(
+        pl.col('finding_count').sum().alias('total_findings')
+    ).sort('date')
+
+    fig = px.line(
+        daily_vulns.to_pandas(),
+        x='date',
+        y='total_findings',
+        title='Vulnerability Findings Over Time',
+        labels={'total_findings': 'Total Findings', 'date': 'Date'}
+    )
+    fig.show()
+else:
+    print("*No vulnerability trend data available*")
+```
+
+## Severity Distribution
+
+```{python}
+if len(scan_results) > 0 and 'severity' in scan_results.columns:
+    severity_counts = scan_results.group_by('severity').agg(
+        pl.count().alias('count')
+    ).sort('count', descending=True)
+
+    color_map = {
+        'critical': 'red',
+        'high': 'orange',
+        'medium': 'yellow',
+        'low': 'green'
+    }
+
+    fig = px.pie(
+        severity_counts.to_pandas(),
+        values='count',
+        names='severity',
+        title='Findings by Severity Level',
+        color='severity',
+        color_discrete_map=color_map
+    )
+    fig.show()
+else:
+    print("*No severity distribution data available*")
+```
+
+## Critical Findings
+
+```{python}
+if len(scan_results) > 0 and 'severity' in scan_results.columns:
+    critical_findings = scan_results.filter(
+        pl.col('severity').is_in(['critical', 'high'])
+    )
+
+    if len(critical_findings) > 0:
+        print(f"""
+### Critical and High Priority Vulnerabilities
+
+Found **{len(critical_findings)}** critical/high severity issues requiring immediate attention:
+""")
+
+        # Display table of critical findings
+        if 'scan_id' in critical_findings.columns:
+            display_cols = ['timestamp', 'severity', 'scan_id', 'finding_count']
+            available_cols = [col for col in display_cols if col in critical_findings.columns]
+            print(critical_findings.select(available_cols).head(20).to_pandas().to_markdown())
+    else:
+        print("✅ **No critical or high severity vulnerabilities found!**")
+else:
+    print("*No critical findings data available*")
+```
+
+## Remediation Status
+
+```{python}
+if critical_count > 0 or high_count > 0:
+    print(f"""
+### Action Items
+
+#### Immediate Actions Required:
+- Review and triage {critical_count} critical vulnerabilities
+- Assess {high_count} high priority security issues
+- Update security scanning configurations if needed
+- Implement automated remediation where possible
+
+#### Timeline:
+- **Critical**: Address within 24-48 hours
+- **High**: Address within 1 week
+- **Medium**: Address within 1 month
+""")
+else:
+    print("""
+### ✅ Security Posture: GOOD
+
+No critical or high severity issues detected. Continue regular security scanning and monitoring.
+""")
+```
+
+## Compliance Notes
+
+```{python}
+print("""
+### Security Compliance Checklist
+
+- [x] Regular security scanning enabled
+- [x] Event-driven security monitoring active
+- [x] AI-powered threat analysis configured
+- [ ] Quarterly penetration testing (scheduled)
+- [ ] Security awareness training (ongoing)
+""")
+```
+
+---
+
+```{python}
+from datetime import datetime
+print(f"*Security audit report generated on {datetime.now().strftime('%Y-%m-%d %H:%M:%S')} by Cortex Event-Driven Architecture*")
+print("")
+print("*This report is confidential and should be handled according to your organization's security policies.*")
+```

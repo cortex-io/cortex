@@ -1,0 +1,337 @@
+{
+  "name": "K3S Storage Expansion",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "k3s-storage-expansion",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "webhook-trigger",
+      "name": "Webhook Trigger",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [250, 300],
+      "webhookId": "k3s-storage-expansion"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Parse and validate input parameters\nconst input = $input.item.json.body || $input.item.json;\n\nconst params = {\n  node_name: input.node_name,\n  size_gb: parseInt(input.size_gb) || 50,\n  storage_class: input.storage_class || 'local-path',\n  dry_run: input.dry_run === true || input.dry_run === 'true',\n  notify_channel: input.notify_channel || 'cortex-infra',\n  request_id: input.request_id || `storage-${Date.now()}`,\n  requested_by: input.requested_by || 'cortex-autonomous',\n  proxmox_node: input.proxmox_node || 'pve01',\n  vm_id: input.vm_id\n};\n\n// Validation\nconst errors = [];\nif (!params.node_name) errors.push('node_name is required');\nif (params.size_gb < 1 || params.size_gb > 1000) errors.push('size_gb must be between 1 and 1000');\nif (!params.vm_id) errors.push('vm_id is required for Proxmox operations');\n\nif (errors.length > 0) {\n  return [{\n    json: {\n      valid: false,\n      errors: errors,\n      params: params\n    }\n  }];\n}\n\nreturn [{\n  json: {\n    valid: true,\n    params: params,\n    timestamp: new Date().toISOString()\n  }\n}];"
+      },
+      "id": "validate-params",
+      "name": "Validate Parameters",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [450, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.valid }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "check-valid",
+      "name": "Valid Input?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [650, 300]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $env.PROXMOX_API_URL }}/api2/json/nodes/{{ $json.params.proxmox_node }}/qemu/{{ $json.params.vm_id }}/status/current",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {
+          "allowUnauthorizedCerts": true
+        }
+      },
+      "id": "get-vm-status",
+      "name": "Get VM Status",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [850, 200],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "proxmox-api-token",
+          "name": "Proxmox API Token"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Check current disk usage and determine expansion needs\nconst params = $input.first().json.params;\nconst vmStatus = $input.last().json.data;\n\nconst currentDiskSize = vmStatus?.maxdisk || 0;\nconst currentDiskUsed = vmStatus?.disk || 0;\nconst usagePercent = currentDiskSize > 0 ? (currentDiskUsed / currentDiskSize) * 100 : 0;\n\nreturn [{\n  json: {\n    params: params,\n    vm_status: {\n      name: vmStatus?.name,\n      status: vmStatus?.status,\n      current_disk_gb: Math.round(currentDiskSize / 1073741824),\n      used_disk_gb: Math.round(currentDiskUsed / 1073741824),\n      usage_percent: Math.round(usagePercent)\n    },\n    expansion: {\n      new_size_gb: params.size_gb,\n      disk_to_expand: 'scsi0',\n      needs_expansion: true\n    }\n  }\n}];"
+      },
+      "id": "analyze-storage",
+      "name": "Analyze Storage",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1050, 200]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.params.dry_run }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "check-dry-run",
+      "name": "Dry Run?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [1250, 200]
+    },
+    {
+      "parameters": {
+        "method": "PUT",
+        "url": "={{ $env.PROXMOX_API_URL }}/api2/json/nodes/{{ $json.params.proxmox_node }}/qemu/{{ $json.params.vm_id }}/resize",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "disk",
+              "value": "={{ $json.expansion.disk_to_expand }}"
+            },
+            {
+              "name": "size",
+              "value": "=+{{ $json.expansion.new_size_gb }}G"
+            }
+          ]
+        },
+        "options": {
+          "allowUnauthorizedCerts": true
+        }
+      },
+      "id": "expand-proxmox-disk",
+      "name": "Expand Proxmox Disk",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1450, 100],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "proxmox-api-token",
+          "name": "Proxmox API Token"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "command": "ssh {{ $json.params.node_name }} 'sudo growpart /dev/sda 3 && sudo resize2fs /dev/sda3'",
+        "options": {}
+      },
+      "id": "expand-filesystem",
+      "name": "Expand Filesystem",
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [1650, 100]
+    },
+    {
+      "parameters": {
+        "command": "ssh {{ $json.params.node_name }} 'df -h / | tail -1'",
+        "options": {}
+      },
+      "id": "verify-expansion",
+      "name": "Verify Expansion",
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [1850, 100]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Parse verification output and prepare result\nconst params = $('Analyze Storage').item.json.params;\nconst vmStatus = $('Analyze Storage').item.json.vm_status;\nconst verifyOutput = $input.item.json.stdout || '';\n\n// Parse df output: Filesystem Size Used Avail Use% Mounted\nconst parts = verifyOutput.trim().split(/\\s+/);\nconst newSize = parts[1] || 'unknown';\nconst newUsed = parts[2] || 'unknown';\nconst newAvail = parts[3] || 'unknown';\nconst newUsePercent = parts[4] || 'unknown';\n\nreturn [{\n  json: {\n    success: true,\n    action: 'storage_expansion',\n    request_id: params.request_id,\n    node: params.node_name,\n    before: {\n      size_gb: vmStatus.current_disk_gb,\n      used_gb: vmStatus.used_disk_gb,\n      usage_percent: vmStatus.usage_percent\n    },\n    after: {\n      size: newSize,\n      used: newUsed,\n      available: newAvail,\n      usage_percent: newUsePercent\n    },\n    expansion_gb: params.size_gb,\n    timestamp: new Date().toISOString(),\n    requested_by: params.requested_by\n  }\n}];"
+      },
+      "id": "prepare-result",
+      "name": "Prepare Result",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [2050, 100]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Prepare dry-run result without executing\nconst data = $input.item.json;\n\nreturn [{\n  json: {\n    success: true,\n    dry_run: true,\n    action: 'storage_expansion',\n    request_id: data.params.request_id,\n    node: data.params.node_name,\n    would_execute: [\n      `Proxmox: Expand ${data.expansion.disk_to_expand} by ${data.expansion.new_size_gb}GB`,\n      `SSH: growpart /dev/sda 3`,\n      `SSH: resize2fs /dev/sda3`\n    ],\n    current_status: data.vm_status,\n    timestamp: new Date().toISOString()\n  }\n}];"
+      },
+      "id": "dry-run-result",
+      "name": "Dry Run Result",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1450, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.AUDIT_LOG_API }}",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "type",
+              "value": "infrastructure_change"
+            },
+            {
+              "name": "action",
+              "value": "k3s_storage_expansion"
+            },
+            {
+              "name": "result",
+              "value": "={{ JSON.stringify($json) }}"
+            },
+            {
+              "name": "timestamp",
+              "value": "={{ $now.toISO() }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "audit-log",
+      "name": "Audit Log",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [2250, 200]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.SLACK_WEBHOOK_INFRA }}",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "text",
+              "value": "={{ $json.dry_run ? '🔍 Storage Expansion (Dry Run)' : ($json.success ? '✅ Storage Expanded' : '❌ Storage Expansion Failed') }}"
+            },
+            {
+              "name": "blocks",
+              "value": "=[{\"type\":\"header\",\"text\":{\"type\":\"plain_text\",\"text\":\"{{ $json.dry_run ? '🔍 Storage Expansion Preview' : ($json.success ? '✅ Storage Expansion Complete' : '❌ Storage Expansion Failed') }}\"}},{\"type\":\"section\",\"fields\":[{\"type\":\"mrkdwn\",\"text\":\"*Node:*\\n{{ $json.node }}\"},{\"type\":\"mrkdwn\",\"text\":\"*Request ID:*\\n{{ $json.request_id }}\"},{\"type\":\"mrkdwn\",\"text\":\"*Expansion:*\\n+{{ $json.expansion_gb || 'N/A' }}GB\"},{\"type\":\"mrkdwn\",\"text\":\"*Requested By:*\\n{{ $json.requested_by }}\"}]}]"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "notify-slack",
+      "name": "Notify Slack",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [2450, 200]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json }}",
+        "options": {}
+      },
+      "id": "webhook-response-success",
+      "name": "Response Success",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [2650, 200]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { \"success\": false, \"errors\": $json.errors, \"params\": $json.params } }}",
+        "options": {
+          "responseCode": 400
+        }
+      },
+      "id": "webhook-response-error",
+      "name": "Response Error",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [850, 400]
+    }
+  ],
+  "connections": {
+    "Webhook Trigger": {
+      "main": [[{"node": "Validate Parameters", "type": "main", "index": 0}]]
+    },
+    "Validate Parameters": {
+      "main": [[{"node": "Valid Input?", "type": "main", "index": 0}]]
+    },
+    "Valid Input?": {
+      "main": [
+        [{"node": "Get VM Status", "type": "main", "index": 0}],
+        [{"node": "Response Error", "type": "main", "index": 0}]
+      ]
+    },
+    "Get VM Status": {
+      "main": [[{"node": "Analyze Storage", "type": "main", "index": 0}]]
+    },
+    "Analyze Storage": {
+      "main": [[{"node": "Dry Run?", "type": "main", "index": 0}]]
+    },
+    "Dry Run?": {
+      "main": [
+        [{"node": "Dry Run Result", "type": "main", "index": 0}],
+        [{"node": "Expand Proxmox Disk", "type": "main", "index": 0}]
+      ]
+    },
+    "Expand Proxmox Disk": {
+      "main": [[{"node": "Expand Filesystem", "type": "main", "index": 0}]]
+    },
+    "Expand Filesystem": {
+      "main": [[{"node": "Verify Expansion", "type": "main", "index": 0}]]
+    },
+    "Verify Expansion": {
+      "main": [[{"node": "Prepare Result", "type": "main", "index": 0}]]
+    },
+    "Prepare Result": {
+      "main": [[{"node": "Audit Log", "type": "main", "index": 0}]]
+    },
+    "Dry Run Result": {
+      "main": [[{"node": "Audit Log", "type": "main", "index": 0}]]
+    },
+    "Audit Log": {
+      "main": [[{"node": "Notify Slack", "type": "main", "index": 0}]]
+    },
+    "Notify Slack": {
+      "main": [[{"node": "Response Success", "type": "main", "index": 0}]]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": [
+    {"name": "infrastructure", "id": "infra-tag"},
+    {"name": "storage", "id": "storage-tag"},
+    {"name": "k3s", "id": "k3s-tag"},
+    {"name": "cortex", "id": "cortex-tag"}
+  ],
+  "triggerCount": 1,
+  "versionId": "1"
+}

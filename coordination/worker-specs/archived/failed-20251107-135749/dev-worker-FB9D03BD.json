@@ -10,13 +10,13 @@
     "type": "development",
     "priority": "high",
     "status": "assigned",
-    "repository": "ry-ops/commit-relay",
+    "repository": "ry-ops/cortex",
     "context": {
       "description": "Optimize dashboard to ensure data is always up-to-date with minimal latency. Address redundancies between dashboard-agent-monitor.sh and server file watching, reduce update latency, and improve system reliability.",
       "current_issues": [
         "Dashboard-agent-monitor.sh duplicates server chokidar file watching functionality",
         "500ms file watcher stability threshold causes noticeable lag",
-        "Dashboard server requires manual startup (not integrated into start-commit-relay.sh)",
+        "Dashboard server requires manual startup (not integrated into start-cortex.sh)",
         "Daemon status not pushed via WebSocket (only HTTP polling)",
         "No data freshness indicators or stale data warnings",
         "Missing event buffer for reconnecting WebSocket clients"
@@ -44,7 +44,7 @@
         "dashboard/server/index.js",
         "dashboard/public/dashboard-v2.js",
         "scripts/dashboard-agent-monitor.sh",
-        "scripts/start-commit-relay.sh"
+        "scripts/start-cortex.sh"
       ],
       "technical_approach": [
         "Reduce chokidar awaitWriteFinish.stabilityThreshold from 500ms to 150ms",
@@ -62,7 +62,7 @@
         "All data sources push via WebSocket (no polling for core data)",
         "Reconnecting clients receive missed events (up to 50)",
         "Clear visual indicators when data is stale",
-        "Dashboard auto-starts with commit-relay system"
+        "Dashboard auto-starts with cortex system"
       ],
       "estimated_effort": "MEDIUM - Multiple file modifications and architectural improvements"
     }
@@ -76,8 +76,8 @@
       "testing"
     ],
     "knowledge_base_refs": {
-      "implementation_patterns": "/Users/ryandahlberg/commit-relay/scripts/../coordination/masters/development/knowledge-base/implementation-patterns.jsonl",
-      "architecture_docs": "/Users/ryandahlberg/commit-relay/scripts/../coordination/masters/development/knowledge-base/codebase-architecture.json"
+      "implementation_patterns": "/Users/ryandahlberg/cortex/scripts/../coordination/masters/development/knowledge-base/implementation-patterns.jsonl",
+      "architecture_docs": "/Users/ryandahlberg/cortex/scripts/../coordination/masters/development/knowledge-base/codebase-architecture.json"
     }
   },
   "resources": {

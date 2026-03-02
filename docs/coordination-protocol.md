@@ -2,7 +2,7 @@
 
 ## Overview
 
-This document defines the communication protocol used by all agents in the commit-relay system.
+This document defines the communication protocol used by all agents in the cortex system.
 
 ## Core Principles
 
@@ -18,7 +18,7 @@ Every agent follows this cycle at the start of each interaction:
 
 ```bash
 # 1. Navigate to coordination repository
-cd ~/commit-relay
+cd ~/cortex
 
 # 2. Pull latest state
 git pull origin main

@@ -1,7 +1,7 @@
 {
-  "name": "commit-relay",
-  "version": "1.0.0",
-  "description": "AI-powered commit automation system with master-worker architecture",
+  "name": "cortex",
+  "version": "2.0.0",
+  "description": "Cortex by ry-ops: Self-improving AI development orchestration with Mixture of Experts learning",
   "main": "index.js",
   "scripts": {
     "test": "jest",
@@ -10,25 +10,39 @@
     "test:ci": "jest --ci --coverage --maxWorkers=2"
   },
   "keywords": [
-    "commit-relay",
+    "cortex",
+    "moe",
+    "mixture-of-experts",
+    "self-improving",
     "automation",
     "ai",
-    "governance"
+    "orchestration",
+    "ry-ops"
   ],
   "author": "ry-ops",
   "license": "MIT",
   "dependencies": {
-    "@anthropic-ai/sdk": "^0.32.1",
+    "@anthropic-ai/sdk": "^0.71.2",
+    "@opentelemetry/api": "^1.9.0",
+    "@opentelemetry/sdk-node": "^0.208.0",
+    "@opentelemetry/sdk-trace-node": "^2.2.0",
     "ajv": "^8.17.1",
     "ajv-formats": "^3.0.1",
+    "cors": "^2.8.5",
+    "express": "^5.2.1",
+    "express-rate-limit": "^8.2.1",
+    "helmet": "^8.1.0",
+    "jsonwebtoken": "^9.0.3",
     "minisearch": "^7.1.0",
     "openai": "^4.73.0",
-    "postman-cli": "^1.24.2",
-    "tiktoken": "^1.0.17"
+    "postman-cli": "^1.26.0",
+    "tiktoken": "^1.0.17",
+    "ws": "^8.19.0"
   },
   "devDependencies": {
     "@types/jest": "^29.5.11",
     "jest": "^29.7.0",
+    "pdf-lib": "^1.17.1",
     "supertest": "^7.1.4"
   }
 }

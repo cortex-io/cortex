@@ -1,0 +1,204 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: dashy-config
+  namespace: default
+data:
+  conf.yml: |
+    pageInfo:
+      title: Cortex Holdings - Infrastructure Dashboard
+      description: Complete monitoring and management dashboard for Larry & the Darryl's
+      logo: https://i.ibb.co/qWWpD0v/astro-dab-128.png
+
+    appConfig:
+      theme: colorful
+      layout: auto
+      iconSize: large
+      language: en
+      statusCheck: true
+      statusCheckInterval: 60
+
+    sections:
+      - name: K3s Cluster Overview
+        icon: fas fa-dharmachakra
+        displayData:
+          collapsed: false
+          hideForGuests: false
+        widgets:
+          - type: cluster-health
+            options:
+              title: Cluster Health
+
+      - name: Kubernetes Management
+        icon: fas fa-dharmachakra
+        items:
+          - title: Rancher
+            description: Kubernetes management platform
+            icon: fas fa-compass
+            url: https://rancher.cortex.local
+            target: newtab
+            statusCheck: true
+            statusCheckUrl: https://rancher.cortex.local
+            statusCheckHeaders:
+              Accept: text/html
+
+          - title: Portainer
+            description: Container management UI
+            icon: fas fa-box-open
+            url: https://portainer.cortex.local
+            target: newtab
+            statusCheck: true
+            statusCheckUrl: https://portainer.cortex.local/api/status
+
+          - title: Traefik Dashboard
+            description: Ingress controller & reverse proxy
+            icon: fas fa-route
+            url: http://traefik.cortex.local/dashboard/
+            target: newtab
+            statusCheck: true
+            statusCheckUrl: http://traefik.cortex.local/api/overview
+            statusCheckHeaders:
+              Accept: application/json
+
+      - name: Security & Monitoring
+        icon: fas fa-shield-alt
+        items:
+          - title: Wazuh Security
+            description: Security monitoring - 8 K3s nodes + UniFi syslog
+            icon: fas fa-shield-virus
+            url: http://wazuh.cortex.local
+            target: newtab
+            statusCheck: true
+            statusCheckUrl: http://10.88.145.208/app/wazuh
+            statusCheckHeaders:
+              Accept: text/html
+
+          - title: Grafana
+            description: Metrics visualization & dashboards
+            icon: fas fa-chart-line
+            url: http://grafana.cortex.local
+            target: newtab
+            statusCheck: true
+            statusCheckUrl: http://grafana.cortex.local/api/health
+            statusCheckHeaders:
+              Accept: application/json
+
+          - title: Prometheus
+            description: Metrics collection & time-series DB
+            icon: fas fa-database
+            url: http://prometheus.cortex.local
+            target: newtab
+            statusCheck: true
+            statusCheckUrl: http://prometheus.cortex.local/-/healthy
+            statusCheckHeaders:
+              Accept: text/plain
+
+      - name: Network & Infrastructure
+        icon: fas fa-network-wired
+        items:
+          - title: UniFi Controller
+            description: Network management (UDM Pro + APs)
+            icon: fas fa-wifi
+            url: https://10.88.140.144:8443
+            target: newtab
+            statusCheck: true
+            statusCheckUrl: https://10.88.140.144:8443
+            statusCheckHeaders:
+              Accept: text/html
+
+          - title: UniFi (Traefik)
+            description: Via Traefik ingress
+            icon: fas fa-wifi
+            url: http://unifi.cortex.local
+            target: newtab
+            statusCheck: true
+            statusCheckUrl: http://unifi.cortex.local
+
+          - title: Proxmox VE
+            description: Hypervisor management (10.88.145.40)
+            icon: fas fa-server
+            url: https://10.88.145.40:8006
+            target: newtab
+            statusCheck: true
+            statusCheckUrl: https://10.88.145.40:8006
+            statusCheckHeaders:
+              Accept: text/html
+
+      - name: Data & Cache
+        icon: fas fa-database
+        items:
+          - title: Redis Commander
+            description: Redis management UI
+            icon: fas fa-memory
+            url: http://redis.cortex.local
+            target: newtab
+            statusCheck: true
+            statusCheckUrl: http://redis.cortex.local
+
+      - name: K3s Master Nodes
+        icon: fas fa-server
+        displayData:
+          collapsed: false
+          hideForGuests: false
+        items:
+          - title: k3s-master01 (Larry)
+            description: 10.88.145.190 - Primary master
+            icon: fas fa-server
+            url: http://10.88.145.190:61208
+            target: newtab
+            statusCheck: true
+            statusCheckUrl: http://10.88.145.190:61208/api/3/status
+
+          - title: k3s-master02 (Darryl)
+            description: 10.88.145.193 - Secondary master
+            icon: fas fa-server
+            url: http://10.88.145.193:61208
+            target: newtab
+            statusCheck: true
+            statusCheckUrl: http://10.88.145.193:61208/api/3/status
+
+          - title: k3s-master03 (Darryl)
+            description: 10.88.145.196 - Tertiary master
+            icon: fas fa-server
+            url: http://10.88.145.196:61208
+            target: newtab
+            statusCheck: true
+            statusCheckUrl: http://10.88.145.196:61208/api/3/status
+
+      - name: K3s Worker Nodes
+        icon: fas fa-cubes
+        displayData:
+          collapsed: true
+          hideForGuests: false
+        items:
+          - title: k3s-worker01
+            description: 10.88.145.191
+            icon: fas fa-cube
+            url: http://10.88.145.191:61208
+            target: newtab
+            statusCheck: true
+            statusCheckUrl: http://10.88.145.191:61208/api/3/status
+
+          - title: k3s-worker02
+            description: 10.88.145.192
+            icon: fas fa-cube
+            url: http://10.88.145.192:61208
+            target: newtab
+            statusCheck: true
+            statusCheckUrl: http://10.88.145.192:61208/api/3/status
+
+          - title: k3s-worker03-agent
+            description: 10.88.145.194 - Wazuh manager host
+            icon: fas fa-cube
+            url: http://10.88.145.194:61208
+            target: newtab
+            statusCheck: true
+            statusCheckUrl: http://10.88.145.194:61208/api/3/status
+
+          - title: k3s-worker04
+            description: 10.88.145.195
+            icon: fas fa-cube
+            url: http://10.88.145.195:61208
+            target: newtab
+            statusCheck: true
+            statusCheckUrl: http://10.88.145.195:61208/api/3/status

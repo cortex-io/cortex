@@ -1,10 +1,10 @@
-# Quick Start: commit-relay Monitoring & Observability
+# Quick Start: cortex Monitoring & Observability
 
 ## 5-Minute Setup
 
 ### Prerequisites
 - ✅ Elastic Cloud account with APM
-- ✅ commit-relay running with APM enabled
+- ✅ cortex running with APM enabled
 - ✅ You can see metrics in Kibana (completed earlier)
 
 ---
@@ -21,11 +21,11 @@ curl http://localhost:5001/api/workers
 curl http://localhost:5001/api/security/current
 
 # Check Kibana
-# Go to: Observability → APM → Services → commit-relay
+# Go to: Observability → APM → Services → cortex
 # You should see transactions appearing
 ```
 
-**Expected**: You see `commit-relay` service with recent transactions
+**Expected**: You see `cortex` service with recent transactions
 
 ---
 
@@ -67,7 +67,7 @@ curl http://localhost:5001/api/security/current
    - Enable **Show time range selector**
    - Set default to **Last 1 hour**
 5. Click refresh icon → **Auto-refresh every 30 seconds**
-6. **Save** as "commit-relay Monitor"
+6. **Save** as "cortex Monitor"
 
 ---
 
@@ -93,7 +93,7 @@ curl http://localhost:5001/api/security/current
 
 ### In Kibana APM
 
-Navigate: **Observability** → **APM** → **Services** → **commit-relay**
+Navigate: **Observability** → **APM** → **Services** → **cortex**
 
 #### 1. Transactions Tab
 - See all API endpoint calls
@@ -237,7 +237,7 @@ chmod +x /tmp/generate-traffic.sh
 ### "No data in Kibana"
 ```bash
 # Check APM is enabled
-cat /Users/ryandahlberg/Projects/commit-relay/.env | grep ELASTIC_APM_ENABLED
+cat /Users/ryandahlberg/Projects/cortex/.env | grep ELASTIC_APM_ENABLED
 # Should show: ELASTIC_APM_ENABLED=true
 
 # Check server logs
@@ -254,7 +254,7 @@ curl http://localhost:5001/api/health
 ```bash
 # Restart server
 kill $(cat /tmp/server.pid)
-cd /Users/ryandahlberg/Projects/commit-relay/api-server
+cd /Users/ryandahlberg/Projects/cortex/api-server
 node server/index.js > /tmp/apm-server.log 2>&1 &
 echo $! > /tmp/server.pid
 
@@ -284,7 +284,7 @@ tail -f /tmp/apm-server.log
 
 # Restart server
 kill $(cat /tmp/server.pid) && sleep 2 && \
-  cd /Users/ryandahlberg/Projects/commit-relay/api-server && \
+  cd /Users/ryandahlberg/Projects/cortex/api-server && \
   node server/index.js > /tmp/apm-server.log 2>&1 & \
   echo $! > /tmp/server.pid
 
@@ -304,7 +304,7 @@ for i in {1..10}; do curl -s http://localhost:5001/api/health > /dev/null; done
 
 After setup, you should have:
 
-- [ ] commit-relay service visible in Kibana APM
+- [ ] cortex service visible in Kibana APM
 - [ ] At least 1 visualization created
 - [ ] Dashboard with auto-refresh enabled
 - [ ] 1 alert configured (even if not fully connected)

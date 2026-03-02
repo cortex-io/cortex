@@ -1,7 +1,7 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
   "title": "Agent Message Specification",
-  "description": "Schema for inter-agent communication messages in commit-relay",
+  "description": "Schema for inter-agent communication messages in cortex",
   "type": "object",
   "required": ["message_id", "from", "to", "type", "body", "timestamp", "status"],
   "properties": {

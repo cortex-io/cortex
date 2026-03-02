@@ -1,0 +1,8 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: cortex-itil-stream2
+  labels:
+    name: cortex-itil-stream2
+    stream: "2"
+    itil-category: sla-availability

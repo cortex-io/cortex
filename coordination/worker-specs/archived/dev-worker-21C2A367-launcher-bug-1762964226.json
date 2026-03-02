@@ -21,7 +21,7 @@
       "Actionable recommendations engine",
       "Executive governance dashboard"
     ],
-    "repository": "ry-ops/commit-relay",
+    "repository": "ry-ops/cortex",
     "branch": "main",
     "handoff_id": "coord-to-development-BD3091B6-0297-4277-979C-CD98F8261BEB",
     "retry_info": {

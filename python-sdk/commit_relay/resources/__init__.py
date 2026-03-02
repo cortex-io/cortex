@@ -1,5 +1,5 @@
 """
-Resource clients for commit-relay API endpoints.
+Resource clients for cortex API endpoints.
 
 This package contains specialized clients for different API resource types,
 providing a clean and organized interface to the dashboard API.

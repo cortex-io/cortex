@@ -126,7 +126,7 @@ This document defines all JSON and JSONL data formats used by the Project Manage
   "environment": {
     "branch": "feature/task-123-auth",
     "last_commit": "a1b2c3d",
-    "working_directory": "/Users/user/commit-relay"
+    "working_directory": "/Users/user/cortex"
   }
 }
 ```

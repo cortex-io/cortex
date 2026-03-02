@@ -1,0 +1,97 @@
+{
+  "validation_config": {
+    "version": "1.0.0",
+    "enabled": true,
+    "test_mode": "continuous",
+    "confidence_threshold": 0.95
+  },
+  "ab_testing": {
+    "enabled": true,
+    "split_ratio": 0.2,
+    "control_method": "keyword",
+    "experiment_method": "semantic",
+    "min_sample_size": 100,
+    "metrics_tracked": [
+      "routing_accuracy",
+      "confidence_score",
+      "task_success_rate",
+      "tokens_used",
+      "execution_time"
+    ]
+  },
+  "rag_validation": {
+    "enabled": true,
+    "track_hit_rate": true,
+    "track_relevance": true,
+    "min_relevance_threshold": 0.6,
+    "metrics_tracked": [
+      "retrieval_count",
+      "hit_rate",
+      "avg_relevance_score",
+      "context_usage_rate",
+      "task_outcome_with_rag",
+      "task_outcome_without_rag"
+    ]
+  },
+  "pytorch_routing_validation": {
+    "enabled": true,
+    "compare_to_keyword": true,
+    "metrics_tracked": [
+      "prediction_accuracy",
+      "confidence_calibration",
+      "routing_time",
+      "fallback_rate"
+    ]
+  },
+  "baseline_metrics": {
+    "routing_accuracy": 0.875,
+    "avg_confidence": 0.82,
+    "task_success_rate": 0.94,
+    "avg_tokens_per_task": 12000,
+    "avg_execution_time_seconds": 45
+  },
+  "test_cases": [
+    {
+      "id": "test-routing-001",
+      "description": "Fix bug in user authentication causing login failures",
+      "expected_expert": "development",
+      "expected_confidence_min": 0.7,
+      "category": "development"
+    },
+    {
+      "id": "test-routing-002",
+      "description": "Scan repository for CVE-2024-12345 vulnerability",
+      "expected_expert": "security",
+      "expected_confidence_min": 0.9,
+      "category": "security"
+    },
+    {
+      "id": "test-routing-003",
+      "description": "Document all repositories with dependency versions",
+      "expected_expert": "inventory",
+      "expected_confidence_min": 0.7,
+      "category": "inventory"
+    },
+    {
+      "id": "test-routing-004",
+      "description": "Implement new API endpoint for user profile",
+      "expected_expert": "development",
+      "expected_confidence_min": 0.7,
+      "category": "development"
+    },
+    {
+      "id": "test-routing-005",
+      "description": "Security audit of authentication feature with vulnerability scanning",
+      "expected_expert": "security",
+      "expected_confidence_min": 0.8,
+      "category": "security"
+    }
+  ],
+  "reporting": {
+    "generate_daily_report": true,
+    "generate_weekly_summary": true,
+    "alert_on_degradation": true,
+    "degradation_threshold": 0.05,
+    "output_dir": "./llm-mesh/validation/reports"
+  }
+}

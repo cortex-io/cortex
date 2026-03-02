@@ -2,7 +2,7 @@
 
 ## Overview
 
-Comprehensive security compliance checklist for commit-relay Achievement Master and MoE system.
+Comprehensive security compliance checklist for cortex Achievement Master and MoE system.
 
 **Compliance Standards**: SOC 2 Type II, GDPR, ISO 27001
 
@@ -136,7 +136,7 @@ coordination/governance/token-rotation-log.jsonl
 
 **Alert Channels**:
 - Slack: `#security-alerts`
-- Email: `security@commit-relay.io`
+- Email: `security@cortex.io`
 - PagerDuty: Critical escalation
 
 ---

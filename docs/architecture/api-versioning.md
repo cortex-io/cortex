@@ -2,7 +2,7 @@
 
 ## Overview
 
-Semantic versioning strategy for commit-relay API ensuring backward compatibility and smooth migrations.
+Semantic versioning strategy for cortex API ensuring backward compatibility and smooth migrations.
 
 **Current Version**: v1  
 **Versioning Scheme**: URL-based (`/api/v1/`, `/api/v2/`)
@@ -37,7 +37,7 @@ Semantic versioning strategy for commit-relay API ensuring backward compatibilit
 
 ```http
 GET /api/achievements/progress
-Accept: application/vnd.commit-relay.v1+json
+Accept: application/vnd.cortex.v1+json
 ```
 
 ---
@@ -267,7 +267,7 @@ const tier = response.achievement.tier.current;
 ```javascript
 class CommitRelayClient {
   constructor(apiVersion = '1') {
-    this.baseURL = `https://api.commit-relay.io/api/v${apiVersion}`;
+    this.baseURL = `https://api.cortex.io/api/v${apiVersion}`;
     this.version = apiVersion;
   }
   
@@ -294,7 +294,7 @@ function detectClientVersion(req) {
   
   // Header-based
   const acceptHeader = req.headers['accept'];
-  const versionMatch = acceptHeader?.match(/vnd\.commit-relay\.v(\d+)/);
+  const versionMatch = acceptHeader?.match(/vnd\.cortex\.v(\d+)/);
   if (versionMatch) return `${versionMatch[1]}.0.0`;
   
   // Default to latest

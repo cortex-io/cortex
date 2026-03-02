@@ -1,5 +1,5 @@
-#!/bin/bash
-# init-common.sh - Mandatory initialization for all commit-relay scripts
+#!/usr/bin/env bash
+# init-common.sh - Mandatory initialization for all cortex scripts
 # This file provides a single entry point for loading all core services
 # and enforcing core principles (observability, validation, governance, etc.)
 #
@@ -31,8 +31,8 @@ if [ -z "${SCRIPT_DIR:-}" ]; then
 fi
 
 # Set project root (go up from scripts/ to project root)
-export COMMIT_RELAY_HOME="${COMMIT_RELAY_HOME:-$(cd "$SCRIPT_DIR/.." && pwd)}"
-export PROJECT_ROOT="$COMMIT_RELAY_HOME"
+export CORTEX_HOME="${CORTEX_HOME:-$(cd "$SCRIPT_DIR/.." && pwd)}"
+export PROJECT_ROOT="$CORTEX_HOME"
 
 # Determine the calling script name
 if [ -n "${BASH_SOURCE[1]:-}" ]; then
@@ -47,11 +47,11 @@ export CALLING_SCRIPT
 # ==============================================================================
 
 # Load system configuration
-SYSTEM_CONFIG_FILE="$COMMIT_RELAY_HOME/coordination/config/system.json"
+SYSTEM_CONFIG_FILE="$CORTEX_HOME/coordination/config/system.json"
 
 if [ ! -f "$SYSTEM_CONFIG_FILE" ]; then
   echo "ERROR: System configuration not found: $SYSTEM_CONFIG_FILE"
-  echo "Please ensure commit-relay is properly initialized"
+  echo "Please ensure cortex is properly initialized"
   exit 99
 fi
 
@@ -77,17 +77,17 @@ get_config() {
 
 # Export common configuration as environment variables
 # Note: LOG_LEVEL is a string ('info', 'debug', etc.) - logging.sh converts to number
-export LOG_LEVEL="${COMMIT_RELAY_LOG_LEVEL:-$(get_config 'logging.level' 'info')}"
+export LOG_LEVEL="${CORTEX_LOG_LEVEL:-$(get_config 'logging.level' 'info')}"
 export LOG_DIR="$(get_config 'logging.directory' 'agents/logs/system')"
 export GOVERNANCE_ENABLED="$(get_config 'governance.enabled' 'true')"
 export OBSERVABILITY_ENABLED="$(get_config 'observability.enabled' 'true')"
 export VALIDATION_ENABLED="$(get_config 'validation.enabled' 'true')"
 
-# Set COMMIT_RELAY_LOG_LEVEL to LOG_LEVEL for logging.sh compatibility
-export COMMIT_RELAY_LOG_LEVEL="$LOG_LEVEL"
+# Set CORTEX_LOG_LEVEL to LOG_LEVEL for logging.sh compatibility
+export CORTEX_LOG_LEVEL="$LOG_LEVEL"
 
 # Set up principal (who is running this script)
-export COMMIT_RELAY_PRINCIPAL="${COMMIT_RELAY_PRINCIPAL:-system}"
+export CORTEX_PRINCIPAL="${CORTEX_PRINCIPAL:-system}"
 
 # ==============================================================================
 # SECTION 3: Core Libraries Loading (Order Matters!)
@@ -130,7 +130,7 @@ source_library() {
 source_library "logging.sh" true
 
 # Now we can use log_* functions
-log_debug "Initializing commit-relay core services for: $CALLING_SCRIPT"
+log_debug "Initializing cortex core services for: $CALLING_SCRIPT"
 
 # 2. Load coordination library (task/worker/token management)
 source_library "coordination.sh" true
@@ -161,7 +161,7 @@ log_debug "Core libraries loaded successfully"
 # Ensure required directories exist
 ensure_directory() {
   local dir="$1"
-  local full_path="$COMMIT_RELAY_HOME/$dir"
+  local full_path="$CORTEX_HOME/$dir"
 
   if [ ! -d "$full_path" ]; then
     log_debug "Creating required directory: $dir"
@@ -194,7 +194,7 @@ ensure_directory "logs/daemons"
 ensure_coordination_file() {
   local file="$1"
   local default_content="$2"
-  local full_path="$COMMIT_RELAY_HOME/coordination/$file"
+  local full_path="$CORTEX_HOME/coordination/$file"
 
   if [ ! -f "$full_path" ]; then
     log_debug "Creating coordination file: $file"
@@ -244,15 +244,15 @@ if [ "$GOVERNANCE_ENABLED" = "true" ]; then
   # Check if we're running in bypass mode (and audit it)
   if [ "${GOVERNANCE_BYPASS:-false}" = "true" ]; then
     log_critical "GOVERNANCE BYPASS ENABLED for $CALLING_SCRIPT"
-    log_critical "Principal: $COMMIT_RELAY_PRINCIPAL, Reason: ${BYPASS_REASON:-not specified}"
+    log_critical "Principal: $CORTEX_PRINCIPAL, Reason: ${BYPASS_REASON:-not specified}"
 
     # Log bypass to audit trail
     if [ -f "$LIB_DIR/access-check.sh" ]; then
-      log_access_decision "$COMMIT_RELAY_PRINCIPAL" "governance-system" "bypass" "allowed" "Bypass mode: ${BYPASS_REASON:-not specified}" 2>/dev/null || true
+      log_access_decision "$CORTEX_PRINCIPAL" "governance-system" "bypass" "allowed" "Bypass mode: ${BYPASS_REASON:-not specified}" 2>/dev/null || true
     fi
   fi
 
-  log_debug "Governance enabled: principal=$COMMIT_RELAY_PRINCIPAL"
+  log_debug "Governance enabled: principal=$CORTEX_PRINCIPAL"
 fi
 
 # ==============================================================================
@@ -272,7 +272,7 @@ trace_event() {
   local timestamp
   timestamp=$(date -u +%Y-%m-%dT%H:%M:%SZ)
 
-  local event_file="$COMMIT_RELAY_HOME/coordination/observability/events/all-events.jsonl"
+  local event_file="$CORTEX_HOME/coordination/observability/events/all-events.jsonl"
 
   # Build event JSON
   local event
@@ -286,7 +286,7 @@ trace_event() {
   "status": "$status",
   "component": "${COMPONENT:-script}",
   "component_id": "$CALLING_SCRIPT",
-  "principal": "$COMMIT_RELAY_PRINCIPAL",
+  "principal": "$CORTEX_PRINCIPAL",
   "metadata": $metadata,
   "context": {
     "hostname": "$(hostname)",
@@ -330,11 +330,11 @@ validate_core_services() {
   local errors=0
 
   # Check if critical files exist
-  if [ ! -f "$COMMIT_RELAY_HOME/coordination/task-queue.json" ]; then
+  if [ ! -f "$CORTEX_HOME/coordination/task-queue.json" ]; then
     log_warn "Task queue not found (will be created)"
   fi
 
-  if [ ! -f "$COMMIT_RELAY_HOME/agents/configs/agent-registry.json" ]; then
+  if [ ! -f "$CORTEX_HOME/agents/configs/agent-registry.json" ]; then
     log_warn "Agent registry not found - some features may not work"
   fi
 
@@ -359,10 +359,10 @@ validate_core_services || {
 log_debug "Core services initialization complete for $CALLING_SCRIPT"
 
 # Emit initialization event
-trace_event "init.complete" "success" "{\"script\":\"$CALLING_SCRIPT\",\"principal\":\"$COMMIT_RELAY_PRINCIPAL\"}"
+trace_event "init.complete" "success" "{\"script\":\"$CALLING_SCRIPT\",\"principal\":\"$CORTEX_PRINCIPAL\"}"
 
 # Set flag to indicate initialization is complete
-export COMMIT_RELAY_INITIALIZED=true
+export CORTEX_INITIALIZED=true
 
 # Return success
 return 0

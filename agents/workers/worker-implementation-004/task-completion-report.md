@@ -27,7 +27,7 @@
 - Status: Operational
 
 ### 2. Codebase Architecture Analysis
-The commit-relay system uses a file-based coordination architecture:
+The cortex system uses a file-based coordination architecture:
 - No traditional database or SQL queries
 - JSON files for state management in `/coordination/` directory
 - Dashboard server implements file-based querying patterns

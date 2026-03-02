@@ -1,0 +1,36 @@
+{
+  "routing_rules": [
+    {
+      "pattern": "security|vulnerability|audit|cve|scan",
+      "target_master": "security",
+      "confidence": 0.95,
+      "description": "Security-related tasks including vulnerability scanning and audits"
+    },
+    {
+      "pattern": "implement|develop|code|feature|bug.*fix|refactor",
+      "target_master": "development",
+      "confidence": 0.90,
+      "description": "Development tasks including coding, features, and bug fixes"
+    },
+    {
+      "pattern": "build|test|deploy|release|pipeline|dashboard.*update",
+      "target_master": "cicd",
+      "confidence": 0.90,
+      "description": "CI/CD tasks including builds, deployments, and releases"
+    },
+    {
+      "pattern": "catalog|inventory|organize|document|readme",
+      "target_master": "inventory",
+      "confidence": 0.85,
+      "description": "Inventory and documentation tasks"
+    }
+  ],
+  "special_routing": {
+    "dashboard_updates": {
+      "from": ["security", "development", "inventory"],
+      "to": "cicd",
+      "auto_route": true,
+      "description": "Dashboard update handoffs automatically route to CI/CD for deployment"
+    }
+  }
+}

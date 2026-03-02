@@ -82,12 +82,12 @@
       "timestamp": "2025-11-15T19:42:45.769Z",
       "data": {
         "task_id": "task-moe-learning-1763235765769",
-        "task_title": "MoE Learning System: Master commit-relay Architecture and Operations",
+        "task_title": "MoE Learning System: Master cortex Architecture and Operations",
         "task_type": "development",
         "priority": "high",
         "created_by": "dashboard-learning-system"
       },
-      "message": "Task Created: 'task-moe-learning-1763235765769: MoE Learning System: Master commit-relay Architecture and Operations'"
+      "message": "Task Created: 'task-moe-learning-1763235765769: MoE Learning System: Master cortex Architecture and Operations'"
     },
     {
       "id": "evt-test-1",
@@ -1690,9 +1690,9 @@
       "data": {
         "task_id": "task-moe-learning-1763218612887",
         "assigned_to": "development",
-        "task_title": "MoE Learning System: Master commit-relay Architecture and Operations"
+        "task_title": "MoE Learning System: Master cortex Architecture and Operations"
       },
-      "message": "task assigned: task-moe-learning-1763218612887 - MoE Learning System: Master commit-relay Architecture and Operations"
+      "message": "task assigned: task-moe-learning-1763218612887 - MoE Learning System: Master cortex Architecture and Operations"
     },
     {
       "id": "evt-1763235770875-xn56k06ez",
@@ -1748,9 +1748,9 @@
       "data": {
         "task_id": "task-moe-learning-1763235765769",
         "assigned_to": "development",
-        "task_title": "MoE Learning System: Master commit-relay Architecture and Operations"
+        "task_title": "MoE Learning System: Master cortex Architecture and Operations"
       },
-      "message": "task assigned: task-moe-learning-1763235765769 - MoE Learning System: Master commit-relay Architecture and Operations"
+      "message": "task assigned: task-moe-learning-1763235765769 - MoE Learning System: Master cortex Architecture and Operations"
     },
     {
       "id": "task-event-1763235771844-quznsayz2",
@@ -1758,7 +1758,7 @@
       "timestamp": "2025-11-15T13:42:50-0600",
       "data": {
         "task_id": "task-moe-learning-1763235765769",
-        "task_title": "MoE Learning System: Master commit-relay Architecture and Operations",
+        "task_title": "MoE Learning System: Master cortex Architecture and Operations",
         "assigned_to": "development",
         "priority": "high"
       },

@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # scripts/lib/prompt-versioning.sh
 # Prompt Versioning and A/B Testing - Phase 4 Item 25
 #
@@ -23,10 +23,10 @@ PROMPT_VERSIONING_LOADED=1
 
 # Load dependencies
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-COMMIT_RELAY_HOME="${COMMIT_RELAY_HOME:-$(cd "$SCRIPT_DIR/../.." && pwd)}"
+CORTEX_HOME="${CORTEX_HOME:-$(cd "$SCRIPT_DIR/../.." && pwd)}"
 
 # Versioning directories
-PROMPTS_DIR="$COMMIT_RELAY_HOME/coordination/prompts"
+PROMPTS_DIR="$CORTEX_HOME/coordination/prompts"
 VERSIONS_DIR="$PROMPTS_DIR/versions"
 OUTCOMES_DIR="$PROMPTS_DIR/outcomes"
 AB_TESTS_DIR="$PROMPTS_DIR/ab-tests"
@@ -552,6 +552,6 @@ export -f conclude_ab_test
 export -f list_prompts
 
 # Log that library is loaded
-if [ "${COMMIT_RELAY_LOG_LEVEL:-1}" -le 0 ] 2>/dev/null; then
+if [ "${CORTEX_LOG_LEVEL:-1}" -le 0 ] 2>/dev/null; then
     echo "[PROMPT-VERSION] Prompt versioning library loaded" >&2
 fi

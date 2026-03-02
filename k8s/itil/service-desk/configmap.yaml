@@ -1,0 +1,227 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: service-desk-config
+  namespace: cortex-service-desk
+data:
+  # NLP Configuration
+  nlp.intent.confidence.threshold: "0.75"
+  nlp.entity.extraction.enabled: "true"
+  nlp.sentiment.analysis.enabled: "true"
+  nlp.language.detection.enabled: "true"
+  nlp.supported.languages: "en,es,fr,de,ja"
+
+  # Service Catalog
+  catalog.categories: "access,hardware,software,network,security,other"
+  catalog.auto.categorize: "true"
+  catalog.sla.mapping.enabled: "true"
+
+  # Request Fulfillment
+  fulfillment.auto.approve.threshold: "low"
+  fulfillment.workflow.timeout: "3600"
+  fulfillment.parallel.execution: "true"
+  fulfillment.retry.attempts: "3"
+
+  # Multi-Channel
+  channels.enabled: "chat,api,web,email,slack"
+  channels.chat.websocket.enabled: "true"
+  channels.api.rate.limit: "1000"
+  channels.web.session.timeout: "1800"
+
+  # Self-Service
+  selfservice.portal.enabled: "true"
+  selfservice.knowledge.base.enabled: "true"
+  selfservice.auto.suggest: "true"
+  selfservice.feedback.enabled: "true"
+
+  # Automation
+  automation.rules.enabled: "true"
+  automation.approval.workflow: "dynamic"
+  automation.escalation.enabled: "true"
+  automation.notification.channels: "email,slack,teams"
+
+  # Metrics & Analytics
+  metrics.enabled: "true"
+  metrics.resolution.time.tracking: "true"
+  metrics.satisfaction.survey: "true"
+  metrics.export.prometheus: "true"
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: service-catalog
+  namespace: cortex-service-desk
+data:
+  catalog.json: |
+    {
+      "version": "1.0",
+      "services": [
+        {
+          "id": "srv-001",
+          "name": "Account Access Request",
+          "category": "access",
+          "description": "Request access to applications or systems",
+          "sla": "4h",
+          "priority": "medium",
+          "auto_fulfill": true,
+          "workflow": "access-provisioning",
+          "fields": [
+            {"name": "application", "type": "select", "required": true},
+            {"name": "access_level", "type": "select", "required": true},
+            {"name": "business_justification", "type": "text", "required": true}
+          ]
+        },
+        {
+          "id": "srv-002",
+          "name": "Password Reset",
+          "category": "access",
+          "description": "Reset password for any system",
+          "sla": "15m",
+          "priority": "high",
+          "auto_fulfill": true,
+          "workflow": "password-reset-auto",
+          "fields": [
+            {"name": "system", "type": "select", "required": true},
+            {"name": "username", "type": "text", "required": true}
+          ]
+        },
+        {
+          "id": "srv-003",
+          "name": "Software Installation",
+          "category": "software",
+          "description": "Request software installation on your workstation",
+          "sla": "8h",
+          "priority": "medium",
+          "auto_fulfill": false,
+          "workflow": "software-approval-install",
+          "fields": [
+            {"name": "software_name", "type": "text", "required": true},
+            {"name": "version", "type": "text", "required": false},
+            {"name": "license_type", "type": "select", "required": true},
+            {"name": "business_justification", "type": "text", "required": true}
+          ]
+        },
+        {
+          "id": "srv-004",
+          "name": "Hardware Request",
+          "category": "hardware",
+          "description": "Request new hardware or replacement",
+          "sla": "24h",
+          "priority": "medium",
+          "auto_fulfill": false,
+          "workflow": "hardware-procurement",
+          "fields": [
+            {"name": "hardware_type", "type": "select", "required": true},
+            {"name": "specifications", "type": "text", "required": true},
+            {"name": "urgency", "type": "select", "required": true},
+            {"name": "cost_center", "type": "text", "required": true}
+          ]
+        },
+        {
+          "id": "srv-005",
+          "name": "Network Access",
+          "category": "network",
+          "description": "Request VPN or network access",
+          "sla": "2h",
+          "priority": "high",
+          "auto_fulfill": true,
+          "workflow": "network-access-provisioning",
+          "fields": [
+            {"name": "access_type", "type": "select", "required": true},
+            {"name": "duration", "type": "select", "required": true},
+            {"name": "justification", "type": "text", "required": true}
+          ]
+        },
+        {
+          "id": "srv-006",
+          "name": "Security Exception",
+          "category": "security",
+          "description": "Request security policy exception",
+          "sla": "4h",
+          "priority": "high",
+          "auto_fulfill": false,
+          "workflow": "security-review-approval",
+          "fields": [
+            {"name": "policy", "type": "select", "required": true},
+            {"name": "exception_reason", "type": "text", "required": true},
+            {"name": "risk_assessment", "type": "text", "required": true},
+            {"name": "duration", "type": "select", "required": true}
+          ]
+        }
+      ]
+    }
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: nlp-intents
+  namespace: cortex-service-desk
+data:
+  intents.json: |
+    {
+      "intents": [
+        {
+          "name": "password_reset",
+          "patterns": [
+            "reset password",
+            "forgot password",
+            "can't login",
+            "cannot access account",
+            "locked out",
+            "password not working",
+            "need new password"
+          ],
+          "service_id": "srv-002",
+          "confidence_threshold": 0.8
+        },
+        {
+          "name": "access_request",
+          "patterns": [
+            "need access to",
+            "request permission",
+            "can't access",
+            "get access",
+            "need privileges",
+            "require access to"
+          ],
+          "service_id": "srv-001",
+          "confidence_threshold": 0.75
+        },
+        {
+          "name": "software_install",
+          "patterns": [
+            "install software",
+            "need application",
+            "install program",
+            "get software",
+            "download and install"
+          ],
+          "service_id": "srv-003",
+          "confidence_threshold": 0.8
+        },
+        {
+          "name": "hardware_request",
+          "patterns": [
+            "need new laptop",
+            "request hardware",
+            "get equipment",
+            "need computer",
+            "replace device"
+          ],
+          "service_id": "srv-004",
+          "confidence_threshold": 0.75
+        },
+        {
+          "name": "network_access",
+          "patterns": [
+            "vpn access",
+            "remote access",
+            "connect to network",
+            "need vpn",
+            "network connection"
+          ],
+          "service_id": "srv-005",
+          "confidence_threshold": 0.8
+        }
+      ]
+    }

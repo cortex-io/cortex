@@ -1,16 +1,16 @@
 {
   "id": "task-moe-learning-template",
-  "title": "MoE Learning System: Master commit-relay Architecture and Operations",
+  "title": "MoE Learning System: Master cortex Architecture and Operations",
   "type": "development",
   "priority": "high",
   "status": "pending",
   "created_at": "2025-11-19T00:00:00.000Z",
   "created_by": "dashboard-learning-system",
   "context": {
-    "description": "Comprehensive learning task for MoE system to deeply understand commit-relay architecture, workflows, agents, security patterns, development standards, and operational intelligence",
+    "description": "Comprehensive learning task for MoE system to deeply understand cortex architecture, workflows, agents, security patterns, development standards, and operational intelligence",
     "learning_objectives": {
       "architecture_mastery": {
-        "description": "Deep understanding of commit-relay system architecture",
+        "description": "Deep understanding of cortex system architecture",
         "areas": [
           "MoE (Mixture of Experts) routing and coordination patterns",
           "Master agent specializations (development, security, inventory, cicd, coordinator)",

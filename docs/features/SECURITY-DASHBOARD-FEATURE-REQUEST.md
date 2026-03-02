@@ -2,11 +2,11 @@
 
 ## Overview
 
-Enhance commit-relay's existing security infrastructure with a unified dashboard UI and improved scanning capabilities. This builds upon the existing Security Master, scan workers, and GitHub connector rather than creating parallel systems.
+Enhance cortex's existing security infrastructure with a unified dashboard UI and improved scanning capabilities. This builds upon the existing Security Master, scan workers, and GitHub connector rather than creating parallel systems.
 
 ## Architecture Alignment
 
-This feature leverages commit-relay's existing architecture:
+This feature leverages cortex's existing architecture:
 - **Backend**: Node.js/Express API server
 - **Storage**: JSON coordination files (no database required)
 - **Routing**: MoE coordinator for task distribution
@@ -276,7 +276,7 @@ Shows:
 ## File Structure Summary
 
 ```
-commit-relay/
+cortex/
 ├── api-server/server/routes/
 │   └── security.js                    # New API routes
 ├── eui-dashboard/src/components/dashboard/security/
@@ -379,7 +379,7 @@ testing/integration/
 
 This restructured approach:
 1. **Avoids duplication** - Uses existing Security Master and scan workers
-2. **Maintains consistency** - Follows commit-relay's Node.js/JSON architecture
+2. **Maintains consistency** - Follows cortex's Node.js/JSON architecture
 3. **Enables incremental delivery** - Each phase is independently valuable
 4. **Leverages MoE routing** - Scans route through coordinator like other tasks
 5. **Integrates with existing systems** - Dashboard, auto-fix, daemons all connected

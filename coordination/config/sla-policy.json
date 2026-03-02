@@ -116,7 +116,7 @@
     "slack": {
       "enabled": true,
       "webhook_url_env": "SLACK_WEBHOOK_URL",
-      "channel": "#commit-relay-alerts",
+      "channel": "#cortex-alerts",
       "username": "SLA Monitor",
       "icon_emoji": ":alarm_clock:",
       "templates": {
@@ -143,9 +143,9 @@
       "smtp_port_env": "SMTP_PORT",
       "smtp_user_env": "SMTP_USER",
       "smtp_pass_env": "SMTP_PASS",
-      "from_address": "sla-monitor@commit-relay.local",
+      "from_address": "sla-monitor@cortex.local",
       "to_addresses_env": "SLA_ALERT_EMAILS",
-      "subject_prefix": "[Commit-Relay SLA]"
+      "subject_prefix": "[Cortex SLA]"
     },
     "dashboard": {
       "enabled": true,

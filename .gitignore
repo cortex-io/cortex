@@ -24,6 +24,19 @@ __pycache__/
 .venv/
 venv/
 
+# Test coverage reports
+coverage/
+.nyc_output/
+*.lcov
+
+# Docker (not using containerization)
+Dockerfile
+docker-compose*.yml
+.dockerignore
+
+# Cloned repositories
+repos/
+
 # Logs - keep directory structure but ignore large log files
 # (We want to commit daily summaries but not huge debug logs)
 *.log
@@ -35,3 +48,49 @@ secrets/
 *.pem
 credentials.json
 .env.test
+
+# Runtime coordination files (state, metrics, events)
+coordination/events/*.jsonl
+coordination/metrics/*.json
+coordination/metrics/*.jsonl
+coordination/metrics/learning/*.jsonl
+coordination/history/
+coordination/memory/working/*.json
+coordination/orchestrator/state/*.json
+coordination/pm-activity.jsonl
+coordination/pm-state.json
+coordination/token-budget.json
+coordination/worker-pool.json
+coordination/workforce-streams.json
+coordination/dashboard-events.jsonl
+coordination/health-alerts.json
+coordination/patterns/failure-patterns.jsonl
+coordination/patterns/pattern-index.json
+coordination/governance/access-log.jsonl
+coordination/knowledge-base/learned-patterns/patterns-*.json
+coordination/knowledge-base/model-versions/
+# Ignore most master knowledge-bases except achievement (for GitHub Actions)
+coordination/masters/coordinator/knowledge-base/
+coordination/masters/security/knowledge-base/
+coordination/masters/development/knowledge-base/
+coordination/masters/cleanup/knowledge-base/
+coordination/masters/cicd/knowledge-base/
+coordination/masters/inventory/knowledge-base/
+coordination/masters/*/metrics/
+coordination/masters/*/scans/
+coordination/masters/*/output/
+coordination/masters/shared-data/
+coordination/tasks/pending/
+coordination/worker-specs/zombie/
+agents/logs/zombie-workers/
+
+# Routing cascade runtime files
+coordination/logs/
+llm-mesh/training-data/*.jsonl
+llm-mesh/training-data/*.py
+llm-mesh/models/*.pt
+
+# OpenTelemetry runtime files
+coordination/observability/traces/*.jsonl
+coordination/observability/metrics/*.jsonl
+.env.unifi

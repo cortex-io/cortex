@@ -35,16 +35,16 @@ This runbook provides procedures for recovering from critical system failures in
 
 ```bash
 # Kill all processes
-pkill -9 -f "commit-relay"
+pkill -9 -f "cortex"
 
 # Remove all PID files
-rm -f /tmp/commit-relay-*.pid
+rm -f /tmp/cortex-*.pid
 
 # Wait for cleanup
 sleep 5
 
 # Verify nothing running
-ps aux | grep commit-relay | grep -v grep && echo "Processes still running!" || echo "All stopped"
+ps aux | grep cortex | grep -v grep && echo "Processes still running!" || echo "All stopped"
 ```
 
 #### 2. Check System Health
@@ -98,7 +98,7 @@ EOF
 
 ```bash
 # Start core system
-./scripts/start-commit-relay.sh
+./scripts/start-cortex.sh
 
 # Verify startup
 sleep 10
@@ -266,7 +266,7 @@ fi
 
 ```bash
 # Full backup
-BACKUP_NAME="commit-relay-backup-$(date +%Y%m%d-%H%M%S)"
+BACKUP_NAME="cortex-backup-$(date +%Y%m%d-%H%M%S)"
 BACKUP_DIR="$COMMIT_RELAY_HOME/backups"
 mkdir -p "$BACKUP_DIR"
 
@@ -286,17 +286,17 @@ echo "Backup created: $BACKUP_DIR/$BACKUP_NAME.tar.gz"
 ls -la $COMMIT_RELAY_HOME/backups/*.tar.gz
 
 # Restore specific backup
-BACKUP_FILE="$COMMIT_RELAY_HOME/backups/commit-relay-backup-20251121-100000.tar.gz"
+BACKUP_FILE="$COMMIT_RELAY_HOME/backups/cortex-backup-20251121-100000.tar.gz"
 
 # Stop system
-pkill -f "commit-relay"
+pkill -f "cortex"
 
 # Restore
 cd $COMMIT_RELAY_HOME
 tar -xzf "$BACKUP_FILE"
 
 # Restart
-./scripts/start-commit-relay.sh
+./scripts/start-cortex.sh
 ```
 
 ### Restore Script
@@ -322,7 +322,7 @@ Use the dedicated restore script:
 
 ```bash
 # Stop system
-pkill -f "commit-relay"
+pkill -f "cortex"
 
 # Find last known good commit
 git log --oneline -10
@@ -335,7 +335,7 @@ git checkout $GOOD_COMMIT
 git revert HEAD~3..HEAD
 
 # Restart
-./scripts/start-commit-relay.sh
+./scripts/start-cortex.sh
 ```
 
 ### Rollback Configuration
@@ -469,25 +469,25 @@ jq empty new-config.json && mv new-config.json config.json
 
 ```bash
 # Nuclear option - complete reset
-pkill -f "commit-relay"
+pkill -f "cortex"
 rm -rf $COMMIT_RELAY_HOME/coordination/worker-specs/active/*
 rm -rf $COMMIT_RELAY_HOME/coordination/worker-specs/zombie/*
 echo '{"tasks": []}' > $COMMIT_RELAY_HOME/coordination/task-queue.json
 echo '{"total": 500000, "used": 0, "available": 500000}' > $COMMIT_RELAY_HOME/coordination/token-budget.json
-./scripts/start-commit-relay.sh
+./scripts/start-cortex.sh
 ```
 
 ### Emergency Commands
 
 ```bash
 # Stop all
-pkill -9 -f "commit-relay"
+pkill -9 -f "cortex"
 
 # Clear state
-rm -f /tmp/commit-relay-*.pid
+rm -f /tmp/cortex-*.pid
 
 # Start fresh
-./scripts/start-commit-relay.sh
+./scripts/start-cortex.sh
 
 # Check status
 ./scripts/dashboards/system-live.sh

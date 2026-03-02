@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # scripts/lib/utility-optimizer.sh
 # Utility-Based Master Optimization Library
 #
@@ -279,7 +279,7 @@ get_master_capability_score() {
     local baseline=${MASTER_PROFILES[$baseline_key]:-0.70}
 
     # Try to get historical adjustment from knowledge base
-    local kb_dir="${COMMIT_RELAY_HOME:-/Users/ryandahlberg/commit-relay}/coordination/knowledge-base/utility-scores"
+    local kb_dir="${CORTEX_HOME:-/Users/ryandahlberg/cortex}/coordination/knowledge-base/utility-scores"
     local history_file="$kb_dir/${master_id}-${task_type}.json"
 
     if [ -f "$history_file" ]; then
@@ -385,7 +385,7 @@ save_utility_decision() {
     local decision="$1"
     local task_id="$2"
 
-    local kb_dir="${COMMIT_RELAY_HOME:-/Users/ryandahlberg/commit-relay}/coordination/knowledge-base/utility-decisions"
+    local kb_dir="${CORTEX_HOME:-/Users/ryandahlberg/cortex}/coordination/knowledge-base/utility-decisions"
     mkdir -p "$kb_dir"
 
     # Save individual decision
@@ -417,7 +417,7 @@ update_master_performance() {
     local task_type="$2"
     local outcome="$3"
 
-    local kb_dir="${COMMIT_RELAY_HOME:-/Users/ryandahlberg/commit-relay}/coordination/knowledge-base/utility-scores"
+    local kb_dir="${CORTEX_HOME:-/Users/ryandahlberg/cortex}/coordination/knowledge-base/utility-scores"
     mkdir -p "$kb_dir"
 
     local history_file="$kb_dir/${master_id}-${task_type}.json"

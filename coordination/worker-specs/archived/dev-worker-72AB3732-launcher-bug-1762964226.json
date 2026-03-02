@@ -20,7 +20,7 @@
       "Drift detection system",
       "Real-time monitoring dashboard"
     ],
-    "repository": "ry-ops/commit-relay",
+    "repository": "ry-ops/cortex",
     "branch": "main",
     "handoff_id": "coord-to-development-47BDDE0F-279F-4E27-BD25-35D60E101AC4"
   },

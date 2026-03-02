@@ -157,7 +157,7 @@ echo "All circuit breakers cleared"
 
 ```bash
 # Restart the daemon to pick up new state
-kill $(cat /tmp/commit-relay-worker-restart.pid) 2>/dev/null || true
+kill $(cat /tmp/cortex-worker-restart.pid) 2>/dev/null || true
 sleep 1
 ./scripts/daemons/worker-restart-daemon.sh &
 ```

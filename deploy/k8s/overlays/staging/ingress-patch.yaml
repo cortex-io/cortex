@@ -1,0 +1,12 @@
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: cortex
+spec:
+  tls:
+  - hosts:
+    - cortex.staging.example.com
+    secretName: cortex-staging-tls
+  rules:
+  - host: cortex.staging.example.com

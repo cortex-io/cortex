@@ -1,6 +1,6 @@
 {
   "version": "1.0.0",
-  "description": "Token and cost budget configuration for commit-relay LLM operations",
+  "description": "Token and cost budget configuration for cortex LLM operations",
   "defaults": {
     "task": {
       "tokens": 10000,

@@ -1,0 +1,531 @@
+{
+  "dashboard": {
+    "title": "Contractor Performance",
+    "tags": ["cortex", "contractors", "performance"],
+    "timezone": "browser",
+    "editable": true,
+    "graphTooltip": 1,
+    "time": {
+      "from": "now-6h",
+      "to": "now"
+    },
+    "refresh": "1m",
+    "schemaVersion": 38,
+    "panels": [
+      {
+        "id": 1,
+        "title": "Contractor Status",
+        "type": "stat",
+        "gridPos": {"h": 6, "w": 24, "x": 0, "y": 0},
+        "targets": [
+          {
+            "expr": "up{job=\"cortex-contractors\"}",
+            "legendFormat": "{{contractor_type}} ({{specialization}})",
+            "refId": "A"
+          }
+        ],
+        "options": {
+          "colorMode": "background",
+          "graphMode": "area",
+          "justifyMode": "auto",
+          "orientation": "horizontal",
+          "reduceOptions": {
+            "values": false,
+            "calcs": ["lastNotNull"],
+            "fields": ""
+          }
+        },
+        "fieldConfig": {
+          "defaults": {
+            "mappings": [
+              {"type": "value", "value": "0", "text": "OFFLINE", "color": "red"},
+              {"type": "value", "value": "1", "text": "ACTIVE", "color": "green"}
+            ],
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {"value": 0, "color": "red"},
+                {"value": 1, "color": "green"}
+              ]
+            }
+          }
+        }
+      },
+      {
+        "id": 2,
+        "title": "Request Rate by Contractor",
+        "type": "graph",
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 6},
+        "targets": [
+          {
+            "expr": "sum(contractor:requests:rate5m) by (contractor_type)",
+            "legendFormat": "{{contractor_type}}",
+            "refId": "A"
+          }
+        ],
+        "yaxes": [
+          {"format": "reqps", "label": "Requests/sec", "show": true},
+          {"format": "short", "show": false}
+        ],
+        "xaxis": {"show": true, "mode": "time"},
+        "lines": true,
+        "fill": 2,
+        "linewidth": 2,
+        "legend": {
+          "show": true,
+          "values": true,
+          "avg": true,
+          "current": true,
+          "max": true,
+          "alignAsTable": true
+        }
+      },
+      {
+        "id": 3,
+        "title": "Contractor Error Rate",
+        "type": "graph",
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 6},
+        "targets": [
+          {
+            "expr": "contractor:error_ratio:rate5m * 100",
+            "legendFormat": "{{contractor_type}}",
+            "refId": "A"
+          }
+        ],
+        "yaxes": [
+          {"format": "percent", "label": "Error Rate %", "show": true, "max": 100},
+          {"format": "short", "show": false}
+        ],
+        "xaxis": {"show": true, "mode": "time"},
+        "lines": true,
+        "fill": 1,
+        "alert": {
+          "conditions": [
+            {
+              "evaluator": {"params": [10], "type": "gt"},
+              "operator": {"type": "and"},
+              "query": {"params": ["A", "5m", "now"]},
+              "reducer": {"params": [], "type": "avg"},
+              "type": "query"
+            }
+          ],
+          "executionErrorState": "alerting",
+          "frequency": "60s",
+          "handler": 1,
+          "name": "High Contractor Error Rate",
+          "noDataState": "no_data"
+        },
+        "thresholds": [
+          {"colorMode": "critical", "fill": true, "line": true, "op": "gt", "value": 10}
+        ]
+      },
+      {
+        "id": 4,
+        "title": "Task Completion Rate by Contractor",
+        "type": "graph",
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 14},
+        "targets": [
+          {
+            "expr": "sum(contractor:tasks_completed:rate5m) by (contractor_type)",
+            "legendFormat": "{{contractor_type}} completed",
+            "refId": "A"
+          },
+          {
+            "expr": "sum(contractor:tasks_failed:rate5m) by (contractor_type)",
+            "legendFormat": "{{contractor_type}} failed",
+            "refId": "B"
+          }
+        ],
+        "yaxes": [
+          {"format": "ops", "label": "Tasks/sec", "show": true},
+          {"format": "short", "show": false}
+        ],
+        "xaxis": {"show": true, "mode": "time"},
+        "seriesOverrides": [
+          {"alias": "/.*failed/", "color": "red", "fill": 0, "dashes": true}
+        ]
+      },
+      {
+        "id": 5,
+        "title": "Contractor Success Rate",
+        "type": "graph",
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 14},
+        "targets": [
+          {
+            "expr": "contractor:success_ratio:rate5m * 100",
+            "legendFormat": "{{contractor_type}}",
+            "refId": "A"
+          }
+        ],
+        "yaxes": [
+          {"format": "percent", "label": "Success Rate %", "show": true, "min": 0, "max": 100},
+          {"format": "short", "show": false}
+        ],
+        "xaxis": {"show": true, "mode": "time"},
+        "lines": true,
+        "fill": 2,
+        "thresholds": [
+          {"colorMode": "critical", "fill": true, "line": true, "op": "lt", "value": 90}
+        ]
+      },
+      {
+        "id": 6,
+        "title": "Contractor Response Latency (p95)",
+        "type": "graph",
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 22},
+        "targets": [
+          {
+            "expr": "contractor:latency:p95",
+            "legendFormat": "{{contractor_type}}",
+            "refId": "A"
+          }
+        ],
+        "yaxes": [
+          {"format": "s", "label": "Latency", "show": true},
+          {"format": "short", "show": false}
+        ],
+        "xaxis": {"show": true, "mode": "time"},
+        "lines": true,
+        "fill": 1,
+        "linewidth": 2
+      },
+      {
+        "id": 7,
+        "title": "Contractor Response Latency (p50)",
+        "type": "graph",
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 22},
+        "targets": [
+          {
+            "expr": "contractor:latency:p50",
+            "legendFormat": "{{contractor_type}}",
+            "refId": "A"
+          }
+        ],
+        "yaxes": [
+          {"format": "s", "label": "Latency", "show": true},
+          {"format": "short", "show": false}
+        ],
+        "xaxis": {"show": true, "mode": "time"},
+        "lines": true,
+        "fill": 2
+      },
+      {
+        "id": 8,
+        "title": "Specialization Effectiveness (Avg Task Duration)",
+        "type": "bargauge",
+        "gridPos": {"h": 10, "w": 12, "x": 0, "y": 30},
+        "targets": [
+          {
+            "expr": "contractor:specialization_effectiveness:avg_duration",
+            "legendFormat": "{{contractor_type}} - {{specialization}}",
+            "refId": "A"
+          }
+        ],
+        "options": {
+          "displayMode": "gradient",
+          "orientation": "horizontal",
+          "reduceOptions": {
+            "values": false,
+            "calcs": ["lastNotNull"],
+            "fields": ""
+          },
+          "showUnfilled": true
+        },
+        "fieldConfig": {
+          "defaults": {
+            "unit": "s",
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {"value": 0, "color": "green"},
+                {"value": 30, "color": "yellow"},
+                {"value": 60, "color": "orange"},
+                {"value": 120, "color": "red"}
+              ]
+            }
+          }
+        }
+      },
+      {
+        "id": 9,
+        "title": "Task Volume by Contractor Type",
+        "type": "piechart",
+        "gridPos": {"h": 10, "w": 12, "x": 12, "y": 30},
+        "targets": [
+          {
+            "expr": "sum(increase(contractor_tasks_completed_total[1h])) by (contractor_type)",
+            "legendFormat": "{{contractor_type}}",
+            "refId": "A"
+          }
+        ],
+        "options": {
+          "legend": {
+            "displayMode": "table",
+            "placement": "right",
+            "values": ["value", "percent"]
+          },
+          "pieType": "pie",
+          "tooltip": {
+            "mode": "single"
+          }
+        },
+        "fieldConfig": {
+          "defaults": {
+            "unit": "short"
+          }
+        }
+      },
+      {
+        "id": 10,
+        "title": "Infrastructure Contractor - Kubernetes Operations",
+        "type": "graph",
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 40},
+        "targets": [
+          {
+            "expr": "sum(rate(contractor_k8s_operations_total{contractor_type=\"infrastructure\"}[5m])) by (operation)",
+            "legendFormat": "{{operation}}",
+            "refId": "A"
+          }
+        ],
+        "yaxes": [
+          {"format": "ops", "label": "Operations/sec", "show": true},
+          {"format": "short", "show": false}
+        ],
+        "xaxis": {"show": true, "mode": "time"},
+        "lines": true,
+        "fill": 1,
+        "stack": true
+      },
+      {
+        "id": 11,
+        "title": "n8n Contractor - Workflow Executions",
+        "type": "graph",
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 40},
+        "targets": [
+          {
+            "expr": "sum(rate(contractor_workflow_executions_total{contractor_type=\"n8n\"}[5m])) by (status)",
+            "legendFormat": "{{status}}",
+            "refId": "A"
+          }
+        ],
+        "yaxes": [
+          {"format": "ops", "label": "Executions/sec", "show": true},
+          {"format": "short", "show": false}
+        ],
+        "xaxis": {"show": true, "mode": "time"},
+        "seriesOverrides": [
+          {"alias": "success", "color": "green"},
+          {"alias": "failed", "color": "red"},
+          {"alias": "timeout", "color": "orange"}
+        ]
+      },
+      {
+        "id": 12,
+        "title": "Talos Contractor - OS Management Tasks",
+        "type": "graph",
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 48},
+        "targets": [
+          {
+            "expr": "sum(rate(contractor_os_tasks_total{contractor_type=\"talos\"}[5m])) by (task_type)",
+            "legendFormat": "{{task_type}}",
+            "refId": "A"
+          }
+        ],
+        "yaxes": [
+          {"format": "ops", "label": "Tasks/sec", "show": true},
+          {"format": "short", "show": false}
+        ],
+        "xaxis": {"show": true, "mode": "time"},
+        "lines": true,
+        "fill": 2,
+        "stack": true
+      },
+      {
+        "id": 13,
+        "title": "Contractor Memory Usage",
+        "type": "graph",
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 48},
+        "targets": [
+          {
+            "expr": "container_memory_usage_bytes{namespace=\"cortex\",pod=~\".*contractor.*\"} / 1024 / 1024",
+            "legendFormat": "{{pod}}",
+            "refId": "A"
+          }
+        ],
+        "yaxes": [
+          {"format": "mbytes", "label": "Memory (MB)", "show": true},
+          {"format": "short", "show": false}
+        ],
+        "xaxis": {"show": true, "mode": "time"}
+      },
+      {
+        "id": 14,
+        "title": "Contractor CPU Usage",
+        "type": "graph",
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 56},
+        "targets": [
+          {
+            "expr": "rate(container_cpu_usage_seconds_total{namespace=\"cortex\",pod=~\".*contractor.*\"}[5m]) * 100",
+            "legendFormat": "{{pod}}",
+            "refId": "A"
+          }
+        ],
+        "yaxes": [
+          {"format": "percent", "label": "CPU %", "show": true},
+          {"format": "short", "show": false}
+        ],
+        "xaxis": {"show": true, "mode": "time"}
+      },
+      {
+        "id": 15,
+        "title": "Contractor Performance Score",
+        "type": "stat",
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 56},
+        "targets": [
+          {
+            "expr": "contractor:success_ratio:rate5m * 100",
+            "legendFormat": "{{contractor_type}}",
+            "refId": "A"
+          }
+        ],
+        "options": {
+          "colorMode": "value",
+          "graphMode": "area",
+          "justifyMode": "auto",
+          "orientation": "auto",
+          "reduceOptions": {
+            "values": false,
+            "calcs": ["lastNotNull"],
+            "fields": ""
+          }
+        },
+        "fieldConfig": {
+          "defaults": {
+            "unit": "percent",
+            "min": 0,
+            "max": 100,
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {"value": 0, "color": "red"},
+                {"value": 80, "color": "yellow"},
+                {"value": 95, "color": "green"}
+              ]
+            }
+          }
+        }
+      },
+      {
+        "id": 16,
+        "title": "Contractor Utilization Over Time",
+        "type": "heatmap",
+        "gridPos": {"h": 10, "w": 24, "x": 0, "y": 64},
+        "targets": [
+          {
+            "expr": "sum(rate(contractor_requests_total[5m])) by (contractor_type)",
+            "format": "time_series",
+            "refId": "A"
+          }
+        ],
+        "options": {
+          "calculate": false,
+          "cellGap": 2,
+          "color": {
+            "exponent": 0.5,
+            "fill": "dark-orange",
+            "mode": "scheme",
+            "reverse": false,
+            "scale": "exponential",
+            "scheme": "Viridis",
+            "steps": 64
+          },
+          "legend": {
+            "show": true
+          },
+          "yAxis": {
+            "axisPlacement": "left",
+            "reverse": false
+          }
+        }
+      },
+      {
+        "id": 17,
+        "title": "Top Contractor Tasks (Last 24h)",
+        "type": "table",
+        "gridPos": {"h": 10, "w": 24, "x": 0, "y": 74},
+        "targets": [
+          {
+            "expr": "topk(20, sum(increase(contractor_tasks_completed_total[24h])) by (contractor_type, task_name))",
+            "format": "table",
+            "instant": true,
+            "refId": "A"
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {
+              "excludeByName": {
+                "Time": true
+              },
+              "indexByName": {},
+              "renameByName": {
+                "Value": "Completions",
+                "contractor_type": "Contractor",
+                "task_name": "Task"
+              }
+            }
+          }
+        ],
+        "options": {
+          "showHeader": true,
+          "sortBy": [
+            {"displayName": "Completions", "desc": true}
+          ]
+        }
+      }
+    ],
+    "templating": {
+      "list": [
+        {
+          "name": "datasource",
+          "type": "datasource",
+          "query": "prometheus",
+          "current": {"text": "Prometheus", "value": "Prometheus"}
+        },
+        {
+          "name": "contractor_type",
+          "type": "query",
+          "datasource": "Prometheus",
+          "query": "label_values(contractor_requests_total, contractor_type)",
+          "current": {},
+          "multi": true,
+          "includeAll": true,
+          "refresh": 1
+        },
+        {
+          "name": "specialization",
+          "type": "query",
+          "datasource": "Prometheus",
+          "query": "label_values(contractor_requests_total, specialization)",
+          "current": {},
+          "multi": true,
+          "includeAll": true,
+          "refresh": 1
+        }
+      ]
+    },
+    "annotations": {
+      "list": [
+        {
+          "datasource": "Prometheus",
+          "enable": true,
+          "expr": "ALERTS{alertstate=\"firing\",component=\"contractor\"}",
+          "iconColor": "red",
+          "name": "Contractor Alerts",
+          "tagKeys": "alertname,severity,contractor_type"
+        }
+      ]
+    }
+  }
+}

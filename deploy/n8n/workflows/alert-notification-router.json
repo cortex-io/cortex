@@ -1,0 +1,530 @@
+{
+  "name": "Alert Notification Router",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "alert-notification-router",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "webhook-input",
+      "name": "Webhook Input",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [250, 300],
+      "webhookId": "alert-notification-router"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Extract alert from webhook payload\nconst body = $input.item.json.body;\nconst alert = body.alert || $input.item.json;\nconst priority = body.priority || 'standard';\n\nreturn {\n  json: {\n    ...alert,\n    priority,\n    routedAt: new Date().toISOString()\n  }\n};"
+      },
+      "id": "extract-alert",
+      "name": "Extract Alert Data",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [450, 300]
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict"
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.severity }}",
+                    "rightValue": "critical",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "critical"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict"
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.severity }}",
+                    "rightValue": "warning",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "warning"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict"
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.severity }}",
+                    "rightValue": "info",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "info"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "switch-severity",
+      "name": "Switch by Severity",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3,
+      "position": [650, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Format message for critical alerts\nconst alert = $input.item.json;\n\nconst slackMessage = {\n  blocks: [\n    {\n      type: \"header\",\n      text: {\n        type: \"plain_text\",\n        text: `🚨 CRITICAL: ${alert.alertName}`,\n        emoji: true\n      }\n    },\n    {\n      type: \"section\",\n      fields: [\n        {\n          type: \"mrkdwn\",\n          text: `*Status:*\\n${alert.status}`\n        },\n        {\n          type: \"mrkdwn\",\n          text: `*Severity:*\\nCritical`\n        },\n        {\n          type: \"mrkdwn\",\n          text: `*Cluster:*\\n${alert.cluster}`\n        },\n        {\n          type: \"mrkdwn\",\n          text: `*Namespace:*\\n${alert.namespace || 'N/A'}`\n        }\n      ]\n    },\n    {\n      type: \"section\",\n      text: {\n        type: \"mrkdwn\",\n        text: `*Summary:*\\n${alert.summary}`\n      }\n    },\n    {\n      type: \"section\",\n      text: {\n        type: \"mrkdwn\",\n        text: `*Description:*\\n${alert.description || 'No additional details'}`\n      }\n    },\n    {\n      type: \"context\",\n      elements: [\n        {\n          type: \"mrkdwn\",\n          text: `Fired at: ${alert.startsAt} | <${alert.generatorURL}|View in Prometheus>`\n        }\n      ]\n    },\n    {\n      type: \"actions\",\n      elements: [\n        {\n          type: \"button\",\n          text: {\n            type: \"plain_text\",\n            text: \"Acknowledge\",\n            emoji: true\n          },\n          style: \"primary\",\n          value: `ack_${alert.fingerprint}`\n        },\n        {\n          type: \"button\",\n          text: {\n            type: \"plain_text\",\n            text: \"View Details\",\n            emoji: true\n          },\n          url: alert.generatorURL\n        }\n      ]\n    }\n  ]\n};\n\nconst emailContent = `\nCRITICAL ALERT: ${alert.alertName}\n\nStatus: ${alert.status}\nSeverity: Critical\nCluster: ${alert.cluster}\nNamespace: ${alert.namespace || 'N/A'}\nPod: ${alert.pod || 'N/A'}\n\nSummary:\n${alert.summary}\n\nDescription:\n${alert.description || 'No additional details'}\n\nFired at: ${alert.startsAt}\nGenerator URL: ${alert.generatorURL}\n\nThis is an automated alert from Cortex Monitoring System.\n`;\n\nreturn {\n  json: {\n    alert,\n    slackMessage,\n    emailSubject: `[CRITICAL] ${alert.alertName} - ${alert.cluster}`,\n    emailContent\n  }\n};"
+      },
+      "id": "format-critical",
+      "name": "Format Critical Message",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [850, 150]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Format message for warning alerts\nconst alert = $input.item.json;\n\nconst slackMessage = {\n  blocks: [\n    {\n      type: \"header\",\n      text: {\n        type: \"plain_text\",\n        text: `⚠️ WARNING: ${alert.alertName}`,\n        emoji: true\n      }\n    },\n    {\n      type: \"section\",\n      fields: [\n        {\n          type: \"mrkdwn\",\n          text: `*Status:*\\n${alert.status}`\n        },\n        {\n          type: \"mrkdwn\",\n          text: `*Severity:*\\nWarning`\n        },\n        {\n          type: \"mrkdwn\",\n          text: `*Cluster:*\\n${alert.cluster}`\n        },\n        {\n          type: \"mrkdwn\",\n          text: `*Instance:*\\n${alert.instance || 'N/A'}`\n        }\n      ]\n    },\n    {\n      type: \"section\",\n      text: {\n        type: \"mrkdwn\",\n        text: `*Summary:*\\n${alert.summary}`\n      }\n    },\n    {\n      type: \"context\",\n      elements: [\n        {\n          type: \"mrkdwn\",\n          text: `Fired at: ${alert.startsAt}`\n        }\n      ]\n    }\n  ]\n};\n\nreturn {\n  json: {\n    alert,\n    slackMessage\n  }\n};"
+      },
+      "id": "format-warning",
+      "name": "Format Warning Message",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [850, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Format log entry for info alerts\nconst alert = $input.item.json;\n\nconst logEntry = {\n  timestamp: new Date().toISOString(),\n  level: 'info',\n  alertName: alert.alertName,\n  status: alert.status,\n  severity: alert.severity,\n  cluster: alert.cluster,\n  summary: alert.summary,\n  startsAt: alert.startsAt,\n  labels: alert.labels\n};\n\nreturn {\n  json: {\n    alert,\n    logEntry\n  }\n};"
+      },
+      "id": "format-info",
+      "name": "Format Info Log",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [850, 450]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.SLACK_WEBHOOK_URL || 'https://hooks.slack.com/services/YOUR/WEBHOOK/URL' }}",
+        "authentication": "none",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json.slackMessage) }}",
+        "options": {
+          "timeout": 10000
+        }
+      },
+      "id": "send-slack-critical",
+      "name": "Send to Slack (Critical)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [1050, 100],
+      "notes": "Configure SLACK_WEBHOOK_URL environment variable",
+      "notesInFlow": true
+    },
+    {
+      "parameters": {
+        "fromEmail": "={{ $env.ALERT_FROM_EMAIL || 'alerts@cortex.local' }}",
+        "toEmail": "={{ $env.ALERT_TO_EMAIL || 'oncall@cortex.local' }}",
+        "subject": "={{ $json.emailSubject }}",
+        "emailFormat": "text",
+        "text": "={{ $json.emailContent }}",
+        "options": {}
+      },
+      "id": "send-email-critical",
+      "name": "Send Email (Critical)",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2,
+      "position": [1050, 200],
+      "credentials": {
+        "smtp": {
+          "id": "1",
+          "name": "SMTP Account (Configure)"
+        }
+      },
+      "notes": "Configure SMTP credentials in N8N settings",
+      "notesInFlow": true
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://n8n.cortex.svc.cluster.local:5678/webhook/audit-trail",
+        "authentication": "none",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "type",
+              "value": "alert_notification"
+            },
+            {
+              "name": "severity",
+              "value": "critical"
+            },
+            {
+              "name": "alert",
+              "value": "={{ $json.alert }}"
+            },
+            {
+              "name": "channels",
+              "value": "[\"slack\", \"email\"]"
+            },
+            {
+              "name": "timestamp",
+              "value": "={{ new Date().toISOString() }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "audit-critical",
+      "name": "Log to Audit Trail (Critical)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [1050, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.SLACK_WEBHOOK_URL || 'https://hooks.slack.com/services/YOUR/WEBHOOK/URL' }}",
+        "authentication": "none",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json.slackMessage) }}",
+        "options": {
+          "timeout": 10000
+        }
+      },
+      "id": "send-slack-warning",
+      "name": "Send to Slack (Warning)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [1050, 400]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://n8n.cortex.svc.cluster.local:5678/webhook/audit-trail",
+        "authentication": "none",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "type",
+              "value": "alert_notification"
+            },
+            {
+              "name": "severity",
+              "value": "warning"
+            },
+            {
+              "name": "alert",
+              "value": "={{ $json.alert }}"
+            },
+            {
+              "name": "channels",
+              "value": "[\"slack\"]"
+            },
+            {
+              "name": "timestamp",
+              "value": "={{ new Date().toISOString() }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "audit-warning",
+      "name": "Log to Audit Trail (Warning)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [1050, 500]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://n8n.cortex.svc.cluster.local:5678/webhook/audit-trail",
+        "authentication": "none",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "type",
+              "value": "alert_notification"
+            },
+            {
+              "name": "severity",
+              "value": "info"
+            },
+            {
+              "name": "logEntry",
+              "value": "={{ $json.logEntry }}"
+            },
+            {
+              "name": "timestamp",
+              "value": "={{ new Date().toISOString() }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "audit-info",
+      "name": "Log to Audit Trail (Info)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [1050, 600]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { \"status\": \"success\", \"message\": \"Alert routed and sent\", \"severity\": $json.alert.severity, \"channels\": $json.channels || ['audit'] } }}"
+      },
+      "id": "webhook-response",
+      "name": "Webhook Response",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [1250, 300]
+    },
+    {
+      "parameters": {
+        "content": "## Alert Notification Router\n\nRoutes parsed alerts to appropriate notification channels:\n\n**Critical Alerts:**\n- Slack notification (formatted blocks)\n- Email notification\n- Audit trail logging\n\n**Warning Alerts:**\n- Slack notification only\n- Audit trail logging\n\n**Info Alerts:**\n- Audit trail logging only\n\n**Webhook URL**: /webhook/alert-notification-router",
+        "height": 450,
+        "width": 350
+      },
+      "id": "sticky-note-1",
+      "name": "Sticky Note",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [240, 480]
+    },
+    {
+      "parameters": {
+        "content": "## Configuration Required\n\n1. **Slack Webhook URL**\n   - Set environment variable: SLACK_WEBHOOK_URL\n   - Or update hardcoded URL in HTTP Request nodes\n\n2. **Email Settings**\n   - Configure SMTP credentials in N8N\n   - Set ALERT_FROM_EMAIL and ALERT_TO_EMAIL\n\n3. **Audit Trail**\n   - Ensure audit-trail webhook is active\n   - Or replace with file/database storage",
+        "height": 380,
+        "width": 350
+      },
+      "id": "sticky-note-2",
+      "name": "Sticky Note 2",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [1050, 720]
+    }
+  ],
+  "connections": {
+    "Webhook Input": {
+      "main": [
+        [
+          {
+            "node": "Extract Alert Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Alert Data": {
+      "main": [
+        [
+          {
+            "node": "Switch by Severity",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch by Severity": {
+      "main": [
+        [
+          {
+            "node": "Format Critical Message",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Format Warning Message",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Format Info Log",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Critical Message": {
+      "main": [
+        [
+          {
+            "node": "Send to Slack (Critical)",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Send Email (Critical)",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Log to Audit Trail (Critical)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Warning Message": {
+      "main": [
+        [
+          {
+            "node": "Send to Slack (Warning)",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Log to Audit Trail (Warning)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Info Log": {
+      "main": [
+        [
+          {
+            "node": "Log to Audit Trail (Info)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send to Slack (Critical)": {
+      "main": [
+        [
+          {
+            "node": "Webhook Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Email (Critical)": {
+      "main": [
+        [
+          {
+            "node": "Webhook Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Log to Audit Trail (Critical)": {
+      "main": [
+        [
+          {
+            "node": "Webhook Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send to Slack (Warning)": {
+      "main": [
+        [
+          {
+            "node": "Webhook Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Log to Audit Trail (Warning)": {
+      "main": [
+        [
+          {
+            "node": "Webhook Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Log to Audit Trail (Info)": {
+      "main": [
+        [
+          {
+            "node": "Webhook Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": [
+    {
+      "name": "cortex",
+      "id": "cortex"
+    },
+    {
+      "name": "alerting",
+      "id": "alerting"
+    },
+    {
+      "name": "notifications",
+      "id": "notifications"
+    }
+  ],
+  "triggerCount": 1,
+  "updatedAt": "2025-12-12T00:00:00.000Z",
+  "versionId": "1"
+}

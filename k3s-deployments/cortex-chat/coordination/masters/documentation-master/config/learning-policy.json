@@ -1,0 +1,66 @@
+{
+  "moe_integration": {
+    "enabled": true,
+    "router_endpoint": "http://llm-mesh-moe-router:8080",
+    "learner_endpoint": "http://llm-mesh-moe-learner:8080",
+    "outcome_tracking": true,
+    "confidence_threshold": 0.7,
+    "report_outcomes": true,
+    "outcome_batch_size": 10,
+    "sync_interval_seconds": 300
+  },
+  "priority_scoring": {
+    "formula": "usage_frequency * success_rate * recency",
+    "weights": {
+      "usage_frequency": 0.4,
+      "success_rate": 0.4,
+      "recency": 0.2
+    },
+    "normalization": {
+      "usage_max": 100,
+      "recency_decay_days": 30,
+      "success_min_samples": 5
+    },
+    "update_frequency_seconds": 900
+  },
+  "pruning_policy": {
+    "enabled": true,
+    "min_value_score": 0.3,
+    "evaluation_window_days": 90,
+    "grace_period_days": 7,
+    "exclude_high_priority": true,
+    "exclude_recent_days": 3,
+    "dry_run_mode": false,
+    "backup_before_prune": true
+  },
+  "learning_triggers": {
+    "knowledge_gap_threshold": 3,
+    "failure_rate_threshold": 0.5,
+    "low_confidence_threshold": 0.4,
+    "usage_spike_multiplier": 3,
+    "auto_learn_enabled": true
+  },
+  "feedback_loop": {
+    "track_documentation_usage": true,
+    "track_query_success": true,
+    "track_api_errors": true,
+    "track_coverage_gaps": true,
+    "feedback_retention_days": 365,
+    "aggregate_metrics_enabled": true
+  },
+  "adaptation": {
+    "auto_adjust_priority": true,
+    "priority_adjustment_threshold": 50,
+    "auto_trigger_recrawl": true,
+    "recrawl_confidence_threshold": 0.5,
+    "enable_predictive_crawling": false
+  },
+  "quality_metrics": {
+    "track_content_freshness": true,
+    "track_link_health": true,
+    "track_indexing_errors": true,
+    "quality_report_frequency_hours": 24,
+    "alert_on_quality_degradation": true,
+    "quality_threshold": 0.8
+  }
+}

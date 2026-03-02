@@ -8,7 +8,7 @@
 
 ## Executive Summary
 
-Conducted comprehensive security audit of the commit-relay production system. Identified **1 CRITICAL** vulnerability, **3 HIGH** priority issues, and **2 MEDIUM** priority concerns requiring remediation.
+Conducted comprehensive security audit of the cortex production system. Identified **1 CRITICAL** vulnerability, **3 HIGH** priority issues, and **2 MEDIUM** priority concerns requiring remediation.
 
 **Overall Security Posture**: ⚠️ **NEEDS IMMEDIATE ATTENTION**
 
@@ -272,7 +272,7 @@ CONTROL_RATE_LIMIT_MAX=10     # 10 control requests
 ## Contact & Escalation
 
 For critical security issues, contact:
-- Security Team: security@commit-relay
-- Incident Response: incidents@commit-relay
+- Security Team: security@cortex
+- Incident Response: incidents@cortex
 
 This report is **CONFIDENTIAL** and should be shared only with authorized personnel.

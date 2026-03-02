@@ -1,4 +1,4 @@
-# Dependency Report: commit-relay
+# Dependency Report: cortex
 
 **Generated**: 2025-11-20
 **Worker**: worker-scan-035

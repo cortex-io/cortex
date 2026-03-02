@@ -5,12 +5,12 @@
   "report_type": "repository_metadata_catalog",
 
   "repository_metadata": {
-    "name": "commit-relay",
+    "name": "cortex",
     "version": "1.0.0",
     "description": "AI-powered commit automation system with master-worker architecture",
     "license": "MIT",
     "author": "ry-ops",
-    "keywords": ["commit-relay", "automation", "ai", "governance"],
+    "keywords": ["cortex", "automation", "ai", "governance"],
     "main_entry": "index.js"
   },
 
@@ -74,7 +74,7 @@
       }
     },
     "dashboard_package": {
-      "name": "commit-relay-dashboard",
+      "name": "cortex-dashboard",
       "version": "1.0.0",
       "production": {
         "chokidar": "^3.5.3",
@@ -91,7 +91,7 @@
       }
     },
     "python_sdk": {
-      "name": "commit-relay-client",
+      "name": "cortex-client",
       "version": "0.1.0",
       "python_version": ">=3.8",
       "core": {

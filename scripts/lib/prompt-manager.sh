@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # scripts/lib/prompt-manager.sh
 # Prompt Manager Library - Phase 3 Item 25
 # Prompt versioning and A/B testing with outcome tracking
@@ -10,7 +10,7 @@
 #   - Automatic promotion of winning variants
 #
 # Usage:
-#   source "$COMMIT_RELAY_HOME/scripts/lib/prompt-manager.sh"
+#   source "$CORTEX_HOME/scripts/lib/prompt-manager.sh"
 #   prompt=$(get_prompt "implementation-worker" --ab-test)
 #   record_prompt_outcome "$version_id" "success"
 
@@ -20,10 +20,10 @@ set -euo pipefail
 # Configuration
 # ============================================================================
 
-COMMIT_RELAY_HOME="${COMMIT_RELAY_HOME:-$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)}"
+CORTEX_HOME="${CORTEX_HOME:-$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)}"
 
 # Prompt storage
-PROMPT_VERSIONS_DIR="${COMMIT_RELAY_HOME}/coordination/prompt-versions"
+PROMPT_VERSIONS_DIR="${CORTEX_HOME}/coordination/prompt-versions"
 PROMPT_REGISTRY_FILE="${PROMPT_VERSIONS_DIR}/registry.json"
 PROMPT_OUTCOMES_FILE="${PROMPT_VERSIONS_DIR}/outcomes.jsonl"
 PROMPT_AB_CONFIG_FILE="${PROMPT_VERSIONS_DIR}/ab-tests.json"
@@ -404,8 +404,12 @@ get_prompt() {
     fi
 
     if [ -z "$version_id" ] || [ "$version_id" = "null" ]; then
-        # Fall back to template file
-        local template_file="${COMMIT_RELAY_HOME}/agents/prompts/workers/${prompt_type}.md"
+        # Fall back to template file (v2: coordination/prompts structure)
+        local template_file="${CORTEX_HOME}/coordination/prompts/workers/${prompt_type}.md"
+        if [ ! -f "$template_file" ]; then
+            # Legacy fallback for backward compatibility
+            template_file="${CORTEX_HOME}/agents/prompts/workers/${prompt_type}.md"
+        fi
         if [ -f "$template_file" ]; then
             cat "$template_file"
         else

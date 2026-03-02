@@ -1,0 +1,23 @@
+{
+  "task_id": "development-011",
+  "master": "development",
+  "description": "Add request tracing with correlation IDs across services",
+  "complexity": "medium",
+  "expected_outcome": {
+    "should_generate_correlation_id": true,
+    "should_propagate_id": true,
+    "should_log_id": true,
+    "should_return_in_response": true
+  },
+  "evaluation_criteria": [
+    "Generates unique correlation ID per request",
+    "Propagates ID through service calls",
+    "Includes ID in all log messages",
+    "Returns ID in response headers",
+    "Supports incoming correlation IDs",
+    "Uses standard header (X-Correlation-ID)",
+    "Documents tracing implementation"
+  ],
+  "estimated_time_minutes": 30,
+  "tags": ["tracing", "observability", "distributed-systems"]
+}

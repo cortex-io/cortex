@@ -104,6 +104,6 @@
   },
   "mcp": {
     "tools": ["route_task"],
-    "resources": ["commit-relay://masters/coordinator/state", "commit-relay://coordination/routing-patterns"]
+    "resources": ["cortex://masters/coordinator/state", "cortex://coordination/routing-patterns"]
   }
 }

@@ -98,14 +98,45 @@
     {
       "name": "compliance_monitoring",
       "description": "Monitor compliance with security frameworks (SOC2, ISO27001, etc.)"
+    },
+    {
+      "name": "wazuh_security_monitoring",
+      "description": "Monitor K3s cluster security via Wazuh SIEM",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "severity": {
+            "type": "string",
+            "enum": ["low", "medium", "high", "critical"]
+          },
+          "time_range": {
+            "type": "string",
+            "enum": ["1h", "24h", "7d", "30d"]
+          }
+        }
+      }
+    },
+    {
+      "name": "wazuh_agent_management",
+      "description": "Manage Wazuh agents deployed on K3s nodes",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "action": {
+            "type": "string",
+            "enum": ["list", "status", "restart", "upgrade"]
+          },
+          "agent_id": { "type": "string" }
+        }
+      }
     }
   ],
-  "workerTypes": ["scan-worker", "security-fix-worker"],
-  "threatDatabases": ["CVE", "NVD", "npm_advisories", "pip_advisories", "OSV"],
+  "workerTypes": ["scan-worker", "security-fix-worker", "wazuh-analysis-worker"],
+  "threatDatabases": ["CVE", "NVD", "npm_advisories", "pip_advisories", "OSV", "wazuh_alerts"],
   "dependencies": {
     "masters": ["coordinator-master"],
-    "services": ["governance", "token-budget"],
-    "tools": ["npm-audit", "pip-audit", "trivy", "gitleaks"]
+    "services": ["governance", "token-budget", "wazuh-mcp-service.cortex-system"],
+    "tools": ["npm-audit", "pip-audit", "trivy", "gitleaks", "wazuh-api"]
   },
   "constraints": {
     "maxConcurrentScans": 10,
@@ -121,6 +152,6 @@
   },
   "mcp": {
     "tools": ["spawn_worker", "check_governance"],
-    "resources": ["commit-relay://coordination/worker-pool"]
+    "resources": ["cortex://coordination/worker-pool"]
   }
 }

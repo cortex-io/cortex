@@ -1,6 +1,6 @@
-# Commit-Relay SDK Architecture
+# Cortex SDK Architecture
 
-This document describes the architecture and design decisions behind the commit-relay Python SDK.
+This document describes the architecture and design decisions behind the cortex Python SDK.
 
 ## Overview
 
@@ -27,7 +27,7 @@ The SDK is designed as a layered architecture with clear separation of concerns:
 └─────────────────────────────────────────────────────────┘
                           │
 ┌─────────────────────────────────────────────────────────┐
-│              Commit-Relay Dashboard API                 │
+│              Cortex Dashboard API                 │
 │                  (HTTP REST API)                         │
 └─────────────────────────────────────────────────────────┘
 ```

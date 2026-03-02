@@ -1,0 +1,22 @@
+{
+  "task_id": "coordinator-001",
+  "master": "coordinator",
+  "description": "Route security-related task to appropriate master based on task description",
+  "complexity": "low",
+  "expected_outcome": {
+    "should_route_to_security": true,
+    "should_identify_task_type": true,
+    "should_set_priority": true,
+    "should_create_handoff": true
+  },
+  "evaluation_criteria": [
+    "Correctly identifies task as security-related",
+    "Routes to security master",
+    "Sets appropriate priority level",
+    "Creates proper handoff structure",
+    "Includes relevant context",
+    "Logs routing decision"
+  ],
+  "estimated_time_minutes": 5,
+  "tags": ["routing", "coordination", "security"]
+}

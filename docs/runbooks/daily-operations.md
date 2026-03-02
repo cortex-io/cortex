@@ -6,7 +6,7 @@ Morning health check checklist and daily operational tasks.
 
 ## Overview
 
-This runbook provides a daily checklist for maintaining Commit-Relay system health and ensuring optimal operation.
+This runbook provides a daily checklist for maintaining Cortex system health and ensuring optimal operation.
 
 ---
 
@@ -28,9 +28,9 @@ This runbook provides a daily checklist for maintaining Commit-Relay system heal
 
 ```bash
 # Check all daemons are running
-for pidfile in /tmp/commit-relay-*.pid; do
+for pidfile in /tmp/cortex-*.pid; do
     if [[ -f "$pidfile" ]]; then
-        NAME=$(basename "$pidfile" .pid | sed 's/commit-relay-//')
+        NAME=$(basename "$pidfile" .pid | sed 's/cortex-//')
         PID=$(cat "$pidfile")
         if ps -p $PID > /dev/null 2>&1; then
             UPTIME=$(ps -p $PID -o etime= | xargs)
@@ -306,7 +306,7 @@ echo "Completion rate: $COMPLETED / $TOTAL"
 grep error $COMMIT_RELAY_HOME/agents/logs/system/coordinator-daemon.log | tail -10
 
 # Restart coordinator
-kill $(cat /tmp/commit-relay-coordinator.pid) && ./scripts/coordinator-daemon.sh &
+kill $(cat /tmp/cortex-coordinator.pid) && ./scripts/coordinator-daemon.sh &
 ```
 
 ### Workers Failing

@@ -794,3 +794,280 @@
   "learned_at": "2025-11-25T19:23:13Z",
   "source": "learner"
 }
+{
+  "task_type": "null",
+  "complexity": "null",
+  "recommended_worker_type": "feature-implementer",
+  "confidence": 92.75,
+  "evidence_count": 4,
+  "learned_at": "2025-11-25T20:23:14Z",
+  "source": "learner"
+}
+{"timestamp":"2025-11-25T20:56:51Z","task":"achievement-dashboard-config","routed_to":"development-master","confidence":0.95,"strategy":"achievement_automation"}
+{"timestamp":"2025-11-25T20:56:51Z","task":"workflow-automation-scripts","routed_to":"cicd-master","confidence":0.92,"strategy":"achievement_automation"}
+{"timestamp":"2025-11-25T20:56:51Z","task":"api-integration-guide","routed_to":"development-master","confidence":0.94,"strategy":"achievement_automation"}
+{"timestamp":"2025-11-25T20:56:51Z","task":"kibana-dashboard-export","routed_to":"development-master","confidence":0.93,"strategy":"achievement_automation"}
+{"timestamp":"2025-11-25T20:56:51Z","task":"security-best-practices","routed_to":"security-master","confidence":0.96,"strategy":"achievement_automation"}
+{
+  "task_type": "null",
+  "complexity": "null",
+  "recommended_worker_type": "feature-implementer",
+  "confidence": 92.75,
+  "evidence_count": 4,
+  "learned_at": "2025-11-25T21:23:14Z",
+  "source": "learner"
+}
+{
+  "task_type": "null",
+  "complexity": "null",
+  "recommended_worker_type": "feature-implementer",
+  "confidence": 92.75,
+  "evidence_count": 4,
+  "learned_at": "2025-11-25T22:23:15Z",
+  "source": "learner"
+}
+{
+  "task_type": "null",
+  "complexity": "null",
+  "recommended_worker_type": "feature-implementer",
+  "confidence": 92.75,
+  "evidence_count": 4,
+  "learned_at": "2025-11-25T23:23:16Z",
+  "source": "learner"
+}
+{
+  "task_type": "null",
+  "complexity": "null",
+  "recommended_worker_type": "feature-implementer",
+  "confidence": 92.75,
+  "evidence_count": 4,
+  "learned_at": "2025-11-26T00:23:16Z",
+  "source": "learner"
+}
+{
+  "task_type": "null",
+  "complexity": "null",
+  "recommended_worker_type": "feature-implementer",
+  "confidence": 92.75,
+  "evidence_count": 4,
+  "learned_at": "2025-11-26T01:23:17Z",
+  "source": "learner"
+}
+{
+  "task_type": "null",
+  "complexity": "null",
+  "recommended_worker_type": "feature-implementer",
+  "confidence": 92.75,
+  "evidence_count": 4,
+  "learned_at": "2025-11-26T02:23:17Z",
+  "source": "learner"
+}
+{
+  "task_type": "null",
+  "complexity": "null",
+  "recommended_worker_type": "feature-implementer",
+  "confidence": 92.75,
+  "evidence_count": 4,
+  "learned_at": "2025-11-26T03:23:18Z",
+  "source": "learner"
+}
+{
+  "task_type": "null",
+  "complexity": "null",
+  "recommended_worker_type": "feature-implementer",
+  "confidence": 92.75,
+  "evidence_count": 4,
+  "learned_at": "2025-11-26T04:23:19Z",
+  "source": "learner"
+}
+{
+  "task_type": "null",
+  "complexity": "null",
+  "recommended_worker_type": "feature-implementer",
+  "confidence": 92.75,
+  "evidence_count": 4,
+  "learned_at": "2025-11-26T05:23:20Z",
+  "source": "learner"
+}
+{
+  "task_type": "null",
+  "complexity": "null",
+  "recommended_worker_type": "feature-implementer",
+  "confidence": 92.75,
+  "evidence_count": 4,
+  "learned_at": "2025-11-26T06:23:21Z",
+  "source": "learner"
+}
+{
+  "task_type": "null",
+  "complexity": "null",
+  "recommended_worker_type": "feature-implementer",
+  "confidence": 92.75,
+  "evidence_count": 4,
+  "learned_at": "2025-11-26T07:23:21Z",
+  "source": "learner"
+}
+{
+  "task_type": "null",
+  "complexity": "null",
+  "recommended_worker_type": "feature-implementer",
+  "confidence": 92.75,
+  "evidence_count": 4,
+  "learned_at": "2025-11-26T08:23:22Z",
+  "source": "learner"
+}
+{
+  "task_type": "null",
+  "complexity": "null",
+  "recommended_worker_type": "feature-implementer",
+  "confidence": 92.75,
+  "evidence_count": 4,
+  "learned_at": "2025-11-26T09:23:23Z",
+  "source": "learner"
+}
+{
+  "task_type": "null",
+  "complexity": "null",
+  "recommended_worker_type": "feature-implementer",
+  "confidence": 92.75,
+  "evidence_count": 4,
+  "learned_at": "2025-11-26T10:23:24Z",
+  "source": "learner"
+}
+{
+  "task_type": "null",
+  "complexity": "null",
+  "recommended_worker_type": "feature-implementer",
+  "confidence": 92.75,
+  "evidence_count": 4,
+  "learned_at": "2025-11-26T11:23:24Z",
+  "source": "learner"
+}
+{
+  "task_type": "null",
+  "complexity": "null",
+  "recommended_worker_type": "feature-implementer",
+  "confidence": 92.75,
+  "evidence_count": 4,
+  "learned_at": "2025-11-26T12:23:25Z",
+  "source": "learner"
+}
+{
+  "task_type": "null",
+  "complexity": "null",
+  "recommended_worker_type": "feature-implementer",
+  "confidence": 92.75,
+  "evidence_count": 4,
+  "learned_at": "2025-11-26T13:23:25Z",
+  "source": "learner"
+}
+{
+  "task_type": "null",
+  "complexity": "null",
+  "recommended_worker_type": "feature-implementer",
+  "confidence": 92.75,
+  "evidence_count": 4,
+  "learned_at": "2025-11-26T14:23:25Z",
+  "source": "learner"
+}
+{
+  "task_type": "null",
+  "complexity": "null",
+  "recommended_worker_type": "feature-implementer",
+  "confidence": 92.75,
+  "evidence_count": 4,
+  "learned_at": "2025-11-26T15:23:25Z",
+  "source": "learner"
+}
+{
+  "task_type": "null",
+  "complexity": "null",
+  "recommended_worker_type": "feature-implementer",
+  "confidence": 92.75,
+  "evidence_count": 4,
+  "learned_at": "2025-11-26T16:23:26Z",
+  "source": "learner"
+}
+{"task_id":"task-test-001","timestamp":"2025-11-29T14:51:18-0600","routing_strategy":"mixture_of_experts","routing_method":"nlp-keyword","decision":{"primary_expert":"development","primary_confidence":0.90,"strategy":"single_expert","parallel_experts":[],"scores":{"development":0.90,"security":0,"inventory":0},"explanation":"Routed to development (90.00% confidence) based on keywords: fix, test, routing, routing. (Phase 3: NLP classifier - keyword layer)","model_recommendation":{"model":"claude-sonnet-4","provider":"anthropic","tier":"balanced","complexity_score":5,"sensitivity_level":"none","reasoning":"Selected claude-sonnet-4 from balanced tier"}}}
+{"task_id":"task-output-resolver-1733000005","timestamp":"2025-11-29T14:51:28-0600","routing_strategy":"mixture_of_experts","routing_method":"nlp-keyword","decision":{"primary_expert":"development","primary_confidence":0.90,"strategy":"single_expert","parallel_experts":[],"scores":{"development":0.90,"security":0,"inventory":0},"explanation":"Routed to development (90.00% confidence) based on keywords: implement, resolve, pattern, pattern, template. (Phase 3: NLP classifier - keyword layer)","model_recommendation":{"model":"claude-sonnet-4","provider":"anthropic","tier":"balanced","complexity_score":5,"sensitivity_level":"none","reasoning":"Selected claude-sonnet-4 from balanced tier"}}}
+{"task_id":"task-parallel-executor-1733000002","timestamp":"2025-11-29T14:51:28-0600","routing_strategy":"mixture_of_experts","routing_method":"nlp-keyword","decision":{"primary_expert":"development","primary_confidence":0.90,"strategy":"single_expert","parallel_experts":[],"scores":{"development":0.90,"security":0,"inventory":0},"explanation":"Routed to development (90.00% confidence) based on keywords: implement, completion, parallel, management, logic. (Phase 3: NLP classifier - keyword layer)","model_recommendation":{"model":"claude-sonnet-4","provider":"anthropic","tier":"balanced","complexity_score":5,"sensitivity_level":"none","reasoning":"Selected claude-sonnet-4 from balanced tier"}}}
+{"task_id":"task-step-runner-1733000004","timestamp":"2025-11-29T14:51:28-0600","routing_strategy":"mixture_of_experts","routing_method":"nlp-keyword","decision":{"primary_expert":"development","primary_confidence":0.90,"strategy":"single_expert","parallel_experts":[],"scores":{"development":0.90,"security":0,"inventory":0},"explanation":"Routed to development (90.00% confidence) based on keywords: implement, port, error, bash, error handling. (Phase 3: NLP classifier - keyword layer)","model_recommendation":{"model":"claude-sonnet-4","provider":"anthropic","tier":"balanced","complexity_score":5,"sensitivity_level":"none","reasoning":"Selected claude-sonnet-4 from balanced tier"}}}
+{"task_id":"task-state-manager-1733000003","timestamp":"2025-11-29T14:51:28-0600","routing_strategy":"mixture_of_experts","routing_method":"nlp-keyword","decision":{"primary_expert":"development","primary_confidence":0.90,"strategy":"single_expert","parallel_experts":[],"scores":{"development":0.90,"security":0,"inventory":0},"explanation":"Routed to development (90.00% confidence) based on keywords: implement, management, state, system, sed. (Phase 3: NLP classifier - keyword layer)","model_recommendation":{"model":"claude-sonnet-4","provider":"anthropic","tier":"balanced","complexity_score":5,"sensitivity_level":"none","reasoning":"Selected claude-sonnet-4 from balanced tier"}}}
+{"task_id":"task-trigger-system-1733000008","timestamp":"2025-11-29T14:51:28-0600","routing_strategy":"mixture_of_experts","routing_method":"nlp-keyword","decision":{"primary_expert":"development","primary_confidence":0.90,"strategy":"single_expert","parallel_experts":[],"scores":{"development":0.90,"security":0,"inventory":0},"explanation":"Routed to development (90.00% confidence) based on keywords: implement, port, event, system, event. (Phase 3: NLP classifier - keyword layer)","model_recommendation":{"model":"claude-sonnet-4","provider":"anthropic","tier":"balanced","complexity_score":5,"sensitivity_level":"none","reasoning":"Selected claude-sonnet-4 from balanced tier"}}}
+{"task_id":"task-cli-commands-1733000009","timestamp":"2025-11-29T14:51:28-0600","routing_strategy":"mixture_of_experts","routing_method":"keyword","decision":{"primary_expert":"inventory","primary_confidence":0.62,"strategy":"single_expert","parallel_experts":[],"scores":{"development":0,"security":0.12,"inventory":0.62},"explanation":"Routed to inventory (62.00% confidence) based on keywords: list, status, list.","model_recommendation":{"model":"claude-sonnet-4","provider":"anthropic","tier":"balanced","complexity_score":5,"sensitivity_level":"none","reasoning":"Selected claude-sonnet-4 from balanced tier"}}}
+{"task_id":"task-main-executor-1733000007","timestamp":"2025-11-29T14:51:28-0600","routing_strategy":"mixture_of_experts","routing_method":"keyword","decision":{"primary_expert":"security","primary_confidence":0.12,"strategy":"single_expert_low_confidence","parallel_experts":[],"scores":{"development":0,"security":0.12,"inventory":0},"explanation":"Routed to security (12.00% confidence) based on keywords: low. Low confidence routing - consider manual review.","model_recommendation":{"model":"claude-sonnet-4","provider":"anthropic","tier":"balanced","complexity_score":5,"sensitivity_level":"none","reasoning":"Selected claude-sonnet-4 from balanced tier"}}}
+{"task_id":"task-integration-tests-1733000010","timestamp":"2025-11-29T14:51:28-0600","routing_strategy":"mixture_of_experts","routing_method":"keyword","decision":{"primary_expert":"security","primary_confidence":0.12,"strategy":"single_expert_low_confidence","parallel_experts":[],"scores":{"development":0,"security":0.12,"inventory":0},"explanation":"Routed to security (12.00% confidence) based on keywords: low. Low confidence routing - consider manual review.","model_recommendation":{"model":"claude-sonnet-4","provider":"anthropic","tier":"balanced","complexity_score":5,"sensitivity_level":"none","reasoning":"Selected claude-sonnet-4 from balanced tier"}}}
+{"task_id":"task-workflow-parser-1733000000","timestamp":"2025-11-29T14:51:28-0600","routing_strategy":"mixture_of_experts","routing_method":"keyword","decision":{"primary_expert":"inventory","primary_confidence":0.25,"strategy":"single_expert","parallel_experts":[],"scores":{"development":0,"security":0.24,"inventory":0.25},"explanation":"Routed to inventory (25.00% confidence) based on keywords: definition.","model_recommendation":{"model":"claude-sonnet-4","provider":"anthropic","tier":"balanced","complexity_score":5,"sensitivity_level":"none","reasoning":"Selected claude-sonnet-4 from balanced tier"}}}
+{"task_id":"task-workflow-visualizer-1733000006","timestamp":"2025-11-29T14:51:28-0600","routing_strategy":"mixture_of_experts","routing_method":"keyword","decision":{"primary_expert":"security","primary_confidence":0.12,"strategy":"single_expert_low_confidence","parallel_experts":[],"scores":{"development":0,"security":0.12,"inventory":0.12},"explanation":"Routed to security (12.00% confidence) based on keywords: low. Low confidence routing - consider manual review.","model_recommendation":{"model":"claude-sonnet-4","provider":"anthropic","tier":"balanced","complexity_score":5,"sensitivity_level":"none","reasoning":"Selected claude-sonnet-4 from balanced tier"}}}
+{"task_id":"task-dependency-resolver-1733000001","timestamp":"2025-11-29T14:51:28-0600","routing_strategy":"mixture_of_experts","routing_method":"keyword","decision":{"primary_expert":"development","primary_confidence":0,"strategy":"single_expert_low_confidence","parallel_experts":[],"scores":{"development":0,"security":0,"inventory":0},"explanation":"Routed to development (0% confidence) based on keywords: build, implement, resolve, parallel, UI. Low confidence routing - consider manual review.","model_recommendation":{"model":"claude-sonnet-4","provider":"anthropic","tier":"balanced","complexity_score":5,"sensitivity_level":"none","reasoning":"Selected claude-sonnet-4 from balanced tier"}}}
+{"task_id":"task-dashboard-aggregation","timestamp":"2025-11-30T08:31:19-0600","routing_strategy":"mixture_of_experts","routing_method":"nlp-keyword","decision":{"primary_expert":"development","primary_confidence":0.90,"strategy":"single_expert","parallel_experts":[],"scores":{"development":0.90,"security":0,"inventory":0},"explanation":"Routed to development (90.00% confidence) based on keywords: implement, update, metrics, logic, real-time. (Phase 3: NLP classifier - keyword layer)","model_recommendation":{"model":"claude-sonnet-4","provider":"anthropic","tier":"balanced","complexity_score":5,"sensitivity_level":"none","reasoning":"Selected claude-sonnet-4 from balanced tier"}}}
+{"task_id":"task-metrics-collector","timestamp":"2025-11-30T08:31:51-0600","routing_strategy":"mixture_of_experts","routing_method":"keyword","decision":{"primary_expert":"development","primary_confidence":0,"strategy":"single_expert_low_confidence","parallel_experts":[],"scores":{"development":0,"security":0,"inventory":0},"explanation":"Routed to development (0% confidence) based on keywords: create, metrics, ratio, script, metrics. Low confidence routing - consider manual review.","model_recommendation":{"model":"claude-sonnet-4","provider":"anthropic","tier":"balanced","complexity_score":5,"sensitivity_level":"none","reasoning":"Selected claude-sonnet-4 from balanced tier"}}}
+{"task_id":"task-metrics-schema","timestamp":"2025-11-30T08:31:54-0600","routing_strategy":"mixture_of_experts","routing_method":"keyword","decision":{"primary_expert":"inventory","primary_confidence":0.75,"strategy":"single_expert","parallel_experts":[],"scores":{"development":0,"security":0,"inventory":0.75},"explanation":"Routed to inventory (75.00% confidence) based on keywords: schema, field, schema.","model_recommendation":{"model":"claude-sonnet-4","provider":"anthropic","tier":"balanced","complexity_score":5,"sensitivity_level":"none","reasoning":"Selected claude-sonnet-4 from balanced tier"}}}
+{"task_id":"task-health-monitor","timestamp":"2025-11-30T08:31:56-0600","routing_strategy":"mixture_of_experts","routing_method":"nlp-keyword","decision":{"primary_expert":"development","primary_confidence":0.90,"strategy":"single_expert","parallel_experts":[],"scores":{"development":0.90,"security":0,"inventory":0},"explanation":"Routed to development (90.00% confidence) based on keywords: implement, worker, monitor, health, tracking. (Phase 3: NLP classifier - keyword layer)","model_recommendation":{"model":"claude-sonnet-4","provider":"anthropic","tier":"balanced","complexity_score":5,"sensitivity_level":"none","reasoning":"Selected claude-sonnet-4 from balanced tier"}}}
+{"task_id":"task-health-schema","timestamp":"2025-11-30T08:31:57-0600","routing_strategy":"mixture_of_experts","routing_method":"keyword","decision":{"primary_expert":"inventory","primary_confidence":0.62,"strategy":"single_expert","parallel_experts":[],"scores":{"development":0,"security":0,"inventory":0.62},"explanation":"Routed to inventory (62.00% confidence) based on keywords: schema, schema, health.","model_recommendation":{"model":"claude-sonnet-4","provider":"anthropic","tier":"balanced","complexity_score":5,"sensitivity_level":"none","reasoning":"Selected claude-sonnet-4 from balanced tier"}}}
+{"task_id":"resumate-builder-core","timestamp":"2025-12-01T12:50:16-0600","routing_strategy":"mixture_of_experts","routing_method":"keyword","decision":{"primary_expert":"inventory","primary_confidence":0.06,"strategy":"single_expert_low_confidence","parallel_experts":[],"scores":{"development":0,"security":0,"inventory":0.06},"explanation":"Routed to inventory (6.00% confidence) based on keywords: projects, architecture, history. Low confidence routing - consider manual review.","model_recommendation":{"model":"claude-sonnet-4","provider":"anthropic","tier":"balanced","complexity_score":6,"sensitivity_level":"none","reasoning":"Selected claude-sonnet-4 from balanced tier"}}}
+{"task_id":"resumate-preview-engine","timestamp":"2025-12-01T12:50:20-0600","routing_strategy":"mixture_of_experts","routing_method":"nlp-keyword","decision":{"primary_expert":"development","primary_confidence":0.90,"strategy":"single_expert","parallel_experts":[],"scores":{"development":0.90,"security":0,"inventory":0},"explanation":"Routed to development (90.00% confidence) via task type classification. (Phase 3: NLP classifier - keyword layer)","model_recommendation":{"model":"claude-sonnet-4","provider":"anthropic","tier":"balanced","complexity_score":5,"sensitivity_level":"none","reasoning":"Selected claude-sonnet-4 from balanced tier"}}}
+{"task_id":"resumate-templates-core","timestamp":"2025-12-01T12:50:24-0600","routing_strategy":"mixture_of_experts","routing_method":"keyword","decision":{"primary_expert":"development","primary_confidence":0,"strategy":"single_expert_low_confidence","parallel_experts":[],"scores":{"development":0,"security":0,"inventory":0},"explanation":"Routed to development (0% confidence) via task type classification. Low confidence routing - consider manual review.","model_recommendation":{"model":"claude-sonnet-4","provider":"anthropic","tier":"balanced","complexity_score":5,"sensitivity_level":"none","reasoning":"Selected claude-sonnet-4 from balanced tier"}}}
+{"task_id":"resumate-ai-writer","timestamp":"2025-12-01T12:50:29-0600","routing_strategy":"mixture_of_experts","routing_method":"nlp-keyword","decision":{"primary_expert":"development","primary_confidence":0.90,"strategy":"single_expert","parallel_experts":[],"scores":{"development":0.90,"security":0,"inventory":0},"explanation":"Routed to development (90.00% confidence) via task type classification. (Phase 3: NLP classifier - keyword layer)","model_recommendation":{"model":"claude-sonnet-4","provider":"anthropic","tier":"balanced","complexity_score":5,"sensitivity_level":"none","reasoning":"Selected claude-sonnet-4 from balanced tier"}}}
+{"task_id":"resumate-security-audit","timestamp":"2025-12-01T12:50:32-0600","routing_strategy":"mixture_of_experts","routing_method":"keyword","decision":{"primary_expert":"security","primary_confidence":1.00,"strategy":"single_expert","parallel_experts":[],"scores":{"development":0,"security":1.00,"inventory":0.12},"explanation":"Routed to security (100.00% confidence) via task type classification.","model_recommendation":{"model":"llama2-70b","provider":"ollama","tier":"local","complexity_score":8,"sensitivity_level":"high","reasoning":"Selected llama2-70b from local tier (forced local for high sensitivity)"}}}
+{"task_id":"resumate-parser","timestamp":"2025-12-01T12:50:36-0600","routing_strategy":"mixture_of_experts","routing_method":"nlp-keyword","decision":{"primary_expert":"development","primary_confidence":0.90,"strategy":"single_expert","parallel_experts":[],"scores":{"development":0.90,"security":0,"inventory":0},"explanation":"Routed to development (90.00% confidence) via task type classification. (Phase 3: NLP classifier - keyword layer)","model_recommendation":{"model":"claude-sonnet-4","provider":"anthropic","tier":"balanced","complexity_score":5,"sensitivity_level":"none","reasoning":"Selected claude-sonnet-4 from balanced tier"}}}
+{"task_id":"cleanup-analysis-001","timestamp":"2025-12-03T11:43:59-0600","routing_strategy":"mixture_of_experts","routing_method":"keyword","decision":{"primary_expert":"inventory","primary_confidence":1.00,"strategy":"single_expert","parallel_experts":[],"scores":{"development":0,"security":0,"inventory":1.00},"explanation":"Routed to inventory (100.00% confidence) based on keywords: document, list, analyze, structure, documentation.","model_recommendation":{"model":"claude-sonnet-4","provider":"anthropic","tier":"balanced","complexity_score":5,"sensitivity_level":"low","reasoning":"Selected claude-sonnet-4 from balanced tier"}}}
+{"task_id":"cve-scan-cortex-001","timestamp":"2025-12-03T11:52:33-0600","routing_strategy":"mixture_of_experts","routing_method":"keyword","decision":{"primary_expert":"security","primary_confidence":1.00,"strategy":"single_expert","parallel_experts":[],"scores":{"development":0,"security":1.00,"inventory":0.60},"explanation":"Routed to security (100.00% confidence) via task type classification.","model_recommendation":{"model":"claude-opus-4","provider":"anthropic","tier":"powerful","complexity_score":8,"sensitivity_level":"none","reasoning":"Selected claude-opus-4 from powerful tier (high complexity score: 8)"}}}
+{"task_id":"package-updates-001","timestamp":"2025-12-03T12:07:52-0600","routing_strategy":"mixture_of_experts","routing_method":"keyword","decision":{"primary_expert":"inventory","primary_confidence":0.12,"strategy":"single_expert_low_confidence","parallel_experts":[],"scores":{"development":0,"security":0,"inventory":0.12},"explanation":"Routed to inventory (12.00% confidence) based on keywords: package. Low confidence routing - consider manual review.","model_recommendation":{"model":"claude-sonnet-4","provider":"anthropic","tier":"balanced","complexity_score":5,"sensitivity_level":"none","reasoning":"Selected claude-sonnet-4 from balanced tier"}}}
+{"task_id":"vuln-remediation-001","timestamp":"2025-12-03T12:11:58-0600","routing_strategy":"mixture_of_experts","routing_method":"nlp-pattern","decision":{"primary_expert":"security","primary_confidence":0.88,"strategy":"single_expert","parallel_experts":[],"scores":{"development":0,"security":0.88,"inventory":0},"explanation":"Routed to security (88.00% confidence) via task type classification. (Phase 3: NLP classifier - pattern layer)","model_recommendation":{"model":"claude-opus-4","provider":"anthropic","tier":"powerful","complexity_score":8,"sensitivity_level":"none","reasoning":"Selected claude-opus-4 from powerful tier (high complexity score: 8)"}}}
+{"task_id":"data-intelligence-phase1-foundation","timestamp":"2025-12-03T12:33:59-0600","routing_strategy":"mixture_of_experts","routing_method":"nlp-keyword","decision":{"primary_expert":"development","primary_confidence":0.90,"strategy":"single_expert","parallel_experts":[],"scores":{"development":0.90,"security":0,"inventory":0},"explanation":"Routed to development (90.00% confidence) via task type classification. (Phase 3: NLP classifier - keyword layer)","model_recommendation":{"model":"claude-sonnet-4","provider":"anthropic","tier":"balanced","complexity_score":6,"sensitivity_level":"none","reasoning":"Selected claude-sonnet-4 from balanced tier"}}}
+{"task_id":"data-intelligence-phase2-intelligence","timestamp":"2025-12-03T12:34:02-0600","routing_strategy":"mixture_of_experts","routing_method":"nlp-keyword","decision":{"primary_expert":"development","primary_confidence":0.90,"strategy":"single_expert","parallel_experts":[],"scores":{"development":0.90,"security":0,"inventory":0},"explanation":"Routed to development (90.00% confidence) via task type classification. (Phase 3: NLP classifier - keyword layer)","model_recommendation":{"model":"claude-sonnet-4","provider":"anthropic","tier":"balanced","complexity_score":6,"sensitivity_level":"none","reasoning":"Selected claude-sonnet-4 from balanced tier"}}}
+{"task_id":"data-intelligence-phase3-scale","timestamp":"2025-12-03T12:34:05-0600","routing_strategy":"mixture_of_experts","routing_method":"nlp-keyword","decision":{"primary_expert":"development","primary_confidence":0.90,"strategy":"single_expert","parallel_experts":[],"scores":{"development":0.90,"security":0,"inventory":0},"explanation":"Routed to development (90.00% confidence) via task type classification. (Phase 3: NLP classifier - keyword layer)","model_recommendation":{"model":"llama2-70b","provider":"ollama","tier":"local","complexity_score":6,"sensitivity_level":"high","reasoning":"Selected llama2-70b from local tier (forced local for high sensitivity)"}}}
+{"task_id":"data-intelligence-phase4-collaboration","timestamp":"2025-12-03T12:34:08-0600","routing_strategy":"mixture_of_experts","routing_method":"nlp-keyword","decision":{"primary_expert":"development","primary_confidence":0.90,"strategy":"single_expert","parallel_experts":[],"scores":{"development":0.90,"security":0,"inventory":0},"explanation":"Routed to development (90.00% confidence) via task type classification. (Phase 3: NLP classifier - keyword layer)","model_recommendation":{"model":"claude-sonnet-4","provider":"anthropic","tier":"balanced","complexity_score":5,"sensitivity_level":"none","reasoning":"Selected claude-sonnet-4 from balanced tier"}}}
+{"task_id":"data-intelligence-integration","timestamp":"2025-12-03T12:34:13-0600","routing_strategy":"mixture_of_experts","routing_method":"nlp-keyword","decision":{"primary_expert":"development","primary_confidence":0.90,"strategy":"single_expert","parallel_experts":[],"scores":{"development":0.90,"security":0,"inventory":0},"explanation":"Routed to development (90.00% confidence) based on keywords: monitor, rate, ratio, feature, form. (Phase 3: NLP classifier - keyword layer)","model_recommendation":{"model":"claude-sonnet-4","provider":"anthropic","tier":"balanced","complexity_score":5,"sensitivity_level":"none","reasoning":"Selected claude-sonnet-4 from balanced tier"}}}
+{"task_id":"data-intelligence-documentation","timestamp":"2025-12-03T12:34:15-0600","routing_strategy":"mixture_of_experts","routing_method":"keyword","decision":{"primary_expert":"inventory","primary_confidence":1.00,"strategy":"single_expert","parallel_experts":[],"scores":{"development":0,"security":0,"inventory":1.00},"explanation":"Routed to inventory (100.00% confidence) via task type classification.","model_recommendation":{"model":"claude-sonnet-4","provider":"anthropic","tier":"balanced","complexity_score":6,"sensitivity_level":"none","reasoning":"Selected claude-sonnet-4 from balanced tier"}}}
+{"task_id":"linkedin-phase-1","timestamp":"2025-12-04T11:23:30-0600","routing_strategy":"mixture_of_experts","routing_method":"nlp-keyword","decision":{"primary_expert":"development","primary_confidence":0.90,"strategy":"single_expert","parallel_experts":[],"scores":{"development":0.90,"security":0,"inventory":0},"explanation":"Routed to development (90.00% confidence) based on keywords: develop, implement, profile, sum, template. (Phase 3: NLP classifier - keyword layer)","model_recommendation":{"model":"claude-sonnet-4","provider":"anthropic","tier":"balanced","complexity_score":6,"sensitivity_level":"none","reasoning":"Selected claude-sonnet-4 from balanced tier"}}}
+{"task_id":"linkedin-phase-2","timestamp":"2025-12-04T11:23:33-0600","routing_strategy":"mixture_of_experts","routing_method":"keyword","decision":{"primary_expert":"inventory","primary_confidence":0.32,"strategy":"single_expert","parallel_experts":[],"scores":{"development":0,"security":0,"inventory":0.32},"explanation":"Routed to inventory (32.00% confidence) based on keywords: track, network, track.","model_recommendation":{"model":"claude-sonnet-4","provider":"anthropic","tier":"balanced","complexity_score":5,"sensitivity_level":"none","reasoning":"Selected claude-sonnet-4 from balanced tier"}}}
+{
+  "task_id": "linkedin-phase-3",
+  "expert": "initializer-master",
+  "confidence": 100,
+  "method": "complexity-based",
+  "complexity": 4,
+  "complexity_level": "moderate",
+  "reason": "Task complexity exceeds threshold - routing to Initializer for decomposition",
+  "timestamp": "2025-12-04T11:23:38-0600"
+}
+{
+  "task_id": "linkedin-phase-4",
+  "expert": "initializer-master",
+  "confidence": 100,
+  "method": "complexity-based",
+  "complexity": 4,
+  "complexity_level": "moderate",
+  "reason": "Task complexity exceeds threshold - routing to Initializer for decomposition",
+  "timestamp": "2025-12-04T11:23:41-0600"
+}
+{"task_id":"self-opt-timeout-001","timestamp":"2025-12-05T08:26:30-0600","routing_strategy":"mixture_of_experts","routing_method":"nlp-keyword","decision":{"primary_expert":"development","primary_confidence":0.90,"strategy":"single_expert","parallel_experts":[],"scores":{"development":0.90,"security":0,"inventory":0},"explanation":"Routed to development (90.00% confidence) based on keywords: create, develop, learning, timeout. (Phase 3: NLP classifier - keyword layer)","model_recommendation":{"model":"claude-sonnet-4","provider":"anthropic","tier":"balanced","complexity_score":5,"sensitivity_level":"none","reasoning":"Selected claude-sonnet-4 from balanced tier"}}}
+{"task_id":"self-opt-timeout-002","timestamp":"2025-12-05T08:26:31-0600","routing_strategy":"mixture_of_experts","routing_method":"nlp-keyword","decision":{"primary_expert":"development","primary_confidence":0.90,"strategy":"single_expert","parallel_experts":[],"scores":{"development":0.90,"security":0,"inventory":0},"explanation":"Routed to development (90.00% confidence) based on keywords: develop, learning, spawn, worker, timeout. (Phase 3: NLP classifier - keyword layer)","model_recommendation":{"model":"claude-sonnet-4","provider":"anthropic","tier":"balanced","complexity_score":5,"sensitivity_level":"none","reasoning":"Selected claude-sonnet-4 from balanced tier"}}}
+{"task_id":"self-opt-timeout-003","timestamp":"2025-12-05T08:26:32-0600","routing_strategy":"mixture_of_experts","routing_method":"keyword","decision":{"primary_expert":"inventory","primary_confidence":0.32,"strategy":"single_expert","parallel_experts":[],"scores":{"development":0,"security":0,"inventory":0.32},"explanation":"Routed to inventory (32.00% confidence) based on keywords: report, analytics, repo.","model_recommendation":{"model":"claude-sonnet-4","provider":"anthropic","tier":"balanced","complexity_score":5,"sensitivity_level":"none","reasoning":"Selected claude-sonnet-4 from balanced tier"}}}
+{"task_id":"self-opt-timeout-003","timestamp":"2025-12-05T08:26:33-0600","routing_strategy":"mixture_of_experts","routing_method":"keyword","decision":{"primary_expert":"inventory","primary_confidence":0.32,"strategy":"single_expert","parallel_experts":[],"scores":{"development":0,"security":0,"inventory":0.32},"explanation":"Routed to inventory (32.00% confidence) based on keywords: report, analytics, repo.","model_recommendation":{"model":"claude-sonnet-4","provider":"anthropic","tier":"balanced","complexity_score":5,"sensitivity_level":"none","reasoning":"Selected claude-sonnet-4 from balanced tier"}}}
+{"task_id":"self-opt-timeout-003","timestamp":"2025-12-05T08:27:27-0600","routing_strategy":"mixture_of_experts","routing_method":"keyword","decision":{"primary_expert":"inventory","primary_confidence":0.32,"strategy":"single_expert","parallel_experts":[],"scores":{"development":0,"security":0,"inventory":0.32},"explanation":"Routed to inventory (32.00% confidence) based on keywords: report, analytics, repo.","model_recommendation":{"model":"claude-sonnet-4","provider":"anthropic","tier":"balanced","complexity_score":5,"sensitivity_level":"none","reasoning":"Selected claude-sonnet-4 from balanced tier"}}}
+{"task_id":"fix-k3s-master03-ip-1734739200","timestamp":"2025-12-20T14:03:07-0600","routing_strategy":"mixture_of_experts","routing_method":"keyword","decision":{"primary_expert":"development","primary_confidence":0,"strategy":"single_expert_low_confidence","parallel_experts":[],"scores":{"development":0,"security":0,"inventory":0},"explanation":"Routed to development (0% confidence) based on keywords: add, fix, configure, interface, master. Low confidence routing - consider manual review.","model_recommendation":{"model":"claude-sonnet-4","provider":"anthropic","tier":"balanced","complexity_score":5,"sensitivity_level":"low","reasoning":"Selected claude-sonnet-4 from balanced tier"}}}
+{"task_id":"task-sandfly-integration-001","routed_to":"development","rule_used":"implement|develop|code|feature","timestamp":"2025-12-25T16:30:00Z","outcome":"pending","priority":"critical","category":"sandfly-mcp-deployment"}
+{"task_id":"task-sandfly-integration-002","routed_to":"development","rule_used":"implement|develop|code|feature","timestamp":"2025-12-25T16:30:00Z","outcome":"pending","priority":"critical","category":"sandfly-tool-integration"}
+{"task_id":"task-context-persistence-003","routed_to":"development","rule_used":"implement|develop|code|feature","timestamp":"2025-12-25T16:30:00Z","outcome":"pending","priority":"critical","category":"context-persistence"}
+{"task_id":"task-deep-conversation-testing-004","routed_to":"development","rule_used":"test.*deep|conversation|api","timestamp":"2025-12-25T16:30:00Z","outcome":"pending","priority":"high","category":"deep-testing"}
+{"task_id":"task-mcp-integration-001","routed_to":"development","rule_used":"code-development","timestamp":"2025-12-26T13:41:34Z","outcome":"pending","priority":"high","category":"mcp-server-integration","confidence":0.90}
+{"task_id":"task-mcp-integration-002","routed_to":"development","rule_used":"code-development","timestamp":"2025-12-26T13:41:34Z","outcome":"pending","priority":"high","category":"k3s-mcp-deployment","confidence":0.90}
+{"task_id":"task-mcp-integration-003","routed_to":"development","rule_used":"code-development","timestamp":"2025-12-26T13:41:34Z","outcome":"pending","priority":"high","category":"grafana-mcp-creation","confidence":0.90}
+{"task_id":"task-mcp-integration-004","routed_to":"cicd","rule_used":"cicd-operations","timestamp":"2025-12-26T13:41:34Z","outcome":"pending","priority":"high","category":"cortex-deployment-update","confidence":0.88}
+{"task_id":"daryl-4-monitoring-access","routed_to":"development","rule_used":"code-development","pattern_match":"troubleshoot|fix|configure","confidence":0.90,"priority":"critical","timestamp":"2025-12-26T15:07:05Z","reasoning":"Infrastructure troubleshooting and configuration - development master expertise"}
+{"task_id":"daryl-1-grafana-dashboards","routed_to":"development","rule_used":"code-development","pattern_match":"create|implement|code","confidence":0.90,"priority":"high","timestamp":"2025-12-26T15:07:05Z","reasoning":"Dashboard creation requires coding ConfigMaps and YAML - development task"}
+{"task_id":"daryl-2-dashy-config","routed_to":"development","rule_used":"code-development","pattern_match":"update|configure","confidence":0.90,"priority":"medium","timestamp":"2025-12-26T15:07:05Z","reasoning":"Configuration update task - development master handles k8s config changes"}
+{"task_id":"daryl-3-chat-ui-styling","routed_to":"development","rule_used":"code-development","pattern_match":"implement|enhance|code","confidence":0.90,"priority":"medium","timestamp":"2025-12-26T15:07:05Z","reasoning":"Frontend CSS/HTML enhancement - development master specialty"}
+{
+  "task_id": "task-elasticsearch-hostpath-1767480481",
+  "expert": "initializer-master",
+  "confidence": 100,
+  "method": "complexity-based",
+  "complexity": 7,
+  "complexity_level": "very-complex",
+  "reason": "Task complexity exceeds threshold - routing to Initializer for decomposition",
+  "timestamp": "2026-01-03T16:48:01-0600"
+}

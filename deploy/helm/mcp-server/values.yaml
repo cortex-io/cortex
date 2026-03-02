@@ -1,0 +1,281 @@
+# Default values for mcp-server
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+# Name override for the chart
+nameOverride: ""
+fullnameOverride: ""
+
+# MCP Server Configuration
+mcpServer:
+  # Server name (n8n-mcp, talos-mcp, proxmox-mcp, resource-manager)
+  name: "mcp-server"
+  # Server type for labeling and routing
+  type: "generic"
+  # Server version
+  version: "1.0.0"
+
+# Image Configuration
+image:
+  repository: ghcr.io/cortex/mcp-server
+  pullPolicy: IfNotPresent
+  tag: ""  # Overrides the image tag whose default is the chart appVersion
+
+imagePullSecrets: []
+
+# Service Account
+serviceAccount:
+  # Specifies whether a service account should be created
+  create: true
+  # Annotations to add to the service account
+  annotations: {}
+  # The name of the service account to use.
+  # If not set and create is true, a name is generated using the fullname template
+  name: ""
+
+# Pod Annotations
+podAnnotations:
+  prometheus.io/scrape: "true"
+  prometheus.io/port: "8080"
+  prometheus.io/path: "/metrics"
+
+# Pod Security Context
+podSecurityContext:
+  runAsNonRoot: true
+  runAsUser: 1000
+  fsGroup: 1000
+  seccompProfile:
+    type: RuntimeDefault
+
+# Container Security Context
+securityContext:
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop:
+    - ALL
+  readOnlyRootFilesystem: true
+  runAsNonRoot: true
+  runAsUser: 1000
+
+# Service Configuration
+service:
+  enabled: true
+  type: ClusterIP
+  port: 8080
+  targetPort: 8080
+  annotations: {}
+  labels: {}
+
+# Ingress Configuration
+ingress:
+  enabled: false
+  className: "nginx"
+  annotations:
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+  hosts:
+    - host: mcp-server.cortex.local
+      paths:
+        - path: /
+          pathType: Prefix
+  tls:
+    - secretName: mcp-server-tls
+      hosts:
+        - mcp-server.cortex.local
+
+# Resource Limits
+resources:
+  limits:
+    cpu: 1000m
+    memory: 512Mi
+  requests:
+    cpu: 100m
+    memory: 128Mi
+
+# Autoscaling Configuration
+autoscaling:
+  enabled: false
+  minReplicas: 1
+  maxReplicas: 10
+  targetCPUUtilizationPercentage: 80
+  targetMemoryUtilizationPercentage: 80
+
+# KEDA Autoscaling (preferred over HPA)
+keda:
+  enabled: false
+  minReplicaCount: 1
+  maxReplicaCount: 10
+  pollingInterval: 30
+  cooldownPeriod: 300
+  # Scaled object triggers
+  triggers: []
+  # Example triggers:
+  # - type: prometheus
+  #   metadata:
+  #     serverAddress: http://prometheus:9090
+  #     metricName: http_requests_total
+  #     threshold: '100'
+  #     query: sum(rate(http_requests_total{job="mcp-server"}[2m]))
+  # - type: cpu
+  #   metricType: Utilization
+  #   metadata:
+  #     value: "80"
+  # - type: memory
+  #   metricType: Utilization
+  #   metadata:
+  #     value: "80"
+
+# Pod Disruption Budget
+podDisruptionBudget:
+  enabled: false
+  minAvailable: 1
+  # maxUnavailable: 1
+
+# Replica count (used when autoscaling is disabled)
+replicaCount: 1
+
+# Node Selector
+nodeSelector: {}
+
+# Tolerations
+tolerations: []
+
+# Affinity
+affinity: {}
+
+# Priority Class
+priorityClassName: ""
+
+# Topology Spread Constraints
+topologySpreadConstraints: []
+
+# Environment Variables
+env: []
+# - name: LOG_LEVEL
+#   value: "info"
+
+# Environment Variables from ConfigMap
+envFrom: []
+# - configMapRef:
+#     name: mcp-config
+
+# Secret Environment Variables
+secretEnv: []
+# - name: API_KEY
+#   valueFrom:
+#     secretKeyRef:
+#       name: mcp-secrets
+#       key: api-key
+
+# ConfigMap Data
+configMap:
+  enabled: false
+  data: {}
+  # config.json: |
+  #   {
+  #     "server": "localhost",
+  #     "port": 8080
+  #   }
+
+# Secret Data
+secret:
+  enabled: false
+  data: {}
+  # api-key: "base64-encoded-key"
+
+# Volume Mounts
+volumeMounts: []
+# - name: config
+#   mountPath: /etc/mcp
+#   readOnly: true
+
+# Volumes
+volumes: []
+# - name: config
+#   configMap:
+#     name: mcp-config
+
+# Init Containers
+initContainers: []
+
+# Sidecar Containers
+sidecars: []
+
+# Liveness Probe
+livenessProbe:
+  enabled: true
+  httpGet:
+    path: /health
+    port: 8080
+  initialDelaySeconds: 30
+  periodSeconds: 10
+  timeoutSeconds: 5
+  successThreshold: 1
+  failureThreshold: 3
+
+# Readiness Probe
+readinessProbe:
+  enabled: true
+  httpGet:
+    path: /ready
+    port: 8080
+  initialDelaySeconds: 10
+  periodSeconds: 5
+  timeoutSeconds: 3
+  successThreshold: 1
+  failureThreshold: 3
+
+# Startup Probe
+startupProbe:
+  enabled: false
+  httpGet:
+    path: /health
+    Port: 8080
+  initialDelaySeconds: 0
+  periodSeconds: 10
+  timeoutSeconds: 3
+  successThreshold: 1
+  failureThreshold: 30
+
+# Lifecycle Hooks
+lifecycle: {}
+# preStop:
+#   exec:
+#     command: ["/bin/sh", "-c", "sleep 15"]
+
+# Pod Labels
+podLabels: {}
+
+# Service Monitor (Prometheus Operator)
+serviceMonitor:
+  enabled: false
+  interval: 30s
+  scrapeTimeout: 10s
+  labels: {}
+  annotations: {}
+
+# Network Policy
+networkPolicy:
+  enabled: false
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress: []
+  egress:
+    - to:
+      - namespaceSelector: {}
+      ports:
+      - protocol: TCP
+        port: 53
+      - protocol: UDP
+        port: 53
+    - to:
+      - namespaceSelector: {}
+
+# PodMonitor (alternative to ServiceMonitor)
+podMonitor:
+  enabled: false
+  interval: 30s
+  scrapeTimeout: 10s
+  labels: {}
+  annotations: {}

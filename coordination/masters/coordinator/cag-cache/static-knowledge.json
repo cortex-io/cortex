@@ -72,6 +72,28 @@
       ]
     },
     {
+      "rule_id": "resource-management",
+      "pattern": "mcp.*server|mcp.*lifecycle|start.*mcp|stop.*mcp|scale.*mcp|worker.*provision|worker.*management|worker.*drain|worker.*destroy|resource.*allocation|capacity.*planning",
+      "target_master": "resource-manager",
+      "priority": "high",
+      "confidence": 0.92,
+      "keywords": [
+        "mcp",
+        "server",
+        "lifecycle",
+        "start",
+        "stop",
+        "scale",
+        "worker",
+        "provision",
+        "drain",
+        "destroy",
+        "resource",
+        "allocation",
+        "capacity"
+      ]
+    },
+    {
       "rule_id": "multi-master",
       "pattern": "comprehensive|full.*audit|major.*update",
       "target_master": "multiple",
@@ -131,6 +153,18 @@
         "testing",
         "deployment",
         "release_management"
+      ],
+      "sla_driven": false
+    },
+    "resource-manager": {
+      "token_budget": 20000,
+      "worker_pool": 10000,
+      "specialization": "mcp_lifecycle_worker_management",
+      "capabilities": [
+        "mcp_server_control",
+        "worker_provisioning",
+        "resource_allocation",
+        "capacity_planning"
       ],
       "sla_driven": false
     }

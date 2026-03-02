@@ -1,0 +1,22 @@
+{
+  "task_id": "coordinator-003",
+  "master": "coordinator",
+  "description": "Handle master handoff when task requires multiple specializations",
+  "complexity": "medium",
+  "expected_outcome": {
+    "should_receive_handoff": true,
+    "should_route_to_next_master": true,
+    "should_preserve_context": true,
+    "should_update_task_status": true
+  },
+  "evaluation_criteria": [
+    "Receives handoff from completed master",
+    "Determines next master in workflow",
+    "Preserves task context and results",
+    "Creates handoff to next master",
+    "Updates task status appropriately",
+    "Handles handoff chain completion"
+  ],
+  "estimated_time_minutes": 10,
+  "tags": ["handoff", "workflow", "coordination"]
+}

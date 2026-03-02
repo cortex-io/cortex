@@ -1,0 +1,44 @@
+{
+  "destructiveOperations": {
+    "enabled": true,
+    "requireHumanApproval": true,
+    "operations": [
+      "delete",
+      "terminate",
+      "shutdown",
+      "destroy",
+      "remove",
+      "drop",
+      "truncate",
+      "purge"
+    ],
+    "exceptions": [
+      "delete-temp-files",
+      "remove-cache"
+    ]
+  },
+  "approvedMcpServers": [
+    "filesystem",
+    "git",
+    "github",
+    "slack",
+    "postgres",
+    "brave-search",
+    "memory"
+  ],
+  "approvedAiProviders": [
+    "anthropic.com",
+    "api.anthropic.com"
+  ],
+  "shadowAiDetection": {
+    "enabled": true,
+    "scanNamespaces": ["default", "cortex", "cortex-chat", "cortex-system"],
+    "alertOnUnauthorized": true,
+    "quarantineUnauthorized": false
+  },
+  "auditLog": {
+    "enabled": true,
+    "retentionDays": 90,
+    "path": "/app/audit/decisions.log"
+  }
+}

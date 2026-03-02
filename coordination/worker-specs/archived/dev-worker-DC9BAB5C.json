@@ -14,7 +14,7 @@
   "created_at": "2025-11-08T04:49:10-0600",
   "created_by": "create-task-cli",
   "context": {
-    "repository": "ry-ops/commit-relay",
+    "repository": "ry-ops/cortex",
     "branch": "main",
     "description": "BUG FIX: Dashboard admin page event log purge button failing with error 'Failed to purge event log: Failed to purge event log'. User reports purge functionality not working. Investigate dashboard API endpoint, backend purge logic in dashboard server, file permissions on coordination/dashboard-events.jsonl, and error handling. Fix the purge functionality and add proper error messages to help debug future issues.",
     "requirements": []
@@ -34,8 +34,8 @@
   "testing"
 ],
     "knowledge_base_refs": {
-      "implementation_patterns": "/Users/ryandahlberg/projects/commit-relay/scripts/../coordination/masters/development/knowledge-base/implementation-patterns.jsonl",
-      "architecture_docs": "/Users/ryandahlberg/projects/commit-relay/scripts/../coordination/masters/development/knowledge-base/codebase-architecture.json"
+      "implementation_patterns": "/Users/ryandahlberg/projects/cortex/scripts/../coordination/masters/development/knowledge-base/implementation-patterns.jsonl",
+      "architecture_docs": "/Users/ryandahlberg/projects/cortex/scripts/../coordination/masters/development/knowledge-base/codebase-architecture.json"
     }
   },
   "resources": {

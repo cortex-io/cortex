@@ -1,0 +1,208 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: improvement-detector-config
+  namespace: cortex-knowledge
+data:
+  config.yaml: |
+    detection:
+      # Improvement detection strategies
+      strategies:
+        - name: pattern-analysis
+          enabled: true
+          description: "Detect recurring issues that need systematic fixes"
+          threshold: 3  # Number of occurrences to trigger
+
+        - name: performance-analysis
+          enabled: true
+          description: "Identify performance bottlenecks and optimization opportunities"
+          metrics:
+            - cpu_usage
+            - memory_usage
+            - response_time
+            - error_rate
+
+        - name: knowledge-gap-analysis
+          enabled: true
+          description: "Identify areas with insufficient documentation or knowledge"
+          min_knowledge_items: 2
+
+        - name: efficiency-analysis
+          enabled: true
+          description: "Find inefficient processes or redundant operations"
+
+        - name: trend-analysis
+          enabled: true
+          description: "Detect negative trends requiring intervention"
+          lookback_days: 7
+
+      # Improvement categories
+      categories:
+        - name: automation
+          priority: high
+          description: "Opportunities to automate manual processes"
+
+        - name: optimization
+          priority: medium
+          description: "Performance and resource optimization"
+
+        - name: reliability
+          priority: high
+          description: "Improvements to system reliability"
+
+        - name: documentation
+          priority: low
+          description: "Documentation improvements"
+
+        - name: security
+          priority: critical
+          description: "Security enhancements"
+
+      # Scoring criteria
+      scoring:
+        impact:
+          critical: 10
+          high: 7
+          medium: 5
+          low: 3
+
+        effort:
+          low: 1
+          medium: 3
+          high: 5
+          very_high: 8
+
+        # ROI = impact / effort
+        min_roi: 1.5
+
+      # Output configuration
+      output:
+        create_github_issues: true
+        notify_masters: true
+        update_dashboard: true
+        min_priority: medium
+
+    mongodb:
+      host: knowledge-mongodb
+      port: 27017
+      database: cortex_knowledge
+
+    neo4j:
+      uri: bolt://knowledge-graph:7687
+      database: cortex
+
+    prometheus:
+      url: http://prometheus.cortex-system:9090
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: improvement-detector
+  namespace: cortex-knowledge
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: improvement-detector
+  template:
+    metadata:
+      labels:
+        app: improvement-detector
+        itil-component: improvement-detection
+    spec:
+      serviceAccountName: improvement-detector
+      containers:
+      - name: detector
+        image: python:3.11-slim
+        command: ["/bin/bash", "-c"]
+        args:
+          - |
+            pip install --no-cache-dir \
+              kubernetes \
+              pymongo \
+              neo4j \
+              prometheus-api-client \
+              pyyaml \
+              numpy \
+              pandas \
+              scikit-learn \
+              requests && \
+            python /app/detector.py
+        volumeMounts:
+        - name: config
+          mountPath: /app/config
+        - name: app
+          mountPath: /app
+        env:
+        - name: PYTHONUNBUFFERED
+          value: "1"
+        - name: GITHUB_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: github-token
+              key: token
+              optional: true
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "100m"
+          limits:
+            memory: "1Gi"
+            cpu: "500m"
+      volumes:
+      - name: config
+        configMap:
+          name: improvement-detector-config
+      - name: app
+        configMap:
+          name: improvement-detector-app
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: improvement-detector
+  namespace: cortex-knowledge
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: improvement-detector
+rules:
+- apiGroups: [""]
+  resources: ["pods", "events", "configmaps"]
+  verbs: ["get", "list", "watch"]
+- apiGroups: ["apps"]
+  resources: ["deployments", "replicasets", "statefulsets"]
+  verbs: ["get", "list", "watch"]
+- apiGroups: ["batch"]
+  resources: ["jobs", "cronjobs"]
+  verbs: ["get", "list", "watch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: improvement-detector
+subjects:
+- kind: ServiceAccount
+  name: improvement-detector
+  namespace: cortex-knowledge
+roleRef:
+  kind: ClusterRole
+  name: improvement-detector
+  apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: improvement-detector
+  namespace: cortex-knowledge
+spec:
+  selector:
+    app: improvement-detector
+  ports:
+  - name: http
+    port: 8080
+    targetPort: 8080
+  - name: metrics
+    port: 9092
+    targetPort: 9092

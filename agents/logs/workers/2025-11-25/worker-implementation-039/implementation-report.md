@@ -10,7 +10,7 @@
 
 ## Executive Summary
 
-Successfully implemented comprehensive Elastic APM integration for the commit-relay Express.js API server. The integration provides full observability including distributed tracing, performance monitoring, error tracking, custom events, and log correlation.
+Successfully implemented comprehensive Elastic APM integration for the cortex Express.js API server. The integration provides full observability including distributed tracing, performance monitoring, error tracking, custom events, and log correlation.
 
 **Key Achievement**: Complete APM observability stack ready for production deployment with Elastic Cloud.
 
@@ -20,7 +20,7 @@ Successfully implemented comprehensive Elastic APM integration for the commit-re
 
 ### Scope Adaptation
 
-The original task specification mentioned "FastAPI application", but upon investigation, the commit-relay API server is built with **Node.js/Express**. The implementation was adapted accordingly using `elastic-apm-node` instead of Python's `elastic-apm`.
+The original task specification mentioned "FastAPI application", but upon investigation, the cortex API server is built with **Node.js/Express**. The implementation was adapted accordingly using `elastic-apm-node` instead of Python's `elastic-apm`.
 
 ### Components Implemented
 
@@ -322,7 +322,7 @@ const result = await withCustomSpan('complex-calculation', 'custom', async () =>
 cp .env.example .env
 # Edit .env:
 ELASTIC_APM_ENABLED=true
-ELASTIC_APM_SERVICE_NAME=commit-relay
+ELASTIC_APM_SERVICE_NAME=cortex
 ELASTIC_APM_SERVER_URL=https://your-deployment.apm.region.cloud.es.io:443
 ELASTIC_APM_SECRET_TOKEN=your-secret-token
 ELASTIC_APM_ENVIRONMENT=production
@@ -343,7 +343,7 @@ Check logs for:
 
 ### Step 4: Verify in Kibana
 1. Kibana → Observability → APM
-2. Services → commit-relay
+2. Services → cortex
 3. Verify transactions appearing
 4. Check service map
 5. View metrics
@@ -413,7 +413,7 @@ Check logs for:
 
 ## Conclusion
 
-The Elastic APM integration for commit-relay has been successfully implemented and tested. All acceptance criteria have been met, including automatic instrumentation, custom event tracking, error handling, configuration, testing, and documentation.
+The Elastic APM integration for cortex has been successfully implemented and tested. All acceptance criteria have been met, including automatic instrumentation, custom event tracking, error handling, configuration, testing, and documentation.
 
 The implementation provides a solid foundation for production observability with minimal performance overhead and comprehensive security safeguards. The system is ready for staging deployment and subsequent production rollout.
 

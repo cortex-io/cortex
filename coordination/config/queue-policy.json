@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "description": "Queue management and rate limiting policy for commit-relay orchestration",
+  "description": "Queue management and rate limiting policy for cortex orchestration",
   "last_updated": "2025-11-23T00:00:00Z",
 
   "queue": {

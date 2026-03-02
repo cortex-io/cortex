@@ -115,7 +115,7 @@
     }
   ],
   "metadata": {
-    "author": "commit-relay-security",
+    "author": "cortex-security",
     "created_at": "2025-11-21T00:00:00Z",
     "updated_at": "2025-11-21T00:00:00Z",
     "tags": ["access-control", "permissions", "authorization", "critical"]

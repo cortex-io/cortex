@@ -1,0 +1,23 @@
+{
+  "task_id": "inventory-001",
+  "master": "inventory",
+  "description": "Catalog all API endpoints and generate OpenAPI specification",
+  "complexity": "medium",
+  "expected_outcome": {
+    "should_find_all_endpoints": true,
+    "should_generate_openapi_spec": true,
+    "should_include_parameters": true,
+    "should_include_responses": true
+  },
+  "evaluation_criteria": [
+    "Discovers all API endpoints",
+    "Extracts route definitions",
+    "Generates valid OpenAPI 3.0 spec",
+    "Includes request/response schemas",
+    "Documents authentication requirements",
+    "Includes examples",
+    "Validates generated spec"
+  ],
+  "estimated_time_minutes": 40,
+  "tags": ["api", "documentation", "openapi"]
+}
