@@ -1,0 +1,180 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 620" width="900" height="620">
+  <defs>
+    <linearGradient id="primeGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#7c3aed;stop-opacity:1"/>
+      <stop offset="100%" style="stop-color:#58a6ff;stop-opacity:1"/>
+    </linearGradient>
+    <linearGradient id="masterGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#1f6feb;stop-opacity:1"/>
+      <stop offset="100%" style="stop-color:#58a6ff;stop-opacity:1"/>
+    </linearGradient>
+    <linearGradient id="workerGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#238636;stop-opacity:1"/>
+      <stop offset="100%" style="stop-color:#3fb950;stop-opacity:1"/>
+    </linearGradient>
+    <linearGradient id="daemonGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#d29922;stop-opacity:1"/>
+      <stop offset="100%" style="stop-color:#f0883e;stop-opacity:1"/>
+    </linearGradient>
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="3" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <style>
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.85; transform: scale(1.03); }
+    }
+    @keyframes dash {
+      to { stroke-dashoffset: -20; }
+    }
+    .prime { animation: pulse 2.5s ease-in-out infinite; transform-origin: 450px 45px; }
+    .flow-line { stroke-dasharray: 8 4; animation: dash 1s linear infinite; }
+    .node-label { fill: #ffffff; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 13px; font-weight: 600; text-anchor: middle; dominant-baseline: central; }
+    .small-label { fill: #c9d1d9; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 10px; text-anchor: middle; dominant-baseline: central; }
+    .section-label { fill: #8b949e; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 11px; font-weight: 600; text-anchor: start; letter-spacing: 1.5px; text-transform: uppercase; }
+  </style>
+
+  <!-- Background -->
+  <rect width="900" height="620" rx="12" fill="#0d1117"/>
+  <rect x="1" y="1" width="898" height="618" rx="12" fill="none" stroke="#30363d" stroke-width="1"/>
+
+  <!-- Section labels -->
+  <text x="30" y="28" class="section-label">Core</text>
+  <text x="30" y="128" class="section-label">Orchestration</text>
+  <text x="30" y="228" class="section-label">Masters</text>
+  <text x="30" y="368" class="section-label">Workers</text>
+  <text x="30" y="518" class="section-label">Daemons</text>
+
+  <!-- Cortex Prime -->
+  <g class="prime" filter="url(#glow)">
+    <rect x="350" y="20" width="200" height="44" rx="10" fill="url(#primeGrad)"/>
+    <text x="450" y="42" class="node-label">Cortex Prime</text>
+  </g>
+
+  <!-- Line: Prime -> COO -->
+  <line x1="450" y1="64" x2="450" y2="100" class="flow-line" stroke="#58a6ff" stroke-width="2"/>
+
+  <!-- COO Orchestrator -->
+  <rect x="330" y="100" width="240" height="40" rx="8" fill="url(#masterGrad)" opacity="0.9"/>
+  <text x="450" y="120" class="node-label">COO Orchestrator</text>
+
+  <!-- Lines: COO -> Masters -->
+  <line x1="450" y1="140" x2="95" y2="210" class="flow-line" stroke="#58a6ff" stroke-width="1.5"/>
+  <line x1="450" y1="140" x2="275" y2="210" class="flow-line" stroke="#58a6ff" stroke-width="1.5"/>
+  <line x1="450" y1="140" x2="450" y2="210" class="flow-line" stroke="#58a6ff" stroke-width="1.5"/>
+  <line x1="450" y1="140" x2="625" y2="210" class="flow-line" stroke="#58a6ff" stroke-width="1.5"/>
+  <line x1="450" y1="140" x2="805" y2="210" class="flow-line" stroke="#58a6ff" stroke-width="1.5"/>
+
+  <!-- Master Agents -->
+  <rect x="25" y="210" width="140" height="40" rx="8" fill="url(#masterGrad)"/>
+  <text x="95" y="230" class="node-label">Coordinator</text>
+
+  <rect x="205" y="210" width="140" height="40" rx="8" fill="url(#masterGrad)"/>
+  <text x="275" y="230" class="node-label">Development</text>
+
+  <rect x="380" y="210" width="140" height="40" rx="8" fill="url(#masterGrad)"/>
+  <text x="450" y="230" class="node-label">Security</text>
+
+  <rect x="555" y="210" width="140" height="40" rx="8" fill="url(#masterGrad)"/>
+  <text x="625" y="230" class="node-label">Inventory</text>
+
+  <rect x="735" y="210" width="140" height="40" rx="8" fill="url(#masterGrad)"/>
+  <text x="805" y="230" class="node-label">CI/CD</text>
+
+  <!-- Lines: Masters -> Workers -->
+  <!-- Coordinator workers -->
+  <line x1="95" y1="250" x2="60" y2="340" class="flow-line" stroke="#3fb950" stroke-width="1.2"/>
+  <line x1="95" y1="250" x2="140" y2="340" class="flow-line" stroke="#3fb950" stroke-width="1.2"/>
+
+  <!-- Development workers -->
+  <line x1="275" y1="250" x2="220" y2="340" class="flow-line" stroke="#3fb950" stroke-width="1.2"/>
+  <line x1="275" y1="250" x2="300" y2="340" class="flow-line" stroke="#3fb950" stroke-width="1.2"/>
+  <line x1="275" y1="250" x2="380" y2="340" class="flow-line" stroke="#3fb950" stroke-width="1.2"/>
+
+  <!-- Security workers -->
+  <line x1="450" y1="250" x2="450" y2="340" class="flow-line" stroke="#3fb950" stroke-width="1.2"/>
+  <line x1="450" y1="250" x2="530" y2="340" class="flow-line" stroke="#3fb950" stroke-width="1.2"/>
+
+  <!-- Inventory workers -->
+  <line x1="625" y1="250" x2="625" y2="340" class="flow-line" stroke="#3fb950" stroke-width="1.2"/>
+
+  <!-- CI/CD workers -->
+  <line x1="805" y1="250" x2="760" y2="340" class="flow-line" stroke="#3fb950" stroke-width="1.2"/>
+  <line x1="805" y1="250" x2="845" y2="340" class="flow-line" stroke="#3fb950" stroke-width="1.2"/>
+
+  <!-- Worker nodes -->
+  <rect x="15" y="340" width="90" height="32" rx="6" fill="url(#workerGrad)"/>
+  <text x="60" y="356" class="small-label" style="fill:#fff">Analysis</text>
+
+  <rect x="115" y="340" width="90" height="32" rx="6" fill="url(#workerGrad)"/>
+  <text x="160" y="356" class="small-label" style="fill:#fff">Docs</text>
+
+  <rect x="215" y="340" width="90" height="32" rx="6" fill="url(#workerGrad)"/>
+  <text x="260" y="356" class="small-label" style="fill:#fff">Implement</text>
+
+  <rect x="315" y="340" width="70" height="32" rx="6" fill="url(#workerGrad)"/>
+  <text x="350" y="356" class="small-label" style="fill:#fff">Test</text>
+
+  <rect x="395" y="340" width="70" height="32" rx="6" fill="url(#workerGrad)"/>
+  <text x="430" y="356" class="small-label" style="fill:#fff">Fix</text>
+
+  <rect x="475" y="340" width="70" height="32" rx="6" fill="url(#workerGrad)"/>
+  <text x="510" y="356" class="small-label" style="fill:#fff">Scan</text>
+
+  <rect x="555" y="340" width="90" height="32" rx="6" fill="url(#workerGrad)"/>
+  <text x="600" y="356" class="small-label" style="fill:#fff">Sec Fix</text>
+
+  <rect x="655" y="340" width="70" height="32" rx="6" fill="url(#workerGrad)"/>
+  <text x="690" y="356" class="small-label" style="fill:#fff">Analysis</text>
+
+  <rect x="735" y="340" width="70" height="32" rx="6" fill="url(#workerGrad)"/>
+  <text x="770" y="356" class="small-label" style="fill:#fff">Implement</text>
+
+  <rect x="815" y="340" width="60" height="32" rx="6" fill="url(#workerGrad)"/>
+  <text x="845" y="356" class="small-label" style="fill:#fff">Test</text>
+
+  <!-- Horizontal line separating daemons -->
+  <line x1="30" y1="490" x2="870" y2="490" stroke="#30363d" stroke-width="1" stroke-dasharray="4 3"/>
+
+  <!-- Daemon nodes -->
+  <rect x="30" y="530" width="85" height="30" rx="6" fill="url(#daemonGrad)"/>
+  <text x="72" y="545" class="small-label" style="fill:#fff;font-size:9px">Self-Heal</text>
+
+  <rect x="125" y="530" width="85" height="30" rx="6" fill="url(#daemonGrad)"/>
+  <text x="167" y="545" class="small-label" style="fill:#fff;font-size:9px">Monitor</text>
+
+  <rect x="220" y="530" width="85" height="30" rx="6" fill="url(#daemonGrad)"/>
+  <text x="262" y="545" class="small-label" style="fill:#fff;font-size:9px">Token Mgr</text>
+
+  <rect x="315" y="530" width="85" height="30" rx="6" fill="url(#daemonGrad)"/>
+  <text x="357" y="545" class="small-label" style="fill:#fff;font-size:9px">Scheduler</text>
+
+  <rect x="410" y="530" width="85" height="30" rx="6" fill="url(#daemonGrad)"/>
+  <text x="452" y="545" class="small-label" style="fill:#fff;font-size:9px">Persistence</text>
+
+  <rect x="505" y="530" width="85" height="30" rx="6" fill="url(#daemonGrad)"/>
+  <text x="547" y="545" class="small-label" style="fill:#fff;font-size:9px">Coordinator</text>
+
+  <rect x="600" y="530" width="85" height="30" rx="6" fill="url(#daemonGrad)"/>
+  <text x="642" y="545" class="small-label" style="fill:#fff;font-size:9px">Health</text>
+
+  <rect x="695" y="530" width="85" height="30" rx="6" fill="url(#daemonGrad)"/>
+  <text x="737" y="545" class="small-label" style="fill:#fff;font-size:9px">Queue</text>
+
+  <rect x="790" y="530" width="85" height="30" rx="6" fill="url(#daemonGrad)"/>
+  <text x="832" y="545" class="small-label" style="fill:#fff;font-size:9px">Telemetry</text>
+
+  <!-- Legend -->
+  <rect x="30" y="580" width="12" height="12" rx="3" fill="url(#masterGrad)"/>
+  <text x="48" y="590" class="small-label" style="text-anchor:start">Masters</text>
+  <rect x="110" y="580" width="12" height="12" rx="3" fill="url(#workerGrad)"/>
+  <text x="128" y="590" class="small-label" style="text-anchor:start">Workers</text>
+  <rect x="190" y="580" width="12" height="12" rx="3" fill="url(#daemonGrad)"/>
+  <text x="208" y="590" class="small-label" style="text-anchor:start">Daemons</text>
+</svg>
