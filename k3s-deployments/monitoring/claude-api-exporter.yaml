@@ -378,7 +378,7 @@ spec:
           protocol: TCP
         env:
         - name: CLAUDE_API_KEY
-          value: "xxxxxx"
+          value: ""
         - name: SCRAPE_INTERVAL
           value: "300"  # 5 minutes
         - name: EXPORTER_PORT
