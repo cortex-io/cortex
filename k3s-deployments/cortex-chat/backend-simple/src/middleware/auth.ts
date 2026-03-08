@@ -1,7 +1,7 @@
 import { Context, Next } from 'hono';
 import { verify } from 'hono/jwt';
 
-const JWT_SECRET = process.env.JWT_SECRET || 'cortex-chat-secret-key-change-in-production';
+const JWT_SECRET = process.env.JWT_SECRET || '';
 
 export interface AuthUser {
   username: string;

@@ -5,9 +5,9 @@ export function createAuthRoutes() {
   const app = new Hono();
 
   // Configuration
-  const AUTH_USERNAME = process.env.AUTH_USERNAME || 'ryan';
-  const AUTH_PASSWORD = process.env.AUTH_PASSWORD || '7vuzjzuN9!';
-  const JWT_SECRET = process.env.JWT_SECRET || 'cortex-chat-secret-key-change-in-production';
+  const AUTH_USERNAME = process.env.AUTH_USERNAME || '';
+  const AUTH_PASSWORD = process.env.AUTH_PASSWORD || '';
+  const JWT_SECRET = process.env.JWT_SECRET || '';
   const JWT_EXPIRES_IN = '24h'; // 24 hours
 
   /**
