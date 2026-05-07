@@ -19,10 +19,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v6
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
 
       - name: Setup Node.js
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
         with:
           node-version: '18'
           cache: 'npm'
@@ -39,7 +39,7 @@ jobs:
 
       - name: Upload npm audit results
         if: always()
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
         with:
           name: npm-audit-results
           path: npm-audit-results.json
@@ -55,10 +55,10 @@ jobs:
           - evaluation/requirements.txt
     steps:
       - name: Checkout code
-        uses: actions/checkout@v6
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
 
       - name: Setup Python
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6
         with:
           python-version: '3.12'
 
@@ -74,7 +74,7 @@ jobs:
 
       - name: Upload pip audit results
         if: always()
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
         with:
           name: pip-audit-results-${{ matrix.requirements }}
           path: pip-audit-${{ matrix.requirements }}.json
@@ -86,10 +86,10 @@ jobs:
     timeout-minutes: 20
     steps:
       - name: Checkout code
-        uses: actions/checkout@v6
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
 
       - name: Run Trivy vulnerability scanner (filesystem)
-        uses: aquasecurity/trivy-action@master
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # master
         with:
           scan-type: 'fs'
           scan-ref: '.'
@@ -101,7 +101,7 @@ jobs:
           timeout: '15m'
 
       - name: Run Trivy vulnerability scanner (JSON output)
-        uses: aquasecurity/trivy-action@master
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # master
         with:
           scan-type: 'fs'
           scan-ref: '.'
@@ -127,14 +127,14 @@ jobs:
 
       - name: Upload Trivy results to GitHub Security
         if: always() && github.event_name != 'pull_request' || github.actor != 'dependabot[bot]'
-        uses: github/codeql-action/upload-sarif@v4
+        uses: github/codeql-action/upload-sarif@e46ed2cbd01164d986452f91f178727624ae40d7 # v4
         with:
           sarif_file: 'trivy-results.sarif'
         continue-on-error: true
 
       - name: Upload Trivy scan results
         if: always()
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
         with:
           name: trivy-scan-results
           path: |
@@ -148,7 +148,7 @@ jobs:
     timeout-minutes: 20
     steps:
       - name: Checkout code
-        uses: actions/checkout@v6
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
 
       - name: Install Syft
         run: |
@@ -163,7 +163,7 @@ jobs:
           syft dir:. -o cyclonedx-json=sbom-cyclonedx.json
 
       - name: Upload SBOM artifacts
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
         with:
           name: sbom-artifacts
           path: |
@@ -180,7 +180,7 @@ jobs:
 
       - name: Upload Grype results
         if: always()
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
         with:
           name: grype-scan-results
           path: grype-results.json
@@ -193,7 +193,7 @@ jobs:
     if: always()
     steps:
       - name: Download all artifacts
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7
 
       - name: Generate security summary
         run: |
