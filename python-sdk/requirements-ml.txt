@@ -24,7 +24,7 @@ openai==1.7.1
 numpy==2.4.2
 pandas==2.1.4
 scikit-learn>=1.5.0  # Updated to fix CVE (sensitive data leakage)
-scipy==1.17.0
+scipy==1.17.1
 
 # Model Training and Evaluation
 tensorboard==2.15.1
