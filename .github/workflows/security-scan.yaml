@@ -152,38 +152,6 @@ jobs:
           retention-days: 30
 
   # SAST with CodeQL
-  codeql-analysis:
-    name: CodeQL Analysis
-    runs-on: ubuntu-latest
-    timeout-minutes: 30
-    permissions:
-      actions: read
-      contents: read
-      security-events: write
-
-    strategy:
-      fail-fast: false
-      matrix:
-        language: ['javascript', 'python']
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
-
-      - name: Initialize CodeQL
-        uses: github/codeql-action/init@1190a975f95ce23525efb6a3fc21ea29567c1b52 # v3.38.2
-        with:
-          languages: ${{ matrix.language }}
-          queries: security-extended,security-and-quality
-
-      - name: Autobuild
-        uses: github/codeql-action/autobuild@1190a975f95ce23525efb6a3fc21ea29567c1b52 # v3.38.2
-
-      - name: Perform CodeQL Analysis
-        uses: github/codeql-action/analyze@1190a975f95ce23525efb6a3fc21ea29567c1b52 # v3.38.2
-        with:
-          category: '/language:${{ matrix.language }}'
-
   # Secret scanning
   secret-scan:
     name: Secret Scanning
@@ -361,7 +329,6 @@ jobs:
     needs:
       - dependency-scan
       - container-scan
-      - codeql-analysis
       - secret-scan
       - license-scan
       - iac-scan
@@ -394,7 +361,7 @@ jobs:
             "scans": {
               "dependency_scan": "${{ needs.dependency-scan.result }}",
               "container_scan": "${{ needs.container-scan.result }}",
-              "codeql_analysis": "${{ needs.codeql-analysis.result }}",
+              "codeql_analysis": "github-default-setup",
               "secret_scan": "${{ needs.secret-scan.result }}",
               "license_scan": "${{ needs.license-scan.result }}",
               "iac_scan": "${{ needs.iac-scan.result }}",
@@ -430,7 +397,7 @@ jobs:
             |-----------|--------|
             | Dependency Scan | ${{ needs.dependency-scan.result }} |
             | Container Scan | ${{ needs.container-scan.result }} |
-            | CodeQL Analysis | ${{ needs.codeql-analysis.result }} |
+            | CodeQL Analysis | GitHub default setup (Security → Code scanning) |
             | Secret Scan | ${{ needs.secret-scan.result }} |
             | License Scan | ${{ needs.license-scan.result }} |
             | IaC Scan | ${{ needs.iac-scan.result }} |
