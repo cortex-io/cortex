@@ -64,7 +64,8 @@
 # Security
 'security':
   - coordination/masters/security/**/*
-  - .github/workflows/security-scan.yaml
+  - .github/workflows/security-scan.yml
+  - .github/workflows/security.yml
 
 # Breaking change
 'breaking':
