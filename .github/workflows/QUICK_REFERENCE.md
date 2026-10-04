@@ -9,7 +9,8 @@ Fast reference for Cortex CI/CD workflows.
 | CI | `ci.yaml` | Push, PR | ~15 min |
 | CD | `cd.yaml` | Main, tags | ~30 min |
 | Release | `release.yaml` | Main | ~20 min |
-| Security | `security-scan.yaml` | Daily, PR | ~25 min |
+| Security | `security-scan.yml`, `security.yml` | Daily / weekly, PR | ~10 min |
+| CodeQL | GitHub default setup (no file) | Push, PR, weekly | managed by GitHub |
 | PR Check | `pr-check.yaml` | PR events | ~10 min |
 
 ## Common Commands
