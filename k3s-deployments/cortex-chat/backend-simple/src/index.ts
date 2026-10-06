@@ -38,7 +38,11 @@ console.log(`[Server] Cortex URL: ${CORTEX_URL}`);
 const authRoutes = createAuthRoutes();
 app.route('/api/auth', authRoutes);
 
-// Mount chat routes
+// Apply authentication middleware to protected chat routes
+app.use('/api/chat', authMiddleware);
+app.use('/api/conversations*', authMiddleware);
+
+// Mount chat routes (authentication already applied above)
 const chatRoutes = createChatRoutes();
 app.route('/api', chatRoutes);
 
