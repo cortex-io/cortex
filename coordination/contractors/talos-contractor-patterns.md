@@ -2025,8 +2025,12 @@ kubectl -n argocd get secret argocd-initial-admin-secret \
   -o jsonpath="{.data.password}" | base64 -d
 
 # Install ArgoCD CLI
-curl -sSL -o argocd-linux-amd64 https://github.com/argoproj/argo-cd/releases/latest/download/argocd-linux-amd64
+ARGOCD_VERSION="v2.9.3"
+curl -sSL -o argocd-linux-amd64 "https://github.com/argoproj/argo-cd/releases/download/${ARGOCD_VERSION}/argocd-linux-amd64"
+curl -sSL -o argocd-linux-amd64.sha256 "https://github.com/argoproj/argo-cd/releases/download/${ARGOCD_VERSION}/argocd-linux-amd64.sha256"
+sha256sum -c argocd-linux-amd64.sha256 || { echo "ArgoCD CLI checksum verification failed"; exit 1; }
 sudo install -m 555 argocd-linux-amd64 /usr/local/bin/argocd
+rm argocd-linux-amd64 argocd-linux-amd64.sha256
 ```
 
 ### Application Manifest
