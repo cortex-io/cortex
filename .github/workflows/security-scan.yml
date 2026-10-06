@@ -152,7 +152,9 @@ jobs:
 
       - name: Install Syft
         run: |
-          curl -sSfL https://raw.githubusercontent.com/anchore/syft/main/install.sh | sh -s -- -b /usr/local/bin
+          curl -sSfL https://raw.githubusercontent.com/anchore/syft/main/install.sh -o install-syft.sh
+          echo "787fe2aa12311f7dd8e1d9337dfc6e25f091396c958937293a2d3c0eca2ff8ce  install-syft.sh" | sha256sum -c -
+          sh install-syft.sh -b /usr/local/bin
 
       - name: Generate SBOM (SPDX format)
         run: |
@@ -173,7 +175,9 @@ jobs:
 
       - name: Scan SBOM with Grype
         run: |
-          curl -sSfL https://raw.githubusercontent.com/anchore/grype/main/install.sh | sh -s -- -b /usr/local/bin
+          curl -sSfL https://raw.githubusercontent.com/anchore/grype/main/install.sh -o install-grype.sh
+          echo "4bc8e844d1ca0b74082cb51e1587d58c35150756954660db3d3078e57c81cbfd  install-grype.sh" | sha256sum -c -
+          sh install-grype.sh -b /usr/local/bin
           grype sbom:sbom-spdx.json -o json > grype-results.json || true
           grype sbom:sbom-spdx.json --fail-on critical
         continue-on-error: false
