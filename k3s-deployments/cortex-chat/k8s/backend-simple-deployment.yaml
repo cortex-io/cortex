@@ -49,6 +49,11 @@ spec:
             secretKeyRef:
               name: cortex-chat-secrets
               key: auth-password
+        - name: JWT_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: cortex-chat-secrets
+              key: jwt-secret
         - name: CORS_ORIGIN
           value: "*"
         resources:
