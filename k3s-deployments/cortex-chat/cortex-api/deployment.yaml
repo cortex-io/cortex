@@ -86,6 +86,8 @@ spec:
           value: "admin"
         - name: SANDFLY_PASSWORD
           value: "emphasize-art-nibble-arguable-paradox-flick-unpack"
+        - name: SANDFLY_REJECT_UNAUTHORIZED
+          value: "false"  # Set to "true" when using valid certificates
         - name: PROXMOX_HOST
           value: "10.88.140.21"
         - name: PROXMOX_PORT
@@ -94,6 +96,8 @@ spec:
           value: "root@pam"
         - name: PROXMOX_PASSWORD
           value: "toor"
+        - name: PROXMOX_REJECT_UNAUTHORIZED
+          value: "false"  # Set to "true" when using valid certificates
         - name: UNIFI_HOST
           value: "10.88.140.16"
         - name: UNIFI_PORT
@@ -106,6 +110,8 @@ spec:
           value: "default"
         - name: UNIFI_IS_UDM
           value: "false"
+        - name: UNIFI_REJECT_UNAUTHORIZED
+          value: "false"  # Set to "true" when using valid certificates
         - name: SELF_HEAL_WORKER_PATH
           value: "/app/scripts/self-heal-worker.sh"
         - name: HEALING_ENABLED
