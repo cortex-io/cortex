@@ -16,11 +16,7 @@ on:
           - major
           - prerelease
 
-permissions:
-  contents: write
-  issues: write
-  pull-requests: write
-  packages: write
+permissions: {}
 
 env:
   NODE_VERSION: '20.x'
@@ -32,6 +28,8 @@ jobs:
     name: Check Release Required
     runs-on: ubuntu-latest
     timeout-minutes: 5
+    permissions:
+      contents: read
     outputs:
       should-release: ${{ steps.check.outputs.should-release }}
       next-version: ${{ steps.check.outputs.next-version }}
@@ -87,6 +85,8 @@ jobs:
     timeout-minutes: 30
     needs: check-release
     if: needs.check-release.outputs.should-release == 'true' || github.event_name == 'workflow_dispatch'
+    permissions:
+      contents: write
 
     outputs:
       version: ${{ steps.semantic.outputs.version }}
