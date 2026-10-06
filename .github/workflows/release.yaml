@@ -119,14 +119,19 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
-      - name: Run semantic-release
-        id: semantic
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Install semantic-release packages
         run: |
-          # Install semantic-release
-          pnpm add -D semantic-release @semantic-release/changelog @semantic-release/git @semantic-release/github conventional-changelog-conventionalcommits
+          # Install semantic-release toolchain with pinned versions
+          # This step runs WITHOUT GITHUB_TOKEN to prevent installation scripts from accessing credentials
+          pnpm add -D \
+            semantic-release@23.0.2 \
+            @semantic-release/changelog@6.0.3 \
+            @semantic-release/git@10.0.1 \
+            @semantic-release/github@9.2.6 \
+            conventional-changelog-conventionalcommits@7.0.2
 
+      - name: Configure semantic-release
+        run: |
           # Create release config
           cat > .releaserc.json <<EOF
           {
@@ -171,7 +176,13 @@ jobs:
           }
           EOF
 
-          # Run semantic-release
+      - name: Run semantic-release
+        id: semantic
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # Run semantic-release with GITHUB_TOKEN
+          # Packages are already installed, so no installation scripts run in this step
           npx semantic-release
 
       - name: Get release version
