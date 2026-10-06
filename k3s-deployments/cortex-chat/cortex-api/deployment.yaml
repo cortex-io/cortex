@@ -110,6 +110,12 @@ spec:
           value: "/app/scripts/self-heal-worker.sh"
         - name: HEALING_ENABLED
           value: "true"
+        - name: CORTEX_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: cortex-api-key
+              key: api-key
+              optional: true
         resources:
           requests:
             memory: "256Mi"
