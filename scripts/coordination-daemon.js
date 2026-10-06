@@ -18,7 +18,8 @@ const config = {
   persistence: PersistenceStrategy.PERIODIC_SNAPSHOT,
   snapshotInterval: 30000,
   snapshotPath: './coordination/state-snapshot.json',
-  walPath: './coordination/wal.log'
+  walPath: './coordination/wal.log',
+  requireAuth: true // Authentication enabled by default for security
 };
 
 // Parse command line arguments
@@ -75,6 +76,14 @@ for (let i = 0; i < args.length; i++) {
       config.heartbeatTimeout = parseInt(args[++i], 10);
       break;
 
+    case '--api-key':
+      config.apiKey = args[++i];
+      break;
+
+    case '--require-auth':
+      config.requireAuth = args[++i] !== 'false';
+      break;
+
     case '--help':
       printHelp();
       process.exit(0);
@@ -108,6 +117,8 @@ Options:
   --max-tasks-per-worker <n>     Maximum tasks per worker (default: 10)
   --heartbeat-interval <ms>      Heartbeat check interval (default: 5000)
   --heartbeat-timeout <ms>       Heartbeat timeout (default: 15000)
+  --api-key <key>                API key for authentication (auto-generated if not provided)
+  --require-auth <true|false>    Enable/disable authentication (default: true)
   --help                         Show this help message
 
 Examples:
@@ -129,6 +140,7 @@ Environment Variables:
   COORDINATION_PERSISTENCE       Persistence mode (overrides --persistence)
   COORDINATION_SNAPSHOT_PATH     Snapshot path (overrides --snapshot-path)
   COORDINATION_WAL_PATH          WAL path (overrides --wal-path)
+  COORDINATION_API_KEY           API key for authentication (overrides --api-key)
   `);
 }
 
