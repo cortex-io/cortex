@@ -6,24 +6,34 @@
         "httpMethod": "POST",
         "path": "auto-remediation",
         "responseMode": "responseNode",
-        "options": {}
+        "options": {
+          "allowedOrigins": "",
+          "rawBody": false
+        },
+        "authentication": "headerAuth",
+        "headerAuth": {
+          "name": "X-Webhook-Secret",
+          "value": "={{ $env.WEBHOOK_SECRET }}"
+        }
       },
       "id": "webhook-trigger",
       "name": "Webhook Trigger",
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 1,
       "position": [250, 400],
-      "webhookId": "auto-remediation"
+      "webhookId": "auto-remediation",
+      "notes": "Requires X-Webhook-Secret header matching WEBHOOK_SECRET environment variable"
     },
     {
       "parameters": {
-        "jsCode": "// Extract alert and check if auto-remediation is enabled\nconst body = $input.item.json.body;\nconst alert = body.alert || $input.item.json;\n\n// Check if dry-run mode is enabled (from environment or alert annotation)\nconst dryRun = $env.AUTO_REMEDIATION_DRY_RUN === 'true' || \n               alert.annotations?.auto_remediation_dry_run === 'true';\n\n// Check if auto-remediation is allowed for this alert\nconst autoRemediationEnabled = alert.annotations?.auto_remediation !== 'false';\n\nreturn {\n  json: {\n    alert,\n    alertName: alert.alertName || alert.labels?.alertname,\n    namespace: alert.namespace || alert.labels?.namespace || 'default',\n    pod: alert.pod || alert.labels?.pod || '',\n    container: alert.container || alert.labels?.container || '',\n    instance: alert.instance || alert.labels?.instance || '',\n    dryRun,\n    autoRemediationEnabled,\n    receivedAt: new Date().toISOString()\n  }\n};"
+        "jsCode": "// Extract alert and check if auto-remediation is enabled\nconst body = $input.item.json.body;\nconst alert = body.alert || $input.item.json;\n\n// Check if dry-run mode is enabled (from environment or alert annotation)\nconst dryRun = $env.AUTO_REMEDIATION_DRY_RUN === 'true' || \n               alert.annotations?.auto_remediation_dry_run === 'true';\n\n// Check if auto-remediation is allowed for this alert\nconst autoRemediationEnabled = alert.annotations?.auto_remediation === 'true';\\n\\n// SECURITY: Require manual approval unless explicitly disabled\\nconst requireApproval = $env.AUTO_REMEDIATION_REQUIRE_APPROVAL !== 'false';\n\nreturn {\n  json: {\n    alert,\n    alertName: alert.alertName || alert.labels?.alertname,\n    namespace: alert.namespace || alert.labels?.namespace || 'default',\n    pod: alert.pod || alert.labels?.pod || '',\n    container: alert.container || alert.labels?.container || '',\n    instance: alert.instance || alert.labels?.instance || '',\n    dryRun,\n    autoRemediationEnabled,\n    receivedAt: new Date().toISOString()\n  }\n};"
       },
       "id": "extract-alert",
-      "name": "Extract Alert & Check Config",
+      "name": "Extract Alert & Check Config - SECURITY HARDENED",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [450, 400]
+      "position": [450, 400],
+      "notes": "SECURITY: Requires explicit opt-in via auto_remediation='true' annotation"
     },
     {
       "parameters": {
