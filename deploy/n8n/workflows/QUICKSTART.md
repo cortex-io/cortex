@@ -34,7 +34,27 @@ export N8N_API_KEY=your-api-key  # Optional
 ./import-workflows.sh
 ```
 
-### Step 2: Configure Environment Variables (5 minutes)
+### Step 2: Configure Webhook Authentication (3 minutes)
+
+**IMPORTANT: Secure the auto-remediation webhook**
+
+1. Generate a strong authentication token:
+```bash
+# Generate a random token
+openssl rand -hex 32
+# Example output: a1b2c3d4e5f6...
+```
+
+2. Configure in N8N:
+   - Go to: Credentials > Add Credential > Header Auth
+   - Name: `Auto-Remediation Webhook Auth`
+   - Header Name: `X-Webhook-Token`
+   - Header Value: `<paste your generated token>`
+   - Save (note the credential ID should be `auto-remediation-webhook-auth`)
+
+3. Store the token securely for Alertmanager configuration
+
+### Step 3: Configure Environment Variables (5 minutes)
 
 Copy and customize the configuration template:
 
@@ -54,6 +74,10 @@ ALERTMANAGER_URL=http://alertmanager:9093
 SLACK_WEBHOOK_CRITICAL=https://hooks.slack.com/services/YOUR/WEBHOOK/HERE
 ALERT_FROM_EMAIL=alerts@your-domain.com
 ONCALL_EMAIL=oncall@your-domain.com
+
+# Auto-remediation security (use the token generated in Step 2)
+AUTO_REMEDIATION_WEBHOOK_TOKEN=<your-generated-token>
+AUTO_REMEDIATION_DRY_RUN=true  # Set to false after testing
 ```
 
 **Load into N8N:**
@@ -61,7 +85,7 @@ ONCALL_EMAIL=oncall@your-domain.com
 2. Paste environment variables
 3. Save
 
-### Step 3: Configure Alertmanager (3 minutes)
+### Step 4: Configure Alertmanager (3 minutes)
 
 Add N8N webhook receiver to `alertmanager.yml`:
 
@@ -71,6 +95,15 @@ receivers:
     webhook_configs:
       - url: 'http://n8n:5678/webhook/alertmanager'
         send_resolved: true
+  
+  # Auto-remediation webhook with authentication
+  - name: 'n8n-auto-remediation'
+    webhook_configs:
+      - url: 'http://n8n:5678/webhook/auto-remediation'
+        send_resolved: false
+        http_config:
+          headers:
+            X-Webhook-Token: '<your-generated-token>'
 
 route:
   receiver: 'n8n-alerts'
@@ -78,6 +111,13 @@ route:
   group_wait: 10s
   group_interval: 10s
   repeat_interval: 1h
+  
+  # Route critical alerts to auto-remediation
+  routes:
+    - match:
+        severity: critical
+      receiver: 'n8n-auto-remediation'
+      continue: true  # Also send to main alerts
 ```
 
 Reload Alertmanager:
@@ -92,7 +132,7 @@ docker restart alertmanager
 kill -HUP $(pidof alertmanager)
 ```
 
-### Step 4: Activate Workflows (2 minutes)
+### Step 5: Activate Workflows (2 minutes)
 
 For each workflow in N8N:
 1. Open workflow
@@ -105,7 +145,7 @@ Verify webhooks are registered:
 curl http://n8n:5678/webhook-test/
 ```
 
-### Step 5: Test the System (3 minutes)
+### Step 6: Test the System (3 minutes)
 
 **Test Alertmanager Integration:**
 ```bash
@@ -136,8 +176,10 @@ curl -X POST http://n8n:5678/webhook/alertmanager \
 
 **Test Auto-Remediation:**
 ```bash
+# Replace <your-token> with the token from Step 2
 curl -X POST http://n8n:5678/webhook/auto-remediation \
   -H "Content-Type: application/json" \
+  -H "X-Webhook-Token: <your-token>" \
   -d '{
     "alert": {
       "alertname": "CortexPodCrashLooping",
@@ -151,17 +193,30 @@ curl -X POST http://n8n:5678/webhook/auto-remediation \
   }'
 ```
 
+**Expected Results:**
+- Workflow executes in dry-run mode (no actual kubectl commands)
+- Execution visible in N8N > Executions
+- Response indicates remediation action that would be taken
+
 ## Verification Checklist
 
 - [ ] All 5 workflows imported successfully
-- [ ] Environment variables configured
-- [ ] Alertmanager pointing to N8N webhook
+- [ ] Webhook authentication credential created
+- [ ] Environment variables configured (including AUTO_REMEDIATION_WEBHOOK_TOKEN)
+- [ ] Alertmanager pointing to N8N webhooks with authentication
 - [ ] All workflows activated
 - [ ] Test alert received in Slack
 - [ ] Test alert sent to email
+- [ ] Auto-remediation test successful (dry-run mode)
 - [ ] Execution logs visible in N8N
 
 ## Common Issues
+
+### Issue: Auto-remediation webhook returns 401 Unauthorized
+**Solution:** 
+1. Verify the X-Webhook-Token header is included in the request
+2. Ensure the token matches the one configured in N8N credentials
+3. Check that the credential is properly linked to the webhook node
 
 ### Issue: Webhook returns 404
 **Solution:** Ensure workflow is activated and saved.
@@ -183,6 +238,14 @@ curl -X POST $SLACK_WEBHOOK_CRITICAL \
 ```bash
 kubectl auth can-i get pods --namespace=cortex --as=system:serviceaccount:n8n:n8n
 ```
+3. Ensure AUTO_REMEDIATION_DRY_RUN=true for initial testing
+
+### Issue: Invalid namespace or pod name errors
+**Solution:**
+1. Kubernetes resource names must follow RFC 1123 DNS subdomain rules
+2. Only lowercase alphanumeric characters, '-' and '.' are allowed
+3. Must start and end with an alphanumeric character
+4. Check alert labels contain valid resource names
 
 ### Issue: Prometheus queries return no data
 **Solution:**
