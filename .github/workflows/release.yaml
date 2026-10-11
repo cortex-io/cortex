@@ -34,7 +34,6 @@ jobs:
     outputs:
       should-release: ${{ steps.check.outputs.should-release }}
       next-version: ${{ steps.check.outputs.next-version }}
-      package-matrix: ${{ steps.check.outputs.package-matrix }}
 
     steps:
       - name: Checkout code
@@ -51,22 +50,6 @@ jobs:
       - name: Check for releasable commits
         id: check
         run: |
-          # Only build release artifacts for packages with a local npm lockfile and build script.
-          packages='[]'
-          for package in mcp-k8s-orchestrator mcp-n8n-workflow mcp-talos-node mcp-s3-storage mcp-postgres-data; do
-            manifest="packages/${package}/package.json"
-            build=false
-            if [[ -f "$manifest" && -f "packages/${package}/package-lock.json" ]] &&
-              node -e 'process.exit(require("./" + process.argv[1]).scripts?.build ? 0 : 1)' "$manifest"; then
-              build=true
-            else
-              echo "Skipping ${package} release artifact: package manifest, npm lockfile, or build script is missing"
-            fi
-            packages=$(jq -c --arg package "$package" --argjson build "$build" \
-              '. + [{package: $package, build: $build}]' <<< "$packages")
-          done
-          echo "package-matrix=${packages}" >> "$GITHUB_OUTPUT"
-
           # Check if there are any commits since last tag
           LAST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
 
@@ -193,60 +176,6 @@ jobs:
           echo "version=$VERSION" >> $GITHUB_OUTPUT
           echo "new-release-published=true" >> $GITHUB_OUTPUT
 
-  # Build release artifacts
-  build-artifacts:
-    name: Build Release Artifacts
-    runs-on: ubuntu-latest
-    timeout-minutes: 20
-    needs: [release, check-release]
-    if: needs.release.outputs.new-release-published == 'true'
-
-    strategy:
-      matrix:
-        include: ${{ fromJSON(needs.check-release.outputs.package-matrix) }}
-        platform:
-          - linux-amd64
-          - linux-arm64
-      fail-fast: false
-
-    steps:
-      - name: Skip unavailable package
-        if: ${{ !matrix.build }}
-        run: echo "No buildable release artifact exists for ${{ matrix.package }}."
-
-      - name: Checkout code
-        if: matrix.build
-        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
-        with:
-          ref: ${{ needs.release.outputs.version }}
-
-      - name: Setup Node.js
-        if: matrix.build
-        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
-          cache-dependency-path: packages/${{ matrix.package }}/package-lock.json
-
-      - name: Build package
-        if: matrix.build
-        run: |
-          npm ci --prefix packages/${{ matrix.package }}
-          npm run build --prefix packages/${{ matrix.package }}
-
-      - name: Package artifact
-        if: matrix.build
-        run: |
-          cd packages/${{ matrix.package }}
-          tar -czf ../../${{ matrix.package }}-${{ needs.release.outputs.version }}-${{ matrix.platform }}.tar.gz dist/
-
-      - name: Upload to release
-        if: matrix.build
-        uses: softprops/action-gh-release@de2c0eb89ae2a093876385947365aca7b0e5f844 # v1
-        with:
-          tag_name: ${{ needs.release.outputs.version }}
-          files: ${{ matrix.package }}-${{ needs.release.outputs.version }}-${{ matrix.platform }}.tar.gz
-
   # Generate release notes
   generate-release-notes:
     name: Generate Release Notes
@@ -325,11 +254,10 @@ jobs:
     name: Announce Release
     runs-on: ubuntu-latest
     timeout-minutes: 5
-    needs: [release, build-artifacts, generate-release-notes]
+    needs: [release, generate-release-notes]
     if: >-
       always() &&
       needs.release.outputs.new-release-published == 'true' &&
-      (needs.build-artifacts.result == 'success' || needs.build-artifacts.result == 'skipped') &&
       needs.generate-release-notes.result == 'success'
 
     steps:
@@ -345,13 +273,10 @@ jobs:
               body: `A new version of Cortex has been released!\n\n` +
                     `Version: ${version}\n` +
                     `Release notes: https://github.com/${{ github.repository }}/releases/tag/${version}\n\n` +
-                    `Docker images are available at ghcr.io/${{ github.repository }}\n\n` +
-                    `Deploy with ArgoCD using the manifests in deploy/argocd/`,
+                    `This release includes the semantic-release changelog and GitHub release.`,
               labels: ['release', 'announcement']
             });
 
       - name: Notify deployment
         run: |
           echo "Release ${{ needs.release.outputs.version }} completed successfully!"
-          echo "Docker images pushed to ghcr.io"
-          echo "Release artifacts uploaded to GitHub"
