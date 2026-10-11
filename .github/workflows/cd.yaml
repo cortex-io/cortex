@@ -29,6 +29,8 @@ jobs:
   prepare-build:
     name: Find Docker build targets
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     outputs:
       packages: ${{ steps.matrix.outputs.packages }}
       has-packages: ${{ steps.matrix.outputs.has-packages }}
