@@ -24,7 +24,6 @@ permissions:
 
 env:
   NODE_VERSION: '20.x'
-  PNPM_VERSION: '8'
 
 jobs:
   # Determine if release is needed
@@ -89,8 +88,8 @@ jobs:
     if: needs.check-release.outputs.should-release == 'true' || github.event_name == 'workflow_dispatch'
 
     outputs:
-      version: ${{ steps.semantic.outputs.version }}
-      new-release-published: ${{ steps.semantic.outputs.new-release-published }}
+      version: ${{ steps.version.outputs.version }}
+      new-release-published: ${{ steps.version.outputs.new-release-published }}
 
     steps:
       - name: Checkout code
@@ -100,19 +99,14 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           persist-credentials: true
 
-      - name: Setup pnpm
-        uses: pnpm/action-setup@eae0cfeb286e66ffb5155f1a79b90583a127a68b # v2.4.1
-        with:
-          version: ${{ env.PNPM_VERSION }}
-
       - name: Setup Node.js
         uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: ${{ env.NODE_VERSION }}
-          cache: 'pnpm'
+          cache: 'npm'
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+        run: npm ci
 
       - name: Setup Git
         run: |
@@ -124,8 +118,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          # Install semantic-release
-          pnpm add -D semantic-release @semantic-release/changelog @semantic-release/git @semantic-release/github conventional-changelog-conventionalcommits
+          npm install --no-save --no-package-lock semantic-release @semantic-release/changelog @semantic-release/git @semantic-release/github conventional-changelog-conventionalcommits
 
           # Create release config
           cat > .releaserc.json <<EOF
@@ -164,7 +157,7 @@ jobs:
                 ]
               }],
               ["@semantic-release/git", {
-                "assets": ["CHANGELOG.md", "package.json", "pnpm-lock.yaml", "packages/*/package.json"],
+                "assets": ["CHANGELOG.md", "package.json", "package-lock.json", "packages/*/package.json"],
                 "message": "chore(release): \${nextRelease.version} [skip ci]\n\n\${nextRelease.notes}"
               }]
             ]
@@ -172,70 +165,16 @@ jobs:
           EOF
 
           # Run semantic-release
-          npx semantic-release
+          npx --no-install semantic-release
 
       - name: Get release version
+        id: version
         if: success()
         run: |
           VERSION=$(git describe --tags --abbrev=0)
           echo "Released version: $VERSION"
           echo "version=$VERSION" >> $GITHUB_OUTPUT
           echo "new-release-published=true" >> $GITHUB_OUTPUT
-
-  # Build release artifacts
-  build-artifacts:
-    name: Build Release Artifacts
-    runs-on: ubuntu-latest
-    timeout-minutes: 20
-    needs: release
-    if: needs.release.outputs.new-release-published == 'true'
-
-    strategy:
-      matrix:
-        package:
-          - mcp-k8s-orchestrator
-          - mcp-n8n-workflow
-          - mcp-talos-node
-          - mcp-s3-storage
-          - mcp-postgres-data
-        platform:
-          - linux-amd64
-          - linux-arm64
-      fail-fast: false
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
-        with:
-          ref: ${{ needs.release.outputs.version }}
-
-      - name: Setup pnpm
-        uses: pnpm/action-setup@eae0cfeb286e66ffb5155f1a79b90583a127a68b # v2.4.1
-        with:
-          version: ${{ env.PNPM_VERSION }}
-
-      - name: Setup Node.js
-        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: 'pnpm'
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
-      - name: Build package
-        run: pnpm --filter ${{ matrix.package }} run build
-
-      - name: Package artifact
-        run: |
-          cd packages/${{ matrix.package }}
-          tar -czf ../../${{ matrix.package }}-${{ needs.release.outputs.version }}-${{ matrix.platform }}.tar.gz dist/
-
-      - name: Upload to release
-        uses: softprops/action-gh-release@de2c0eb89ae2a093876385947365aca7b0e5f844 # v1
-        with:
-          tag_name: ${{ needs.release.outputs.version }}
-          files: ${{ matrix.package }}-${{ needs.release.outputs.version }}-${{ matrix.platform }}.tar.gz
 
   # Generate release notes
   generate-release-notes:
@@ -315,8 +254,11 @@ jobs:
     name: Announce Release
     runs-on: ubuntu-latest
     timeout-minutes: 5
-    needs: [release, build-artifacts, generate-release-notes]
-    if: needs.release.outputs.new-release-published == 'true'
+    needs: [release, generate-release-notes]
+    if: >-
+      always() &&
+      needs.release.outputs.new-release-published == 'true' &&
+      needs.generate-release-notes.result == 'success'
 
     steps:
       - name: Create announcement issue
@@ -331,13 +273,10 @@ jobs:
               body: `A new version of Cortex has been released!\n\n` +
                     `Version: ${version}\n` +
                     `Release notes: https://github.com/${{ github.repository }}/releases/tag/${version}\n\n` +
-                    `Docker images are available at ghcr.io/${{ github.repository }}\n\n` +
-                    `Deploy with ArgoCD using the manifests in deploy/argocd/`,
+                    `This release includes the semantic-release changelog and GitHub release.`,
               labels: ['release', 'announcement']
             });
 
       - name: Notify deployment
         run: |
           echo "Release ${{ needs.release.outputs.version }} completed successfully!"
-          echo "Docker images pushed to ghcr.io"
-          echo "Release artifacts uploaded to GitHub"
