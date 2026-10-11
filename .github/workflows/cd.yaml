@@ -25,23 +25,50 @@ env:
   IMAGE_NAME: ${{ github.repository }}
 
 jobs:
+  # Build targets may be absent when a legacy package has been removed.
+  prepare-build:
+    name: Find Docker build targets
+    runs-on: ubuntu-latest
+    outputs:
+      packages: ${{ steps.matrix.outputs.packages }}
+      has-packages: ${{ steps.matrix.outputs.has-packages }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+
+      - name: Create build matrix
+        id: matrix
+        run: |
+          packages='[]'
+          has_packages=false
+          for package in mcp-k8s-orchestrator mcp-n8n-workflow mcp-talos-node mcp-s3-storage mcp-postgres-data; do
+            build=false
+            if [[ -f "packages/${package}/Dockerfile" ]]; then
+              build=true
+              has_packages=true
+            else
+              echo "Skipping ${package}: packages/${package}/Dockerfile is not present"
+            fi
+            packages=$(jq -c --arg package "$package" --argjson build "$build" \
+              '. + [{package: $package, build: $build}]' <<< "$packages")
+          done
+          echo "packages=${packages}" >> "$GITHUB_OUTPUT"
+          echo "has-packages=${has_packages}" >> "$GITHUB_OUTPUT"
+
   # Build and push Docker images
   build-and-push:
     name: Build & Push (${{ matrix.package }})
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    needs: prepare-build
     permissions:
       contents: read
       packages: write
 
     strategy:
       matrix:
-        package:
-          - mcp-k8s-orchestrator
-          - mcp-n8n-workflow
-          - mcp-talos-node
-          - mcp-s3-storage
-          - mcp-postgres-data
+        include: ${{ fromJSON(needs.prepare-build.outputs.packages) }}
       fail-fast: false
 
     steps:
@@ -49,9 +76,11 @@ jobs:
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
 
       - name: Set up Docker Buildx
+        if: matrix.build
         uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3.12.0
 
       - name: Log in to Container Registry
+        if: matrix.build
         uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3.7.0
         with:
           registry: ${{ env.REGISTRY }}
@@ -59,6 +88,7 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Extract metadata
+        if: matrix.build
         id: meta
         uses: docker/metadata-action@c299e40c65443455700f0fdfc63efafe5b349051 # v5.10.0
         with:
@@ -73,6 +103,7 @@ jobs:
             type=raw,value=latest,enable={{is_default_branch}}
 
       - name: Build and push Docker image
+        if: matrix.build
         uses: docker/build-push-action@ca052bb54ab0790a636c9b5f226502c73d547a25 # v5.4.0
         with:
           context: .
@@ -90,11 +121,11 @@ jobs:
             VERSION=${{ steps.meta.outputs.version }}
 
       - name: Sign container image
-        if: github.ref == 'refs/heads/main'
+        if: matrix.build && github.ref == 'refs/heads/main'
         uses: sigstore/cosign-installer@7e8b541eb2e61bf99390e1afd4be13a184e9ebc5 # v3.10.1
 
       - name: Cosign sign image
-        if: github.ref == 'refs/heads/main'
+        if: matrix.build && github.ref == 'refs/heads/main'
         run: |
           cosign sign --yes ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/${{ matrix.package }}@${{ steps.meta.outputs.digest }}
 
@@ -103,8 +134,10 @@ jobs:
     name: Update ArgoCD Manifests
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    needs: build-and-push
-    if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/')
+    needs: [prepare-build, build-and-push]
+    if: >-
+      needs.prepare-build.outputs.has-packages == 'true' &&
+      (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/'))
 
     steps:
       - name: Checkout code
@@ -292,7 +325,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     needs: deploy-production
-    if: failure()
+    if: failure() && needs.deploy-production.result == 'failure'
 
     steps:
       - name: Setup kubectl
