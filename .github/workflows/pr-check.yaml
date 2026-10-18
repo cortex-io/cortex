@@ -162,13 +162,22 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Run audit
+      # Fail only when this PR adds high or critical advisories. Gating on the
+      # absolute count blocked the Dependabot PRs that remove them.
+      - name: Run audit (no new high or critical advisories)
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
         run: |
-          npm audit --audit-level=high || {
-            echo "Security vulnerabilities found!"
-            echo "Run 'npm audit' locally and fix issues"
+          count() { node -e 'const v=JSON.parse(require("fs").readFileSync(0,"utf8")).metadata?.vulnerabilities||{}; console.log((v.high||0)+(v.critical||0))'; }
+          head=$(npm audit --package-lock-only --json 2>/dev/null | count)
+          git fetch --no-tags --depth=1 origin "$BASE_SHA"
+          mkdir -p /tmp/base && git show "$BASE_SHA:package.json" > /tmp/base/package.json && git show "$BASE_SHA:package-lock.json" > /tmp/base/package-lock.json
+          base=$(cd /tmp/base && npm audit --package-lock-only --json 2>/dev/null | count)
+          echo "High + critical advisories: base $base, this PR $head"
+          if [ "$head" -gt "$base" ]; then
+            echo "::error::This PR adds high or critical advisories ($base -> $head). Run 'npm audit' locally."
             exit 1
-          }
+          fi
 
       - name: Check for secrets
         uses: trufflesecurity/trufflehog@4dd8831c5f12599465d4d45c3c447b4018a34c85 # v3.97.9
