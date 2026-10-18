@@ -1,6 +1,6 @@
 {
   "name": "cortex",
-  "version": "2.0.0",
+  "version": "1.0.0",
   "description": "Cortex by ry-ops: Self-improving AI development orchestration with Mixture of Experts learning",
   "main": "index.js",
   "scripts": {
