@@ -23,10 +23,11 @@ export interface WorkflowError {
  */
 export async function detectWorkflowErrors(
   sessionId: string,
-  workflowType: string
+  workflowType: string,
+  username?: string
 ): Promise<WorkflowError[]> {
   const errors: WorkflowError[] = [];
-  const messages = await conversationStorage.getMessages(sessionId);
+  const messages = await conversationStorage.getMessages(sessionId, username);
 
   for (const message of messages) {
     // Check for [object Object] pattern - indicates serialization issue
@@ -83,7 +84,8 @@ export async function detectWorkflowErrors(
 export async function notifyUserOfError(
   sessionId: string,
   error: WorkflowError,
-  recoveryStatus: 'attempting' | 'completed' | 'failed'
+  recoveryStatus: 'attempting' | 'completed' | 'failed',
+  username?: string
 ): Promise<void> {
   let message = '';
 
@@ -126,7 +128,7 @@ The development team has been notified and will investigate. In the meantime, yo
     role: 'assistant',
     content: message,
     timestamp: new Date().toISOString()
-  });
+  }, username);
 }
 
 /**
@@ -154,12 +156,13 @@ export async function logWorkflowError(error: WorkflowError): Promise<void> {
  */
 export async function runErrorDetectionAndRecovery(
   sessionId: string,
-  workflowType: string
+  workflowType: string,
+  username?: string
 ): Promise<{ errorsFound: number; errorsFixed: number; errors: WorkflowError[] }> {
   console.log(`[ErrorRecovery] Running error detection for ${workflowType} workflow in session ${sessionId}`);
 
   // Detect errors
-  const errors = await detectWorkflowErrors(sessionId, workflowType);
+  const errors = await detectWorkflowErrors(sessionId, workflowType, username);
 
   if (errors.length === 0) {
     console.log(`[ErrorRecovery] No errors detected in ${workflowType} workflow`);
@@ -177,7 +180,7 @@ export async function runErrorDetectionAndRecovery(
   let errorsFixed = 0;
   for (const error of errors) {
     if (error.autoFixable) {
-      await notifyUserOfError(sessionId, error, 'attempting');
+      await notifyUserOfError(sessionId, error, 'attempting', username);
       errorsFixed++;
     }
   }

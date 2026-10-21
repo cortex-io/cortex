@@ -36,22 +36,23 @@ export interface VideoProcessingStatus {
 export async function startVideoProcessing(
   sessionId: string,
   videoUrl: string,
-  videoId: string
+  videoId: string,
+  username?: string
 ): Promise<void> {
   console.log(`[YouTubeWorkflow] Starting video processing for ${videoId}`);
 
   // Update conversation status to in_progress
-  await conversationStorage.updateConversationStatus(sessionId, 'in_progress');
+  await conversationStorage.updateConversationStatus(sessionId, 'in_progress', username);
 
   // Post initial status message to conversation
   await conversationStorage.addMessage(sessionId, {
     role: 'assistant',
     content: formatInitialStatus(videoUrl, videoId),
     timestamp: new Date().toISOString()
-  });
+  }, username);
 
   // Start background processing
-  processVideoInBackground(sessionId, videoUrl, videoId).catch(error => {
+  processVideoInBackground(sessionId, videoUrl, videoId, username).catch(error => {
     console.error(`[YouTubeWorkflow] Background processing failed:`, error);
   });
 }
@@ -62,7 +63,8 @@ export async function startVideoProcessing(
 async function processVideoInBackground(
   sessionId: string,
   videoUrl: string,
-  videoId: string
+  videoId: string,
+  username?: string
 ): Promise<void> {
   try {
     // Step 1: Trigger ingestion and wait for completion
@@ -95,13 +97,13 @@ async function processVideoInBackground(
         analysis,
         requiresApproval: true
       }
-    });
+    }, username);
 
     console.log(`[YouTubeWorkflow] Video ${videoId} ready for approval`);
 
     // Step 4: Run error detection and auto-recovery
     console.log(`[YouTubeWorkflow] Step 4: Running error detection`);
-    const { errorsFound, errorsFixed, errors } = await runErrorDetectionAndRecovery(sessionId, 'youtube_ingestion');
+    const { errorsFound, errorsFixed, errors } = await runErrorDetectionAndRecovery(sessionId, 'youtube_ingestion', username);
 
     if (errorsFound > 0 && errorsFixed > 0) {
       console.log(`[YouTubeWorkflow] Detected ${errorsFound} error(s), attempting to fix ${errorsFixed}`);
@@ -111,7 +113,7 @@ async function processVideoInBackground(
       const reanalysis = await analyzeVideoContent(videoData);
 
       // Post corrected analysis
-      await notifyUserOfError(sessionId, errors[0], 'completed');
+      await notifyUserOfError(sessionId, errors[0], 'completed', username);
       await conversationStorage.addMessage(sessionId, {
         role: 'assistant',
         content: formatAnalysisSummary(videoData, reanalysis),
@@ -123,7 +125,7 @@ async function processVideoInBackground(
           requiresApproval: true,
           corrected: true
         }
-      });
+      }, username);
 
       console.log(`[YouTubeWorkflow] Posted corrected analysis for ${videoId}`);
     }
@@ -136,10 +138,10 @@ async function processVideoInBackground(
       role: 'assistant',
       content: `ERROR: Video processing failed: ${error.message}`,
       timestamp: new Date().toISOString()
-    });
+    }, username);
 
     // Mark conversation as completed (with error)
-    await conversationStorage.updateConversationStatus(sessionId, 'completed');
+    await conversationStorage.updateConversationStatus(sessionId, 'completed', username);
   }
 }
 
@@ -214,7 +216,8 @@ async function generateImprovements(
 export async function handleImplementationApproval(
   sessionId: string,
   videoId: string,
-  approved: boolean
+  approved: boolean,
+  username?: string
 ): Promise<void> {
   if (!approved) {
     console.log(`[YouTubeWorkflow] User declined implementation for ${videoId}`);
@@ -223,9 +226,9 @@ export async function handleImplementationApproval(
       role: 'assistant',
       content: 'Got it - I won\'t implement these changes. The analysis is saved for future reference.',
       timestamp: new Date().toISOString()
-    });
+    }, username);
 
-    await conversationStorage.updateConversationStatus(sessionId, 'completed');
+    await conversationStorage.updateConversationStatus(sessionId, 'completed', username);
     return;
   }
 
@@ -236,10 +239,10 @@ export async function handleImplementationApproval(
     role: 'assistant',
     content: 'Starting implementation... I\'ll work on this in the background and keep you updated.',
     timestamp: new Date().toISOString()
-  });
+  }, username);
 
   // Trigger Cortex implementation in background
-  startImplementation(sessionId, videoId).catch(error => {
+  startImplementation(sessionId, videoId, username).catch(error => {
     console.error(`[YouTubeWorkflow] Implementation failed:`, error);
   });
 }
@@ -247,10 +250,10 @@ export async function handleImplementationApproval(
 /**
  * Start Cortex implementation tasks
  */
-async function startImplementation(sessionId: string, videoId: string): Promise<void> {
+async function startImplementation(sessionId: string, videoId: string, username?: string): Promise<void> {
   try {
     // Get the analysis from conversation metadata
-    const messages = await conversationStorage.getMessages(sessionId);
+    const messages = await conversationStorage.getMessages(sessionId, username);
     const analysisMessage = messages.find(m =>
       m.metadata?.type === 'youtube_analysis' &&
       m.metadata?.videoId === videoId
@@ -272,10 +275,10 @@ async function startImplementation(sessionId: string, videoId: string): Promise<
       role: 'assistant',
       content: `Implementation started! Created ${improvements.length} task(s) in Cortex queue.\n\nI'll work on these automatically and report back when complete.`,
       timestamp: new Date().toISOString()
-    });
+    }, username);
 
     // Mark conversation as completed
-    await conversationStorage.updateConversationStatus(sessionId, 'completed');
+    await conversationStorage.updateConversationStatus(sessionId, 'completed', username);
 
   } catch (error: any) {
     console.error(`[YouTubeWorkflow] Implementation startup failed:`, error);
@@ -284,9 +287,9 @@ async function startImplementation(sessionId: string, videoId: string): Promise<
       role: 'assistant',
       content: `ERROR: Failed to start implementation: ${error.message}`,
       timestamp: new Date().toISOString()
-    });
+    }, username);
 
-    await conversationStorage.updateConversationStatus(sessionId, 'completed');
+    await conversationStorage.updateConversationStatus(sessionId, 'completed', username);
   }
 }
 
