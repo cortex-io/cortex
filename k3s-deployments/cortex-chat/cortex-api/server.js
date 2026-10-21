@@ -70,7 +70,8 @@ const SANDFLY_CONFIG = {
   host: process.env.SANDFLY_HOST || '10.88.140.176',
   username: process.env.SANDFLY_USERNAME || 'admin',
   password: process.env.SANDFLY_PASSWORD || 'emphasize-art-nibble-arguable-paradox-flick-unpack',
-  baseUrl: `https://${process.env.SANDFLY_HOST || '10.88.140.176'}/v4`
+  baseUrl: `https://${process.env.SANDFLY_HOST || '10.88.140.176'}/v4`,
+  rejectUnauthorized: process.env.SANDFLY_REJECT_UNAUTHORIZED !== 'false' // Secure by default
 };
 
 // Proxmox API configuration
@@ -79,7 +80,8 @@ const PROXMOX_CONFIG = {
   port: process.env.PROXMOX_PORT || '8006',
   username: process.env.PROXMOX_USERNAME || 'root@pam',
   password: process.env.PROXMOX_PASSWORD || '',
-  baseUrl: `https://${process.env.PROXMOX_HOST || 'proxmox.local'}:${process.env.PROXMOX_PORT || '8006'}/api2/json`
+  baseUrl: `https://${process.env.PROXMOX_HOST || 'proxmox.local'}:${process.env.PROXMOX_PORT || '8006'}/api2/json`,
+  rejectUnauthorized: process.env.PROXMOX_REJECT_UNAUTHORIZED !== 'false' // Secure by default
 };
 
 // UniFi API configuration
@@ -90,7 +92,8 @@ const UNIFI_CONFIG = {
   password: process.env.UNIFI_PASSWORD || '',
   site: process.env.UNIFI_SITE || 'default',
   isUDM: process.env.UNIFI_IS_UDM === 'true',
-  baseUrl: `https://${process.env.UNIFI_HOST || 'unifi.local'}:${process.env.UNIFI_PORT || '443'}`
+  baseUrl: `https://${process.env.UNIFI_HOST || 'unifi.local'}:${process.env.UNIFI_PORT || '443'}`,
+  rejectUnauthorized: process.env.UNIFI_REJECT_UNAUTHORIZED !== 'false' // Secure by default
 };
 
 let sandflyToken = null;
@@ -126,7 +129,7 @@ async function getSandflyHosts() {
         'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json'
       },
-      rejectUnauthorized: false
+      rejectUnauthorized: SANDFLY_CONFIG.rejectUnauthorized
     };
 
     const req = https.request(options, (res) => {
@@ -231,7 +234,7 @@ async function getProxmoxTicket() {
         'Content-Type': 'application/x-www-form-urlencoded',
         'Content-Length': data.length
       },
-      rejectUnauthorized: false
+      rejectUnauthorized: PROXMOX_CONFIG.rejectUnauthorized
     };
 
     const req = https.request(options, (res) => {
@@ -300,7 +303,7 @@ async function makeProxmoxRequest(endpoint, method, body, auth) {
       headers: {
         'Cookie': `PVEAuthCookie=${auth.ticket}`
       },
-      rejectUnauthorized: false
+      rejectUnauthorized: PROXMOX_CONFIG.rejectUnauthorized
     };
 
     // Add CSRF token for write operations
@@ -387,7 +390,7 @@ async function getUnifiCookie() {
         'Content-Type': 'application/json',
         'Content-Length': data.length
       },
-      rejectUnauthorized: false
+      rejectUnauthorized: UNIFI_CONFIG.rejectUnauthorized
     };
 
     const req = https.request(options, (res) => {
@@ -559,7 +562,7 @@ async function makeUnifiRequest(endpoint, method, body, cookie) {
         'Cookie': cookie,
         'Content-Type': 'application/json'
       },
-      rejectUnauthorized: false
+      rejectUnauthorized: UNIFI_CONFIG.rejectUnauthorized
     };
 
     if (body) {
@@ -856,7 +859,7 @@ async function getSandflyToken() {
         'Content-Type': 'application/json',
         'Content-Length': data.length
       },
-      rejectUnauthorized: false // Allow self-signed certs
+      rejectUnauthorized: SANDFLY_CONFIG.rejectUnauthorized
     };
 
     const req = https.request(options, (res) => {
