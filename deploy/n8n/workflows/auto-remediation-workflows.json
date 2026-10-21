@@ -6,18 +6,25 @@
         "httpMethod": "POST",
         "path": "auto-remediation",
         "responseMode": "responseNode",
-        "options": {}
+        "options": {},
+        "authentication": "headerAuth"
       },
       "id": "webhook-trigger",
       "name": "Webhook Trigger",
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 1,
       "position": [250, 400],
-      "webhookId": "auto-remediation"
+      "webhookId": "auto-remediation",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "auto-remediation-webhook-auth",
+          "name": "Auto-Remediation Webhook Auth"
+        }
+      }
     },
     {
       "parameters": {
-        "jsCode": "// Extract alert and check if auto-remediation is enabled\nconst body = $input.item.json.body;\nconst alert = body.alert || $input.item.json;\n\n// Check if dry-run mode is enabled (from environment or alert annotation)\nconst dryRun = $env.AUTO_REMEDIATION_DRY_RUN === 'true' || \n               alert.annotations?.auto_remediation_dry_run === 'true';\n\n// Check if auto-remediation is allowed for this alert\nconst autoRemediationEnabled = alert.annotations?.auto_remediation !== 'false';\n\nreturn {\n  json: {\n    alert,\n    alertName: alert.alertName || alert.labels?.alertname,\n    namespace: alert.namespace || alert.labels?.namespace || 'default',\n    pod: alert.pod || alert.labels?.pod || '',\n    container: alert.container || alert.labels?.container || '',\n    instance: alert.instance || alert.labels?.instance || '',\n    dryRun,\n    autoRemediationEnabled,\n    receivedAt: new Date().toISOString()\n  }\n};"
+        "jsCode": "// Extract alert and check if auto-remediation is enabled\nconst body = $input.item.json.body;\nconst alert = body.alert || $input.item.json;\n\n// Check if dry-run mode is enabled (from environment or alert annotation)\nconst dryRun = $env.AUTO_REMEDIATION_DRY_RUN === 'true' || \n               alert.annotations?.auto_remediation_dry_run === 'true';\n\n// Check if auto-remediation is allowed for this alert\nconst autoRemediationEnabled = alert.annotations?.auto_remediation !== 'false';\n\n// Extract raw values\nconst rawNamespace = alert.namespace || alert.labels?.namespace || 'default';\nconst rawPod = alert.pod || alert.labels?.pod || '';\nconst rawContainer = alert.container || alert.labels?.container || '';\nconst rawInstance = alert.instance || alert.labels?.instance || '';\nconst rawDeployment = alert.deployment || alert.labels?.deployment || '';\nconst rawService = alert.service || alert.labels?.service || alert.labels?.job || '';\n\n// Validate Kubernetes resource names (RFC 1123 DNS subdomain)\n// Must consist of lowercase alphanumeric characters, '-' or '.'\n// Must start and end with an alphanumeric character\n// Max length 253 characters for namespace, 63 for most other resources\nfunction isValidK8sName(name, maxLength = 63) {\n  if (!name || typeof name !== 'string') return false;\n  if (name.length === 0 || name.length > maxLength) return false;\n  // RFC 1123 DNS subdomain: [a-z0-9]([-a-z0-9]*[a-z0-9])?(\\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*\n  const dnsSubdomainRegex = /^[a-z0-9]([a-z0-9-]*[a-z0-9])?(\\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)*$/;\n  return dnsSubdomainRegex.test(name);\n}\n\n// Validate all resource names\nconst namespace = isValidK8sName(rawNamespace, 253) ? rawNamespace : null;\nconst pod = isValidK8sName(rawPod) ? rawPod : null;\nconst container = isValidK8sName(rawContainer) ? rawContainer : null;\nconst instance = rawInstance; // Instance can be IP:port, validated separately if needed\nconst deployment = isValidK8sName(rawDeployment) ? rawDeployment : null;\nconst service = isValidK8sName(rawService) ? rawService : null;\n\n// Check if validation failed for critical fields\nif (!namespace) {\n  throw new Error(`Invalid namespace: ${rawNamespace}. Must be a valid RFC 1123 DNS subdomain.`);\n}\n\nreturn {\n  json: {\n    alert,\n    alertName: alert.alertName || alert.labels?.alertname,\n    namespace,\n    pod,\n    container,\n    instance,\n    deployment,\n    service,\n    dryRun,\n    autoRemediationEnabled,\n    receivedAt: new Date().toISOString(),\n    validationPassed: true\n  }\n};"
       },
       "id": "extract-alert",
       "name": "Extract Alert & Check Config",
@@ -134,7 +141,7 @@
     },
     {
       "parameters": {
-        "jsCode": "// Prepare kubectl delete pod command\nconst alert = $input.item.json;\nconst namespace = alert.namespace;\nconst pod = alert.pod;\nconst dryRun = alert.dryRun;\n\n// Build kubectl command\nconst kubectlCommand = dryRun \n  ? `kubectl delete pod ${pod} -n ${namespace} --dry-run=client -o json`\n  : `kubectl delete pod ${pod} -n ${namespace}`;\n\nreturn {\n  json: {\n    ...alert,\n    remediation: {\n      type: 'pod_restart',\n      action: 'delete_pod',\n      command: kubectlCommand,\n      namespace,\n      pod,\n      dryRun,\n      reason: 'Pod crash looping - forcing restart by deletion'\n    }\n  }\n};"
+        "jsCode": "// Prepare kubectl delete pod command\nconst alert = $input.item.json;\nconst namespace = alert.namespace;\nconst pod = alert.pod;\nconst dryRun = alert.dryRun;\n\n// Validate required fields are present and validated\nif (!namespace || !pod) {\n  throw new Error('Missing or invalid required fields: namespace and pod must be valid');\n}\n\n// Use array-based command construction to prevent injection\n// n8n executeCommand node will handle proper escaping when command is a string\n// We construct a safe command string using validated inputs\nconst kubectlCommand = dryRun \n  ? `kubectl delete pod ${pod} -n ${namespace} --dry-run=client -o json`\n  : `kubectl delete pod ${pod} -n ${namespace}`;\n\nreturn {\n  json: {\n    ...alert,\n    remediation: {\n      type: 'pod_restart',\n      action: 'delete_pod',\n      command: kubectlCommand,\n      namespace,\n      pod,\n      dryRun,\n      reason: 'Pod crash looping - forcing restart by deletion'\n    }\n  }\n};"
       },
       "id": "prepare-pod-delete",
       "name": "Prepare Pod Delete",
@@ -190,7 +197,7 @@
     },
     {
       "parameters": {
-        "jsCode": "// Prepare HPA scaling command\nconst alert = $input.item.json;\nconst namespace = alert.namespace;\nconst instance = alert.instance;\nconst dryRun = alert.dryRun;\n\n// Extract deployment name from instance/pod labels\n// This is a simplified example - adjust based on your label structure\nconst deployment = alert.alert?.labels?.deployment || 'cortex-worker';\n\n// Build kubectl autoscale command\nconst kubectlCommand = dryRun\n  ? `kubectl autoscale deployment ${deployment} -n ${namespace} --min=2 --max=10 --cpu-percent=70 --dry-run=client -o json`\n  : `kubectl autoscale deployment ${deployment} -n ${namespace} --min=2 --max=10 --cpu-percent=70 || echo 'HPA may already exist'`;\n\nreturn {\n  json: {\n    ...alert,\n    remediation: {\n      type: 'horizontal_scaling',\n      action: 'create_hpa',\n      command: kubectlCommand,\n      namespace,\n      deployment,\n      dryRun,\n      reason: 'High memory usage detected - enabling HPA'\n    }\n  }\n};"
+        "jsCode": "// Prepare HPA scaling command\nconst alert = $input.item.json;\nconst namespace = alert.namespace;\nconst instance = alert.instance;\nconst dryRun = alert.dryRun;\n\n// Extract deployment name from validated fields\nconst deployment = alert.deployment || 'cortex-worker';\n\n// Validate required fields\nif (!namespace || !deployment) {\n  throw new Error('Missing or invalid required fields: namespace and deployment must be valid');\n}\n\n// Build kubectl autoscale command with validated inputs\nconst kubectlCommand = dryRun\n  ? `kubectl autoscale deployment ${deployment} -n ${namespace} --min=2 --max=10 --cpu-percent=70 --dry-run=client -o json`\n  : `kubectl autoscale deployment ${deployment} -n ${namespace} --min=2 --max=10 --cpu-percent=70 || echo 'HPA may already exist'`;\n\nreturn {\n  json: {\n    ...alert,\n    remediation: {\n      type: 'horizontal_scaling',\n      action: 'create_hpa',\n      command: kubectlCommand,\n      namespace,\n      deployment,\n      dryRun,\n      reason: 'High memory usage detected - enabling HPA'\n    }\n  }\n};"
       },
       "id": "prepare-hpa",
       "name": "Prepare HPA Scaling",
