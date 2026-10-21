@@ -4,10 +4,12 @@ export interface Message {
   role: 'user' | 'assistant';
   content: string;
   timestamp: string;
+  metadata?: any;
 }
 
 export interface Conversation {
   sessionId: string;
+  userId: string;
   title?: string;
   messages: Message[];
   summary?: string;
@@ -76,6 +78,12 @@ export class ConversationStorage {
         conversation.status = 'active';
       }
 
+      // Backward compatibility: set userId to 'legacy' if not present
+      // This allows existing conversations to continue working
+      if (!conversation.userId) {
+        conversation.userId = 'legacy';
+      }
+
       return conversation;
     } catch (error) {
       console.error('[ConversationStorage] Error getting conversation:', error);
@@ -108,14 +116,20 @@ export class ConversationStorage {
     return title.length < message.length ? `${title}...` : title;
   }
 
-  async addMessage(sessionId: string, message: Message): Promise<Conversation> {
+  async addMessage(sessionId: string, message: Message, userId?: string): Promise<Conversation> {
     try {
       let conversation = await this.getConversation(sessionId);
 
       if (!conversation) {
+        // For new conversations, userId is required
+        if (!userId) {
+          throw new Error(`Cannot create new conversation ${sessionId} without userId`);
+        }
+        
         // Create new conversation
         conversation = {
           sessionId,
+          userId,
           messages: [],
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString(),
@@ -127,9 +141,16 @@ export class ConversationStorage {
         if (message.role === 'user') {
           conversation.title = this.generateTitle(message.content);
         }
-      } else if (!conversation.title && message.role === 'user' && conversation.messages.length === 0) {
-        // Set title if this is the first user message and no title exists
-        conversation.title = this.generateTitle(message.content);
+      } else {
+        // For existing conversations, validate userId if provided
+        if (userId && conversation.userId !== userId) {
+          throw new Error(`Conversation ${sessionId} belongs to user ${conversation.userId}, not ${userId}`);
+        }
+        
+        if (!conversation.title && message.role === 'user' && conversation.messages.length === 0) {
+          // Set title if this is the first user message and no title exists
+          conversation.title = this.generateTitle(message.content);
+        }
       }
 
       // Ensure status exists for backward compatibility
@@ -308,6 +329,11 @@ export class ConversationStorage {
             conversation.status = 'active';
           }
 
+          // Backward compatibility: set userId to 'legacy' if not present
+          if (!conversation.userId) {
+            conversation.userId = 'legacy';
+          }
+
           conversations.push(conversation);
         }
       }
@@ -324,7 +350,7 @@ export class ConversationStorage {
     }
   }
 
-  async getGroupedConversations(): Promise<{
+  async getGroupedConversations(userId: string): Promise<{
     active: Conversation[];
     in_progress: Conversation[];
     completed: Conversation[];
@@ -332,10 +358,13 @@ export class ConversationStorage {
     try {
       const allConversations = await this.getAllConversations();
 
+      // Filter by userId
+      const userConversations = allConversations.filter(c => c.userId === userId);
+
       const grouped = {
-        active: allConversations.filter(c => c.status === 'active'),
-        in_progress: allConversations.filter(c => c.status === 'in_progress'),
-        completed: allConversations.filter(c => c.status === 'completed')
+        active: userConversations.filter(c => c.status === 'active'),
+        in_progress: userConversations.filter(c => c.status === 'in_progress'),
+        completed: userConversations.filter(c => c.status === 'completed')
       };
 
       return grouped;
