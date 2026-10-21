@@ -10,43 +10,61 @@ metadata:
   namespace: cortex
 ---
 apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRole
+kind: Role
 metadata:
   name: cortex-api-reader
+  namespace: cortex
 rules:
 - apiGroups: [""]
-  resources: ["pods", "services", "nodes", "namespaces", "configmaps", "secrets", "endpoints"]
+  resources: ["pods", "services", "configmaps", "endpoints"]
   verbs: ["get", "list", "watch"]
 - apiGroups: [""]
-  resources: ["pods", "pods/log"]
+  resources: ["pods/log"]
   verbs: ["get", "list"]
-- apiGroups: [""]
-  resources: ["pods"]
-  verbs: ["create", "delete"]  # For connectivity tests
 - apiGroups: ["apps"]
   resources: ["deployments", "statefulsets", "daemonsets", "replicasets"]
-  verbs: ["get", "list", "watch", "patch", "update"]  # patch/update for self-healing
-- apiGroups: ["apps"]
-  resources: ["deployments/scale"]
-  verbs: ["get", "update", "patch"]  # For scaling during healing
+  verbs: ["get", "list", "watch"]
 - apiGroups: ["batch"]
   resources: ["jobs", "cronjobs"]
   verbs: ["get", "list", "watch"]
-- apiGroups: ["metrics.k8s.io"]
-  resources: ["nodes", "pods"]
-  verbs: ["get", "list"]
 - apiGroups: [""]
   resources: ["events"]
-  verbs: ["get", "list", "watch"]  # For diagnostic checks
+  verbs: ["get", "list", "watch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: cortex-api-reader-binding
+  namespace: cortex
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: cortex-api-reader
+subjects:
+- kind: ServiceAccount
+  name: cortex-api
+  namespace: cortex
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: cortex-api-cluster-reader
+rules:
+- apiGroups: [""]
+  resources: ["nodes", "namespaces"]
+  verbs: ["get", "list"]
+- apiGroups: ["metrics.k8s.io"]
+  resources: ["nodes"]
+  verbs: ["get", "list"]
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
-  name: cortex-api-reader-binding
+  name: cortex-api-cluster-reader-binding
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
-  name: cortex-api-reader
+  name: cortex-api-cluster-reader
 subjects:
 - kind: ServiceAccount
   name: cortex-api
@@ -78,6 +96,14 @@ spec:
         - containerPort: 8000
           name: http
         env:
+        - name: CORTEX_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: cortex-api-key
+              key: api-key
+              optional: true
+        - name: ALLOWED_NAMESPACES
+          value: "cortex,cortex-system"
         - name: ANTHROPIC_API_KEY
           value: "xxxxxx"
         - name: SANDFLY_HOST

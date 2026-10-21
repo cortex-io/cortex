@@ -15,6 +15,14 @@ const SELF_HEAL_WORKER_PATH = process.env.SELF_HEAL_WORKER_PATH || '/app/scripts
 const TASK_DIR = process.env.TASK_DIR || '/app/tasks';
 const TASK_POLL_INTERVAL = process.env.TASK_POLL_INTERVAL || 5000; // 5 seconds
 
+// Authentication configuration
+const API_KEY = process.env.CORTEX_API_KEY || null;
+const ALLOWED_NAMESPACES = (process.env.ALLOWED_NAMESPACES || 'cortex,cortex-system').split(',');
+
+// Kubectl command whitelist - only allow safe read-only operations
+const KUBECTL_ALLOWED_VERBS = ['get', 'describe', 'logs', 'top'];
+const KUBECTL_BLOCKED_RESOURCES = ['secrets', 'serviceaccounts', 'roles', 'rolebindings', 'clusterroles', 'clusterrolebindings'];
+
 // Redis configuration
 const REDIS_HOST = process.env.REDIS_HOST || 'redis-queue.cortex.svc.cluster.local';
 const REDIS_PORT = process.env.REDIS_PORT || 6379;
@@ -1175,12 +1183,126 @@ async function querySandflyDocs(query, sseWriter = null) {
 }
 
 /**
+ * Authenticate API request using API key
+ */
+function authenticateRequest(req) {
+  // If no API key is configured, allow all requests (backward compatibility)
+  if (!API_KEY) {
+    console.warn('[Cortex] WARNING: No CORTEX_API_KEY configured - authentication disabled');
+    return true;
+  }
+
+  const authHeader = req.headers['authorization'];
+  if (!authHeader) {
+    return false;
+  }
+
+  // Support both "Bearer <token>" and direct token
+  const token = authHeader.startsWith('Bearer ') 
+    ? authHeader.substring(7) 
+    : authHeader;
+
+  return token === API_KEY;
+}
+
+/**
+ * Validate kubectl command for security
+ */
+function validateKubectlCommand(command) {
+  const cmdLower = command.toLowerCase().trim();
+  
+  // Must start with kubectl
+  if (!cmdLower.startsWith('kubectl')) {
+    return { valid: false, reason: 'Command must start with kubectl' };
+  }
+
+  // Extract the verb (get, describe, logs, etc.)
+  const parts = cmdLower.split(/\s+/);
+  if (parts.length < 2) {
+    return { valid: false, reason: 'Invalid kubectl command format' };
+  }
+
+  const verb = parts[1];
+  
+  // Check if verb is in whitelist
+  if (!KUBECTL_ALLOWED_VERBS.includes(verb)) {
+    return { 
+      valid: false, 
+      reason: `kubectl verb '${verb}' not allowed. Allowed verbs: ${KUBECTL_ALLOWED_VERBS.join(', ')}` 
+    };
+  }
+
+  // Check for blocked resources (secrets, etc.)
+  for (const blockedResource of KUBECTL_BLOCKED_RESOURCES) {
+    if (cmdLower.includes(blockedResource)) {
+      return { 
+        valid: false, 
+        reason: `Access to resource '${blockedResource}' is not allowed` 
+      };
+    }
+  }
+
+  // Check for dangerous flags
+  const dangerousFlags = ['--all-namespaces', '-A', '--as=', '--as-group='];
+  for (const flag of dangerousFlags) {
+    if (cmdLower.includes(flag)) {
+      return { 
+        valid: false, 
+        reason: `Flag '${flag}' is not allowed` 
+      };
+    }
+  }
+
+  // If namespace is specified, validate it's in allowed list
+  const namespaceMatch = cmdLower.match(/-n\s+(\S+)|--namespace[=\s]+(\S+)/);
+  if (namespaceMatch) {
+    const namespace = namespaceMatch[1] || namespaceMatch[2];
+    if (!ALLOWED_NAMESPACES.includes(namespace)) {
+      return { 
+        valid: false, 
+        reason: `Access to namespace '${namespace}' not allowed. Allowed namespaces: ${ALLOWED_NAMESPACES.join(', ')}` 
+      };
+    }
+  } else {
+    // If no namespace specified, default to cortex namespace for safety
+    // Append -n cortex to the command
+    return { 
+      valid: true, 
+      modified: true,
+      command: `${command} -n cortex`,
+      reason: 'Added default namespace: cortex'
+    };
+  }
+
+  return { valid: true };
+}
+
+/**
  * Execute kubectl command
  */
 async function executeKubectl(command) {
+  // Validate command first
+  const validation = validateKubectlCommand(command);
+  
+  if (!validation.valid) {
+    console.error(`[Cortex] kubectl command blocked: ${validation.reason}`);
+    return {
+      success: false,
+      error: `Security policy violation: ${validation.reason}`,
+      output: ''
+    };
+  }
+
+  // Use modified command if validation added namespace
+  const finalCommand = validation.modified ? validation.command : command;
+  
+  if (validation.modified) {
+    console.log(`[Cortex] kubectl command modified: ${validation.reason}`);
+  }
+
   try {
-    console.log(`[Cortex] Executing kubectl: ${command}`);
-    const { stdout, stderr } = await execPromise(command, {
+    console.log(`[Cortex] Executing kubectl: ${finalCommand}`);
+    const { stdout, stderr } = await execPromise(finalCommand, {
       timeout: 30000,
       maxBuffer: 10 * 1024 * 1024
     });
@@ -1737,12 +1859,22 @@ async function getInfrastructureSummary(sseWriter = null) {
       sseWriter(JSON.stringify({ type: 'summary_progress', service: 'kubernetes' }));
     }
 
-    const k8sResult = await executeKubectl('kubectl get nodes -o json && kubectl get pods --all-namespaces -o json');
+    const k8sResult = await executeKubectl('kubectl get nodes -o json');
+    const podsResult = await executeKubectl('kubectl get pods -n cortex -o json');
+    const systemPodsResult = await executeKubectl('kubectl get pods -n cortex-system -o json');
     if (k8sResult.success) {
       try {
-        const parts = k8sResult.output.split('\n');
-        const nodesData = JSON.parse(parts[0] || '{"items":[]}');
-        const podsData = JSON.parse(parts[1] || '{"items":[]}');
+        const nodesData = JSON.parse(k8sResult.output || '{\"items\":[]}');
+        
+        let allPods = [];
+        if (podsResult.success) {
+          const cortexPods = JSON.parse(podsResult.output || '{\"items\":[]}');
+          allPods = allPods.concat(cortexPods.items || []);
+        }
+        if (systemPodsResult.success) {
+          const systemPods = JSON.parse(systemPodsResult.output || '{\"items\":[]}');
+          allPods = allPods.concat(systemPods.items || []);
+        }
 
         summary.kubernetes = {
           nodes: {
@@ -1750,10 +1882,10 @@ async function getInfrastructureSummary(sseWriter = null) {
             ready: nodesData.items?.filter(n => n.status?.conditions?.find(c => c.type === 'Ready' && c.status === 'True')).length || 0
           },
           pods: {
-            total: podsData.items?.length || 0,
-            running: podsData.items?.filter(p => p.status?.phase === 'Running').length || 0,
-            pending: podsData.items?.filter(p => p.status?.phase === 'Pending').length || 0,
-            failed: podsData.items?.filter(p => p.status?.phase === 'Failed').length || 0
+            total: allPods.length,
+            running: allPods.filter(p => p.status?.phase === 'Running').length,
+            pending: allPods.filter(p => p.status?.phase === 'Pending').length,
+            failed: allPods.filter(p => p.status?.phase === 'Failed').length
           }
         };
       } catch (e) {
@@ -2912,6 +3044,16 @@ const server = http.createServer(async (req, res) => {
 
   // Main API endpoint with SSE support
   if (req.url === '/api/tasks' && req.method === 'POST') {
+    // Authenticate request
+    if (!authenticateRequest(req)) {
+      res.writeHead(401, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ 
+        error: 'Unauthorized',
+        message: 'Valid API key required. Set Authorization header with Bearer token.'
+      }));
+      return;
+    }
+
     let body = '';
 
     req.on('data', chunk => {
@@ -2995,6 +3137,16 @@ const server = http.createServer(async (req, res) => {
 
   // Handle /api/chat POST endpoint for streaming chat with Claude
   if (req.url === '/api/chat' && req.method === 'POST') {
+    // Authenticate request
+    if (!authenticateRequest(req)) {
+      res.writeHead(401, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ 
+        error: 'Unauthorized',
+        message: 'Valid API key required. Set Authorization header with Bearer token.'
+      }));
+      return;
+    }
+
     let body = '';
     req.on('data', chunk => body += chunk);
     req.on('end', async () => {
@@ -3568,6 +3720,16 @@ For infrastructure queries:
 
   // Handle /execute-tool endpoint for chat integration
   if (req.url === '/execute-tool' && req.method === 'POST') {
+    // Authenticate request
+    if (!authenticateRequest(req)) {
+      res.writeHead(401, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ 
+        error: 'Unauthorized',
+        message: 'Valid API key required. Set Authorization header with Bearer token.'
+      }));
+      return;
+    }
+
     let body = '';
     req.on('data', chunk => body += chunk);
     req.on('end', async () => {
