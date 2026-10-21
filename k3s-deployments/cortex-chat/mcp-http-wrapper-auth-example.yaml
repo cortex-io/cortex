@@ -1,0 +1,179 @@
+---
+# Example Kubernetes Secret for MCP HTTP Wrapper Authentication
+# 
+# SECURITY NOTICE:
+# The MCP HTTP wrapper now requires Bearer token authentication for all tool execution endpoints.
+# This prevents unauthorized access to privileged MCP tools from network-reachable workloads.
+#
+# DEPLOYMENT INSTRUCTIONS:
+# 1. Generate a secure random API key (minimum 32 characters):
+#    python3 -c "import secrets; print(secrets.token_urlsafe(48))"
+#
+# 2. Base64 encode the API key:
+#    echo -n "YOUR_GENERATED_KEY" | base64
+#
+# 3. Replace the placeholder below with your base64-encoded key
+#
+# 4. Apply this secret before deploying MCP wrapper pods:
+#    kubectl apply -f mcp-http-wrapper-auth-example.yaml
+#
+# 5. Update your MCP wrapper deployment to reference this secret:
+#    - Add the secret as an environment variable
+#    - Update client applications to include the Authorization header
+#
+# USAGE IN DEPLOYMENTS:
+# Add to your deployment's container spec:
+#   env:
+#   - name: MCP_API_KEY
+#     valueFrom:
+#       secretKeyRef:
+#         name: mcp-api-key
+#         key: api-key
+#
+# USAGE IN CLIENT APPLICATIONS:
+# Include the Authorization header in all POST requests:
+#   Authorization: Bearer YOUR_GENERATED_KEY
+#
+# Example curl command:
+#   curl -X POST http://proxmox-mcp-server:3000/call-tool \
+#     -H "Authorization: Bearer YOUR_GENERATED_KEY" \
+#     -H "Content-Type: application/json" \
+#     -d '{"tool_name": "list_vms", "arguments": {}}'
+#
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: mcp-api-key
+  namespace: cortex-system
+  labels:
+    app: mcp-http-wrapper
+    component: authentication
+type: Opaque
+data:
+  # REPLACE THIS with your base64-encoded API key
+  # Generate with: python3 -c "import secrets; print(secrets.token_urlsafe(48))"
+  # Then base64 encode: echo -n "YOUR_KEY" | base64
+  api-key: REPLACE_WITH_BASE64_ENCODED_API_KEY
+
+---
+# Example: How to update an existing MCP server deployment
+# This shows the Proxmox MCP server as an example
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: proxmox-mcp-server
+  namespace: cortex-system
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: proxmox-mcp-server
+  template:
+    metadata:
+      labels:
+        app: proxmox-mcp-server
+    spec:
+      containers:
+      - name: mcp-server
+        image: your-registry/proxmox-mcp-server:latest
+        env:
+        # Existing environment variables
+        - name: PROXMOX_HOST
+          value: "10.88.140.164"
+        - name: PROXMOX_USER
+          value: "pveauditor@pve"
+        # ... other existing env vars ...
+        
+        # NEW: Add MCP_API_KEY from secret
+        - name: MCP_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: mcp-api-key
+              key: api-key
+        
+        ports:
+        - containerPort: 3000
+          name: http
+        
+        # Health check endpoint does not require authentication
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 3000
+          initialDelaySeconds: 10
+          periodSeconds: 30
+        
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 3000
+          initialDelaySeconds: 5
+          periodSeconds: 10
+
+---
+# Example: ConfigMap for client applications that need to call MCP servers
+# Store this in a ConfigMap and mount it in client pods
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mcp-client-config
+  namespace: cortex-system
+data:
+  # Example configuration for applications calling MCP servers
+  mcp-endpoints.json: |
+    {
+      "proxmox": {
+        "url": "http://proxmox-mcp-server.cortex-system.svc.cluster.local:3000",
+        "auth_required": true,
+        "auth_type": "bearer",
+        "secret_name": "mcp-api-key",
+        "secret_key": "api-key"
+      },
+      "unifi": {
+        "url": "http://unifi-mcp-server.cortex-system.svc.cluster.local:3000",
+        "auth_required": true,
+        "auth_type": "bearer",
+        "secret_name": "mcp-api-key",
+        "secret_key": "api-key"
+      },
+      "sandfly": {
+        "url": "http://sandfly-mcp-server.cortex-system.svc.cluster.local:3000",
+        "auth_required": true,
+        "auth_type": "bearer",
+        "secret_name": "mcp-api-key",
+        "secret_key": "api-key"
+      }
+    }
+
+---
+# Example: NetworkPolicy to further restrict access
+# This is defense-in-depth - authentication is still required
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: mcp-server-access-policy
+  namespace: cortex-system
+spec:
+  podSelector:
+    matchLabels:
+      component: mcp-server
+  policyTypes:
+  - Ingress
+  ingress:
+  # Only allow traffic from authorized client pods
+  - from:
+    - podSelector:
+        matchLabels:
+          mcp-client: "authorized"
+    ports:
+    - protocol: TCP
+      port: 3000
+  # Allow health checks from monitoring
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          name: monitoring
+    ports:
+    - protocol: TCP
+      port: 3000

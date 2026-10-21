@@ -2,6 +2,7 @@
 """
 HTTP wrapper for MCP stdio servers with proper MCP JSON-RPC support
 Supports both MCP JSON-RPC format (POST /) and legacy endpoints
+Requires Bearer token authentication for all tool execution endpoints
 """
 import json
 import subprocess
@@ -11,9 +12,24 @@ import os
 import threading
 import queue
 import time
+import secrets
+import hmac
+import hashlib
 
 MCP_COMMAND = os.getenv('MCP_COMMAND', 'python main.py')
 PORT = int(os.getenv('PORT', '3000'))
+MCP_API_KEY = os.getenv('MCP_API_KEY', '')
+
+# Validate that authentication is configured
+if not MCP_API_KEY:
+    print('[SECURITY-ERROR] MCP_API_KEY environment variable is required but not set', file=sys.stderr)
+    print('[SECURITY-ERROR] The MCP HTTP wrapper will not start without authentication configured', file=sys.stderr)
+    print('[SECURITY-ERROR] Set MCP_API_KEY to a secure random value (minimum 32 characters)', file=sys.stderr)
+    sys.exit(1)
+
+if len(MCP_API_KEY) < 32:
+    print('[SECURITY-WARNING] MCP_API_KEY is too short (minimum 32 characters recommended)', file=sys.stderr)
+    print('[SECURITY-WARNING] Current length: {} characters'.format(len(MCP_API_KEY)), file=sys.stderr)
 
 class MCPStdioClient:
     """Manages communication with MCP stdio server"""
@@ -276,7 +292,52 @@ class MCPStdioClient:
 mcp_client = MCPStdioClient()
 
 class MCPHandler(BaseHTTPRequestHandler):
+    def _verify_authentication(self):
+        """
+        Verify Bearer token authentication.
+        Returns (authenticated: bool, error_response: dict or None)
+        """
+        auth_header = self.headers.get('Authorization', '')
+        
+        if not auth_header:
+            return False, {
+                'error': 'Authentication required',
+                'message': 'Missing Authorization header. Use: Authorization: Bearer <token>'
+            }
+        
+        # Parse Bearer token
+        parts = auth_header.split(' ', 1)
+        if len(parts) != 2 or parts[0].lower() != 'bearer':
+            return False, {
+                'error': 'Invalid authentication format',
+                'message': 'Authorization header must use Bearer token format: Authorization: Bearer <token>'
+            }
+        
+        provided_token = parts[1]
+        
+        # Constant-time comparison to prevent timing attacks
+        if not secrets.compare_digest(provided_token, MCP_API_KEY):
+            # Log authentication failure
+            print(f'[AUTH-FAILURE] Invalid token from {self.client_address[0]}', file=sys.stderr)
+            return False, {
+                'error': 'Authentication failed',
+                'message': 'Invalid API key'
+            }
+        
+        # Authentication successful
+        return True, None
+
     def do_POST(self):
+        # Authenticate all POST requests (tool execution endpoints)
+        authenticated, auth_error = self._verify_authentication()
+        if not authenticated:
+            self.send_response(401)
+            self.send_header('Content-Type', 'application/json')
+            self.send_header('WWW-Authenticate', 'Bearer realm="MCP API"')
+            self.end_headers()
+            self.wfile.write(json.dumps(auth_error).encode())
+            return
+
         # Read request body
         content_length = int(self.headers['Content-Length'])
         body = self.rfile.read(content_length)
@@ -479,12 +540,14 @@ class MCPHandler(BaseHTTPRequestHandler):
 if __name__ == '__main__':
     print(f'[Wrapper] Starting MCP stdio wrapper on port {PORT}')
     print(f'[Wrapper] MCP Command: {MCP_COMMAND}')
+    print(f'[Wrapper] Authentication: ENABLED (Bearer token required)')
+    print(f'[Wrapper] API Key length: {len(MCP_API_KEY)} characters')
     print(f'[Wrapper] Supported endpoints:')
-    print(f'  POST /           - MCP JSON-RPC (tools/call, tools/list, resources/*, prompts/*)')
-    print(f'  POST /call-tool  - Legacy tool call (tool_name, arguments)')
-    print(f'  POST /query      - Legacy query (query)')
-    print(f'  GET  /health     - Health check')
-    print(f'  GET  /list-tools - List available tools')
+    print(f'  POST /           - MCP JSON-RPC (tools/call, tools/list, resources/*, prompts/*) [AUTH REQUIRED]')
+    print(f'  POST /call-tool  - Legacy tool call (tool_name, arguments) [AUTH REQUIRED]')
+    print(f'  POST /query      - Legacy query (query) [AUTH REQUIRED]')
+    print(f'  GET  /health     - Health check [NO AUTH]')
+    print(f'  GET  /list-tools - List available tools [NO AUTH]')
 
     mcp_client.start()
 
