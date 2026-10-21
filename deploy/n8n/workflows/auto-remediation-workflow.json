@@ -6,14 +6,23 @@
         "httpMethod": "POST",
         "path": "auto-remediation",
         "responseMode": "responseNode",
-        "options": {}
+        "options": {
+          "allowedOrigins": "",
+          "rawBody": false
+        },
+        "authentication": "headerAuth",
+        "headerAuth": {
+          "name": "X-Webhook-Secret",
+          "value": "={{ $env.WEBHOOK_SECRET }}"
+        }
       },
       "id": "webhook-trigger",
       "name": "Webhook Trigger",
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 1,
       "position": [250, 300],
-      "webhookId": "auto-remediation-webhook"
+      "webhookId": "auto-remediation-webhook",
+      "notes": "Requires X-Webhook-Secret header matching WEBHOOK_SECRET environment variable"
     },
     {
       "parameters": {
