@@ -2,7 +2,7 @@
 # For Marimo notebooks and data analysis
 
 # Core notebook environment
-marimo>=0.9.0
+marimo>=0.25.2
 
 # AI/LLM clients
 anthropic>=0.39.0
