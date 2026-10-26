@@ -36,7 +36,7 @@ wandb==0.16.2
 tqdm>=4.66.3  # Updated to fix CVE (CLI arguments injection)
 pyyaml==6.0.3
 python-dotenv==1.2.4
-joblib==1.5.3
+joblib==1.6.0
 
 # Code Understanding
 tree-sitter==0.20.4
