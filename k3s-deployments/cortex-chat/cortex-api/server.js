@@ -8,9 +8,11 @@ const fs = require('fs').promises;
 const Redis = require('ioredis');
 const TokenThrottle = require("./token-throttle.js");
 const metrics = require("./prometheus-metrics.js");
+const crypto = require('crypto');
 
 const PORT = process.env.PORT || 8000;
 const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY;
+const JWT_SECRET = process.env.JWT_SECRET || '';
 const SELF_HEAL_WORKER_PATH = process.env.SELF_HEAL_WORKER_PATH || '/app/scripts/self-heal-worker.sh';
 const TASK_DIR = process.env.TASK_DIR || '/app/tasks';
 const TASK_POLL_INTERVAL = process.env.TASK_POLL_INTERVAL || 5000; // 5 seconds
@@ -104,6 +106,105 @@ let proxmoxTicketExpiry = null;
 
 let unifiCookie = null;
 let unifiCookieExpiry = null;
+
+/**
+ * JWT Authentication Functions
+ */
+
+/**
+ * Base64 URL decode helper
+ */
+function base64UrlDecode(str) {
+  // Replace URL-safe characters
+  str = str.replace(/-/g, '+').replace(/_/g, '/');
+  // Pad with '=' to make length multiple of 4
+  while (str.length % 4) {
+    str += '=';
+  }
+  return Buffer.from(str, 'base64').toString('utf8');
+}
+
+/**
+ * Verify JWT token
+ * Returns decoded payload if valid, null if invalid
+ */
+function verifyJWT(token) {
+  if (!JWT_SECRET) {
+    console.error('[Auth] JWT_SECRET not configured');
+    return null;
+  }
+
+  try {
+    const parts = token.split('.');
+    if (parts.length !== 3) {
+      console.log('[Auth] Invalid token format');
+      return null;
+    }
+
+    const [headerB64, payloadB64, signatureB64] = parts;
+
+    // Verify signature
+    const signatureCheck = crypto
+      .createHmac('sha256', JWT_SECRET)
+      .update(`${headerB64}.${payloadB64}`)
+      .digest('base64url');
+
+    if (signatureCheck !== signatureB64) {
+      console.log('[Auth] Invalid token signature');
+      return null;
+    }
+
+    // Decode payload
+    const payload = JSON.parse(base64UrlDecode(payloadB64));
+
+    // Check expiration
+    const now = Math.floor(Date.now() / 1000);
+    if (payload.exp && payload.exp < now) {
+      console.log('[Auth] Token expired');
+      return null;
+    }
+
+    return payload;
+  } catch (error) {
+    console.error('[Auth] Token verification error:', error.message);
+    return null;
+  }
+}
+
+/**
+ * Authentication middleware for HTTP requests
+ * Returns true if authenticated, false otherwise
+ * Sends 401 response if authentication fails
+ */
+function requireAuth(req, res) {
+  const authHeader = req.headers['authorization'];
+
+  if (!authHeader) {
+    console.log('[Auth] No Authorization header');
+    res.writeHead(401, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ error: 'Authentication required' }));
+    return false;
+  }
+
+  if (!authHeader.startsWith('Bearer ')) {
+    console.log('[Auth] Invalid Authorization header format');
+    res.writeHead(401, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ error: 'Invalid authentication format' }));
+    return false;
+  }
+
+  const token = authHeader.substring(7);
+  const payload = verifyJWT(token);
+
+  if (!payload) {
+    res.writeHead(401, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ error: 'Invalid or expired token' }));
+    return false;
+  }
+
+  console.log('[Auth] Authenticated user:', payload.username || payload.sub);
+  return true;
+}
 
 /**
  * Get list of Sandfly hosts and cache for 5 minutes
@@ -2798,7 +2899,7 @@ const server = http.createServer(async (req, res) => {
   // Set CORS headers
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
 
   // Handle preflight
   if (req.method === 'OPTIONS') {
@@ -2912,6 +3013,11 @@ const server = http.createServer(async (req, res) => {
 
   // Main API endpoint with SSE support
   if (req.url === '/api/tasks' && req.method === 'POST') {
+    // Require authentication
+    if (!requireAuth(req, res)) {
+      return;
+    }
+
     let body = '';
 
     req.on('data', chunk => {
@@ -2995,6 +3101,11 @@ const server = http.createServer(async (req, res) => {
 
   // Handle /api/chat POST endpoint for streaming chat with Claude
   if (req.url === '/api/chat' && req.method === 'POST') {
+    // Require authentication
+    if (!requireAuth(req, res)) {
+      return;
+    }
+
     let body = '';
     req.on('data', chunk => body += chunk);
     req.on('end', async () => {
@@ -3568,6 +3679,11 @@ For infrastructure queries:
 
   // Handle /execute-tool endpoint for chat integration
   if (req.url === '/execute-tool' && req.method === 'POST') {
+    // Require authentication
+    if (!requireAuth(req, res)) {
+      return;
+    }
+
     let body = '';
     req.on('data', chunk => body += chunk);
     req.on('end', async () => {
@@ -3703,6 +3819,7 @@ server.listen(PORT, '0.0.0.0', async () => {
   console.log('============================================================');
   console.log(`Listening on port ${PORT}`);
   console.log(`Intelligence: ${ANTHROPIC_API_KEY ? 'ENABLED ✓' : 'DISABLED ✗'}`);
+  console.log(`Authentication: ${JWT_SECRET ? 'ENABLED ✓' : 'DISABLED ✗ (WARNING: Endpoints unprotected!)'}`);
   console.log(`Self-Healing: ENABLED ✓`);
   console.log(`Healing Worker: ${SELF_HEAL_WORKER_PATH}`);
   console.log(`Task Processor: ENABLED ✓`);
