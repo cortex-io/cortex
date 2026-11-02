@@ -11,9 +11,9 @@ const express = require('express');
 const axios = require('axios');
 const Redis = require('ioredis');
 const cors = require('cors');
-const { exec } = require('child_process');
+const { execFile } = require('child_process');
 const util = require('util');
-const execPromise = util.promisify(exec);
+const execFilePromise = util.promisify(execFile);
 
 const app = express();
 const PORT = process.env.PORT || 8765;
@@ -347,7 +347,25 @@ app.post('/mcp/execute', validateApiKey, async (req, res) => {
       }
 
       try {
-        const { stdout, stderr } = await execPromise(`kubectl ${parameters.command}`);
+        // Parse command string into arguments array to prevent shell injection
+        // Split on whitespace while preserving quoted strings
+        const args = parameters.command.match(/(?:[^\s"']+|"[^"]*"|'[^']*')+/g) || [];
+        
+        // Remove quotes from arguments
+        const cleanArgs = args.map(arg => {
+          if ((arg.startsWith('"') && arg.endsWith('"')) || 
+              (arg.startsWith("'") && arg.endsWith("'"))) {
+            return arg.slice(1, -1);
+          }
+          return arg;
+        });
+
+        // Use execFile instead of exec to avoid shell interpretation
+        const { stdout, stderr } = await execFilePromise('kubectl', cleanArgs, {
+          timeout: 30000,
+          maxBuffer: 10 * 1024 * 1024 // 10MB buffer
+        });
+        
         result = {
           output: stdout || stderr,
           success: true
@@ -363,7 +381,10 @@ app.post('/mcp/execute', validateApiKey, async (req, res) => {
     // Handle get_infrastructure_summary
     else if (tool === 'get_infrastructure_summary') {
       const [k8sResult, proxmoxResult] = await Promise.allSettled([
-        execPromise('kubectl get nodes,pods --all-namespaces'),
+        execFilePromise('kubectl', ['get', 'nodes,pods', '--all-namespaces'], {
+          timeout: 30000,
+          maxBuffer: 10 * 1024 * 1024
+        }),
         callMCPServer(PROXMOX_MCP_URL, 'list_vms', {})
       ]);
 
