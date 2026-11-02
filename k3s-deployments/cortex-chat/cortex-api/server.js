@@ -14,6 +14,7 @@ const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY;
 const SELF_HEAL_WORKER_PATH = process.env.SELF_HEAL_WORKER_PATH || '/app/scripts/self-heal-worker.sh';
 const TASK_DIR = process.env.TASK_DIR || '/app/tasks';
 const TASK_POLL_INTERVAL = process.env.TASK_POLL_INTERVAL || 5000; // 5 seconds
+const CORTEX_API_KEY = process.env.CORTEX_API_KEY; // API key for /execute-tool endpoint
 
 // Redis configuration
 const REDIS_HOST = process.env.REDIS_HOST || 'redis-queue.cortex.svc.cluster.local';
@@ -2307,11 +2308,17 @@ async function handleListAgents(input) {
 async function handleGetTasks(input) {
   const { status = 'all', limit = 20 } = input;
 
-  // Check if task storage exists
-  try {
-    const { stdout } = await execPromise('ls -la /app/tasks 2>/dev/null || echo "none"');
+  // Validate and sanitize limit parameter to prevent command injection
+  const sanitizedLimit = parseInt(limit, 10);
+  if (isNaN(sanitizedLimit) || sanitizedLimit < 1 || sanitizedLimit > 1000) {
+    throw new Error('Invalid limit parameter: must be a number between 1 and 1000');
+  }
 
-    if (stdout.includes('none')) {
+  // Check if task storage exists using fs instead of shell commands
+  try {
+    const taskDirExists = await fs.access(TASK_DIR).then(() => true).catch(() => false);
+    
+    if (!taskDirExists) {
       return {
         tasks: [],
         count: 0,
@@ -2319,10 +2326,13 @@ async function handleGetTasks(input) {
       };
     }
 
-    // List task files
-    const { stdout: taskFiles } = await execPromise(`ls -t /app/tasks/*.json 2>/dev/null | head -${limit} || echo ""`);
+    // List task files using fs.readdir instead of shell commands
+    const allFiles = await fs.readdir(TASK_DIR);
+    const taskFiles = allFiles
+      .filter(f => f.endsWith('.json'))
+      .map(f => path.join(TASK_DIR, f));
 
-    if (!taskFiles.trim()) {
+    if (taskFiles.length === 0) {
       return {
         tasks: [],
         count: 0,
@@ -2330,13 +2340,30 @@ async function handleGetTasks(input) {
       };
     }
 
-    const files = taskFiles.trim().split('\n');
+    // Get file stats to sort by modification time
+    const filesWithStats = await Promise.all(
+      taskFiles.map(async (file) => {
+        try {
+          const stats = await fs.stat(file);
+          return { file, mtime: stats.mtime };
+        } catch (err) {
+          return null;
+        }
+      })
+    );
+
+    // Sort by modification time (newest first) and apply limit
+    const sortedFiles = filesWithStats
+      .filter(f => f !== null)
+      .sort((a, b) => b.mtime - a.mtime)
+      .slice(0, sanitizedLimit)
+      .map(f => f.file);
+
     const tasks = [];
 
-    for (const file of files) {
-      if (!file) continue;
+    for (const file of sortedFiles) {
       try {
-        const { stdout: content } = await execPromise(`cat "${file}"`);
+        const content = await fs.readFile(file, 'utf8');
         const task = JSON.parse(content);
 
         // Filter by status if specified
@@ -3572,6 +3599,31 @@ For infrastructure queries:
     req.on('data', chunk => body += chunk);
     req.on('end', async () => {
       try {
+        // Authenticate request using API key
+        const authHeader = req.headers['authorization'];
+        const providedKey = authHeader?.startsWith('Bearer ') ? authHeader.substring(7) : null;
+        
+        // Check if API key is configured and matches
+        if (!CORTEX_API_KEY) {
+          console.error('[CortexAPI] CORTEX_API_KEY not configured - /execute-tool endpoint is disabled');
+          res.writeHead(503, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ 
+            error: 'Service unavailable: API key not configured',
+            success: false 
+          }));
+          return;
+        }
+        
+        if (!providedKey || providedKey !== CORTEX_API_KEY) {
+          console.warn('[CortexAPI] Unauthorized /execute-tool request - invalid or missing API key');
+          res.writeHead(401, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ 
+            error: 'Unauthorized: Invalid or missing API key',
+            success: false 
+          }));
+          return;
+        }
+
         const { tool_name, tool_input } = JSON.parse(body);
 
         console.log('[CortexAPI] Tool execution request:', tool_name, tool_input);
