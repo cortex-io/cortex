@@ -56,13 +56,16 @@ export class ConversationStorage {
     }
   }
 
-  private getKey(sessionId: string): string {
+  private getKey(sessionId: string, username?: string): string {
+    if (username) {
+      return `conversation:${username}:${sessionId}`;
+    }
     return `conversation:${sessionId}`;
   }
 
-  async getConversation(sessionId: string): Promise<Conversation | null> {
+  async getConversation(sessionId: string, username?: string): Promise<Conversation | null> {
     try {
-      const key = this.getKey(sessionId);
+      const key = this.getKey(sessionId, username);
       const data = await this.redis.get(key);
 
       if (!data) {
@@ -83,9 +86,9 @@ export class ConversationStorage {
     }
   }
 
-  async saveConversation(conversation: Conversation): Promise<void> {
+  async saveConversation(conversation: Conversation, username?: string): Promise<void> {
     try {
-      const key = this.getKey(conversation.sessionId);
+      const key = this.getKey(conversation.sessionId, username);
       conversation.updatedAt = new Date().toISOString();
       conversation.messageCount = conversation.messages.length;
 
@@ -108,9 +111,9 @@ export class ConversationStorage {
     return title.length < message.length ? `${title}...` : title;
   }
 
-  async addMessage(sessionId: string, message: Message): Promise<Conversation> {
+  async addMessage(sessionId: string, message: Message, username?: string): Promise<Conversation> {
     try {
-      let conversation = await this.getConversation(sessionId);
+      let conversation = await this.getConversation(sessionId, username);
 
       if (!conversation) {
         // Create new conversation
@@ -141,7 +144,7 @@ export class ConversationStorage {
       conversation.messages.push(message);
 
       // Save updated conversation
-      await this.saveConversation(conversation);
+      await this.saveConversation(conversation, username);
 
       return conversation;
     } catch (error) {
@@ -150,9 +153,9 @@ export class ConversationStorage {
     }
   }
 
-  async getMessages(sessionId: string): Promise<Message[]> {
+  async getMessages(sessionId: string, username?: string): Promise<Message[]> {
     try {
-      const conversation = await this.getConversation(sessionId);
+      const conversation = await this.getConversation(sessionId, username);
       return conversation?.messages || [];
     } catch (error) {
       console.error('[ConversationStorage] Error getting messages:', error);
@@ -160,9 +163,9 @@ export class ConversationStorage {
     }
   }
 
-  async deleteConversation(sessionId: string): Promise<void> {
+  async deleteConversation(sessionId: string, username?: string): Promise<void> {
     try {
-      const key = this.getKey(sessionId);
+      const key = this.getKey(sessionId, username);
       await this.redis.del(key);
       console.log(`[ConversationStorage] Deleted conversation ${sessionId}`);
     } catch (error) {
@@ -173,10 +176,11 @@ export class ConversationStorage {
 
   async updateConversationStatus(
     sessionId: string,
-    status: 'active' | 'in_progress' | 'completed'
+    status: 'active' | 'in_progress' | 'completed',
+    username?: string
   ): Promise<void> {
     try {
-      const conversation = await this.getConversation(sessionId);
+      const conversation = await this.getConversation(sessionId, username);
 
       if (!conversation) {
         console.warn(`[ConversationStorage] Cannot update status: conversation ${sessionId} not found`);
@@ -185,7 +189,7 @@ export class ConversationStorage {
 
       const oldStatus = conversation.status;
       conversation.status = status;
-      await this.saveConversation(conversation);
+      await this.saveConversation(conversation, username);
 
       console.log(`[ConversationStorage] Updated conversation ${sessionId} status: ${oldStatus} -> ${status}`);
     } catch (error) {
@@ -194,9 +198,9 @@ export class ConversationStorage {
     }
   }
 
-  async summarizeConversation(sessionId: string, apiKey: string): Promise<string> {
+  async summarizeConversation(sessionId: string, apiKey: string, username?: string): Promise<string> {
     try {
-      const conversation = await this.getConversation(sessionId);
+      const conversation = await this.getConversation(sessionId, username);
 
       if (!conversation || conversation.messages.length === 0) {
         return '';
@@ -245,7 +249,7 @@ export class ConversationStorage {
 
       // Update conversation with summary
       conversation.summary = summary;
-      await this.saveConversation(conversation);
+      await this.saveConversation(conversation, username);
 
       console.log(`[ConversationStorage] Generated summary for ${sessionId}: ${summary.substring(0, 100)}...`);
 
@@ -256,9 +260,9 @@ export class ConversationStorage {
     }
   }
 
-  async getContextForMessage(sessionId: string, apiKey: string): Promise<Message[]> {
+  async getContextForMessage(sessionId: string, apiKey: string, username?: string): Promise<Message[]> {
     try {
-      const conversation = await this.getConversation(sessionId);
+      const conversation = await this.getConversation(sessionId, username);
 
       if (!conversation || conversation.messages.length === 0) {
         return [];
@@ -270,7 +274,7 @@ export class ConversationStorage {
       }
 
       // For longer conversations, summarize old messages and keep recent ones
-      const summary = await this.summarizeConversation(sessionId, apiKey);
+      const summary = await this.summarizeConversation(sessionId, apiKey, username);
       const recentMessages = conversation.messages.slice(-10); // Keep last 10 messages
 
       // Prepend summary as a system-like message
@@ -293,9 +297,10 @@ export class ConversationStorage {
     }
   }
 
-  async getAllConversations(): Promise<Conversation[]> {
+  async getAllConversations(username?: string): Promise<Conversation[]> {
     try {
-      const keys = await this.redis.keys('conversation:*');
+      const pattern = username ? `conversation:${username}:*` : 'conversation:*';
+      const keys = await this.redis.keys(pattern);
       const conversations: Conversation[] = [];
 
       for (const key of keys) {
@@ -324,13 +329,13 @@ export class ConversationStorage {
     }
   }
 
-  async getGroupedConversations(): Promise<{
+  async getGroupedConversations(username?: string): Promise<{
     active: Conversation[];
     in_progress: Conversation[];
     completed: Conversation[];
   }> {
     try {
-      const allConversations = await this.getAllConversations();
+      const allConversations = await this.getAllConversations(username);
 
       const grouped = {
         active: allConversations.filter(c => c.status === 'active'),
