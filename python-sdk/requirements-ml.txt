@@ -16,15 +16,15 @@ langsmith==0.14.9
 
 # Vector Stores and Embeddings
 chromadb==1.4.1
-faiss-cpu==1.7.4
-tiktoken==0.5.2
-openai==1.7.1
+faiss-cpu==1.13.0
+tiktoken==0.7.0
+openai==2.45.0
 
 # Data Processing
-numpy==2.4.2
+numpy==2.5.3
 pandas==3.0.6
 scikit-learn>=1.5.0  # Updated to fix CVE (sensitive data leakage)
-scipy==1.17.0
+scipy==1.18.1
 
 # Model Training and Evaluation
 tensorboard==2.15.1
