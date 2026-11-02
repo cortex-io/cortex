@@ -5,6 +5,7 @@ import { issueDetector, type DetectedIssue } from '../services/issue-detector';
 import { contextAnalyzer, type ContextualSuggestion } from '../services/context-analyzer';
 import { detectYouTubeURLs } from '../services/youtube-detector';
 import { startVideoProcessing, handleImplementationApproval } from '../services/youtube-workflow';
+import { authMiddleware, type AuthUser } from '../middleware/auth';
 
 const CORTEX_URL = process.env.CORTEX_URL || 'http://cortex-orchestrator.cortex.svc.cluster.local:8000';
 const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY || '';
@@ -33,6 +34,12 @@ function stripEmojis(text: string): string {
 export function createChatRoutes() {
   const app = new Hono();
 
+  // Apply authentication middleware to all routes except health check
+  app.use('/chat', authMiddleware);
+  app.use('/conversations/*', authMiddleware);
+  app.use('/conversations', authMiddleware);
+  app.use('/cluster-health', authMiddleware);
+
   // Initialize conversation storage on first request
   let storageInitialized = false;
   const ensureStorage = async () => {
@@ -51,6 +58,12 @@ export function createChatRoutes() {
     try {
       await ensureStorage();
 
+      // Get authenticated user
+      const user = c.get('user') as AuthUser;
+      if (!user) {
+        return c.json({ error: 'Authentication required' }, 401);
+      }
+
       const body = await c.req.json();
       const { message, style, sessionId, isAction } = body;
 
@@ -60,6 +73,13 @@ export function createChatRoutes() {
 
       if (!sessionId || typeof sessionId !== 'string') {
         return c.json({ error: 'Session ID is required' }, 400);
+      }
+
+      // Validate session ownership - session must belong to authenticated user
+      const existingConversation = await conversationStorage.getConversation(sessionId);
+      if (existingConversation && existingConversation.userId !== user.username) {
+        console.warn(`[ChatRoute] User ${user.username} attempted to access session ${sessionId} owned by ${existingConversation.userId}`);
+        return c.json({ error: 'Unauthorized access to conversation' }, 403);
       }
 
       // If this is an action (fix/investigate/auto-continue), update status to in_progress
@@ -96,7 +116,7 @@ export function createChatRoutes() {
             role: 'assistant',
             content: detailsMessage,
             timestamp: new Date().toISOString()
-          });
+          }, user.username);
 
           // Return SSE stream and trigger frontend reload
           return streamSSE(c, async (stream) => {
@@ -127,7 +147,7 @@ export function createChatRoutes() {
           role: 'user',
           content: message,
           timestamp: new Date().toISOString()
-        });
+        }, user.username);
 
         // Start workflow for each video (parallel processing)
         for (const videoId of youtubeDetection.videoIds) {
@@ -159,7 +179,7 @@ export function createChatRoutes() {
         role: 'user',
         content: message,
         timestamp: new Date().toISOString()
-      });
+      }, user.username);
 
       // Get conversation context (includes summarization if needed)
       const contextMessages = await conversationStorage.getContextForMessage(sessionId, ANTHROPIC_API_KEY);
@@ -336,7 +356,7 @@ export function createChatRoutes() {
               role: 'assistant',
               content: assistantResponse,
               timestamp: new Date().toISOString()
-            });
+            }, user.username);
 
             console.log(`[ChatRoute] Saved assistant response to session ${sessionId}`);
 
@@ -397,6 +417,12 @@ export function createChatRoutes() {
     try {
       await ensureStorage();
 
+      // Get authenticated user
+      const user = c.get('user') as AuthUser;
+      if (!user) {
+        return c.json({ error: 'Authentication required' }, 401);
+      }
+
       const sessionId = c.req.param('sessionId');
       const conversation = await conversationStorage.getConversation(sessionId);
 
@@ -406,6 +432,12 @@ export function createChatRoutes() {
           conversation: null,
           messages: []
         });
+      }
+
+      // Validate ownership
+      if (conversation.userId !== user.username) {
+        console.warn(`[ChatRoute] User ${user.username} attempted to access conversation ${sessionId} owned by ${conversation.userId}`);
+        return c.json({ error: 'Unauthorized access to conversation' }, 403);
       }
 
       return c.json({
@@ -430,7 +462,21 @@ export function createChatRoutes() {
     try {
       await ensureStorage();
 
+      // Get authenticated user
+      const user = c.get('user') as AuthUser;
+      if (!user) {
+        return c.json({ error: 'Authentication required' }, 401);
+      }
+
       const sessionId = c.req.param('sessionId');
+      
+      // Validate ownership before deletion
+      const conversation = await conversationStorage.getConversation(sessionId);
+      if (conversation && conversation.userId !== user.username) {
+        console.warn(`[ChatRoute] User ${user.username} attempted to delete conversation ${sessionId} owned by ${conversation.userId}`);
+        return c.json({ error: 'Unauthorized access to conversation' }, 403);
+      }
+
       await conversationStorage.deleteConversation(sessionId);
 
       return c.json({
@@ -454,6 +500,12 @@ export function createChatRoutes() {
     try {
       await ensureStorage();
 
+      // Get authenticated user
+      const user = c.get('user') as AuthUser;
+      if (!user) {
+        return c.json({ error: 'Authentication required' }, 401);
+      }
+
       const sessionId = c.req.param('sessionId');
       const body = await c.req.json();
       const { status } = body;
@@ -462,6 +514,13 @@ export function createChatRoutes() {
         return c.json({
           error: 'Invalid status. Must be one of: active, in_progress, completed'
         }, 400);
+      }
+
+      // Validate ownership before updating
+      const conversation = await conversationStorage.getConversation(sessionId);
+      if (conversation && conversation.userId !== user.username) {
+        console.warn(`[ChatRoute] User ${user.username} attempted to update conversation ${sessionId} owned by ${conversation.userId}`);
+        return c.json({ error: 'Unauthorized access to conversation' }, 403);
       }
 
       await conversationStorage.updateConversationStatus(sessionId, status);
@@ -487,7 +546,13 @@ export function createChatRoutes() {
     try {
       await ensureStorage();
 
-      const grouped = await conversationStorage.getGroupedConversations();
+      // Get authenticated user
+      const user = c.get('user') as AuthUser;
+      if (!user) {
+        return c.json({ error: 'Authentication required' }, 401);
+      }
+
+      const grouped = await conversationStorage.getGroupedConversations(user.username);
 
       return c.json({
         success: true,
