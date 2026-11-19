@@ -53,6 +53,13 @@ export function createChatRoutes() {
     try {
       await ensureStorage();
 
+      // Get authenticated user
+      const user = c.get('user');
+      if (!user || !user.username) {
+        return c.json({ error: 'Authentication required' }, 401);
+      }
+      const username = user.username;
+
       const body = await c.req.json();
       const { message, style, sessionId, isAction } = body;
 
@@ -66,7 +73,7 @@ export function createChatRoutes() {
 
       // If this is an action (fix/investigate/auto-continue), update status to in_progress
       if (isAction === true) {
-        await conversationStorage.updateConversationStatus(sessionId, 'in_progress');
+        await conversationStorage.updateConversationStatus(sessionId, 'in_progress', username);
       }
 
       // Check for yes/no/details responses to YouTube analysis
@@ -74,7 +81,7 @@ export function createChatRoutes() {
       const isYouTubeResponse = lowerMessage === 'yes' || lowerMessage === 'no' || lowerMessage === 'details';
 
       // Get recent messages to check if this is a response to YouTube analysis
-      const recentMessages = await conversationStorage.getMessages(sessionId);
+      const recentMessages = await conversationStorage.getMessages(sessionId, username);
       const lastAnalysis = recentMessages.reverse().find(m =>
         m.metadata?.type === 'youtube_analysis' &&
         m.metadata?.requiresApproval === true
@@ -85,10 +92,10 @@ export function createChatRoutes() {
         const videoId = lastAnalysis.metadata?.videoId;
 
         if (lowerMessage === 'yes') {
-          await handleImplementationApproval(sessionId, videoId, true);
+          await handleImplementationApproval(sessionId, videoId, true, username);
           return c.json({ message: 'Implementation started' });
         } else if (lowerMessage === 'no') {
-          await handleImplementationApproval(sessionId, videoId, false);
+          await handleImplementationApproval(sessionId, videoId, false, username);
           return c.json({ message: 'Implementation cancelled' });
         } else if (lowerMessage === 'details') {
           const analysis = lastAnalysis.metadata?.analysis;
@@ -98,7 +105,7 @@ export function createChatRoutes() {
             role: 'assistant',
             content: detailsMessage,
             timestamp: new Date().toISOString()
-          });
+          }, username);
 
           // Return SSE stream and trigger frontend reload
           return streamSSE(c, async (stream) => {
@@ -129,12 +136,12 @@ export function createChatRoutes() {
           role: 'user',
           content: message,
           timestamp: new Date().toISOString()
-        });
+        }, username);
 
         // Start workflow for each video (parallel processing)
         for (const videoId of youtubeDetection.videoIds) {
           const videoUrl = youtubeDetection.urls.find(url => url.includes(videoId)) || '';
-          startVideoProcessing(sessionId, videoUrl, videoId).catch(error => {
+          startVideoProcessing(sessionId, videoUrl, videoId, username).catch(error => {
             console.error(`[ChatRoute] Workflow failed for ${videoId}:`, error);
           });
         }
@@ -161,10 +168,10 @@ export function createChatRoutes() {
         role: 'user',
         content: message,
         timestamp: new Date().toISOString()
-      });
+      }, username);
 
       // Get conversation context (includes summarization if needed)
-      const contextMessages = await conversationStorage.getContextForMessage(sessionId, ANTHROPIC_API_KEY);
+      const contextMessages = await conversationStorage.getContextForMessage(sessionId, ANTHROPIC_API_KEY, username);
 
       console.log(`[ChatRoute] Session ${sessionId}: ${contextMessages.length} context messages loaded`);
 
@@ -338,12 +345,12 @@ export function createChatRoutes() {
               role: 'assistant',
               content: assistantResponse,
               timestamp: new Date().toISOString()
-            });
+            }, username);
 
             console.log(`[ChatRoute] Saved assistant response to session ${sessionId}`);
 
             // Update conversation status to 'completed' after Cortex response
-            await conversationStorage.updateConversationStatus(sessionId, 'completed');
+            await conversationStorage.updateConversationStatus(sessionId, 'completed', username);
           }
 
         } catch (error) {
@@ -400,8 +407,15 @@ export function createChatRoutes() {
     try {
       await ensureStorage();
 
+      // Get authenticated user
+      const user = c.get('user');
+      if (!user || !user.username) {
+        return c.json({ error: 'Authentication required' }, 401);
+      }
+      const username = user.username;
+
       const sessionId = c.req.param('sessionId');
-      const conversation = await conversationStorage.getConversation(sessionId);
+      const conversation = await conversationStorage.getConversation(sessionId, username);
 
       if (!conversation) {
         return c.json({
@@ -434,8 +448,15 @@ export function createChatRoutes() {
     try {
       await ensureStorage();
 
+      // Get authenticated user
+      const user = c.get('user');
+      if (!user || !user.username) {
+        return c.json({ error: 'Authentication required' }, 401);
+      }
+      const username = user.username;
+
       const sessionId = c.req.param('sessionId');
-      await conversationStorage.deleteConversation(sessionId);
+      await conversationStorage.deleteConversation(sessionId, username);
 
       return c.json({
         success: true,
@@ -459,6 +480,13 @@ export function createChatRoutes() {
     try {
       await ensureStorage();
 
+      // Get authenticated user
+      const user = c.get('user');
+      if (!user || !user.username) {
+        return c.json({ error: 'Authentication required' }, 401);
+      }
+      const username = user.username;
+
       const sessionId = c.req.param('sessionId');
       const body = await c.req.json();
       const { status } = body;
@@ -469,7 +497,7 @@ export function createChatRoutes() {
         }, 400);
       }
 
-      await conversationStorage.updateConversationStatus(sessionId, status);
+      await conversationStorage.updateConversationStatus(sessionId, status, username);
 
       return c.json({
         success: true,
@@ -493,7 +521,14 @@ export function createChatRoutes() {
     try {
       await ensureStorage();
 
-      const grouped = await conversationStorage.getGroupedConversations();
+      // Get authenticated user
+      const user = c.get('user');
+      if (!user || !user.username) {
+        return c.json({ error: 'Authentication required' }, 401);
+      }
+      const username = user.username;
+
+      const grouped = await conversationStorage.getGroupedConversations(username);
 
       return c.json({
         success: true,
