@@ -6,18 +6,25 @@
         "httpMethod": "POST",
         "path": "auto-remediation",
         "responseMode": "responseNode",
-        "options": {}
+        "options": {},
+        "authentication": "headerAuth"
       },
       "id": "webhook-trigger",
       "name": "Webhook Trigger",
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 1,
       "position": [250, 300],
-      "webhookId": "auto-remediation-webhook"
+      "webhookId": "auto-remediation-webhook",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "auto-remediation-webhook-auth",
+          "name": "Auto-Remediation Webhook Auth"
+        }
+      }
     },
     {
       "parameters": {
-        "jsCode": "// Parse alert payload\nconst alert = $input.item.json.body.alert || $input.item.json.body;\n\nreturn [{\n  json: {\n    alertname: alert.labels?.alertname || alert.alertname,\n    severity: alert.labels?.severity || alert.severity,\n    service: alert.labels?.service || alert.labels?.job,\n    namespace: alert.labels?.namespace || 'default',\n    pod: alert.labels?.pod || alert.labels?.pod_name,\n    instance: alert.labels?.instance,\n    container: alert.labels?.container,\n    summary: alert.annotations?.summary || '',\n    description: alert.annotations?.description || '',\n    fingerprint: alert.fingerprint || '',\n    rawAlert: alert\n  }\n}];"
+        "jsCode": "// Parse alert payload\nconst alert = $input.item.json.body.alert || $input.item.json.body;\n\n// Validate Kubernetes resource names (RFC 1123 DNS subdomain)\n// Must consist of lowercase alphanumeric characters, '-' or '.'\n// Must start and end with an alphanumeric character\nfunction isValidK8sName(name, maxLength = 63) {\n  if (!name || typeof name !== 'string') return false;\n  if (name.length === 0 || name.length > maxLength) return false;\n  // RFC 1123 DNS subdomain: [a-z0-9]([-a-z0-9]*[a-z0-9])?(\\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*\n  const dnsSubdomainRegex = /^[a-z0-9]([a-z0-9-]*[a-z0-9])?(\\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)*$/;\n  return dnsSubdomainRegex.test(name);\n}\n\n// Extract and validate resource names\nconst rawNamespace = alert.labels?.namespace || 'default';\nconst rawPod = alert.labels?.pod || alert.labels?.pod_name;\nconst rawService = alert.labels?.service || alert.labels?.job;\nconst rawContainer = alert.labels?.container;\n\nconst namespace = isValidK8sName(rawNamespace, 253) ? rawNamespace : null;\nconst pod = isValidK8sName(rawPod) ? rawPod : null;\nconst service = isValidK8sName(rawService) ? rawService : null;\nconst container = isValidK8sName(rawContainer) ? rawContainer : null;\n\n// Validate critical fields\nif (!namespace) {\n  throw new Error(`Invalid namespace: ${rawNamespace}. Must be a valid RFC 1123 DNS subdomain.`);\n}\n\nreturn [{\n  json: {\n    alertname: alert.labels?.alertname || alert.alertname,\n    severity: alert.labels?.severity || alert.severity,\n    service: service,\n    namespace: namespace,\n    pod: pod,\n    instance: alert.labels?.instance,\n    container: container,\n    summary: alert.annotations?.summary || '',\n    description: alert.annotations?.description || '',\n    fingerprint: alert.fingerprint || '',\n    rawAlert: alert,\n    validationPassed: true\n  }\n}];"
       },
       "id": "parse-alert",
       "name": "Parse Alert",
@@ -119,14 +126,15 @@
     },
     {
       "parameters": {
-        "command": "kubectl logs -n {{ $json.namespace }} {{ $json.pod }} --tail=100 --previous",
+        "command": "=kubectl logs -n {{ $json.namespace }} {{ $json.pod }} --tail=100 --previous",
         "options": {}
       },
       "id": "collect-crash-logs",
       "name": "Collect Crash Logs",
       "type": "n8n-nodes-base.executeCommand",
       "typeVersion": 1,
-      "position": [1050, 100]
+      "position": [1050, 100],
+      "notes": "Validated inputs from Parse Alert node"
     },
     {
       "parameters": {
@@ -168,25 +176,27 @@
     },
     {
       "parameters": {
-        "command": "kubectl delete pod -n {{ $json.namespace }} {{ $json.pod }}",
+        "command": "=kubectl delete pod -n {{ $json.namespace }} {{ $json.pod }}",
         "options": {}
       },
       "id": "restart-pod",
       "name": "Restart Pod",
       "type": "n8n-nodes-base.executeCommand",
       "typeVersion": 1,
-      "position": [1650, 50]
+      "position": [1650, 50],
+      "notes": "Validated inputs from Parse Alert node"
     },
     {
       "parameters": {
-        "command": "kubectl get pod -n {{ $json.namespace }} {{ $json.pod }} -o json",
+        "command": "=kubectl get pod -n {{ $json.namespace }} {{ $json.pod }} -o json",
         "options": {}
       },
       "id": "get-pod-status",
       "name": "Get Pod Status",
       "type": "n8n-nodes-base.executeCommand",
       "typeVersion": 1,
-      "position": [1050, 250]
+      "position": [1050, 250],
+      "notes": "Validated inputs from Parse Alert node"
     },
     {
       "parameters": {
@@ -228,40 +238,43 @@
     },
     {
       "parameters": {
-        "command": "kubectl autoscale deployment -n {{ $json.namespace }} {{ $json.service }} --min=2 --max=10 --cpu-percent=80",
+        "command": "=kubectl autoscale deployment -n {{ $json.namespace }} {{ $json.service }} --min=2 --max=10 --cpu-percent=80",
         "options": {}
       },
       "id": "create-hpa",
       "name": "Create HPA",
       "type": "n8n-nodes-base.executeCommand",
       "typeVersion": 1,
-      "position": [1650, 200]
+      "position": [1650, 200],
+      "notes": "Validated inputs from Parse Alert node"
     },
     {
       "parameters": {
-        "command": "kubectl scale deployment -n {{ $json.namespace }} {{ $json.service }} --replicas=3",
+        "command": "=kubectl scale deployment -n {{ $json.namespace }} {{ $json.service }} --replicas=3",
         "options": {}
       },
       "id": "scale-replicas",
       "name": "Scale Replicas",
       "type": "n8n-nodes-base.executeCommand",
       "typeVersion": 1,
-      "position": [1650, 300]
+      "position": [1650, 300],
+      "notes": "Validated inputs from Parse Alert node"
     },
     {
       "parameters": {
-        "command": "kubectl get pod -n {{ $json.namespace }} -l app={{ $json.service }} -o json",
+        "command": "=kubectl get pod -n {{ $json.namespace }} -l app={{ $json.service }} -o json",
         "options": {}
       },
       "id": "get-worker-pods",
       "name": "Get Worker Pods",
       "type": "n8n-nodes-base.executeCommand",
       "typeVersion": 1,
-      "position": [1050, 400]
+      "position": [1050, 400],
+      "notes": "Validated inputs from Parse Alert node"
     },
     {
       "parameters": {
-        "jsCode": "// Identify stuck worker pod\nconst alert = $input.first().json;\nconst podsInfo = JSON.parse($input.last().json.stdout || '{}');\nconst pods = podsInfo.items || [];\n\n// Find pod that matches alert instance or is in bad state\nconst stuckPod = pods.find(pod => {\n  const podName = pod.metadata?.name;\n  const status = pod.status?.phase;\n  \n  // Check if pod name matches or if pod is in problematic state\n  return podName?.includes(alert.instance) || status === 'Unknown' || status === 'Pending';\n});\n\nif (stuckPod) {\n  return [{\n    json: {\n      ...alert,\n      stuckPodName: stuckPod.metadata?.name,\n      stuckPodStatus: stuckPod.status?.phase,\n      canTerminate: true\n    }\n  }];\n}\n\nreturn [{\n  json: {\n    ...alert,\n    canTerminate: false,\n    reason: 'No stuck pod found'\n  }\n}];"
+        "jsCode": "// Identify stuck worker pod\nconst alert = $input.first().json;\nconst podsInfo = JSON.parse($input.last().json.stdout || '{}');\nconst pods = podsInfo.items || [];\n\n// Validate Kubernetes resource name\nfunction isValidK8sName(name, maxLength = 63) {\n  if (!name || typeof name !== 'string') return false;\n  if (name.length === 0 || name.length > maxLength) return false;\n  const dnsSubdomainRegex = /^[a-z0-9]([a-z0-9-]*[a-z0-9])?(\\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)*$/;\n  return dnsSubdomainRegex.test(name);\n}\n\n// Find pod that matches alert instance or is in bad state\nconst stuckPod = pods.find(pod => {\n  const podName = pod.metadata?.name;\n  const status = pod.status?.phase;\n  \n  // Check if pod name matches or if pod is in problematic state\n  return podName?.includes(alert.instance) || status === 'Unknown' || status === 'Pending';\n});\n\nif (stuckPod) {\n  const podName = stuckPod.metadata?.name;\n  // Validate the pod name before returning\n  if (!isValidK8sName(podName)) {\n    throw new Error(`Invalid pod name detected: ${podName}`);\n  }\n  \n  return [{\n    json: {\n      ...alert,\n      stuckPodName: podName,\n      stuckPodStatus: stuckPod.status?.phase,\n      canTerminate: true\n    }\n  }];\n}\n\nreturn [{\n  json: {\n    ...alert,\n    canTerminate: false,\n    reason: 'No stuck pod found'\n  }\n}];"
       },
       "id": "identify-stuck-worker",
       "name": "Identify Stuck Worker",
@@ -299,14 +312,15 @@
     },
     {
       "parameters": {
-        "command": "kubectl delete pod -n {{ $json.namespace }} {{ $json.stuckPodName }} --grace-period=0 --force",
+        "command": "=kubectl delete pod -n {{ $json.namespace }} {{ $json.stuckPodName }} --grace-period=0 --force",
         "options": {}
       },
       "id": "force-terminate-worker",
       "name": "Force Terminate Worker",
       "type": "n8n-nodes-base.executeCommand",
       "typeVersion": 1,
-      "position": [1650, 400]
+      "position": [1650, 400],
+      "notes": "Validated inputs from Identify Stuck Worker node"
     },
     {
       "parameters": {
