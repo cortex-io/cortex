@@ -9,6 +9,21 @@ const { spawn } = require('child_process');
 class K8sClient {
   constructor() {
     this.kubectl = 'kubectl';
+    // Namespace allowlist for security - only allow operations in cortex-system
+    this.allowedNamespaces = ['cortex-system'];
+  }
+
+  /**
+   * Validate namespace against allowlist
+   * @param {string} namespace - Namespace to validate
+   * @throws {Error} If namespace is not allowed
+   */
+  validateNamespace(namespace) {
+    if (!this.allowedNamespaces.includes(namespace)) {
+      throw new Error(
+        `Namespace '${namespace}' is not allowed. Operations are restricted to: ${this.allowedNamespaces.join(', ')}`
+      );
+    }
   }
 
   /**
@@ -88,16 +103,19 @@ class K8sClient {
    */
   extractNamespace(query) {
     const match = query.match(/namespace[:\s]+([a-z0-9-]+)/i);
-    if (match) return match[1];
-
-    // Default to cortex-system
-    return 'cortex-system';
+    const namespace = match ? match[1] : 'cortex-system';
+    
+    // Validate namespace against allowlist
+    this.validateNamespace(namespace);
+    
+    return namespace;
   }
 
   /**
    * Get pods
    */
   async getPods(namespace = 'cortex-system') {
+    this.validateNamespace(namespace);
     return await this.exec(['get', 'pods', '-n', namespace, '-o', 'json']);
   }
 
@@ -105,6 +123,7 @@ class K8sClient {
    * Get deployments
    */
   async getDeployments(namespace = 'cortex-system') {
+    this.validateNamespace(namespace);
     return await this.exec(['get', 'deployments', '-n', namespace, '-o', 'json']);
   }
 
@@ -112,6 +131,7 @@ class K8sClient {
    * Get services
    */
   async getServices(namespace = 'cortex-system') {
+    this.validateNamespace(namespace);
     return await this.exec(['get', 'services', '-n', namespace, '-o', 'json']);
   }
 
@@ -133,6 +153,7 @@ class K8sClient {
    * Get all resources in namespace
    */
   async getAllResources(namespace = 'cortex-system') {
+    this.validateNamespace(namespace);
     return await this.exec(['get', 'all', '-n', namespace, '-o', 'json']);
   }
 
@@ -140,6 +161,8 @@ class K8sClient {
    * Create resource from YAML
    */
   async create(yaml, namespace = 'cortex-system') {
+    this.validateNamespace(namespace);
+    
     // Write YAML to temp file and apply
     const fs = require('fs').promises;
     const path = require('path');
@@ -162,6 +185,7 @@ class K8sClient {
    * Delete resource
    */
   async delete(resourceType, name, namespace = 'cortex-system') {
+    this.validateNamespace(namespace);
     return await this.exec(['delete', resourceType, name, '-n', namespace]);
   }
 
@@ -169,6 +193,7 @@ class K8sClient {
    * Scale deployment
    */
   async scale(deployment, replicas, namespace = 'cortex-system') {
+    this.validateNamespace(namespace);
     return await this.exec(['scale', 'deployment', deployment,
       '--replicas', String(replicas), '-n', namespace]);
   }

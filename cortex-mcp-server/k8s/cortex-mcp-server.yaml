@@ -18,30 +18,60 @@ metadata:
 
 ---
 apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRole
+kind: Role
 metadata:
   name: cortex-mcp-server
+  namespace: cortex-system
 rules:
-  # Allow cortex-mcp-server to manage k8s resources
+  # Allow cortex-mcp-server to manage resources within cortex-system namespace only
   - apiGroups: [""]
-    resources: ["pods", "services", "deployments", "namespaces", "nodes"]
+    resources: ["pods", "services"]
     verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
   - apiGroups: ["apps"]
     resources: ["deployments", "replicasets", "statefulsets"]
-    verbs: ["get", "list", "watch", "create", "update", "patch", "delete", "scale"]
+    verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+  - apiGroups: ["apps"]
+    resources: ["deployments/scale"]
+    verbs: ["get", "update", "patch"]
   - apiGroups: ["batch"]
     resources: ["jobs", "cronjobs"]
     verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
 
 ---
 apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRoleBinding
+kind: ClusterRole
+metadata:
+  name: cortex-mcp-server-readonly
+rules:
+  # Read-only access to cluster-scoped resources for monitoring
+  - apiGroups: [""]
+    resources: ["nodes", "namespaces"]
+    verbs: ["get", "list", "watch"]
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
 metadata:
   name: cortex-mcp-server
+  namespace: cortex-system
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: cortex-mcp-server
+subjects:
+  - kind: ServiceAccount
+    name: cortex-mcp-server
+    namespace: cortex-system
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: cortex-mcp-server-readonly
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
-  name: cortex-mcp-server
+  name: cortex-mcp-server-readonly
 subjects:
   - kind: ServiceAccount
     name: cortex-mcp-server
