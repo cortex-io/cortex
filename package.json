@@ -34,10 +34,14 @@
     "helmet": "^8.1.0",
     "jsonwebtoken": "^9.0.3",
     "minisearch": "^7.1.0",
-    "openai": "^6.22.0",
+    "openai": "^7.6.0",
     "postman-cli": "^1.31.3",
     "tiktoken": "^1.0.17",
     "ws": "^8.22.0"
+  },
+  "overrides": {
+    "raw-body@>=0.0.1 <=3.0.2": "4.0.0",
+    "yargs@>=0.0.1 <=18.0.0": "18.1.0"
   },
   "devDependencies": {
     "@types/jest": "^30.0.0",
