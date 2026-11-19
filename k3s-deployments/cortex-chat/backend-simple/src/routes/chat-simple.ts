@@ -5,6 +5,7 @@ import { issueDetector, type DetectedIssue } from '../services/issue-detector';
 import { contextAnalyzer, type ContextualSuggestion } from '../services/context-analyzer';
 import { detectYouTubeURLs } from '../services/youtube-detector';
 import { startVideoProcessing, handleImplementationApproval } from '../services/youtube-workflow';
+import { authMiddleware } from '../middleware/auth';
 
 const CORTEX_URL = process.env.CORTEX_URL || 'http://cortex-orchestrator.cortex.svc.cluster.local:8000';
 const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY || '';
@@ -46,8 +47,9 @@ export function createChatRoutes() {
    * POST /chat
    * Simple proxy to Cortex - just forward the query and return the response
    * Now with conversation persistence!
+   * REQUIRES AUTHENTICATION to prevent unauthorized access to privileged kubectl and infrastructure tools
    */
-  app.post('/chat', async (c) => {
+  app.post('/chat', authMiddleware, async (c) => {
     try {
       await ensureStorage();
 
@@ -392,8 +394,9 @@ export function createChatRoutes() {
   /**
    * GET /conversations/:sessionId
    * Get conversation history for a session
+   * REQUIRES AUTHENTICATION to prevent unauthorized access to conversation data
    */
-  app.get('/conversations/:sessionId', async (c) => {
+  app.get('/conversations/:sessionId', authMiddleware, async (c) => {
     try {
       await ensureStorage();
 
@@ -425,8 +428,9 @@ export function createChatRoutes() {
   /**
    * DELETE /conversations/:sessionId
    * Delete a conversation
+   * REQUIRES AUTHENTICATION to prevent unauthorized deletion of conversation data
    */
-  app.delete('/conversations/:sessionId', async (c) => {
+  app.delete('/conversations/:sessionId', authMiddleware, async (c) => {
     try {
       await ensureStorage();
 
@@ -449,8 +453,9 @@ export function createChatRoutes() {
   /**
    * PATCH /conversations/:sessionId/status
    * Update conversation status
+   * REQUIRES AUTHENTICATION to prevent unauthorized modification of conversation data
    */
-  app.patch('/conversations/:sessionId/status', async (c) => {
+  app.patch('/conversations/:sessionId/status', authMiddleware, async (c) => {
     try {
       await ensureStorage();
 
@@ -482,8 +487,9 @@ export function createChatRoutes() {
   /**
    * GET /conversations
    * Get all conversations grouped by status
+   * REQUIRES AUTHENTICATION to prevent unauthorized access to conversation data
    */
-  app.get('/conversations', async (c) => {
+  app.get('/conversations', authMiddleware, async (c) => {
     try {
       await ensureStorage();
 
@@ -510,8 +516,9 @@ export function createChatRoutes() {
   /**
    * GET /cluster-health
    * Returns real-time Kubernetes cluster health
+   * REQUIRES AUTHENTICATION to prevent unauthorized access to cluster information
    */
-  app.get('/cluster-health', async (c) => {
+  app.get('/cluster-health', authMiddleware, async (c) => {
     try {
       const { exec } = await import('child_process');
       const { promisify } = await import('util');

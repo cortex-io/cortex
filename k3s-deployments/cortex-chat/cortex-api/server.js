@@ -8,12 +8,14 @@ const fs = require('fs').promises;
 const Redis = require('ioredis');
 const TokenThrottle = require("./token-throttle.js");
 const metrics = require("./prometheus-metrics.js");
+const crypto = require('crypto');
 
 const PORT = process.env.PORT || 8000;
 const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY;
 const SELF_HEAL_WORKER_PATH = process.env.SELF_HEAL_WORKER_PATH || '/app/scripts/self-heal-worker.sh';
 const TASK_DIR = process.env.TASK_DIR || '/app/tasks';
 const TASK_POLL_INTERVAL = process.env.TASK_POLL_INTERVAL || 5000; // 5 seconds
+const JWT_SECRET = process.env.JWT_SECRET || '';
 
 // Redis configuration
 const REDIS_HOST = process.env.REDIS_HOST || 'redis-queue.cortex.svc.cluster.local';
@@ -104,6 +106,72 @@ let proxmoxTicketExpiry = null;
 
 let unifiCookie = null;
 let unifiCookieExpiry = null;
+
+/**
+ * Verify JWT token for authentication
+ * Returns user payload if valid, null if invalid
+ */
+function verifyJWT(token) {
+  if (!JWT_SECRET) {
+    console.error('[Auth] JWT_SECRET not configured');
+    return null;
+  }
+
+  try {
+    // JWT format: header.payload.signature
+    const parts = token.split('.');
+    if (parts.length !== 3) {
+      return null;
+    }
+
+    const [headerB64, payloadB64, signatureB64] = parts;
+    
+    // Verify signature
+    const signatureCheck = crypto
+      .createHmac('sha256', JWT_SECRET)
+      .update(`${headerB64}.${payloadB64}`)
+      .digest('base64url');
+
+    if (signatureCheck !== signatureB64) {
+      console.log('[Auth] Invalid JWT signature');
+      return null;
+    }
+
+    // Decode payload
+    const payload = JSON.parse(Buffer.from(payloadB64, 'base64url').toString());
+
+    // Check expiration
+    const now = Math.floor(Date.now() / 1000);
+    if (payload.exp && payload.exp < now) {
+      console.log('[Auth] JWT token expired');
+      return null;
+    }
+
+    return payload;
+  } catch (error) {
+    console.error('[Auth] JWT verification error:', error.message);
+    return null;
+  }
+}
+
+/**
+ * Authenticate request by checking Authorization header
+ * Returns user payload if authenticated, null otherwise
+ */
+function authenticateRequest(req) {
+  const authHeader = req.headers['authorization'];
+  
+  if (!authHeader) {
+    return null;
+  }
+
+  if (!authHeader.startsWith('Bearer ')) {
+    return null;
+  }
+
+  const token = authHeader.substring(7);
+  return verifyJWT(token);
+}
 
 /**
  * Get list of Sandfly hosts and cache for 5 minutes
@@ -2809,6 +2877,14 @@ const server = http.createServer(async (req, res) => {
 
   // Queue status endpoint
   if (req.url === '/api/queue/status' && req.method === 'GET') {
+    // AUTHENTICATION REQUIRED: Prevent unauthorized access to queue information
+    const user = authenticateRequest(req);
+    if (!user) {
+      res.writeHead(401, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: 'Authentication required' }));
+      return;
+    }
+
     try {
       let queueStatus = {
         redis_enabled: REDIS_ENABLED,
@@ -2838,6 +2914,14 @@ const server = http.createServer(async (req, res) => {
 
   // Workers status endpoint
   if (req.url === '/api/workers/status' && req.method === 'GET') {
+    // AUTHENTICATION REQUIRED: Prevent unauthorized access to cluster information via kubectl
+    const user = authenticateRequest(req);
+    if (!user) {
+      res.writeHead(401, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: 'Authentication required' }));
+      return;
+    }
+
     try {
       // Query Kubernetes for worker pod count
       const { stdout } = await execPromise('kubectl get pods -n cortex -l app=cortex-queue-worker -o json');
@@ -2898,6 +2982,14 @@ const server = http.createServer(async (req, res) => {
 
   // Task processor status
   if (req.url === '/api/task-processor/status' && req.method === 'GET') {
+    // AUTHENTICATION REQUIRED: Prevent unauthorized access to system status
+    const user = authenticateRequest(req);
+    if (!user) {
+      res.writeHead(401, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: 'Authentication required' }));
+      return;
+    }
+
     res.writeHead(200, { 'Content-Type': 'application/json' });
     res.end(JSON.stringify({
       enabled: true,
@@ -2912,6 +3004,14 @@ const server = http.createServer(async (req, res) => {
 
   // Main API endpoint with SSE support
   if (req.url === '/api/tasks' && req.method === 'POST') {
+    // AUTHENTICATION REQUIRED: Prevent unauthorized task creation and query processing
+    const user = authenticateRequest(req);
+    if (!user) {
+      res.writeHead(401, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: 'Authentication required' }));
+      return;
+    }
+
     let body = '';
 
     req.on('data', chunk => {
@@ -2995,6 +3095,16 @@ const server = http.createServer(async (req, res) => {
 
   // Handle /api/chat POST endpoint for streaming chat with Claude
   if (req.url === '/api/chat' && req.method === 'POST') {
+    // AUTHENTICATION REQUIRED: Verify JWT token to prevent unauthorized access to privileged kubectl and infrastructure tools
+    const user = authenticateRequest(req);
+    if (!user) {
+      res.writeHead(401, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: 'Authentication required' }));
+      return;
+    }
+
+    console.log(`[CortexChat] Authenticated user: ${user.username}`);
+
     let body = '';
     req.on('data', chunk => body += chunk);
     req.on('end', async () => {
